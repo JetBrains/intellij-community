@@ -9,20 +9,26 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.PagePool;
 import com.intellij.util.io.RecordDataOutput;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public abstract class AbstractStorage implements Disposable, Forceable {
@@ -33,7 +39,11 @@ public abstract class AbstractStorage implements Disposable, Forceable {
 
   private static final int MAX_PAGES_TO_FLUSH_AT_A_TIME = 50;
 
+  @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
+  @Deprecated
   protected final Object myLock = new Object();
+  private final ReadWriteLock myScalableLock = new ReentrantReadWriteLock();
+  private final boolean myUseScalableLock;
 
   protected AbstractRecordsTable myRecordsTable;
   protected DataTable myDataTable;
@@ -50,25 +60,36 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     return deletedRecordsFile && deletedDataFile;
   }
 
+  /**
+   * @deprecated please use scalable lock
+   */
+  @Deprecated
   protected AbstractStorage(String storageFilePath) throws IOException {
-    this(storageFilePath, PagePool.SHARED);
+    this(storageFilePath, PagePool.SHARED, false);
   }
 
-  protected AbstractStorage(String storageFilePath, PagePool pool) throws IOException {
-    this(storageFilePath, pool, CapacityAllocationPolicy.DEFAULT);
+  protected AbstractStorage(String storageFilePath, boolean useScalableLock) throws IOException {
+    this(storageFilePath, PagePool.SHARED, useScalableLock);
+  }
+
+  protected AbstractStorage(String storageFilePath, PagePool pool, boolean useScalableLock) throws IOException {
+    this(storageFilePath, pool, CapacityAllocationPolicy.DEFAULT, useScalableLock);
   }
 
   protected AbstractStorage(String storageFilePath,
-                            CapacityAllocationPolicy capacityAllocationPolicy) throws IOException {
-    this(storageFilePath, PagePool.SHARED, capacityAllocationPolicy);
+                            CapacityAllocationPolicy capacityAllocationPolicy,
+                            boolean useScalableLock) throws IOException {
+    this(storageFilePath, PagePool.SHARED, capacityAllocationPolicy, useScalableLock);
   }
 
   protected AbstractStorage(String storageFilePath,
                             PagePool pool,
-                            CapacityAllocationPolicy capacityAllocationPolicy) throws IOException {
+                            CapacityAllocationPolicy capacityAllocationPolicy,
+                            boolean useScalableLock) throws IOException {
     myCapacityAllocationPolicy = capacityAllocationPolicy != null ? capacityAllocationPolicy
                                                                   : CapacityAllocationPolicy.DEFAULT;
     tryInit(storageFilePath, pool, 0);
+    myUseScalableLock = useScalableLock;
   }
 
   private void tryInit(String storageFilePath, PagePool pool, int retryCount) throws IOException {
@@ -118,7 +139,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
   protected abstract AbstractRecordsTable createRecordsTable(PagePool pool, File recordsFile) throws IOException;
 
   private void compact(final String path) {
-    synchronized (myLock) {
+    withWriteLock(() -> {
       LOG.info("Space waste in " + path + " is " + myDataTable.getWaste() + " bytes. Compacting now.");
       long start = System.currentTimeMillis();
 
@@ -165,50 +186,46 @@ public abstract class AbstractStorage implements Disposable, Forceable {
 
       long timedelta = System.currentTimeMillis() - start;
       LOG.info("Done compacting in " + timedelta + "msec.");
-    }
+    });
   }
 
   public int getVersion() {
-    synchronized (myLock) {
+    return withReadLock(() -> {
       return myRecordsTable.getVersion();
-    }
+    });
   }
 
   public void setVersion(int expectedVersion) {
-    synchronized (myLock) {
+    withWriteLock(() -> {
       myRecordsTable.setVersion(expectedVersion);
-    }
+    });
   }
 
   @Override
   public void force() {
-    synchronized (myLock) {
+    withWriteLock(() -> {
       myDataTable.force();
       myRecordsTable.force();
-    }
+    });
   }
 
   public boolean flushSome() {
-    synchronized (myLock) {
+    return withWriteLock(() -> {
       boolean okRecords = myRecordsTable.flushSome(MAX_PAGES_TO_FLUSH_AT_A_TIME);
       boolean okData = myDataTable.flushSome(MAX_PAGES_TO_FLUSH_AT_A_TIME);
 
       return okRecords && okData;
-    }
+    });
   }
 
   @Override
   public boolean isDirty() {
-    synchronized (myLock) {
-      return myDataTable.isDirty() || myRecordsTable.isDirty();
-    }
+    return withReadLock(() -> myDataTable.isDirty() || myRecordsTable.isDirty());
   }
 
   @TestOnly
   public int getLiveRecordsCount() throws IOException {
-    synchronized (myLock) {
-      return myRecordsTable.getLiveRecordsCount();
-    }
+    return withReadLock(() -> myRecordsTable.getLiveRecordsCount());
   }
 
   @TestOnly
@@ -233,7 +250,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
   }
 
   protected byte[] readBytes(int record) throws IOException {
-    synchronized (myLock) {
+    return withReadLock(() -> {
       final int length = myRecordsTable.getSize(record);
       if (length == 0 || AbstractRecordsTable.isSizeOfRemovedRecord(length)) return ArrayUtilRt.EMPTY_BYTE_ARRAY;
       assert length > 0:length;
@@ -241,16 +258,14 @@ public abstract class AbstractStorage implements Disposable, Forceable {
       final long address = myRecordsTable.getAddress(record);
       byte[] result = new byte[length];
       myDataTable.readBytes(address, result);
-
       return result;
-    }
+    });
   }
 
   protected void appendBytes(int record, ByteArraySequence bytes) throws IOException {
     final int delta = bytes.getLength();
     if (delta == 0) return;
-
-    synchronized (myLock) {
+    withWriteLock(() -> {
       int capacity = myRecordsTable.getCapacity(record);
       int oldSize = myRecordsTable.getSize(record);
       int newSize = oldSize + delta;
@@ -270,11 +285,11 @@ public abstract class AbstractStorage implements Disposable, Forceable {
         myDataTable.writeBytes(address, bytes.getBytes(), bytes.getOffset(), bytes.getLength());
         myRecordsTable.setSize(record, newSize);
       }
-    }
+    });
   }
 
   public void writeBytes(int record, ByteArraySequence bytes, boolean fixedSize) throws IOException {
-    synchronized (myLock) {
+    withWriteLock(() -> {
       final int requiredLength = bytes.getLength();
       final int currentCapacity = myRecordsTable.getCapacity(record);
 
@@ -299,7 +314,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
 
       myDataTable.writeBytes(address, bytes.getBytes(), bytes.getOffset(), bytes.getLength());
       myRecordsTable.setSize(record, requiredLength);
-    }
+    });
   }
 
   protected void doDeleteRecord(int record) throws IOException {
@@ -309,25 +324,24 @@ public abstract class AbstractStorage implements Disposable, Forceable {
 
   @Override
   public void dispose() {
-    synchronized (myLock) {
+    withWriteLock(() -> {
       Disposer.dispose(myRecordsTable);
       Disposer.dispose(myDataTable);
-
-    }
+    });
   }
 
   public void checkSanity(final int record) {
-    synchronized (myLock) {
+    withReadLock(() -> {
       final int size = myRecordsTable.getSize(record);
       assert size >= 0;
       final long address = myRecordsTable.getAddress(record);
       assert address >= 0;
       assert address + size < myDataTable.getFileSize();
-    }
+    });
   }
 
-  public void replaceBytes(int record, int offset, ByteArraySequence bytes) throws IOException {
-    synchronized (myLock) {
+  public void replaceBytes(int record, int offset, ByteArraySequence bytes) {
+    withWriteLock(() -> {
       final int changedBytesLength = bytes.getLength();
 
       final int currentSize = myRecordsTable.getSize(record);
@@ -339,7 +353,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
       final long address = myRecordsTable.getAddress(record);
 
       myDataTable.writeBytes(address + offset, bytes.getBytes(), bytes.getOffset(), bytes.getLength());
-    }
+    });
   }
 
   public static class StorageDataOutput extends DataOutputStream implements RecordDataOutput {
@@ -384,6 +398,50 @@ public abstract class AbstractStorage implements Disposable, Forceable {
       super.close();
       final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
       appendBytes(myRecordId, _out.toByteArraySequence());
+    }
+  }
+
+  protected <T, E extends Throwable> T withReadLock(@NotNull ThrowableComputable<T, E> runnable) throws E {
+    if (myUseScalableLock) {
+      return ConcurrencyUtil.withLock(myScalableLock.readLock(), runnable);
+    }
+    else {
+      synchronized (myLock) {
+        return runnable.compute();
+      }
+    }
+  }
+
+  protected <E extends Throwable> void withReadLock(@NotNull ThrowableRunnable<E> runnable) throws E {
+    if (myUseScalableLock) {
+      ConcurrencyUtil.withLock(myScalableLock.readLock(), runnable);
+    }
+    else {
+      synchronized (myLock) {
+        runnable.run();
+      }
+    }
+  }
+
+  protected  <T, E extends Throwable> T withWriteLock(@NotNull ThrowableComputable<T, E> runnable) throws E {
+    if (myUseScalableLock) {
+      return ConcurrencyUtil.withLock(myScalableLock.writeLock(), runnable);
+    }
+    else {
+      synchronized (myLock) {
+        return runnable.compute();
+      }
+    }
+  }
+
+  protected <E extends Throwable> void withWriteLock(@NotNull ThrowableRunnable<E> runnable) throws E {
+    if (myUseScalableLock) {
+      ConcurrencyUtil.withLock(myScalableLock.writeLock(), runnable);
+    }
+    else {
+      synchronized (myLock) {
+        runnable.run();
+      }
     }
   }
 }

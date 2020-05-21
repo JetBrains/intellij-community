@@ -26,11 +26,7 @@ import java.io.IOException;
 
 public class LocalHistoryStorage extends AbstractStorage {
   public LocalHistoryStorage(String storageFilePath) throws IOException {
-    super(storageFilePath);
-  }
-
-  public LocalHistoryStorage(String storageFilePath, PagePool pool) throws IOException {
-    super(storageFilePath, pool);
+    super(storageFilePath, true);
   }
 
   @Override
@@ -39,68 +35,67 @@ public class LocalHistoryStorage extends AbstractStorage {
   }
 
   public long getFSTimestamp() {
-    synchronized (myLock) {
+    return withReadLock(() -> {
       return ((LocalHistoryRecordsTable)myRecordsTable).getFSTimestamp();
-    }
+    });
   }
 
   public void setFSTimestamp(long timestamp) {
-    synchronized (myLock) {
+    withWriteLock(() -> {
       ((LocalHistoryRecordsTable)myRecordsTable).setFSTimestamp(timestamp);
-    }
+    });
   }
 
   public long getLastId() {
-    synchronized (myLock) {
+    return withReadLock(() -> {
       return ((LocalHistoryRecordsTable)myRecordsTable).getLastId();
-    }
+    });
   }
 
   public void setLastId(long lastId) {
-    synchronized (myLock) {
+    withWriteLock(() -> {
       ((LocalHistoryRecordsTable)myRecordsTable).setLastId(lastId);
-    }
+    });
   }
 
   public int getFirstRecord() {
-    synchronized (myLock) {
+    return withReadLock(() -> {
       return ((LocalHistoryRecordsTable)myRecordsTable).getFirstRecord();
-    }
+    });
   }
 
   public int getLastRecord() {
-    synchronized (myLock) {
+    return withReadLock(() -> {
       return ((LocalHistoryRecordsTable)myRecordsTable).getLastRecord();
-    }
+    });
   }
 
   public int getPrevRecord(int record) {
-    synchronized (myLock) {
+    return withReadLock(() -> {
       return ((LocalHistoryRecordsTable)myRecordsTable).getPrevRecord(record);
-    }
+    });
   }
 
   public int getNextRecord(int record) {
-    synchronized (myLock) {
+    return withReadLock(() -> {
       return ((LocalHistoryRecordsTable)myRecordsTable).getNextRecord(record);
-    }
+    });
   }
 
   public long getTimestamp(int record) {
-    synchronized (myLock) {
+    return withReadLock(() -> {
       return ((LocalHistoryRecordsTable)myRecordsTable).getTimestamp(record);
-    }
+    });
   }
 
   public Pair<Long, Integer> getOffsetAndSize(int id) {
-    synchronized (myLock) {
+    return withReadLock(() -> {
       return Pair.create(myRecordsTable.getAddress(id), myRecordsTable.getSize(id));
-    }
-
+    });
   }
 
   public int createNextRecord() throws IOException {
-    synchronized (myLock) {
+    return withWriteLock(() -> {
       LocalHistoryRecordsTable table = (LocalHistoryRecordsTable)myRecordsTable;
       int id = table.createNewRecord();
       int prev = table.getLastRecord();
@@ -117,11 +112,11 @@ public class LocalHistoryStorage extends AbstractStorage {
       table.setTimestamp(id, Clock.getTime());
 
       return id;
-    }
+    });
   }
 
   public void deleteRecordsUpTo(int idInclusively) throws IOException {
-    synchronized (myLock) {
+    withWriteLock(() -> {
       LocalHistoryRecordsTable table = (LocalHistoryRecordsTable)myRecordsTable;
 
       int each = table.getFirstRecord();
@@ -145,6 +140,6 @@ public class LocalHistoryStorage extends AbstractStorage {
         table.setFirstRecord(each);
         table.setPrevRecord(each, 0);
       }
-    }
+    });
   }
 }

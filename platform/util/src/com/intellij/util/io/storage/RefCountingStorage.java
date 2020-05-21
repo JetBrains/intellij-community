@@ -46,7 +46,7 @@ public class RefCountingStorage extends AbstractStorage {
   }
 
   public RefCountingStorage(String path, CapacityAllocationPolicy capacityAllocationPolicy, boolean doNotZipCaches) throws IOException {
-    super(path, capacityAllocationPolicy);
+    super(path, capacityAllocationPolicy, true);
     myDoNotZipCaches = doNotZipCaches;
   }
 
@@ -65,11 +65,7 @@ public class RefCountingStorage extends AbstractStorage {
 
   private BufferExposingByteArrayOutputStream internalReadStream(int record) throws IOException {
     waitForPendingWriteForRecord(record);
-    byte[] result;
-
-    synchronized (myLock) {
-      result = super.readBytes(record);
-    }
+    byte[] result = withReadLock(() -> super.readBytes(record));
 
     try (InflaterInputStream in = new CustomInflaterInputStream(result)) {
       final BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
@@ -127,7 +123,7 @@ public class RefCountingStorage extends AbstractStorage {
 
     waitForPendingWriteForRecord(record);
 
-    synchronized (myLock) {
+    withWriteLock(() -> {
       myPendingWriteRequestsSize += bytes.getLength();
       if (myPendingWriteRequestsSize > MAX_PENDING_WRITE_SIZE) {
         zipAndWrite(bytes, record, fixedSize);
@@ -137,7 +133,7 @@ public class RefCountingStorage extends AbstractStorage {
           return null;
         }));
       }
-    }
+    });
   }
 
   private void zipAndWrite(ByteArraySequence bytes, int record, boolean fixedSize) throws IOException {
@@ -146,11 +142,11 @@ public class RefCountingStorage extends AbstractStorage {
       out.write(bytes.getBytes(), bytes.getOffset(), bytes.getLength());
     }
 
-    synchronized (myLock) {
+    withWriteLock(() -> {
       doWrite(record, fixedSize, s);
       myPendingWriteRequestsSize -= bytes.getLength();
       myPendingWriteRequests.remove(record);
-    }
+                             });
   }
 
   private void doWrite(int record, boolean fixedSize, BufferExposingByteArrayOutputStream s) throws IOException {
@@ -163,24 +159,18 @@ public class RefCountingStorage extends AbstractStorage {
   }
 
   public int acquireNewRecord() throws IOException {
-    synchronized (myLock) {
+    return withWriteLock(() -> {
       int record = myRecordsTable.createNewRecord();
       ((RefCountingRecordsTable)myRecordsTable).incRefCount(record);
       return record;
-    }
-  }
-
-  public int createNewRecord() throws IOException {
-    synchronized (myLock) {
-      return myRecordsTable.createNewRecord();
-    }
+    });
   }
 
   public void acquireRecord(int record) {
     waitForPendingWriteForRecord(record);
-    synchronized (myLock) {
+    withWriteLock(() -> {
       ((RefCountingRecordsTable)myRecordsTable).incRefCount(record);
-    }
+    });
   }
 
   public void releaseRecord(int record) throws IOException {
@@ -189,18 +179,18 @@ public class RefCountingStorage extends AbstractStorage {
 
   public void releaseRecord(int record, boolean completely) throws IOException {
     waitForPendingWriteForRecord(record);
-    synchronized (myLock) {
+    withWriteLock(() -> {
       if (((RefCountingRecordsTable)myRecordsTable).decRefCount(record) && completely) {
         doDeleteRecord(record);
       }
-    }
+    });
   }
 
   public int getRefCount(int record) {
     waitForPendingWriteForRecord(record);
-    synchronized (myLock) {
+    return withReadLock(() -> {
       return ((RefCountingRecordsTable)myRecordsTable).getRefCount(record);
-    }
+    });
   }
 
   @Override

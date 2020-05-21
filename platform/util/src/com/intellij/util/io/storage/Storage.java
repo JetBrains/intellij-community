@@ -26,15 +26,11 @@ import java.io.IOException;
 
 public class Storage extends AbstractStorage {
   public Storage(String path) throws IOException {
-    super(path);
-  }
-
-  public Storage(String path, PagePool pool) throws IOException {
-    super(path, pool);
+    super(path, true);
   }
 
   public Storage(String path, CapacityAllocationPolicy capacityAllocationPolicy) throws IOException {
-    super(path, capacityAllocationPolicy);
+    super(path, capacityAllocationPolicy, true);
   }
 
   @Override
@@ -43,15 +39,15 @@ public class Storage extends AbstractStorage {
   }
 
   public int createNewRecord() throws IOException {
-    synchronized (myLock) {
+    return withWriteLock(() -> {
       return myRecordsTable.createNewRecord();
-    }
+    });
   }
 
   public void deleteRecord(int record) throws IOException {
     assert record > 0;
-    synchronized (myLock) {
+    withWriteLock(() -> {
       doDeleteRecord(record);
-    }
+    });
   }
 }
