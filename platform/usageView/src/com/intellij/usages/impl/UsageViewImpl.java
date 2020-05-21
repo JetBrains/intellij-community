@@ -701,7 +701,7 @@ public class UsageViewImpl implements UsageViewEx {
     });
 
     TreeUtil.promiseSelectFirst(myTree);
-    setPopupHandler(IdeActions.GROUP_USAGE_VIEW_POPUP);
+    PopupHandler.installPopupHandler(myTree, IdeActions.GROUP_USAGE_VIEW_POPUP, ActionPlaces.USAGE_VIEW_POPUP);
 
     myTree.addTreeExpansionListener(new TreeExpansionListener() {
       @Override
@@ -859,7 +859,7 @@ public class UsageViewImpl implements UsageViewEx {
     addFilteringFromExtensionPoints(filteringSubgroup);
 
     return new AnAction[] {
-      canPerformReRun() ? ActionManager.getInstance().getAction("UsageView.Rerun") : null,
+      ActionManager.getInstance().getAction("UsageView.Rerun"),
       actionsManager.createPrevOccurenceAction(myRootPanel),
       actionsManager.createNextOccurenceAction(myRootPanel),
       new Separator(),
@@ -1585,10 +1585,6 @@ public class UsageViewImpl implements UsageViewEx {
     catch (PsiInvalidElementAccessException e) {
       return false;
     }
-  }
-
-  public void setPopupHandler(@NotNull String groupId) {
-    PopupHandler.installPopupHandler(myTree, groupId, ActionPlaces.USAGE_VIEW_POPUP);
   }
 
   private boolean checkReadonlyUsages() {

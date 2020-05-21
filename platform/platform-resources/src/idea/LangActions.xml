@@ -788,18 +788,6 @@
       <reference ref="ExportToTextFile"/>
     </group>
 
-    <group id="BrokenUsageView.Popup">
-      <reference ref="EditSource"/>
-      <reference ref="TreeNodeExclusion"/>
-      <reference ref="UsageView.Remove"/>
-      <separator/>
-      <reference ref="AddToFavorites"/>
-      <separator/>
-      <reference ref="RunContextGroup"/>
-      <separator/>
-      <reference ref="ExportToTextFile"/>
-    </group>
-
     <action id="NewElementSamePlace" class="com.intellij.ide.actions.NewElementSamePlaceAction"/>
 
     <action id="ChangeCodeStyleScheme" class="com.intellij.ide.actions.QuickChangeCodeStyleSchemeAction">
