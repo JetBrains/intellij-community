@@ -97,10 +97,12 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
                                                                   logUi.filterUi.textFilterComponent.textEditor)
   }
 
+  private val showBranches get() = logUi.properties.get(SHOW_GIT_BRANCHES_LOG_PROPERTY)
+
   init {
     initMainUi()
     installLogUi()
-    updateBranchesTree(true)
+    toggleBranchesPanelVisibility()
   }
 
   @CalledInAwt
@@ -187,12 +189,11 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     mainPanel.isFocusCycleRoot = true
     mainPanel.focusTraversalPolicy = BRANCHES_UI_FOCUS_TRAVERSAL_POLICY
     startLoadingBranches()
-    toggleBranchesPanelVisibility()
   }
 
   fun toggleBranchesPanelVisibility() {
-    val showBranches = logUi.properties.get(SHOW_GIT_BRANCHES_LOG_PROPERTY)
     branchesPanelExpandableController.toggleExpand(showBranches)
+    updateBranchesTree(true)
   }
 
   private fun createFocusFilterFieldAction(searchField: Component) {
@@ -224,7 +225,9 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   }
 
   fun updateBranchesTree(initial: Boolean) {
-    tree.update(initial)
+    if (showBranches) {
+      tree.update(initial)
+    }
   }
 
   fun refreshTree() {
