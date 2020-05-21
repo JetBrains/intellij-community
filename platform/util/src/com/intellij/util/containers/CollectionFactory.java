@@ -63,6 +63,10 @@ public final class CollectionFactory {
     return new Object2ObjectOpenCustomHashMap<>(expectedSize, loadFactor, caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
   }
 
+  public static @NotNull Set<CharSequence> createCharSequenceSet(boolean caseSensitive, int expectedSize, float loadFactor) {
+    return new ObjectOpenCustomHashSet<>(expectedSize, loadFactor, caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
+  }
+
   public static @NotNull <T> Map<CharSequence, T> createCharSequenceMap(boolean caseSensitive) {
     return new Object2ObjectOpenCustomHashMap<>(caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
   }

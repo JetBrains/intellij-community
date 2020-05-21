@@ -1,13 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.intellij.diagnostic.ActivityImpl
-import gnu.trove.TLongObjectHashMap
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 
 internal class ThreadNameManager {
   // ConcurrencyUtil.runUnderThreadName is used in our code (to make thread dumps more clear) and changes thread name,
   // so, use first thread name that associated with thread and not subsequent one
-  private val idToName = TLongObjectHashMap<String>()
+  private val idToName = Long2ObjectOpenHashMap<String>()
 
   fun getThreadName(event: ActivityImpl): String {
     var result = idToName.get(event.threadId)

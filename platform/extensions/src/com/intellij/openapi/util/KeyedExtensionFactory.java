@@ -6,7 +6,6 @@ import com.intellij.openapi.extensions.ExtensionInstantiationException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.KeyedFactoryEPBean;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +16,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author yole
@@ -64,7 +62,7 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
       }
 
       try {
-        return (T)epBean.instantiateClass(epBean.implementationClass, picoContainer);
+        return epBean.instantiateClass(epBean.implementationClass, picoContainer);
       }
       catch (ProcessCanceledException | ExtensionInstantiationException e) {
         throw e;
@@ -76,17 +74,8 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
     return null;
   }
 
-  public @NotNull Set<String> getAllKeys() {
-    List<KeyedFactoryEPBean> list = myEpName.getExtensionList();
-    Set<String> set = new THashSet<>();
-    for (KeyedFactoryEPBean epBean : list) {
-      set.add(epBean.key);
-    }
-    return set;
-  }
-
   private T getByKey(final List<? extends KeyedFactoryEPBean> epBeans, final String key, final Method method, final Object[] args) {
-    Object result = null;
+    T result = null;
     for(KeyedFactoryEPBean epBean: epBeans) {
       if (Comparing.strEqual(epBean.key, key, true)) {
         try {
@@ -95,7 +84,8 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
           }
           else {
             Object factory = epBean.instantiateClass(epBean.factoryClass, myPicoContainer);
-            result = method.invoke(factory, args);
+            //noinspection unchecked
+            result = (T)method.invoke(factory, args);
           }
           if (result != null) {
             break;
@@ -120,7 +110,7 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
         }
       }
     }
-    return (T)result;
+    return result;
   }
 
   public abstract @NotNull String getKey(@NotNull KeyT key);

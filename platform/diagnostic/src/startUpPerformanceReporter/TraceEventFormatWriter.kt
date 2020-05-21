@@ -33,9 +33,8 @@ internal class TraceEventFormatWriter(private val timeOffset: Long,
 
     for (event in servicesSortedByTime) {
       writer.obj {
-        val computedOwnDuration = ownDurations.get(event)
+        val computedOwnDuration = ownDurations.getLong(event)
         val duration = if (computedOwnDuration == -1L) event.end - event.start else computedOwnDuration
-
         writeCompleteEvent(event, writer, extraArgWriter = {
           writer.writeNumberField("ownDur", TimeUnit.NANOSECONDS.toMicros(duration))
         })

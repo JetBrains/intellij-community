@@ -8,8 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ThreeState;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jdom.Element;
 import org.jdom.Namespace;
 import org.jetbrains.annotations.*;
@@ -27,7 +26,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   private final ComponentManager componentManager;
   private final Map<String, ExtensionPointImpl<?>> extensionPoints = new ConcurrentHashMap<>();
-  private final Map<String,Throwable> epTraces = DEBUG_REGISTRATION ? new THashMap<>() : null;
+  private final Map<String,Throwable> epTraces = DEBUG_REGISTRATION ? new Object2ObjectOpenHashMap<>() : null;
 
   public ExtensionsAreaImpl(@NotNull ComponentManager componentManager) {
     this.componentManager = componentManager;
@@ -35,7 +34,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   @TestOnly
   public final void notifyAreaReplaced(@Nullable ExtensionsAreaImpl newArea) {
-    Set<String> processedEPs = new THashSet<>();
+    Set<String> processedEPs = new HashSet<>(extensionPoints.size());
     for (ExtensionPointImpl<?> point : extensionPoints.values()) {
       point.notifyAreaReplaced(this);
       processedEPs.add(point.getName());

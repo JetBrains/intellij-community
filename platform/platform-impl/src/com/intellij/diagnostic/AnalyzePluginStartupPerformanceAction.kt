@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic
 
 import com.intellij.ide.plugins.PluginManagerCore
@@ -59,16 +59,16 @@ class PluginStartupCostDialog(private val project: Project) : DialogWrapper(proj
         val name = PluginManagerCore.getPlugin(PluginId.getId(pluginId))?.name ?: return@mapNotNull null
 
         var totalCost = 0L
-        costMap.forEachValue {
-          totalCost += it
-          true
+        val iterator = costMap.values.iterator()
+        while (iterator.hasNext()) {
+          totalCost += iterator.nextLong()
         }
 
-        val ids = costMap.keys()
+        val ids = costMap.keys.toMutableList()
         ids.sort()
         val costDetails = StringBuilder()
         for (id in ids) {
-          costDetails.append(id).append(": ").append(TimeUnit.NANOSECONDS.toMillis(costMap[id as String]))
+          costDetails.append(id).append(": ").append(TimeUnit.NANOSECONDS.toMillis(costMap.getLong(id)))
           costDetails.append('\n')
         }
 

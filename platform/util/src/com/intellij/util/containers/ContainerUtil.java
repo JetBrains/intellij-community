@@ -441,6 +441,10 @@ public class ContainerUtil {
     return new THashSet<>(elements);
   }
 
+  /**
+   * @deprecated Use {@link it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet}.
+   */
+  @Deprecated
   @Contract(pure = true)
   public static @NotNull <K> THashSet<K> newIdentityTroveSet() {
     return new THashSet<>(identityStrategy());

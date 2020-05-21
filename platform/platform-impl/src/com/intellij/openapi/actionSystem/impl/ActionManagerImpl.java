@@ -59,8 +59,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +81,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private static final ExtensionPointName<ActionConfigurationCustomizer> EP =
     new ExtensionPointName<>("com.intellij.actionConfigurationCustomizer");
   private static final ExtensionPointName<EditorActionHandlerBean> EDITOR_ACTION_HANDLER_EP =
-    ExtensionPointName.create("com.intellij.editorActionHandler");
+    new ExtensionPointName<>("com.intellij.editorActionHandler");
 
   private static final String ACTION_ELEMENT_NAME = "action";
   private static final String GROUP_ELEMENT_NAME = "group";
@@ -131,10 +132,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private static final int UPDATE_DELAY_AFTER_TYPING = 500;
 
   private final Object myLock = new Object();
-  private final Map<String, AnAction> myId2Action = new THashMap<>();
+  private final Map<String, AnAction> myId2Action = new Object2ObjectOpenHashMap<>();
   private final MultiMap<PluginId, String> myPlugin2Id = new MultiMap<>();
-  private final TObjectIntHashMap<String> myId2Index = new TObjectIntHashMap<>();
-  private final Map<Object, String> myAction2Id = new THashMap<>();
+  private final Object2IntMap<String> myId2Index = new Object2IntOpenHashMap<>();
+  private final Map<Object, String> myAction2Id = new Object2ObjectOpenHashMap<>();
   private final MultiMap<String, String> myId2GroupId = new MultiMap<>();
   private final List<String> myNotRegisteredInternalActionIds = new ArrayList<>();
   private final List<AnActionListener> myActionListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -227,7 +228,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Nullable
-  static ActionGroup convertGroupStub(@NotNull ActionGroupStub stub, @NotNull ActionManager actionManager) {
+  private static ActionGroup convertGroupStub(@NotNull ActionGroupStub stub, @NotNull ActionManager actionManager) {
     IdeaPluginDescriptor plugin = stub.getPlugin();
     ActionGroup group = instantiate(stub.getActionClass(), plugin, ActionGroup.class);
     if (group == null) {
@@ -1278,7 +1279,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
       AnAction actionToRemove = myId2Action.remove(actionId);
       myAction2Id.remove(actionToRemove);
-      myId2Index.remove(actionId);
+      myId2Index.removeInt(actionId);
 
       for (Map.Entry<PluginId, Collection<String>> entry : myPlugin2Id.entrySet()) {
         entry.getValue().remove(actionId);
@@ -1325,7 +1326,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   @NotNull
   @Override
   public Comparator<String> getRegistrationOrderComparator() {
-    return Comparator.comparingInt(myId2Index::get);
+    return Comparator.comparingInt(myId2Index::getInt);
   }
 
   @Override
@@ -1635,7 +1636,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  private class MyTimer extends Timer implements ActionListener {
+  private final class MyTimer extends Timer implements ActionListener {
     private final List<TimerListener> myTimerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
     private final List<TimerListener> myTransparentTimerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
     private int myLastTimePerformed;

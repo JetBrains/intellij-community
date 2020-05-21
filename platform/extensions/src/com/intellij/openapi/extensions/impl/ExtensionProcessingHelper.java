@@ -2,7 +2,7 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
-import gnu.trove.THashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -156,7 +156,7 @@ public final class ExtensionProcessingHelper {
                                                                      @NotNull Function<@NotNull T, @Nullable V> valueMapper,
                                                                      @NotNull ExtensionPointImpl<T> point) {
     List<T> extensions = point.getExtensionList();
-    Map<K, V> cache = new THashMap<>(extensions.size());
+    Map<K, V> cache = new Object2ObjectOpenHashMap<>(extensions.size());
     for (T extension : extensions) {
       K key = keyMapper.apply(extension);
       if (key == null) {

@@ -1,7 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
-import com.intellij.util.containers.ObjectLongHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -60,7 +61,7 @@ public final class StartUpMeasurer {
   }
 
   @ApiStatus.Internal
-  public static final Map<String, ObjectLongHashMap<String>> pluginCostMap = new HashMap<>();
+  public static final Map<String, Object2LongMap<String>> pluginCostMap = new HashMap<>();
 
   public static long getCurrentTime() {
     return System.nanoTime();
@@ -237,13 +238,14 @@ public final class StartUpMeasurer {
   }
 
   @ApiStatus.Internal
-  public static void doAddPluginCost(@NonNls @NotNull String pluginId, @NonNls @NotNull String phase, long time, @NotNull Map<String, ObjectLongHashMap<String>> pluginCostMap) {
-    ObjectLongHashMap<String> costPerPhaseMap = pluginCostMap.get(pluginId);
+  public static void doAddPluginCost(@NonNls @NotNull String pluginId, @NonNls @NotNull String phase, long time, @NotNull Map<String, Object2LongMap<String>> pluginCostMap) {
+    Object2LongMap<String> costPerPhaseMap = pluginCostMap.get(pluginId);
     if (costPerPhaseMap == null) {
-      costPerPhaseMap = new ObjectLongHashMap<>();
+      costPerPhaseMap = new Object2LongOpenHashMap<>();
+      costPerPhaseMap.defaultReturnValue(-1);
       pluginCostMap.put(pluginId, costPerPhaseMap);
     }
-    long oldCost = costPerPhaseMap.get(phase);
+    long oldCost = costPerPhaseMap.getLong(phase);
     if (oldCost == -1) {
       oldCost = 0L;
     }

@@ -13,10 +13,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.pico.DefaultPicoContainer;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -400,7 +401,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
       return result;
     }
 
-    OpenTHashSet<T> duplicates = this instanceof BeanExtensionPoint ? null : new OpenTHashSet<>(totalSize);
+    ObjectOpenHashSet<T> duplicates = this instanceof BeanExtensionPoint ? null : new ObjectOpenHashSet<>(totalSize);
     ExtensionPointListener<T>[] listeners = myListeners;
     int extensionIndex = 0;
     for (int i = 0; i < adapters.size(); i++) {
@@ -454,7 +455,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   private @Nullable T processAdapter(@NotNull ExtensionComponentAdapter adapter,
                                      ExtensionPointListener<T> @Nullable [] listeners,
                                      T @Nullable [] result,
-                                     @Nullable OpenTHashSet<T> duplicates,
+                                     @Nullable ObjectOpenHashSet<T> duplicates,
                                      @NotNull Class<T> extensionClassForCheck,
                                      @NotNull List<? extends ExtensionComponentAdapter> adapters) {
     try {
@@ -762,7 +763,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
   // true if added
   private boolean addListener(@NotNull ExtensionPointListener<T> listener) {
-    if (ArrayUtil.indexOf(myListeners, listener) != -1) {
+    if (ArrayUtilRt.indexOf(myListeners, listener, 0, myListeners.length) != -1) {
       return false;
     }
     if (listener instanceof ExtensionPointPriorityListener) {

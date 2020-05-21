@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.fasterxml.jackson.core.JsonGenerator
@@ -7,15 +7,17 @@ import com.intellij.diagnostic.ActivityImpl
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginClassLoader
-import com.intellij.util.containers.ObjectLongHashMap
 import com.intellij.util.io.jackson.obj
-import gnu.trove.THashMap
+import it.unimi.dsi.fastutil.objects.Object2LongMap
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 
 // events must be already sorted by time
-internal fun computeOwnTime(allEvents: List<ActivityImpl>, threadNameManager: ThreadNameManager): ObjectLongHashMap<ActivityImpl> {
-  val ownDurations = ObjectLongHashMap<ActivityImpl>()
+internal fun computeOwnTime(allEvents: List<ActivityImpl>, threadNameManager: ThreadNameManager): Object2LongMap<ActivityImpl> {
+  val ownDurations = Object2LongOpenHashMap<ActivityImpl>()
+  ownDurations.defaultReturnValue(-1)
 
-  val threadToList = THashMap<String, MutableList<ActivityImpl>>()
+  val threadToList = Object2ObjectOpenHashMap<String, MutableList<ActivityImpl>>()
   for (event in allEvents) {
     threadToList.getOrPut(threadNameManager.getThreadName(event)) { mutableListOf() }.add(event)
   }
