@@ -35,6 +35,9 @@ import com.intellij.psi.PsiManager
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xdebugger.XDebuggerUtil
+import com.jetbrains.python.newProject.welcome.PyWelcomeCollector.Companion.ProjectType
+import com.jetbrains.python.newProject.welcome.PyWelcomeCollector.Companion.ProjectViewResult
+import com.jetbrains.python.newProject.welcome.PyWelcomeCollector.Companion.ScriptResult
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonRunConfigurationProducer
 import org.jetbrains.annotations.CalledInAny
@@ -50,10 +53,7 @@ class PyWelcomeConfigurator : DirectoryProjectConfigurator {
     if (newProject) return
 
     StartupManager.getInstance(project).runWhenProjectIsInitialized(
-      DumbAwareRunnable {
-        PyWelcomeCollector.logWelcomeScriptForOpenedProject()
-        PyWelcome.welcomeUser(project, baseDir)
-      }
+      DumbAwareRunnable { PyWelcome.welcomeUser(project, baseDir, false) }
     )
   }
 }
@@ -70,10 +70,7 @@ object PyWelcomeGenerator {
     )
   }
 
-  fun welcomeUser(project: Project, baseDir: VirtualFile) {
-    PyWelcomeCollector.logWelcomeScriptForNewProject()
-    PyWelcome.welcomeUser(project, baseDir)
-  }
+  fun welcomeUser(project: Project, baseDir: VirtualFile): Unit = PyWelcome.welcomeUser(project, baseDir, true)
 }
 
 private object PyWelcome {
@@ -81,9 +78,13 @@ private object PyWelcome {
   private val LOG = Logger.getInstance(PyWelcome::class.java)
 
   @CalledInAny
-  fun welcomeUser(project: Project, baseDir: VirtualFile) {
-    if (PyWelcomeSettings.instance.createWelcomeScriptForEmptyProject &&
-        baseDir.children.filterNot { ProjectCoreUtil.isProjectOrWorkspaceFile(it) }.isEmpty()) {
+  internal fun welcomeUser(project: Project, baseDir: VirtualFile, newProject: Boolean) {
+    val enabled = PyWelcomeSettings.instance.createWelcomeScriptForEmptyProject
+
+    if (enabled) PyWelcomeCollector.logWelcomeProject(project, if (newProject) ProjectType.NEW else ProjectType.OPENED)
+
+    if (enabled &&
+        isEmptyProject(baseDir).also { if (!it) PyWelcomeCollector.logWelcomeScript(project, ScriptResult.NOT_EMPTY) }) {
       prepareFileAndOpen(project, baseDir).onSuccess {
         if (it != null) {
           // expand tree after the welcome script is created, otherwise expansion will have no effect on empty tree
@@ -95,6 +96,10 @@ private object PyWelcome {
     else {
       expandProjectTree(project)
     }
+  }
+
+  private fun isEmptyProject(baseDir: VirtualFile): Boolean {
+    return baseDir.children.all { ProjectCoreUtil.isProjectOrWorkspaceFile(it) }
   }
 
   private fun prepareFileAndOpen(project: Project, baseDir: VirtualFile): CancellablePromise<PsiFile?> {
@@ -139,15 +144,18 @@ private object PyWelcome {
               val pane = ProjectView.getInstance(project).getProjectViewPaneById(ProjectViewPane.ID)
               if (pane == null) {
                 LOG.warn("Project view pane is null")
+                PyWelcomeCollector.logWelcomeProjectView(project, ProjectViewResult.NO_PANE)
                 return@submit
               }
 
               val tree = pane.tree
               if (tree == null) {
                 LOG.warn("Project view tree is null")
+                PyWelcomeCollector.logWelcomeProjectView(project, ProjectViewResult.NO_TREE)
                 return@submit
               }
 
+              PyWelcomeCollector.logWelcomeProjectView(project, ProjectViewResult.EXPANDED)
               TreeUtil.expand(tree, 2)
             }
         }
@@ -156,15 +164,20 @@ private object PyWelcome {
   }
 
   private fun prepareFile(project: Project, baseDir: VirtualFile): PsiFile? {
-    val file = baseDir.createChildData(this, "main.py")
+    val file = kotlin.runCatching { baseDir.createChildData(this, "main.py") }
+      .onFailure { PyWelcomeCollector.logWelcomeScript(project, ScriptResult.NO_VFILE) }
+      .getOrThrow()
 
     val psiFile = PsiManager.getInstance(project).findFile(file)
     if (psiFile == null) {
       LOG.warn("Unable to get psi for $file")
+      PyWelcomeCollector.logWelcomeScript(project, ScriptResult.NO_PSI)
       return null
     }
 
     writeText(project, psiFile)?.also { line ->
+      PyWelcomeCollector.logWelcomeScript(project, ScriptResult.CREATED)
+
       XDebuggerUtil.getInstance().toggleLineBreakpoint(project, file, line)
     }
 
@@ -175,6 +188,7 @@ private object PyWelcome {
     val document = PsiDocumentManager.getInstance(project).getDocument(psiFile)
     if (document == null) {
       LOG.warn("Unable to get document for ${psiFile.virtualFile}")
+      PyWelcomeCollector.logWelcomeScript(project, ScriptResult.NO_DOCUMENT)
       return null
     }
 
@@ -220,14 +234,18 @@ private object PyWelcome {
 
   private class ProjectViewListener(private val project: Project) : ToolWindowManagerListener, Disposable {
 
+    private var toolWindowRegistered = false
+
     override fun toolWindowsRegistered(ids: List<String>) {
       if (ToolWindowId.PROJECT_VIEW in ids) {
+        toolWindowRegistered = true
         Disposer.dispose(this) // to release message bus connection
         expandProjectTree(project)
       }
     }
 
     override fun dispose() {
+      if (!toolWindowRegistered) PyWelcomeCollector.logWelcomeProjectView(project, ProjectViewResult.NO_TOOLWINDOW)
     }
   }
 }
