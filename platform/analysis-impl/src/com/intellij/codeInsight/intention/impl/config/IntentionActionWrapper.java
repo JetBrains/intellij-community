@@ -19,7 +19,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class IntentionActionWrapper implements IntentionAction, ShortcutProvider, IntentionActionDelegate, PossiblyDumbAware {
+public final class IntentionActionWrapper implements IntentionAction, ShortcutProvider, IntentionActionDelegate, PossiblyDumbAware,
+                                                     Comparable<IntentionAction> {
   private final IntentionActionBean myExtension;
   private String myFullFamilyName;
   private String myFamilyName;
@@ -134,5 +135,18 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
   public ShortcutSet getShortcut() {
     IntentionAction delegate = getDelegate();
     return delegate instanceof ShortcutProvider ? ((ShortcutProvider)delegate).getShortcut() : null;
+  }
+
+  @Override
+  public int compareTo(@NotNull IntentionAction other) {
+    if (other instanceof IntentionActionWrapper) {
+      IntentionAction action1 = getDelegate();
+      IntentionAction action2 = ((IntentionActionWrapper)other).getDelegate();
+      if (action1 instanceof Comparable && action2 instanceof Comparable) {
+        //noinspection rawtypes,unchecked
+        return ((Comparable)action1).compareTo(action2);
+      }
+    }
+    return 0;
   }
 }
