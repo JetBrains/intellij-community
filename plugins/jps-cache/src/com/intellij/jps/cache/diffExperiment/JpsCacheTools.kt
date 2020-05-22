@@ -1,6 +1,8 @@
 package com.intellij.jps.cache.diffExperiment
 
 
+import com.github.luben.zstd.Zstd
+import com.github.luben.zstd.ZstdInputStream
 import com.google.common.collect.Maps
 import com.google.common.hash.Hashing
 import com.google.common.io.CountingInputStream
@@ -8,7 +10,6 @@ import com.google.common.io.Files
 import com.google.gson.Gson
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.concurrency.AppExecutorUtil
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
 import java.io.Reader
@@ -21,45 +22,40 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
-import java.util.zip.GZIPInputStream
-import java.util.zip.GZIPOutputStream
 import kotlin.math.ceil
 import java.nio.file.Files as NioFiles
 
 data class JpsCacheFileInfo(val size: Long, val path: String, @Volatile var hash: Long = 0) {
   companion object {
-    private const val minSizeToZip = 1024
+    private const val minSizeToZip = 512
 
-    private fun gzip(input: ByteArray): ByteArray {
-      val output = ByteArrayOutputStream()
-      GZIPOutputStream(output).use { gzip ->
-        gzip.write(input)
-      }
-      return output.toByteArray()
+    private fun archive(uncompressed: ByteArray): ByteArray {
+      return Zstd.compress(uncompressed)
     }
   }
 
   private val shouldArchive = size > minSizeToZip
 
   fun forUploading(srcFolder: File): ByteArray =
-    File(srcFolder, path).readBytes().let { bytes -> if (shouldArchive) gzip(bytes) else bytes }
+    File(srcFolder, path).readBytes().let { bytes -> if (shouldArchive) archive(bytes) else bytes }
 
   fun afterDownloading(destFolder: File, dataStream: InputStream): Long {
     val countingDataStream = CountingInputStream(dataStream)
     val dest = File(destFolder, path).apply {
       parentFile.mkdirs()
     }
-    (if (shouldArchive) GZIPInputStream(countingDataStream) else countingDataStream).use { stream ->
+    (if (shouldArchive) ZstdInputStream(countingDataStream) else countingDataStream).use { stream ->
       dest.writeBytes(stream.readBytes())
     }
     return countingDataStream.count
   }
+
   fun getUrl(baseUrl: String) = "$baseUrl/$path/$hash"
 }
 
 class JpsCacheTools(val secondsToWaitForFuture: Long) {
   companion object {
-    private const val EXPECTED_NUMBER_OF_FILES = 52_000
+    private const val EXPECTED_NUMBER_OF_FILES = 60_000
     private val HASH_FUNCTION = Hashing.murmur3_128()
     private const val MANIFESTS_PATH = "manifests"
   }
