@@ -280,7 +280,7 @@ public class WelcomeScreenComponentFactory {
       myButton.addActionListener(l -> {
         ActionToolbar toolbar = ComponentUtil.getParentOfType(ActionToolbar.class, myButton);
         DataContext dataContext = toolbar != null ? toolbar.getToolbarDataContext() : DataManager.getInstance().getDataContext(myButton);
-        getDelegate().actionPerformed(AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, dataContext));
+        actionPerformed(AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, dataContext));
       });
     }
 

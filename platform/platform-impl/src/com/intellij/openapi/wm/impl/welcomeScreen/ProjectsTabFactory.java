@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.RecentProjectListActionProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
@@ -21,14 +22,18 @@ import static com.intellij.openapi.actionSystem.impl.ActionButton.HIDE_DROPDOWN_
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.ToolbarTextButtonWrapper.wrapAsTextButton;
 
 public class ProjectsTabFactory implements WelcomeTabFactory {
+
+  public static final int PRIMARY_BUTTONS_NUM = 3;
+
   @Override
   public @NotNull WelcomeScreenTab createWelcomeTab(@NotNull Disposable parentDisposable) {
     return new TabbedWelcomeScreen.DefaultWelcomeScreenTab("Projects") {
 
-      private static final int PRIMARY_BUTTONS_NUM = 3;
-
       @Override
       protected JComponent buildComponent() {
+        if (RecentProjectListActionProvider.getInstance().getActions(false, true).isEmpty()) {
+          return new EmptyStateProjectsPanel();
+        }
         JPanel mainPanel = JBUI.Panels.simplePanel().withBorder(JBUI.Borders.empty(13, 12))
           .withBackground(WelcomeScreenUIManager.getProjectsBackground());
 
