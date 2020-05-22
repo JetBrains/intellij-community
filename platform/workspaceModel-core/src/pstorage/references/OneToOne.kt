@@ -14,7 +14,7 @@ import kotlin.reflect.KProperty
 class OneToOneParent private constructor() {
   class NotNull<T : PTypedEntity, SUBT : PTypedEntity>(private val childClass: Class<SUBT>,
                                                        val isParentInChildNullable: Boolean) : ReadOnlyProperty<T, SUBT> {
-    private var connectionId: ConnectionId<T, SUBT>? = null
+    private var connectionId: ConnectionId? = null
 
     override fun getValue(thisRef: T, property: KProperty<*>): SUBT {
       if (connectionId == null) {
@@ -26,7 +26,7 @@ class OneToOneParent private constructor() {
 
   class Nullable<T : PTypedEntity, SUBT : PTypedEntity>(private val childClass: Class<SUBT>,
                                                         val isParentInChildNullable: Boolean) : ReadOnlyProperty<T, SUBT?> {
-    private var connectionId: ConnectionId<T, SUBT>? = null
+    private var connectionId: ConnectionId? = null
 
     override fun getValue(thisRef: T, property: KProperty<*>): SUBT? {
       if (connectionId == null) {
@@ -40,19 +40,19 @@ class OneToOneParent private constructor() {
 class OneToOneChild private constructor() {
   class NotNull<SUBT : PTypedEntity, T : PTypedEntity>(private val parentClass: Class<T>,
                                                        val isChildInParentNullable: Boolean) : ReadOnlyProperty<SUBT, T> {
-    private var connectionId: ConnectionId<T, SUBT>? = null
+    private var connectionId: ConnectionId? = null
 
     override fun getValue(thisRef: SUBT, property: KProperty<*>): T {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, thisRef.javaClass, ONE_TO_ONE, false, isChildInParentNullable)
       }
-      return thisRef.snapshot.extractOneToOneParent(connectionId!!, thisRef.id as PId)!!
+      return thisRef.snapshot.extractOneToOneParent(connectionId!!, thisRef.id)!!
     }
   }
 
   class Nullable<SUBT : PTypedEntity, T : PTypedEntity>(private val parentClass: Class<T>,
                                                         val isChildInParentNullable: Boolean) : ReadOnlyProperty<SUBT, T?> {
-    private var connectionId: ConnectionId<T, SUBT>? = null
+    private var connectionId: ConnectionId? = null
 
     override fun getValue(thisRef: SUBT, property: KProperty<*>): T? {
       if (connectionId == null) {
@@ -70,7 +70,7 @@ class MutableOneToOneParent private constructor() {
     private val isParentInChildNullable: Boolean
   ) : ReadWriteProperty<MODT, SUBT> {
 
-    private var connectionId: ConnectionId<T, SUBT>? = null
+    private var connectionId: ConnectionId? = null
 
     override fun getValue(thisRef: MODT, property: KProperty<*>): SUBT {
       if (connectionId == null) {
@@ -96,7 +96,7 @@ class MutableOneToOneParent private constructor() {
     private val isParentInChildNullable: Boolean
   ) : ReadWriteProperty<MODT, SUBT?> {
 
-    private var connectionId: ConnectionId<T, SUBT>? = null
+    private var connectionId: ConnectionId? = null
 
     override fun getValue(thisRef: MODT, property: KProperty<*>): SUBT? {
       if (connectionId == null) {
@@ -123,7 +123,7 @@ class MutableOneToOneChild private constructor() {
     private val parentClass: Class<T>,
     private val isChildInParentNullable: Boolean
   ) : ReadWriteProperty<MODSUBT, T> {
-    private var connectionId: ConnectionId<T, SUBT>? = null
+    private var connectionId: ConnectionId? = null
 
     override fun getValue(thisRef: MODSUBT, property: KProperty<*>): T {
       if (connectionId == null) {
@@ -148,7 +148,7 @@ class MutableOneToOneChild private constructor() {
     private val parentClass: Class<T>,
     private val isChildInParentNullable: Boolean
   ) : ReadWriteProperty<MODSUBT, T?> {
-    private var connectionId: ConnectionId<T, SUBT>? = null
+    private var connectionId: ConnectionId? = null
 
     override fun getValue(thisRef: MODSUBT, property: KProperty<*>): T? {
       if (connectionId == null){

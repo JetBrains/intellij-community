@@ -14,7 +14,7 @@ import kotlin.reflect.KProperty
 class OneToMany<T : PTypedEntity, SUBT : PTypedEntity>(private val childClass: Class<SUBT>,
                                                        private val isParentInChildNullable: Boolean) : ReadOnlyProperty<T, Sequence<SUBT>> {
 
-  private var connectionId: ConnectionId<T, SUBT>? = null
+  private var connectionId: ConnectionId? = null
 
   override fun getValue(thisRef: T, property: KProperty<*>): Sequence<SUBT> {
     if (connectionId == null) {
@@ -26,7 +26,7 @@ class OneToMany<T : PTypedEntity, SUBT : PTypedEntity>(private val childClass: C
 
 class ManyToOne private constructor() {
   class NotNull<T : PTypedEntity, SUBT : PTypedEntity>(private val parentClass: Class<T>) : ReadOnlyProperty<SUBT, T> {
-    private var connectionId: ConnectionId<T, SUBT>? = null
+    private var connectionId: ConnectionId? = null
 
     override fun getValue(thisRef: SUBT, property: KProperty<*>): T {
       if (connectionId == null) {
@@ -37,7 +37,7 @@ class ManyToOne private constructor() {
   }
 
   class Nullable<T : PTypedEntity, SUBT : PTypedEntity>(private val parentClass: Class<T>) : ReadOnlyProperty<SUBT, T?> {
-    private var connectionId: ConnectionId<T, SUBT>? = null
+    private var connectionId: ConnectionId? = null
 
     override fun getValue(thisRef: SUBT, property: KProperty<*>): T? {
       if (connectionId == null) {
@@ -54,7 +54,7 @@ sealed class MutableOneToMany<T : PTypedEntity, SUBT : PTypedEntity, MODT : PMod
   private val isParentInChildNullable: Boolean
 ) : ReadWriteProperty<MODT, Sequence<SUBT>> {
 
-  private var connectionId: ConnectionId<T, SUBT>? = null
+  private var connectionId: ConnectionId? = null
 
   override fun getValue(thisRef: MODT, property: KProperty<*>): Sequence<SUBT> {
     if (connectionId == null) {
@@ -79,7 +79,7 @@ class MutableManyToOne private constructor() {
     private val childClass: Class<SUBT>,
     private val parentClass: Class<T>
   ) : ReadWriteProperty<MODSUBT, T> {
-    private var connectionId: ConnectionId<T, SUBT>? = null
+    private var connectionId: ConnectionId? = null
 
     override fun getValue(thisRef: MODSUBT, property: KProperty<*>): T {
       if (connectionId == null) {
@@ -103,7 +103,7 @@ class MutableManyToOne private constructor() {
     private val childClass: Class<SUBT>,
     private val parentClass: Class<T>
   ) : ReadWriteProperty<MODSUBT, T?> {
-    private var connectionId: ConnectionId<T, SUBT>? = null
+    private var connectionId: ConnectionId? = null
 
     override fun getValue(thisRef: MODSUBT, property: KProperty<*>): T? {
       if (connectionId == null) {

@@ -28,11 +28,11 @@ abstract class PTypedEntity : ReferableTypedEntity, Any() {
   }
 
   override fun <R : TypedEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R> {
-    val connectionId = snapshot.refs.findConnectionId(this::class.java, entityClass) as ConnectionId<PTypedEntity, R>?
+    val connectionId = snapshot.refs.findConnectionId(this::class.java, entityClass) as ConnectionId?
     if (connectionId == null) return emptySequence()
     return when (connectionId.connectionType) {
       ConnectionId.ConnectionType.ONE_TO_MANY -> snapshot.extractOneToManyChildren(connectionId, id)
-      ConnectionId.ConnectionType.ONE_TO_ONE -> snapshot.extractOneToOneChild(connectionId, id)?.let { sequenceOf(it) } ?: emptySequence()
+      ConnectionId.ConnectionType.ONE_TO_ONE -> snapshot.extractOneToOneChild<R>(connectionId, id)?.let { sequenceOf(it) } ?: emptySequence()
       ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> snapshot.extractOneToAbstractManyChildren(connectionId, id)
       ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> snapshot.extractAbstractOneToOneChildren(connectionId, id)
     }

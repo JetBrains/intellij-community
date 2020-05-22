@@ -18,14 +18,14 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
 
-internal typealias ChildrenConnectionsInfo<T> = Map<ConnectionId<T, TypedEntity>, Set<PId>>
-internal typealias ParentConnectionsInfo<SUBT> = Map<ConnectionId<TypedEntity, SUBT>, PId>
+internal typealias ChildrenConnectionsInfo = Map<ConnectionId, Set<PId>>
+internal typealias ParentConnectionsInfo = Map<ConnectionId, PId>
 
-internal fun <T : TypedEntity> ChildrenConnectionsInfo<T>.replaceByMapChildren(replaceMap: Map<PId, PId>): ChildrenConnectionsInfo<T> {
+internal fun  ChildrenConnectionsInfo.replaceByMapChildren(replaceMap: Map<PId, PId>): ChildrenConnectionsInfo {
   return mapValues { it.value.map { v -> replaceMap.getOrDefault(v, v) }.toSet() }
 }
 
-internal fun <T : TypedEntity> ParentConnectionsInfo<T>.replaceByMapParent(replaceMap: Map<PId, PId>): ParentConnectionsInfo<T> {
+internal fun  ParentConnectionsInfo.replaceByMapParent(replaceMap: Map<PId, PId>): ParentConnectionsInfo {
   return mapValues { replaceMap.getOrDefault(it.value, it.value) }
 }
 
@@ -79,16 +79,16 @@ internal class PEntityStorageBuilder(
     data class AddEntity<E : TypedEntity>(
       val entityData: PEntityData<E>,
       val clazz: Int,
-      val children: ChildrenConnectionsInfo<E>,
-      val parents: ParentConnectionsInfo<E>
+      val children: ChildrenConnectionsInfo,
+      val parents: ParentConnectionsInfo
     ) : ChangeEntry()
 
     data class RemoveEntity(val id: PId) : ChangeEntry()
 
     data class ReplaceEntity<E : TypedEntity>(
       val newData: PEntityData<E>,
-      val children: ChildrenConnectionsInfo<E>,
-      val parents: ParentConnectionsInfo<E>
+      val children: ChildrenConnectionsInfo,
+      val parents: ParentConnectionsInfo
     ) : ChangeEntry()
   }
 
@@ -122,8 +122,8 @@ internal class PEntityStorageBuilder(
 
     // Add the change to changelog
     val pid = pEntityData.createPid()
-    val parents = refs.getParentRefsOfChild(pid) as ParentConnectionsInfo<T>
-    val children = refs.getChildrenRefsOfParentBy(pid) as ChildrenConnectionsInfo<T>
+    val parents = refs.getParentRefsOfChild(pid)
+    val children = refs.getChildrenRefsOfParentBy(pid)
     updateChangeLog { it.add(ChangeEntry.AddEntity(pEntityData, unmodifiableEntityClassId, children, parents)) }
 
     if (pEntityData is PSoftLinkable) {
@@ -165,8 +165,8 @@ internal class PEntityStorageBuilder(
   }
 
   // modificationCount is not incremented
-  private fun <T : TypedEntity> updateEntityRefs(entityId: PId, updatedChildren: ChildrenConnectionsInfo<T>,
-                                                 updatedParents: ParentConnectionsInfo<T>) {
+  private fun  updateEntityRefs(entityId: PId, updatedChildren: ChildrenConnectionsInfo,
+                                                 updatedParents: ParentConnectionsInfo) {
     // Restore children references of the entity
     for ((connectionId, children) in updatedChildren) {
       refs.updateChildrenOfParent(connectionId, entityId, children.toList())
@@ -193,8 +193,8 @@ internal class PEntityStorageBuilder(
   // modificationCount is not incremented
   private fun <T : TypedEntity> replaceEntityWithRefs(newEntity: PEntityData<T>,
                                                       clazz: Int,
-                                                      updatedChildren: ChildrenConnectionsInfo<T>,
-                                                      updatedParents: ParentConnectionsInfo<T>) {
+                                                      updatedChildren: ChildrenConnectionsInfo,
+                                                      updatedParents: ParentConnectionsInfo) {
 
     val id = newEntity.createPid()
     val existingEntityData = entityDataById(id)
@@ -224,8 +224,8 @@ internal class PEntityStorageBuilder(
 
     // Add an entry to changelog
     val pid = e.id as PId
-    val parents = this.refs.getParentRefsOfChild(pid) as ParentConnectionsInfo<T>
-    val children = this.refs.getChildrenRefsOfParentBy(pid) as ChildrenConnectionsInfo<T>
+    val parents = this.refs.getParentRefsOfChild(pid)
+    val children = this.refs.getChildrenRefsOfParentBy(pid)
     updateChangeLog { it.add(ChangeEntry.ReplaceEntity(copiedData, children, parents)) }
 
     val updatedEntity = copiedData.createEntity(this)
@@ -254,8 +254,8 @@ internal class PEntityStorageBuilder(
 
             if (updated) {
               val softLinkedPid = pEntityData.createPid()
-              val softLinkedParents = this.refs.getParentRefsOfChild(softLinkedPid) as ParentConnectionsInfo<TypedEntity>
-              val softLinkedChildren = this.refs.getChildrenRefsOfParentBy(softLinkedPid) as ChildrenConnectionsInfo<TypedEntity>
+              val softLinkedParents = this.refs.getParentRefsOfChild(softLinkedPid)
+              val softLinkedChildren = this.refs.getChildrenRefsOfParentBy(softLinkedPid)
               updateChangeLog { it.add(ChangeEntry.ReplaceEntity(pEntityData, softLinkedChildren, softLinkedParents)) }
             }
           }
@@ -279,8 +279,8 @@ internal class PEntityStorageBuilder(
     copiedData.entitySource = newSource
 
     val pid = e.id
-    val parents = this.refs.getParentRefsOfChild(pid) as ParentConnectionsInfo<T>
-    val children = this.refs.getChildrenRefsOfParentBy(pid) as ChildrenConnectionsInfo<T>
+    val parents = this.refs.getParentRefsOfChild(pid)
+    val children = this.refs.getChildrenRefsOfParentBy(pid)
     updateChangeLog { it.add(ChangeEntry.ReplaceEntity(copiedData, children, parents)) }
 
     entitySourceIndex.index(copiedData.createPid(), newSource)
@@ -338,25 +338,25 @@ internal class PEntityStorageBuilder(
     }
   }
 
-  internal fun <T : PTypedEntity, SUBT : PTypedEntity> updateOneToManyChildrenOfParent(connectionId: ConnectionId<T, SUBT>,
+  internal fun <SUBT : PTypedEntity> updateOneToManyChildrenOfParent(connectionId: ConnectionId,
                                                                               parentId: PId,
                                                                               children: Sequence<SUBT>) {
     refs.updateOneToManyChildrenOfParent(connectionId, parentId.arrayId, children)
   }
 
-  internal fun <T : PTypedEntity, SUBT : PTypedEntity> updateOneToAbstractManyChildrenOfParent(connectionId: ConnectionId<T, SUBT>,
+  internal fun <SUBT : PTypedEntity> updateOneToAbstractManyChildrenOfParent(connectionId: ConnectionId,
                                                                                       parentId: PId,
                                                                                       children: Sequence<SUBT>) {
     refs.updateOneToAbstractManyChildrenOfParent(connectionId, parentId, children)
   }
 
-  internal fun <T : PTypedEntity, SUBT : PTypedEntity> updateOneToAbstractOneParentOfChild(connectionId: ConnectionId<T, SUBT>,
+  internal fun <T : PTypedEntity> updateOneToAbstractOneParentOfChild(connectionId: ConnectionId,
                                                                                   childId: PId,
                                                                                   parent: T) {
     refs.updateOneToAbstractOneParentOfChild(connectionId, childId, parent)
   }
 
-  internal fun <T : PTypedEntity, SUBT : PTypedEntity> updateOneToOneChildOfParent(connectionId: ConnectionId<T, SUBT>,
+  internal fun <SUBT : PTypedEntity> updateOneToOneChildOfParent(connectionId: ConnectionId,
                                                                           parentId: PId,
                                                                           child: SUBT?) {
     if (child != null) {
@@ -367,7 +367,7 @@ internal class PEntityStorageBuilder(
     }
   }
 
-  internal fun <T : PTypedEntity, SUBT : PTypedEntity> updateOneToManyParentOfChild(connectionId: ConnectionId<T, SUBT>,
+  internal fun <T : PTypedEntity> updateOneToManyParentOfChild(connectionId: ConnectionId,
                                                                            childId: PId,
                                                                            parent: T?) {
     if (parent != null) {
@@ -378,7 +378,7 @@ internal class PEntityStorageBuilder(
     }
   }
 
-  internal fun <T : PTypedEntity, SUBT : PTypedEntity> updateOneToOneParentOfChild(connectionId: ConnectionId<T, SUBT>,
+  internal fun <T : PTypedEntity> updateOneToOneParentOfChild(connectionId: ConnectionId,
                                                                           childId: PId,
                                                                           parent: T?) {
     if (parent != null) {
@@ -496,8 +496,8 @@ internal class PEntityStorageBuilder(
             clonedEntity.id = localNode.id
             this.entitiesByType.replaceById(clonedEntity as PEntityData<TypedEntity>, clonedEntity.createPid().clazz)
             val pid = clonedEntity.createPid()
-            val parents = this.refs.getParentRefsOfChild(pid) as ParentConnectionsInfo<TypedEntity>
-            val children = this.refs.getChildrenRefsOfParentBy(pid) as ChildrenConnectionsInfo<TypedEntity>
+            val parents = this.refs.getParentRefsOfChild(pid)
+            val children = this.refs.getChildrenRefsOfParentBy(pid)
             updateIndices(oldPid, pid, replaceWith)
             updateChangeLog { it.add(ChangeEntry.ReplaceEntity(clonedEntity, children, parents)) }
           }
@@ -510,8 +510,8 @@ internal class PEntityStorageBuilder(
           val newEntity = this.entitiesByType.cloneAndAdd(matchedEntityData as PEntityData<TypedEntity>, entityClass)
           val newPid = newEntity.createPid()
           replaceMap[newPid] = oldPid
-          val parents = this.refs.getParentRefsOfChild(newPid) as ParentConnectionsInfo<TypedEntity>
-          val children = this.refs.getChildrenRefsOfParentBy(newPid) as ChildrenConnectionsInfo<TypedEntity>
+          val parents = this.refs.getParentRefsOfChild(newPid)
+          val children = this.refs.getChildrenRefsOfParentBy(newPid)
           updateIndices(oldPid, newPid, replaceWith)
           updateChangeLog { it.add(ChangeEntry.AddEntity(newEntity, newEntity.createPid().clazz, children, parents)) }
         }
@@ -826,16 +826,16 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
     refs.oneToManyContainer.forEach { (connectionId, map) ->
       map.forEachKey { childId, parentId ->
         //  1) Refs should not have links without a corresponding entity
-        assertResolvable(ClassToIntConverter.getInt(connectionId.parentClass), parentId)
-        assertResolvable(ClassToIntConverter.getInt(connectionId.childClass), childId)
+        assertResolvable(connectionId.parentClass, parentId)
+        assertResolvable(connectionId.childClass, childId)
       }
     }
 
     refs.oneToOneContainer.forEach { (connectionId, map) ->
       map.forEachKey { childId, parentId ->
         //  1) Refs should not have links without a corresponding entity
-        assertResolvable(ClassToIntConverter.getInt(connectionId.parentClass), parentId)
-        assertResolvable(ClassToIntConverter.getInt(connectionId.childClass), childId)
+        assertResolvable(connectionId.parentClass, parentId)
+        assertResolvable(connectionId.childClass, childId)
       }
     }
 
@@ -870,8 +870,8 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
     }
   }
 
-  private fun assertCorrectEntityClass(connectionClass: Class<out TypedEntity>, entityId: PId) {
-    assert(connectionClass.isAssignableFrom(ClassToIntConverter.getClassSlowlyOrDie(entityId.clazz))) {
+  private fun assertCorrectEntityClass(connectionClass: Int, entityId: PId) {
+    assert(connectionClass.toClass<TypedEntity>().isAssignableFrom(ClassToIntConverter.getClassSlowlyOrDie(entityId.clazz))) {
       "Entity storage with connection class $connectionClass contains entity data of wrong type $entityId"
     }
   }
@@ -899,45 +899,45 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
     TODO("Not yet implemented")
   }
 
-  internal fun <T : TypedEntity, SUBT : TypedEntity> extractOneToManyChildren(connectionId: ConnectionId<T, SUBT>,
+  internal fun <SUBT : TypedEntity> extractOneToManyChildren(connectionId: ConnectionId,
                                                                           parentId: PId): Sequence<SUBT> {
-    val entitiesList = entitiesByType[connectionId.childClass.toInt()] ?: return emptySequence()
+    val entitiesList = entitiesByType[connectionId.childClass] ?: return emptySequence()
     return refs.getOneToManyChildren(connectionId, parentId.arrayId)?.map { entitiesList[it]!!.createEntity(this) } as? Sequence<SUBT> ?: emptySequence()
   }
 
-  internal fun <T : TypedEntity, SUBT : TypedEntity> extractOneToAbstractManyChildren(connectionId: ConnectionId<T, SUBT>,
+  internal fun <SUBT : TypedEntity> extractOneToAbstractManyChildren(connectionId: ConnectionId,
                                                                                   parentId: PId): Sequence<SUBT> {
     return refs.getOneToAbstractManyChildren(connectionId, parentId)?.asSequence()?.map { pid ->
       entityDataByIdOrDie(pid).createEntity(this)
-    } as Sequence<SUBT> ?: emptySequence()
+    } as? Sequence<SUBT> ?: emptySequence()
   }
 
-  internal fun <T : TypedEntity, SUBT : TypedEntity> extractAbstractOneToOneChildren(connectionId: ConnectionId<T, SUBT>,
+  internal fun <SUBT : TypedEntity> extractAbstractOneToOneChildren(connectionId: ConnectionId,
                                                                                  parentId: PId): Sequence<SUBT> {
     return refs.getAbstractOneToOneChildren(connectionId, parentId)?.let { pid ->
       sequenceOf(entityDataByIdOrDie(pid).createEntity(this))
-    } as Sequence<SUBT> ?: emptySequence()
+    } as? Sequence<SUBT> ?: emptySequence()
   }
 
-  internal fun <T : TypedEntity, SUBT : TypedEntity> extractOneToAbstractOneParent(connectionId: ConnectionId<T, SUBT>,
+  internal fun <T : TypedEntity> extractOneToAbstractOneParent(connectionId: ConnectionId,
                                                                                childId: PId): T? {
     return refs.getOneToAbstractOneParent(connectionId, childId)?.let { entityDataByIdOrDie(it).createEntity(this) as T }
   }
 
-  internal fun <T : TypedEntity, SUBT : TypedEntity> extractOneToOneChild(connectionId: ConnectionId<T, SUBT>,
+  internal fun <SUBT : TypedEntity> extractOneToOneChild(connectionId: ConnectionId,
                                                                       parentId: PId): SUBT? {
-    val entitiesList = entitiesByType[connectionId.childClass.toInt()] ?: return null
+    val entitiesList = entitiesByType[connectionId.childClass] ?: return null
     return refs.getOneToOneChild(connectionId, parentId.arrayId) { entitiesList[it]!!.createEntity(this) as? SUBT }
   }
 
-  internal fun <T : TypedEntity, SUBT : TypedEntity> extractOneToOneParent(connectionId: ConnectionId<T, SUBT>,
+  internal fun <T : TypedEntity> extractOneToOneParent(connectionId: ConnectionId,
                                                                        childId: PId): T? {
-    val entitiesList = entitiesByType[connectionId.parentClass.toInt()] ?: return null
+    val entitiesList = entitiesByType[connectionId.parentClass] ?: return null
     return refs.getOneToOneParent(connectionId, childId.arrayId) { entitiesList[it]!!.createEntity(this) as? T }
   }
 
-  internal fun <T : TypedEntity, SUBT : TypedEntity> extractOneToManyParent(connectionId: ConnectionId<T, SUBT>, childId: PId): T? {
-    val entitiesList = entitiesByType[connectionId.parentClass.toInt()] ?: return null
+  internal fun <T : TypedEntity> extractOneToManyParent(connectionId: ConnectionId, childId: PId): T? {
+    val entitiesList = entitiesByType[connectionId.parentClass] ?: return null
     return refs.getOneToManyParent(connectionId, childId.arrayId) { entitiesList[it]!!.createEntity(this) as? T }
   }
 
@@ -961,9 +961,6 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
     }
     return res
   }
-
-  private fun Class<*>.toInt(): Int = ClassToIntConverter.getInt(this)
-  private inline fun <reified E> Int.toClass(): Class<E> = ClassToIntConverter.getClassSlowlyOrDie(this) as Class<E>
 
   @Suppress("UNCHECKED_CAST")
   override fun <T> getExternalIndex(identifier: String): ExternalEntityIndex<T>? {

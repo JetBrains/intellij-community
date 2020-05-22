@@ -12,7 +12,7 @@ import kotlin.reflect.KProperty
 
 class OneToAbstractOneChild<T : PTypedEntity, SUBT : PTypedEntity>(private val parentClass: Class<T>) : ReadOnlyProperty<SUBT, T> {
 
-  private var connectionId: ConnectionId<T, SUBT>? = null
+  private var connectionId: ConnectionId? = null
 
   override fun getValue(thisRef: SUBT, property: KProperty<*>): T {
     if (connectionId == null) {
@@ -28,7 +28,7 @@ class MutableOneToAbstractOneChild<T : PTypedEntity, SUBT : PTypedEntity, MODSUB
   private val parentClass: Class<T>
 ) : ReadWriteProperty<MODSUBT, T> {
 
-  private var connectionId: ConnectionId<T, SUBT>? = null
+  private var connectionId: ConnectionId? = null
 
   override fun getValue(thisRef: MODSUBT, property: KProperty<*>): T {
     if (connectionId == null) {
