@@ -8,7 +8,7 @@ import org.cef.network.CefRequest;
 
 import static com.intellij.ui.jcef.JBCefSourceSchemeHandlerFactory.SOURCE_SCHEME;
 
-public class JBCefSourceSchemeHandler extends CefResourceHandlerAdapter implements Disposable {
+class JBCefSourceSchemeHandler extends CefResourceHandlerAdapter implements Disposable {
   @Override
   public void dispose() {}
 

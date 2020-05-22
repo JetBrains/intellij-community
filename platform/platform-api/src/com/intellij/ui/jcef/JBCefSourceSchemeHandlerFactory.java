@@ -8,7 +8,7 @@ import org.cef.handler.CefResourceHandler;
 import org.cef.network.CefRequest;
 import org.jetbrains.annotations.NotNull;
 
-public class JBCefSourceSchemeHandlerFactory implements JBCefApp.JBCefCustomSchemeHandlerFactory {
+class JBCefSourceSchemeHandlerFactory implements JBCefApp.JBCefCustomSchemeHandlerFactory {
   public static final String SOURCE_SCHEME = "source";
 
   @Override
