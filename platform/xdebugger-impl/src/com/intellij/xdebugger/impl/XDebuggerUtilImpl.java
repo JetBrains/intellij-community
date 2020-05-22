@@ -197,7 +197,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return getLineBreakpointVariants(project, types, position).thenAsync(variants -> {
       final AsyncPromise<XLineBreakpoint> res = new AsyncPromise<>();
       GuiUtils.invokeLaterIfNeeded(() -> {
-        for (XLineBreakpointType type : types) {
+        for (XLineBreakpointType<?> type : types) {
           if (breakpointManager.findBreakpointAtLine(type, file, line) != null) {
             return;
           }
@@ -211,7 +211,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
               @Override
               public void valueChanged(ListSelectionEvent e) {
                 if (!e.getValueIsAdjusting()) {
-                  updateHighlighter(((JList)e.getSource()).getSelectedValue());
+                  updateHighlighter(((JList<?>)e.getSource()).getSelectedValue());
                 }
               }
 
@@ -301,13 +301,12 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
             popup.addListSelectionListener(selectionListener);
             popup.show(relativePoint);
-            return;
           }
           else {
             XLineBreakpointType.XLineBreakpointVariant variant = variants.get(0);
             insertBreakpoint(variant.createProperties(), res, breakpointManager, file, line, variant.getType(), temporary);
-            return;
           }
+          return;
         }
         XLineBreakpointType type = types.get(0);
         insertBreakpoint(type.createBreakpointProperties(file, line), res, breakpointManager, file, line, type, temporary);
@@ -456,11 +455,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @Override
   public <P extends XBreakpointProperties> Comparator<XLineBreakpoint<P>> getDefaultLineBreakpointComparator() {
-    return (o1, o2) -> {
-      int fileCompare = o1.getFileUrl().compareTo(o2.getFileUrl());
-      if (fileCompare != 0) return fileCompare;
-      return o1.getLine() - o2.getLine();
-    };
+    return Comparator.comparing(XLineBreakpoint<P>::getFileUrl).thenComparingInt(XLineBreakpoint::getLine);
   }
 
   @Nullable
