@@ -102,7 +102,7 @@ public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Dispos
   @Override
   @NotNull
   public ModifiableRootModel getModifiableModel() {
-    return getModifiableModel(new RootConfigurationAccessor());
+    return getModifiableModel(RootConfigurationAccessor.DEFAULT_INSTANCE);
   }
 
   @Override

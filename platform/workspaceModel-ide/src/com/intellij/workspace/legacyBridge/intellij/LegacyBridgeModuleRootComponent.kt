@@ -40,7 +40,7 @@ class LegacyBridgeModuleRootComponent(
         itemUpdater = null,
         // TODO
         moduleLibraryTable = moduleLibraryTable,
-        accessor = RootConfigurationAccessor(),
+        accessor = RootConfigurationAccessor.DEFAULT_INSTANCE,
         updater = null
       )
     }).also { Disposer.register(this, it) }
@@ -80,7 +80,7 @@ class LegacyBridgeModuleRootComponent(
 
   override fun getFileIndex(): ModuleFileIndex = currentModule.getService(ModuleFileIndex::class.java)!!
 
-  override fun getModifiableModel(): ModifiableRootModel = getModifiableModel(RootConfigurationAccessor())
+  override fun getModifiableModel(): ModifiableRootModel = getModifiableModel(RootConfigurationAccessor.DEFAULT_INSTANCE)
   override fun getModifiableModel(accessor: RootConfigurationAccessor): ModifiableRootModel = LegacyBridgeModifiableRootModel(
     TypedEntityStorageBuilder.from(legacyBridgeModule.entityStore.current),
     legacyBridgeModule, legacyBridgeModule.moduleEntityId,

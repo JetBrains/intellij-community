@@ -79,7 +79,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
       registerOnDispose(model);
       myExtensions.add(model);
     }
-    myConfigurationAccessor = new RootConfigurationAccessor();
+    myConfigurationAccessor = RootConfigurationAccessor.DEFAULT_INSTANCE;
     myExtensionToStateDigest = null;
   }
 
@@ -133,7 +133,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
       registerOnDispose(model);
       myExtensions.add(model);
     }
-    myConfigurationAccessor = new RootConfigurationAccessor();
+    myConfigurationAccessor = RootConfigurationAccessor.DEFAULT_INSTANCE;
     myExtensionToStateDigest = null;
   }
 

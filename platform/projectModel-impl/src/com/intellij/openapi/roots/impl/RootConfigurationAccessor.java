@@ -16,6 +16,8 @@ import org.jetbrains.annotations.Nullable;
  */
 @ApiStatus.Internal
 public class RootConfigurationAccessor {
+  public static final RootConfigurationAccessor DEFAULT_INSTANCE = new RootConfigurationAccessor();
+
   @Nullable
   public Library getLibrary(final Library library, final String libraryName, final String libraryLevel) {
     return library;
