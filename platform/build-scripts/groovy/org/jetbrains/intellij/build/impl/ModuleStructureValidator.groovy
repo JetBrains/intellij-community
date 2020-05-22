@@ -20,7 +20,7 @@ class ModuleStructureValidator {
   private static HashSet<String> pathAttributes = new HashSet<String>([
     "interface", "implementation", "class", "topic", "instance", "provider",
     "implements", "headlessImplementation", "serviceInterface", "serviceImplementation",
-    "implementationClass", "beanClass", "schemeClass", "factoryClass", "handlerClass",
+    "interfaceClass", "implementationClass", "beanClass", "schemeClass", "factoryClass", "handlerClass", "hostElementClass", "targetClass",
     "forClass", "className", "predicateClassName", "displayNameSupplierClassName", "preloaderClassName",
     "treeRenderer"])
 
@@ -29,17 +29,23 @@ class ModuleStructureValidator {
 
   private static HashSet<String> pathElements = new HashSet<String>(["interface-class", "implementation-class"])
   private static HashSet<String> predefinedTypes = new HashSet<String>(["java.lang.Object"])
+  private static HashSet<String> ignoreModules = new HashSet<String>(["intellij.java.testFramework", "intellij.platform.uast.tests"])
 
   private BuildContext buildContext
-  private MultiMap<String, String> moduleJars
-  private HashSet<String> moduleNames
-  private ArrayList<GString> errors
+  private MultiMap<String, String> moduleJars = new MultiMap<String, String>()
+  private HashSet<String> moduleNames = new HashSet<String>()
+  private ArrayList<GString> errors = new ArrayList<>()
 
   ModuleStructureValidator(BuildContext buildContext, MultiMap<String, String> moduleJars) {
     this.buildContext = buildContext
-    this.moduleJars = moduleJars
-    this.moduleNames = new HashSet<String>(moduleJars.values())
-    this.errors = new ArrayList<>()
+    for (moduleJar in moduleJars.entrySet()) {
+      // Filter out jars with relative paths in name
+      if (moduleJar.key.contains("\\") || moduleJar.key.contains("/"))
+        continue
+
+      this.moduleJars.put(moduleJar.key, moduleJar.value)
+      this.moduleNames.addAll(moduleJar.value)
+    }
   }
 
   void validate() {
@@ -49,6 +55,9 @@ class ModuleStructureValidator {
     buildContext.messages.info("Validating modules...")
     def visitedModules = new HashSet<JpsModule>()
     for (moduleName in moduleNames) {
+      if (ignoreModules.contains(moduleName)) {
+        continue
+      }
       validateModuleDependencies(visitedModules, buildContext.findModule(moduleName))
     }
 
