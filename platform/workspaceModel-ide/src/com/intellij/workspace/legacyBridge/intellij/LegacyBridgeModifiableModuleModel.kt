@@ -30,6 +30,7 @@ internal class LegacyBridgeModifiableModuleModel(
 
   private val myModulesToAdd = HashBiMap.create<String, LegacyBridgeModule>()
   private val myModulesToDispose = HashBiMap.create<String, LegacyBridgeModule>()
+  private val myUncommittedModulesToDispose = ArrayList<LegacyBridgeModule>()
   private val myNewNameToModule = HashBiMap.create<String, LegacyBridgeModule>()
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
 
@@ -131,7 +132,7 @@ internal class LegacyBridgeModifiableModuleModel(
 
     if (myModulesToAdd.inverse().remove(module) != null) {
       (ModuleManager.getInstance(project) as LegacyBridgeModuleManagerComponent).removeUncommittedModule(module.name)
-      Disposer.dispose(module)
+      myUncommittedModulesToDispose.add(module)
     }
 
     myNewNameToModule.inverse().remove(module)
@@ -161,6 +162,9 @@ internal class LegacyBridgeModifiableModuleModel(
       moduleManager.removeUncommittedModule(moduleToAdd.name)
       Disposer.dispose(moduleToAdd)
     }
+    for (module in myUncommittedModulesToDispose) {
+      Disposer.dispose(module)
+    }
 
     myModulesToAdd.clear()
     myModulesToDispose.clear()
@@ -174,6 +178,9 @@ internal class LegacyBridgeModifiableModuleModel(
 
   override fun commit() {
     val diff = collectChanges()
+    for (module in myUncommittedModulesToDispose) {
+      Disposer.dispose(module)
+    }
 
     WorkspaceModel.getInstance(project).updateProjectModel {
       it.addDiff(diff)
