@@ -6,12 +6,18 @@ import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.getModuleNameByFilePath
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl
+import com.intellij.openapi.roots.impl.storage.ClasspathStorage
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.impl.VirtualFilePointerContainerImpl
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -26,7 +32,6 @@ import com.intellij.workspace.bracket
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.ide.WorkspaceModelChangeListener
 import com.intellij.workspace.ide.WorkspaceModelTopics
-import com.intellij.workspace.ide.getInstance
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
@@ -45,6 +50,7 @@ class LegacyBridgeRootsWatcher(
   private val rootsValidityChangedListener
     get() = ProjectRootManagerImpl.getInstanceImpl(project).rootsValidityChangedListener
 
+  private val moduleManager = ModuleManager.getInstance(project)
   private val rootFilePointers = LegacyModelRootsFilePointers(project)
 
   private val myExecutor = if (ApplicationManager.getApplication().isUnitTestMode) ConcurrencyUtil.newSameThreadExecutorService()
@@ -104,8 +110,9 @@ class LegacyBridgeRootsWatcher(
       }
 
       override fun after(events: List<VFileEvent>) = events.forEach { event ->
-        val (oldUrl, newUrl) = getUrls(event) ?: return@forEach
+        if (event is VFilePropertyChangeEvent) propertyChanged(event)
 
+        val (oldUrl, newUrl) = getUrls(event) ?: return@forEach
         updateModuleName(oldUrl, newUrl)
       }
 
@@ -120,6 +127,26 @@ class LegacyBridgeRootsWatcher(
         workspaceModel.updateProjectModel { diff ->
           diff.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) { this.name = newModuleName }
         }
+      }
+
+      private fun propertyChanged(event: VFilePropertyChangeEvent) {
+        if (!event.file.isDirectory || event.requestor is StateStorage || event.propertyName != VirtualFile.PROP_NAME) return
+
+        val parentPath = event.file.parent?.path ?: return
+        val newAncestorPath = "$parentPath/${event.newValue}"
+        val oldAncestorPath = "$parentPath/${event.oldValue}"
+        var someModulePathIsChanged = false
+        for (module in moduleManager.modules) {
+          if (!module.isLoaded || module.isDisposed) continue
+
+          val moduleFilePath = module.moduleFilePath
+          if (FileUtil.isAncestor(oldAncestorPath, moduleFilePath, true)) {
+            module.stateStore.setPath("$newAncestorPath/${FileUtil.getRelativePath(oldAncestorPath, moduleFilePath, '/')}")
+            ClasspathStorage.modulePathChanged(module)
+            someModulePathIsChanged = true
+          }
+        }
+        if (someModulePathIsChanged) moduleManager.incModificationCount()
       }
 
       private fun String.isImlFile() = Files.getFileExtension(this) == ModuleFileType.DEFAULT_EXTENSION
