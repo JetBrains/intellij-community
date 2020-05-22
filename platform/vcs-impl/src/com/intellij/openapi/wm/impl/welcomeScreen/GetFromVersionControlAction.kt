@@ -20,7 +20,7 @@ open class GetFromVersionControlAction : DumbAwareAction() {
     if (!isEnabled)
       return
     if (e.place == ActionPlaces.WELCOME_SCREEN) {
-      presentation.icon = AllIcons.Vcs.Clone
+      presentation.icon = AllIcons.Welcome.FromVCS
       presentation.text = ActionsBundle.message("Vcs.VcsClone.Welcome.text")
     }
     else {
