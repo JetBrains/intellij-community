@@ -14,6 +14,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,21 +23,20 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author peter
  */
 public abstract class ElementPresentationManager {
-  private static final ConcurrentMap<Class,Method> ourNameValueMethods = ConcurrentFactoryMap.createMap(key-> {
-      for (final Method method : ReflectionUtil.getClassPublicMethods(key)) {
-      if (JavaMethod.getMethod(key, method).getAnnotation(NameValue.class) != null) {
-        return method;
-      }
-    }
-    return null;
-    }
-  );
+  private static final ConcurrentMap<Class, Optional<Method>> ourNameValueMethods = ConcurrentFactoryMap.create(
+    key -> ReflectionUtil
+      .getClassPublicMethods(key)
+      .stream()
+      .filter(method -> JavaMethod.getMethod(key, method).getAnnotation(NameValue.class) != null)
+      .findFirst(),
+    ContainerUtil::createConcurrentWeakKeySoftValueMap);
 
   private final static Function<Object, String> DEFAULT_NAMER = element -> getElementName(element);
 
@@ -78,12 +78,14 @@ public abstract class ElementPresentationManager {
    * @deprecated use {@link com.intellij.ide.presentation.Presentation#provider()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public static void registerNameProvider(Function<Object, String> function) { ourNameProviders.add(function); }
 
   /**
    * @deprecated use {@link Documentation}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public static void registerDocumentationProvider(Function<Object, String> function) { ourDocumentationProviders.add(function); }
 
 
@@ -134,12 +136,7 @@ public abstract class ElementPresentationManager {
 
   @Nullable
   public static Object invokeNameValueMethod(@NotNull final Object element) {
-    final Method nameValueMethod = findNameValueMethod(element.getClass());
-    if (nameValueMethod == null) {
-      return null;
-    }
-
-    return DomReflectionUtil.invokeMethod(nameValueMethod, element);
+    return ourNameValueMethods.get(element.getClass()).map(method -> DomReflectionUtil.invokeMethod(method, element)).orElse(null);
   }
 
   public static String getTypeNameForObject(Object o) {
@@ -220,12 +217,6 @@ public abstract class ElementPresentationManager {
     }
 
     return null;
-  }
-
-  public static Method findNameValueMethod(final Class<?> aClass) {
-    synchronized (ourNameValueMethods) {
-      return ourNameValueMethods.get(aClass);
-    }
   }
 
   @Nullable
