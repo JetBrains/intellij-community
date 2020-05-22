@@ -1,6 +1,9 @@
 package com.intellij.workspace.api
 
-import com.intellij.workspace.api.pstorage.*
+import com.intellij.workspace.api.pstorage.PEntityData
+import com.intellij.workspace.api.pstorage.PModifiableTypedEntity
+import com.intellij.workspace.api.pstorage.PSoftLinkable
+import com.intellij.workspace.api.pstorage.PTypedEntity
 import com.intellij.workspace.api.pstorage.indices.VirtualFileUrlListProperty
 import com.intellij.workspace.api.pstorage.references.*
 import java.io.Serializable
@@ -77,15 +80,23 @@ class ModuleEntity(
 
   override fun persistentId(): ModuleId = ModuleId(name)
 
-  val sourceRoots: Sequence<SourceRootEntity> by OneToMany(SourceRootEntity::class.java, false)
+  val sourceRoots: Sequence<SourceRootEntity> by sourceRootDelegate
 
-  val contentRoots: Sequence<ContentRootEntity> by OneToMany(ContentRootEntity::class.java, false)
+  val contentRoots: Sequence<ContentRootEntity> by contentRootDelegate
 
-  val customImlData: ModuleCustomImlDataEntity? by OneToOneParent.Nullable(ModuleCustomImlDataEntity::class.java, false)
+  val customImlData: ModuleCustomImlDataEntity? by moduleImlDelegate
 
-  val groupPath: ModuleGroupPathEntity? by OneToOneParent.Nullable(ModuleGroupPathEntity::class.java, false)
+  val groupPath: ModuleGroupPathEntity? by moduleGroupDelegate
 
-  val javaSettings: JavaModuleSettingsEntity? by OneToOneParent.Nullable(JavaModuleSettingsEntity::class.java, false)
+  val javaSettings: JavaModuleSettingsEntity? by javaSettingsDelegate
+
+  companion object {
+    val sourceRootDelegate = OneToMany<ModuleEntity, SourceRootEntity>(SourceRootEntity::class.java, false)
+    val contentRootDelegate = OneToMany<ModuleEntity, ContentRootEntity>(ContentRootEntity::class.java, false)
+    val moduleImlDelegate = OneToOneParent.Nullable<ModuleEntity, ModuleCustomImlDataEntity>(ModuleCustomImlDataEntity::class.java, false)
+    val moduleGroupDelegate = OneToOneParent.Nullable<ModuleEntity, ModuleGroupPathEntity>(ModuleGroupPathEntity::class.java, false)
+    val javaSettingsDelegate = OneToOneParent.Nullable<ModuleEntity, JavaModuleSettingsEntity>(JavaModuleSettingsEntity::class.java, false)
+  }
 }
 
 @Suppress("unused")
@@ -106,7 +117,11 @@ class JavaModuleSettingsEntity(
   val compilerOutput: VirtualFileUrl?,
   val compilerOutputForTests: VirtualFileUrl?
 ) : PTypedEntity() {
-  val module: ModuleEntity by ManyToOne.NotNull(ModuleEntity::class.java)
+  val module: ModuleEntity by moduleDelegate
+
+  companion object {
+    val moduleDelegate = ManyToOne.NotNull<ModuleEntity, JavaModuleSettingsEntity>(ModuleEntity::class.java)
+  }
 }
 
 @Suppress("unused")
@@ -123,7 +138,11 @@ class ModuleCustomImlDataEntity(
   val rootManagerTagCustomData: String?,
   val customModuleOptions: Map<String, String>
 ) : PTypedEntity() {
-  val module: ModuleEntity by ManyToOne.NotNull(ModuleEntity::class.java)
+  val module: ModuleEntity by moduleDelegate
+
+  companion object {
+    val moduleDelegate = ManyToOne.NotNull<ModuleEntity, ModuleCustomImlDataEntity>(ModuleEntity::class.java)
+  }
 }
 
 @Suppress("unused")
@@ -136,7 +155,11 @@ class ModuleGroupPathEntityData : PEntityData<ModuleGroupPathEntity>() {
 class ModuleGroupPathEntity(
   val path: List<String>
 ) : PTypedEntity() {
-  val module: ModuleEntity by ManyToOne.NotNull(ModuleEntity::class.java)
+  val module: ModuleEntity by moduleDelegate
+
+  companion object {
+    val moduleDelegate = ManyToOne.NotNull<ModuleEntity, ModuleGroupPathEntity>(ModuleEntity::class.java)
+  }
 }
 
 data class ModuleId(val name: String) : PersistentEntityId<ModuleEntity>() {
@@ -196,7 +219,11 @@ open class SourceRootEntity(
   val tests: Boolean,
   val rootType: String
 ) : PTypedEntity() {
-  val module: ModuleEntity by ManyToOne.NotNull(ModuleEntity::class.java)
+  val module: ModuleEntity by moduleDelegate
+
+  companion object {
+    val moduleDelegate = ManyToOne.NotNull<ModuleEntity, SourceRootEntity>(ModuleEntity::class.java)
+  }
 }
 
 @Suppress("unused")
@@ -211,7 +238,11 @@ class JavaSourceRootEntity(
   val generated: Boolean,
   val packagePrefix: String
 ) : PTypedEntity() {
-  val sourceRoot: SourceRootEntity by ManyToOne.NotNull(SourceRootEntity::class.java)
+  val sourceRoot: SourceRootEntity by sourceRootDelegate
+
+  companion object {
+    val sourceRootDelegate = ManyToOne.NotNull<SourceRootEntity, JavaSourceRootEntity>(SourceRootEntity::class.java)
+  }
 }
 
 fun SourceRootEntity.asJavaSourceRoot(): JavaSourceRootEntity? = referrers(JavaSourceRootEntity::sourceRoot).firstOrNull()
@@ -228,7 +259,11 @@ class JavaResourceRootEntity(
   val generated: Boolean,
   val relativeOutputPath: String
 ) : PTypedEntity() {
-  val sourceRoot: SourceRootEntity by ManyToOne.NotNull(SourceRootEntity::class.java)
+  val sourceRoot: SourceRootEntity by sourceRootDelegate
+
+  companion object {
+    val sourceRootDelegate = ManyToOne.NotNull<SourceRootEntity, JavaResourceRootEntity>(SourceRootEntity::class.java)
+  }
 }
 
 fun SourceRootEntity.asJavaResourceRoot() = referrers(JavaResourceRootEntity::sourceRoot).firstOrNull()
@@ -244,7 +279,11 @@ class CustomSourceRootPropertiesEntityData : PEntityData<CustomSourceRootPropert
 class CustomSourceRootPropertiesEntity(
   val propertiesXmlTag: String
 ) : PTypedEntity() {
-  val sourceRoot: SourceRootEntity by ManyToOne.NotNull(SourceRootEntity::class.java)
+  val sourceRoot: SourceRootEntity by sourceRootDelegate
+
+  companion object {
+    val sourceRootDelegate = ManyToOne.NotNull<SourceRootEntity, CustomSourceRootPropertiesEntity>(SourceRootEntity::class.java)
+  }
 }
 
 fun SourceRootEntity.asCustomSourceRoot() = referrers(CustomSourceRootPropertiesEntity::sourceRoot).firstOrNull()
@@ -265,7 +304,11 @@ open class ContentRootEntity(
   val excludedUrls: List<VirtualFileUrl>,
   val excludedPatterns: List<String>
 ) : PTypedEntity() {
-  open val module: ModuleEntity by ManyToOne.NotNull(ModuleEntity::class.java)
+  open val module: ModuleEntity by moduleDelegate
+
+  companion object {
+    val moduleDelegate = ManyToOne.NotNull<ModuleEntity, ContentRootEntity>(ModuleEntity::class.java)
+  }
 }
 
 class FakeContentRootEntity(url: VirtualFileUrl, moduleEntity: ModuleEntity) : ContentRootEntity(url, emptyList(), emptyList()) {
@@ -290,7 +333,11 @@ class SourceRootOrderEntityData : PEntityData<SourceRootOrderEntity>() {
 class SourceRootOrderEntity(
   var orderOfSourceRoots: List<VirtualFileUrl>
 ) : PTypedEntity() {
-  val contentRootEntity: ContentRootEntity by OneToOneChild.NotNull(ContentRootEntity::class.java, true)
+  val contentRootEntity: ContentRootEntity by contentRootDelegate
+
+  companion object {
+    val contentRootDelegate = OneToOneChild.NotNull<SourceRootOrderEntity, ContentRootEntity>(ContentRootEntity::class.java, true)
+  }
 }
 
 class ModifiableSourceRootOrderEntity : PModifiableTypedEntity<SourceRootOrderEntity>() {
@@ -399,7 +446,11 @@ class LibraryPropertiesEntity(
   val libraryType: String,
   val propertiesXmlTag: String?
 ) : PTypedEntity() {
-  val library: LibraryEntity by OneToOneChild.NotNull(LibraryEntity::class.java, true)
+  val library: LibraryEntity by libraryDelegate
+
+  companion object {
+    val libraryDelegate = OneToOneChild.NotNull<LibraryPropertiesEntity, LibraryEntity>(LibraryEntity::class.java, true)
+  }
 }
 
 fun LibraryEntity.getCustomProperties() = referrers(LibraryPropertiesEntity::library).firstOrNull()
@@ -414,7 +465,11 @@ class SdkEntityData : PEntityData<SdkEntity>() {
 class SdkEntity(
   val homeUrl: VirtualFileUrl
 ) : PTypedEntity() {
-  val library: LibraryEntity by OneToOneChild.NotNull(LibraryEntity::class.java, true)
+  val library: LibraryEntity by libraryDelegate
+
+  companion object {
+    val libraryDelegate = OneToOneChild.NotNull<SdkEntity, LibraryEntity>(LibraryEntity::class.java, true)
+  }
 }
 
 @Suppress("unused")
@@ -446,7 +501,11 @@ class ExternalSystemModuleOptionsEntity(
   val externalSystemModuleGroup: String?,
   val externalSystemModuleType: String?
 ) : PTypedEntity() {
-  val module: ModuleEntity by OneToOneChild.NotNull(ModuleEntity::class.java, true)
+  val module: ModuleEntity by moduleDelegate
+
+  companion object {
+    val moduleDelegate = OneToOneChild.NotNull<ExternalSystemModuleOptionsEntity, ModuleEntity>(ModuleEntity::class.java, true)
+  }
 }
 
 
@@ -467,9 +526,14 @@ class FacetEntity(
   val facetType: String,
   val configurationXmlTag: String?
 ) : TypedEntityWithPersistentId, PTypedEntity() {
-  val module: ModuleEntity by ManyToOne.NotNull(ModuleEntity::class.java)
+  val module: ModuleEntity by moduleDelegate
 
-  val underlyingFacet: FacetEntity? by OneToOneChild.Nullable(FacetEntity::class.java, true)
+  val underlyingFacet: FacetEntity? by facetDelegate
+
+  companion object {
+    val moduleDelegate = ManyToOne.NotNull<ModuleEntity, FacetEntity>(ModuleEntity::class.java)
+    val facetDelegate = OneToOneChild.Nullable<FacetEntity, FacetEntity>(FacetEntity::class.java, true)
+  }
 
   override fun persistentId(): FacetId = FacetId(name, facetType, module.persistentId())
 }
@@ -513,11 +577,16 @@ class ArtifactEntity(
   val includeInProjectBuild: Boolean,
   val outputUrl: VirtualFileUrl
 ) : TypedEntityWithPersistentId, PTypedEntity() {
-  val rootElement: CompositePackagingElementEntity by OneToAbstractOneChild(CompositePackagingElementEntity::class.java)
-
   override fun persistentId(): ArtifactId = ArtifactId(name)
 
-  val customProperties: Sequence<ArtifactPropertiesEntity> by OneToMany(ArtifactPropertiesEntity::class.java, false)
+  val rootElement: CompositePackagingElementEntity by rootElementDelegate
+
+  val customProperties: Sequence<ArtifactPropertiesEntity> by customPropertiesDelegate
+
+  companion object {
+    val rootElementDelegate = OneToAbstractOneChild<CompositePackagingElementEntity, ArtifactEntity>(CompositePackagingElementEntity::class.java)
+    val customPropertiesDelegate = OneToMany<ArtifactEntity, ArtifactPropertiesEntity>(ArtifactPropertiesEntity::class.java, false)
+  }
 }
 
 @Suppress("unused")
@@ -534,7 +603,11 @@ class ArtifactPropertiesEntity(
   val providerType: String,
   val propertiesXmlTag: String?
 ) : PTypedEntity() {
-  val artifact: ArtifactEntity by ManyToOne.NotNull(ArtifactEntity::class.java)
+  val artifact: ArtifactEntity by artifactDelegate
+
+  companion object {
+    val artifactDelegate = ManyToOne.NotNull<ArtifactEntity, ArtifactPropertiesEntity>(ArtifactEntity::class.java)
+  }
 }
 
 abstract class PackagingElementEntity : PTypedEntity()
