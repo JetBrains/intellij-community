@@ -46,16 +46,16 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
     final PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(name, JavaLanguage.INSTANCE, content, false, false);
     psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.JDK_14_PREVIEW);
 
-    if (!(psiFile instanceof PsiJavaFile)){
-      throw new IncorrectOperationException("This template did not produce a Java class or an interface\n"+psiFile.getText());
+    if (!(psiFile instanceof PsiJavaFile)) {
+      throw new IncorrectOperationException("This template did not produce a Java class or an interface\n" + psiFile.getText());
     }
     PsiJavaFile psiJavaFile = (PsiJavaFile)psiFile;
     final PsiClass[] classes = psiJavaFile.getClasses();
     if (classes.length == 0) {
-      throw new IncorrectOperationException("This template did not produce a Java class or an interface\n"+psiFile.getText());
+      throw new IncorrectOperationException("This template did not produce a Java class or an interface\n" + psiFile.getText());
     }
     PsiClass createdClass = classes[0];
-    if(reformat){
+    if (reformat) {
       CodeStyleManager.getInstance(project).reformat(psiJavaFile);
     }
     String className = createdClass.getName();
@@ -82,7 +82,7 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
     else {
       PsiFile containingFile = addedElement.getContainingFile();
       throw new IncorrectOperationException("Selected class file name '" +
-                                            containingFile.getName() +  "' mapped to not java file type '"+
+                                            containingFile.getName() + "' mapped to not java file type '" +
                                             containingFile.getFileType().getDescription() + "'");
     }
   }
@@ -91,7 +91,7 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
     if (!template.isTemplateOfType(StdFileTypes.JAVA)) return;
 
     String packageName = (String)props.get(FileTemplate.ATTRIBUTE_PACKAGE_NAME);
-    if(packageName == null || packageName.length() == 0 || packageName.equals(FileTemplate.ATTRIBUTE_PACKAGE_NAME)){
+    if (packageName == null || packageName.length() == 0 || packageName.equals(FileTemplate.ATTRIBUTE_PACKAGE_NAME)) {
       PsiPackageStatement packageStatement = file.getPackageStatement();
       if (packageStatement != null) {
         packageStatement.delete();
@@ -102,7 +102,7 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
   @Override
   public boolean handlesTemplate(@NotNull FileTemplate template) {
     FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
-    return fileType.equals(StdFileTypes.JAVA) && !ArrayUtil.contains(template.getName(), JavaTemplateUtil.INTERNAL_FILE_TEMPLATES);
+    return fileType.equals(StdFileTypes.JAVA) && JavaTemplateUtil.INTERNAL_FILE_TEMPLATES.contains(template.getName());
   }
 
   @NotNull
