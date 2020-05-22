@@ -718,16 +718,13 @@ class DistributionJARsBuilder {
         .stream().map { it.trim() }.filter { !it.isEmpty() && !it.startsWith("//") }.collect(Collectors.toSet())
 
       pluginsToPublish.each { plugin ->
-        def includeInCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins
-
         def directory = getActualPluginDirectoryName(plugin, buildContext)
-        String suffix = includeInCustomRepository ? "" : "-$pluginVersion"
         def targetDirectory = whiteList.contains(plugin.mainModule)
           ? "$nonBundledPluginsArtifacts/auto-uploading"
           : nonBundledPluginsArtifacts
-        def destFile = "$targetDirectory/$directory${suffix}.zip"
+        def destFile = "$targetDirectory/$directory-${pluginVersion}.zip"
 
-        if (includeInCustomRepository) {
+        if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
           def pluginXmlPath = "$buildContext.paths.temp/patched-plugin-xml/$plugin.mainModule/META-INF/plugin.xml"
           if (!new File(pluginXmlPath).exists()) {
             buildContext.messages.error("patched plugin.xml not found for $plugin.mainModule module: $pluginXmlPath")
