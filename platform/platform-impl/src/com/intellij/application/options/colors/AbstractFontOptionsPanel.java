@@ -15,6 +15,7 @@ import com.intellij.ui.FontComboBox;
 import com.intellij.ui.FontInfoRenderer;
 import com.intellij.ui.TooltipWithClickableLinks;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ui.JBUI;
@@ -37,7 +38,9 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
-  @NotNull private final JTextField myEditorFontSizeField = new JTextField(4);
+  @NotNull private final JTextField myEditorFontSizeField = new IntegerField(null,
+                                                                             EditorFontsConstants.getMinEditorFontSize(),
+                                                                             EditorFontsConstants.getMaxEditorFontSize());
   @NotNull private final JTextField myLineSpacingField = new JTextField(4);
   private final FontComboBox myPrimaryCombo = new FontComboBox();
   private final JCheckBox myEnableLigaturesCheckbox = new JCheckBox(ApplicationBundle.message("use.ligatures"));
@@ -58,6 +61,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
   protected AbstractFontOptionsPanel() {
     setLayout(new FlowLayout(FlowLayout.LEFT));
     add(createControls());
+    myEditorFontSizeField.setColumns(4);
   }
 
   protected JComponent createControls() {
