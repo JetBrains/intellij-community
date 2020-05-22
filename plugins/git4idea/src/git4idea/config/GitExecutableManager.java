@@ -122,7 +122,7 @@ public class GitExecutableManager {
     String distName = pathToGit.substring(0, index);
     String wslPath = FileUtil.toSystemIndependentName(pathToGit.substring(index));
 
-    WSLDistribution distribution = WSLUtil.getDistributionByName(distName);
+    WSLDistribution distribution = WSLUtil.getDistributionByMsId(distName);
     if (distribution == null) return null;
     return new GitExecutable.Wsl(wslPath, distribution);
   }
