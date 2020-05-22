@@ -726,6 +726,10 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
       UIUtil.putClientProperty(myComponent, ProcessPopup.KEY, myProgressPanel);
 
       mySuspendUpdateRunnable = createSuspendUpdateRunnable(Objects.requireNonNull(myProgressPanel.getSuspendButton()));
+
+      setProcessNameValue(task.getTitle());
+
+      // TODO: update javadoc for ProgressIndicator
     }
 
     @Override
@@ -734,31 +738,31 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
 
     @Override
     protected @Nullable String getTextValue() {
-      return myProgressPanel.getLabelText();
+      return myProgressPanel.getCommentText();
     }
 
     @Override
     protected void setTextValue(@NotNull String text) {
-      myProgressPanel.setLabelText(text);
-    }
-
-    @Override
-    protected void setTextEnabled(boolean value) {
-      myProgressPanel.setLabelEnabled(value);
-    }
-
-    @Override
-    protected void setText2Value(@NotNull String text) {
       myProgressPanel.setCommentText(text);
     }
 
     @Override
-    protected void setText2Enabled(boolean value) {
+    protected void setTextEnabled(boolean value) {
       myProgressPanel.setCommentEnabled(value);
     }
 
     @Override
+    protected void setText2Value(@NotNull String text) {
+      // XXX
+    }
+
+    @Override
+    protected void setText2Enabled(boolean value) {
+    }
+
+    @Override
     protected void setProcessNameValue(@NotNull String text) {
+      myProgressPanel.setLabelText(text);
     }
 
     @Override
