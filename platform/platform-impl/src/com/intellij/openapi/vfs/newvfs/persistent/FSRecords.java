@@ -277,7 +277,7 @@ public final class FSRecords {
           throw new IOException("Corruption marker file found");
         }
 
-        PagedFileStorage.StorageLockContext storageLockContext = new PagedFileStorage.StorageLockContext(false);
+        StorageLockContext storageLockContext = new StorageLockContext(false);
         myNames = new PersistentStringEnumerator(namesFile.toPath(), storageLockContext);
 
         myAttributes = new Storage(attributesFile.getPath(), REASONABLY_SMALL) {

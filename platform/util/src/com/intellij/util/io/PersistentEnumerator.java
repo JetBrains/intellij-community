@@ -53,7 +53,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   public PersistentEnumerator(@NotNull Path file,
                               @NotNull KeyDescriptor<Data> dataDescriptor,
                               int initialSize,
-                              @Nullable PagedFileStorage.StorageLockContext storageLockContext,
+                              @Nullable StorageLockContext storageLockContext,
                               int version) throws IOException {
     super(file, new ResizeableMappedFile(file, initialSize, storageLockContext, -1, false), dataDescriptor, initialSize, new Version(VERSION + version),
           new RecordBufferHandler(), true);

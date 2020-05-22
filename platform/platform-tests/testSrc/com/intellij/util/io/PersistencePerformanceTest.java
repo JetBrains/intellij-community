@@ -58,7 +58,7 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
       PersistentHashMap<String, Record> map = createMap(FileUtil.createTempFile(tempDirectory, "persistent", "map" + i));
       myMaps.add(map);
     }
-    PagedFileStorage.StorageLockContext storageLockContext = new PagedFileStorage.StorageLockContext(false);
+    StorageLockContext storageLockContext = new StorageLockContext(false);
     myEnumerator = new PersistentStringEnumerator(FileUtil.createTempFile(tempDirectory, "persistent", "enum").toPath(), storageLockContext);
   }
 

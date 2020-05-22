@@ -45,14 +45,14 @@ public class ResizeableMappedFile implements Forceable {
   static final int DEFAULT_ALLOCATION_ROUND_FACTOR = 4096;
   private int myRoundFactor = DEFAULT_ALLOCATION_ROUND_FACTOR;
 
-  public ResizeableMappedFile(@NotNull Path file, int initialSize, @Nullable PagedFileStorage.StorageLockContext lockContext, int pageSize,
+  public ResizeableMappedFile(@NotNull Path file, int initialSize, @Nullable StorageLockContext lockContext, int pageSize,
                               boolean valuesAreBufferAligned) {
     this(file, initialSize, lockContext, pageSize, valuesAreBufferAligned, false);
   }
 
   public ResizeableMappedFile(@NotNull Path file,
                               int initialSize,
-                              @Nullable PagedFileStorage.StorageLockContext lockContext,
+                              @Nullable StorageLockContext lockContext,
                               int pageSize,
                               boolean valuesAreBufferAligned,
                               boolean nativeBytesOrder) {

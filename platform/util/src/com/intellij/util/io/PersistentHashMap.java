@@ -145,7 +145,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
                            @NotNull DataExternalizer<Value> valueExternalizer,
                            final int initialSize,
                            int version,
-                           @Nullable PagedFileStorage.StorageLockContext lockContext) throws IOException {
+                           @Nullable StorageLockContext lockContext) throws IOException {
     this(file, keyDescriptor, valueExternalizer, initialSize, version, lockContext,
          PersistentHashMapValueStorage.CreationTimeOptions.threadLocalOptions());
   }
@@ -155,7 +155,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
                             @NotNull DataExternalizer<Value> valueExternalizer,
                             final int initialSize,
                             int version,
-                            @Nullable PagedFileStorage.StorageLockContext lockContext,
+                            @Nullable StorageLockContext lockContext,
                             @NotNull PersistentHashMapValueStorage.CreationTimeOptions options) throws IOException {
     myEnumerator = PersistentEnumeratorDelegate.createDefaultEnumerator(checkDataFiles(file),
                                                                         keyDescriptor,

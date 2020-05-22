@@ -24,7 +24,7 @@ public class PagedFileStorageTest {
   private static final Logger LOG = Logger.getInstance(PagedFileStorageTest.class);
   @Rule public TempDirectory tempDir = new TempDirectory();
 
-  private final PagedFileStorage.StorageLockContext lock = new PagedFileStorage.StorageLockContext(true);
+  private final StorageLockContext lock = new StorageLockContext(true);
   private Path f;
   private PagedFileStorage s;
 
@@ -123,7 +123,7 @@ public class PagedFileStorageTest {
     });
   }
 
-  private static void withLock(PagedFileStorage.StorageLockContext lock, ThrowableRunnable<IOException> block) throws IOException {
+  private static void withLock(StorageLockContext lock, ThrowableRunnable<IOException> block) throws IOException {
     lock.lock();
     try {
       block.run();

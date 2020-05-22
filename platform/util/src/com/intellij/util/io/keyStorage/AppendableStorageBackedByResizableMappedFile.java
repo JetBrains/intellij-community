@@ -24,7 +24,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
 
   public AppendableStorageBackedByResizableMappedFile(final Path file,
                                                       int initialSize,
-                                                      @Nullable PagedFileStorage.StorageLockContext lockContext,
+                                                      @Nullable StorageLockContext lockContext,
                                                       int pageSize,
                                                       boolean valuesAreBufferAligned,
                                                       @NotNull KeyDescriptor<Data> dataDescriptor) {

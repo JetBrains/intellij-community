@@ -37,7 +37,7 @@ public class PersistentEnumeratorDelegate<Data> implements DataEnumeratorEx<Data
   public PersistentEnumeratorDelegate(@NotNull final Path file,
                                       @NotNull KeyDescriptor<Data> dataDescriptor,
                                       final int initialSize,
-                                      @Nullable PagedFileStorage.StorageLockContext lockContext) throws IOException {
+                                      @Nullable StorageLockContext lockContext) throws IOException {
     myEnumerator = useBtree() ?
                    new PersistentBTreeEnumerator<>(file, dataDescriptor, initialSize, lockContext) :
                    new PersistentEnumerator<>(file, dataDescriptor, initialSize);
@@ -46,7 +46,7 @@ public class PersistentEnumeratorDelegate<Data> implements DataEnumeratorEx<Data
   public PersistentEnumeratorDelegate(@NotNull final File file,
                                       @NotNull KeyDescriptor<Data> dataDescriptor,
                                       final int initialSize,
-                                      @Nullable PagedFileStorage.StorageLockContext lockContext,
+                                      @Nullable StorageLockContext lockContext,
                                       int version) throws IOException {
     this(file.toPath(), dataDescriptor, initialSize, lockContext, version);
   }
@@ -54,7 +54,7 @@ public class PersistentEnumeratorDelegate<Data> implements DataEnumeratorEx<Data
   public PersistentEnumeratorDelegate(@NotNull Path file,
                                       @NotNull KeyDescriptor<Data> dataDescriptor,
                                       final int initialSize,
-                                      @Nullable PagedFileStorage.StorageLockContext lockContext,
+                                      @Nullable StorageLockContext lockContext,
                                       int version) throws IOException {
     myEnumerator = createDefaultEnumerator(file, dataDescriptor, initialSize, lockContext, version);
   }
@@ -63,7 +63,7 @@ public class PersistentEnumeratorDelegate<Data> implements DataEnumeratorEx<Data
   static <Data> PersistentEnumeratorBase<Data> createDefaultEnumerator(@NotNull Path file,
                                                                        @NotNull KeyDescriptor<Data> dataDescriptor,
                                                                        final int initialSize,
-                                                                       @Nullable PagedFileStorage.StorageLockContext lockContext,
+                                                                       @Nullable StorageLockContext lockContext,
                                                                        int version) throws IOException {
     return useBtree()
            ? new PersistentBTreeEnumerator<>(file, dataDescriptor, initialSize, lockContext, version)

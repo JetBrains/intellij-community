@@ -61,14 +61,14 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   public PersistentBTreeEnumerator(@NotNull Path file,
                                    @NotNull KeyDescriptor<Data> dataDescriptor,
                                    int initialSize,
-                                   @Nullable PagedFileStorage.StorageLockContext lockContext) throws IOException {
+                                   @Nullable StorageLockContext lockContext) throws IOException {
     this(file, dataDescriptor, initialSize, lockContext, 0);
   }
 
   public PersistentBTreeEnumerator(@NotNull Path file,
                                    @NotNull KeyDescriptor<Data> dataDescriptor,
                                    int initialSize,
-                                   @Nullable PagedFileStorage.StorageLockContext lockContext,
+                                   @Nullable StorageLockContext lockContext,
                                    int version) throws IOException {
     super(file,
           new ResizeableMappedFile(
