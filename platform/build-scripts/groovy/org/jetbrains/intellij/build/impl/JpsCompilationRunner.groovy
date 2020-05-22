@@ -26,6 +26,7 @@ import org.jetbrains.jps.incremental.MessageHandler
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType
 import org.jetbrains.jps.incremental.artifacts.impl.ArtifactSorter
 import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactUtil
+import org.jetbrains.jps.incremental.groovy.JpsGroovycRunner
 import org.jetbrains.jps.incremental.messages.*
 import org.jetbrains.jps.model.artifact.JpsArtifact
 import org.jetbrains.jps.model.artifact.JpsArtifactService
@@ -127,6 +128,7 @@ class JpsCompilationRunner {
       addToolsJarToSystemClasspath(context.paths.jdkHome, context.messages)
     }
     System.setProperty(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "false")
+    System.setProperty(JpsGroovycRunner.GROOVYC_IN_PROCESS, "true")
     final AntMessageHandler messageHandler = new AntMessageHandler()
     AntLoggerFactory.ourMessageHandler = messageHandler
     AntLoggerFactory.ourFileLoggerFactory = compilationData.fileLoggerFactory
