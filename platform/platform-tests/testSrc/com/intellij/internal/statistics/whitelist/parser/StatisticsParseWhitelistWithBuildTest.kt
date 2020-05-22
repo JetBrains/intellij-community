@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal.statistics.whitelist
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.internal.statistics.whitelist.parser
 
 import com.intellij.internal.statistic.eventLog.EventLogBuild
 import com.intellij.internal.statistic.service.fus.FUSWhitelist
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
+import com.intellij.internal.statistics.whitelist.TestWhitelistBuilder
 import org.junit.Test
 import kotlin.test.assertEquals
 
@@ -36,7 +37,7 @@ class StatisticsParseWhitelistWithBuildTest {
   }]
 }
     """
-    val whitelist = WhitelistBuilder().
+    val whitelist = TestWhitelistBuilder().
       addBuild("test.group.id", newBuild(173, 4284, 118), null)
     doTest(content, whitelist.build())
   }
@@ -58,7 +59,7 @@ class StatisticsParseWhitelistWithBuildTest {
   }]
 }
     """
-    val whitelist = WhitelistBuilder().
+    val whitelist = TestWhitelistBuilder().
       addBuild("test.group.id", null, newBuild(173, 4284, 118))
     doTest(content, whitelist.build())
   }
@@ -81,7 +82,7 @@ class StatisticsParseWhitelistWithBuildTest {
   }]
 }
     """
-    val whitelist = WhitelistBuilder().
+    val whitelist = TestWhitelistBuilder().
       addBuild("test.group.id", newBuild(173, 4284, 118), newBuild(181, 231))
     doTest(content, whitelist.build())
   }
@@ -104,7 +105,7 @@ class StatisticsParseWhitelistWithBuildTest {
   }]
 }
     """
-    val whitelist = WhitelistBuilder().
+    val whitelist = TestWhitelistBuilder().
       addBuild("test.group.id", newBuild(173, 0), newBuild(181, 231))
     doTest(content, whitelist.build())
   }
@@ -127,7 +128,7 @@ class StatisticsParseWhitelistWithBuildTest {
   }]
 }
     """
-    val whitelist = WhitelistBuilder().
+    val whitelist = TestWhitelistBuilder().
       addBuild("test.group.id", newBuild(173, 4284, 118), newBuild(181, 0))
     doTest(content, whitelist.build())
   }
@@ -150,7 +151,7 @@ class StatisticsParseWhitelistWithBuildTest {
   }]
 }
     """
-    val whitelist = WhitelistBuilder().
+    val whitelist = TestWhitelistBuilder().
       addBuild("test.group.id", newBuild(173, 0), newBuild(181, 0))
     doTest(content, whitelist.build())
   }
@@ -172,7 +173,7 @@ class StatisticsParseWhitelistWithBuildTest {
   }]
 }
     """
-    val whitelist = WhitelistBuilder().
+    val whitelist = TestWhitelistBuilder().
       addBuild("test.group.id", newBuild(173, 0), null)
     doTest(content, whitelist.build())
   }
@@ -195,7 +196,7 @@ class StatisticsParseWhitelistWithBuildTest {
   }]
 }
     """
-    val whitelist = WhitelistBuilder().
+    val whitelist = TestWhitelistBuilder().
       addBuild("test.group.id", newBuild(173, 0), newBuild(182, 31, 3))
     doTest(content, whitelist.build())
   }
@@ -217,7 +218,7 @@ class StatisticsParseWhitelistWithBuildTest {
   }]
 }
     """
-    val whitelist = WhitelistBuilder().
+    val whitelist = TestWhitelistBuilder().
       addBuild("test.group.id", null, newBuild(183, 0))
     doTest(content, whitelist.build())
   }
@@ -240,7 +241,7 @@ class StatisticsParseWhitelistWithBuildTest {
   }]
 }
     """
-    val whitelist = WhitelistBuilder().
+    val whitelist = TestWhitelistBuilder().
       addBuild("test.group.id", newBuild(173, 332), newBuild(182, 0))
     doTest(content, whitelist.build())
   }
@@ -263,7 +264,7 @@ class StatisticsParseWhitelistWithBuildTest {
   }]
 }
     """
-    val whitelist = WhitelistBuilder().
+    val whitelist = TestWhitelistBuilder().
       addBuild("test.group.id", newBuild(12, 0), newBuild(183, 0))
     doTest(content, whitelist.build())
   }
@@ -286,7 +287,7 @@ class StatisticsParseWhitelistWithBuildTest {
   }]
 }
     """
-    val whitelist = WhitelistBuilder().
+    val whitelist = TestWhitelistBuilder().
       addBuild("test.group.id", newBuild(-12, 0), newBuild(183, 23))
     doTest(content, whitelist.build())
   }
@@ -309,7 +310,7 @@ class StatisticsParseWhitelistWithBuildTest {
   }]
 }
     """
-    val whitelist = WhitelistBuilder().
+    val whitelist = TestWhitelistBuilder().
       addBuild("test.group.id", newBuild(12, 2351, 123), newBuild(-183, 23))
     doTest(content, whitelist.build())
   }
@@ -334,7 +335,7 @@ class StatisticsParseWhitelistWithBuildTest {
   }]
 }
     """
-    val whitelist = WhitelistBuilder().
+    val whitelist = TestWhitelistBuilder().
       addBuild("test.group.id", newBuild(173, 4284, 118), null).
       addBuild("test.group.id", newBuild(182, 421), newBuild(183, 5, 1))
     doTest(content, whitelist.build())
@@ -360,7 +361,7 @@ class StatisticsParseWhitelistWithBuildTest {
   }]
 }
     """
-    val whitelist = WhitelistBuilder().
+    val whitelist = TestWhitelistBuilder().
       addBuild("test.group.id", newBuild(173, 4284, 118), newBuild(181, 231)).
       addBuild("test.group.id", newBuild(182, 421), null)
     doTest(content, whitelist.build())
@@ -386,7 +387,7 @@ class StatisticsParseWhitelistWithBuildTest {
   }]
 }
     """
-    val whitelist = WhitelistBuilder().
+    val whitelist = TestWhitelistBuilder().
       addBuild("test.group.id", null, newBuild(181, 231)).
       addBuild("test.group.id", newBuild(182, 421), newBuild(183, 5, 1))
     doTest(content, whitelist.build())
@@ -412,7 +413,7 @@ class StatisticsParseWhitelistWithBuildTest {
   }]
 }
     """
-    val whitelist = WhitelistBuilder().
+    val whitelist = TestWhitelistBuilder().
       addBuild("test.group.id", newBuild(173, 4284, 118), newBuild(181, 231)).
       addBuild("test.group.id", null, newBuild(183, 5, 1))
     doTest(content, whitelist.build())
@@ -439,7 +440,7 @@ class StatisticsParseWhitelistWithBuildTest {
   }]
 }
     """
-    val whitelist = WhitelistBuilder().
+    val whitelist = TestWhitelistBuilder().
       addBuild("test.group.id", newBuild(173, 4284, 118), newBuild(181, 231)).
       addBuild("test.group.id", newBuild(182, 421), newBuild(183, 5, 1))
     doTest(content, whitelist.build())
@@ -467,7 +468,7 @@ class StatisticsParseWhitelistWithBuildTest {
   }]
 }
     """
-    val whitelist = WhitelistBuilder().
+    val whitelist = TestWhitelistBuilder().
       addVersion("test.group.id", 10, 15).
       addBuild("test.group.id", newBuild(173, 4284, 118), newBuild(181, 231))
     doTest(content, whitelist.build())
@@ -501,7 +502,7 @@ class StatisticsParseWhitelistWithBuildTest {
   }]
 }
     """
-    val whitelist = WhitelistBuilder().
+    val whitelist = TestWhitelistBuilder().
       addVersion("test.group.id", 2, 5).
       addVersion("test.group.id", 10, 15).
       addBuild("test.group.id", newBuild(173, 4284, 118), newBuild(181, 231)).
@@ -528,7 +529,7 @@ class StatisticsParseWhitelistWithBuildTest {
   }]
 }
     """
-    val whitelist = WhitelistBuilder().
+    val whitelist = TestWhitelistBuilder().
       addBuild("test.group.id", newBuild(173, 4284, 118), newBuild(181, 231))
     doTest(content, whitelist.build())
   }
@@ -555,7 +556,7 @@ class StatisticsParseWhitelistWithBuildTest {
   }]
 }
     """
-    val whitelist = WhitelistBuilder().
+    val whitelist = TestWhitelistBuilder().
       addBuild("test.group.id", newBuild(173, 4284, 118), newBuild(181, 231)).
       addBuild("test.group.id", newBuild(182, 421), newBuild(183, 5, 1))
     doTest(content, whitelist.build())
@@ -583,7 +584,7 @@ class StatisticsParseWhitelistWithBuildTest {
   }]
 }
     """
-    val whitelist = WhitelistBuilder().
+    val whitelist = TestWhitelistBuilder().
       addVersion("test.group.id", 2, 5).
       addVersion("test.group.id", 10, 15)
     doTest(content, whitelist.build())
@@ -608,7 +609,7 @@ class StatisticsParseWhitelistWithBuildTest {
   }]
 }
     """
-    val whitelist = WhitelistBuilder().
+    val whitelist = TestWhitelistBuilder().
       addVersion("test.group.id", 2, 5)
     doTest(content, whitelist.build())
   }

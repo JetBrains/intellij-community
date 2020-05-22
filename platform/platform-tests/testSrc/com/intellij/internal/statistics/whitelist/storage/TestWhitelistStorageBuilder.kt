@@ -1,37 +1,37 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal.statistics.whitelist
+package com.intellij.internal.statistics.whitelist.storage
 
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence
 import com.intellij.internal.statistic.eventLog.whitelist.EventLogWhitelistLoader
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorage
 
-class WhitelistStorageBuilder(private val recorderId: String = "TEST") {
+class TestWhitelistStorageBuilder(private val recorderId: String = "TEST") {
   private var cachedContent: String? = ""
   private var serverContentProvider: () -> String = {""}
   private var cachedLastModified: Long = 0
   private var serverLastModified: Long = 0
 
-  fun withCachedContent(content: String): WhitelistStorageBuilder {
+  fun withCachedContent(content: String): TestWhitelistStorageBuilder {
     cachedContent = content
     return this
   }
 
-  fun withServerContent(content: String): WhitelistStorageBuilder {
+  fun withServerContent(content: String): TestWhitelistStorageBuilder {
     serverContentProvider = {content}
     return this
   }
 
-  fun withServerContentProvider(provider: () -> String): WhitelistStorageBuilder {
+  fun withServerContentProvider(provider: () -> String): TestWhitelistStorageBuilder {
     serverContentProvider = provider
     return this
   }
 
-  fun withCachedLastModified(lastModified: Long): WhitelistStorageBuilder {
+  fun withCachedLastModified(lastModified: Long): TestWhitelistStorageBuilder {
     cachedLastModified = lastModified
     return this
   }
 
-  fun withServerLastModified(lastModified: Long): WhitelistStorageBuilder {
+  fun withServerLastModified(lastModified: Long): TestWhitelistStorageBuilder {
     serverLastModified = lastModified
     return this
   }

@@ -1,11 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal.statistics.whitelist
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.internal.statistics.whitelist.parser
 
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
 import org.junit.Assert
 import org.junit.Test
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 class StatisticsFilterGroupByBuildTest {
 
@@ -17,10 +15,120 @@ class StatisticsFilterGroupByBuildTest {
   }
 
   private fun doTestRejected(content: String, build: String, vararg expected: String) {
+    doTestRejectedWithVersion(content, build, "4", *expected)
+  }
+
+  private fun doTestRejectedWithVersion(content: String, build: String, version: String?, vararg expected: String) {
     val actual = FUStatisticsWhiteListGroupsService.parseApprovedGroups(content)
     for (e in expected) {
-      Assert.assertFalse(actual.accepts(e, "4", build))
+      Assert.assertFalse(actual.accepts(e, version, build))
     }
+  }
+
+  @Test
+  fun `with only build is accepted`() {
+    val content = """
+{
+  "groups" : [{
+    "id" : "test.group.id",
+    "title" : "Test Group",
+    "description" : "Test group description",
+    "type" : "counter",
+    "builds" : [ {
+      "from" : "173.4284.118"
+    }]
+  }]
+}
+    """
+    doTestAccepted(content, "IU-173.4284.118", "test.group.id")
+  }
+
+  @Test
+  fun `with only group version is accepted`() {
+    val content = """
+{
+  "groups" : [{
+    "id" : "test.group.id",
+    "title" : "Test Group",
+    "description" : "Test group description",
+    "type" : "counter",
+    "versions" : [ {
+      "from" : "3",
+      "to" : "5"
+    }]
+  }]
+}
+    """
+    doTestAccepted(content, "IU-173.4284.118", "test.group.id")
+  }
+
+  @Test
+  fun `without build and group version is rejected`() {
+    val content = """
+{
+  "groups" : [{
+    "id" : "test.group.id",
+    "title" : "Test Group",
+    "description" : "Test group description",
+    "type" : "counter"
+  }]
+}
+    """
+    doTestRejected(content, "IU-173.4284.118", "test.group.id")
+  }
+
+  @Test
+  fun `with invalid group version is rejected`() {
+    val content = """
+{
+  "groups" : [{
+    "id" : "test.group.id",
+    "title" : "Test Group",
+    "description" : "Test group description",
+    "type" : "counter",
+    "builds" : [ {
+      "from" : "173.4284.118"
+    }]
+  }]
+}
+    """
+    doTestRejectedWithVersion(content, "IU-173.4284.118", "abcd","test.group.id")
+  }
+
+  @Test
+  fun `with null group version is rejected`() {
+    val content = """
+{
+  "groups" : [{
+    "id" : "test.group.id",
+    "title" : "Test Group",
+    "description" : "Test group description",
+    "type" : "counter",
+    "builds" : [ {
+      "from" : "173.4284.118"
+    }]
+  }]
+}
+    """
+    doTestRejectedWithVersion(content, "IU-173.4284.118", null,"test.group.id")
+  }
+
+  @Test
+  fun `with negative group version is rejected`() {
+    val content = """
+{
+  "groups" : [{
+    "id" : "test.group.id",
+    "title" : "Test Group",
+    "description" : "Test group description",
+    "type" : "counter",
+    "builds" : [ {
+      "from" : "173.4284.118"
+    }]
+  }]
+}
+    """
+    doTestRejectedWithVersion(content, "IU-173.4284.118", "-100","test.group.id")
   }
 
   @Test

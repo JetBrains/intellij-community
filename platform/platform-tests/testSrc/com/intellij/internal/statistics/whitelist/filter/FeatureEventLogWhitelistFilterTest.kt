@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal.statistics.whitelist
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.internal.statistics.whitelist.filter
 
 import com.intellij.internal.statistic.eventLog.*
 import com.intellij.internal.statistic.service.fus.FUSWhitelist
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
 import com.intellij.internal.statistics.logger.TestDataCollectorDebugLogger
+import com.intellij.internal.statistics.whitelist.TestWhitelistBuilder
 import com.intellij.openapi.util.io.FileUtil
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -22,6 +23,43 @@ class FeatureEventLogWhitelistFilterTest {
   }
 
   @Test
+  fun `test whitelist with build and group version`() {
+    val event = newEvent("group-id", "first", groupVersion = "4", build = "173.23")
+
+    val whitelist = TestWhitelistBuilder()
+    whitelist.addBuild("group-id", "173.20.132", null)
+    whitelist.addVersion("group-id", "2", "10")
+    testWhitelistFilter(whitelist.build(), listOf(event), listOf(event))
+  }
+
+  @Test
+  fun `test whitelist only with build`() {
+    val event = newEvent("group-id", "first", groupVersion = "4", build = "173.23")
+
+    val whitelist = TestWhitelistBuilder()
+    whitelist.addBuild("group-id", "173.20.132", null)
+    testWhitelistFilter(whitelist.build(), listOf(event), listOf(event))
+  }
+
+  @Test
+  fun `test whitelist only with group version`() {
+    val event = newEvent("group-id", "first", groupVersion = "4", build = "173.23")
+
+    val whitelist = TestWhitelistBuilder()
+    whitelist.addVersion("group-id", "2", "10")
+    testWhitelistFilter(whitelist.build(), listOf(event), listOf(event))
+  }
+
+  @Test
+  fun `test whitelist without build and group version`() {
+    val event = newEvent("group-id", "first", groupVersion = "4", build = "173.23")
+
+    val whitelist = TestWhitelistBuilder()
+    whitelist.addGroup("group-id")
+    testWhitelistFilter(whitelist.build(), listOf(event), emptyList())
+  }
+
+  @Test
   fun `test whitelist without versions`() {
     val first = newEvent("group-id", "first", build = "173.23")
     val second = newEvent("group-id-1", "second", build = "173.23")
@@ -35,7 +73,7 @@ class FeatureEventLogWhitelistFilterTest {
     filtered.add(first)
     filtered.add(third)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", "173.20.132", null)
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -54,7 +92,7 @@ class FeatureEventLogWhitelistFilterTest {
     filtered.add(first)
     filtered.add(third)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", "173.20.132", null)
     whitelist.addBuild("group-id-2", "173.20.132", "173.24.132")
     testWhitelistFilter(whitelist.build(), all, filtered)
@@ -75,7 +113,7 @@ class FeatureEventLogWhitelistFilterTest {
     filtered.add(second)
     filtered.add(third)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", null, "182.0")
     whitelist.addBuild("group-id-1", null, "182.0")
     whitelist.addBuild("group-id-2", null, "182.0")
@@ -93,7 +131,7 @@ class FeatureEventLogWhitelistFilterTest {
     val filtered = ArrayList<LogEvent>()
     filtered.add(second)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addVersion("group-id", "2", null)
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -109,7 +147,7 @@ class FeatureEventLogWhitelistFilterTest {
     val filtered = ArrayList<LogEvent>()
     filtered.add(second)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addVersion("group-id", "2", null)
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -125,7 +163,7 @@ class FeatureEventLogWhitelistFilterTest {
     val filtered = ArrayList<LogEvent>()
     filtered.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addVersion("group-id", null, "3")
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -141,7 +179,7 @@ class FeatureEventLogWhitelistFilterTest {
     val filtered = ArrayList<LogEvent>()
     filtered.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addVersion("group-id", null, "4")
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -158,7 +196,7 @@ class FeatureEventLogWhitelistFilterTest {
     filtered.add(first)
     filtered.add(second)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addVersion("group-id", null, null)
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -175,7 +213,7 @@ class FeatureEventLogWhitelistFilterTest {
     filtered.add(first)
     filtered.add(second)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", null, "182.0")
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -192,7 +230,7 @@ class FeatureEventLogWhitelistFilterTest {
     filtered.add(first)
     filtered.add(second)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addVersion("group-id", "1", "5")
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -209,7 +247,7 @@ class FeatureEventLogWhitelistFilterTest {
     filtered.add(first)
     filtered.add(second)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addVersion("group-id", "1", "5")
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -225,7 +263,7 @@ class FeatureEventLogWhitelistFilterTest {
     val filtered = ArrayList<LogEvent>()
     filtered.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addVersion("group-id", "1", "4")
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -242,7 +280,7 @@ class FeatureEventLogWhitelistFilterTest {
     filtered.add(first)
     filtered.add(second)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addVersion("group-id", "1", "4").addVersion("group-id", "4", "5")
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -259,7 +297,7 @@ class FeatureEventLogWhitelistFilterTest {
     filtered.add(first)
     filtered.add(second)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addVersion("group-id", "1", "4").addVersion("group-id", "3", "5")
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -275,7 +313,7 @@ class FeatureEventLogWhitelistFilterTest {
     val filtered = ArrayList<LogEvent>()
     filtered.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addVersion("group-id", null, "3").addVersion("group-id", "5", null)
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -292,7 +330,7 @@ class FeatureEventLogWhitelistFilterTest {
     filtered.add(first)
     filtered.add(second)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addVersion("group-id", null, "2").addVersion("group-id", null, null)
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -353,7 +391,7 @@ class FeatureEventLogWhitelistFilterTest {
     val filtered = ArrayList<LogEvent>()
     filtered.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", "999.99", null)
     testWhitelistAndSnapshotBuildFilter(whitelist.build(), all, filtered)
   }
@@ -375,7 +413,7 @@ class FeatureEventLogWhitelistFilterTest {
     val filtered = ArrayList<LogEvent>()
     filtered.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addVersion("group-id", "3", null)
     testWhitelistAndSnapshotBuildFilter(whitelist.build(), all, filtered)
   }
@@ -397,7 +435,7 @@ class FeatureEventLogWhitelistFilterTest {
     val filtered = ArrayList<LogEvent>()
     filtered.add(second)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addVersion("group-id", null, "3")
     testWhitelistAndSnapshotBuildFilter(whitelist.build(), all, filtered)
   }
@@ -419,7 +457,7 @@ class FeatureEventLogWhitelistFilterTest {
     val filtered = ArrayList<LogEvent>()
     filtered.add(second)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addVersion("group-id", "1", "3")
     testWhitelistAndSnapshotBuildFilter(whitelist.build(), all, filtered)
   }
@@ -434,7 +472,7 @@ class FeatureEventLogWhitelistFilterTest {
     val filtered = ArrayList<LogEvent>()
     filtered.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", "173.23", null)
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -448,7 +486,7 @@ class FeatureEventLogWhitelistFilterTest {
     val filtered = ArrayList<LogEvent>()
     filtered.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", "173.23.435", null)
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -462,7 +500,7 @@ class FeatureEventLogWhitelistFilterTest {
     val filtered = ArrayList<LogEvent>()
     filtered.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", "173.232", null)
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -474,7 +512,7 @@ class FeatureEventLogWhitelistFilterTest {
     val all = ArrayList<LogEvent>()
     all.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", "173.232.1", null)
     testWhitelistFilter(whitelist.build(), all, ArrayList())
   }
@@ -488,7 +526,7 @@ class FeatureEventLogWhitelistFilterTest {
     val filtered = ArrayList<LogEvent>()
     filtered.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", "172.20.132", null)
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -502,7 +540,7 @@ class FeatureEventLogWhitelistFilterTest {
     val filtered = ArrayList<LogEvent>()
     filtered.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", "173.20.132", null)
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -516,7 +554,7 @@ class FeatureEventLogWhitelistFilterTest {
     val filtered = ArrayList<LogEvent>()
     filtered.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", "173.23.13", null)
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -528,7 +566,7 @@ class FeatureEventLogWhitelistFilterTest {
     val all = ArrayList<LogEvent>()
     all.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", "181.20.132", null)
     testWhitelistFilter(whitelist.build(), all, ArrayList())
   }
@@ -540,7 +578,7 @@ class FeatureEventLogWhitelistFilterTest {
     val all = ArrayList<LogEvent>()
     all.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", "173.203.132", null)
     testWhitelistFilter(whitelist.build(), all, ArrayList())
   }
@@ -552,7 +590,7 @@ class FeatureEventLogWhitelistFilterTest {
     val all = ArrayList<LogEvent>()
     all.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", "173.23.35", null)
     testWhitelistFilter(whitelist.build(), all, ArrayList())
   }
@@ -564,7 +602,7 @@ class FeatureEventLogWhitelistFilterTest {
     val all = ArrayList<LogEvent>()
     all.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", "181.0", null)
     testWhitelistFilter(whitelist.build(), all, ArrayList())
   }
@@ -578,7 +616,7 @@ class FeatureEventLogWhitelistFilterTest {
     val filtered = ArrayList<LogEvent>()
     filtered.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", "181.0", null)
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -590,7 +628,7 @@ class FeatureEventLogWhitelistFilterTest {
     val all = ArrayList<LogEvent>()
     all.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", null, "173.23")
     testWhitelistFilter(whitelist.build(), all, ArrayList())
   }
@@ -602,7 +640,7 @@ class FeatureEventLogWhitelistFilterTest {
     val all = ArrayList<LogEvent>()
     all.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", null, "173.23.234")
     testWhitelistFilter(whitelist.build(), all, ArrayList())
   }
@@ -616,7 +654,7 @@ class FeatureEventLogWhitelistFilterTest {
     val filtered = ArrayList<LogEvent>()
     filtered.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", null, "173.23.234")
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -630,7 +668,7 @@ class FeatureEventLogWhitelistFilterTest {
     val filtered = ArrayList<LogEvent>()
     filtered.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", null, "173.23.234")
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -644,7 +682,7 @@ class FeatureEventLogWhitelistFilterTest {
     val filtered = ArrayList<LogEvent>()
     filtered.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", null, "173.23.234")
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -656,7 +694,7 @@ class FeatureEventLogWhitelistFilterTest {
     val all = ArrayList<LogEvent>()
     all.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", null, "173.23.234")
     testWhitelistFilter(whitelist.build(), all, ArrayList())
   }
@@ -668,7 +706,7 @@ class FeatureEventLogWhitelistFilterTest {
     val all = ArrayList<LogEvent>()
     all.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", null, "183.23.234")
     testWhitelistFilter(whitelist.build(), all, ArrayList())
   }
@@ -680,7 +718,7 @@ class FeatureEventLogWhitelistFilterTest {
     val all = ArrayList<LogEvent>()
     all.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", null, "183.345.12")
     testWhitelistFilter(whitelist.build(), all, ArrayList())
   }
@@ -694,7 +732,7 @@ class FeatureEventLogWhitelistFilterTest {
     val filtered = ArrayList<LogEvent>()
     filtered.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", "181.345.12", "183.345.12")
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -708,7 +746,7 @@ class FeatureEventLogWhitelistFilterTest {
     val filtered = ArrayList<LogEvent>()
     filtered.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", "183.35.12", "183.345.12")
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -722,7 +760,7 @@ class FeatureEventLogWhitelistFilterTest {
     val filtered = ArrayList<LogEvent>()
     filtered.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", "183.35.12", "183.35.120")
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -738,7 +776,7 @@ class FeatureEventLogWhitelistFilterTest {
     val filtered = ArrayList<LogEvent>()
     filtered.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", "183.35.12", null)
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
@@ -754,7 +792,7 @@ class FeatureEventLogWhitelistFilterTest {
     val filtered = ArrayList<LogEvent>()
     filtered.add(first)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", "183.35.12", null)
     whitelist.addBuild("group-id-1", "183.35.32", null)
     testWhitelistFilter(whitelist.build(), all, filtered)
@@ -772,7 +810,7 @@ class FeatureEventLogWhitelistFilterTest {
     filtered.add(first)
     filtered.add(second)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", "183.35.12", null)
     whitelist.addBuild("group-id-1", "181.35.32", null)
     testWhitelistFilter(whitelist.build(), all, filtered)
@@ -787,7 +825,7 @@ class FeatureEventLogWhitelistFilterTest {
     all.add(first)
     all.add(second)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", "183.35.12", null)
     whitelist.addBuild("group-id-1", "181.35.32", null)
     testWhitelistFilter(whitelist.build(), all, ArrayList())
@@ -815,7 +853,7 @@ class FeatureEventLogWhitelistFilterTest {
     filtered.add(fifth)
     filtered.add(sixth)
 
-    val whitelist = WhitelistBuilder()
+    val whitelist = TestWhitelistBuilder()
     whitelist.addBuild("group-id", "181.12", "182.312")
     whitelist.addBuild("group-id", "183.35.12", null)
     whitelist.addVersion("group-id", 3, 5)

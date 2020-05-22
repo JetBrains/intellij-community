@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.whitelist;
 
+import com.intellij.internal.statistic.eventLog.EventLogBuild;
+import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.internal.statistic.eventLog.EventLogSystemLogger;
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules;
@@ -71,7 +73,8 @@ public class WhitelistStorage extends BaseWhitelistStorage {
     mySemaphore.down();
     try {
       FUStatisticsWhiteListGroupsService.WLGroups groups = FUStatisticsWhiteListGroupsService.parseWhiteListContent(whiteListContent);
-      Map<String, WhiteListGroupRules> result = createValidators(groups);
+      EventLogBuild build = EventLogBuild.fromString(EventLogConfiguration.INSTANCE.getBuild());
+      Map<String, WhiteListGroupRules> result = createValidators(build, groups);
       isWhiteListInitialized.set(false);
       eventsValidators.clear();
       eventsValidators.putAll(result);

@@ -143,7 +143,8 @@ public class FUSWhitelist {
     }
 
     public boolean contains(@NotNull EventLogBuild build) {
-      return (myTo == null || myTo.compareTo(build) > 0) && (myFrom == null || myFrom.compareTo(build) <= 0);
+      return (myTo == null || myTo.compareTo(build) > 0) &&
+             (myFrom == null || myFrom.compareTo(build) <= 0);
     }
 
     @Override
