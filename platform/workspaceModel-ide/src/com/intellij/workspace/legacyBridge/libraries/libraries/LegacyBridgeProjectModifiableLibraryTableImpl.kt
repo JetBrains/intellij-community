@@ -103,7 +103,12 @@ internal class LegacyBridgeProjectModifiableLibraryTableImpl(
     val libraryEntity = currentStorage.resolve(entityId)
     if (libraryEntity != null) {
       diff.removeEntity(libraryEntity)
-      myLibrariesToRemove.add(library)
+      if (myLibrariesToAdd.remove(library)) {
+        Disposer.dispose(library)
+      }
+      else {
+        myLibrariesToRemove.add(library)
+      }
     }
   }
 
