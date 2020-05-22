@@ -5,15 +5,18 @@ import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.diagnostic.MessagePool;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.labels.ActionLink;
@@ -253,6 +256,18 @@ public class WelcomeScreenComponentFactory {
         group.add(action);
       }
     }
+  }
+
+  public static String getApplicationTitle() {
+    String title = IdeBundle.message("label.welcome.to.0", ApplicationNamesInfo.getInstance().getFullProductName());
+    if (Boolean.getBoolean("ide.ui.version.in.title")) {
+      title += ' ' + ApplicationInfo.getInstance().getFullVersion();
+    }
+    String suffix = ProjectFrameHelper.getSuperUserSuffix();
+    if (suffix != null) {
+      title += " (" + suffix + ")";
+    }
+    return title;
   }
 
   public static class ToolbarTextButtonWrapper extends AnActionButton.AnActionButtonWrapper implements CustomComponentAction {

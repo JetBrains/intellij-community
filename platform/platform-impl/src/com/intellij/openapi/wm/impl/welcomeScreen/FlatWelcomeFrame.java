@@ -18,9 +18,7 @@ import com.intellij.notification.impl.widget.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.JBProtocolCommand;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
@@ -32,7 +30,6 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
-import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -207,15 +204,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   protected String getWelcomeFrameTitle() {
-    String title = IdeBundle.message("label.welcome.to.0", ApplicationNamesInfo.getInstance().getFullProductName());
-    if (Boolean.getBoolean("ide.ui.version.in.title")) {
-      title += ' ' + ApplicationInfo.getInstance().getFullVersion();
-    }
-    String suffix = ProjectFrameHelper.getSuperUserSuffix();
-    if (suffix != null) {
-      title += " (" + suffix+")";
-    }
-    return title;
+    return getApplicationTitle();
   }
 
   @NotNull
