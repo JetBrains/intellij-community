@@ -34,8 +34,6 @@ internal class LegacyBridgeModuleImpl(
 ) : ModuleImpl(name, project, filePath), LegacyBridgeModule {
   private val directoryPath: String? = filePath?.let { File(it).parent }
 
-  private val bridgeComponentsRegistered = AtomicBoolean(false)
-
   init {
     // default project doesn't have modules
     if (!project.isDefault) {
@@ -61,7 +59,7 @@ internal class LegacyBridgeModuleImpl(
     val pluginDescriptor = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)
                            ?: error("Could not find plugin by id: ${PluginManagerCore.CORE_ID}")
 
-    if (bridgeComponentsRegistered.compareAndSet(false, true)) {
+    if (plugins.any { it.descriptor.pluginId == PluginManagerCore.CORE_ID }) {
       registerComponent(ModuleRootManager::class.java, LegacyBridgeModuleRootComponent::class.java, pluginDescriptor, true)
       registerComponent(FacetManager::class.java, FacetManagerViaWorkspaceModel::class.java, pluginDescriptor, true)
       (picoContainer as MutablePicoContainer).unregisterComponent(DeprecatedModuleOptionManager::class.java)
