@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 
 public class IndentPsiBuilder extends PsiBuilderAdapter {
-  protected boolean myNewLine = true;
+  protected boolean myNewLine;
   protected int myCurrentIndent;
 
   protected HashMap<Marker, Integer> myIndents = new HashMap<>();
@@ -18,6 +18,29 @@ public class IndentPsiBuilder extends PsiBuilderAdapter {
 
   public IndentPsiBuilder(PsiBuilder delegate) {
     super(delegate);
+    calcInitialIndent();
+  }
+
+  private void calcInitialIndent() {
+    final CharSequence contents = myDelegate.getOriginalText();
+    int pos = 0;
+    myNewLine = true;
+    myCurrentIndent = 0;
+    while (pos < contents.length()) {
+      char ch = contents.charAt(pos++);
+      switch (ch) {
+        case ' ':
+        case '\t':
+          myCurrentIndent++;
+          break;
+        case '\n':
+        case '\r':
+          myCurrentIndent = 0;
+          break;
+        default:
+          return;
+      }
+    }
   }
 
   @Override
@@ -63,7 +86,6 @@ public class IndentPsiBuilder extends PsiBuilderAdapter {
   private void unregisterMarker(Marker marker) {
     myIndents.remove(marker);
     myNewLines.remove(marker);
-
   }
 
   public boolean isNewLine() {
