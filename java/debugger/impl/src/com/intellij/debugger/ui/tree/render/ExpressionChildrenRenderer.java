@@ -67,7 +67,7 @@ public class ExpressionChildrenRenderer extends TypeRenderer implements Children
         evaluationContext.createEvaluationContext(value), parentDescriptor
       );
 
-      DebuggerUtilsAsync.type(childrenValue, evaluationContext.getSuspendContext())
+      DebuggerUtilsAsync.type(childrenValue)
         .thenAccept(type -> {
           NodeRenderer renderer = getChildrenRenderer(type, parentDescriptor);
           renderer.buildChildren(childrenValue, builder, evaluationContext);

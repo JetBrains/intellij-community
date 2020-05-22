@@ -16,7 +16,7 @@ public interface Renderer extends Cloneable, JDOMExternalizable {
    */
   boolean isApplicable(Type type);
 
-  default CompletableFuture<Boolean> isApplicableAsync(Type type, SuspendContext context) {
+  default CompletableFuture<Boolean> isApplicableAsync(Type type) {
     return CompletableFuture.completedFuture(isApplicable(type));
   }
 

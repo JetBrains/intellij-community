@@ -104,7 +104,7 @@ public class ArrayRenderer extends NodeRendererImpl{
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
     ArrayReference array = (ArrayReference)value;
-    DebuggerUtilsAsync.length(array, evaluationContext.getSuspendContext())
+    DebuggerUtilsAsync.length(array)
       .thenAccept(arrayLength -> {
         if (arrayLength > 0) {
           if (!myForced) {
@@ -132,7 +132,7 @@ public class ArrayRenderer extends NodeRendererImpl{
                                            AtomicInteger added,
                                            AtomicBoolean hiddenNulls) {
     int chunkLength = Math.min(XCompositeNode.MAX_CHILDREN_TO_SHOW, end - start + 1);
-    return DebuggerUtilsAsync.getValues(array, start, chunkLength, evaluationContext.getSuspendContext())
+    return DebuggerUtilsAsync.getValues(array, start, chunkLength)
       .thenCompose(values -> {
         int idx = start;
         for (; idx < start + values.size(); idx++) {
@@ -243,7 +243,7 @@ public class ArrayRenderer extends NodeRendererImpl{
     if (!(value instanceof ArrayReference)) {
       return CompletableFuture.completedFuture(false);
     }
-    return DebuggerUtilsAsync.length(((ArrayReference)value), evaluationContext.getSuspendContext()).thenApply(l -> l > 0);
+    return DebuggerUtilsAsync.length(((ArrayReference)value)).thenApply(l -> l > 0);
   }
 
   @Override

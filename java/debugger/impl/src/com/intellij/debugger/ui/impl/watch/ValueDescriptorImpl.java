@@ -289,7 +289,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
     DebugProcessImpl debugProcess = context.getDebugProcess();
-    getRendererAsync(debugProcess, context.getSuspendContext())
+    getRendererAsync(debugProcess)
       .thenAccept(renderer -> calcRepresentation(context, labelListener, debugProcess, renderer));
 
     return "";
@@ -463,10 +463,10 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return OnDemandRenderer.isOnDemandForced(debugProcess) ? DebugProcessImpl.getDefaultRenderer(getValue()) : getRenderer(debugProcess);
   }
 
-  public CompletableFuture<NodeRenderer> getRendererAsync(DebugProcessImpl debugProcess, SuspendContext context) {
+  public CompletableFuture<NodeRenderer> getRendererAsync(DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    return DebuggerUtilsAsync.type(getValue(), context)
-      .thenCompose(type -> getRendererAsync(type, debugProcess, context));
+    return DebuggerUtilsAsync.type(getValue())
+      .thenCompose(type -> getRendererAsync(type, debugProcess));
   }
 
   public NodeRenderer getRenderer(DebugProcessImpl debugProcess) {
@@ -483,13 +483,13 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return myAutoRenderer;
   }
 
-  private CompletableFuture<NodeRenderer> getRendererAsync(Type type, DebugProcessImpl debugProcess, SuspendContext context) {
+  private CompletableFuture<NodeRenderer> getRendererAsync(Type type, DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (type != null && myRenderer != null && myRenderer.isApplicable(type)) {
       return CompletableFuture.completedFuture(myRenderer);
     }
 
-    return debugProcess.getAutoRendererAsync(type, context).thenApply(r -> myAutoRenderer = r);
+    return debugProcess.getAutoRendererAsync(type).thenApply(r -> myAutoRenderer = r);
   }
 
   public void setRenderer(NodeRenderer renderer) {
@@ -587,7 +587,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     if (objRef instanceof ArrayReference) {
       int idx = buf.indexOf("[");
       if(idx >= 0) {
-        return DebuggerUtilsAsync.length((ArrayReference)objRef, context).thenApply(length -> buf.insert(idx + 1, length).toString());
+        return DebuggerUtilsAsync.length((ArrayReference)objRef).thenApply(length -> buf.insert(idx + 1, length).toString());
       }
     }
 

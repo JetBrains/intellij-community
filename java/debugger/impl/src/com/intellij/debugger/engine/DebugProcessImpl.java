@@ -221,7 +221,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @NotNull
-  public CompletableFuture<NodeRenderer> getAutoRendererAsync(Type type, SuspendContext context) {
+  public CompletableFuture<NodeRenderer> getAutoRendererAsync(Type type) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     // in case evaluation is not possible, force default renderer
     if (!isEvaluationPossible()) {
@@ -233,7 +233,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       if (renderer != null) {
         return CompletableFuture.completedFuture(renderer);
       }
-      CompletableFuture<Boolean>[] futures = myRenderers.stream().map(r -> r.isApplicableAsync(type, context)).toArray(CompletableFuture[]::new);
+      CompletableFuture<Boolean>[] futures = myRenderers.stream().map(r -> r.isApplicableAsync(type)).toArray(CompletableFuture[]::new);
       return CompletableFuture.allOf(futures).thenApply(__ -> {
         List<Boolean> res = StreamEx.of(futures).map(CompletableFuture::join).toList();
         int idx = res.indexOf(true);

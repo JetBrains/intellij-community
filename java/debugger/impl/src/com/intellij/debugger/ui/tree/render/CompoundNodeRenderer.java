@@ -73,9 +73,9 @@ public class CompoundNodeRenderer extends NodeRendererImpl{
   }
 
   @Override
-  public CompletableFuture<Boolean> isApplicableAsync(Type type, SuspendContext context) {
-    return getLabelRenderer().isApplicableAsync(type, context)
-      .thenCombine(getChildrenRenderer().isApplicableAsync(type, context), (res1, res2) -> res1 && res2);
+  public CompletableFuture<Boolean> isApplicableAsync(Type type) {
+    return getLabelRenderer().isApplicableAsync(type)
+      .thenCombine(getChildrenRenderer().isApplicableAsync(type), (res1, res2) -> res1 && res2);
   }
 
   @Override

@@ -2,7 +2,6 @@
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Type;
@@ -24,9 +23,9 @@ public abstract class ReferenceRenderer extends TypeRenderer {
   }
 
   @Override
-  public CompletableFuture<Boolean> isApplicableAsync(Type type, SuspendContext context) {
+  public CompletableFuture<Boolean> isApplicableAsync(Type type) {
     if (type instanceof ReferenceType) {
-      return DebuggerUtilsAsync.instanceOf(type, getClassName(), context);
+      return DebuggerUtilsAsync.instanceOf(type, getClassName());
     }
     return CompletableFuture.completedFuture(false);
   }

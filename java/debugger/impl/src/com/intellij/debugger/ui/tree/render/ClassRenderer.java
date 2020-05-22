@@ -5,7 +5,6 @@ import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
@@ -99,7 +98,7 @@ public class ClassRenderer extends NodeRendererImpl{
     CompletableFuture<String> future;
     if (value instanceof StringReferenceImpl) {
       DebuggerUtils.ensureNotInsideObjectConstructor((ObjectReference)value, evaluationContext);
-      future = DebuggerUtilsAsync.getStringValue((StringReference)value, evaluationContext.getSuspendContext());
+      future = DebuggerUtilsAsync.getStringValue((StringReference)value);
     }
     else {
       future = CompletableFuture.completedFuture(calcLabel(descriptor, evaluationContext));
@@ -169,7 +168,7 @@ public class ClassRenderer extends NodeRendererImpl{
     final ObjectReference objRef = (ObjectReference)value;
     final ReferenceType refType = objRef.referenceType();
     // default ObjectReference processing
-    DebuggerUtilsAsync.allFields(refType, evaluationContext.getSuspendContext())
+    DebuggerUtilsAsync.allFields(refType)
       .thenAccept(
         fields -> {
           if (fields.isEmpty()) {
@@ -203,7 +202,7 @@ public class ClassRenderer extends NodeRendererImpl{
                                                                 NodeDescriptorFactory nodeDescriptorFactory,
                                                                 ObjectReference objRef,
                                                                 Set<String> names) {
-    return DebuggerUtilsAsync.getValues(objRef, fields, evaluationContext.getSuspendContext())
+    return DebuggerUtilsAsync.getValues(objRef, fields)
       .thenApply(cachedValues -> {
         List<DebuggerTreeNode> res = new ArrayList<>(fields.size());
         for (Field field : fields) {
@@ -289,9 +288,9 @@ public class ClassRenderer extends NodeRendererImpl{
     }
   }
 
-  private static CompletableFuture<Boolean> valueExpandable(Value value, SuspendContext context)  {
+  private static CompletableFuture<Boolean> valueExpandableAsync(Value value)  {
     if(value instanceof ArrayReference) {
-      return DebuggerUtilsAsync.length((ArrayReference)value, context).thenApply(r -> r > 0).exceptionally(throwable -> true);
+      return DebuggerUtilsAsync.length((ArrayReference)value).thenApply(r -> r > 0).exceptionally(throwable -> true);
     }
     else if(value instanceof ObjectReference) {
       return CompletableFuture.completedFuture(true); // if object has no fields, it contains a child-message about that
@@ -327,7 +326,7 @@ public class ClassRenderer extends NodeRendererImpl{
   @Override
   public CompletableFuture<Boolean> isExpandableAsync(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    return valueExpandable(value, evaluationContext.getSuspendContext());
+    return valueExpandableAsync(value);
   }
 
   @Override

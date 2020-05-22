@@ -1,10 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.CommonClassNames;
 import com.jetbrains.jdi.*;
@@ -24,74 +26,73 @@ import static java.util.concurrent.CompletableFuture.allOf;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public class DebuggerUtilsAsync {
+  private static final Logger LOG = Logger.getInstance(DebuggerUtilsAsync.class);
+
   // Debugger manager thread
-  public static CompletableFuture<String> getStringValue(StringReference value, SuspendContext context) {
+  public static CompletableFuture<String> getStringValue(StringReference value) {
     if (value instanceof StringReferenceImpl && Registry.is("debugger.async.jdi")) {
-      return schedule((SuspendContextImpl)context, ((StringReferenceImpl)value).valueAsync());
+      return reschedule(((StringReferenceImpl)value).valueAsync());
     }
     return completedFuture(value.value());
   }
 
-  public static CompletableFuture<List<Field>> allFields(ReferenceType type, SuspendContext context) {
+  public static CompletableFuture<List<Field>> allFields(ReferenceType type) {
     if (type instanceof ReferenceTypeImpl && Registry.is("debugger.async.jdi")) {
-      return schedule((SuspendContextImpl)context, ((ReferenceTypeImpl)type).allFieldsAsync());
+      return reschedule(((ReferenceTypeImpl)type).allFieldsAsync());
     }
     return completedFuture(type.allFields());
   }
 
-  public static CompletableFuture<List<Method>> methods(ReferenceType type, SuspendContext context) {
-    if (type instanceof ReferenceTypeImpl && Registry.is("debugger.async.jdi")) {
-      return schedule((SuspendContextImpl)context, ((ReferenceTypeImpl)type).methodsAsync());
-    }
-    return completedFuture(type.methods());
-  }
-
-  public static CompletableFuture<? extends Type> type(@Nullable Value value, SuspendContext context) {
+  public static CompletableFuture<? extends Type> type(@Nullable Value value) {
     if (value == null) {
       return completedFuture(null);
     }
     if (value instanceof ObjectReferenceImpl && Registry.is("debugger.async.jdi")) {
-      return schedule((SuspendContextImpl)context, ((ObjectReferenceImpl)value).typeAsync());
+      return reschedule(((ObjectReferenceImpl)value).typeAsync());
     }
     return completedFuture(value.type());
   }
 
-  public static CompletableFuture<Value> getValue(ObjectReference ref, Field field, @Nullable SuspendContext context) {
-    if (ref instanceof ObjectReferenceImpl && Registry.is("debugger.async.jdi") && context != null) {
-      return schedule((SuspendContextImpl)context, ((ObjectReferenceImpl)ref).getValueAsync(field));
+  public static CompletableFuture<Value> getValue(ObjectReference ref, Field field, boolean now) {
+    if (!now && ref instanceof ObjectReferenceImpl && Registry.is("debugger.async.jdi")) {
+      return reschedule(((ObjectReferenceImpl)ref).getValueAsync(field));
     }
     return completedFuture(ref.getValue(field));
   }
 
-  public static CompletableFuture<Map<Field, Value>> getValues(ObjectReference ref, List<Field> fields, @Nullable SuspendContext context) {
-    if (ref instanceof ObjectReferenceImpl && Registry.is("debugger.async.jdi") && context != null) {
-      return schedule((SuspendContextImpl)context, ((ObjectReferenceImpl)ref).getValuesAsync(fields));
+  public static CompletableFuture<Map<Field, Value>> getValues(ObjectReference ref, List<Field> fields) {
+    if (ref instanceof ObjectReferenceImpl && Registry.is("debugger.async.jdi")) {
+      return reschedule(((ObjectReferenceImpl)ref).getValuesAsync(fields));
     }
     return completedFuture(ref.getValues(fields));
   }
 
-  public static CompletableFuture<Map<Field, Value>> getValues(ReferenceType type, List<Field> fields, @Nullable SuspendContext context) {
-    if (type instanceof ReferenceTypeImpl && Registry.is("debugger.async.jdi") && context != null) {
-      return schedule((SuspendContextImpl)context, ((ReferenceTypeImpl)type).getValuesAsync(fields));
+  public static CompletableFuture<Map<Field, Value>> getValues(ReferenceType type, List<Field> fields) {
+    if (type instanceof ReferenceTypeImpl && Registry.is("debugger.async.jdi")) {
+      return reschedule(((ReferenceTypeImpl)type).getValuesAsync(fields));
     }
     return completedFuture(type.getValues(fields));
   }
 
-  public static CompletableFuture<List<Value>> getValues(ArrayReference ref, int index, int length, @Nullable SuspendContext context) {
-    if (ref instanceof ArrayReferenceImpl && Registry.is("debugger.async.jdi") && context != null) {
-      return schedule((SuspendContextImpl)context, ((ArrayReferenceImpl)ref).getValuesAsync(index, length));
+  public static CompletableFuture<List<Value>> getValues(ArrayReference ref, int index, int length) {
+    if (ref instanceof ArrayReferenceImpl && Registry.is("debugger.async.jdi")) {
+      return reschedule(((ArrayReferenceImpl)ref).getValuesAsync(index, length));
     }
     return completedFuture(ref.getValues(index, length));
   }
 
-  public static CompletableFuture<Integer> length(ArrayReference ref, @Nullable SuspendContext context) {
-    if (ref instanceof ArrayReferenceImpl && Registry.is("debugger.async.jdi") && context != null) {
-      return schedule((SuspendContextImpl)context, ((ArrayReferenceImpl)ref).lengthAsync());
+  public static CompletableFuture<Integer> length(ArrayReference ref) {
+    if (ref instanceof ArrayReferenceImpl && Registry.is("debugger.async.jdi")) {
+      return reschedule(((ArrayReferenceImpl)ref).lengthAsync());
     }
     return completedFuture(ref.length());
   }
 
-  public static CompletableFuture<Boolean> instanceOf(@Nullable Type subType, @NotNull String superType, @Nullable SuspendContext context) {
+  public static CompletableFuture<Boolean> instanceOf(@Nullable Type subType, @NotNull String superType) {
+    return instanceOf(subType, superType, true);
+  }
+
+  private static CompletableFuture<Boolean> instanceOf(@Nullable Type subType, @NotNull String superType, boolean reschedule) {
     if (!Registry.is("debugger.async.jdi")) {
       return completedFuture(DebuggerUtils.instanceOf(subType, superType));
     }
@@ -110,7 +111,10 @@ public class DebuggerUtilsAsync {
 
     CompletableFuture<Boolean> res = new CompletableFuture<>();
     instanceOfObject(subType, superType, res).thenRun(() -> res.complete(false));
-    return schedule((SuspendContextImpl)context, res);
+    if (!reschedule) {
+      return res;
+    }
+    return reschedule(res);
   }
 
   private static CompletableFuture<Void> instanceOfObject(@Nullable Type subType,
@@ -142,7 +146,7 @@ public class DebuggerUtilsAsync {
       try {
         String superTypeItem = superType.substring(0, superType.length() - 2);
         Type subTypeItem = ((ArrayType)subType).componentType();
-        return instanceOf(subTypeItem, superTypeItem, null).thenAccept(r -> {
+        return instanceOf(subTypeItem, superTypeItem, false).thenAccept(r -> {
           if (r) res.complete(true);
         });
       }
@@ -164,12 +168,10 @@ public class DebuggerUtilsAsync {
     return type.name().replace('$', '.').equals(typeName.replace('$', '.'));
   }
 
-  public static CompletableFuture<Type> findAnyBaseType(@NotNull Type subType,
-                                                        Function<Type, CompletableFuture<Boolean>> checker,
-                                                        SuspendContext context) {
+  public static CompletableFuture<Type> findAnyBaseType(@NotNull Type subType, Function<Type, CompletableFuture<Boolean>> checker) {
     CompletableFuture<Type> res = new CompletableFuture<>();
     findAnyBaseType(subType, checker, res).thenRun(() -> res.complete(null));
-    return schedule((SuspendContextImpl)context, res);
+    return reschedule(res);
   }
 
   private static CompletableFuture<Void> findAnyBaseType(@Nullable Type type,
@@ -206,6 +208,13 @@ public class DebuggerUtilsAsync {
   }
 
   // Reader thread
+  public static CompletableFuture<List<Method>> methods(ReferenceType type) {
+    if (type instanceof ReferenceTypeImpl && Registry.is("debugger.async.jdi")) {
+      return ((ReferenceTypeImpl)type).methodsAsync();
+    }
+    return completedFuture(type.methods());
+  }
+
   public static CompletableFuture<List<InterfaceType>> superinterfaces(InterfaceType iface) {
     if (iface instanceof InterfaceTypeImpl && Registry.is("debugger.async.jdi")) {
       return ((InterfaceTypeImpl)iface).superinterfacesAsync();
@@ -241,25 +250,51 @@ public class DebuggerUtilsAsync {
     return completedFuture(StreamEx.empty());
   }
 
-  private static <T> CompletableFuture<T> schedule(@Nullable SuspendContextImpl context, CompletableFuture<T> future) {
-    if (future.isDone() || context == null) {
-      return future;
-    }
+  /**
+   * Schedule future completion in a separate command with the same priority and suspend context (if available)
+   * as in the command being processed at the moment
+   */
+  public static <T> CompletableFuture<T> reschedule(CompletableFuture<T> future) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    DebuggerManagerThreadImpl thread = (DebuggerManagerThreadImpl)InvokeThread.currentThread();
+    LOG.assertTrue(thread != null);
+    DebuggerCommandImpl event = thread.myEvents.getCurrentEvent();
+    LOG.assertTrue(event != null);
+    PrioritizedTask.Priority priority = event.getPriority();
+    SuspendContextImpl suspendContext =
+      event instanceof SuspendContextCommandImpl ? ((SuspendContextCommandImpl)event).getSuspendContext() : null;
 
     CompletableFuture<T> res = new CompletableFuture<>();
     future.whenComplete((r, ex) -> {
-      context.getDebugProcess().getManagerThread().schedule(new SuspendContextCommandImpl(context) {
-        @Override
-        public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-          if (ex != null) {
-            res.completeExceptionally(ex);
+      if (DebuggerManagerThreadImpl.isManagerThread()) {
+        completeFuture(r, ex, res);
+      }
+      else if (suspendContext != null) {
+        thread.schedule(new SuspendContextCommandImpl(suspendContext) {
+          @Override
+          public Priority getPriority() {
+            return priority;
           }
-          else {
-            res.complete(r);
+
+          @Override
+          public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+            completeFuture(r, ex, res);
           }
-        }
-      });
+        });
+      }
+      else {
+        thread.schedule(priority, () -> completeFuture(r, ex, res));
+      }
     });
     return res;
+  }
+
+  private static <T> void completeFuture(T res, Throwable ex, CompletableFuture<T> future) {
+    if (ex != null) {
+      future.completeExceptionally(ex);
+    }
+    else {
+      future.complete(res);
+    }
   }
 }

@@ -134,7 +134,7 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
   }
 
   @Override
-  public CompletableFuture<Boolean> isApplicableAsync(Type type, SuspendContext context) {
+  public CompletableFuture<Boolean> isApplicableAsync(Type type) {
     if (!(type instanceof ReferenceType)) {
       return CompletableFuture.completedFuture(false);
     }
@@ -143,7 +143,7 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
       return CompletableFuture.completedFuture(false); // do not render 'String' objects for performance reasons
     }
 
-    return overridesToString(type, context);
+    return overridesToStringAsync(type);
   }
 
   private static boolean overridesToString(Type type) {
@@ -154,14 +154,14 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
     return false;
   }
 
-  private static CompletableFuture<Boolean> overridesToString(Type type, SuspendContext context) {
+  private static CompletableFuture<Boolean> overridesToStringAsync(Type type) {
     if (!Registry.is("debugger.async.jdi")) {
       return CompletableFuture.completedFuture(overridesToString(type));
     }
     if (type instanceof ClassType) {
       return DebuggerUtilsAsync.findAnyBaseType(type, t -> {
         if (t instanceof ReferenceType) {
-          return DebuggerUtilsAsync.methods((ReferenceType)t, context)
+          return DebuggerUtilsAsync.methods((ReferenceType)t)
             .thenApply(methods -> {
               return methods.stream().anyMatch(m -> !m.isAbstract() &&
                                                     DebuggerUtilsEx.methodMatches(m, "toString", "()Ljava/lang/String;") &&
@@ -169,7 +169,7 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
             });
         }
         return CompletableFuture.completedFuture(false);
-      }, context).thenApply(t -> t != null);
+      }).thenApply(t -> t != null);
     }
     return CompletableFuture.completedFuture(false);
   }

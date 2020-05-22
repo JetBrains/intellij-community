@@ -4,7 +4,6 @@ package com.intellij.debugger.ui.tree.render;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
@@ -106,9 +105,9 @@ public class CompoundTypeRenderer extends CompoundNodeRenderer {
   }
 
   @Override
-  public CompletableFuture<Boolean> isApplicableAsync(Type type, SuspendContext context) {
-    return DebuggerUtilsAsync.instanceOf(type, getClassName(), context)
-      .thenCombine(super.isApplicableAsync(type, context), (res1, res2) -> res1 && res2);
+  public CompletableFuture<Boolean> isApplicableAsync(Type type) {
+    return DebuggerUtilsAsync.instanceOf(type, getClassName())
+      .thenCombine(super.isApplicableAsync(type), (res1, res2) -> res1 && res2);
   }
 
   @Override

@@ -70,7 +70,7 @@ public class JavaStaticGroup extends XValueGroup implements NodeDescriptorProvid
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         ReferenceType refType = myStaticDescriptor.getType();
-        DebuggerUtilsAsync.allFields(refType, suspendContext)
+        DebuggerUtilsAsync.allFields(refType)
           .thenAccept(
             fields -> {
               boolean showSynthetics = NodeRendererSettings.getInstance().getClassRenderer().SHOW_SYNTHETICS;
@@ -92,7 +92,7 @@ public class JavaStaticGroup extends XValueGroup implements NodeDescriptorProvid
       }
 
       private CompletableFuture<XValueChildrenList> createNodes(List<Field> fields, ReferenceType refType, SuspendContext context) {
-        return DebuggerUtilsAsync.getValues(refType, fields, context)
+        return DebuggerUtilsAsync.getValues(refType, fields)
           .thenApply(cachedValues -> {
                        XValueChildrenList children = new XValueChildrenList();
                        for (Field field : fields) {

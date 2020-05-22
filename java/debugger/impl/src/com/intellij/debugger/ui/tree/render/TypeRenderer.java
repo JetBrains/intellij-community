@@ -2,7 +2,6 @@
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
@@ -53,8 +52,8 @@ public abstract class TypeRenderer implements Renderer {
   }
 
   @Override
-  public CompletableFuture<Boolean> isApplicableAsync(Type type, SuspendContext context) {
-    return DebuggerUtilsAsync.instanceOf(type, getClassName(), context);
+  public CompletableFuture<Boolean> isApplicableAsync(Type type) {
+    return DebuggerUtilsAsync.instanceOf(type, getClassName());
   }
 
   @Override

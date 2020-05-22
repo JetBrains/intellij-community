@@ -2,7 +2,6 @@
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
@@ -68,7 +67,7 @@ public class UnBoxingEvaluator implements Evaluator {
   private static Value convertToPrimitive(EvaluationContextImpl context, ObjectReference value, final String conversionMethodName,
                                           String conversionMethodSignature) throws EvaluateException {
     // for speedup first try value field
-    Value primitiveValue = getInnerPrimitiveValue(value, null).join();
+    Value primitiveValue = getInnerPrimitiveValue(value, true).join();
     if (primitiveValue != null) {
       return primitiveValue;
     }
@@ -82,13 +81,12 @@ public class UnBoxingEvaluator implements Evaluator {
     return context.getDebugProcess().invokeMethod(context, value, method, Collections.emptyList());
   }
 
-  public static CompletableFuture<PrimitiveValue> getInnerPrimitiveValue(@Nullable ObjectReference value,
-                                                                         @Nullable SuspendContext context) {
+  public static CompletableFuture<PrimitiveValue> getInnerPrimitiveValue(@Nullable ObjectReference value, boolean now) {
     if (value != null) {
       ReferenceType type = value.referenceType();
       Field valueField = type.fieldByName("value");
       if (valueField != null) {
-        return DebuggerUtilsAsync.getValue(value, valueField, context)
+        return DebuggerUtilsAsync.getValue(value, valueField, now)
           .thenApply(primitiveValue -> {
             if (primitiveValue instanceof PrimitiveValue) {
               LOG.assertTrue(type.name().equals(PsiJavaParserFacadeImpl.getPrimitiveType(primitiveValue.type().name()).getBoxedTypeName()));

@@ -23,7 +23,7 @@ public abstract class UnboxableTypeRenderer extends CompoundReferenceRenderer {
       public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener)
         throws EvaluateException {
         CompletableFuture<PrimitiveValue> future =
-          UnBoxingEvaluator.getInnerPrimitiveValue((ObjectReference)descriptor.getValue(), evaluationContext.getSuspendContext());
+          UnBoxingEvaluator.getInnerPrimitiveValue((ObjectReference)descriptor.getValue(), false);
         if (future.isDone()) {
           return DebuggerUtils.getValueAsString(evaluationContext, future.join());
         }
