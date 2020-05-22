@@ -21,11 +21,7 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.ResolveResult;
-import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
@@ -37,19 +33,7 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.AccessDirection;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyDocStringOwner;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyParameter;
-import com.jetbrains.python.psi.PyQualifiedExpression;
-import com.jetbrains.python.psi.PyRecursiveElementVisitor;
-import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.PyTargetExpression;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -60,25 +44,13 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyClassTypeImpl;
-import com.jetbrains.python.psi.types.PyModuleType;
-import com.jetbrains.python.psi.types.PyStructuralType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeChecker;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.pyi.PyiUtil;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
 
 /**
  * @author yole
@@ -212,7 +184,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
       if (qualifierType instanceof PyStructuralType && ((PyStructuralType)qualifierType).isInferredFromUsages()) {
         final PyClassType guessedType = guessClassTypeByName();
         if (guessedType != null) {
-          Collections.addAll(variants, getTypeCompletionVariants(myElement, guessedType));
+          Collections.addAll(variants, guessedType.getCompletionVariants(myElement.getName(), myElement, ctx));
         }
       }
       if (qualifier instanceof PyQualifiedExpression) {
@@ -242,7 +214,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
     else {
       final PyClassType guessedType = guessClassTypeByName();
       if (guessedType != null) {
-        Collections.addAll(variants, getTypeCompletionVariants(myElement, guessedType, ctx));
+        Collections.addAll(variants, guessedType.getCompletionVariants(myElement.getName(), myElement, ctx));
       }
       if (qualifier instanceof PyReferenceExpression) {
         Collections.addAll(variants, collectSeenMembers(qualifier.getText(), ctx));

@@ -15,7 +15,6 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -26,7 +25,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyModuleType;
-import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
@@ -797,15 +795,5 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   @Override
   public int hashCode() {
     return myElement.hashCode();
-  }
-
-  protected static Object[] getTypeCompletionVariants(PyExpression pyExpression, PyType type) {
-    ProcessingContext context = new ProcessingContext();
-    return getTypeCompletionVariants(pyExpression, type, context);
-  }
-
-  protected static Object[] getTypeCompletionVariants(PyExpression pyExpression, PyType type, ProcessingContext context) {
-    context.put(PyType.CTX_NAMES, new HashSet<>());
-    return type.getCompletionVariants(pyExpression.getName(), pyExpression, context);
   }
 }
