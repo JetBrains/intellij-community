@@ -67,6 +67,28 @@ class LegacyBridgeProjectRootManager(project: Project) : ProjectRootManagerCompo
       }
 
       override fun jdkNameChanged(jdk: Sdk, previousName: String) {
+        //todo make this more efficient by storing mapping between sdks and modules
+        val affectedModules = WorkspaceModel.getInstance(myProject).entityStore.current.entities(ModuleEntity::class.java)
+          .filter { module ->
+            module.dependencies.asSequence().filterIsInstance<ModuleDependencyItem.SdkDependency>().any {
+              it.sdkName == previousName && it.sdkType == jdk.sdkType.name
+            }
+          }.toList()
+        if (affectedModules.isNotEmpty()) {
+          WorkspaceModel.getInstance(myProject).updateProjectModel { builder ->
+            for (module in affectedModules) {
+              val updated = module.dependencies.map {
+                when {
+                  it is ModuleDependencyItem.SdkDependency -> ModuleDependencyItem.SdkDependency(jdk.name, jdk.sdkType.name)
+                  else -> it
+                }
+              }
+              builder.modifyEntity(ModifiableModuleEntity::class.java, module) {
+                dependencies = updated
+              }
+            }
+          }
+        }
       }
 
       override fun jdkRemoved(jdk: Sdk) {
