@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
@@ -30,7 +30,7 @@ import static org.jetbrains.idea.svn.SvnUtil.SYSTEM_CONFIGURATION_PATH;
 import static org.jetbrains.idea.svn.SvnUtil.USER_CONFIGURATION_PATH;
 
 @State(name = "SvnConfiguration", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class SvnConfiguration implements PersistentStateComponent<SvnConfigurationState> {
+public class SvnConfiguration implements PersistentStateComponent<SvnConfigurationState>, Disposable {
   public final static int ourMaxAnnotateRevisionsDefault = 500;
 
   private final static long UPGRADE_TO_15_VERSION_ASKED = 123;
@@ -301,7 +301,12 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     }
   }
 
-  public void clear() {
+  @Override
+  public void dispose() {
+    clear();
+  }
+
+  private void clear() {
     myAuthManager = null;
     myPassiveAuthManager = null;
     myInteractiveManager = null;
@@ -317,7 +322,6 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     if (myAuthManager == null) {
       // reloaded when configuration directory changes
       myAuthManager = new SvnAuthenticationManager(svnVcs, getConfigurationPath());
-      Disposer.register(svnVcs.getProject(), () -> myAuthManager = null);
       getInteractiveManager(svnVcs);
       // to init
       myAuthManager.setAuthenticationProvider(new SvnAuthenticationProvider(svnVcs, myInteractiveProvider, myAuthManager));
