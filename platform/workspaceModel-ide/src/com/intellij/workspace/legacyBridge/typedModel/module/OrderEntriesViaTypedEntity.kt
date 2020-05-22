@@ -108,6 +108,7 @@ internal abstract class ModuleOrderEntryBaseViaTypedEntity(
   private fun getEnumerator(rootType: OrderRootType) = module.let { ModuleRootManagerImpl.getCachingEnumeratorForType(rootType, it) }
 
   override fun getPresentableName() = moduleName
+  override fun isValid(): Boolean = module != null
 
   override fun <R : Any?> accept(policy: RootPolicy<R>, initialValue: R?): R? = policy.visitModuleOrderEntry(this, initialValue)
 }
@@ -326,6 +327,8 @@ internal class SdkOrderEntryViaTypedEntity(
 
   override fun getPresentableName() = "< ${jdk?.name ?: sdkDependencyItem.sdkName} >"
 
+  override fun isValid(): Boolean = jdk != null
+
   override fun getJdk(): Sdk? {
     val jdkTable = ProjectJdkTable.getInstance()
 
@@ -357,7 +360,9 @@ internal class InheritedSdkOrderEntryViaTypedEntity(module: LegacyBridgeModule, 
   override fun getJdk(): Sdk? = getRootModel().accessor.getProjectSdk(module.project)
   override fun getJdkName(): String? = getRootModel().accessor.getProjectSdkName(module.project)
 
-  override fun getPresentableName() = jdk?.let { "<${it.name}>" } ?: "<INVALID-INHERITED-JDK>"
+  override fun isValid(): Boolean = jdk != null
+
+  override fun getPresentableName() = "< $jdkName >"
 
   override fun <R : Any?> accept(policy: RootPolicy<R>, initialValue: R?): R? = policy.visitInheritedJdkOrderEntry(this, initialValue)
 
