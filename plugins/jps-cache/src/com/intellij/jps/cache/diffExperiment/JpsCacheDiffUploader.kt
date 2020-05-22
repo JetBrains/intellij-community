@@ -97,7 +97,7 @@ enum class Measures {
     fun toHumanSize(value: Long): String {
       val decValue = value.toBigDecimal()
       val measure = values().reversed().find { it.size < decValue } ?: B
-      return "${decValue.divide(measure.size, 3, RoundingMode.UP)} $measure"
+      return "${decValue.divide(measure.size, measure.ordinal, RoundingMode.UP)} $measure"
 
     }
   }
