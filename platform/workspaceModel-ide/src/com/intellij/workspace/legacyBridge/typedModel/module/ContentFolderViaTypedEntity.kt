@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspace.api.*
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProvider
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerScope
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.JpsElementFactory
@@ -32,7 +33,10 @@ internal abstract class ContentFolderViaTypedEntity(private val entry: ContentEn
 internal class SourceFolderViaTypedEntity(private val entry: ContentEntryViaTypedEntity, val sourceRootEntity: SourceRootEntity)
   : ContentFolderViaTypedEntity(entry, sourceRootEntity.url), SourceFolder {
 
-  override fun getFile(): VirtualFile? = entry.model.filePointerProvider.getAndCacheFilePointer(sourceRootEntity.url, LegacyBridgeFilePointerScope.SourceRoot).file
+  override fun getFile(): VirtualFile? {
+    val filePointerProvider = LegacyBridgeFilePointerProvider.getInstance(entry.model.legacyBridgeModule)
+    return filePointerProvider.getAndCacheFilePointer(sourceRootEntity.url, LegacyBridgeFilePointerScope.SourceRoot).file
+  }
 
   private var packagePrefixVar: String? = null
   private var sourceRootType: JpsModuleSourceRootType<out JpsElement> = getSourceRootType(sourceRootEntity)
@@ -127,7 +131,7 @@ internal class SourceFolderViaTypedEntity(private val entry: ContentEntryViaType
   override fun setPackagePrefix(packagePrefix: String) {
     if (getPackagePrefix() == packagePrefix) return
 
-    val updater = entry.model.updater ?: error("Model is read-only")
+    val updater = entry.updater ?: error("Model is read-only")
 
     val javaSourceRoot = sourceRootEntity.asJavaSourceRoot()
     if (javaSourceRoot == null) {
@@ -166,5 +170,8 @@ internal class SourceFolderViaTypedEntity(private val entry: ContentEntryViaType
 
 internal class ExcludeFolderViaTypedEntity(val entry: ContentEntryViaTypedEntity, val excludeFolderUrl: VirtualFileUrl)
   : ContentFolderViaTypedEntity(entry, excludeFolderUrl), ExcludeFolder {
-  override fun getFile(): VirtualFile? = entry.model.filePointerProvider.getAndCacheFilePointer(excludeFolderUrl, LegacyBridgeFilePointerScope.ExcludedRoots).file
+  override fun getFile(): VirtualFile? {
+    val filePointerProvider = LegacyBridgeFilePointerProvider.getInstance(entry.model.legacyBridgeModule)
+    return filePointerProvider.getAndCacheFilePointer(excludeFolderUrl, LegacyBridgeFilePointerScope.ExcludedRoots).file
+  }
 }

@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.ModuleOrderEnumerator
-import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.roots.impl.RootModelBase
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.util.Comparing
@@ -14,25 +13,22 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.workspace.api.*
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeCompilerModuleExtension
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProvider
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProviderImpl
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleRootModel
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibrary
 import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.collections.HashMap
 
 internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: PersistentEntityId<ModuleEntity>,
-                                  internal val storage: TypedEntityStorage,
-                                  private val module: LegacyBridgeModule,
-                                  private val moduleLibraryTable: LibraryTable,
-                                  private val itemUpdater: ((Int, (ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?,
-                                  internal val filePointerProvider: LegacyBridgeFilePointerProvider,
-                                  internal val accessor: RootConfigurationAccessor,
-                                  internal val updater: (((TypedEntityStorageDiffBuilder) -> Unit) -> Unit)?) : RootModelBase(), Disposable {
+                                           val storage: TypedEntityStorage,
+                                           private val moduleLibraryTable: LibraryTable,
+                                           private val itemUpdater: ((Int, (ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?,
+                                           private val rootModel: LegacyBridgeModuleRootModel,
+                                           internal val updater: (((TypedEntityStorageDiffBuilder) -> Unit) -> Unit)?) : RootModelBase(), Disposable {
+  private val module: LegacyBridgeModule = rootModel.legacyBridgeModule
 
   private val extensions by lazy {
     loadExtensions(storage = storage, module = module, writable = false, parentDisposable = this)
@@ -73,7 +69,7 @@ internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: Persiste
     }
 
     contentEntries.map { contentRoot ->
-      ContentEntryViaTypedEntity(this, contentUrlToSourceRoots[contentRoot.url] ?: emptyList(), contentRoot)
+      ContentEntryViaTypedEntity(rootModel, contentUrlToSourceRoots[contentRoot.url] ?: emptyList(), contentRoot, updater)
     }
   }
 
@@ -129,14 +125,14 @@ internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: Persiste
     else null
 
     return when (item) {
-      is ModuleDependencyItem.Exportable.ModuleDependency -> ModuleOrderEntryViaTypedEntity(module, index, item, updater)
+      is ModuleDependencyItem.Exportable.ModuleDependency -> ModuleOrderEntryViaTypedEntity(rootModel, index, item, updater)
       is ModuleDependencyItem.Exportable.LibraryDependency -> {
         val library = moduleLibraryTable.libraries.firstOrNull { (it as? LegacyBridgeLibrary)?.libraryId == item.library }
-        LibraryOrderEntryViaTypedEntity(module, index, item, library, updater)
+        LibraryOrderEntryViaTypedEntity(rootModel, index, item, library, updater)
       }
-      is ModuleDependencyItem.SdkDependency -> SdkOrderEntryViaTypedEntity(module, index, item)
-      is ModuleDependencyItem.InheritedSdkDependency -> InheritedSdkOrderEntryViaTypedEntity(module, index, item)
-      is ModuleDependencyItem.ModuleSourceDependency -> ModuleSourceOrderEntryViaTypedEntity(module, index, item)
+      is ModuleDependencyItem.SdkDependency -> SdkOrderEntryViaTypedEntity(rootModel, index, item)
+      is ModuleDependencyItem.InheritedSdkDependency -> InheritedSdkOrderEntryViaTypedEntity(rootModel, index, item)
+      is ModuleDependencyItem.ModuleSourceDependency -> ModuleSourceOrderEntryViaTypedEntity(rootModel, index, item)
     }
   }
 

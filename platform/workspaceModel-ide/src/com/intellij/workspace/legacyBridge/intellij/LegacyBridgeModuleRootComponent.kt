@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspace.api.CachedValue
 import com.intellij.workspace.api.DisposableCachedValue
+import com.intellij.workspace.api.TypedEntityStorage
 import com.intellij.workspace.api.TypedEntityStorageBuilder
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
 import com.intellij.workspace.legacyBridge.typedModel.module.RootModelViaTypedEntityImpl
@@ -21,9 +22,9 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
 class LegacyBridgeModuleRootComponent(
   private val currentModule: Module
-) : ModuleRootManagerEx(), Disposable {
+) : ModuleRootManagerEx(), Disposable, LegacyBridgeModuleRootModel {
 
-  private val legacyBridgeModule = currentModule as LegacyBridgeModule
+  override val legacyBridgeModule = currentModule as LegacyBridgeModule
 
   private val orderRootsCache =  OrderRootsCache(currentModule)
 
@@ -33,14 +34,12 @@ class LegacyBridgeModuleRootComponent(
     { legacyBridgeModule.entityStore },
     CachedValue { storage ->
       RootModelViaTypedEntityImpl(
-        module = legacyBridgeModule,
         moduleEntityId = legacyBridgeModule.moduleEntityId,
         storage = storage,
-        filePointerProvider = LegacyBridgeFilePointerProvider.getInstance(legacyBridgeModule),
+        moduleLibraryTable = moduleLibraryTable,
         itemUpdater = null,
         // TODO
-        moduleLibraryTable = moduleLibraryTable,
-        accessor = RootConfigurationAccessor.DEFAULT_INSTANCE,
+        rootModel = this,
         updater = null
       )
     }).also { Disposer.register(this, it) }
@@ -63,8 +62,14 @@ class LegacyBridgeModuleRootComponent(
     }, false, null)
   }
 
-  internal val model: RootModelViaTypedEntityImpl
+  private val model: RootModelViaTypedEntityImpl
     get() = modelValue.value
+
+  override val storage: TypedEntityStorage
+    get() = legacyBridgeModule.entityStore.current
+
+  override val accessor: RootConfigurationAccessor
+    get() = RootConfigurationAccessor.DEFAULT_INSTANCE
 
   override fun dispose() = Unit
 

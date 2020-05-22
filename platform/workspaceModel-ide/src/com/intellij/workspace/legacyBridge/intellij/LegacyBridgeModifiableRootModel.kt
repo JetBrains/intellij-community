@@ -34,11 +34,11 @@ import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 class LegacyBridgeModifiableRootModel(
   diff: TypedEntityStorageBuilder,
-  private val legacyBridgeModule: LegacyBridgeModule,
+  override val legacyBridgeModule: LegacyBridgeModule,
   internal val moduleId: ModuleId,
   private val initialStorage: TypedEntityStorage,
-  private val accessor: RootConfigurationAccessor
-) : LegacyBridgeModifiableBase(diff), ModifiableRootModel, ModificationTracker {
+  override val accessor: RootConfigurationAccessor
+) : LegacyBridgeModifiableBase(diff), ModifiableRootModel, ModificationTracker, LegacyBridgeModuleRootModel {
 
   override fun getModificationCount(): Long = diff.modificationCount
 
@@ -75,6 +75,9 @@ class LegacyBridgeModifiableRootModel(
       )
     }
   }
+
+  override val storage: TypedEntityStorage
+    get() = entityStoreOnDiff.current
 
   private val contentEntries
     get() = entityStoreOnDiff.cachedValue(contentEntriesImplValue)
@@ -215,10 +218,15 @@ class LegacyBridgeModifiableRootModel(
   }
 
   override fun findLibraryOrderEntry(library: Library): LibraryOrderEntry? {
-    val libraryIdToFind = (library as LegacyBridgeLibrary).libraryId
-    return orderEntries
-      .filterIsInstance<LibraryOrderEntry>()
-      .firstOrNull { libraryIdToFind == (it.library as? LegacyBridgeLibrary)?.libraryId }
+    if (library is LegacyBridgeLibrary) {
+      val libraryIdToFind = (library as LegacyBridgeLibrary).libraryId
+      return orderEntries
+        .filterIsInstance<LibraryOrderEntry>()
+        .firstOrNull { libraryIdToFind == (it.library as? LegacyBridgeLibrary)?.libraryId }
+    }
+    else {
+      return orderEntries.filterIsInstance<LibraryOrderEntry>().firstOrNull { it.library == library }
+    }
   }
 
   override fun removeOrderEntry(orderEntry: OrderEntry) {
@@ -435,10 +443,9 @@ class LegacyBridgeModifiableRootModel(
 
   private val modelValue = CachedValue { storage ->
     RootModelViaTypedEntityImpl(
-      module = legacyBridgeModule,
       moduleEntityId = moduleId,
       storage = storage,
-      filePointerProvider = LegacyBridgeFilePointerProvider.getInstance(legacyBridgeModule),
+      moduleLibraryTable = moduleLibraryTable,
       itemUpdater = { index, transformer -> updateDependencies { dependencies ->
           val mutableList = dependencies.toMutableList()
 
@@ -449,8 +456,7 @@ class LegacyBridgeModifiableRootModel(
           mutableList.toList()
         }
       },
-      moduleLibraryTable = moduleLibraryTable,
-      accessor = accessor,
+      rootModel = this,
       updater = { transformer -> transformer(diff) }
     )
   }
