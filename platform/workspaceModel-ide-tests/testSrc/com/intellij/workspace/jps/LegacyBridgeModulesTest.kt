@@ -628,7 +628,7 @@ class LegacyBridgeModulesTest {
   }
 
   @Test
-  fun `test disposed module doesn't appear in "roots changed"`() = WriteCommandAction.runWriteCommandAction(project) {
+  fun `test disposed module doesn't appear in rootsChanged`() = WriteCommandAction.runWriteCommandAction(project) {
     val moduleName = "build"
     val moduleFile = File(project.basePath, "$moduleName.iml")
     val module = ModuleManager.getInstance(project).modifiableModel.let { moduleModel ->
