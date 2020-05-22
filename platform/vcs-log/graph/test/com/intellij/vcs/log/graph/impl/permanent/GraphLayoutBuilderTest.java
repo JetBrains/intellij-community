@@ -89,5 +89,4 @@ public abstract class GraphLayoutBuilderTest<CommitId> extends AbstractTestWithT
       return CommitIdManager.INTEGER_COMMIT_ID_MANAGER;
     }
   }
-
 }

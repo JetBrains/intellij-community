@@ -52,5 +52,4 @@ public class EdgeNodeCharConverter {
   public static char toChar(@NotNull GraphNodeType type) {
     return REVERSE_GRAPH_NODE_TYPE_MAP.get(type);
   }
-
 }

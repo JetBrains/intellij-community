@@ -26,7 +26,6 @@ import com.intellij.vcs.log.data.SingleTaskController
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInBackground
-import org.jetbrains.annotations.NotNull
 import java.awt.BorderLayout
 import javax.swing.JPanel
 import javax.swing.border.Border

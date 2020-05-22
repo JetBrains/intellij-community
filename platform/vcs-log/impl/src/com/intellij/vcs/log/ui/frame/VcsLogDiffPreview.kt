@@ -25,8 +25,8 @@ import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
 
 private fun toggleDiffPreviewOnPropertyChange(uiProperties: VcsLogUiProperties,
-                                      parent: Disposable,
-                                      showDiffPreview: (Boolean) -> Unit) {
+                                              parent: Disposable,
+                                              showDiffPreview: (Boolean) -> Unit) {
   val propertiesChangeListener: PropertiesChangeListener = object : PropertiesChangeListener {
     override fun <T> onPropertyChanged(property: VcsLogUiProperty<T>) {
       if (CommonUiProperties.SHOW_DIFF_PREVIEW == property) {

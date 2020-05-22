@@ -154,34 +154,34 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
       Task.Backgroundable task = new Task.Backgroundable(null,
                                                          VcsLogBundle.message("vcs.log.loading.selected.details.process"),
                                                          true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            indicator.checkCanceled();
-            try {
-              TIntObjectHashMap<T> map = preLoadCommitData(toLoad);
-              map.forEachValue(value -> {
-                result.add(value);
-                return true;
-              });
-              sortCommitsByRow(result, commits);
-              notifyLoaded();
-            }
-            catch (VcsException e) {
-              LOG.warn(e);
-              throw new RuntimeException(e);
-            }
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          indicator.checkCanceled();
+          try {
+            TIntObjectHashMap<T> map = preLoadCommitData(toLoad);
+            map.forEachValue(value -> {
+              result.add(value);
+              return true;
+            });
+            sortCommitsByRow(result, commits);
+            notifyLoaded();
           }
+          catch (VcsException e) {
+            LOG.warn(e);
+            throw new RuntimeException(e);
+          }
+        }
 
-          @Override
-          public void onSuccess() {
-            consumer.consume(result);
-          }
+        @Override
+        public void onSuccess() {
+          consumer.consume(result);
+        }
 
-          @Override
-          public void onThrowable(@NotNull Throwable error) {
-            errorConsumer.consume(error);
-          }
-        };
+        @Override
+        public void onThrowable(@NotNull Throwable error) {
+          errorConsumer.consume(error);
+        }
+      };
       if (indicator != null) {
         ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, indicator);
       }

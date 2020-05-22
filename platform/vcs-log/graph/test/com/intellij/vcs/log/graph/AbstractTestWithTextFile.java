@@ -33,5 +33,4 @@ abstract class AbstractTestWithTextFile {
   protected String loadText(String filename) throws IOException {
     return FileUtil.loadFile(new File(myDirectory, filename), true);
   }
-
 }

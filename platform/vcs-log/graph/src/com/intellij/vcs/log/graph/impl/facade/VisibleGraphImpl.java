@@ -173,7 +173,8 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
       boolean selectionChanged;
       if (answer.getSelectedNodeIds() != null) {
         selectionChanged = myPrintElementManager.setSelectedElements(answer.getSelectedNodeIds());
-      } else {
+      }
+      else {
         selectionChanged = myPrintElementManager.setSelectedElements(Collections.emptySet());
       }
 
@@ -199,8 +200,10 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
       if (affectedElement != null) {
         if (affectedElement instanceof PrintElementWithGraphElement) {
           printElement = (PrintElementWithGraphElement)affectedElement;
-        } else {
-          printElement = ContainerUtil.find(myPrintElementGenerator.getPrintElements(affectedElement.getRowIndex()), it -> it.equals(affectedElement));
+        }
+        else {
+          printElement = ContainerUtil.find(myPrintElementGenerator.getPrintElements(affectedElement.getRowIndex()),
+                                            it -> it.equals(affectedElement));
           if (printElement == null) {
             throw new IllegalStateException("Not found graphElement for this printElement: " + affectedElement);
           }

@@ -193,8 +193,9 @@ public abstract class VcsLogUserFilterTest {
 
     MultiMap<VcsUser, String> commits = generateHistory(users);
     List<VcsCommitMetadata> metadata = generateMetadata(commits);
-    VcsLogUserFilter filter =
-      VcsLogFilterObject.fromUserNames(singleton(VcsLogFilterObject.ME), singletonMap(myProject.getBaseDir(), petrov), new HashSet<>(users));
+    VcsLogUserFilter filter = VcsLogFilterObject.fromUserNames(singleton(VcsLogFilterObject.ME),
+                                                               singletonMap(myProject.getBaseDir(), petrov),
+                                                               new HashSet<>(users));
 
     StringBuilder builder = new StringBuilder();
     checkFilter(filter, "me", commits.get(petrov), metadata, builder);

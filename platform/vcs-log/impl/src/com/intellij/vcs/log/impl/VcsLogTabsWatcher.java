@@ -146,7 +146,9 @@ public final class VcsLogTabsWatcher implements Disposable {
     return VcsLogEditorUtilKt.findSelectedLogIds(project);
   }
 
-  private static void addContentManagerListener(@NotNull ToolWindow window, @NotNull ContentManagerListener listener, @NotNull Disposable disposable) {
+  private static void addContentManagerListener(@NotNull ToolWindow window,
+                                                @NotNull ContentManagerListener listener,
+                                                @NotNull Disposable disposable) {
     window.getContentManager().addContentManagerListener(listener);
     Disposer.register(disposable, () -> {
       if (!window.isDisposed()) {

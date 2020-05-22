@@ -26,5 +26,4 @@ public class TreeIntToIntMapTest extends UpdatableIntToIntMapTest {
   protected UpdatableIntToIntMap createUpdatableIntToIntMap(@NotNull BooleanFunction<Integer> thisIsVisible, int longSize) {
     return TreeIntToIntMap.newInstance(thisIsVisible, longSize);
   }
-
 }

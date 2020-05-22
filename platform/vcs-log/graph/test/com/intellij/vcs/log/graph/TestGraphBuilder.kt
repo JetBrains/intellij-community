@@ -112,14 +112,15 @@ class TestGraphBuilder : BaseTestGraphBuilder {
 
     override fun getNodeId(nodeIndex: Int): Int = nodeIndexToId[nodeIndex]!!
 
-    override fun getAdjacentEdges(nodeIndex: Int, filter: EdgeFilter)
-      = edges[nodeIndex].filter {
-      if (it.type.isNormalEdge) {
-        (LinearGraphUtils.isEdgeUp(it, nodeIndex) && filter.upNormal)
-        || (LinearGraphUtils.isEdgeDown(it, nodeIndex) && filter.downNormal)
-      }
-      else {
-        filter.special
+    override fun getAdjacentEdges(nodeIndex: Int, filter: EdgeFilter): List<GraphEdge> {
+      return edges[nodeIndex].filter {
+        if (it.type.isNormalEdge) {
+          (LinearGraphUtils.isEdgeUp(it, nodeIndex) && filter.upNormal)
+          || (LinearGraphUtils.isEdgeDown(it, nodeIndex) && filter.downNormal)
+        }
+        else {
+          filter.special
+        }
       }
     }
 
