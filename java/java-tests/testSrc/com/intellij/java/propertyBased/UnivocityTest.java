@@ -102,7 +102,7 @@ public class UnivocityTest extends BaseUnivocityTest {
         env.executeCommands(Generator.constant(env1 -> {
           PsiJavaFile file = env1.generateValue(javaFiles, "Open %s in editor");
 
-          Map<Generator<? extends MadTestingAction>, Integer> actionWeights = new LinkedHashMap<>();
+          LinkedHashMap<Generator<? extends MadTestingAction>, Integer> actionWeights = new LinkedHashMap<>();
 
           List<ActionOnFile> psiMutations = Arrays.asList(new DeleteRange(file),
                                                           new AddNullArgument(file),
