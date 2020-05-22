@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.template;
 
@@ -9,7 +9,10 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.VolatileNullableLazyValue;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.util.NlsContexts.Label;
 
@@ -47,7 +50,15 @@ public abstract class TemplateContextType {
     return myContextId;
   }
 
+  /**
+   * @deprecated use {@link #isInContext(TemplateActionContext)}
+   */
+  @Deprecated
   public abstract boolean isInContext(@NotNull PsiFile file, int offset);
+
+  public boolean isInContext(@NotNull TemplateActionContext templateActionContext) {
+    return isInContext(templateActionContext.getFile(), templateActionContext.getStartOffset());
+  }
 
   /**
    * @return whether an abbreviation of this context's template can be entered in editor
