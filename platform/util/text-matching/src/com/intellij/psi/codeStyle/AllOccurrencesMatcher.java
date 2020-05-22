@@ -1,14 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * {@link FixingLayoutMatcher} extension that returns all matches (not just the first one)
@@ -17,8 +17,11 @@ import java.util.List;
 public class AllOccurrencesMatcher extends MinusculeMatcher {
   private final MinusculeMatcher delegate;
 
-  private AllOccurrencesMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, String hardSeparators) {
-    delegate = new FixingLayoutMatcher(pattern, options, hardSeparators);
+  public AllOccurrencesMatcher(@NotNull String pattern,
+                               @NotNull NameUtil.MatchingCaseSensitivity options,
+                               String hardSeparators,
+                               @Nullable Function<Character, Character> asciiToCharConverter) {
+    delegate = new FixingLayoutMatcher(pattern, options, hardSeparators, asciiToCharConverter);
   }
 
   @NotNull
@@ -36,10 +39,10 @@ public class AllOccurrencesMatcher extends MinusculeMatcher {
   @Override
   public FList<TextRange> matchingFragments(@NotNull String name) {
     FList<TextRange> match = delegate.matchingFragments(name);
-    if (!ContainerUtil.isEmpty(match)) {
+    if (match != null && !match.isEmpty()) {
       List<FList<TextRange>> allMatchesReversed = new ArrayList<>();
       int lastOffset = 0;
-      while (!ContainerUtil.isEmpty(match)) {
+      while (match != null && !match.isEmpty()) {
         FList<TextRange> reversedWithAbsoluteOffsets = FList.emptyList();
         for (TextRange r : match) {
           reversedWithAbsoluteOffsets = reversedWithAbsoluteOffsets.prepend(r.shiftRight(lastOffset));
@@ -63,9 +66,5 @@ public class AllOccurrencesMatcher extends MinusculeMatcher {
     return "AllOccurrencesMatcher{" +
            "delegate=" + delegate +
            '}';
-  }
-
-  public static MinusculeMatcher create(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, String hardSeparators) {
-    return new AllOccurrencesMatcher(pattern, options, hardSeparators);
   }
 }

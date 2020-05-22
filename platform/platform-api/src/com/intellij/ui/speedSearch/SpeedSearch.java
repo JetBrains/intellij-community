@@ -3,12 +3,10 @@ package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.codeStyle.AllOccurrencesMatcher;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.ui.FixingLayoutMatcherUtil;
-import com.intellij.util.ui.KeyboardLayoutUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -132,7 +130,7 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
       String pattern = "*" + string;
       NameUtil.MatchingCaseSensitivity caseSensitivity = NameUtil.MatchingCaseSensitivity.NONE;
       String separators = "";
-      myMatcher = myMatchAllOccurrences ? AllOccurrencesMatcher.create(pattern, caseSensitivity, KeyboardLayoutUtil::getAsciiForChar, separators)
+      myMatcher = myMatchAllOccurrences ? FixingLayoutMatcherUtil.createAllOccurrencesMatcher(pattern, caseSensitivity, separators)
                                         : FixingLayoutMatcherUtil.create(pattern, caseSensitivity, separators);
     }
     catch (Exception e) {

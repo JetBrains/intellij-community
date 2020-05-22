@@ -4,7 +4,6 @@ package com.intellij.psi.util;
 
 import com.intellij.ide.util.FileStructureDialog;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.codeStyle.AllOccurrencesMatcher;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.testFramework.UsefulTestCase;
@@ -659,7 +658,7 @@ public class NameUtilMatchingTest extends TestCase {
 
   public void testMatchingAllOccurrences() {
     String text = "some text";
-    MinusculeMatcher matcher = AllOccurrencesMatcher.create("*e", NameUtil.MatchingCaseSensitivity.NONE, null, "");
+    MinusculeMatcher matcher = FixingLayoutMatcherUtil.createAllOccurrencesMatcher("*e", NameUtil.MatchingCaseSensitivity.NONE, "");
     UsefulTestCase.assertOrderedEquals(matcher.matchingFragments(text),
                         new TextRange(3, 4), new TextRange(6, 7));
   }
