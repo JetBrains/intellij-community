@@ -31,9 +31,6 @@ public class RerunSearchAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     UsageView usageView = e.getData(UsageView.USAGE_VIEW_KEY);
-    boolean isEnabled = usageView instanceof UsageViewImpl;
-    Presentation presentation = e.getPresentation();
-    if (isEnabled) presentation.setVisible(((UsageViewImpl)usageView).canPerformReRun());
-    presentation.setEnabled(isEnabled);
+    e.getPresentation().setEnabledAndVisible(usageView instanceof UsageViewImpl && ((UsageViewImpl)usageView).canPerformReRun());
   }
 }
