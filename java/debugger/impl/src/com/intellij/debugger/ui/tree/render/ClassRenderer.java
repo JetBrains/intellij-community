@@ -288,45 +288,18 @@ public class ClassRenderer extends NodeRendererImpl{
     }
   }
 
-  private static CompletableFuture<Boolean> valueExpandableAsync(Value value)  {
-    if(value instanceof ArrayReference) {
+  @Override
+  public CompletableFuture<Boolean> isExpandableAsync(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    if (value instanceof ArrayReference) {
       return DebuggerUtilsAsync.length((ArrayReference)value).thenApply(r -> r > 0).exceptionally(throwable -> true);
     }
-    else if(value instanceof ObjectReference) {
+    else if (value instanceof ObjectReference) {
       return CompletableFuture.completedFuture(true); // if object has no fields, it contains a child-message about that
       //return ((ObjectReference)value).referenceType().allFields().size() > 0;
     }
 
     return CompletableFuture.completedFuture(false);
-  }
-
-  private static boolean valueExpandable(Value value)  {
-    try {
-      if(value instanceof ArrayReference) {
-        return ((ArrayReference)value).length() > 0;
-      }
-      else if(value instanceof ObjectReference) {
-        return true; // if object has no fields, it contains a child-message about that
-        //return ((ObjectReference)value).referenceType().allFields().size() > 0;
-      }
-    }
-    catch (ObjectCollectedException e) {
-      return true;
-    }
-
-    return false;
-  }
-
-  @Override
-  public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    return valueExpandable(value);
-  }
-
-  @Override
-  public CompletableFuture<Boolean> isExpandableAsync(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    return valueExpandableAsync(value);
   }
 
   @Override

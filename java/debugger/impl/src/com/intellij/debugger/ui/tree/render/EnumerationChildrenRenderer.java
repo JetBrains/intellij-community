@@ -132,12 +132,6 @@ public final class EnumerationChildrenRenderer extends TypeRenderer implements C
   }
 
   @Override
-  public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
-    return myChildren.size() > 0 ||
-           (myAppendDefaultChildren && DebugProcessImpl.getDefaultRenderer(value).isExpandable(value, evaluationContext, parentDescriptor));
-  }
-
-  @Override
   public CompletableFuture<Boolean> isExpandableAsync(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
     if (myChildren.size() > 0) {
       return CompletableFuture.completedFuture(true);

@@ -28,7 +28,13 @@ public interface ChildrenRenderer extends Renderer {
    */
   PsiElement getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException;
 
-  boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor);
+  /**
+   * @deprecated override {@link #isExpandableAsync(Value, EvaluationContext, NodeDescriptor)}
+   */
+  @Deprecated
+  default boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
+    throw new AbstractMethodError("isExpandableAsync is not implemented");
+  }
 
   default CompletableFuture<Boolean> isExpandableAsync(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
     return CompletableFuture.completedFuture(isExpandable(value, evaluationContext, parentDescriptor));

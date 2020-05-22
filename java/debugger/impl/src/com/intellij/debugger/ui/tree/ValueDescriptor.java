@@ -25,6 +25,8 @@ public interface ValueDescriptor extends NodeDescriptor{
 
   void setValueLabel(String label);
 
+  void setIdLabel(String idLabel);
+
   String setValueLabelFailed(EvaluateException e);
 
   Icon setValueIcon(Icon icon);

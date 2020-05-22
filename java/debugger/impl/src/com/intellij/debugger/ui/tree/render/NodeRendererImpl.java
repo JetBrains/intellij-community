@@ -3,7 +3,6 @@ package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.settings.NodeRendererSettings;
@@ -11,6 +10,7 @@ import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
+import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
 import com.sun.jdi.ObjectReference;
@@ -18,8 +18,6 @@ import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.concurrent.CompletableFuture;
 
 public abstract class NodeRendererImpl implements NodeRenderer {
   public static final String DEFAULT_NAME = "unnamed";
@@ -110,16 +108,28 @@ public abstract class NodeRendererImpl implements NodeRenderer {
     return getName();
   }
 
+
+  private static final String DEPRECATED_VALUE = "DEPRECATED_VALUE";
+  /**
+   * @deprecated Override {@link #calcIdLabel(Value, DebugProcess, DescriptorLabelListener)}
+   */
+  @Deprecated
   @Nullable
   public String getIdLabel(Value value, DebugProcess process) {
-    return value instanceof ObjectReference && isShowType() ? ValueDescriptorImpl.getIdLabel((ObjectReference)value) : null;
+    return DEPRECATED_VALUE;
   }
 
-  @NotNull
-  public CompletableFuture<String> getIdLabelAsync(Value value, DebugProcess process, SuspendContext context) {
-    return value instanceof ObjectReference && isShowType()
-           ? ValueDescriptorImpl.getIdLabelAsync((ObjectReference)value, context)
-           : CompletableFuture.completedFuture(null);
+  @Nullable
+  public String calcIdLabel(ValueDescriptor descriptor, DebugProcess process, DescriptorLabelListener labelListener) {
+    Value value = descriptor.getValue();
+    String id = getIdLabel(value, process);
+    if (DEPRECATED_VALUE != id) {
+      return id;
+    }
+    if (!(value instanceof ObjectReference) || !isShowType()) {
+      return null;
+    }
+    return ValueDescriptorImpl.calcIdLabel(descriptor, labelListener);
   }
 
   public boolean hasOverhead() {

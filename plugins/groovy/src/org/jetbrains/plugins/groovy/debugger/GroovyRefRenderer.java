@@ -67,11 +67,12 @@ public class GroovyRefRenderer extends NodeRendererImpl {
     return getDelegateRenderer(context.getDebugProcess(), fieldDescriptor).getChildValueExpression(node, context);
   }
 
+  // TODO: make truly async
   @Override
-  public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
+  public CompletableFuture<Boolean> isExpandableAsync(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
     ValueDescriptor fieldDescriptor = getWrappedDescriptor(value, evaluationContext.getProject());
-    return getDelegateRenderer(evaluationContext.getDebugProcess(), fieldDescriptor).isExpandable(fieldDescriptor.getValue(),
-                                                                                                  evaluationContext, fieldDescriptor);
+    return getDelegateRenderer(evaluationContext.getDebugProcess(), fieldDescriptor)
+      .isExpandableAsync(fieldDescriptor.getValue(), evaluationContext, fieldDescriptor);
   }
 
   @Override
@@ -118,10 +119,10 @@ public class GroovyRefRenderer extends NodeRendererImpl {
     };
   }
 
-  @Nullable
+  // TODO: make truly async
   @Override
-  public String getIdLabel(Value value, DebugProcess process) {
-    ValueDescriptor fieldDescriptor = getWrappedDescriptor(value, process.getProject());
-    return ((NodeRendererImpl)getDelegateRenderer(process, fieldDescriptor)).getIdLabel(fieldDescriptor.getValue(), process);
+  public @Nullable String calcIdLabel(ValueDescriptor descriptor, DebugProcess process, DescriptorLabelListener labelListener) {
+    ValueDescriptor fieldDescriptor = getWrappedDescriptor(descriptor.getValue(), process.getProject());
+    return ((NodeRendererImpl)getDelegateRenderer(process, fieldDescriptor)).calcIdLabel(fieldDescriptor, process, labelListener);
   }
 }

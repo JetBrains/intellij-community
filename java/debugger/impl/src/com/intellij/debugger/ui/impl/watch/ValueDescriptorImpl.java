@@ -323,17 +323,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
     //set label id
     if (isShowIdLabel() && renderer instanceof NodeRendererImpl) {
-      CompletableFuture<String> asyncId =
-        ((NodeRendererImpl)renderer).getIdLabelAsync(getValue(), debugProcess, context.getSuspendContext());
-      if (asyncId.isDone()) {
-        myIdLabel = asyncId.join();
-      }
-      else {
-        asyncId.thenAccept(res -> {
-          myIdLabel = asyncId.join();
-          labelListener.labelChanged();
-        });
-      }
+      setIdLabel(((NodeRendererImpl)renderer).calcIdLabel(this, debugProcess, labelListener));
     }
 
     if (valueException == null) {
@@ -554,14 +544,25 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   public abstract PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException;
 
   public static String getIdLabel(ObjectReference objRef) {
-    return getIdLabelAsync(objRef, null).join();
+    return calcIdLabel(objRef, null, null);
   }
 
-  @NotNull
-  public static CompletableFuture<String> getIdLabelAsync(ObjectReference objRef, SuspendContext context) {
+  @Nullable
+  public static String calcIdLabel(ValueDescriptor descriptor, @NotNull DescriptorLabelListener labelListener) {
+    Value value = descriptor.getValue();
+    if (!(value instanceof ObjectReference)) {
+      return null;
+    }
+    return calcIdLabel((ObjectReference)value, descriptor, labelListener);
+  }
+
+  @Nullable
+  private static String calcIdLabel(ObjectReference objRef,
+                                    @Nullable ValueDescriptor descriptor,
+                                    @Nullable DescriptorLabelListener labelListener) {
     final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
     if (objRef instanceof StringReference && !classRenderer.SHOW_STRINGS_TYPE) {
-      return CompletableFuture.completedFuture(null);
+      return null;
     }
     StringBuilder buf = new StringBuilder();
     final boolean showConcreteType =
@@ -587,11 +588,26 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     if (objRef instanceof ArrayReference) {
       int idx = buf.indexOf("[");
       if(idx >= 0) {
-        return DebuggerUtilsAsync.length((ArrayReference)objRef).thenApply(length -> buf.insert(idx + 1, length).toString());
+        if (labelListener == null || descriptor == null) {
+          buf.insert(idx + 1, ((ArrayReference)objRef).length());
+        }
+        else {
+          CompletableFuture<String> asyncId = DebuggerUtilsAsync.length((ArrayReference)objRef)
+            .thenApply(length -> buf.insert(idx + 1, length).toString());
+          if (asyncId.isDone()) {
+            return asyncId.join();
+          }
+          else {
+            asyncId.thenAccept(res -> {
+              descriptor.setIdLabel(res);
+              labelListener.labelChanged();
+            });
+          }
+        }
       }
     }
 
-    return CompletableFuture.completedFuture(buf.toString());
+    return buf.toString();
   }
 
   private static boolean isEnumConstant(final ObjectReference objRef) {
@@ -612,6 +628,11 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   public String getIdLabel() {
     return myIdLabel;
+  }
+
+  @Override
+  public void setIdLabel(String idLabel) {
+    myIdLabel = idLabel;
   }
 
   public String getValueLabel() {

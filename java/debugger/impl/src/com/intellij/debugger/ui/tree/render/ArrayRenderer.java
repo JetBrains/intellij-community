@@ -234,11 +234,6 @@ public class ArrayRenderer extends NodeRendererImpl{
   }
 
   @Override
-  public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
-    return value instanceof ArrayReference && ((ArrayReference)value).length() > 0;
-  }
-
-  @Override
   public CompletableFuture<Boolean> isExpandableAsync(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
     if (!(value instanceof ArrayReference)) {
       return CompletableFuture.completedFuture(false);

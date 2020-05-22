@@ -2,7 +2,6 @@
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
-import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.settings.NodeRendererSettings;
@@ -55,11 +54,6 @@ public class CompoundNodeRenderer extends NodeRendererImpl{
   @Override
   public PsiElement getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
     return getChildrenRenderer().getChildValueExpression(node, context);
-  }
-
-  @Override
-  public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
-    return getChildrenRenderer().isExpandable(value, evaluationContext, parentDescriptor);
   }
 
   @Override

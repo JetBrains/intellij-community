@@ -5,7 +5,6 @@ import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
@@ -183,11 +182,6 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
   public PsiElement getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
     return DebugProcessImpl.getDefaultRenderer(((ValueDescriptor)node.getParent().getDescriptor()).getType())
       .getChildValueExpression(node, context);
-  }
-
-  @Override
-  public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
-    return DebugProcessImpl.getDefaultRenderer(value).isExpandable(value, evaluationContext, parentDescriptor);
   }
 
   @Override

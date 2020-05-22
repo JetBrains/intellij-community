@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class ExpressionChildrenRenderer extends TypeRenderer implements ChildrenRenderer {
   public static final @NonNls String UNIQUE_ID = "ExpressionChildrenRenderer";
@@ -153,14 +154,14 @@ public class ExpressionChildrenRenderer extends TypeRenderer implements Children
   }
 
   @Override
-  public boolean isExpandable(Value value, final EvaluationContext context, NodeDescriptor parentDescriptor) {
+  public CompletableFuture<Boolean> isExpandableAsync(Value value, EvaluationContext context, NodeDescriptor parentDescriptor) {
     final EvaluationContext evaluationContext = context.createEvaluationContext(value);
 
     if(!StringUtil.isEmpty(myChildrenExpandable.getReferenceExpression().getText())) {
       try {
         Value expanded = myChildrenExpandable.getEvaluator(evaluationContext.getProject()).evaluate(evaluationContext);
         if(expanded instanceof BooleanValue) {
-          return ((BooleanValue)expanded).booleanValue();
+          return CompletableFuture.completedFuture(((BooleanValue)expanded).booleanValue());
         }
       }
       catch (EvaluateException e) {
@@ -171,10 +172,10 @@ public class ExpressionChildrenRenderer extends TypeRenderer implements Children
     try {
       Value children = evaluateChildren(evaluationContext, parentDescriptor);
       ChildrenRenderer defaultChildrenRenderer = DebugProcessImpl.getDefaultRenderer(value.type());
-      return defaultChildrenRenderer.isExpandable(children, evaluationContext, parentDescriptor);
+      return defaultChildrenRenderer.isExpandableAsync(children, evaluationContext, parentDescriptor);
     }
     catch (EvaluateException e) {
-      return true;
+      return CompletableFuture.completedFuture(true);
     }
   }
 
