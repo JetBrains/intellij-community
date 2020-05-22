@@ -191,8 +191,8 @@ public class InstanceOfUtils {
       while (true) {
         if (context instanceof PsiPolyadicExpression) {
           IElementType tokenType = ((PsiPolyadicExpression)context).getOperationTokenType();
-          if (tokenType.equals(JavaTokenType.ANDAND)) {
-            PsiInstanceOfExpression instanceOf = findInstanceOf((PsiExpression)context, cast, true);
+          if (tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR)) {
+            PsiInstanceOfExpression instanceOf = findInstanceOf((PsiExpression)context, cast, tokenType.equals(JavaTokenType.ANDAND));
             if (instanceOf != null) {
               return instanceOf;
             }
