@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.actions;
 
+import com.intellij.model.ModelPatch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
@@ -8,8 +9,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.openapi.vcs.ex.*;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -20,9 +23,11 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 
 public final class VcsFacadeImpl extends VcsFacade {
@@ -328,4 +333,16 @@ public final class VcsFacadeImpl extends VcsFacade {
   public void markFilesDirty(@NotNull Project project, @NotNull List<? extends VirtualFile> virtualFiles) {
     VcsFileUtil.markFilesDirty(project, virtualFiles);
   }
+
+  @Override
+  public JComponent createPatchPreviewComponent(@NotNull Project project, @NotNull ModelPatch patch) {
+    List<Change> changes = EntryStream.of(patch.getBranchChanges()).mapKeyValue((file, content) -> {
+      FilePath filePath = VcsUtil.getFilePath(file);
+      ContentRevision current = new CurrentContentRevision(filePath);
+      ContentRevision changed = new SimpleContentRevision(content.toString(), filePath, "Patched");
+      return new Change(current, changed);
+    }).toList();
+    return new SimpleChangesBrowser(project, changes);
+  }
+
 }
