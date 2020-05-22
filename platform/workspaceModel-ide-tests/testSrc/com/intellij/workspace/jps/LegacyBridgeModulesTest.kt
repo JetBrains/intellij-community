@@ -1,5 +1,6 @@
 package com.intellij.workspace.jps
 
+import com.intellij.ProjectTopics.PROJECT_ROOTS
 import com.intellij.configurationStore.StoreUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -624,6 +625,26 @@ class LegacyBridgeModulesTest {
 
     assertEmpty(entityStore.current.entities(ContentRootEntity::class.java).toList())
     assertEmpty(entityStore.current.entities(SourceRootEntity::class.java).toList())
+  }
+
+  @Test
+  fun `test disposed module doesn't appear in "roots changed"`() = WriteCommandAction.runWriteCommandAction(project) {
+    val moduleName = "build"
+    val moduleFile = File(project.basePath, "$moduleName.iml")
+    val module = ModuleManager.getInstance(project).modifiableModel.let { moduleModel ->
+      val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as LegacyBridgeModule
+      moduleModel.commit()
+      module
+    }
+
+    project.messageBus.connect(disposableRule.disposable).subscribe(PROJECT_ROOTS, object : ModuleRootListener {
+      override fun rootsChanged(event: ModuleRootEvent) {
+        val modules = ModuleManager.getInstance(event.project).modules
+        assertEmpty(modules)
+      }
+    })
+
+    ModuleManager.getInstance(project).disposeModule(module)
   }
 }
 

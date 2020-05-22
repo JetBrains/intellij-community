@@ -12,8 +12,8 @@ import com.intellij.workspace.api.EntityStoreChanged
 import com.intellij.workspace.api.LibraryEntity
 import com.intellij.workspace.ide.WorkspaceModelChangeListener
 
-internal class LegacyBridgeProjectRootsChangeListener(private val project: Project) : WorkspaceModelChangeListener {
-  override fun beforeChanged(event: EntityStoreChanged) {
+internal class LegacyBridgeProjectRootsChangeListener(private val project: Project) {
+  fun beforeChanged(event: EntityStoreChanged) {
     if (project.isDisposed || Disposer.isDisposing(project)) return
     val projectRootManager = ProjectRootManager.getInstance(project)
     if (projectRootManager !is LegacyBridgeProjectRootManager) return
@@ -21,7 +21,7 @@ internal class LegacyBridgeProjectRootsChangeListener(private val project: Proje
     if (performUpdate) projectRootManager.fireRootsChanged(true)
   }
 
-  override fun changed(event: EntityStoreChanged) {
+  fun changed(event: EntityStoreChanged) {
     if (project.isDisposed || Disposer.isDisposing(project)) return
     val projectRootManager = ProjectRootManager.getInstance(project)
     if (projectRootManager !is LegacyBridgeProjectRootManager) return
