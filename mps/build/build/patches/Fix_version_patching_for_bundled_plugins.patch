@@ -1,0 +1,16 @@
+Index: community/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/DistributionJARsBuilder.groovy
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- community/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/DistributionJARsBuilder.groovy	(revision cd0e0cd424038a01b954878c54b97ea8e0acd02f)
++++ community/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/DistributionJARsBuilder.groovy	(date 1590141549516)
+@@ -809,7 +809,7 @@
+     def productLayout = buildContext.productProperties.productLayout
+     def includeInBuiltinCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
+             buildContext.proprietaryBuildTools.artifactsServer != null
+-    CompatibleBuildRange compatibleBuildRange = bundled ||
++    CompatibleBuildRange compatibleBuildRange =
+             //plugins included into the built-in custom plugin repository should use EXACT range because such custom repositories are used for nightly builds and there may be API differences between different builds
+             includeInBuiltinCustomRepository ? CompatibleBuildRange.EXACT :
+                     //when publishing plugins with EAP build let's use restricted range to ensure that users will update to a newer version of the plugin when they update to the next EAP or release build
