@@ -309,7 +309,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
 
   @NotNull
   public Object getDataAccessLock() {
-    return myEnumerator;
+    return myEnumerator.getDataAccessLock();
   }
 
   private static boolean doNewCompact() {

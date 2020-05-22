@@ -55,7 +55,7 @@ public class PersistentSetImpl<T> extends PersistentBTreeEnumerator<T> implement
   }
 
   @Override
-  public synchronized void markCorrupted() {
+  public void markCorrupted() {
     super.markCorrupted();
   }
 }

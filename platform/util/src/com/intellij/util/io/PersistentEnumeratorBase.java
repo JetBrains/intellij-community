@@ -253,6 +253,11 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
   }
 
+  @NotNull
+  protected Object getDataAccessLock() {
+    return this;
+  }
+
   void lockStorage() {
     myStorage.getPagedFileStorage().lock();
   }
@@ -503,16 +508,18 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   protected abstract int indexToAddr(int idx);
 
   @Override
-  public synchronized void close() throws IOException {
-    lockStorage();
-    try {
-      if (!myClosed) {
-        myClosed = true;
-        doClose();
+  public void close() throws IOException {
+    synchronized (getDataAccessLock()) {
+      lockStorage();
+      try {
+        if (!myClosed) {
+          myClosed = true;
+          doClose();
+        }
       }
-    }
-    finally {
-      unlockStorage();
+      finally {
+        unlockStorage();
+      }
     }
   }
 
@@ -526,28 +533,36 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
   }
 
-  public synchronized boolean isClosed() {
-    return myClosed;
+  public boolean isClosed() {
+    synchronized (getDataAccessLock()) {
+      return myClosed;
+    }
   }
 
   @Override
-  public synchronized boolean isDirty() {
-    return myDirty;
-  }
-
-  public synchronized boolean isCorrupted() {
-    return myCorrupted;
-  }
-
-  private synchronized void flush() throws IOException {
-    lockStorage();
-    try {
-      if (myStorage.isDirty() || isDirty()) {
-        doFlush();
-      }
+  public boolean isDirty() {
+    synchronized (getDataAccessLock()) {
+      return myDirty;
     }
-    finally {
-      unlockStorage();
+  }
+
+  public boolean isCorrupted() {
+    synchronized (getDataAccessLock()) {
+      return myCorrupted;
+    }
+  }
+
+  private void flush() throws IOException {
+    synchronized (getDataAccessLock()) {
+      lockStorage();
+      try {
+        if (myStorage.isDirty() || isDirty()) {
+          doFlush();
+        }
+      }
+      finally {
+        unlockStorage();
+      }
     }
   }
 
@@ -557,60 +572,66 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   @Override
-  public synchronized void force() {
-    lockStorage();
+  public void force() {
+    synchronized (getDataAccessLock()) {
+      lockStorage();
 
-    try {
-      myKeyStorage.force();
-      flush();
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    finally {
-      unlockStorage();
-    }
-  }
-
-  protected synchronized final void markDirty(boolean dirty) throws IOException {
-    if (dirty && myDirty && !myDirtyStatusUpdateInProgress) return;
-    lockStorage();
-    try {
-      if (myDirty) {
-        if (!dirty) {
-          myDirtyStatusUpdateInProgress = true;
-          if (myMarkCleanCallback != null) myMarkCleanCallback.flush();
-          if (!myCorrupted) {
-            myStorage.putInt(0, myVersion.correctlyClosedMagic);
-            myDirty = false;
-          }
-          myDirtyStatusUpdateInProgress = false;
-        }
-      }
-      else {
-        if (dirty) {
-          myDirtyStatusUpdateInProgress = true;
-          myStorage.putInt(0, myVersion.dirtyMagic);
-          myDirtyStatusUpdateInProgress = false;
-          myDirty = true;
-        }
-      }
-    }
-    finally {
-      unlockStorage();
-    }
-  }
-
-  protected synchronized void markCorrupted() {
-    if (!myCorrupted) {
-      myCorrupted = true;
-      if (LOG.isDebugEnabled()) LOG.debug("Marking corrupted:" + myFile, new Throwable());
       try {
-        markDirty(true);
-        force();
+        myKeyStorage.force();
+        flush();
       }
       catch (IOException e) {
-        // ignore...
+        throw new RuntimeException(e);
+      }
+      finally {
+        unlockStorage();
+      }
+    }
+  }
+
+  protected final void markDirty(boolean dirty) throws IOException {
+    synchronized (getDataAccessLock()) {
+      if (dirty && myDirty && !myDirtyStatusUpdateInProgress) return;
+      lockStorage();
+      try {
+        if (myDirty) {
+          if (!dirty) {
+            myDirtyStatusUpdateInProgress = true;
+            if (myMarkCleanCallback != null) myMarkCleanCallback.flush();
+            if (!myCorrupted) {
+              myStorage.putInt(0, myVersion.correctlyClosedMagic);
+              myDirty = false;
+            }
+            myDirtyStatusUpdateInProgress = false;
+          }
+        }
+        else {
+          if (dirty) {
+            myDirtyStatusUpdateInProgress = true;
+            myStorage.putInt(0, myVersion.dirtyMagic);
+            myDirtyStatusUpdateInProgress = false;
+            myDirty = true;
+          }
+        }
+      }
+      finally {
+        unlockStorage();
+      }
+    }
+  }
+
+  protected void markCorrupted() {
+    synchronized (getDataAccessLock()) {
+      if (!myCorrupted) {
+        myCorrupted = true;
+        if (LOG.isDebugEnabled()) LOG.debug("Marking corrupted:" + myFile, new Throwable());
+        try {
+          markDirty(true);
+          force();
+        }
+        catch (IOException e) {
+          // ignore...
+        }
       }
     }
   }
