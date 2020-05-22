@@ -12,7 +12,6 @@ import com.intellij.internal.statistic.eventLog.uploader.EventLogExternalUploade
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
 import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence;
-import com.intellij.internal.statistic.service.fus.collectors.LegacyFUSProjectUsageTrigger;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
@@ -113,7 +112,6 @@ final class StatisticsJobsScheduler implements ApplicationInitializedListener {
           LOG_PROJECTS_STATES_INITIAL_DELAY_IN_MIN,
           LOG_PROJECTS_STATES_DELAY_IN_MIN, TimeUnit.MINUTES);
         myPersistStatisticsSessionsMap.put(project, future);
-        LegacyFUSProjectUsageTrigger.cleanup(project);
       }
 
       @Override
