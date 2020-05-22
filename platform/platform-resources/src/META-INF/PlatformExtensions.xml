@@ -855,6 +855,10 @@
       <description>Defines whether to show "What's new" notification after IDE update or not.</description>
     </experimentalFeature>
 
+    <experimentalFeature id="search.everywhere.mixed.results" internalFeature="true" percentOfUsers="0">
+      <description>Use mixed list of results on All tab in Search Everywhere (instead of Files/Classes/Actions groups)</description>
+    </experimentalFeature>
+
     <rawEditorTypedHandler implementationClass="com.intellij.openapi.editor.impl.EditorFactoryImpl$MyRawTypedHandler"/>
 
     <postStartupActivity implementation="com.intellij.diagnostic.AnalyzePendingSnapshotActivity"/>
