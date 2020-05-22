@@ -128,12 +128,12 @@ public class WSLUtil {
    * @return instance of WSL distribution or null if it's unavailable
    */
   @Nullable
-  public static WSLDistribution getDistributionByName(@Nullable String name) {
+  public static WSLDistribution getDistributionByMsId(@Nullable String name) {
     if (name == null) {
       return null;
     }
     for (WSLDistribution distribution : getAvailableDistributions()) {
-      if (name.equals(distribution.getPresentableName())) {
+      if (name.equals(distribution.getMsId())) {
         return distribution;
       }
     }
