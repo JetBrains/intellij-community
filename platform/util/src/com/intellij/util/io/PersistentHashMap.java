@@ -37,7 +37,7 @@ import java.util.List;
  Also for certain Value types it is possible to avoid random reads at all: e.g. in case Value is non-negative integer the value can be stored
  directly in storage used for offset and in case of btree enumerator directly in btree leaf.
  **/
-public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<Key> implements AppendablePersistentMap<Key, Value> {
+public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Key, Value> {
 
   private static final Logger LOG = Logger.getInstance(PersistentHashMap.class);
   private static final boolean myDoTrace = SystemProperties.getBooleanProperty("idea.trace.persistent.map", false);
@@ -73,7 +73,12 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   private int myLargeIndexWatermarkId;  // starting with this id we store offset in adjacent file in long format
   private boolean myIntAddressForNewRecord;
   private static final boolean doHardConsistencyChecks = false;
-  private volatile boolean myBusyReading;
+  private final PersistentEnumeratorBase<Key> myEnumerator;
+
+  @TestOnly
+  public boolean isCorrupted() {
+    return myEnumerator.isCorrupted();
+  }
 
   private static class AppendStream extends DataOutputStream {
     private AppendStream() {
@@ -151,7 +156,11 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
                             int version,
                             @Nullable PagedFileStorage.StorageLockContext lockContext,
                             @NotNull PersistentHashMapValueStorage.CreationTimeOptions options) throws IOException {
-    super(checkDataFiles(file), keyDescriptor, initialSize, lockContext, modifyVersionDependingOnOptions(version, options));
+    myEnumerator = PersistentEnumeratorDelegate.createDefaultEnumerator(checkDataFiles(file),
+                                                                        keyDescriptor,
+                                                                        initialSize,
+                                                                        lockContext,
+                                                                        modifyVersionDependingOnOptions(version, options));
 
     myStorageFile = file;
     myKeyDescriptor = keyDescriptor;
@@ -288,7 +297,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
           }
         }
         catch (IOException e) {
-          markCorrupted();
+          myEnumerator.markCorrupted();
           throw new RuntimeException(e);
         }
         finally {
@@ -296,6 +305,11 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
         }
       }
     };
+  }
+
+  @NotNull
+  public Object getDataAccessLock() {
+    return myEnumerator;
   }
 
   private static boolean doNewCompact() {
@@ -309,7 +323,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
   public final void dropMemoryCaches() {
     if (myDoTrace) LOG.info("Drop memory caches " + myStorageFile);
-    synchronized (myEnumerator) {
+    synchronized (getDataAccessLock()) {
       doDropMemoryCaches();
     }
   }
@@ -393,7 +407,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   @Override
   public final void put(Key key, Value value) throws IOException {
     if (myIsReadOnly) throw new IncorrectOperationException();
-    synchronized (myEnumerator) {
+    synchronized (getDataAccessLock()) {
       try {
         doPut(key, value);
       }
@@ -453,12 +467,15 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
   }
 
-  @Override
-  public final int enumerate(Key name) throws IOException {
+  /**
+   * @deprecated hash map is not an enumerator
+   */
+  @Deprecated
+  public int enumerate(Key name) throws IOException {
     if (myIsReadOnly) throw new IncorrectOperationException();
-    synchronized (myEnumerator) {
+    synchronized (getDataAccessLock()) {
       myIntAddressForNewRecord = canUseIntAddressForNewRecord(myValueStorage.getSize());
-      return super.enumerate(name);
+      return myEnumerator.enumerate(name);
     }
   }
 
@@ -477,7 +494,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   @Override
   public final void appendData(Key key, @NotNull ValueDataAppender appender) throws IOException {
     if (myIsReadOnly) throw new IncorrectOperationException();
-    synchronized (myEnumerator) {
+    synchronized (getDataAccessLock()) {
       try {
         doAppendData(key, appender);
       }
@@ -514,7 +531,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
    */
   @Override
   public final boolean processKeys(@NotNull Processor<? super Key> processor) throws IOException {
-    synchronized (myEnumerator) {
+    synchronized (getDataAccessLock()) {
       try {
         myAppendCache.clear();
         return myEnumerator.iterateData(processor);
@@ -526,6 +543,21 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
   }
 
+  @Override
+  public boolean isClosed() {
+    return myEnumerator.isClosed();
+  }
+
+  @Override
+  public boolean isDirty() {
+    return myEnumerator.isDirty();
+  }
+
+  @Override
+  public void markDirty() throws IOException {
+    myEnumerator.markDirty(true);
+  }
+
   @NotNull
   public Collection<Key> getAllKeysWithExistingMapping() throws IOException {
     final List<Key> values = new ArrayList<>();
@@ -534,7 +566,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   public final boolean processKeysWithExistingMapping(Processor<? super Key> processor) throws IOException {
-    synchronized (myEnumerator) {
+    synchronized (getDataAccessLock()) {
       try {
         myAppendCache.clear();
         return myEnumerator.processAllDataObject(processor, new PersistentEnumerator.DataFilter() {
@@ -553,8 +585,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
   @Override
   public final Value get(Key key) throws IOException {
-    synchronized (myEnumerator) {
-      myBusyReading = true;
+    synchronized (getDataAccessLock()) {
       try {
         return doGet(key);
       }
@@ -565,9 +596,6 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
           LOG.warn(e);
         }
         throw ex;
-      }
-      finally {
-        myBusyReading = false;
       }
     }
   }
@@ -588,7 +616,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
         id = -1;
       }
       else {
-        id = tryEnumerate(key);
+        id = myEnumerator.tryEnumerate(key);
         if (id == PersistentEnumeratorBase.NULL_ID) {
           return null;
         }
@@ -644,7 +672,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   public final boolean containsMapping(Key key) throws IOException {
-    synchronized (myEnumerator) {
+    synchronized (getDataAccessLock()) {
       return doContainsMapping(key);
     }
   }
@@ -657,7 +685,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
         return ((PersistentBTreeEnumerator<Key>)myEnumerator).getNonNegativeValue(key) != NULL_ADDR;
       }
       else {
-        final int id = tryEnumerate(key);
+        final int id = myEnumerator.tryEnumerate(key);
         if (id == PersistentEnumeratorBase.NULL_ID) {
           return false;
         }
@@ -672,7 +700,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
   public final void remove(Key key) throws IOException {
     if (myIsReadOnly) throw new IncorrectOperationException();
-    synchronized (myEnumerator) {
+    synchronized (getDataAccessLock()) {
       doRemove(key);
     }
   }
@@ -691,7 +719,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
         }
       }
       else {
-        final int id = tryEnumerate(key);
+        final int id = myEnumerator.tryEnumerate(key);
         if (id == PersistentEnumeratorBase.NULL_ID) {
           return;
         }
@@ -715,7 +743,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   public final void force() {
     if (myIsReadOnly) return;
     if (myDoTrace) LOG.info("Forcing " + myStorageFile);
-    synchronized (myEnumerator) {
+    synchronized (getDataAccessLock()) {
       doForce();
     }
   }
@@ -727,7 +755,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
         clearAppenderCaches();
       }
       finally {
-        super.force();
+        myEnumerator.force();
       }
     }
     finally {
@@ -743,7 +771,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   @Override
   public final void close() throws IOException {
     if (myDoTrace) LOG.info("Closed " + myStorageFile);
-    synchronized (myEnumerator) {
+    synchronized (getDataAccessLock()) {
       doClose();
     }
   }
@@ -770,7 +798,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
           }
         }
         finally {
-          super.close();
+          myEnumerator.close();
         }
       }
     }
@@ -796,7 +824,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   // made public for tests
   public void compact() throws IOException {
     if (myIsReadOnly) throw new IncorrectOperationException();
-    synchronized (myEnumerator) {
+    synchronized (getDataAccessLock()) {
       force();
       LOG.info("Compacting " + myEnumerator.myFile);
       LOG.info("Live keys:" + (int)(myLiveAndGarbageKeysCounter / LIVE_KEY_MASK) +
@@ -823,7 +851,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
           newCompact(newStorage);
         }
         else {
-          traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
+          myEnumerator.traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
             @Override
             public boolean process(final int keyId) throws IOException {
               final long record = readValueId(keyId);
@@ -883,7 +911,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     long started = System.currentTimeMillis();
     final List<CompactionRecordInfo> infos = new ArrayList<>(10000);
 
-    traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
+    myEnumerator.traverseAllRecords(new PersistentEnumerator.RecordsProcessor() {
       @Override
       public boolean process(final int keyId) {
         final long record = readValueId(keyId);

@@ -572,8 +572,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
   }
 
-  protected final void markDirty(boolean dirty) throws IOException {
-    //assert Thread.holdsLock(this) || Thread.holdsLock(ourLock); // we hold one lock or another so can access myDirty
+  protected synchronized final void markDirty(boolean dirty) throws IOException {
     if (dirty && myDirty && !myDirtyStatusUpdateInProgress) return;
     lockStorage();
     try {
