@@ -41,6 +41,7 @@ internal object PySuggestedRefactoringUI : SuggestedRefactoringUI() {
           parameter.name,
           valueFragment,
           false,
+          placeholderText(shouldHaveDefaultValue),
           ParameterData(shouldHaveDefaultValue)
         )
       }
@@ -59,6 +60,11 @@ internal object PySuggestedRefactoringUI : SuggestedRefactoringUI() {
   override fun extractValue(fragment: PsiCodeFragment): SuggestedRefactoringExecution.NewParameterValue.Expression? {
     val expression = (fragment.firstChild as? PyExpressionStatement)?.expression ?: return null
     return SuggestedRefactoringExecution.NewParameterValue.Expression(expression)
+  }
+
+  private fun placeholderText(shouldHaveDefaultValue: Boolean): String? {
+    return if (shouldHaveDefaultValue) PyBundle.message("refactoring.change.signature.suggested.callSite.value")
+    else PyBundle.message("refactoring.change.signature.suggested.callSite.value.optional")
   }
 
   private fun shouldHaveDefaultValue(newParameter: Parameter, oldParameter: Parameter?): Boolean {
