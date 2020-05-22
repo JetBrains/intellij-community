@@ -318,20 +318,20 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     myState.directory.useDefault = useDefault;
   }
 
-  public SvnAuthenticationManager getAuthenticationManager(@NotNull SvnVcs svnVcs) {
+  public SvnAuthenticationManager getAuthenticationManager(@NotNull SvnVcs vcs) {
     if (myAuthManager == null) {
       // reloaded when configuration directory changes
-      myAuthManager = new SvnAuthenticationManager(svnVcs, getConfigurationPath());
-      getInteractiveManager(svnVcs);
+      myAuthManager = new SvnAuthenticationManager(vcs.getProject(), getConfigurationPath());
+      getInteractiveManager(vcs);
       // to init
-      myAuthManager.setAuthenticationProvider(new SvnAuthenticationProvider(svnVcs, myInteractiveProvider, myAuthManager));
+      myAuthManager.setAuthenticationProvider(new SvnAuthenticationProvider(vcs, myInteractiveProvider, myAuthManager));
     }
     return myAuthManager;
   }
 
-  public SvnAuthenticationManager getPassiveAuthenticationManager(@NotNull SvnVcs svnVcs) {
+  public SvnAuthenticationManager getPassiveAuthenticationManager(@NotNull SvnVcs vcs) {
     if (myPassiveAuthManager == null) {
-      myPassiveAuthManager = new SvnAuthenticationManager(svnVcs, getConfigurationPath());
+      myPassiveAuthManager = new SvnAuthenticationManager(vcs.getProject(), getConfigurationPath());
       myPassiveAuthManager.setAuthenticationProvider(new AuthenticationProvider() {
         @Override
         public AuthenticationData requestClientAuthentication(String kind, Url url, String realm, boolean canCache) {
@@ -347,10 +347,10 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     return myPassiveAuthManager;
   }
 
-  public SvnAuthenticationManager getInteractiveManager(@NotNull SvnVcs svnVcs) {
+  public SvnAuthenticationManager getInteractiveManager(@NotNull SvnVcs vcs) {
     if (myInteractiveManager == null) {
-      myInteractiveManager = new SvnAuthenticationManager(svnVcs, getConfigurationPath());
-      myInteractiveProvider = new SvnInteractiveAuthenticationProvider(svnVcs, myInteractiveManager);
+      myInteractiveManager = new SvnAuthenticationManager(vcs.getProject(), getConfigurationPath());
+      myInteractiveProvider = new SvnInteractiveAuthenticationProvider(vcs, myInteractiveManager);
       myInteractiveManager.setAuthenticationProvider(myInteractiveProvider);
     }
     return myInteractiveManager;
