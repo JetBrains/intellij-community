@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
 @ApiStatus.Internal
-public class StorageLock {
+class StorageLock {
   private static final Logger LOG = Logger.getInstance(StorageLock.class);
 
   static final int MAX_PAGES_COUNT = 0xFFFF;
@@ -73,11 +73,12 @@ public class StorageLock {
   private final ConcurrentIntObjectMap<PagedFileStorage> myIndex2Storage = ContainerUtil.createConcurrentIntObjectMap();
 
   private final LinkedHashMap<Integer, ByteBufferWrapper> mySegments;
+
   private final ReentrantLock mySegmentsAccessLock = new ReentrantLock(); // protects map operations of mySegments, needed for LRU order, mySize and myMappingChangeCount
   // todo avoid locking for access
-
   private final ReentrantLock mySegmentsAllocationLock = new ReentrantLock();
   private final ConcurrentLinkedQueue<ByteBufferWrapper> mySegmentsToRemove = new ConcurrentLinkedQueue<>();
+
   private volatile long mySize;
   private volatile long mySizeLimit;
   private volatile int myMappingChangeCount;

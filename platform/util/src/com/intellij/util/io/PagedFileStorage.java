@@ -20,6 +20,7 @@ public class PagedFileStorage implements Forceable {
   public static final int BUFFER_SIZE = StorageLock.BUFFER_SIZE;
 
   private static final ByteOrder ourNativeByteOrder = ByteOrder.nativeOrder();
+  private final static ThreadLocal<byte[]> ourTypedIOBuffer = ThreadLocal.withInitial(() -> new byte[8]);
 
   // It is important to have ourLock after previous static constants as it depends on them
   static final StorageLock ourLock = new StorageLock();
@@ -29,7 +30,6 @@ public class PagedFileStorage implements Forceable {
   private int myStorageIndex; // -1 when closed
   private final PagedFileStorageCache myLastAccessedBufferCache = new PagedFileStorageCache();
 
-  private final byte[] myTypedIOBuffer;
   private final Path myFile;
   protected final int myPageSize;
   protected final boolean myValuesAreBufferAligned;
@@ -47,7 +47,6 @@ public class PagedFileStorage implements Forceable {
     myPageSize = Math.max(pageSize > 0 ? pageSize : BUFFER_SIZE, Page.PAGE_SIZE);
     myValuesAreBufferAligned = valuesAreBufferAligned;
     myStorageIndex = myStorageLockContext.getStorageLock().registerPagedFileStorage(this);
-    myTypedIOBuffer = valuesAreBufferAligned ? null:new byte[8];
     myNativeBytesOrder = nativeBytesOrder;
   }
 
@@ -77,8 +76,8 @@ public class PagedFileStorage implements Forceable {
       int page_offset = (int)(addr % myPageSize);
       getBuffer(page).putInt(page_offset, value);
     } else {
-      Bits.putInt(myTypedIOBuffer, 0, value);
-      put(addr, myTypedIOBuffer, 0, 4);
+      Bits.putInt(getThreadLocalTypedIOBuffer(), 0, value);
+      put(addr, getThreadLocalTypedIOBuffer(), 0, 4);
     }
   }
 
@@ -88,8 +87,8 @@ public class PagedFileStorage implements Forceable {
       int page_offset = (int) (addr % myPageSize);
       return getReadOnlyBuffer(page).getInt(page_offset);
     } else {
-      get(addr, myTypedIOBuffer, 0, 4);
-      return Bits.getInt(myTypedIOBuffer, 0);
+      get(addr, getThreadLocalTypedIOBuffer(), 0, 4);
+      return Bits.getInt(getThreadLocalTypedIOBuffer(), 0);
     }
   }
 
@@ -109,8 +108,8 @@ public class PagedFileStorage implements Forceable {
       int page_offset = (int)(addr % myPageSize);
       getBuffer(page).putLong(page_offset, value);
     } else {
-      Bits.putLong(myTypedIOBuffer, 0, value);
-      put(addr, myTypedIOBuffer, 0, 8);
+      Bits.putLong(getThreadLocalTypedIOBuffer(), 0, value);
+      put(addr, getThreadLocalTypedIOBuffer(), 0, 8);
     }
   }
 
@@ -120,8 +119,8 @@ public class PagedFileStorage implements Forceable {
       int page_offset = (int)(addr % myPageSize);
       return getReadOnlyBuffer(page).getLong(page_offset);
     } else {
-      get(addr, myTypedIOBuffer, 0, 8);
-      return Bits.getLong(myTypedIOBuffer, 0);
+      get(addr, getThreadLocalTypedIOBuffer(), 0, 8);
+      return Bits.getLong(getThreadLocalTypedIOBuffer(), 0);
     }
   }
 
@@ -312,6 +311,10 @@ public class PagedFileStorage implements Forceable {
   private void markDirty(ByteBufferWrapper buffer) {
     if (!isDirty) isDirty = true;
     buffer.markDirty();
+  }
+
+  private static byte[] getThreadLocalTypedIOBuffer() {
+    return ourTypedIOBuffer.get();
   }
 
   @Override
