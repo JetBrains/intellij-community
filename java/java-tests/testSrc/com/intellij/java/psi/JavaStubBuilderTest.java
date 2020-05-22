@@ -68,6 +68,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    IMPORT_STATIC_STATEMENT:PsiImportStatementStub[static java.util.Arrays.sort]\n");
   }
 
+  @SuppressWarnings("deprecation")
   public void testClassDeclaration() {
     doTest("package p;" +
            "class A implements I, J<I> { }\n" +
@@ -116,6 +117,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
   }
 
+  @SuppressWarnings({"CStyleArrayDeclaration", "RedundantThrows", "UnnecessaryInterfaceModifier"})
   public void testMethods() {
     doTest("public @interface Anno {\n" +
            "  int i() default 42;\n" +
@@ -195,6 +197,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
   }
 
+  @SuppressWarnings({"CStyleArrayDeclaration", "MultipleVariablesInDeclaration"})
   public void testFields() {
     doTest("static class C {\n" +
            "  strictfp float f;\n" +
@@ -286,6 +289,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n");
   }
 
+  @SuppressWarnings({"MethodMayBeStatic", "Convert2Lambda", "override", "StatementWithEmptyBody", "EmptyTryBlock"})
   public void testLocalVariables() {
     doTest("class C {\n" +
            "  void m() {\n" +
@@ -330,6 +334,8 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "          THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
   }
 
+  @SuppressWarnings({"StatementWithEmptyBody", "NullableProblems", "ConstantConditions", "EmptyTryBlock", "CatchMayIgnoreException",
+    "TryWithIdenticalCatches"})
   public void testNonListParameters() {
     doTest("class C {\n" +
            "  {\n" +
@@ -382,6 +388,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
   }
 
+  @SuppressWarnings({"rawtypes", "InfiniteRecursion", "UnusedAssignment", "CStyleArrayDeclaration"})
   public void testTypeAnnotations() {
     doTest("import j.u.@A C;\n" +
            "import @A j.u.D;\n" +
@@ -476,6 +483,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   public void testLocalClass() {
     doTest("class C {\n" +
            "  void m() {\n" +
@@ -574,6 +582,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
   }
 
 
+  @SuppressWarnings("MethodMayBeStatic")
   public void testLocalRecordIncorrect() {
     doTest("class A {\n" +
            "  void test() {\n" +
