@@ -79,12 +79,12 @@ public final class DnDManagerImpl extends DnDManager {
   @Override
   public void unregisterSource(@NotNull DnDSource source, @NotNull JComponent component) {
     component.putClientProperty(SOURCE_KEY, null);
-    cleanup(source, null, null);
+    cleanup(null, null);
   }
 
-  private void cleanup(@Nullable final DnDSource source, @Nullable final DnDTarget target, @Nullable final JComponent targetComponent) {
+  private void cleanup(@Nullable final DnDTarget target, @Nullable final JComponent targetComponent) {
     Runnable cleanup = () -> {
-      if (shouldCancelCurrentDnDOperation(source, target, targetComponent)) {
+      if (shouldCancelCurrentDnDOperation(target, targetComponent)) {
         myLastProcessedOverComponent = null;
         myCurrentDragContext = null;
         resetEvents("cleanup");
@@ -99,9 +99,9 @@ public final class DnDManagerImpl extends DnDManager {
     }
   }
 
-  private boolean shouldCancelCurrentDnDOperation(DnDSource source, DnDTarget target, JComponent targetComponent) {
+  private boolean shouldCancelCurrentDnDOperation(DnDTarget target, JComponent targetComponent) {
     DnDEvent currentDnDEvent = myLastProcessedEvent;
-    if (currentDnDEvent == null || (source != null && currentDnDEvent.equals(source))) {
+    if (currentDnDEvent == null) {
       return true;
     }
 
@@ -129,7 +129,7 @@ public final class DnDManagerImpl extends DnDManager {
   public void unregisterTarget(DnDTarget target, JComponent component) {
     component.putClientProperty(TARGET_KEY, null);
 
-    cleanup(null, target, component);
+    cleanup(target, component);
   }
 
   private DnDEventImpl updateCurrentEvent(Component aComponentOverDragging, Point aPoint, int nativeAction, DataFlavor @Nullable [] flavors, @Nullable Transferable transferable) {
