@@ -300,13 +300,13 @@ internal class PEntityStorageBuilder(
     accumulateEntitiesToRemove(idx, accumulator)
 
     for (id in accumulator) {
-      entitiesByType.remove(id.arrayId, id.clazz)
       val entityData = entityDataById(id)
       if (entityData is PSoftLinkable) {
         for (link in entityData.getLinks()) {
           this.softLinks.remove(link, id)
         }
       }
+      entitiesByType.remove(id.arrayId, id.clazz)
     }
 
     // Update index
