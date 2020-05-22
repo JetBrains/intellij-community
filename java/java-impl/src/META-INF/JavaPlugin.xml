@@ -548,6 +548,7 @@
     <externalSystem.beforeRunTaskImporter implementation="com.intellij.compiler.options.CompileStepBeforeRunImporter"/>
     <externalSystemConfigurationHandler
         implementation="com.intellij.openapi.externalSystem.service.project.settings.CompilerConfigurationHandler"/>
+    <externalSystem.beforeRunTaskImporter implementation="com.intellij.openapi.externalSystem.service.project.settings.BuildArtifactsTaskImporter"/>
     <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.settings.ArtifactsImporter"/>
     <externalSystem.moduleDataServiceExtension implementation="com.intellij.openapi.externalSystem.service.project.ModuleDataServiceJavaExtension"/>
     <externalSystem.runConfigurationExtension implementation="com.intellij.execution.ExternalSystemRunConfigurationJavaExtension"/>
