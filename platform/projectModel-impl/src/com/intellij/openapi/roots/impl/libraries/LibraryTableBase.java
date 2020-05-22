@@ -136,9 +136,9 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     return createLibrary(null);
   }
 
-  void fireLibraryRenamed(@NotNull LibraryImpl library) {
+  void fireLibraryRenamed(@NotNull LibraryImpl library, String oldName) {
     incrementModificationCount();
-    myDispatcher.getMulticaster().afterLibraryRenamed(library);
+    myDispatcher.getMulticaster().afterLibraryRenamed(library, oldName);
   }
 
   private void incrementModificationCount() {

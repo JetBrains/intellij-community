@@ -140,7 +140,7 @@ internal class LegacyBridgeProjectLibraryTableImpl(
                   library.entityId = idAfter
                   addLibraryToMaps(library)
 
-                  dispatcher.multicaster.afterLibraryRenamed(library)
+                  dispatcher.multicaster.afterLibraryRenamed(library, LegacyBridgeLibraryImpl.getLegacyLibraryName(idBefore))
                 }
               }
             }

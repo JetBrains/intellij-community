@@ -549,11 +549,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
 
     @Override
-    public void afterLibraryRenamed(@NotNull final Library library) {
+    public void afterLibraryRenamed(@NotNull Library library, @Nullable String oldName) {
       incModificationCount();
       mergeRootsChangesDuring(() -> {
         for (LibraryTable.Listener listener : getListeners()) {
-          listener.afterLibraryRenamed(library);
+          listener.afterLibraryRenamed(library, oldName);
         }
       });
     }
