@@ -19,14 +19,12 @@ import java.util.Collection;
  * @author yole
  */
 public class ProjectFileIndexFacade extends FileIndexFacade {
-  private final DirectoryIndex myDirectoryIndex;
   private final ProjectFileIndex myFileIndex;
 
   protected ProjectFileIndexFacade(@NotNull Project project) {
     super(project);
 
     myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    myDirectoryIndex = DirectoryIndex.getInstance(project);
   }
 
   @Override
@@ -75,10 +73,11 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
     if (!childDir.isDirectory()) {
       childDir = childDir.getParent();
     }
+    DirectoryIndex dirIndex = DirectoryIndex.getInstance(myProject);
     while (true) {
       if (childDir == null) return false;
       if (childDir.equals(baseDir)) return true;
-      if (!myDirectoryIndex.getInfoForFile(childDir).isInProject(childDir)) return false;
+      if (!dirIndex.getInfoForFile(childDir).isInProject(childDir)) return false;
       childDir = childDir.getParent();
     }
   }
@@ -98,7 +97,7 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
   @Override
   public boolean isInProjectScope(@NotNull VirtualFile file) {
     // optimization: equivalent to the super method but has fewer getInfoForFile() calls
-    DirectoryInfo info = myDirectoryIndex.getInfoForFile(file);
+    DirectoryInfo info = ((ProjectFileIndexImpl)myFileIndex).getInfoForFileOrDirectory(file);
     if (!info.isInProject(file)) return false;
     if (info.hasLibraryClassRoot() && !info.isInModuleSource(file)) return false;
     return info.getModule() != null;
