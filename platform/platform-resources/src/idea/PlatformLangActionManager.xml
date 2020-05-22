@@ -111,8 +111,7 @@
         <reference ref="ProblemsView.ShowErrors"/>
         <reference ref="ProblemsView.ShowWarnings"/>
         <reference ref="ProblemsView.ShowInformation"/>
-      </group>
-      <group id="ProblemsView.Comparator" icon="AllIcons.ObjectBrowser.SortByType" popup="true">
+        <separator/>
         <reference ref="ProblemsView.SortFoldersFirst"/>
         <reference ref="ProblemsView.SortBySeverity"/>
         <reference ref="ProblemsView.SortByName"/>
