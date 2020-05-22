@@ -23,6 +23,7 @@ public class LiteralAsArgToStringEqualsFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  @SuppressWarnings("EqualsBetweenInconvertibleTypes")
   public void testNoQualifier() {
     assertQuickfixNotAvailable("Flip 'equals()'",
            "class X {" +
