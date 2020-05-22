@@ -19,7 +19,7 @@ class OneToAbstractMany<T : PTypedEntity, SUBT : PTypedEntity>(private val child
     if (connectionId == null) {
       connectionId = ConnectionId.create(thisRef.javaClass, childClass, ONE_TO_ABSTRACT_MANY, false, false)
     }
-    return thisRef.snapshot.extractOneToAbstractManyChildren(connectionId!!, thisRef.id as PId<T>)
+    return thisRef.snapshot.extractOneToAbstractManyChildren(connectionId!!, thisRef.id as PId)
   }
 }
 
@@ -34,7 +34,7 @@ class MutableOneToAbstractMany<T : PTypedEntity, SUBT : PTypedEntity, MODT : PMo
     if (connectionId == null) {
       connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ABSTRACT_MANY, false, false)
     }
-    return thisRef.diff.extractOneToAbstractManyChildren(connectionId!!, thisRef.id as PId<T>)
+    return thisRef.diff.extractOneToAbstractManyChildren(connectionId!!, thisRef.id as PId)
   }
 
   override fun setValue(thisRef: MODT, property: KProperty<*>, value: Sequence<SUBT>) {
@@ -44,6 +44,6 @@ class MutableOneToAbstractMany<T : PTypedEntity, SUBT : PTypedEntity, MODT : PMo
     if (connectionId == null) {
       connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ABSTRACT_MANY, false, false)
     }
-    thisRef.diff.updateOneToAbstractManyChildrenOfParent(connectionId!!, thisRef.id as PId<T>, value)
+    thisRef.diff.updateOneToAbstractManyChildrenOfParent(connectionId!!, thisRef.id as PId, value)
   }
 }

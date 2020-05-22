@@ -6,26 +6,26 @@ import com.intellij.workspace.api.TypedEntity
 import com.intellij.workspace.api.pstorage.PId
 
 open class EntityStorageInternalIndex<T> private constructor(
-  internal open val index: BidirectionalMap<PId<out TypedEntity>, T>
+  internal open val index: BidirectionalMap<PId, T>
 ) {
-  constructor() : this(BidirectionalMap<PId<out TypedEntity>, T>())
+  constructor() : this(BidirectionalMap<PId, T>())
 
-  internal fun getIdsByEntry(entitySource: T): List<PId<out TypedEntity>>? =
+  internal fun getIdsByEntry(entitySource: T): List<PId>? =
     index.getKeysByValue(entitySource)
 
-  internal fun getEntryById(id: PId<out TypedEntity>): T? = index[id]
+  internal fun getEntryById(id: PId): T? = index[id]
 
   internal fun entries(): Collection<T> {
     return index.values
   }
 
   class MutableEntityStorageInternalIndex<T> private constructor(
-    override var index: BidirectionalMap<PId<out TypedEntity>, T>
+    override var index: BidirectionalMap<PId, T>
   ) : EntityStorageInternalIndex<T>(index) {
 
     private var freezed = true
 
-    internal fun index(id: PId<out TypedEntity>, entitySource: T? = null) {
+    internal fun index(id: PId, entitySource: T? = null) {
       startWrite()
       index.remove(id)
       if (entitySource == null) return
@@ -38,8 +38,8 @@ open class EntityStorageInternalIndex<T> private constructor(
       index = copyIndex()
     }
 
-    private fun copyIndex(): BidirectionalMap<PId<out TypedEntity>, T> {
-      val copy = BidirectionalMap<PId<out TypedEntity>, T>()
+    private fun copyIndex(): BidirectionalMap<PId, T> {
+      val copy = BidirectionalMap<PId, T>()
       index.keys.forEach { key -> index[key]?.also { value -> copy[key] = value } }
       return copy
     }

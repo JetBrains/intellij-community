@@ -43,16 +43,16 @@ class PSerializer(private val virtualFileManager: VirtualFileUrlManager) : Entit
         virtualFileManager.fromUrl(input.readString())
     })
 
-    kryo.register(PId::class.java, object : Serializer<PId<*>>(false, true) {
-      override fun write(kryo: Kryo, output: Output, `object`: PId<*>) {
+    kryo.register(PId::class.java, object : Serializer<PId>(false, true) {
+      override fun write(kryo: Kryo, output: Output, `object`: PId) {
         output.writeInt(`object`.arrayId)
-        kryo.writeClass(output, `object`.clazz)
+        kryo.writeClass(output, ClassToIntConverter.getClassSlowlyOrDie(`object`.clazz))
       }
 
-      override fun read(kryo: Kryo, input: Input, type: Class<PId<*>>): PId<*> {
+      override fun read(kryo: Kryo, input: Input, type: Class<PId>): PId {
         val arrayId = input.readInt()
         val clazz = kryo.readClass(input).type as Class<TypedEntity>
-        return PId(arrayId, clazz)
+        return PId(arrayId, ClassToIntConverter.getInt(clazz))
       }
     })
 

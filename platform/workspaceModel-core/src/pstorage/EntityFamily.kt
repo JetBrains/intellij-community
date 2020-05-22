@@ -80,7 +80,7 @@ internal class MutableEntityFamily<E : TypedEntity>(
     copiedToModify.add(id)
   }
 
-  fun getEntityDataForModification(id: PId<E>): PEntityData<E> {
+  fun getEntityDataForModification(id: PId): PEntityData<E> {
     val entity = entities[id.arrayId] ?: error("Nothing to modify")
     if (copiedToModify.contains(id.arrayId)) return entity
     startWrite()
@@ -115,7 +115,7 @@ internal class MutableEntityFamily<E : TypedEntity>(
   }
 
   companion object {
-    fun <E : TypedEntity> createEmptyMutable() = MutableEntityFamily<E>(ArrayList(), false)
+    fun createEmptyMutable() = MutableEntityFamily<TypedEntity>(ArrayList(), false)
   }
 }
 

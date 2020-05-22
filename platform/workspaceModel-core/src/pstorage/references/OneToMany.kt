@@ -20,7 +20,7 @@ class OneToMany<T : PTypedEntity, SUBT : PTypedEntity>(private val childClass: C
     if (connectionId == null) {
       connectionId = ConnectionId.create(thisRef.javaClass, childClass, ONE_TO_MANY, isParentInChildNullable, false)
     }
-    return thisRef.snapshot.extractOneToManyChildren(connectionId!!, thisRef.id as PId<T>)
+    return thisRef.snapshot.extractOneToManyChildren(connectionId!!, thisRef.id as PId)
   }
 }
 
@@ -32,7 +32,7 @@ class ManyToOne private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, thisRef.javaClass, ONE_TO_MANY, false, false)
       }
-      return thisRef.snapshot.extractOneToManyParent(connectionId!!, thisRef.id as PId<SUBT>)!!
+      return thisRef.snapshot.extractOneToManyParent(connectionId!!, thisRef.id as PId)!!
     }
   }
 
@@ -43,7 +43,7 @@ class ManyToOne private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, thisRef.javaClass, ONE_TO_MANY, true, false)
       }
-      return thisRef.snapshot.extractOneToManyParent(connectionId!!, thisRef.id as PId<SUBT>)
+      return thisRef.snapshot.extractOneToManyParent(connectionId!!, thisRef.id as PId)
     }
   }
 }
@@ -60,7 +60,7 @@ sealed class MutableOneToMany<T : PTypedEntity, SUBT : PTypedEntity, MODT : PMod
     if (connectionId == null) {
       connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_MANY, isParentInChildNullable, false)
     }
-    return thisRef.diff.extractOneToManyChildren(connectionId!!, thisRef.id as PId<T>)
+    return thisRef.diff.extractOneToManyChildren(connectionId!!, thisRef.id as PId)
   }
 
   override fun setValue(thisRef: MODT, property: KProperty<*>, value: Sequence<SUBT>) {
@@ -70,7 +70,7 @@ sealed class MutableOneToMany<T : PTypedEntity, SUBT : PTypedEntity, MODT : PMod
     if (connectionId == null) {
       connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_MANY, isParentInChildNullable, false)
     }
-    thisRef.diff.updateOneToManyChildrenOfParent(connectionId!!, thisRef.id as PId<T>, value)
+    thisRef.diff.updateOneToManyChildrenOfParent(connectionId!!, thisRef.id as PId, value)
   }
 }
 
@@ -85,7 +85,7 @@ class MutableManyToOne private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_MANY, false, false)
       }
-      return thisRef.diff.extractOneToManyParent(connectionId!!, thisRef.id as PId<SUBT>)!!
+      return thisRef.diff.extractOneToManyParent(connectionId!!, thisRef.id as PId)!!
     }
 
     override fun setValue(thisRef: MODSUBT, property: KProperty<*>, value: T) {
@@ -95,7 +95,7 @@ class MutableManyToOne private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_MANY, false, false)
       }
-      return thisRef.diff.updateOneToManyParentOfChild(connectionId!!, thisRef.id as PId<SUBT>, value)
+      return thisRef.diff.updateOneToManyParentOfChild(connectionId!!, thisRef.id as PId, value)
     }
   }
 
@@ -109,7 +109,7 @@ class MutableManyToOne private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_MANY, true, false)
       }
-      return thisRef.diff.extractOneToManyParent(connectionId!!, thisRef.id as PId<SUBT>)
+      return thisRef.diff.extractOneToManyParent(connectionId!!, thisRef.id as PId)
     }
 
     override fun setValue(thisRef: MODSUBT, property: KProperty<*>, value: T?) {
@@ -119,7 +119,7 @@ class MutableManyToOne private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_MANY, true, false)
       }
-      return thisRef.diff.updateOneToManyParentOfChild(connectionId!!, thisRef.id as PId<SUBT>, value)
+      return thisRef.diff.updateOneToManyParentOfChild(connectionId!!, thisRef.id as PId, value)
     }
   }
 }

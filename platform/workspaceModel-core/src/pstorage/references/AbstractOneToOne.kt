@@ -19,7 +19,7 @@ class OneToAbstractOneChild<T : PTypedEntity, SUBT : PTypedEntity>(private val p
       connectionId = ConnectionId.create(parentClass, thisRef.javaClass, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false,
                                          false)
     }
-    return thisRef.snapshot.extractOneToAbstractOneParent(connectionId!!, thisRef.id as PId<SUBT>)!!
+    return thisRef.snapshot.extractOneToAbstractOneParent(connectionId!!, thisRef.id as PId)!!
   }
 }
 
@@ -34,7 +34,7 @@ class MutableOneToAbstractOneChild<T : PTypedEntity, SUBT : PTypedEntity, MODSUB
     if (connectionId == null) {
       connectionId = ConnectionId.create(parentClass, childClass, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false, false)
     }
-    return thisRef.diff.extractOneToAbstractOneParent(connectionId!!, thisRef.id as PId<SUBT>)!!
+    return thisRef.diff.extractOneToAbstractOneParent(connectionId!!, thisRef.id as PId)!!
   }
 
   override fun setValue(thisRef: MODSUBT, property: KProperty<*>, value: T) {
@@ -44,6 +44,6 @@ class MutableOneToAbstractOneChild<T : PTypedEntity, SUBT : PTypedEntity, MODSUB
     if (connectionId == null) {
       connectionId = ConnectionId.create(parentClass, childClass, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false, false)
     }
-    thisRef.diff.updateOneToAbstractOneParentOfChild(connectionId!!, thisRef.id as PId<SUBT>, value)
+    thisRef.diff.updateOneToAbstractOneParentOfChild(connectionId!!, thisRef.id as PId, value)
   }
 }
