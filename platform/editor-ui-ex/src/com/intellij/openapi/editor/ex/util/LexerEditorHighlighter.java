@@ -40,7 +40,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   private static final Logger LOG = Logger.getInstance(LexerEditorHighlighter.class);
   private static final int LEXER_INCREMENTALITY_THRESHOLD = 200;
   private static final Set<Class<?>> ourNonIncrementalLexers = new HashSet<>();
-  private HighlighterClient myEditor;
+  private HighlighterClient myHighlighterClient;
   private final Lexer myLexer;
   private final Map<IElementType, TextAttributes> myAttributesMap = new HashMap<>();
   private SegmentArrayWithData mySegments;
@@ -93,7 +93,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
   @Nullable
   protected final Document getDocument() {
-    return myEditor != null ? myEditor.getDocument() : null;
+    return myHighlighterClient != null ? myHighlighterClient.getDocument() : null;
   }
 
   public final synchronized boolean checkContentIsEqualTo(@NotNull CharSequence sequence) {
@@ -113,8 +113,8 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
   @Override
   public void setEditor(@NotNull HighlighterClient editor) {
-    LOG.assertTrue(myEditor == null, "Highlighters cannot be reused with different editors");
-    myEditor = editor;
+    LOG.assertTrue(myHighlighterClient == null, "Highlighters cannot be reused with different editors");
+    myHighlighterClient = editor;
   }
 
   @Override
@@ -142,7 +142,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   public boolean isValid() {
-    Project project = myEditor.getProject();
+    Project project = myHighlighterClient.getProject();
     return project != null && !project.isDisposed();
   }
 
@@ -343,7 +343,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
         return;
       }
 
-      myEditor.repaint(startOffset, repaintEnd);
+      myHighlighterClient.fireHighlighterChanged(startOffset, repaintEnd);
     }
     catch (ProcessCanceledException ex) {
       myText = null;
@@ -414,7 +414,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   public HighlighterClient getClient() {
-    return myEditor;
+    return myHighlighterClient;
   }
 
   final synchronized void resetText(@NotNull CharSequence text) {
@@ -467,8 +467,8 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       throw new IllegalStateException("Unexpected termination offset for lexer " + myLexer);
     }
 
-    if(myEditor != null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      UIUtil.invokeLaterIfNeeded(() -> myEditor.repaint(0, textLength));
+    if(myHighlighterClient != null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      UIUtil.invokeLaterIfNeeded(() -> myHighlighterClient.fireHighlighterChanged(0, textLength));
     }
   }
 

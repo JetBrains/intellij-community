@@ -37,6 +37,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
+import com.intellij.openapi.editor.highlighter.HighlighterClientListener;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.impl.view.EditorView;
 import com.intellij.openapi.editor.markup.*;
@@ -210,6 +211,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull private final EditorMarkupModelImpl myMarkupModel;
   @NotNull private final EditorFilteringMarkupModelEx myDocumentMarkupModel;
   @NotNull private final MarkupModelListener myMarkupModelListener;
+  @NotNull private final List<HighlighterClientListener> myHighlighterClientListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @NotNull private final FoldingModelImpl myFoldingModel;
   @NotNull private final ScrollingModelImpl myScrollingModel;
@@ -400,7 +402,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myDocumentMarkupModel.addMarkupModelListener(myCaretModel, myMarkupModelListener);
     myMarkupModel.addMarkupModelListener(myCaretModel, myMarkupModelListener);
-
+    addHighlighterClientListener((startOffset, endOffset) -> repaint(startOffset, endOffset, true), myCaretModel);
     myDocument.addDocumentListener(myFoldingModel, myCaretModel);
     myDocument.addDocumentListener(myCaretModel, myCaretModel);
 
@@ -1565,9 +1567,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myView.visualLineToY(line);
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void repaint(int startOffset, int endOffset) {
     repaint(startOffset, endOffset, true);
+  }
+
+  @Override
+  public void fireHighlighterChanged(int startOffset, int endOffset) {
+    myHighlighterClientListeners.forEach(listener -> listener.highlighterChanged(startOffset, endOffset));
+  }
+
+  @Override
+  public void addHighlighterClientListener(HighlighterClientListener listener, Disposable parentDisposable) {
+    ContainerUtil.add(listener, myHighlighterClientListeners, parentDisposable);
   }
 
   void repaint(int startOffset, int endOffset, boolean invalidateTextLayout) {
