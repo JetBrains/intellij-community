@@ -406,10 +406,6 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
         }
         break;
       }
-      if (isUppercasePatternVsLowercaseNameChar(name, patternIndex + i, nameIndex + i) &&
-          shouldProhibitCaseMismatch(name, patternIndex + i, nameIndex + i)) {
-        break;
-      }
       i++;
     }
     return i;
@@ -514,18 +510,6 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
                                                      boolean isAsciiName) {
     int nextWordStart = indexOfWordStart(name, patternIndex, nameIndex);
     return matchWildcards(name, patternIndex, nextWordStart, isAsciiName);
-  }
-
-  private boolean shouldProhibitCaseMismatch(String name, int patternIndex, int nameIndex) {
-    // at least three consecutive uppercase letters shouldn't match lowercase
-    if (myHasHumps && patternIndex >= 2 && isUpperCase[patternIndex - 1] && isUpperCase[patternIndex - 2]) {
-      // but if there's a lowercase after them, it can match (in case shift was released a bit later)
-      if (nameIndex + 1 == name.length() ||
-          patternIndex + 1 < myPattern.length && !isLowerCase[patternIndex + 1]) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private boolean isFirstCharMatching(@NotNull String name, int nameIndex, int patternIndex) {

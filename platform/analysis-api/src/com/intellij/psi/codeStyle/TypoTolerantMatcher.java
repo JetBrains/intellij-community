@@ -516,10 +516,6 @@ class TypoTolerantMatcher extends MinusculeMatcher {
           }
           break;
         }
-        if (isUppercasePatternVsLowercaseNameChar(patternIndex + i, nameIndex + i, errorState) &&
-            shouldProhibitCaseMismatch(patternIndex + i, nameIndex + i, errorState)) {
-          break;
-        }
         i++;
       }
       return new Fragment(i, errorState);
@@ -607,18 +603,6 @@ class TypoTolerantMatcher extends MinusculeMatcher {
                                                    @NotNull ErrorState errorState) {
       int nextWordStart = indexOfWordStart(patternIndex, nameIndex, errorState);
       return matchWildcards(patternIndex, nextWordStart, errorState.deriveFrom(patternIndex));
-    }
-
-    private boolean shouldProhibitCaseMismatch(int patternIndex, int nameIndex, @NotNull ErrorState errorState) {
-      // at least three consecutive uppercase letters shouldn't match lowercase
-      if (myHasHumps && patternIndex >= 2 && isUpperCase(patternIndex - 1, errorState) && isUpperCase(patternIndex - 2, errorState)) {
-        // but if there's a lowercase after them, it can match (in case shift was released a bit later)
-        if (nameIndex + 1 == myName.length() ||
-            patternIndex + 1 < patternLength(errorState) && !isLowerCase(patternIndex + 1, errorState)) {
-          return true;
-        }
-      }
-      return false;
     }
 
     private boolean isFirstCharMatching(int nameIndex, int patternIndex, @NotNull ErrorState errorState) {

@@ -652,8 +652,9 @@ public class NameUtilMatchingTest extends TestCase {
     assertDoesntMatch("*.ico", "a.i.c.o");
   }
 
-  public void testUsingCapsMeansTheyShouldMatchCaps() {
-    assertDoesntMatch("URLCl", "UrlClassLoader");
+  public void testCapsMayMatchNonCaps() {
+    assertMatches("PDFRe", "PdfRenderer");
+    assertMatches("*pGETPartTimePositionInfo", "dbo.pGetPartTimePositionInfo.sql");
   }
 
   public void testACapitalAfterAnotherCapitalMayMatchALowercaseLetterBecauseShiftWasAccidentallyHeldTooLong() {
