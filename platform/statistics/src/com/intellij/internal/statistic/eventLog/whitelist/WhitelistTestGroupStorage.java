@@ -13,6 +13,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListG
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLGroups;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLRule;
+import com.intellij.internal.statistic.service.fus.StatisticsWhitelistGroupConditions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,9 +72,9 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
   protected @NotNull Map<String, WhiteListGroupRules> createValidators(@NotNull WLGroups groups,
                                                                        @Nullable WLRule productionRules) {
     final WLRule rules = merge(groups.rules, productionRules);
-    final EventLogBuild buildNumber = EventLogBuild.fromString(EventLogConfiguration.INSTANCE.getBuild());
+    final EventLogBuild build = EventLogBuild.fromString(EventLogConfiguration.INSTANCE.getBuild());
     return groups.groups.stream().
-      filter(group -> group.accepts(buildNumber)).
+      filter(group -> StatisticsWhitelistGroupConditions.create(group).accepts(build)).
       collect(Collectors.toMap(group -> group.id, group -> createRules(group, rules)));
   }
 

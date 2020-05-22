@@ -2,9 +2,10 @@
 package com.intellij.internal.statistics.whitelist
 
 import com.intellij.internal.statistic.eventLog.EventLogBuild
-import com.intellij.internal.statistic.service.fus.FUSWhitelist
-import com.intellij.internal.statistic.service.fus.FUSWhitelist.BuildRange
-import com.intellij.internal.statistic.service.fus.FUSWhitelist.VersionRange
+import com.intellij.internal.statistic.service.fus.StatisticsWhitelistConditions
+import com.intellij.internal.statistic.service.fus.StatisticsWhitelistGroupConditions
+import com.intellij.internal.statistic.service.fus.StatisticsWhitelistGroupConditions.BuildRange
+import com.intellij.internal.statistic.service.fus.StatisticsWhitelistGroupConditions.VersionRange
 
 class TestWhitelistBuilder {
   private val groupIds: MutableSet<String> = HashSet()
@@ -52,13 +53,13 @@ class TestWhitelistBuilder {
     return this
   }
 
-  fun build(): FUSWhitelist {
-    val result = HashMap<String, FUSWhitelist.GroupFilterCondition>()
+  fun build(): StatisticsWhitelistConditions {
+    val result = HashMap<String, StatisticsWhitelistGroupConditions>()
     for (groupId in groupIds) {
       val builds: List<BuildRange> = groupBuilds.getOrDefault(groupId, emptyList())
       val versions: List<VersionRange> = groupVersions.getOrDefault(groupId, emptyList())
-      result[groupId] = FUSWhitelist.GroupFilterCondition(builds, versions)
+      result[groupId] = StatisticsWhitelistGroupConditions(builds, versions)
     }
-    return FUSWhitelist.create(result)
+    return StatisticsWhitelistConditions.create(result)
   }
 }

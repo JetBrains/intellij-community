@@ -3,8 +3,8 @@ package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.StatisticsEventLogUtil;
 import com.intellij.internal.statistic.connect.SettingsConnectionService;
-import com.intellij.internal.statistic.service.fus.FUSWhitelist;
-import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
+import com.intellij.internal.statistic.service.fus.StatisticsWhitelistConditions;
+import com.intellij.internal.statistic.service.fus.StatisticsWhitelistLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,11 +59,11 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   @Override
   @NotNull
   public LogEventFilter getEventFilter() {
-    final FUSWhitelist whitelist = notNull(getWhitelistedGroups(), FUSWhitelist.empty());
+    final StatisticsWhitelistConditions whitelist = notNull(getWhitelistedGroups(), StatisticsWhitelistConditions.empty());
     return new LogEventCompositeFilter(new LogEventWhitelistFilter(whitelist), LogEventSnapshotBuildFilter.INSTANCE);
   }
 
-  private static FUSWhitelist notNull(@Nullable FUSWhitelist whitelist, @NotNull FUSWhitelist defaultValue) {
+  private static StatisticsWhitelistConditions notNull(@Nullable StatisticsWhitelistConditions whitelist, @NotNull StatisticsWhitelistConditions defaultValue) {
     return whitelist != null ? whitelist : defaultValue;
   }
 
@@ -73,11 +73,11 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   }
 
   @Nullable
-  protected FUSWhitelist getWhitelistedGroups() {
+  protected StatisticsWhitelistConditions getWhitelistedGroups() {
     final String productUrl = getWhiteListProductUrl();
     if (productUrl == null) return null;
     String userAgent = myApplicationInfo.getUserAgent();
-    return FUStatisticsWhiteListGroupsService.getApprovedGroups(userAgent, productUrl);
+    return StatisticsWhitelistLoader.getApprovedGroups(userAgent, productUrl);
   }
 
   @NonNls

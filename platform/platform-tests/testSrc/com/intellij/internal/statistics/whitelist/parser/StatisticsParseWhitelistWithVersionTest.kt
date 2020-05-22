@@ -2,16 +2,16 @@
 package com.intellij.internal.statistics.whitelist.parser
 
 import com.intellij.internal.statistic.eventLog.EventLogBuild
-import com.intellij.internal.statistic.service.fus.FUSWhitelist
-import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
+import com.intellij.internal.statistic.service.fus.StatisticsWhitelistConditions
+import com.intellij.internal.statistic.service.fus.StatisticsWhitelistLoader
 import com.intellij.internal.statistics.whitelist.TestWhitelistBuilder
 import org.junit.Test
 import kotlin.test.assertEquals
 
 class StatisticsParseWhitelistWithVersionTest {
 
-  private fun doTest(content: String, expected: FUSWhitelist) {
-    val actual = FUStatisticsWhiteListGroupsService.parseApprovedGroups(content)
+  private fun doTest(content: String, expected: StatisticsWhitelistConditions) {
+    val actual = StatisticsWhitelistLoader.parseApprovedGroups(content)
     assertEquals(expected.size, actual.size)
     assertEquals(expected, actual)
   }
@@ -305,7 +305,7 @@ class StatisticsParseWhitelistWithVersionTest {
   }]
 }
     """
-    doTest(content, FUSWhitelist.empty())
+    doTest(content, TestWhitelistBuilder().addGroup("test.group.id").build())
   }
 
   @Test
@@ -345,7 +345,7 @@ class StatisticsParseWhitelistWithVersionTest {
   }]
 }
     """
-    doTest(content, FUSWhitelist.empty())
+    doTest(content, TestWhitelistBuilder().addGroup("test.group.id").build())
   }
 
   @Test
