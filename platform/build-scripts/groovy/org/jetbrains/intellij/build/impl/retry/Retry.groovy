@@ -37,9 +37,9 @@ class Retry {
     log.error("Should not be reached") as T
   }
 
-  private long backOffLimitMs = TimeUnit.MINUTES.toMillis(15)
-  private int backOffFactor = 2
-  private double backOffJitter = 0.1
+  private static long backOffLimitMs = TimeUnit.MINUTES.toMillis(15)
+  private static int backOffFactor = 2
+  private static double backOffJitter = 0.1
   private Random random = new Random()
 
   private long backOff(long delayMs, int attempt, Exception e) {
