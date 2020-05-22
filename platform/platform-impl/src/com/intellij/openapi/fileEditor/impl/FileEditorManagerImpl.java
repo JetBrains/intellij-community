@@ -1470,8 +1470,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     Trinity<VirtualFile, FileEditor, FileEditorProvider> oldData = extract(SoftReference.dereference(myLastSelectedComposite));
     Trinity<VirtualFile, FileEditor, FileEditorProvider> newData = extract(newSelectedComposite);
     myLastSelectedComposite = newSelectedComposite == null ? null : new WeakReference<>(newSelectedComposite);
-    boolean filesEqual = oldData.first == null ? newData.first == null : oldData.first.equals(newData.first);
-    boolean editorsEqual = oldData.second == null ? newData.second == null : oldData.second.equals(newData.second);
+    boolean filesEqual = Objects.equals(oldData.first, newData.first);
+    boolean editorsEqual = Objects.equals(oldData.second, newData.second);
     if (!filesEqual || !editorsEqual) {
       if (oldData.first != null && newData.first != null) {
         for (FileEditorAssociateFinder finder : FileEditorAssociateFinder.EP_NAME.getExtensionList()) {
@@ -1546,11 +1546,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     for (int i = editors.length - 1; i >= 0; i--) {
       FileEditor editor1 = editors[i];
       FileEditorProvider provider = providers[i];
-      if (!editor.equals(selectedEditor)) {
-        // we already notified the myEditor (when fire event)
-        if (selectedEditor.equals(editor1)) {
-          editor1.deselectNotify();
-        }
+      // we already notified the myEditor (when fire event)
+      if (selectedEditor.equals(editor1)) {
+        editor1.deselectNotify();
       }
       editor1.removePropertyChangeListener(myEditorPropertyChangeListener);
       provider.disposeEditor(editor1);
