@@ -125,7 +125,11 @@ public class UseOfPropertiesAsHashtableInspection extends BaseInspection {
 
   private static class UseOfPropertiesAsHashtableVisitor extends BaseInspectionVisitor {
     private static final CallMatcher HASH_TABLE_CALLS =
-      CallMatcher.exactInstanceCall("java.util.Hashtable", "put", "get", "putAll", "putIfAbsent");
+      CallMatcher.anyOf(
+        CallMatcher.instanceCall("java.util.Hashtable", "put", "putIfAbsent").parameterTypes("K", "V"),
+        CallMatcher.instanceCall("java.util.Hashtable", "get").parameterTypes(CommonClassNames.JAVA_LANG_OBJECT),
+        CallMatcher.instanceCall("java.util.Hashtable", "putAll").parameterTypes(CommonClassNames.JAVA_UTIL_MAP)
+      );
 
     @Override
     public void visitMethodCallExpression(
