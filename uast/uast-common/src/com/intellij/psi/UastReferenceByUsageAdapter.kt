@@ -13,6 +13,7 @@ import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
+import com.intellij.psi.search.PsiSearchHelper.SearchCostResult
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
@@ -99,7 +100,6 @@ private fun getDirectVariableUsages(uVar: UVariable): Sequence<PsiElement> {
 }
 
 private const val MAX_FILES_TO_FIND_USAGES = 5
-private const val MAX_USAGES_TO_PROCESS_PER_SEARCH = 10
 private val STRICT_CONSTANT_NAME_PATTERN = Regex("[\\p{Upper}_0-9]+")
 
 private fun findDirectVariableUsages(variablePsi: PsiElement): Iterable<PsiElement> {
@@ -121,7 +121,7 @@ private fun findDirectVariableUsages(variablePsi: PsiElement): Iterable<PsiEleme
   val uastScope = getUastScope(module.moduleScope)
 
   val searchHelper = PsiSearchHelper.getInstance(variablePsi.project)
-  if (searchHelper.isCheapEnoughToSearch(variableName, uastScope, null, null) != PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES) {
+  if (searchHelper.isCheapEnoughToSearch(variableName, uastScope, null, null) != SearchCostResult.FEW_OCCURRENCES) {
     return localUsages
   }
 
@@ -161,9 +161,7 @@ private fun findVariableUsages(variablePsi: PsiElement, variableName: String, fi
       }
       emptyList<PsiElement>()
     }
-    .asSequence()
-    .take(MAX_USAGES_TO_PROCESS_PER_SEARCH)
-    .toList()
+    .findAll()
 }
 
 private fun getUastScope(originalScope: GlobalSearchScope): GlobalSearchScope {
