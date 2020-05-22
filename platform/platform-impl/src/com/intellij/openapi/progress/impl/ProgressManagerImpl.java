@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SystemNotifications;
 import com.intellij.util.concurrency.PlainEdtExecutor;
@@ -44,7 +45,7 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   /**
    * The passes progress won't count in {@link #hasUnsafeProgressIndicator()} and won't stop from application exiting.
    */
-  public void markProgressSafe(@NotNull ProgressIndicatorBase progress) {
+  public void markProgressSafe(@NotNull UserDataHolder progress) {
     progress.putUserData(SAFE_PROGRESS_INDICATOR, true);
   }
 
