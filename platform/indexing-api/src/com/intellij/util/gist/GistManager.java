@@ -2,6 +2,7 @@
 package com.intellij.util.gist;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.io.DataExternalizer;
@@ -51,5 +52,10 @@ public abstract class GistManager {
    * Force all gists to be recalculated on the next request.
    */
   public abstract void invalidateData();
+
+  /**
+   * Force all gists for the given file to be recalculated on the next request.
+   */
+  public abstract void invalidateData(@NotNull VirtualFile file);
 
 }

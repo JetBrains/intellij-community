@@ -171,7 +171,7 @@ data class MethodData(
       return JavaPsiFacade.getElementFactory(method.project).createCodeBlockFromText(bodyText, method)
     }
     catch (e: Exception) {
-      GistManager.getInstance().invalidateData()
+      GistManager.getInstance().invalidateData(method.containingFile.viewProvider.virtualFile)
       throw e
     }
   }
