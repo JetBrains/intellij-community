@@ -20,9 +20,9 @@ import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.StandardTargetWeights;
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -35,7 +35,6 @@ import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.WrappingVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,32 +43,30 @@ import java.util.Iterator;
 
 public class ProjectStructureSelectInTarget implements SelectInTarget, DumbAware {
   @Override
-  public boolean canSelect(final SelectInContext context) {
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(context.getProject()).getFileIndex();
-    final VirtualFile file = context.getVirtualFile();
-    if (file instanceof WrappingVirtualFile) {
-      final Object o = ((WrappingVirtualFile)file).getWrappedObject(context.getProject());
-      return o instanceof Facet;
+  public boolean canSelect(SelectInContext context) {
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(context.getProject()).getFileIndex();
+    VirtualFile file = context.getVirtualFile();
+    if (file instanceof FacetAsVirtualFile) {
+      return ((FacetAsVirtualFile)file).findFacet() != null;
     }
     return fileIndex.isInContent(file) || fileIndex.isInLibrary(file)
-           || FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.IDEA_MODULE) && findModuleByModuleFile(context.getProject(), file) != null;
+           || FileTypeRegistry.getInstance().isFileOfType(file, ModuleFileType.INSTANCE) && findModuleByModuleFile(context.getProject(), file) != null;
   }
 
   @Override
   public void selectIn(final SelectInContext context, final boolean requestFocus) {
-    final Project project = context.getProject();
-    final VirtualFile file = context.getVirtualFile();
+    Project project = context.getProject();
+    VirtualFile file = context.getVirtualFile();
 
-    final Module module;
-    final Facet facet;
-    if (file instanceof WrappingVirtualFile) {
-      final Object o = ((WrappingVirtualFile)file).getWrappedObject(project);
-      facet = o instanceof Facet? (Facet)o : null;
+    Module module;
+    Facet<?> facet;
+    if (file instanceof FacetAsVirtualFile) {
+      facet = ((FacetAsVirtualFile)file).findFacet();
       module = facet == null? null : facet.getModule();
     }
     else {
-      Module moduleByIml = FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.IDEA_MODULE) ? findModuleByModuleFile(project, file) : null;
-      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+      Module moduleByIml = FileTypeRegistry.getInstance().isFileOfType(file, ModuleFileType.INSTANCE) ? findModuleByModuleFile(project, file) : null;
+      ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       module = moduleByIml != null ? moduleByIml : fileIndex.getModuleForFile(file);
       facet = fileIndex.isInSourceContent(file) ? null : findFacet(project, file);
     }
@@ -85,7 +82,7 @@ public class ProjectStructureSelectInTarget implements SelectInTarget, DumbAware
       return;
     }
 
-    final OrderEntry orderEntry = LibraryUtil.findLibraryEntry(file, project);
+    OrderEntry orderEntry = LibraryUtil.findLibraryEntry(file, project);
     if (orderEntry != null) {
       ApplicationManager.getApplication().invokeLater(
         () -> ProjectSettingsService.getInstance(project).openLibraryOrSdkSettings(orderEntry));
@@ -103,10 +100,10 @@ public class ProjectStructureSelectInTarget implements SelectInTarget, DumbAware
   }
 
   @Nullable
-  private static Facet findFacet(final @NotNull Project project, final @NotNull VirtualFile file) {
-    for (FacetTypeId id : FacetTypeRegistry.getInstance().getFacetTypeIds()) {
+  private static Facet<?> findFacet(final @NotNull Project project, final @NotNull VirtualFile file) {
+    for (FacetTypeId<?> id : FacetTypeRegistry.getInstance().getFacetTypeIds()) {
       if (hasFacetWithRoots(project, id)) {
-        Facet facet = FacetFinder.getInstance(project).findFacet(file, id);
+        Facet<?> facet = FacetFinder.getInstance(project).findFacet(file, (FacetTypeId)id);
         if (facet != null) {
           return facet;
         }
@@ -115,10 +112,10 @@ public class ProjectStructureSelectInTarget implements SelectInTarget, DumbAware
     return null;
   }
 
-  private static <F extends Facet> boolean hasFacetWithRoots(final @NotNull Project project, final @NotNull FacetTypeId<F> id) {
+  private static <F extends Facet<?>> boolean hasFacetWithRoots(final @NotNull Project project, final @NotNull FacetTypeId<F> id) {
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      Collection<? extends Facet> facets = FacetManager.getInstance(module).getFacetsByType(id);
-      Iterator<? extends Facet> iterator = facets.iterator();
+      Collection<? extends Facet<?>> facets = FacetManager.getInstance(module).getFacetsByType(id);
+      Iterator<? extends Facet<?>> iterator = facets.iterator();
       if (iterator.hasNext()) {
         return iterator.next() instanceof FacetRootsProvider;
       }
