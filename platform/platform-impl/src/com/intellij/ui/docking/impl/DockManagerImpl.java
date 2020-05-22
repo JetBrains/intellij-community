@@ -216,7 +216,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     private final JLabel myImageContainer;
 
     private MyDragSession(MouseEvent me, @NotNull DockableContent content) {
-      myWindow = new JDialog(WindowManager.getInstance().getFrame(myProject));
+      myWindow = new JDialog(UIUtil.getWindow(me.getComponent()));
       myWindow.setUndecorated(true);
       myContent = content;
       myStartDragContainer = getContainerFor(me.getComponent());
@@ -343,18 +343,22 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
   private @Nullable DockContainer findContainerFor(RelativePoint point, @NotNull DockableContent<?> content) {
     DockContainer candidate = null;
-    for (DockContainer each : myContainers) {
+    for (DockContainer each : getContainers()) {
       RelativeRectangle rec = each.getAcceptArea();
       if (rec.contains(point) && each.getContentResponse(content, point).canAccept()) {
+        Window window = UIUtil.getWindow(each.getContainerComponent());
+        if (window != null && window.isActive()) return each;
         if (candidate == null || Comparing.equal(candidate, myCurrentDragSession.myStartDragContainer)) {
           candidate = each;
         }
       }
     }
 
-    for (DockContainer each : myContainers) {
+    for (DockContainer each : getContainers()) {
       RelativeRectangle rec = each.getAcceptAreaFallback();
       if (rec.contains(point) && each.getContentResponse(content, point).canAccept()) {
+        Window window = UIUtil.getWindow(each.getContainerComponent());
+        if (window != null && window.isActive()) return candidate;
         if (candidate == null || Comparing.equal(candidate, myCurrentDragSession.myStartDragContainer)) {
           candidate = each;
         }
