@@ -18,6 +18,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -59,6 +60,7 @@ public class AntHectorConfigurable extends HectorComponentPanel {
   @Override
   public JComponent createComponent() {
     final JPanel panel = new JPanel(new GridBagLayout());
+    panel.setBackground(UIUtil.getToolTipActionBackground());
     panel.setBorder(IdeBorderFactory.createTitledBorder("File Context", false));
     myCombo = new ComboBox();
     myCombo.putClientProperty(CONTEXTS_COMBO_KEY, Boolean.TRUE);

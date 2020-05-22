@@ -71,6 +71,9 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     add(myComponent, BorderLayout.CENTER);
 
     myBrowseButton = new FixedSizeButton(myComponent);
+    if (isBackgroundSet()) {
+      myBrowseButton.setBackground(getBackground());
+    }
     if (browseActionListener != null) {
       myBrowseButton.addActionListener(browseActionListener);
     }
@@ -144,6 +147,14 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   public void setButtonIcon(@NotNull Icon icon) {
     myBrowseButton.setIcon(icon);
     myBrowseButton.setDisabledIcon(IconLoader.getDisabledIcon(icon));
+  }
+
+  @Override
+  public void setBackground(Color color) {
+    super.setBackground(color);
+    if (myBrowseButton != null) {
+      myBrowseButton.setBackground(color);
+    }
   }
 
   /**
