@@ -515,6 +515,7 @@ public final class CharArrayUtil {
   }
 
   @NotNull
+  //TODO: move to a better place or inline, because it creates excesive dependencies
   public static ImmutableCharSequence createImmutableCharSequence(@NotNull CharSequence sequence) {
     return ImmutableText.valueOf(sequence);
   }
