@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import git4idea.config.GitExecutableProblemsNotifier.getPrettyErrorMessage
 import git4idea.i18n.GitBundle
 import java.io.File
 
@@ -28,6 +29,7 @@ class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHa
 
   private fun showGenericError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
     errorNotifier.showError(GitBundle.message("executable.error.git.not.installed"),
+                            getPrettyErrorMessage(exception),
                             ErrorNotifier.FixOption.Standard(GitBundle.message("install.download.and.install.action")) {
       errorNotifier.executeTask(GitBundle.message("install.downloading.progress"), false) {
         try {
