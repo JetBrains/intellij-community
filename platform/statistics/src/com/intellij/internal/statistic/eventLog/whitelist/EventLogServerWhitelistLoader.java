@@ -17,12 +17,14 @@ public class EventLogServerWhitelistLoader implements EventLogWhitelistLoader {
 
   @Override
   public long getLastModifiedOnServer() {
-    return StatisticsWhitelistLoader.lastModifiedWhitelist(mySettingsService);
+    String userAgent = mySettingsService.getApplicationInfo().getUserAgent();
+    return StatisticsWhitelistLoader.lastModifiedWhitelist(mySettingsService.getWhiteListProductUrl(), userAgent);
   }
 
   @Override
   @NotNull
   public String loadWhiteListFromServer() throws EventLogWhitelistLoadException {
-    return StatisticsWhitelistLoader.loadWhiteListFromServer(mySettingsService);
+    String userAgent = mySettingsService.getApplicationInfo().getUserAgent();
+    return StatisticsWhitelistLoader.loadWhiteListFromServer(mySettingsService.getWhiteListProductUrl(), userAgent);
   }
 }

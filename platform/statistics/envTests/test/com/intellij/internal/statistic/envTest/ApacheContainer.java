@@ -10,7 +10,7 @@ import org.testcontainers.containers.GenericContainer;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-final class ApacheContainer extends GenericContainer<ApacheContainer> {
+public final class ApacheContainer extends GenericContainer<ApacheContainer> {
   private static final int DEFAULT_PORT = 80;
   private static final String REMOTE_ROOT = "/var/www/html";
 

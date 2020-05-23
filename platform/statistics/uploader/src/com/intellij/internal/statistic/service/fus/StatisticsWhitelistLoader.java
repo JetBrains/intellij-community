@@ -2,10 +2,9 @@
 package com.intellij.internal.statistic.service.fus;
 
 import com.intellij.internal.statistic.StatisticsEventLogUtil;
-import com.intellij.internal.statistic.eventLog.EventLogUploadSettingsService;
+import com.intellij.internal.statistic.service.fus.EventLogWhitelistLoadException.EventLogWhitelistLoadErrorType;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLGroup;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLGroups;
-import com.intellij.internal.statistic.service.fus.EventLogWhitelistLoadException.EventLogWhitelistLoadErrorType;
 import org.apache.http.*;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -51,9 +50,9 @@ public class StatisticsWhitelistLoader {
    * @return empty whitelist if error happened during groups fetching or parsing
    */
   @NotNull
-  public static StatisticsWhitelistConditions getApprovedGroups(@NotNull String userAgent, @NotNull String serviceUrl) {
+  public static StatisticsWhitelistConditions getApprovedGroups(@NotNull String serviceUrl, @NotNull String userAgent) {
     try {
-      String content = getFUSWhiteListContent(userAgent, serviceUrl);
+      String content = loadWhiteListFromServer(serviceUrl, userAgent);
       return parseApprovedGroups(content);
     }
     catch (EventLogWhitelistParseException | EventLogWhitelistLoadException e) {
@@ -62,20 +61,8 @@ public class StatisticsWhitelistLoader {
   }
 
   @NotNull
-  public static String loadWhiteListFromServer(@NotNull EventLogUploadSettingsService settingsService) throws
-                                                                                                       EventLogWhitelistLoadException {
-    String userAgent = settingsService.getApplicationInfo().getUserAgent();
-    return getFUSWhiteListContent(userAgent, settingsService.getWhiteListProductUrl());
-  }
-
-  public static long lastModifiedWhitelist(@NotNull EventLogUploadSettingsService settingsService) {
-    String userAgent = settingsService.getApplicationInfo().getUserAgent();
-    return lastModifiedWhitelist(userAgent, settingsService.getWhiteListProductUrl());
-  }
-
-  @NotNull
-  private static String getFUSWhiteListContent(@NotNull String userAgent,
-                                               @Nullable String serviceUrl) throws EventLogWhitelistLoadException {
+  public static String loadWhiteListFromServer(@Nullable String serviceUrl, @NotNull String userAgent)
+    throws EventLogWhitelistLoadException {
     if (isEmptyOrSpaces(serviceUrl)) {
       throw new EventLogWhitelistLoadException(EventLogWhitelistLoadErrorType.EMPTY_SERVICE_URL);
     }
@@ -100,7 +87,7 @@ public class StatisticsWhitelistLoader {
     }
   }
 
-  private static long lastModifiedWhitelist(@NotNull String userAgent, @Nullable String serviceUrl) {
+  public static long lastModifiedWhitelist(@Nullable String serviceUrl, @NotNull String userAgent) {
     if (!isEmptyOrSpaces(serviceUrl)) {
       try (CloseableHttpClient client = StatisticsEventLogUtil.create(userAgent);
            CloseableHttpResponse response = client.execute(new HttpHead(serviceUrl))) {

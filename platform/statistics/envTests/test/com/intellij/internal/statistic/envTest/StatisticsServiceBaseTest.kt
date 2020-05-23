@@ -11,7 +11,7 @@ import com.intellij.testFramework.ThreadTracker
 import junit.framework.TestCase
 import java.io.File
 
-internal abstract class StatisticsUploaderBaseTest : HeavyPlatformTestCase() {
+internal abstract class StatisticsServiceBaseTest : HeavyPlatformTestCase() {
   private val longRunningThreadDisposable: Disposable = Disposer.newDisposable()
   protected lateinit var container: ApacheContainer
   protected lateinit var tmpLocalRoot: String

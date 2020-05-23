@@ -142,6 +142,7 @@ public class EventLogStatisticsService implements StatisticsService {
           if (logger.isTraceEnabled()) {
             logger.trace(file.getName() + " -> " + e.getMessage());
           }
+          decorator.onFailed(null, null);
         }
       }
 

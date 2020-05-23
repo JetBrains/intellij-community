@@ -77,7 +77,7 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
     final String productUrl = getWhiteListProductUrl();
     if (productUrl == null) return null;
     String userAgent = myApplicationInfo.getUserAgent();
-    return StatisticsWhitelistLoader.getApprovedGroups(userAgent, productUrl);
+    return StatisticsWhitelistLoader.getApprovedGroups(productUrl, userAgent);
   }
 
   @NonNls
