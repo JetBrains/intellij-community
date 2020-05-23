@@ -44,7 +44,7 @@ internal open class InlineErrorNotifier(private val inlineComponent: InlineCompo
       val linkLabel = LinkLabel<Any>(fixOption.text, null) { _, _ ->
         fixOption.fix()
       }
-      val message = if (description == null) text else "$text\n$description"
+      val message = if (description == null) text else "<html>$text<br/>$description</html>"
       inlineComponent.showError(message, linkLabel)
     }
   }
