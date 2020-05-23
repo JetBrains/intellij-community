@@ -80,6 +80,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
       @Override
       public void directoryMappingChanged() {
         myLocationCache.reset();
+        myCachesHolder.reset();
         refreshAllCachesAsync(false, true);
         refreshIncomingChangesAsync();
         myTaskQueue.run(() -> {

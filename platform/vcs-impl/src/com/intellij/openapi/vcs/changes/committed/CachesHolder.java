@@ -54,9 +54,13 @@ public class CachesHolder {
     }
   }
 
+  public void reset() {
+    myCacheFiles.clear();
+  }
+
   public void clearAllCaches() {
     myCacheFiles.values().forEach(ChangesCacheFile::delete);
-    myCacheFiles.clear();
+    reset();
   }
 
   public @NotNull Collection<ChangesCacheFile> getAllCaches() {
