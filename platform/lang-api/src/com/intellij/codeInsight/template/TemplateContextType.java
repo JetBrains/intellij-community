@@ -54,7 +54,9 @@ public abstract class TemplateContextType {
    * @deprecated use {@link #isInContext(TemplateActionContext)}
    */
   @Deprecated
-  public abstract boolean isInContext(@NotNull PsiFile file, int offset);
+  public boolean isInContext(@NotNull PsiFile file, int offset) {
+    throw new RuntimeException("Please, implement isInContext(TemplateActionContext) method and don't invoke this method directly");
+  }
 
   public boolean isInContext(@NotNull TemplateActionContext templateActionContext) {
     return isInContext(templateActionContext.getFile(), templateActionContext.getStartOffset());
