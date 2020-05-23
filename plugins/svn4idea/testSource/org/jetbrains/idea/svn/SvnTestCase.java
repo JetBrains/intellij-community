@@ -259,11 +259,13 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
       assertDoesntExist(rootFile);
       refreshVfs();
 
-      runInAndVerifyIgnoreOutput("co", mainUrl);
-      final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
-      final File innerDir = new File(sourceDir, "inner1/inner2/inner");
+      File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
+      File innerDir = new File(sourceDir, "inner1/inner2/inner");
+      runInAndVerifyIgnoreOutput("co", mainUrl, sourceDir.getPath());
       runInAndVerifyIgnoreOutput("co", externalURL, innerDir.getPath());
+
       refreshVfs();
+      setVcsMappings(createDirectoryMapping(sourceDir));
     });
   }
 
@@ -364,7 +366,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
       }
 
       refreshVfs();
-      setNewDirectoryMappings(sourceDir);
+      setVcsMappings(createDirectoryMapping(sourceDir));
 
       if (updateExternal) {
         assertExists(new File(sourceDir, "external"));
@@ -380,8 +382,9 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
     refreshSvnMappingsSynchronously();
   }
 
-  private void setNewDirectoryMappings(@NotNull File directory) {
-    setVcsMappings(new VcsDirectoryMapping(toSystemIndependentName(directory.getPath()), vcs.getName()));
+  @NotNull
+  private VcsDirectoryMapping createDirectoryMapping(@NotNull File directory) {
+    return new VcsDirectoryMapping(toSystemIndependentName(directory.getPath()), vcs.getName());
   }
 
   protected void createAnotherRepo() throws Exception {
