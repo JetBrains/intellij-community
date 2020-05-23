@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
 import com.intellij.execution.wsl.WSLDistribution;
@@ -22,6 +22,7 @@ import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.*;
 
 import java.io.File;
+import java.nio.file.NoSuchFileException;
 import java.text.ParseException;
 import java.util.Collections;
 
@@ -252,7 +253,11 @@ public class GitExecutableManager {
   public GitVersion identifyVersion(@NotNull GitExecutable executable) throws GitVersionIdentificationException {
     CachingFileTester<GitVersion>.TestResult result = myVersionCache.getResultFor(executable);
     if (result.getResult() == null) {
-      throw new GitVersionIdentificationException("Cannot identify version of git executable " + executable, result.getException());
+      Exception e = result.getException();
+      if (e instanceof NoSuchFileException && executable.getExePath().equals(GitExecutableDetector.getDefaultExecutable())) {
+        throw new GitNotInstalledException("Git not installed", e);
+      }
+      throw new GitVersionIdentificationException("Cannot identify version of git executable " + executable, e);
     }
     else {
       return result.getResult();

@@ -20,7 +20,7 @@ internal class WindowsExecutableProblemHandler(val project: Project) : GitExecut
 
   override fun showError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
     errorNotifier.showError(GitBundle.message("executable.error.git.not.installed"),
-                            getPrettyErrorMessage(exception),
+                            getHumanReadableErrorFor(exception),
                             ErrorNotifier.FixOption.Standard(GitBundle.message("install.download.and.install.action")) {
         errorNotifier.executeTask(GitBundle.message("install.downloading.progress"), true) {
           val installer = fetchInstaller(errorNotifier) { it.os == "windows" && archMatches(it.arch) }

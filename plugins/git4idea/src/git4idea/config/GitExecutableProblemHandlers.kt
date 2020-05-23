@@ -98,8 +98,17 @@ internal fun getErrorTitle(text: String, description: String?) =
 
 internal fun getErrorMessage(text: String, description: String?) = description ?: text
 
+internal fun getHumanReadableErrorFor(exception: Throwable): String? {
+  if (exception is GitNotInstalledException) {
+    return null
+  }
+  return getPrettyErrorMessage(exception)
+}
+
 private class DefaultExecutableProblemHandler(val project: Project) : GitExecutableProblemHandler {
   override fun showError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
-    errorNotifier.showError(getPrettyErrorMessage(exception), getLinkToConfigure(project))
+    errorNotifier.showError(GitBundle.message("executable.error.git.not.installed"),
+                            getHumanReadableErrorFor(exception),
+                            getLinkToConfigure(project))
   }
 }

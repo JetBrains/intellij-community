@@ -29,7 +29,7 @@ class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHa
 
   private fun showGenericError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
     errorNotifier.showError(GitBundle.message("executable.error.git.not.installed"),
-                            getPrettyErrorMessage(exception),
+                            getHumanReadableErrorFor(exception),
                             ErrorNotifier.FixOption.Standard(GitBundle.message("install.download.and.install.action")) {
       errorNotifier.executeTask(GitBundle.message("install.downloading.progress"), false) {
         try {
