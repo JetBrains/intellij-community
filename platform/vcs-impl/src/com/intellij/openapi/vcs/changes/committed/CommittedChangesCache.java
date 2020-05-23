@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.vcs.ProgressManagerQueue;
@@ -115,10 +114,6 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
       }
     });
     myExternallyLoadedChangeLists = new ConcurrentHashMap<>();
-  }
-
-  public MessageBus getMessageBus() {
-    return myProject.getMessageBus();
   }
 
   @Override
