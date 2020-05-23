@@ -5,17 +5,16 @@ import org.jetbrains.intellij.build.BuildMessages
 import org.junit.Test
 
 class RetryTest {
+  private def log = [
+    info : { println it.toString() },
+    error: { String message -> throw new Exception(message) }
+  ] as BuildMessages
+  private def retries = 10
+  private def retry = new Retry(log, retries, 1)
+
   @Test
   void 'retry test'() {
-    def log = [
-      info : { println it.toString() },
-      error: { throw new Exception(it) }
-    ] as BuildMessages
-    def retries = 10
-    def retry = new Retry(log, retries, 1)
-    assert retry.call {
-      42
-    } == 42
+    assert retry.call { 42 } == 42
     def attempts = 0
     assert retry.call {
       if (it > retries / 2) return 42
