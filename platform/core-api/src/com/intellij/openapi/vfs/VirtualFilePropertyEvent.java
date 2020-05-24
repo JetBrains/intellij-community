@@ -2,8 +2,6 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
-import com.intellij.util.FileContentUtilCore;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -57,10 +55,5 @@ public class VirtualFilePropertyEvent extends VirtualFileEvent {
    */
   public Object getNewValue() {
     return myNewValue;
-  }
-
-  @ApiStatus.Experimental
-  public boolean isRename() {
-    return myPropertyName == VirtualFile.PROP_NAME && getRequestor() != FileContentUtilCore.FORCE_RELOAD_REQUESTOR;
   }
 }
