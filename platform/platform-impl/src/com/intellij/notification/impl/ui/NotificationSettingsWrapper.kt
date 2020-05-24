@@ -62,7 +62,13 @@ class NotificationSettingsWrapper internal constructor(var version: Notification
       version = version.withShouldReadAloud(readAloud)
     }
 
-  var displayType: NotificationDisplayType?
+  var isPlaySound: Boolean
+    get() = version.isPlaySound
+    set(playSound) {
+      version = version.withPlaySound(playSound)
+    }
+
+  var displayType: NotificationDisplayType
     get() = version.displayType
     set(type) {
       version = version.withDisplayType(type)
