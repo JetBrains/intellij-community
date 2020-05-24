@@ -82,7 +82,7 @@ public final class TemplateActionContext {
 
   public static @NotNull TemplateActionContext surrounding(@NotNull PsiFile psiFile, @NotNull Editor editor) {
     SelectionModel selectionModel = editor.getSelectionModel();
-    return create(psiFile, editor, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(), false);
+    return create(psiFile, editor, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(), true);
   }
 
   public static @NotNull TemplateActionContext create(@NotNull PsiFile psiFile,
