@@ -51,7 +51,6 @@ import java.util.*;
  *
  * instance of this component should be managed by the code which requires dependency resolution functionality
  * all necessary params like path to local repo should be passed in constructor
- *
  */
 public class ArtifactRepositoryManager {
   private static final VersionScheme ourVersioning = new GenericVersionScheme();
@@ -322,9 +321,20 @@ public class ArtifactRepositoryManager {
     return result.getVersions();
   }
 
-  public static RemoteRepository createRemoteRepository(final String id, final String url) {
+  public static RemoteRepository createRemoteRepository(final String id,
+                                                        final String url) {
+    return createRemoteRepository(id, url, true);
+  }
+
+  public static RemoteRepository createRemoteRepository(final String id,
+                                                        final String url,
+                                                        boolean allowSnapshots) {
     // for maven repos repository type should be 'default'
-    return new RemoteRepository.Builder(id, "default", url).setProxy(ourProxySelector.getProxy(url)).build();
+    RemoteRepository.Builder builder = new RemoteRepository.Builder(id, "default", url);
+    if (!allowSnapshots) {
+      builder.setSnapshotPolicy(new RepositoryPolicy(false, null, null));
+    }
+    return builder.setProxy(ourProxySelector.getProxy(url)).build();
   }
 
   public static RemoteRepository createRemoteRepository(RemoteRepository prototype) {
