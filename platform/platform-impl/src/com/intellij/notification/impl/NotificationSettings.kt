@@ -13,122 +13,65 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.notification.impl;
+package com.intellij.notification.impl
 
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.openapi.util.text.StringUtil;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.notification.NotificationDisplayType
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
+import org.jdom.Element
 
 /**
  * @author spleaner
+ * @author Konstantin Bulenkov
  */
-public final class NotificationSettings {
-  private final String myGroupId;
-  private final NotificationDisplayType myDisplayType;
-  private final boolean myShouldLog;
-  private final boolean myShouldReadAloud;
+data class NotificationSettings @JvmOverloads constructor(var groupId: String,
+                                                          var displayType: NotificationDisplayType,
+                                                          var isShouldLog: Boolean,
+                                                          var isShouldReadAloud: Boolean,
+                                                          var isPlaySound: Boolean = false) {
 
-  public NotificationSettings(String groupId, NotificationDisplayType displayType, boolean shouldLog, boolean shouldReadAloud) {
-    myGroupId = groupId;
-    myDisplayType = displayType;
-    myShouldLog = shouldLog;
-    myShouldReadAloud = shouldReadAloud;
-  }
+  fun withShouldLog(shouldLog: Boolean) = copy(isShouldLog = shouldLog)
 
- @NotNull
-  public String getGroupId() {
-    return myGroupId;
-  }
+  fun withShouldReadAloud(shouldReadAloud: Boolean) = copy(isShouldReadAloud = shouldReadAloud)
 
-  @NotNull
-  public NotificationDisplayType getDisplayType() {
-    return myDisplayType;
-  }
+  fun withPlaySound(playSound: Boolean) = copy(isPlaySound = playSound)
 
-  public boolean isShouldLog() {
-    return myShouldLog;
-  }
+  fun withDisplayType(type: NotificationDisplayType) = copy(displayType = type)
 
-  public NotificationSettings withShouldLog(boolean shouldLog) {
-    return new NotificationSettings(myGroupId, myDisplayType, shouldLog, myShouldReadAloud);
-  }
-
-  public boolean isShouldReadAloud() {
-    return myShouldReadAloud;
-  }
-
-  public NotificationSettings withShouldReadAloud(boolean shouldReadAloud) {
-    return new NotificationSettings(myGroupId, myDisplayType, myShouldLog, shouldReadAloud);
-  }
-
-  public NotificationSettings withDisplayType(NotificationDisplayType displayType) {
-    return new NotificationSettings(myGroupId, displayType, myShouldLog, myShouldReadAloud);
-  }
-
-  @Nullable
-  public static NotificationSettings load(@NotNull final Element element) {
-    final String displayTypeString = element.getAttributeValue("displayType");
-    NotificationDisplayType displayType = NotificationDisplayType.BALLOON;
-    boolean shouldLog = !"false".equals(element.getAttributeValue("shouldLog"));
-    boolean shouldReadAloud = "true".equals(element.getAttributeValue("shouldReadAloud"));
-    if ("BALLOON_ONLY".equals(displayTypeString)) {
-      shouldLog = false;
-      displayType = NotificationDisplayType.BALLOON;
+  fun save(): Element {
+    return Element("notification").apply {
+      setAttribute("groupId", groupId)
+      if (displayType != NotificationDisplayType.BALLOON) setAttribute("displayType", displayType.toString())
+      if (!isShouldLog) setAttribute("shouldLog", "false")
+      if (isShouldReadAloud) setAttribute("shouldReadAloud", "true")
+      if (isPlaySound) setAttribute("playSound", "true")
     }
-    else if (displayTypeString != null) {
-      try {
-        displayType = NotificationDisplayType.valueOf(StringUtil.toUpperCase(displayTypeString));
+  }
+
+  companion object {
+    fun load(element: Element): NotificationSettings? {
+      val displayTypeString = element.getAttributeValue("displayType")
+      var displayType = NotificationDisplayType.BALLOON
+      var shouldLog = "false" != element.getAttributeValue("shouldLog")
+      val shouldReadAloud = "true" == element.getAttributeValue("shouldReadAloud")
+      val playSound = "true" == element.getAttributeValue("playSound")
+      if ("BALLOON_ONLY" == displayTypeString) {
+        shouldLog = false
+        displayType = NotificationDisplayType.BALLOON
       }
-      catch (IllegalArgumentException ignored) {
+      else if (displayTypeString != null) {
+        try {
+          displayType = NotificationDisplayType.valueOf(StringUtil.toUpperCase(displayTypeString))
+        }
+        catch (ignored: IllegalArgumentException) {
+        }
       }
+      val groupId = element.getAttributeValue("groupId")
+      return groupId?.let { NotificationSettings(it, displayType, shouldLog, shouldReadAloud, playSound) }
     }
-
-    final String groupId = element.getAttributeValue("groupId");
-    return groupId != null ? new NotificationSettings(groupId, displayType, shouldLog, shouldReadAloud) : null;
-  }
-
-  @NotNull
-  public Element save() {
-    final Element result = new Element("notification");
-
-    result.setAttribute("groupId", getGroupId());
-    final NotificationDisplayType displayType = getDisplayType();
-    if (displayType != NotificationDisplayType.BALLOON) {
-      result.setAttribute("displayType", displayType.toString());
-    }
-    if (!myShouldLog) {
-      result.setAttribute("shouldLog", "false");
-    }
-    if (myShouldReadAloud) {
-      result.setAttribute("shouldReadAloud", "true");
-    }
-
-    return result;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof NotificationSettings)) return false;
-
-    NotificationSettings settings = (NotificationSettings)o;
-
-    if (myShouldLog != settings.myShouldLog) return false;
-    if (myShouldReadAloud != settings.myShouldReadAloud) return false;
-    if (myDisplayType != settings.myDisplayType) return false;
-    if (!myGroupId.equals(settings.myGroupId)) return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = myGroupId.hashCode();
-    result = 31 * result + myDisplayType.hashCode();
-    result = 31 * result + (myShouldLog ? 1 : 0);
-    result = 31 * result + (myShouldReadAloud ? 1 : 0);
-    return result;
   }
 }
+
+fun isReadAloudEnabled() = SystemInfo.isMac
+fun isSoundEnabled() = Registry.`is`("ide.notifications.sound.enabled")

@@ -180,7 +180,7 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
   public synchronized void loadState(@NotNull final Element state) {
     myIdToSettingsMap.clear();
     for (Element child : state.getChildren("notification")) {
-      final NotificationSettings settings = NotificationSettings.load(child);
+      final NotificationSettings settings = NotificationSettings.Companion.load(child);
       if (settings != null) {
         final String id = settings.getGroupId();
         LOG.assertTrue(!myIdToSettingsMap.containsKey(id), String.format("Settings for '%s' already loaded!", id));
