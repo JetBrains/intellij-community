@@ -471,7 +471,9 @@ public class JarRepositoryManager {
 
         final ArrayList<RemoteRepository> remotes = new ArrayList<>();
         for (RemoteRepositoryDescription repository : myRepositories) {
-          remotes.add(ArtifactRepositoryManager.createRemoteRepository(repository.getId(), repository.getUrl()));
+          remotes.add(
+            ArtifactRepositoryManager.createRemoteRepository(repository.getId(), repository.getUrl(), repository.isAllowSnapshots())
+          );
         }
         try {
           return perform(indicator, new ArtifactRepositoryManager(getLocalRepositoryPath(), remotes, new ProgressConsumer() {
