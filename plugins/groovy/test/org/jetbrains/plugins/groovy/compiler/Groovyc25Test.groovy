@@ -61,4 +61,44 @@ class Groovyc25Test extends GroovycTestBase {
   void testPartialCrossRecompile() {
     super.testPartialCrossRecompile()
   }
+
+  void 'test dependent trait'() {
+    def ca = myFixture.addFileToProject('A.groovy', 'class A implements B { }')
+    myFixture.addFileToProject('B.groovy', 'trait B { A aaa }')
+    assertEmpty make()
+    touch(ca.virtualFile)
+    assert make().collect { it.message } == chunkRebuildMessage("Groovy stub generator")
+  }
+
+  void 'test dependent class instanceof'() {
+    def ca = myFixture.addFileToProject('A.groovy', 'class A { def usage(x) { x instanceof B } }')
+    myFixture.addFileToProject('B.groovy', 'class B { A aaa }')
+    assertEmpty make()
+    touch(ca.virtualFile)
+    assert make().collect { it.message } == chunkRebuildMessage("Groovy compiler")
+  }
+
+  void 'test dependent class exception'() {
+    def ca = myFixture.addFileToProject('A.groovy', 'class A { def usage(x) throws B {} }')
+    myFixture.addFileToProject('B.groovy', 'class B extends Throwable { A aaa }')
+    assertEmpty make()
+    touch(ca.virtualFile)
+    assert make().collect { it.message } == chunkRebuildMessage("Groovy compiler")
+  }
+
+  void 'test dependent class literal'() {
+    def ca = myFixture.addFileToProject('A.groovy', 'class A { def usage() { B.class } }')
+    myFixture.addFileToProject('B.groovy', '@groovy.transform.PackageScope class B { A aaa }')
+    assertEmpty make()
+    touch(ca.virtualFile)
+    assert make().collect { it.message } == chunkRebuildMessage("Groovy compiler")
+  }
+
+  void 'test dependent class array'() {
+    def ca = myFixture.addFileToProject('A.groovy', 'class A { def usage() { new B[0] } }')
+    myFixture.addFileToProject('B.groovy', 'class B { A aaa }')
+    assertEmpty make()
+    touch(ca.virtualFile)
+    assert make().collect { it.message } == chunkRebuildMessage("Groovy compiler")
+  }
 }
