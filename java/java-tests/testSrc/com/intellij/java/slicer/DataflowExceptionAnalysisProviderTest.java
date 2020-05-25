@@ -32,6 +32,45 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
            "class X {static void test(Object obj) {System.out.println(((Number) obj).intValue());}}");
   }
   
+  public void testClassCastGenericArray() {
+    //noinspection unchecked
+    doTest("java.lang.ClassCastException: class java.lang.String cannot be cast to class [Ljava.lang.Object; (java.lang.String and [Ljava.lang.Object; are in module java.base of loader 'bootstrap')",
+           "Find why 'obj' could be java.lang.String (not-null)",
+           "class X {static <E> E[] asArray(Object obj) {return (E[])obj;}}");
+  }
+  
+  public void testClassCastFromArray() {
+    doTest("java.lang.ClassCastException: class [Ljava.lang.String; cannot be cast to class java.lang.String",
+           "Find why 'obj' could be java.lang.String[] (not-null)",
+           "class X {static String cast(Object obj) {return (String)obj;}}");
+  }
+  
+  public void testClassCastFromPrimitiveTwoDimArray() {
+    doTest("java.lang.ClassCastException: class [[J cannot be cast to class java.lang.String",
+           "Find why 'obj' could be long[][] (not-null)",
+           "class X {static String cast(Object obj) {return (String)obj;}}");
+  }
+  
+  public void testClassCastFromNested() {
+    doTest("java.lang.ClassCastException: class MainTest$X cannot be cast to class java.lang.String",
+           "Find why 'obj' could be instanceof MainTest.X (not-null)",
+           "class MainTest {static String cast(Object obj) {return (String)obj;}static class X {}}");
+  }
+  
+  public void testClassCastFromLocal() {
+    doTest("java.lang.ClassCastException: class MainTest$1X cannot be cast to class java.lang.String",
+           "Find why 'obj' could be instanceof X (not-null)",
+           "class MainTest {static String cast(Object obj) {return (String)obj;}" +
+           "public static void main(String[] args) { class X{}cast(new X()); }}");
+  }
+  
+  public void testClassCastFromAnonymous() {
+    doTest("java.lang.ClassCastException: class MainTest$1 cannot be cast to class java.lang.String",
+           "Find why 'obj' could be anonymous java.lang.Object (not-null)",
+           "class MainTest {static String cast(Object obj) {return (String)obj;}" +
+           "public static void main(String[] args) { cast(new Object() {});}}");
+  }
+  
   public void testNpe() {
     doTest("java.lang.NullPointerException: Cannot invoke \"Object.hashCode()\" because \"obj\" is null",
            "Find why 'obj' could be null",

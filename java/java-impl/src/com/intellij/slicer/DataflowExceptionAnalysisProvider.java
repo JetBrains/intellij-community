@@ -15,7 +15,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -264,16 +264,45 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
     PsiExpression ref = AnalysisStartingPoint.extractAnchor(castExpression.getOperand());
     if (ref == null) return null;
     if (actualClass != null) {
-      // TODO: support arrays, primitive arrays, inner classes
-      PsiClass[] classes = JavaPsiFacade.getInstance(myProject).findClasses(actualClass, GlobalSearchScope.allScope(myProject));
-      if (classes.length == 1) {
-        return new AnalysisStartingPoint(
-          DfTypes.typedObject(JavaPsiFacade.getElementFactory(myProject).createType(classes[0]), Nullability.NOT_NULL), ref);
+      PsiType psiType = getPsiType(actualClass);
+      if (psiType != null) {
+        return new AnalysisStartingPoint(DfTypes.typedObject(psiType, Nullability.NOT_NULL), ref);
       }
     }
     PsiType castType = castExpression.getType();
     if (castType != null) {
       return AnalysisStartingPoint.tryNegate(new AnalysisStartingPoint(DfTypes.typedObject(castType, Nullability.NULLABLE), ref));
+    }
+    return null;
+  }
+  
+  private @Nullable PsiType getPsiType(String classCastExceptionType) {
+    int dim = 0;
+    while (classCastExceptionType.startsWith("[", dim)) {
+      dim++;
+    }
+    String className;
+    if (dim > 0) {
+      if (classCastExceptionType.startsWith("L", dim) && classCastExceptionType.endsWith(";")) {
+        className = classCastExceptionType.substring(dim + 1, classCastExceptionType.length() - 1);
+      } else {
+        if (classCastExceptionType.length() == dim + 1){
+          PsiType type = PsiPrimitiveType.fromJvmTypeDescriptor(classCastExceptionType.charAt(dim));
+          if (type != null) {
+            while (dim-- > 0) type = type.createArrayType();
+            return type;
+          }
+        }
+        return null;
+      }
+    } else {
+      className = classCastExceptionType;
+    }
+    PsiClass psiClass = ClassUtil.findPsiClass(PsiManager.getInstance(myProject), className, null, true);
+    if (psiClass != null) {
+      PsiType type = JavaPsiFacade.getElementFactory(myProject).createType(psiClass);
+      while (dim-- > 0) type = type.createArrayType();
+      return type;
     }
     return null;
   }
