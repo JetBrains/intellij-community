@@ -166,14 +166,19 @@ public class DumbServiceMergingTaskQueue {
     }
   }
 
-  public static class QueuedDumbModeTask {
+  public static class QueuedDumbModeTask implements AutoCloseable {
     private final DumbModeTask myTask;
     private final ProgressIndicatorEx myIndicator;
 
-    public QueuedDumbModeTask(@NotNull DumbModeTask task,
-                              @NotNull ProgressIndicatorEx progress) {
+    QueuedDumbModeTask(@NotNull DumbModeTask task,
+                       @NotNull ProgressIndicatorEx progress) {
       myTask = task;
       myIndicator = progress;
+    }
+
+    @Override
+    public void close() {
+      Disposer.dispose(myTask);
     }
 
     @NotNull
@@ -186,28 +191,24 @@ public class DumbServiceMergingTaskQueue {
     }
 
     public void executeTask(@Nullable ProgressIndicator customIndicator) {
-      try {
-        //this is the cancellation check
-        myIndicator.checkCanceled();
-        myIndicator.setIndeterminate(true);
+      //this is the cancellation check
+      myIndicator.checkCanceled();
+      myIndicator.setIndeterminate(true);
 
-        if (customIndicator == null) {
-          customIndicator = myIndicator;
-        } else {
-          customIndicator.checkCanceled();
-          ProgressIndicator customIndicatorFinal = customIndicator;
-          new ProgressIndicatorListenerAdapter() {
-            @Override
-            public void cancelled() {
-              customIndicatorFinal.cancel();
-            }
-          }.installToProgress(myIndicator);
-        }
-
-        myTask.performInDumbMode(customIndicator);
-      } finally {
-        Disposer.dispose(myTask);
+      if (customIndicator == null) {
+        customIndicator = myIndicator;
+      } else {
+        customIndicator.checkCanceled();
+        ProgressIndicator customIndicatorFinal = customIndicator;
+        new ProgressIndicatorListenerAdapter() {
+          @Override
+          public void cancelled() {
+            customIndicatorFinal.cancel();
+          }
+        }.installToProgress(myIndicator);
       }
+
+      myTask.performInDumbMode(customIndicator);
     }
 
     public void registerStageStarted(@NotNull IdeActivity activity) {

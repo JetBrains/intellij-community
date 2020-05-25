@@ -24,9 +24,10 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
 
   private void runAllTasks() {
     while(true) {
-      @Nullable QueuedDumbModeTask nextTask = myQueue.extractNextTask();
-      if (nextTask == null) return;
-      nextTask.executeTask();
+      try (@Nullable QueuedDumbModeTask nextTask = myQueue.extractNextTask()) {
+        if (nextTask == null) return;
+        nextTask.executeTask();
+      }
     }
   }
 
@@ -254,6 +255,8 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
       Assert.fail();
     } catch (ProcessCanceledException ignore) {
       //OK
+    } finally {
+      task.close();
     }
     Assert.assertEquals(Boolean.TRUE, isDisposed.get());
   }
@@ -273,8 +276,7 @@ public class DumbServiceMergingTaskQueueTest extends BasePlatformTestCase {
     });
 
     Thread th = new Thread(() -> {
-      try {
-        QueuedDumbModeTask nextTask = myQueue.extractNextTask();
+      try (QueuedDumbModeTask nextTask = myQueue.extractNextTask()) {
         nextTask.executeTask();
       } catch (Exception e) {
         LOG.error(e);
