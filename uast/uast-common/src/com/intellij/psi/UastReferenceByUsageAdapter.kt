@@ -59,14 +59,13 @@ internal class UastReferenceByUsageAdapter(private val usagePattern: UElementPat
 
 @ApiStatus.Experimental
 fun uInjectionHostInVariable() = injectionHostUExpression().filter {
-  val uastParent = it.uastParent ?: getOriginalUastParent(it)
-  uastParent is UVariable
+  it.uastParent is UVariable
 }
 
 @ApiStatus.Experimental
 fun uExpressionInVariable() = injectionHostUExpression().filter {
-  val uastParent = it.uastParent ?: getOriginalUastParent(it)
-  uastParent is UVariable || (uastParent is UPolyadicExpression && uastParent.uastParent is UVariable)
+  val parent = it.uastParent
+  parent is UVariable || (parent is UPolyadicExpression && parent.uastParent is UVariable)
 }
 
 private val USAGE_REFERENCE_EXPRESSION: Key<UReferenceExpression> = Key.create("uast.referenceExpressions.byUsage")
@@ -149,8 +148,7 @@ private fun findVariableUsages(variablePsi: PsiElement, variableName: String, fi
     .searchWord(variablePsi.project, variableName)
     .inScope(LocalSearchScope(files, null, true))
     .buildQuery { _, occurrencePsi, _ ->
-      // we get identifiers and need to process their parents, see IDEA-232166
-      val uRef = occurrencePsi.parent.findContaining(UReferenceExpression::class.java)
+      val uRef = occurrencePsi.findContaining(UReferenceExpression::class.java)
       val expressionType = uRef?.getExpressionType()
       if (expressionType != null && expressionType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         val occurrenceResolved = uRef.tryResolve()
