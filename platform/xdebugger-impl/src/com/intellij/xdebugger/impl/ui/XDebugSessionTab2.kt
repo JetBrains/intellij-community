@@ -14,7 +14,9 @@ import com.intellij.openapi.ui.PersistentThreeComponentSplitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.ex.ToolWindowEx
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.JBColor
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
@@ -118,6 +120,16 @@ class XDebugSessionTab2(
     Disposer.register(lifetime, Disposable {
       toolWindow?.component?.removeAncestorListener(ancestorListener)
     })
+
+    var oldToolWindowType: ToolWindowType? = null
+    project.messageBus.connect(lifetime).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+      override fun stateChanged(toolWindowManager: ToolWindowManager) {
+        if (oldToolWindowType == toolWindow?.type) return
+
+        setHeaderState()
+        oldToolWindowType = toolWindow?.type
+      }
+    })
   }
 
   override fun getWatchesContentId() = debuggerContentId
@@ -197,8 +209,9 @@ class XDebugSessionTab2(
       if (toolWindow !is ToolWindowEx) return@let
 
       val singleContent = toolWindow.contentManager.contents.singleOrNull()
+      val headerVisible = toolWindow.isHeaderVisible
       val toolbar = DefaultActionGroup().apply {
-        if (singleContent == null) return@apply
+        if (singleContent == null || headerVisible) return@apply
 
         add(object : AnAction() {
           override fun actionPerformed(e: AnActionEvent) {
@@ -214,7 +227,7 @@ class XDebugSessionTab2(
       }
       myUi.options.setTopRightToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
 
-      toolWindow.decorator.isHeaderVisible = singleContent == null
+      toolWindow.decorator.isHeaderVisible = headerVisible
 
       if (toolWindow.decorator.isHeaderVisible) {
         toolWindow.component.border = null
@@ -225,6 +238,8 @@ class XDebugSessionTab2(
       }
     }
   }
+
+  private val ToolWindowEx.isHeaderVisible get() = (type != ToolWindowType.DOCKED) || contentManager.contents.singleOrNull() == null
 
   override fun registerAdditionalActions(leftToolbar: DefaultActionGroup, topLeftToolbar: DefaultActionGroup, settings: DefaultActionGroup) {
     leftToolbar.apply {
