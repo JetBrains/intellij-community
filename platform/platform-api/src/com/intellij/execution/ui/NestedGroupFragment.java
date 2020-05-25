@@ -49,7 +49,6 @@ public abstract class NestedGroupFragment<S extends FragmentedSettings> extends 
 
     @Override
   protected @NotNull JComponent createEditor() {
-    myComponent = new FragmentedSettingsBuilder<>(getChildren(), myComponent).createCompoundEditor();
-    return super.createEditor();
+     return new FragmentedSettingsBuilder<>(getChildren(), this).createCompoundEditor();
   }
 }

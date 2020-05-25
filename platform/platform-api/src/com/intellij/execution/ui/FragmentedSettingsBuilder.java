@@ -29,10 +29,10 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
   private final GridBagConstraints myConstraints =
     new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.insetsTop(5), 0, 0);
   private final java.util.List<SettingsEditorFragment<Settings, ?>> myFragments;
-  private final JComponent myMain;
+  private final SettingsEditorFragment<Settings, ?> myMain;
   private LinkLabel<?> myLinkLabel;
 
-  FragmentedSettingsBuilder(List<SettingsEditorFragment<Settings, ?>> fragments, JComponent main) {
+  FragmentedSettingsBuilder(List<SettingsEditorFragment<Settings, ?>> fragments, SettingsEditorFragment<Settings, ?> main) {
     myFragments = fragments;
     myMain = main;
   }
@@ -57,7 +57,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     buildBeforeRun(fragments);
     addLine(buildHeader(fragments));
     if (myMain != null) {
-      addLine(myMain);
+      addLine(myMain.component());
     }
     addLine(buildCommandLinePanel(fragments));
 
@@ -103,8 +103,10 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
       panel.add(label.getComponent(), BorderLayout.WEST);
       fragments.remove(label);
     }
-
-    myLinkLabel = new DropDownLink<>(OptionsBundle.message("settings.editor.modify.options"), () -> showOptions());
+    if (myMain != null) {
+      panel.add(new JLabel(myMain.getGroup()), BorderLayout.WEST);
+    }
+    myLinkLabel = new DropDownLink<>(OptionsBundle.message(myMain == null? "settings.editor.modify.options" : "settings.editor.modify"), () -> showOptions());
     panel.add(myLinkLabel, BorderLayout.EAST);
     return panel;
   }
