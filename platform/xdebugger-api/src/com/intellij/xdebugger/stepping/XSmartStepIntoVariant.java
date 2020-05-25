@@ -23,7 +23,7 @@ public abstract class XSmartStepIntoVariant {
   }
 
   @Nullable
-  public String getTooltip() {
+  public String getDescription() {
     return null;
   }
 }

@@ -356,9 +356,9 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
       myCurrentVariant = variant;
       setCurrentVariantHighlighterAttributes(DebuggerColors.SMART_STEP_INTO_SELECTION);
 
-      String tooltip = variant.myVariant.getTooltip();
-      if (tooltip != null) {
-        showHint(myEditor, tooltip, variant);
+      String description = variant.myVariant.getDescription();
+      if (description != null) {
+        showHint(myEditor, description, variant);
       }
     }
 
