@@ -1,9 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Type;
+
+import java.util.concurrent.CompletableFuture;
 
 public class CompoundReferenceRenderer extends CompoundTypeRenderer {
   public CompoundReferenceRenderer(NodeRendererSettings rendererSettings,
@@ -23,6 +25,14 @@ public class CompoundReferenceRenderer extends CompoundTypeRenderer {
       return super.isApplicable(type);
     }
     return false;
+  }
+
+  @Override
+  public CompletableFuture<Boolean> isApplicableAsync(Type type) {
+    if (type instanceof ReferenceType) {
+      return super.isApplicableAsync(type);
+    }
+    return CompletableFuture.completedFuture(false);
   }
 
   @Override

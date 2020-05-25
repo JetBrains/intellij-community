@@ -174,6 +174,11 @@ public class CompoundTypeRenderer extends CompoundNodeRenderer {
     }
 
     @Override
+    public CompletableFuture<Boolean> isApplicableAsync(Type type) {
+      return CompletableFuture.completedFuture(type instanceof ReferenceType);
+    }
+
+    @Override
     public boolean isOnDemand(EvaluationContext evaluationContext, ValueDescriptor valueDescriptor) {
       return NodeRendererSettings.getInstance().getToStringRenderer().isOnDemand(evaluationContext, valueDescriptor);
     }

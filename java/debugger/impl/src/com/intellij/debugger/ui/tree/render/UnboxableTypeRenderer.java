@@ -54,6 +54,11 @@ public abstract class UnboxableTypeRenderer extends CompoundReferenceRenderer {
     return type instanceof ReferenceType && StringUtil.equals(type.name(), getClassName());
   }
 
+  @Override
+  public CompletableFuture<Boolean> isApplicableAsync(Type type) {
+    return CompletableFuture.completedFuture(type instanceof ReferenceType && StringUtil.equals(type.name(), getClassName()));
+  }
+
   public static class BooleanRenderer extends UnboxableTypeRenderer {
     public BooleanRenderer() {
       super(CommonClassNames.JAVA_LANG_BOOLEAN);
