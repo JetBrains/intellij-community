@@ -41,6 +41,9 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
   private var myFramesManager: FramesManager
   private var myThreadsContainer: ThreadsContainer
 
+  val threads: XDebuggerThreadsList get() = myThreadsList
+  val frames: XDebuggerFramesList get() = myFramesList
+
   private val myFramesPresentationCache = mutableMapOf<Any, String>()
 
   val mainPanel = JPanel(BorderLayout())
