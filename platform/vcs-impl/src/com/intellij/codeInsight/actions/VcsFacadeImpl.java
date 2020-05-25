@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
@@ -339,7 +340,7 @@ public final class VcsFacadeImpl extends VcsFacade {
     List<Change> changes = EntryStream.of(patch.getBranchChanges()).mapKeyValue((file, content) -> {
       FilePath filePath = VcsUtil.getFilePath(file);
       ContentRevision current = new CurrentContentRevision(filePath);
-      ContentRevision changed = new SimpleContentRevision(content.toString(), filePath, "Patched");
+      ContentRevision changed = new SimpleContentRevision(content.toString(), filePath, VcsBundle.message("patched.version.name"));
       return new Change(current, changed);
     }).toList();
     return new SimpleChangesBrowser(project, changes);
