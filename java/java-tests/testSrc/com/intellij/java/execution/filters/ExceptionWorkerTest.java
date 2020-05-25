@@ -659,6 +659,13 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
       Trinity.create("\tat MainTest.main(MainTest.java:4)\n", 4, 20));
     checkColumnFinder(classText, traceAndPositions);
   }
+  
+  public void testParseExceptionLine() {
+    String exceptionLine = "Caused by: java.lang.AssertionError: expected same";
+    ExceptionInfo info = ExceptionInfo.parseMessage(exceptionLine, exceptionLine.length());
+    assertNotNull(info);
+    assertEquals("java.lang.AssertionError", info.getExceptionClassName());
+  }
 
   private void checkColumnFinder(String classText, List<Trinity<String, Integer, Integer>> traceAndPositions) {
     myFixture.configureByText("SomeClass.java", classText);
