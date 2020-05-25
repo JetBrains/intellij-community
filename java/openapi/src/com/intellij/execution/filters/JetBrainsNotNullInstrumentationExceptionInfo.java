@@ -3,6 +3,7 @@ package com.intellij.execution.filters;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,6 +19,7 @@ public class JetBrainsNotNullInstrumentationExceptionInfo extends ExceptionInfo 
   private final String myParameterName;
   private final String myClassName;
   private final String myMethodName;
+  private final String myFullClassName;
   private final int myWantLines;
 
   private JetBrainsNotNullInstrumentationExceptionInfo(int offset,
@@ -29,6 +31,7 @@ public class JetBrainsNotNullInstrumentationExceptionInfo extends ExceptionInfo 
                                                        int wantLines) {
     super(offset, exceptionClassName, exceptionMessage);
     myParameterName = parameterName;
+    myFullClassName = className;
     myClassName = StringUtil.getShortName(className, '/');
     myMethodName = methodName;
     myWantLines = wantLines;
@@ -53,7 +56,13 @@ public class JetBrainsNotNullInstrumentationExceptionInfo extends ExceptionInfo 
     if (method == null) return null;
     PsiClass psiClass = method.getContainingClass();
     if (psiClass == null) return null;
-    if (!myClassName.equals(psiClass.getName())) return null;
+    if (!myClassName.equals(psiClass.getName())) {
+      PsiClass aClass = ClassUtil.findPsiClass(method.getManager(), myFullClassName.replace('/', '.'), null, true);
+      if (aClass == null || !aClass.isInheritor(psiClass, true)) return null;
+      PsiMethod subClassMethod = aClass.findMethodBySignature(method, false);
+      if (subClassMethod == null) return null;
+      method = subClassMethod;
+    }
     PsiParameter[] parameters = method.getParameterList().getParameters();
     for (int i = 0; i < parameters.length; i++) {
       if (parameters[i].getName().equals(myParameterName)) {
@@ -73,13 +82,13 @@ public class JetBrainsNotNullInstrumentationExceptionInfo extends ExceptionInfo 
       case 2:
         if (line.contains(myClassName+".$$$reportNull$$$0")) {
           return new JetBrainsNotNullInstrumentationExceptionInfo(getClassNameOffset(), getExceptionClassName(), getExceptionMessage(), 
-                                                                  myParameterName, myClassName, myMethodName, 1); 
+                                                                  myParameterName, myFullClassName, myMethodName, 1); 
         }
         break;
       case 1:
         if (line.contains(myClassName+"."+myMethodName)) {
           return new JetBrainsNotNullInstrumentationExceptionInfo(getClassNameOffset(), getExceptionClassName(), getExceptionMessage(),
-                                                                  myParameterName, myClassName, myMethodName, 0);
+                                                                  myParameterName, myFullClassName, myMethodName, 0);
         }
     }
     return null;

@@ -330,6 +330,21 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
            "}");
   }
   
+  public void testNpeJetBrainsOverride() {
+    doTest("Exception in thread \"main\" java.lang.IllegalArgumentException: Argument for @NotNull parameter 's' of MainTest$XImpl.foo must not be null\n" +
+           "\tat MainTest$XImpl.$$$reportNull$$$0(MainTest.java)\n" +
+           "\tat MainTest$XImpl.foo(MainTest.java)",
+           "Find why 's1' could be null",
+           "import org.jetbrains.annotations.NotNull;\n" +
+           "\n" +
+           "public class MainTest {\n" +
+           "    static void test(X x, String s, String s1) { x.foo(s, s1); }\n" +
+           "    interface X { void foo(String s, String t);}\n" +
+           "    static class XImpl implements X { @Override public void foo(String t, @NotNull String s) {}}" +
+           "    public static void main(String[] args) { test(new XImpl(), \"\", null); }" +
+           "}");
+  }
+  
   public void testArrayCopySource() {
     doTest("java.lang.ArrayIndexOutOfBoundsException: arraycopy: source index -1 out of bounds for int[10]\n" +
            "\tat java.base/java.lang.System.arraycopy(Native Method)",
