@@ -28,10 +28,10 @@ class LineCommentingSuggester : FeatureSuggester {
             return NoSuggestion
         }
 
-        when (val lastAction = actions.last) {
+        when (val lastAction = actions.last()) {
             is ChildAddedAction -> {
                 val child = lastAction.newChild
-                if (isOneLineComment(child)
+                if (child != null && isOneLineComment(child)
                     && isCommentAddedToLineStart(child.containingFile, child.textRange.startOffset)
                 ) {
                     return createSuggestion(DESCRIPTOR_ID, POPUP_MESSAGE)
@@ -40,6 +40,11 @@ class LineCommentingSuggester : FeatureSuggester {
             is ChildReplacedAction -> {
                 val newChild = lastAction.newChild
                 val oldChild = lastAction.oldChild
+
+                if(newChild == null || oldChild == null) {
+                    return NoSuggestion
+                }
+
                 if (isOneLineComment(newChild)
                     && oldChild !is PsiComment
                     && isCommentAddedToLineStart(newChild.containingFile, newChild.textRange.startOffset)

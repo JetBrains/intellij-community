@@ -6,4 +6,4 @@ object NoSuggestion : Suggestion()
 
 object FeatureUsageSuggestion : Suggestion()
 
-class PopupSuggestion(message: String) : Suggestion()
+class PopupSuggestion(val message: String) : Suggestion()

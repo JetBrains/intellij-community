@@ -6,11 +6,13 @@ open class ChangedCache<EventType>(val maxCacheSize: Int) {
 
     private val cache: MutableList<EventType> = LinkedList<EventType>()
 
-    val last: EventType = cache.last()
-
     fun add(event: EventType) {
         cache.add(event)
         checkOverflow()
+    }
+
+    fun last(): EventType {
+        return cache.last()
     }
 
     /**
