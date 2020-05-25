@@ -24,7 +24,7 @@
     </extensions>
 
     <projectListeners>
-        <listener class="org.jetbrains.plugins.feature.suggester.FeatureSuggestersManager" topic="com.intellij.openapi.project.impl.ProjectLifecycleListener"/>
+        <listener class="org.jetbrains.plugins.feature.suggester.FeatureSuggestersManager" topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
     </projectListeners>
 
     <actions>
