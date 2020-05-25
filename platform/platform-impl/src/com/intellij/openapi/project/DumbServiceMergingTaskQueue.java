@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import org.jetbrains.annotations.NotNull;
@@ -194,7 +195,13 @@ public class DumbServiceMergingTaskQueue {
           customIndicator = myIndicator;
         } else {
           customIndicator.checkCanceled();
-          //TODO[jo]: bind with myIndicator here to enforce cancellation
+          ProgressIndicator customIndicatorFinal = customIndicator;
+          new ProgressIndicatorListenerAdapter() {
+            @Override
+            public void cancelled() {
+              customIndicatorFinal.cancel();
+            }
+          }.installToProgress(myIndicator);
         }
 
         myTask.performInDumbMode(customIndicator);
