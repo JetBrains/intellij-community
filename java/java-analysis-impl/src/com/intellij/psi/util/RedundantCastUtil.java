@@ -492,7 +492,7 @@ public class RedundantCastUtil {
       PsiParameter[] parameters = oldMethod.getParameterList().getParameters();
 
       if (i == newArgs.length - 1 && newArgs.length == parameters.length && parameters[i].isVarArgs() &&
-          (NullArgumentToVariableArgMethodInspection.isSuspiciousVararg(newCall, newArgs[i].getType()) ||
+          (NullArgumentToVariableArgMethodInspection.isSuspiciousVararg(newCall, newArgs[i].getType(), () -> (PsiMethod)newResult.getElement()) ||
            oldResult instanceof MethodCandidateInfo && newResult instanceof MethodCandidateInfo &&
            ((MethodCandidateInfo)oldResult).getApplicabilityLevel() != ((MethodCandidateInfo)newResult).getApplicabilityLevel())) {
         newArgs[i].replace(arg);
