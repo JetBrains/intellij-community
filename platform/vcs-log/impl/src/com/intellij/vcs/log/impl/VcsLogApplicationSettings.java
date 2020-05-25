@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -40,6 +40,7 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
       .ifEq(LABELS_LEFT_ALIGNED).then(myState.LABELS_LEFT_ALIGNED)
       .ifEq(SHOW_CHANGES_FROM_PARENTS).then(myState.SHOW_CHANGES_FROM_PARENTS)
       .ifEq(SHOW_DIFF_PREVIEW).then(myState.SHOW_DIFF_PREVIEW)
+      .ifEq(DIFF_PREVIEW_VERTICAL_SPLIT).then(myState.DIFF_PREVIEW_VERTICAL_SPLIT)
       .ifEq(PREFER_COMMIT_DATE).then(myState.PREFER_COMMIT_DATE)
       .ifEq(COLUMN_ORDER).thenGet(() -> {
         List<Integer> order = myState.COLUMN_ORDER;
@@ -69,6 +70,9 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     else if (SHOW_DIFF_PREVIEW.equals(property)) {
       myState.SHOW_DIFF_PREVIEW = (Boolean)value;
     }
+    else if (DIFF_PREVIEW_VERTICAL_SPLIT.equals(property)) {
+      myState.DIFF_PREVIEW_VERTICAL_SPLIT = (Boolean)value;
+    }
     else if (PREFER_COMMIT_DATE.equals(property)) {
       myState.PREFER_COMMIT_DATE = (Boolean)value;
     }
@@ -85,8 +89,8 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
   @Override
   public <T> boolean exists(@NotNull VcsLogUiProperty<T> property) {
     return COMPACT_REFERENCES_VIEW.equals(property) || SHOW_TAG_NAMES.equals(property) || LABELS_LEFT_ALIGNED.equals(property) ||
-           SHOW_CHANGES_FROM_PARENTS.equals(property) || SHOW_DIFF_PREVIEW.equals(property) ||
-           COLUMN_ORDER.equals(property) || PREFER_COMMIT_DATE.equals(property);
+           SHOW_DIFF_PREVIEW.equals(property) || DIFF_PREVIEW_VERTICAL_SPLIT.equals(property) ||
+           SHOW_CHANGES_FROM_PARENTS.equals(property) || COLUMN_ORDER.equals(property) || PREFER_COMMIT_DATE.equals(property);
   }
 
   @Override
@@ -105,6 +109,7 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     public boolean LABELS_LEFT_ALIGNED = Registry.is("vcs.log.labels.left.aligned");
     public boolean SHOW_CHANGES_FROM_PARENTS = false;
     public boolean SHOW_DIFF_PREVIEW = false;
+    public boolean DIFF_PREVIEW_VERTICAL_SPLIT = true;
     public boolean PREFER_COMMIT_DATE = false;
     public List<Integer> COLUMN_ORDER = new ArrayList<>();
   }
