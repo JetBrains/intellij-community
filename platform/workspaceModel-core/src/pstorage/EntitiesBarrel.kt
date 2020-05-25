@@ -5,12 +5,12 @@ import com.intellij.workspace.api.TypedEntity
 import org.jetbrains.annotations.TestOnly
 
 internal open class ImmutableEntitiesBarrel internal constructor(
-  override val entities: List<ImmutableEntityFamily<out TypedEntity>>
+  override val entities: List<ImmutableEntityFamily<out TypedEntity>?>
 ) : EntitiesBarrel() {
   fun assertConsistency() {
     entities.forEachIndexed { i, family ->
       val clazz = i.findEntityClass<TypedEntity>()
-      family.assertConsistency { entityData ->
+      family?.assertConsistency { entityData ->
         val immutableClass = ClassConversion.entityDataToEntity(entityData.javaClass)
         assert(clazz == immutableClass) {
           """EntityFamily contains entity data of wrong type:
@@ -28,15 +28,12 @@ internal open class ImmutableEntitiesBarrel internal constructor(
 }
 
 internal class MutableEntitiesBarrel(
-  override var entities: MutableList<EntityFamily<out TypedEntity>>
+  override var entities: MutableList<EntityFamily<out TypedEntity>?>
 ) : EntitiesBarrel() {
   fun remove(id: Int, clazz: Int) {
     val entityFamily = getMutableEntityFamily(clazz)
     entityFamily.remove(id)
-    if (entityFamily.isEmpty()) {
-      entities.remove(entityFamily)
-      ClassToIntConverter.releaseInt(clazz)
-    }
+    if (entityFamily.isEmpty()) entities[clazz] = null
   }
 
   fun getEntityDataForModification(id: PId): PEntityData<*> {
@@ -64,6 +61,7 @@ internal class MutableEntitiesBarrel(
       when (family) {
         is MutableEntityFamily<*> -> family.toImmutable()
         is ImmutableEntityFamily<*> -> family
+        else -> null
       }
     }
     return ImmutableEntitiesBarrel(friezedEntities)
@@ -77,7 +75,11 @@ internal class MutableEntitiesBarrel(
     while (entities.size <= unmodifiableEntityId) {
       entities.add(MutableEntityFamily.createEmptyMutable())
     }
-    val entityFamily = entities[unmodifiableEntityId]
+    val entityFamily = entities[unmodifiableEntityId] ?: run {
+      val emptyEntityFamily = MutableEntityFamily.createEmptyMutable()
+      entities[unmodifiableEntityId] = emptyEntityFamily
+      emptyEntityFamily
+    }
     return when (entityFamily) {
       is MutableEntityFamily<*> -> entityFamily
       is ImmutableEntityFamily<*> -> {
@@ -90,7 +92,7 @@ internal class MutableEntitiesBarrel(
 
   companion object {
     fun from(original: ImmutableEntitiesBarrel): MutableEntitiesBarrel {
-      val copy = ArrayList<EntityFamily<out TypedEntity>>()
+      val copy = ArrayList<EntityFamily<out TypedEntity>?>()
       original.forEach { entry -> copy.add(entry) }
       return MutableEntitiesBarrel(copy)
     }
@@ -98,12 +100,12 @@ internal class MutableEntitiesBarrel(
 }
 
 internal sealed class EntitiesBarrel : Iterable<EntityFamily<out TypedEntity>> {
-  protected abstract val entities: List<EntityFamily<out TypedEntity>>
+  protected abstract val entities: List<EntityFamily<out TypedEntity>?>
 
   @Suppress("UNCHECKED_CAST")
   open operator fun get(clazz: Int): EntityFamily<out TypedEntity>? = entities.getOrNull(clazz)
-  override fun iterator(): Iterator<EntityFamily<out TypedEntity>> = entities.iterator()
+  override fun iterator(): Iterator<EntityFamily<out TypedEntity>> = entities.filterNotNull().iterator()
 
   @TestOnly
-  internal fun all() = entities
+  internal fun all() = entities.filterNotNull()
 }
