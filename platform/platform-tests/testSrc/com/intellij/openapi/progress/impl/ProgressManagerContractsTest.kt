@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.assertions.Assertions
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
 import java.util.concurrent.atomic.AtomicInteger
@@ -15,14 +16,14 @@ class ProgressManagerContractsTest : LightPlatformTestCase() {
   fun `test backgroundable modality in tests`() = repeat(10) {
     require(ApplicationManager.getApplication().isDispatchThread)
     val callbackResult = `task_backgroundable vs invokeLater`()
-    Assertions.assertThat(callbackResult).isEqualTo("fromProgress.invokeLater.")
+    assertThat(callbackResult).isEqualTo("fromProgress.invokeLater.")
   }
 
   fun `test backgroundable modality in GUI`() = repeat(10) {
     require(ApplicationManager.getApplication().isDispatchThread)
     runWithGuiTasksMode {
       val callbackResult = `task_backgroundable vs invokeLater`()
-      Assertions.assertThat(callbackResult).isEqualTo("invokeLater.fromProgress.")
+      assertThat(callbackResult).isEqualTo("invokeLater.fromProgress.")
     }
   }
 
@@ -30,14 +31,14 @@ class ProgressManagerContractsTest : LightPlatformTestCase() {
     require(ApplicationManager.getApplication().isDispatchThread)
 
     val callbackResult = `task_modal vs pooled thread`()
-    Assertions.assertThat(callbackResult).isEqualTo("fromProgress.1.fromProgress.2.fromPool.")
+    assertThat(callbackResult).isEqualTo("fromProgress.1.fromProgress.2.fromPool.")
   }
 
   fun `test invoke later from pooled thread in GUI`() = repeat(10) {
     require(ApplicationManager.getApplication().isDispatchThread)
     runWithGuiTasksMode {
       val callbackResult = `task_modal vs pooled thread`()
-      Assertions.assertThat(callbackResult).isEqualTo("fromProgress.1.fromPool.fromProgress.2.")
+      assertThat(callbackResult).isEqualTo("fromProgress.1.fromPool.fromProgress.2.")
     }
   }
 
