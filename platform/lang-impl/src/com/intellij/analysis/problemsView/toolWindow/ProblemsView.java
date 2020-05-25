@@ -3,6 +3,7 @@ package com.intellij.analysis.problemsView.toolWindow;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -85,7 +86,7 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
 
   @Override
   public boolean shouldBeAvailable(@NotNull Project project) {
-    return false;
+    return Experiments.getInstance().isFeatureEnabled("problems.view.enabled");
   }
 
   @Override
