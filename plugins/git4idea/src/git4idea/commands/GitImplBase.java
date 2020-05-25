@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
+import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ColoredOutputTypeRegistry;
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -358,15 +359,24 @@ public abstract class GitImplBase implements Git {
     if (project != null && !project.isDefault()) {
       GitVcsConsoleWriter vcsConsoleWriter = GitVcsConsoleWriter.getInstance(project);
       handler.addLineListener(new GitLineHandlerListener() {
+        private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
+
         @Override
         public void onLineAvailable(String line, Key outputType) {
-          if (!handler.isSilent() && !StringUtil.isEmptyOrSpaces(line)) {
+          if (!handler.isSilent()) {
+            myAnsiEscapeDecoder.escapeText(line, outputType, (text, attributes) -> processText(text, attributes));
+          }
+        }
+
+        private void processText(String line, Key outputType) {
+          if (!StringUtil.isEmptyOrSpaces(line)) {
             if (outputType == ProcessOutputTypes.STDOUT && !handler.isStdoutSuppressed()) {
               vcsConsoleWriter.showMessage(line);
             }
             else if (outputType == ProcessOutputTypes.STDERR && !handler.isStderrSuppressed()) {
               if (!looksLikeProgress(line)) vcsConsoleWriter.showErrorMessage(line);
-            } else if (CSI_SEQUENCE_REGEX.matcher(outputType.toString()).matches()) {
+            }
+            else if (CSI_SEQUENCE_REGEX.matcher(outputType.toString()).matches()) {
               ProcessOutputType coloredOutputType = ColoredOutputTypeRegistry.getInstance()
                 .getOutputType(outputType.toString(), outputType);
 
