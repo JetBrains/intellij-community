@@ -80,7 +80,7 @@ class DfGenericObjectType extends DfAntiConstantType<Object> implements DfRefere
     TypeConstraint negated = myConstraint.tryNegate();
     if (negated == null) return null;
     DfType result = negated.asDfType();
-    return myNullability == DfaNullability.NOT_NULL ? result.join(DfTypes.NULL) : result;
+    return myNullability == DfaNullability.NOT_NULL ? result.join(DfTypes.NULL) : result.meet(DfTypes.NOT_NULL_OBJECT);
   }
 
   @NotNull
