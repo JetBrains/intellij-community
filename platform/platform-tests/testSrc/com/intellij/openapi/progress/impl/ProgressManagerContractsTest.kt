@@ -38,7 +38,7 @@ class ProgressManagerContractsTest : LightPlatformTestCase() {
     require(ApplicationManager.getApplication().isDispatchThread)
     runWithGuiTasksMode {
       val callbackResult = `task_modal vs pooled thread`()
-      assertThat(callbackResult).isEqualTo("fromProgress.1.fromPool.fromProgress.2.")
+      assertThat(callbackResult).isEqualTo("fromProgress.1.fromProgress.2.fromPool.")
     }
   }
 
@@ -46,7 +46,7 @@ class ProgressManagerContractsTest : LightPlatformTestCase() {
     var callbackResult = ""
     val taskCompleted = AtomicInteger(0)
 
-    object : Task.Backgroundable(project, "mock", true) {
+    object : Task.Modal(project, "mock", true) {
       override fun run(indicator: ProgressIndicator) {
         // ensure the messages queue is flushed
         ApplicationManager.getApplication().invokeAndWait {
