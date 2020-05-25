@@ -42,9 +42,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-/**
- * @author Eugene Zhuravlev
- */
 public class ExternalJavacManager extends ProcessAdapter {
   private static final Logger LOG = Logger.getInstance(ExternalJavacManager.class);
 
@@ -154,8 +151,8 @@ public class ExternalJavacManager extends ProcessAdapter {
                                           CanceledStatus cancelStatus, final boolean keepProcessAlive) {
     try {
       final ExternalJavacProcessHandler running = findRunningProcess(processHash(javaHome, vmOptions, compilingTool));
-      final ExternalJavacProcessHandler processHandler = running != null && running.lock()? running : launchExternalJavacProcess(
-        javaHome, heapSize, myListenPort, myWorkingDir, vmOptions, compilingTool, running == null && keepProcessAlive
+      final ExternalJavacProcessHandler processHandler = running != null? running : launchExternalJavacProcess(
+        javaHome, heapSize, myListenPort, myWorkingDir, vmOptions, compilingTool, keepProcessAlive
       );
 
       final Channel channel = lookupChannel(processHandler.getProcessId());
@@ -208,7 +205,9 @@ public class ExternalJavacManager extends ProcessAdapter {
   }
 
   private ExternalJavacProcessHandler findRunningProcess(int processHash) {
-    LOG.debug("findRunningProcess: looking for hash " + processHash);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("findRunningProcess: looking for hash " + processHash);
+    }
     List<ExternalJavacProcessHandler> idleProcesses = null;
     try {
       synchronized (myRunningProcesses) {
@@ -220,20 +219,26 @@ public class ExternalJavacManager extends ProcessAdapter {
           }
 
           final Integer hash = PROCESS_HASH.get(process);
-          if (hash != null && hash == processHash) {
-            LOG.debug("findRunningProcess: returning process " + process.getProcessId() + " for hash " + processHash);
+          if (hash != null && hash == processHash && process.lock()) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("findRunningProcess: returning process " + process.getProcessId() + " for hash " + processHash);
+            }
             return process;
           }
           if (process.getIdleTime() > myKeepAliveTimeout) {
             if (idleProcesses == null) {
               idleProcesses = new ArrayList<>();
             }
-            LOG.debug("findRunningProcess: adding " + process.getProcessId() + " to idle list");
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("findRunningProcess: adding " + process.getProcessId() + " to idle list");
+            }
             idleProcesses.add(process);
           }
         }
       }
-      LOG.debug("findRunningProcess: no running process for " + hashCode() + " is found");
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("findRunningProcess: no running process for " + processHash + " is found");
+      }
       return null;
     }
     finally {

@@ -110,6 +110,6 @@ public class Utils {
     if (maxMbytes < 0) {
       return -1; // in case of int overflow, return -1 to let VM choose the heap size
     }
-    return Math.max(maxMbytes * 75 / 100, 256); // minimum 256 Mb, maximum 75% from JPS max heap size
+    return Math.max(maxMbytes / 3, 256); // per-forked process: minimum 256 Mb, maximum 33% from JPS max heap size
   }
 }
