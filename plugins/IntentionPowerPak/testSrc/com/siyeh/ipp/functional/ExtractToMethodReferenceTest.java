@@ -78,6 +78,10 @@ public class ExtractToMethodReferenceTest extends IPPTestCase {
     doTest();
   }
   
+  public void testAnnotatedLambdaParameterTypeWildcard() {
+    doTest();
+  }
+  
   public void testAnnotatedLambdaParameterVar() {
     doTest();
   }

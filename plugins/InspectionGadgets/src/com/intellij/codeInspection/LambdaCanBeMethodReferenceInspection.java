@@ -584,8 +584,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
   private static boolean hasAnnotation(PsiVariable p) {
     if (p.getAnnotations().length > 0) return true;
     PsiTypeElement typeElement = p.getTypeElement();
-    return typeElement != null && !typeElement.isInferredType() &&
-           !typeElement.getType().getCanonicalText(true).equals(typeElement.getType().getCanonicalText(false));
+    return typeElement != null && !typeElement.isInferredType() && PsiTypesUtil.hasTypeAnnotation(typeElement.getType());
   }
 
   private static class ReplaceWithMethodRefFix implements LocalQuickFix {

@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -347,6 +348,45 @@ public class PsiTypesUtil {
     } catch (IncorrectOperationException e) {
       return false;
     }
+  }
+
+  /**
+   * @param type type to check
+   * @return true if given type has a type annotation anywhere inside its declaration
+   */
+  public static boolean hasTypeAnnotation(@NotNull PsiType type) {
+    return type.accept(new PsiTypeVisitor<Boolean>() {
+      @Override
+      public Boolean visitType(@NotNull PsiType type) {
+        return type.getAnnotations().length > 0;
+      }
+
+      @Override
+      public Boolean visitClassType(@NotNull PsiClassType classType) {
+        return super.visitClassType(classType) ||
+               ContainerUtil.exists(classType.getParameters(), t -> t.accept(this));
+      }
+
+      @Override
+      public Boolean visitArrayType(@NotNull PsiArrayType arrayType) {
+        return super.visitArrayType(arrayType) || arrayType.getComponentType().accept(this);
+      }
+
+      @Override
+      public Boolean visitWildcardType(@NotNull PsiWildcardType wildcardType) {
+        return super.visitWildcardType(wildcardType) || wildcardType.getBound() != null && wildcardType.getBound().accept(this);
+      }
+
+      @Override
+      public Boolean visitIntersectionType(@NotNull PsiIntersectionType intersectionType) {
+        return ContainerUtil.exists(intersectionType.getConjuncts(), t -> t.accept(this));
+      }
+
+      @Override
+      public Boolean visitDisjunctionType(@NotNull PsiDisjunctionType disjunctionType) {
+        return ContainerUtil.exists(disjunctionType.getDisjunctions(), t -> t.accept(this));
+      }
+    });
   }
   
   public static boolean hasUnresolvedComponents(@NotNull PsiType type) {
