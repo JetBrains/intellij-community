@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.Hint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListActions;
 import com.intellij.ui.components.JBList;
@@ -271,21 +272,29 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
     int counter = propertiesComponent.getInt(COUNTER_PROPERTY, 0);
     if (counter < 3) {
-      showHint(editor, XDebuggerBundle.message("message.smart.step"), data.myCurrentVariant);
+      Hint hint = showHint(editor, XDebuggerBundle.message("message.smart.step"), data.myCurrentVariant);
+      editor.putUserData(SMART_STEP_HINT_DATA, hint);
       propertiesComponent.setValue(COUNTER_PROPERTY, counter + 1, 0);
     }
   }
 
-  private static <V extends XSmartStepIntoVariant> void showHint(Editor editor, String message, SmartStepData<V>.VariantInfo myCurrentVariant) {
+  private static <V extends XSmartStepIntoVariant> Hint showHint(Editor editor, String message, SmartStepData<V>.VariantInfo myCurrentVariant) {
     LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(message));
     JComponent component = HintManagerImpl.getExternalComponent(editor);
     Point convertedPoint = SwingUtilities.convertPoint(editor.getContentComponent(), myCurrentVariant.myStartPoint, component);
     HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, convertedPoint, HintManager.HIDE_BY_TEXT_CHANGE |
         HintManager.HIDE_BY_SCROLLING,
       0, false, HintManager.ABOVE);
+    return hint;
+  }
+
+  private static boolean shouldShowElementDescription(Editor editor) {
+    Hint hint = editor.getUserData(SMART_STEP_HINT_DATA);
+    return hint == null || !hint.isVisible();
   }
 
   static final Key<SmartStepData> SMART_STEP_INPLACE_DATA = Key.create("SMART_STEP_INPLACE_DATA");
+  static final Key<Hint> SMART_STEP_HINT_DATA = Key.create("SMART_STEP_HINT_DATA");
 
   static class SmartStepData<V extends XSmartStepIntoVariant> {
     enum Direction {UP, DOWN, LEFT, RIGHT}
@@ -357,7 +366,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
       setCurrentVariantHighlighterAttributes(DebuggerColors.SMART_STEP_INTO_SELECTION);
 
       String description = variant.myVariant.getDescription();
-      if (description != null) {
+      if (description != null && shouldShowElementDescription(myEditor)) {
         showHint(myEditor, description, variant);
       }
     }
@@ -376,6 +385,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
 
     void clear() {
       myEditor.putUserData(SMART_STEP_INPLACE_DATA, null);
+      myEditor.putUserData(SMART_STEP_HINT_DATA, null);
       HighlightManagerImpl highlightManager = (HighlightManagerImpl)HighlightManager.getInstance(mySession.getProject());
       highlightManager.hideHighlights(myEditor, HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_TEXT_CHANGE);
     }
