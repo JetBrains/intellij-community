@@ -370,32 +370,4 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     final String substituted = map.substitute(path, false);
     assertEquals(path, substituted);
   }
-
-  //public void testLoadRegisteredSaveUnknown() {
-  //
-  //  Element loadedXml = new Element(JpsModuleRootModelSerializer.SOURCE_FOLDER_TAG);
-  //  loadedXml.setAttribute(JpsModuleRootModelSerializer.PACKAGE_PREFIX_ATTRIBUTE, "package-prefix");
-  //  loadedXml.setAttribute(JpsJavaModelSerializerExtension.IS_GENERATED_ATTRIBUTE, Boolean.TRUE.toString());
-  //
-  //  JpsElementFactory.getInstance().createModuleSourceRoot("file://someFile", JavaSourceRootType.SOURCE, JpsJavaExtensionService.getInstance().createSourceRootProperties("package_prefix", true));
-  //
-  //  JpsModuleSourceRootPropertiesSerializer<? extends JpsElement> javaSerializer = null;
-  //  for (JpsModelSerializerExtension ext : JpsModelSerializerExtension.getExtensions()) {
-  //    javaSerializer = ext.getModuleSourceRootPropertiesSerializers().stream().filter(serializer -> JavaSourceRootType.SOURCE.equals(serializer.getType())).findFirst().orElse(null);
-  //    if (javaSerializer != null) {
-  //      break;
-  //    }
-  //  }
-  //  assertNotNull(javaSerializer);
-  //
-  //  //JavaSourceRootProperties properties = JpsJavaExtensionService.getInstance().createSourceRootProperties("package_prefix", true);
-  //
-  //  JpsElement javaProperties = javaSerializer.loadProperties(loadedXml);
-  //
-  //  UnknownSourceRootPropertiesSerializer unknownTypeSerializer =
-  //    UnknownSourceRootPropertiesSerializer.forType(javaSerializer.getTypeId(), JavaSourceRootType.SOURCE.isForTests());
-  //
-  //  Element savedXml = new Element(JpsModuleRootModelSerializer.SOURCE_FOLDER_TAG);
-  //  //unknownTypeSerializer.saveProperties();
-  //}
 }

@@ -160,7 +160,7 @@ internal class SourceFolderViaTypedEntity(private val entry: ContentEntryViaType
         if (it.typeId == entity.rootType) return it.type
       }
     }
-    return UnknownSourceRootType.getInstance(entity.rootType, entity.tests)
+    return UnknownSourceRootType.getInstance(entity.rootType)
   }
 
   companion object {

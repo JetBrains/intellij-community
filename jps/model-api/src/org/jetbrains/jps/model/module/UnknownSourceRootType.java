@@ -10,11 +10,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class UnknownSourceRootType extends JpsElementTypeBase<UnknownSourceRootTypeProperties<?>> implements JpsModuleSourceRootType<UnknownSourceRootTypeProperties<?>> {
   private static final Map<String, UnknownSourceRootType> ourTypeNameToInstanceMap = new ConcurrentHashMap<>();
   private final String myUnknownTypeId;
-  private final boolean myForTests;
 
-  private UnknownSourceRootType(String unknownTypeId, boolean forTests) {
+  private UnknownSourceRootType(String unknownTypeId) {
     myUnknownTypeId = unknownTypeId;
-    myForTests = forTests;
   }
 
   public String getUnknownTypeId() {
@@ -23,7 +21,7 @@ public class UnknownSourceRootType extends JpsElementTypeBase<UnknownSourceRootT
 
   @Override
   public boolean isForTests() {
-    return myForTests;
+    return false;
   }
 
   @NotNull
@@ -32,7 +30,7 @@ public class UnknownSourceRootType extends JpsElementTypeBase<UnknownSourceRootT
     return new UnknownSourceRootTypeProperties<>(null);
   }
 
-  public static UnknownSourceRootType getInstance(String typeId, boolean forTests) {
-    return ourTypeNameToInstanceMap.computeIfAbsent((forTests? "tst:" : "src:") + typeId, id -> new UnknownSourceRootType(typeId, forTests));
+  public static UnknownSourceRootType getInstance(String typeId) {
+    return ourTypeNameToInstanceMap.computeIfAbsent(typeId, id -> new UnknownSourceRootType(id));
   }
 }

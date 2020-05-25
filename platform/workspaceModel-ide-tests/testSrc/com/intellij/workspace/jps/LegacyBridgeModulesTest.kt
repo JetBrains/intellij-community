@@ -520,7 +520,7 @@ class LegacyBridgeModulesTest {
       val contentEntry = ModuleRootManager.getInstance(module).contentEntries.single()
       val sourceFolder = contentEntry.sourceFolders.single()
 
-      assertSame(UnknownSourceRootType.getInstance("unsupported-custom-source-root-type", false), sourceFolder.rootType)
+      assertSame(UnknownSourceRootType.getInstance("unsupported-custom-source-root-type"), sourceFolder.rootType)
       assertTrue(sourceFolder.jpsElement.properties is UnknownSourceRootTypeProperties<*>)
 
       val customRoot = WorkspaceModel.getInstance(project).entityStore.current.entities(CustomSourceRootPropertiesEntity::class.java)

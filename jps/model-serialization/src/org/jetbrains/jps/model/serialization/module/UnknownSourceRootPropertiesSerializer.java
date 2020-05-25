@@ -25,8 +25,8 @@ public class UnknownSourceRootPropertiesSerializer extends JpsModuleSourceRootPr
     }
   }
 
-  public static UnknownSourceRootPropertiesSerializer forType(String unknownTypeId, boolean isTests) {
-    return forType(UnknownSourceRootType.getInstance(unknownTypeId, isTests));
+  public static UnknownSourceRootPropertiesSerializer forType(String unknownTypeId) {
+    return forType(UnknownSourceRootType.getInstance(unknownTypeId));
   }
 
   @NotNull
