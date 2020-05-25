@@ -12,7 +12,7 @@ internal open class ImmutableEntitiesBarrel internal constructor(
       val clazz = i.toClass<TypedEntity>()
       family.assertConsistency { entityData ->
         val immutableClass = ClassConversion.entityDataToEntity(entityData.javaClass)
-        assert(clazz ==  immutableClass) {
+        assert(clazz == immutableClass) {
           """EntityFamily contains entity data of wrong type:
             | - EntityFamily class:   $clazz
             | - entityData class:     $immutableClass
@@ -56,7 +56,7 @@ internal class MutableEntitiesBarrel(
   }
 
   fun toImmutable(): ImmutableEntitiesBarrel {
-    val friezedEntities = entities.map {  family ->
+    val friezedEntities = entities.map { family ->
       when (family) {
         is MutableEntityFamily<*> -> family.toImmutable()
         is ImmutableEntityFamily<*> -> family
@@ -99,6 +99,7 @@ internal sealed class EntitiesBarrel : Iterable<EntityFamily<out TypedEntity>> {
   @Suppress("UNCHECKED_CAST")
   open operator fun get(clazz: Int): EntityFamily<out TypedEntity>? = entities.getOrNull(clazz)
   override fun iterator(): Iterator<EntityFamily<out TypedEntity>> = entities.iterator()
+
   @TestOnly
   internal fun all() = entities
 }

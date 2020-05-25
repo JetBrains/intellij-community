@@ -44,7 +44,8 @@ fun TypedEntityStorage.checkConsistency() {
   assertEquals(emptySet<TypedEntity>(), allEntitiesBySource - allEntitiesByType)
   assertEquals(emptySet<TypedEntity>(), allEntitiesByType - allEntitiesBySource)
 
-  val allEntitiesByPersistentId: ReferenceSet<EntityData> = storage.entitiesByPersistentIdHash.flatMapTo(ReferenceOpenHashSet()) { it.value }
+  val allEntitiesByPersistentId: ReferenceSet<EntityData> = storage.entitiesByPersistentIdHash.flatMapTo(
+    ReferenceOpenHashSet()) { it.value }
   val expectedEntitiesByPersistentId = allEntitiesByType.filterTo(ReferenceOpenHashSet()) {
     TypedEntityWithPersistentId::class.java.isAssignableFrom((it as EntityData).unmodifiableEntityType)
   }

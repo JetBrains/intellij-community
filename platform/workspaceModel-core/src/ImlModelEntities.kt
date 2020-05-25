@@ -107,7 +107,8 @@ class JavaModuleSettingsEntityData : PEntityData<JavaModuleSettingsEntity>() {
   var compilerOutputForTests: VirtualFileUrl? = null
 
   override fun createEntity(snapshot: TypedEntityStorage): JavaModuleSettingsEntity {
-    return JavaModuleSettingsEntity(inheritedCompilerOutput, excludeOutput, compilerOutput, compilerOutputForTests).also { addMetaData(it, snapshot) }
+    return JavaModuleSettingsEntity(inheritedCompilerOutput, excludeOutput, compilerOutput, compilerOutputForTests)
+      .also { addMetaData(it, snapshot) }
   }
 }
 
@@ -149,7 +150,9 @@ class ModuleCustomImlDataEntity(
 class ModuleGroupPathEntityData : PEntityData<ModuleGroupPathEntity>() {
   lateinit var path: List<String>
 
-  override fun createEntity(snapshot: TypedEntityStorage): ModuleGroupPathEntity = ModuleGroupPathEntity(path).also { addMetaData(it, snapshot) }
+  override fun createEntity(snapshot: TypedEntityStorage): ModuleGroupPathEntity = ModuleGroupPathEntity(path).also {
+    addMetaData(it, snapshot)
+  }
 }
 
 class ModuleGroupPathEntity(
@@ -211,7 +214,9 @@ class SourceRootEntityData : PEntityData<SourceRootEntity>() {
   var tests: Boolean = false
   lateinit var rootType: String
 
-  override fun createEntity(snapshot: TypedEntityStorage): SourceRootEntity = SourceRootEntity(url, tests, rootType).also { addMetaData(it, snapshot) }
+  override fun createEntity(snapshot: TypedEntityStorage): SourceRootEntity = SourceRootEntity(url, tests, rootType).also {
+    addMetaData(it, snapshot)
+  }
 }
 
 open class SourceRootEntity(
@@ -231,7 +236,9 @@ class JavaSourceRootEntityData : PEntityData<JavaSourceRootEntity>() {
   var generated: Boolean = false
   lateinit var packagePrefix: String
 
-  override fun createEntity(snapshot: TypedEntityStorage): JavaSourceRootEntity = JavaSourceRootEntity(generated, packagePrefix).also { addMetaData(it, snapshot) }
+  override fun createEntity(snapshot: TypedEntityStorage): JavaSourceRootEntity = JavaSourceRootEntity(generated, packagePrefix).also {
+    addMetaData(it, snapshot)
+  }
 }
 
 class JavaSourceRootEntity(
@@ -252,7 +259,10 @@ class JavaResourceRootEntityData : PEntityData<JavaResourceRootEntity>() {
   var generated: Boolean = false
   lateinit var relativeOutputPath: String
 
-  override fun createEntity(snapshot: TypedEntityStorage): JavaResourceRootEntity = JavaResourceRootEntity(generated, relativeOutputPath).also { addMetaData(it, snapshot) }
+  override fun createEntity(snapshot: TypedEntityStorage): JavaResourceRootEntity = JavaResourceRootEntity(generated,
+                                                                                                           relativeOutputPath).also {
+    addMetaData(it, snapshot)
+  }
 }
 
 class JavaResourceRootEntity(
@@ -344,7 +354,7 @@ class ModifiableSourceRootOrderEntity : PModifiableTypedEntity<SourceRootOrderEn
   var orderOfSourceRoots: List<VirtualFileUrl> by VirtualFileUrlListProperty()
 
   var contentRootEntity: ContentRootEntity by MutableOneToOneChild.NotNull(SourceRootOrderEntity::class.java, ContentRootEntity::class.java,
-                                                                                   true)
+                                                                           true)
 }
 
 fun ContentRootEntity.getSourceRootOrder() = referrers(SourceRootOrderEntity::contentRootEntity).firstOrNull()
@@ -486,7 +496,9 @@ class ExternalSystemModuleOptionsEntityData : PEntityData<ExternalSystemModuleOp
 
   override fun createEntity(snapshot: TypedEntityStorage): ExternalSystemModuleOptionsEntity {
     return ExternalSystemModuleOptionsEntity(externalSystem, externalSystemModuleVersion, linkedProjectPath, linkedProjectId,
-                                             rootProjectPath, externalSystemModuleGroup, externalSystemModuleType).also { addMetaData(it, snapshot) }
+                                             rootProjectPath, externalSystemModuleGroup, externalSystemModuleType).also {
+      addMetaData(it, snapshot)
+    }
   }
 }
 
@@ -518,7 +530,8 @@ class FacetEntityData : PEntityData.WithPersistentId<FacetEntity>() {
   lateinit var facetType: String
   var configurationXmlTag: String? = null
 
-  override fun createEntity(snapshot: TypedEntityStorage): FacetEntity = FacetEntity(name, facetType, configurationXmlTag).also { addMetaData(it, snapshot) }
+  override fun createEntity(snapshot: TypedEntityStorage): FacetEntity = FacetEntity(name, facetType,
+                                                                                     configurationXmlTag).also { addMetaData(it, snapshot) }
 }
 
 class FacetEntity(
@@ -584,7 +597,8 @@ class ArtifactEntity(
   val customProperties: Sequence<ArtifactPropertiesEntity> by customPropertiesDelegate
 
   companion object {
-    val rootElementDelegate = OneToAbstractOneChild<CompositePackagingElementEntity, ArtifactEntity>(CompositePackagingElementEntity::class.java)
+    val rootElementDelegate = OneToAbstractOneChild<CompositePackagingElementEntity, ArtifactEntity>(
+      CompositePackagingElementEntity::class.java)
     val customPropertiesDelegate = OneToMany<ArtifactEntity, ArtifactPropertiesEntity>(ArtifactPropertiesEntity::class.java, false)
   }
 }

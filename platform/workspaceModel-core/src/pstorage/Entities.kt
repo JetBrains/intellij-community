@@ -32,7 +32,8 @@ abstract class PTypedEntity : ReferableTypedEntity, Any() {
     if (connectionId == null) return emptySequence()
     return when (connectionId.connectionType) {
       ConnectionId.ConnectionType.ONE_TO_MANY -> snapshot.extractOneToManyChildren(connectionId, id)
-      ConnectionId.ConnectionType.ONE_TO_ONE -> snapshot.extractOneToOneChild<R>(connectionId, id)?.let { sequenceOf(it) } ?: emptySequence()
+      ConnectionId.ConnectionType.ONE_TO_ONE -> snapshot.extractOneToOneChild<R>(connectionId, id)?.let { sequenceOf(it) }
+                                                ?: emptySequence()
       ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> snapshot.extractOneToAbstractManyChildren(connectionId, id)
       ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> snapshot.extractAbstractOneToOneChildren(connectionId, id)
     }
@@ -107,7 +108,7 @@ interface PSoftLinkable {
                  affectedIds: MutableList<Pair<PersistentEntityId<*>, PersistentEntityId<*>>>): Boolean
 }
 
-abstract class PEntityData<E : TypedEntity>: Cloneable {
+abstract class PEntityData<E : TypedEntity> : Cloneable {
   lateinit var entitySource: EntitySource
   var id: Int = -1
 

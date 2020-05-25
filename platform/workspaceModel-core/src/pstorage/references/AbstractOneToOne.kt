@@ -2,12 +2,10 @@
 package com.intellij.workspace.api.pstorage.references
 
 import com.intellij.workspace.api.pstorage.ConnectionId
-import com.intellij.workspace.api.pstorage.PId
 import com.intellij.workspace.api.pstorage.PModifiableTypedEntity
 import com.intellij.workspace.api.pstorage.PTypedEntity
 import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
-import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
 class OneToAbstractOneChild<T : PTypedEntity, SUBT : PTypedEntity>(private val parentClass: Class<T>) : ReadOnlyProperty<SUBT, T> {

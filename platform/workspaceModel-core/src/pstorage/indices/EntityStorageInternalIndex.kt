@@ -2,7 +2,6 @@
 package com.intellij.workspace.api.pstorage.indices
 
 import com.intellij.util.containers.BidirectionalMap
-import com.intellij.workspace.api.TypedEntity
 import com.intellij.workspace.api.pstorage.PId
 
 open class EntityStorageInternalIndex<T> private constructor(
@@ -50,7 +49,9 @@ open class EntityStorageInternalIndex<T> private constructor(
     }
 
     companion object {
-      fun <T> from(other: EntityStorageInternalIndex<T>): MutableEntityStorageInternalIndex<T> = MutableEntityStorageInternalIndex(other.index)
+      fun <T> from(other: EntityStorageInternalIndex<T>): MutableEntityStorageInternalIndex<T> {
+        return MutableEntityStorageInternalIndex(other.index)
+      }
     }
   }
 }

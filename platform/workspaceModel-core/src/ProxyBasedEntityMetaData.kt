@@ -53,7 +53,8 @@ internal class EntityMetaData(val unmodifiableEntityType: Class<out TypedEntity>
       when (kind) {
         is EntityPropertyKind.List -> when (val itemKind = kind.itemKind) {
           is EntityPropertyKind.List -> error("List of lists are not supported")
-          is EntityPropertyKind.SealedKotlinDataClassHierarchy -> (value as List<*>).forEach { itemKind.subclassesKinds.entries
+          is EntityPropertyKind.SealedKotlinDataClassHierarchy -> (value as List<*>).forEach {
+            itemKind.subclassesKinds.entries
               .find { subclassKinds -> subclassKinds.key.isInstance(it) }?.value?.collectPersistentIdReferences(it, collector)
           }
           is EntityPropertyKind.DataClass -> (value as List<*>).forEach { itemKind.collectPersistentIdReferences(it, collector) }
@@ -69,7 +70,9 @@ internal class EntityMetaData(val unmodifiableEntityType: Class<out TypedEntity>
     }
   }
 
-  fun replaceAllPersistentIdReferences(values: MutableMap<String, Any?>, oldEntity: PersistentEntityId<*>, newEntity: PersistentEntityId<*>) {
+  fun replaceAllPersistentIdReferences(values: MutableMap<String, Any?>,
+                                       oldEntity: PersistentEntityId<*>,
+                                       newEntity: PersistentEntityId<*>) {
     // Property values already new copy of old properties
     val newValuesMap = mutableMapOf<String, Any?>()
     for ((name, value) in values) {
@@ -81,8 +84,9 @@ internal class EntityMetaData(val unmodifiableEntityType: Class<out TypedEntity>
       val newValue = when (kind) {
         is EntityPropertyKind.List -> when (val itemKind = kind.itemKind) {
           is EntityPropertyKind.List -> error("List of lists are not supported")
-          is EntityPropertyKind.SealedKotlinDataClassHierarchy -> (value as List<*>).map { itemKind.subclassesKinds.entries
-            .find { subclassKinds -> subclassKinds.key.isInstance(it) }?.value?.replaceAll(it, oldEntity, newEntity)
+          is EntityPropertyKind.SealedKotlinDataClassHierarchy -> (value as List<*>).map {
+            itemKind.subclassesKinds.entries
+              .find { subclassKinds -> subclassKinds.key.isInstance(it) }?.value?.replaceAll(it, oldEntity, newEntity)
           }
           is EntityPropertyKind.DataClass -> (value as List<*>).map { itemKind.replaceAll(it, oldEntity, newEntity) }
           is EntityPropertyKind.PersistentId -> (value as List<PersistentEntityId<*>>).map { if (it == oldEntity) newEntity else it }
@@ -171,7 +175,7 @@ internal sealed class EntityPropertyKind {
       }
     }
 
-    fun  replaceAll(instance: Any?,  oldElement: PersistentEntityId<*>, newElement: PersistentEntityId<*>) : Any?  {
+    fun replaceAll(instance: Any?, oldElement: PersistentEntityId<*>, newElement: PersistentEntityId<*>): Any? {
       fun replaceProperty(getters: kotlin.collections.List<Method>, getterIndex: Int, value: Any): Any {
         when {
           value is kotlin.collections.List<*> -> return value.map { replaceProperty(getters, getterIndex, it!!) }
@@ -199,7 +203,7 @@ internal sealed class EntityPropertyKind {
       return originInstance
     }
 
-    private fun Any.copyWithPropertyReplace(propertyName : String, propertyValue: Any): Any {
+    private fun Any.copyWithPropertyReplace(propertyName: String, propertyValue: Any): Any {
       val copyFunction = this::class.memberFunctions.first { it.name == "copy" }
       val instanceParam = copyFunction.instanceParameter!!
       val fieldParam = copyFunction.parameters.first { it.name == propertyName }
@@ -377,32 +381,38 @@ internal class EntityMetaDataRegistry {
   }
 }
 
-  private fun Hasher.putEntityPropertyKind(kind: EntityPropertyKind, metaDataRegistry: EntityMetaDataRegistry, visited: MutableSet<Class<*>>): Hasher {
-    putUnencodedChars(kind.javaClass.name)
-    return when (kind) {
-      is EntityPropertyKind.EntityReference -> putEntityMetadata(metaDataRegistry.getEntityMetaData(kind.clazz), metaDataRegistry, visited)
-      is EntityPropertyKind.List -> putEntityPropertyKind(kind.itemKind, metaDataRegistry, visited)
-      is EntityPropertyKind.SealedKotlinDataClassHierarchy -> {
-        kind.subclassesKinds.keys.sortedBy { it.jvmName }.forEach { putDataClassMetadata(metaDataRegistry.getDataClassMetaData(it.java), metaDataRegistry, visited) }
-        this
+private fun Hasher.putEntityPropertyKind(kind: EntityPropertyKind,
+                                         metaDataRegistry: EntityMetaDataRegistry,
+                                         visited: MutableSet<Class<*>>): Hasher {
+  putUnencodedChars(kind.javaClass.name)
+  return when (kind) {
+    is EntityPropertyKind.EntityReference -> putEntityMetadata(metaDataRegistry.getEntityMetaData(kind.clazz), metaDataRegistry, visited)
+    is EntityPropertyKind.List -> putEntityPropertyKind(kind.itemKind, metaDataRegistry, visited)
+    is EntityPropertyKind.SealedKotlinDataClassHierarchy -> {
+      kind.subclassesKinds.keys.sortedBy { it.jvmName }.forEach {
+        putDataClassMetadata(metaDataRegistry.getDataClassMetaData(it.java), metaDataRegistry, visited)
       }
-      is EntityPropertyKind.DataClass -> putDataClassMetadata(kind, metaDataRegistry, visited)
-      is EntityPropertyKind.EntityValue -> putEntityMetadata(metaDataRegistry.getEntityMetaData(kind.clazz), metaDataRegistry, visited)
-      EntityPropertyKind.FileUrl -> this
-      is EntityPropertyKind.PersistentId -> putDataClassMetadata(metaDataRegistry.getDataClassMetaData(kind.clazz), metaDataRegistry, visited)
-      is EntityPropertyKind.Primitive -> {
-        putUnencodedChars(kind.clazz.name)
+      this
+    }
+    is EntityPropertyKind.DataClass -> putDataClassMetadata(kind, metaDataRegistry, visited)
+    is EntityPropertyKind.EntityValue -> putEntityMetadata(metaDataRegistry.getEntityMetaData(kind.clazz), metaDataRegistry, visited)
+    EntityPropertyKind.FileUrl -> this
+    is EntityPropertyKind.PersistentId -> putDataClassMetadata(metaDataRegistry.getDataClassMetaData(kind.clazz), metaDataRegistry, visited)
+    is EntityPropertyKind.Primitive -> {
+      putUnencodedChars(kind.clazz.name)
 
-        if (kind.clazz.isEnum) {
-          kind.clazz.enumConstants.forEach { putUnencodedChars((it as Enum<*>).name) }
-        }
-
-        this
+      if (kind.clazz.isEnum) {
+        kind.clazz.enumConstants.forEach { putUnencodedChars((it as Enum<*>).name) }
       }
+
+      this
     }
   }
+}
 
-private fun Hasher.putEntityMetadata(metadata: EntityMetaData, metaDataRegistry: EntityMetaDataRegistry, visited: MutableSet<Class<*>>): Hasher {
+private fun Hasher.putEntityMetadata(metadata: EntityMetaData,
+                                     metaDataRegistry: EntityMetaDataRegistry,
+                                     visited: MutableSet<Class<*>>): Hasher {
   putUnencodedChars("ENTITY")
   putUnencodedChars(metadata.unmodifiableEntityType.name)
 
@@ -418,7 +428,9 @@ private fun Hasher.putEntityMetadata(metadata: EntityMetaData, metaDataRegistry:
   return this
 }
 
-private fun Hasher.putDataClassMetadata(metadata: EntityPropertyKind.DataClass, metaDataRegistry: EntityMetaDataRegistry, visited: MutableSet<Class<*>>): Hasher {
+private fun Hasher.putDataClassMetadata(metadata: EntityPropertyKind.DataClass,
+                                        metaDataRegistry: EntityMetaDataRegistry,
+                                        visited: MutableSet<Class<*>>): Hasher {
   putUnencodedChars("DATACLASS")
   putUnencodedChars(metadata.dataClass.name)
 
@@ -435,13 +447,15 @@ private fun Hasher.putDataClassMetadata(metadata: EntityPropertyKind.DataClass, 
   return this
 }
 
-internal fun EntityPropertyKind.DataClass.hash(metaDataRegistry: EntityMetaDataRegistry, hasher: () -> Hasher = { Hashing.murmur3_128().newHasher() }): ByteArray {
+internal fun EntityPropertyKind.DataClass.hash(metaDataRegistry: EntityMetaDataRegistry,
+                                               hasher: () -> Hasher = { Hashing.murmur3_128().newHasher() }): ByteArray {
   val h = hasher()
   h.putDataClassMetadata(this, metaDataRegistry, mutableSetOf())
   return h.hash().asBytes()
 }
 
-internal fun EntityMetaData.hash(metaDataRegistry: EntityMetaDataRegistry, hasher: () -> Hasher = { Hashing.murmur3_128().newHasher() }): ByteArray {
+internal fun EntityMetaData.hash(metaDataRegistry: EntityMetaDataRegistry,
+                                 hasher: () -> Hasher = { Hashing.murmur3_128().newHasher() }): ByteArray {
   val h = hasher()
   h.putEntityMetadata(this, metaDataRegistry, mutableSetOf())
   return h.hash().asBytes()

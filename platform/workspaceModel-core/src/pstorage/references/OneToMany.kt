@@ -3,12 +3,10 @@ package com.intellij.workspace.api.pstorage.references
 
 import com.intellij.workspace.api.pstorage.ConnectionId
 import com.intellij.workspace.api.pstorage.ConnectionId.ConnectionType.ONE_TO_MANY
-import com.intellij.workspace.api.pstorage.PId
 import com.intellij.workspace.api.pstorage.PModifiableTypedEntity
 import com.intellij.workspace.api.pstorage.PTypedEntity
 import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
-import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
 class OneToMany<T : PTypedEntity, SUBT : PTypedEntity>(private val childClass: Class<SUBT>,

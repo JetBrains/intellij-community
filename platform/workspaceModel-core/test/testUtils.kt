@@ -12,7 +12,7 @@ import java.io.ByteArrayOutputStream
 import kotlin.reflect.KType
 import kotlin.reflect.full.memberProperties
 
-class TestEntityTypesResolver: EntityTypesResolver {
+class TestEntityTypesResolver : EntityTypesResolver {
   private val pluginPrefix = "PLUGIN___"
 
   override fun getPluginId(clazz: Class<*>): String? = pluginPrefix + clazz.name

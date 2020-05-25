@@ -9,6 +9,7 @@ import kotlin.collections.set
 
 interface VirtualFileUrlManager {
   companion object
+
   fun fromUrl(url: String): VirtualFileUrl
   fun fromPath(path: String): VirtualFileUrl
   fun getParentVirtualUrlById(id: Int): VirtualFileUrl?
@@ -16,8 +17,8 @@ interface VirtualFileUrlManager {
   fun isEqualOrParentOf(parentNodeId: Int, childNodeId: Int): Boolean
 }
 
-class VirtualFileUrlManagerImpl: VirtualFileUrlManager {
-  private val idGenerator= IntIdGenerator()
+class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
+  private val idGenerator = IntIdGenerator()
   private val EMPTY_URL = VirtualFileUrl(0, this)
   private val fileNameStore = VirtualFileNameStore()
   private val id2NodeMapping = Int2ObjectOpenHashMap<FilePathNode>()
@@ -97,7 +98,8 @@ class VirtualFileUrlManagerImpl: VirtualFileUrlManager {
         latestNode = newNode
         // If it's the latest name of folder or files, save entity Id as node value
         if (index == latestElement) return VirtualFileUrl(nodeId, this)
-      } else {
+      }
+      else {
         // If it's the latest name of folder or files, save entity Id as node value
         if (index == latestElement) return VirtualFileUrl(node.nodeId, this)
         latestNode = node
@@ -130,7 +132,8 @@ class VirtualFileUrlManagerImpl: VirtualFileUrlManager {
       removeNameUsage(currentNode.contentId)
       id2NodeMapping.remove(currentNode.nodeId)
       currentNode = parent
-    } while (currentNode.isEmpty())
+    }
+    while (currentNode.isEmpty())
   }
 
   internal fun update(oldPath: String, newPath: String) {

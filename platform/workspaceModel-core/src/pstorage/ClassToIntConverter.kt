@@ -24,6 +24,7 @@ object ClassToIntConverter {
     error("Cannot find class")
   }
 }
+
 internal fun Class<*>.toInt(): Int = ClassToIntConverter.getInt(this)
 internal inline fun <reified E> Int.toClass(): Class<E> = ClassToIntConverter.getClassSlowlyOrDie(this) as Class<E>
 

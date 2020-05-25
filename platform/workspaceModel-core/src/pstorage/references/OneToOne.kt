@@ -3,12 +3,10 @@ package com.intellij.workspace.api.pstorage.references
 
 import com.intellij.workspace.api.pstorage.ConnectionId
 import com.intellij.workspace.api.pstorage.ConnectionId.ConnectionType.ONE_TO_ONE
-import com.intellij.workspace.api.pstorage.PId
 import com.intellij.workspace.api.pstorage.PModifiableTypedEntity
 import com.intellij.workspace.api.pstorage.PTypedEntity
 import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
-import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
 class OneToOneParent private constructor() {
@@ -151,7 +149,7 @@ class MutableOneToOneChild private constructor() {
     private var connectionId: ConnectionId? = null
 
     override fun getValue(thisRef: MODSUBT, property: KProperty<*>): T? {
-      if (connectionId == null){
+      if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, true, isChildInParentNullable)
       }
       return thisRef.diff.extractOneToOneParent(connectionId!!, thisRef.id)
@@ -161,7 +159,7 @@ class MutableOneToOneChild private constructor() {
       if (!thisRef.modifiable.get()) {
         throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
       }
-      if (connectionId == null){
+      if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, true, isChildInParentNullable)
       }
       thisRef.diff.updateOneToOneParentOfChild(connectionId!!, thisRef.id, value)

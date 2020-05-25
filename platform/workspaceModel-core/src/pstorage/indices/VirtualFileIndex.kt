@@ -2,7 +2,6 @@
 package com.intellij.workspace.api.pstorage.indices
 
 import com.intellij.util.containers.BidirectionalMultiMap
-import com.intellij.workspace.api.TypedEntity
 import com.intellij.workspace.api.VirtualFileUrl
 import com.intellij.workspace.api.pstorage.PId
 import com.intellij.workspace.api.pstorage.PModifiableTypedEntity
@@ -59,7 +58,8 @@ open class VirtualFileIndex private constructor(
 //---------------------------------------------------------------------
 class VirtualFileUrlProperty<T : PModifiableTypedEntity<out PTypedEntity>> : ReadWriteProperty<T, VirtualFileUrl> {
   override fun getValue(thisRef: T, property: KProperty<*>): VirtualFileUrl {
-    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>).get(thisRef.original) as VirtualFileUrl
+    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>)
+      .get(thisRef.original) as VirtualFileUrl
   }
 
   override fun setValue(thisRef: T, property: KProperty<*>, value: VirtualFileUrl) {
@@ -76,7 +76,8 @@ class VirtualFileUrlProperty<T : PModifiableTypedEntity<out PTypedEntity>> : Rea
 //---------------------------------------------------------------------
 class VirtualFileUrlNullableProperty<T : PModifiableTypedEntity<out PTypedEntity>> : ReadWriteProperty<T, VirtualFileUrl?> {
   override fun getValue(thisRef: T, property: KProperty<*>): VirtualFileUrl? {
-    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>).get(thisRef.original) as VirtualFileUrl?
+    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>)
+      .get(thisRef.original) as VirtualFileUrl?
   }
 
   override fun setValue(thisRef: T, property: KProperty<*>, value: VirtualFileUrl?) {
@@ -86,14 +87,15 @@ class VirtualFileUrlNullableProperty<T : PModifiableTypedEntity<out PTypedEntity
     val field = thisRef.original.javaClass.getDeclaredField(property.name)
     field.isAccessible = true
     field.set(thisRef.original, value)
-    thisRef.diff.virtualFileIndex.index(thisRef.id, value?.let{ listOf(value) })
+    thisRef.diff.virtualFileIndex.index(thisRef.id, value?.let { listOf(value) })
   }
 }
 
 //---------------------------------------------------------------------
 class VirtualFileUrlListProperty<T : PModifiableTypedEntity<out PTypedEntity>> : ReadWriteProperty<T, List<VirtualFileUrl>> {
   override fun getValue(thisRef: T, property: KProperty<*>): List<VirtualFileUrl> {
-    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>).get(thisRef.original) as List<VirtualFileUrl>
+    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>)
+      .get(thisRef.original) as List<VirtualFileUrl>
   }
 
   override fun setValue(thisRef: T, property: KProperty<*>, value: List<VirtualFileUrl>) {
