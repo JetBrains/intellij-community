@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -196,6 +196,9 @@ class SvnChangeProviderContext implements StatusReceiver {
         myChangelistBuilder.processUnversionedFile(filePath);
       }
     }
+    else if (status.is(StatusType.STATUS_MISSING)) {
+      myChangelistBuilder.processLocallyDeletedFile(new SvnLocallyDeletedChange(filePath, getState(status)));
+    }
     else if (status.is(StatusType.STATUS_ADDED)) {
       processChangeInList(null, CurrentContentRevision.create(filePath), fStatus, status);
     }
@@ -207,9 +210,6 @@ class SvnChangeProviderContext implements StatusReceiver {
     }
     else if (status.is(StatusType.STATUS_DELETED)) {
       processChangeInList(SvnContentRevision.createBaseRevision(myVcs, filePath, status), null, fStatus, status);
-    }
-    else if (status.is(StatusType.STATUS_MISSING)) {
-      myChangelistBuilder.processLocallyDeletedFile(new SvnLocallyDeletedChange(filePath, getState(status)));
     }
     else if (status.is(StatusType.STATUS_IGNORED)) {
       VirtualFile file = filePath.getVirtualFile();
@@ -346,10 +346,6 @@ class SvnChangeProviderContext implements StatusReceiver {
     final File ioFile = ChangesUtil.getFilePath(change).getIOFile();
     final File beforeFile = deletedStatus != null ? deletedStatus.getFile() : ioFile;
 
-    // TODO: There are cases when status output is like (on newly added file with some properties that is locally deleted)
-    // <entry path="some_path"> <wc-status item="missing" revision="-1" props="modified"> </wc-status> </entry>
-    // TODO: For such cases in current logic we'll have Change with before revision containing Revision.UNDEFINED
-    // TODO: Analyze if this logic is OK or we should update flow somehow (for instance, to have null before revision)
     ContentRevision beforeRevision =
       !svnStatus.isProperty(StatusType.STATUS_ADDED) || deletedStatus != null ? createPropertyRevision(change, beforeFile, true) : null;
     ContentRevision afterRevision = !svnStatus.isProperty(StatusType.STATUS_DELETED) ? createPropertyRevision(change, ioFile, false) : null;
