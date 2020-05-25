@@ -453,7 +453,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   void forceReload(VirtualFile virtualFile, @Nullable FileViewProvider viewProvider) {
     if (viewProvider != null) {
-      ((AbstractFileViewProvider)viewProvider).markInvalidated();
+      DebugUtil.performPsiModification("psi.forceReload", () -> ((AbstractFileViewProvider)viewProvider).markInvalidated());
     }
     if (virtualFile != null) {
       ((FileManagerImpl)getFileManager()).forceReload(virtualFile);

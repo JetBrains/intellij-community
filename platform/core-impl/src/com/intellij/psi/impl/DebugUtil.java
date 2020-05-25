@@ -612,12 +612,18 @@ public class DebugUtil {
     return currentInvalidationTrace();
   }
 
-  @NotNull
+  @Nullable
   private static Object currentInvalidationTrace() {
     Object trace = ourPsiModificationTrace.get();
-    if (trace == null) {
-      trace = new Throwable();
-      ourErrorLogger.info("PSI invalidated outside transaction", (Throwable)trace);
+    return trace != null || ApplicationInfoImpl.isInStressTest() ? trace : handleUnspecifiedTrace();
+  }
+
+  private static Throwable handleUnspecifiedTrace() {
+    Throwable trace = new Throwable();
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      ourErrorLogger.error("PSI invalidated outside transaction", trace);
+    } else {
+      ourErrorLogger.info("PSI invalidated outside transaction", trace);
     }
     return trace;
   }

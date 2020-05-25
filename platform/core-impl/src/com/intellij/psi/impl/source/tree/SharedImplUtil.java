@@ -209,8 +209,6 @@ public class SharedImplUtil {
     TreeElement elementCopy = ChangeUtil.copyToElement(newElement);
     treeParent.replaceChildInternal(treeElement, elementCopy);
     elementCopy = ChangeUtil.decodeInformation(elementCopy);
-    final PsiElement result = SourceTreeToPsiMap.treeElementToPsi(elementCopy);
-    treeElement.invalidate();
-    return result;
+    return SourceTreeToPsiMap.treeElementToPsi(elementCopy);
   }
 }
