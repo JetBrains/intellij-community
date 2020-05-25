@@ -2,6 +2,7 @@
 package com.intellij.execution.application;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
+import com.intellij.diagnostic.logging.LogsFragment;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.ui.*;
@@ -85,6 +86,7 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
                                                    configuration -> configuration.isSwingInspectorEnabled(),
                                                    (configuration, enabled) -> configuration.setSwingInspectorEnabled(enabled)));
 
+    fragments.add(new LogsFragment());
     fragments.addAll(BeforeRunFragment.createGroup());
     return fragments;
   }

@@ -26,7 +26,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   private final String myId;
   private final String myName;
   private final String myGroup;
-  private final C myComponent;
+  protected C myComponent;
   private final BiConsumer<Settings, C> myReset;
   private final BiConsumer<Settings, C> myApply;
   private final int myCommandLinePosition;
@@ -57,6 +57,12 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
                                 BiConsumer<Settings, C> reset, BiConsumer<Settings, C> apply,
                                 Predicate<Settings> initialSelection)  {
     this(id, name, group, component, 0, reset, apply, initialSelection);
+  }
+
+  protected SettingsEditorFragment(String id,
+                                @Nls(capitalization = Nls.Capitalization.Sentence) String name,
+                                @Nls(capitalization = Nls.Capitalization.Sentence) String group)  {
+    this(id, name, group, null, 0, null, null, null);
   }
 
   public static <S> SettingsEditorFragment<S, ?> create(String id, String name, String group, Component<? super S> component) {
