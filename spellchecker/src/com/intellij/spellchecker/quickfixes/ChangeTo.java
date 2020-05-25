@@ -4,6 +4,7 @@ package com.intellij.spellchecker.quickfixes;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptorBase;
 import com.intellij.ide.DataManager;
@@ -17,6 +18,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.spellchecker.statistics.SpellcheckerLookupUsageDescriptor;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,7 +69,10 @@ public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
           .stream()
           .map(LookupElementBuilder::create)
           .toArray(LookupElement[]::new);
-        LookupManager.getInstance(project).showLookup(editor, items);
+        final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(project).showLookup(editor, items);
+        if (lookup != null) {
+          lookup.putUserDataIfAbsent(SpellcheckerLookupUsageDescriptor.Companion.getSPELLCHECKER_KEY(), true);
+        }
       });
   }
 
