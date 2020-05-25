@@ -98,7 +98,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
   /**
    * All {@link TimeZone} IDs.
    */
-  private static final Set<String> timeZoneIds = new HashSet();
+  private static final Set<String> timeZoneIds = new HashSet<>();
 
   static {
     ContainerUtil.addAll(timeZoneIds, TimeZone.getAvailableIDs());
@@ -165,7 +165,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
             }
           }
         }
-        registerErrorAtOffset(expression, 1, expression.getTextLength() - 2);
+        registerErrorInString(expression);
       }
       else if (type != null && type.equals(PsiType.CHAR)) {
         final Character value = (Character)expression.getValue();
@@ -195,8 +195,8 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
       if (string == null) {
         return false;
       }
-      if (string.indexOf((int)'/') == -1 &&
-          string.indexOf((int)'\\') == -1) {
+      if (string.indexOf(SLASH) == -1 &&
+          string.indexOf(BACKSLASH) == -1) {
         return false;
       }
       final char startChar = string.charAt(0);
@@ -216,6 +216,37 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
         return false;
       }
       return !isTimeZoneIdString(string);
+    }
+
+    private void registerErrorInString(@NotNull PsiLiteralExpression expression) {
+      String text = expression.getText();
+      int length = 0;
+      int slashInd = 0;
+      int prevSlashInd;
+      while (slashInd != -1) {
+        prevSlashInd = slashInd;
+        int nextSlashInd;
+        for (nextSlashInd = slashInd; nextSlashInd < text.length(); nextSlashInd++) {
+          char symbol = text.charAt(nextSlashInd);
+          if (SLASH == symbol || BACKSLASH == symbol) {
+            slashInd = nextSlashInd;
+            break;
+          }
+        }
+        if (nextSlashInd == text.length()) {
+          slashInd = -1;
+        }
+        else {
+          slashInd++;
+        }
+        if (prevSlashInd == 0 || slashInd - prevSlashInd == 1) {
+          length++;
+        }
+        else {
+          registerErrorAtOffset(expression, prevSlashInd - length, length);
+          length = 1;
+        }
+      }
     }
 
     /**
@@ -246,7 +277,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
       final int strLength = string.length();
       final char startChar = string.charAt(0);
       final char endChar = string.charAt(strLength - 1);
-      if (startChar == '/' || endChar == '/') {
+      if (startChar == SLASH || endChar == SLASH) {
         // Most likely it's a filename if the string starts or ends
         // with a slash.
         return false;
