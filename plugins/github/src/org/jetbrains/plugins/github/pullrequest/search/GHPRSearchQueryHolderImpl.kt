@@ -7,7 +7,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
 
-internal class GithubPullRequestSearchQueryHolderImpl : GithubPullRequestSearchQueryHolder {
+internal class GHPRSearchQueryHolderImpl : GHPRSearchQueryHolder {
 
   private val queryChangeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 

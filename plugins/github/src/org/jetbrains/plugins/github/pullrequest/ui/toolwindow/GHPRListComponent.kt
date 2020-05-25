@@ -22,7 +22,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRListUpdatesChecker
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
-import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQueryHolder
+import org.jetbrains.plugins.github.pullrequest.search.GHPRSearchQueryHolder
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
 import org.jetbrains.plugins.github.ui.GHHandledErrorPanelModel
 import org.jetbrains.plugins.github.ui.GHHtmlErrorPanel
@@ -223,7 +223,7 @@ internal object GHPRListComponent {
   }
 
   private class ListEmptyTextController(private val listLoader: GHListLoader<*>,
-                                        private val searchHolder: GithubPullRequestSearchQueryHolder,
+                                        private val searchHolder: GHPRSearchQueryHolder,
                                         private val emptyText: StatusText,
                                         listenersDisposable: Disposable) {
     init {

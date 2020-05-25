@@ -26,7 +26,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInforma
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRVirtualFile
 import org.jetbrains.plugins.github.pullrequest.data.service.*
-import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQueryHolderImpl
+import org.jetbrains.plugins.github.pullrequest.search.GHPRSearchQueryHolderImpl
 import org.jetbrains.plugins.github.util.*
 import java.io.IOException
 import java.util.concurrent.CompletableFuture
@@ -114,7 +114,7 @@ internal class GHPRDataContextRepository(private val project: Project) {
                                                 gitRemoteCoordinates, repositoryCoordinates)
     val reviewService = GHPRReviewServiceImpl(ProgressManager.getInstance(), securityService, requestExecutor, repositoryCoordinates)
 
-    val searchHolder = GithubPullRequestSearchQueryHolderImpl().apply {
+    val searchHolder = GHPRSearchQueryHolderImpl().apply {
       query = GHPRSearchQuery.DEFAULT
     }
     val listLoader = GHGQLPagedListLoader(ProgressManager.getInstance(),

@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
 
-internal interface GithubPullRequestSearchQueryHolder {
+internal interface GHPRSearchQueryHolder {
 
   @get:CalledInAwt
   @set:CalledInAwt

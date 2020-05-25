@@ -10,14 +10,14 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
-import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQueryHolder
+import org.jetbrains.plugins.github.pullrequest.search.GHPRSearchQueryHolder
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 
 internal class GHPRDataContext(val gitRepositoryCoordinates: GitRemoteUrlCoordinates,
                                val repositoryCoordinates: GHRepositoryCoordinates,
                                val account: GithubAccount,
                                val requestExecutor: GithubApiRequestExecutor,
-                               val searchHolder: GithubPullRequestSearchQueryHolder,
+                               val searchHolder: GHPRSearchQueryHolder,
                                val listLoader: GHListLoader<GHPullRequestShort>,
                                val listUpdatesChecker: GHPRListUpdatesChecker,
                                val dataProviderRepository: GHPRDataProviderRepository,
