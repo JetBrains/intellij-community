@@ -282,7 +282,7 @@ class SliceUtil {
       if (override instanceof PsiCompiledElement) {
         override = (PsiMethod)override.getNavigationElement();
       }
-      if (!builder.getSearchScope().contains(PsiUtil.preferCompiledElement(override).getContainingFile().getVirtualFile())) continue;
+      if (!builder.getParent().getScope().contains(PsiUtil.preferCompiledElement(override))) continue;
 
       Language language = override.getLanguage();
       if (language != JavaLanguage.INSTANCE) {
