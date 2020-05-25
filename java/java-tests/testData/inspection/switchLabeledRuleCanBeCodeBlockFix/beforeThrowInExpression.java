@@ -2,7 +2,7 @@
 class C {
     String foo(int n) {
         return switch (n) {
-            <caret>case 1 -> /*1*/ throw new RuntimeException(); /*2*/
+            <caret>case 1 -> /*1*/ throw new RuntimeException(); /*2*/ //c3
             default -> "b";
         };
     }

@@ -103,12 +103,12 @@ public class SwitchLabeledRuleCanBeCodeBlockInspection extends LocalInspectionTo
     private static void wrapExpression(PsiExpressionStatement expressionStatement) {
       CommentTracker tracker = new CommentTracker();
       String valueKeyword = PsiKeyword.YIELD;
-      tracker.replaceAndRestoreComments(expressionStatement, "{ " + valueKeyword + " " + tracker.text(expressionStatement) + " }");
+      tracker.replaceAndRestoreComments(expressionStatement, "{ " + valueKeyword + " " + tracker.text(expressionStatement) + "\n }");
     }
 
     private static void wrapStatement(@NotNull PsiStatement statement) {
       CommentTracker tracker = new CommentTracker();
-      tracker.replaceAndRestoreComments(statement, "{ " + tracker.text(statement) + " }");
+      tracker.replaceAndRestoreComments(statement, "{ " + tracker.text(statement) + "\n }");
     }
   }
 }
