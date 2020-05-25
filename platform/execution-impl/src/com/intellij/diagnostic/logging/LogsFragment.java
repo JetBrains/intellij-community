@@ -200,13 +200,13 @@ public class LogsFragment<T extends RunConfigurationBase<?>> extends NestedGroup
       return new DefaultTableCellRenderer() {
         @NotNull
         @Override
-        public java.awt.Component getTableCellRendererComponent(@NotNull JTable table,
+        public Component getTableCellRendererComponent(@NotNull JTable table,
                                                                 Object value,
                                                                 boolean isSelected,
                                                                 boolean hasFocus,
                                                                 int row,
                                                                 int column) {
-          final java.awt.Component renderer = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+          final Component renderer = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
           setText(((LogFileOptions)value).getName());
           setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
           setBorder(null);
@@ -328,7 +328,7 @@ public class LogsFragment<T extends RunConfigurationBase<?>> extends NestedGroup
     }
 
     @Override
-    public java.awt.Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+    public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
       getChildComponent().setText(((LogFileOptions)value).getName());
       return myComponent;
     }

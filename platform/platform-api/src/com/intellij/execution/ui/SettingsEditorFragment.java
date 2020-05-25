@@ -20,7 +20,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   /**
    * Should be implemented by a JComponent
    */
-  public interface Component<Settings> {
+  public interface FragmentComponent<Settings> {
     void reset(Settings s);
     void apply(Settings s);
     boolean isVisible(Settings s);
@@ -62,7 +62,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     this(id, name, group, component, 0, reset, apply, initialSelection);
   }
 
-  public static <S> SettingsEditorFragment<S, ?> create(String id, String name, String group, Component<? super S> component) {
+  public static <S> SettingsEditorFragment<S, ?> create(String id, String name, String group, FragmentComponent<? super S> component) {
     return new SettingsEditorFragment<>(id, name, group, (JComponent)component,
                                         (settings, c) -> component.reset(settings),
                                         (settings, c) -> component.apply(settings),
