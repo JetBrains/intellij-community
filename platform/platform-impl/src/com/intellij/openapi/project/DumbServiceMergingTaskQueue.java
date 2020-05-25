@@ -199,13 +199,13 @@ public class DumbServiceMergingTaskQueue {
         customIndicator = myIndicator;
       } else {
         customIndicator.checkCanceled();
-        ProgressIndicator customIndicatorFinal = customIndicator;
-        new ProgressIndicatorListenerAdapter() {
-          @Override
-          public void cancelled() {
-            customIndicatorFinal.cancel();
-          }
-        }.installToProgress(myIndicator);
+        //ProgressIndicator customIndicatorFinal = customIndicator;
+        //new ProgressIndicatorListenerAdapter() {
+        //  @Override
+        //  public void cancelled() {
+        //    customIndicatorFinal.cancel();
+        //  }
+        //}.installToProgress(myIndicator);
       }
 
       myTask.performInDumbMode(customIndicator);
