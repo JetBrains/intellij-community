@@ -10,7 +10,6 @@ import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.execution.runners.ProgramRunner
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
@@ -21,7 +20,6 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
@@ -961,7 +959,7 @@ class BuildContextImpl extends BuildContext {
     setFileText(sub, subText + ' ')
     assert make().collect { it.message } == chunkRebuildMessage('Groovy compiler')
     def fileMessages = compileFiles(sub.virtualFile)
-    if (this instanceof GroovycTest) {
+    if (this instanceof GroovycTestBase) {
       assert fileMessages.collect { it.message == 'Consider building whole project or rebuilding the module' }
     } else {
       assert fileMessages.empty
@@ -1009,45 +1007,5 @@ class BuildContextImpl extends BuildContext {
 
     CompilerConfiguration.getInstance(project).buildProcessVMOptions += " -D$JpsGroovycRunner.GROOVYC_IN_PROCESS=false"
     assertEmpty(rebuild())
-  }
-
-  static class GroovycTest extends GroovyCompilerTest {
-    void "test navigate from stub to source"() {
-      myFixture.addFileToProject("a.groovy", "class Groovy3 { InvalidType type }").virtualFile
-      myFixture.addClass("class Java4 extends Groovy3 {}")
-
-      def msg = make().find { it.message.contains('InvalidType') }
-      assert msg?.virtualFile
-      ApplicationManager.application.runWriteAction { msg.virtualFile.delete(this) }
-
-      def messages = make()
-      assert messages
-      def error = messages.find { it.message.contains('InvalidType') }
-      assert error?.virtualFile
-      assert myFixture.findClass("Groovy3") == GroovyStubNotificationProvider.findClassByStub(project, error.virtualFile)
-    }
-
-    void "test config script"() {
-      def script = FileUtil.createTempFile("configScriptTest", ".groovy", true)
-      FileUtil.writeToFile(script, "import groovy.transform.*; withConfig(configuration) { ast(CompileStatic) }")
-
-      GroovyCompilerConfiguration.getInstance(project).configScript = script.path
-
-      myFixture.addFileToProject("a.groovy", "class A { int s = 'foo' }")
-      shouldFail { make() }
-    }
-
-    void "test user-level diagnostic for missing dependency of groovy-all"() {
-      myFixture.addFileToProject 'Bar.groovy', '''import groovy.util.logging.Commons
-@Commons
-class Bar {}'''
-      def msg = assertOneElement(make())
-      assert msg.message.contains('Please')
-      assert msg.message.contains('org.apache.commons.logging.Log')
-    }
-
-    protected List<String> chunkRebuildMessage(String builder) {
-      return ['Builder "' + builder + '" requested rebuild of module chunk "mainModule"']
-    }
   }
 }
