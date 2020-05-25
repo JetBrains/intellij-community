@@ -128,6 +128,10 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       assert project != null;
       final Configuration configuration = dialog.getConfiguration();
       configuration.setOrder(0); // reset
+      configuration.setName(SSRBundle.message("new.template.defaultname"));
+      configuration.setDescription("");
+      configuration.setProblemDescriptor("");
+      configuration.setSuppressId("");
       if (!createNewInspection(configuration, project, profile)) {
         return;
       }
@@ -199,6 +203,11 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       mySuppressIdTextField = new JTextField(configuration.getSuppressId());
       setTitle(SSRBundle.message("meta.data.dialog.title"));
       init();
+    }
+
+    @Override
+    public @Nullable JComponent getPreferredFocusedComponent() {
+      return myNameTextField;
     }
 
     @Override
