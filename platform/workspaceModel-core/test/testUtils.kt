@@ -27,12 +27,12 @@ fun verifyPSerializationRoundTrip(storage: TypedEntityStorage, virtualFileManage
 
   fun assertStorageEquals(expected: PEntityStorage, actual: PEntityStorage) {
     assertEquals(
-      actual.entitiesByType.all(),
-      expected.entitiesByType.all()
+      actual.entitiesByType.allEntities(),
+      expected.entitiesByType.allEntities()
     )
 
-    for ((clazz, expectedEntityFamily) in expected.entitiesByType.all().withIndex()) {
-      val actualEntityFamily = actual.entitiesByType.all().get(clazz)
+    for ((clazz, expectedEntityFamily) in expected.entitiesByType.allEntities().withIndex()) {
+      val actualEntityFamily = actual.entitiesByType.allEntities().get(clazz)
 
       val expectedEntities = expectedEntityFamily.entities
       val actualEntities = actualEntityFamily.entities

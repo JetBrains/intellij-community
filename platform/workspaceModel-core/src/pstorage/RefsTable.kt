@@ -84,8 +84,6 @@ internal class MutableRefsTable(
   override val abstractOneToOneContainer: MutableMap<ConnectionId, BiMap<PId, PId>>
 ) : AbstractRefsTable() {
 
-  constructor() : this(HashMap(), HashMap(), HashMap(), HashMap())
-
   private val oneToAbstractManyCopiedToModify: MutableSet<ConnectionId> = HashSet()
   private val abstractOneToOneCopiedToModify: MutableSet<ConnectionId> = HashSet()
 
@@ -315,7 +313,6 @@ internal sealed class AbstractRefsTable {
   fun <T : TypedEntity, SUBT : TypedEntity> findConnectionId(parentClass: Class<T>, childClass: Class<SUBT>): ConnectionId? {
     val parentClassId = parentClass.toClassId()
     val childClassId = childClass.toClassId()
-    // TODO: 07.04.2020 broken for abstract container
     return (oneToManyContainer.keys.find { it.parentClass == parentClassId && it.childClass == childClassId }
             ?: oneToOneContainer.keys.find { it.parentClass == parentClassId && it.childClass == childClassId }
             ?: oneToAbstractManyContainer.keys.find {
@@ -420,29 +417,24 @@ internal sealed class AbstractRefsTable {
   }
 
   fun getOneToManyChildren(connectionId: ConnectionId, parentId: Int): PositiveIntIntMultiMap.IntSequence? {
-    // TODO: 26.03.2020 What about missing values?
     return oneToManyContainer[connectionId]?.getKeys(parentId)
   }
 
   fun getOneToAbstractManyChildren(connectionId: ConnectionId, parentId: PId): List<PId>? {
-    // TODO: 26.03.2020 What about missing values?
     val map = oneToAbstractManyContainer[connectionId]
     return map?.getKeysByValue(parentId)
   }
 
   fun getAbstractOneToOneChildren(connectionId: ConnectionId, parentId: PId): PId? {
-    // TODO: 26.03.2020 What about missing values?
     val map = abstractOneToOneContainer[connectionId]
     return map?.inverse()?.get(parentId)
   }
 
   fun getOneToAbstractOneParent(connectionId: ConnectionId, childId: PId): PId? {
-    // TODO: 26.03.2020 What about missing values?
     return abstractOneToOneContainer[connectionId]?.get(childId)
   }
 
   fun <SUBT : TypedEntity> getOneToOneChild(connectionId: ConnectionId, parentId: Int, transformer: (Int) -> SUBT?): SUBT? {
-    // TODO: 26.03.2020 What about missing values?
     val bimap = oneToOneContainer[connectionId] ?: return null
     if (!bimap.containsValue(parentId)) return null
 

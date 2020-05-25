@@ -128,6 +128,7 @@ internal class PEntityStorageBuilder(
     val children = refs.getChildrenRefsOfParentBy(pid)
     updateChangeLog { it.add(ChangeEntry.AddEntity(pEntityData, unmodifiableEntityClassId, children, parents)) }
 
+    // Update soft links index
     if (pEntityData is PSoftLinkable) {
       for (link in pEntityData.getLinks()) {
         softLinks.put(link, pEntityData.createPid())
@@ -956,7 +957,7 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
 
   override fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out TypedEntity>, List<TypedEntity>>> {
     val res = HashMap<EntitySource, MutableMap<Class<out TypedEntity>, MutableList<TypedEntity>>>()
-    entitiesByType.forEachIndexed { i, entities ->
+    entitiesByType.allEntities().forEachIndexed { i, entities ->
       entities.all().forEach {
         if (sourceFilter(it.entitySource)) {
           val mutableMapRes = res.getOrPut(it.entitySource, { mutableMapOf() })

@@ -27,7 +27,7 @@ internal open class ImmutableEntitiesBarrel internal constructor(
   }
 }
 
-internal class MutableEntitiesBarrel(
+internal class MutableEntitiesBarrel private constructor(
   override var entities: MutableList<EntityFamily<out TypedEntity>?>
 ) : EntitiesBarrel() {
   fun remove(id: Int, clazz: Int) {
@@ -37,7 +37,7 @@ internal class MutableEntitiesBarrel(
   }
 
   fun getEntityDataForModification(id: PId): PEntityData<*> {
-    return getMutableEntityFamily(id.clazz).getEntityDataForModification(id)
+    return getMutableEntityFamily(id.clazz).getEntityDataForModification(id.arrayId)
   }
 
   fun <T : TypedEntity> add(newEntity: PEntityData<T>, clazz: Int) {
@@ -67,10 +67,6 @@ internal class MutableEntitiesBarrel(
     return ImmutableEntitiesBarrel(friezedEntities)
   }
 
-  fun isEmpty() = entities.isEmpty()
-
-  fun clear() = entities.clear()
-
   private fun getMutableEntityFamily(unmodifiableEntityId: Int): MutableEntityFamily<*> {
     while (entities.size <= unmodifiableEntityId) {
       entities.add(MutableEntityFamily.createEmptyMutable())
@@ -91,21 +87,14 @@ internal class MutableEntitiesBarrel(
   }
 
   companion object {
-    fun from(original: ImmutableEntitiesBarrel): MutableEntitiesBarrel {
-      val copy = ArrayList<EntityFamily<out TypedEntity>?>()
-      original.forEach { entry -> copy.add(entry) }
-      return MutableEntitiesBarrel(copy)
-    }
+    fun from(original: ImmutableEntitiesBarrel): MutableEntitiesBarrel = MutableEntitiesBarrel(ArrayList(original.allEntities()))
   }
 }
 
-internal sealed class EntitiesBarrel : Iterable<EntityFamily<out TypedEntity>> {
+internal sealed class EntitiesBarrel {
   protected abstract val entities: List<EntityFamily<out TypedEntity>?>
 
-  @Suppress("UNCHECKED_CAST")
   open operator fun get(clazz: Int): EntityFamily<out TypedEntity>? = entities.getOrNull(clazz)
-  override fun iterator(): Iterator<EntityFamily<out TypedEntity>> = entities.filterNotNull().iterator()
 
-  @TestOnly
-  internal fun all() = entities.filterNotNull()
+  internal fun allEntities() = entities.filterNotNull()
 }

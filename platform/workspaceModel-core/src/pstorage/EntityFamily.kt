@@ -14,6 +14,8 @@ internal class ImmutableEntityFamily<E : TypedEntity>(
 
   override fun size(): Int = entities.size - emptySlotsSize
 
+  override fun isEmpty(): Boolean = entities.isEmpty() || entities.size - emptySlotsSize == 0
+
   inline fun assertConsistency(entityAssertion: (PEntityData<E>) -> Unit = {}) {
     var emptySlotsCounter = 0
 
@@ -32,18 +34,21 @@ internal class ImmutableEntityFamily<E : TypedEntity>(
 
 internal class MutableEntityFamily<E : TypedEntity>(
   override var entities: ArrayList<PEntityData<E>?>,
+
+  // if [freezed] is true, [entities] array MUST BE copied before modifying it.
   private var freezed: Boolean
 ) : EntityFamily<E>() {
 
   // This set contains empty slots at the moment of MutableEntityFamily creation
-  //   New empty slots MUST NOT be added this this set.
-  // TODO Fill the reason
+  //   New empty slots MUST NOT be added this this set, otherwise it would be impossible to distinguish (remove + add) and (replace) events
   private val availableSlots: IntSet = IntOpenHashSet().also {
     entities.mapIndexed { index, pEntityData -> if (pEntityData == null) it.add(index) }
   }
 
+  // Current amount of nulls in entities
   private var amountOfGapsInEntities = availableSlots.size
 
+  // Indexes of entity data that are copied for modification. These entities can be safely modified.
   private val copiedToModify: IntSet = IntOpenHashSet()
 
   fun remove(id: Int) {
@@ -55,6 +60,9 @@ internal class MutableEntityFamily<E : TypedEntity>(
     amountOfGapsInEntities++
   }
 
+  /**
+   * This method adds entityData and changes it's id to the actual one
+   */
   fun add(other: PEntityData<E>) {
     startWrite()
 
@@ -80,14 +88,17 @@ internal class MutableEntityFamily<E : TypedEntity>(
     copiedToModify.add(id)
   }
 
-  fun getEntityDataForModification(id: PId): PEntityData<E> {
-    val entity = entities[id.arrayId] ?: error("Nothing to modify")
-    if (copiedToModify.contains(id.arrayId)) return entity
+  /**
+   * Get entity data that can be modified in a save manne
+   */
+  fun getEntityDataForModification(arrayId: Int): PEntityData<E> {
+    val entity = entities[arrayId] ?: error("Nothing to modify")
+    if (arrayId in copiedToModify) return entity
     startWrite()
 
     val clonedEntity = entity.clone()
-    entities[id.arrayId] = clonedEntity
-    copiedToModify.add(id.arrayId)
+    entities[arrayId] = clonedEntity
+    copiedToModify.add(arrayId)
     return clonedEntity
   }
 
@@ -99,6 +110,9 @@ internal class MutableEntityFamily<E : TypedEntity>(
 
   override fun size(): Int = entities.size - amountOfGapsInEntities
 
+  override fun isEmpty(): Boolean = entities.isEmpty() || entities.size - amountOfGapsInEntities == 0
+
+  /** This method should always be called before any modification */
   private fun startWrite() {
     if (!freezed) return
 
@@ -115,7 +129,7 @@ internal class MutableEntityFamily<E : TypedEntity>(
   }
 
   companion object {
-    fun createEmptyMutable() = MutableEntityFamily<TypedEntity>(ArrayList(), false)
+    fun createEmptyMutable() = MutableEntityFamily(ArrayList(), false)
   }
 }
 
@@ -124,7 +138,7 @@ internal sealed class EntityFamily<E : TypedEntity> {
 
   operator fun get(idx: Int) = entities.getOrNull(idx)
   fun exists(id: Int) = get(id) != null
-  fun isEmpty() = entities.isEmpty()
   fun all() = entities.asSequence().filterNotNull()
   abstract fun size(): Int
+  abstract fun isEmpty(): Boolean
 }
