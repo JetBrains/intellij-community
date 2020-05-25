@@ -48,7 +48,7 @@ public class CompositeFoldingBuilderTest extends AbstractEditorTest {
 
     try {
       PsiFile file = getFile();
-      List<FoldingUpdate.RegionInfo> regionInfos = FoldingUpdate.getFoldingsFor(file, getEditor().getDocument(), false);
+      List<FoldingUpdate.RegionInfo> regionInfos = FoldingUpdate.getFoldingsFor(file, false);
       int regionCount = ContainerUtil.count(regionInfos, i -> file.equals(i.element));
 
       assert regionCount == 1: "Only one descriptor allowed for the same text range. Descriptors: " + regionInfos;
@@ -66,7 +66,7 @@ public class CompositeFoldingBuilderTest extends AbstractEditorTest {
 
     try {
       PsiFile file = getFile();
-      List<FoldingUpdate.RegionInfo> regionInfos = FoldingUpdate.getFoldingsFor(file, getEditor().getDocument(), false);
+      List<FoldingUpdate.RegionInfo> regionInfos = FoldingUpdate.getFoldingsFor(file, false);
       int regionCount = ContainerUtil.count(regionInfos, i -> file.equals(i.element));
       assertEquals("mountain", regionInfos.get(0).descriptor.getPlaceholderText());
 
