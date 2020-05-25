@@ -45,13 +45,14 @@ public class RemoveAssignmentFix extends RemoveInitializerFix {
     if (!(parent instanceof PsiAssignmentExpression)) return;
 
     PsiAssignmentExpression parentExpr = (PsiAssignmentExpression)parent;
-    PsiElement parentParentExpr = parentExpr.getParent();
+    PsiElement gParentExpr = parentExpr.getParent();
     PsiExpression initializer = getInitializer(parentExpr);
-    if (mayBeFixedWithoutSideEffect(parentParentExpr, initializer)) {
-      if (!FileModificationService.getInstance().prepareFileForWrite(parentParentExpr.getContainingFile())) return;
+    if (initializer == null) return;
+    if (mayBeFixedWithoutSideEffect(gParentExpr)) {
+      if (!FileModificationService.getInstance().prepareFileForWrite(gParentExpr.getContainingFile())) return;
       WriteAction.run(() -> {
-        if (parentParentExpr instanceof PsiParenthesizedExpression) {
-          parentParentExpr.replace(initializer);
+        if (gParentExpr instanceof PsiParenthesizedExpression) {
+          gParentExpr.replace(initializer);
         } else {
           parentExpr.replace(initializer);
         }
@@ -75,8 +76,7 @@ public class RemoveAssignmentFix extends RemoveInitializerFix {
     return result;
   }
 
-  private static boolean mayBeFixedWithoutSideEffect(@NotNull PsiElement expr, @Nullable PsiExpression initializer) {
-    if (initializer == null) return false;
+  private static boolean mayBeFixedWithoutSideEffect(@NotNull PsiElement expr) {
     return expr instanceof PsiExpression || expr instanceof PsiExpressionList || expr instanceof PsiReturnStatement
             || expr instanceof PsiLocalVariable;
   }
