@@ -7,8 +7,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
@@ -57,12 +60,6 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
                                 BiConsumer<Settings, C> reset, BiConsumer<Settings, C> apply,
                                 Predicate<Settings> initialSelection)  {
     this(id, name, group, component, 0, reset, apply, initialSelection);
-  }
-
-  protected SettingsEditorFragment(String id,
-                                @Nls(capitalization = Nls.Capitalization.Sentence) String name,
-                                @Nls(capitalization = Nls.Capitalization.Sentence) String group)  {
-    this(id, name, group, null, 0, null, null, null);
   }
 
   public static <S> SettingsEditorFragment<S, ?> create(String id, String name, String group, Component<? super S> component) {
@@ -161,6 +158,14 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   protected @NotNull JComponent createEditor() {
     myComponent.setVisible(isSelected());
     return myComponent;
+  }
+
+  public List<SettingsEditorFragment<Settings, ?>> getChildren() {
+    return Collections.emptyList();
+  }
+
+  public @Nullable String getChildrenGroupName() {
+    return null;
   }
 
   @Override

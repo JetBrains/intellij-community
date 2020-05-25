@@ -5,6 +5,7 @@ import com.intellij.diagnostic.DiagnosticBundle;
 import com.intellij.execution.configurations.LogFileOptions;
 import com.intellij.execution.configurations.PredefinedLogFile;
 import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.execution.ui.NestedGroupFragment;
 import com.intellij.execution.ui.SettingsEditorFragment;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -20,16 +21,15 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
-public class LogsFragment<T extends RunConfigurationBase> extends SettingsEditorFragment<T, JPanel> {
+public class LogsFragment<T extends RunConfigurationBase<?>> extends NestedGroupFragment<T> {
 
   private final Map<LogFileOptions, PredefinedLogFile> myLog2Predefined = new THashMap<>();
   private final List<PredefinedLogFile> myUnresolvedPredefined = new SmartList<>();
@@ -118,6 +118,7 @@ public class LogsFragment<T extends RunConfigurationBase> extends SettingsEditor
 
   @Override
   protected void resetEditorFrom(@NotNull T configuration) {
+    super.resetEditorFrom(configuration);
     ArrayList<LogFileOptions> list = new ArrayList<>();
     final List<LogFileOptions> logFiles = configuration.getLogFiles();
     for (LogFileOptions setting : logFiles) {
@@ -144,6 +145,7 @@ public class LogsFragment<T extends RunConfigurationBase> extends SettingsEditor
 
   @Override
   protected void applyEditorTo(@NotNull T configuration) throws ConfigurationException {
+    super.applyEditorTo(configuration);
     myFilesTable.stopEditing();
     configuration.removeAllLogFiles();
     configuration.removeAllPredefinedLogFiles();
@@ -170,6 +172,22 @@ public class LogsFragment<T extends RunConfigurationBase> extends SettingsEditor
     for (PredefinedLogFile logFile : myUnresolvedPredefined) {
       configuration.addPredefinedLogFile(logFile);
     }
+  }
+
+  @Override
+  public List<SettingsEditorFragment<T, ?>> createChildren() {
+    SettingsEditorFragment<T, JButton> stdOut = SettingsEditorFragment
+      .createTag("xxx", DiagnosticBundle.message("log.monitor.fragment.stdout"), null, t -> t.isShowConsoleOnStdOut(),
+                 (t, value) -> t.setShowConsoleOnStdOut(value));
+    SettingsEditorFragment<T, JButton> stdErr = SettingsEditorFragment
+      .createTag("xxx", DiagnosticBundle.message("log.monitor.fragment.stderr"), null, t -> t.isShowConsoleOnStdErr(),
+                 (t, value) -> t.setShowConsoleOnStdErr(value));
+    return Arrays.asList(stdOut, stdErr);
+  }
+
+  @Override
+  public @Nullable String getChildrenGroupName() {
+    return DiagnosticBundle.message("log.monitor.fragment.settings");
   }
 
   private class MyLogFileColumnInfo extends ColumnInfo<LogFileOptions, LogFileOptions> {
