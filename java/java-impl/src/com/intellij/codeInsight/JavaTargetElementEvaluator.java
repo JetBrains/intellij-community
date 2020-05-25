@@ -344,25 +344,38 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
        }
       final PsiClass[] memberClass = getClassesWithMember(referenceExpression, (PsiMember)element);
       if (memberClass != null && memberClass.length == 1) {
-        return CachedValuesManager.getCachedValue(memberClass[0], () -> {
-          final List<PsiClass> classesToSearch = ContainerUtil.newArrayList(memberClass);
-          classesToSearch.addAll(ClassInheritorsSearch.search(memberClass[0]).findAll());
-
-          final Set<PsiClass> supers = new HashSet<>();
-          for (PsiClass psiClass : classesToSearch) {
-            supers.addAll(InheritanceUtil.getSuperClasses(psiClass));
-          }
-
-          final List<PsiElement> elements = new ArrayList<>();
-          elements.addAll(classesToSearch);
-          elements.addAll(supers);
-          elements.addAll(FunctionalExpressionSearch.search(memberClass[0]).findAll());
-
-          return new CachedValueProvider.Result<SearchScope>(new LocalSearchScope(PsiUtilCore.toPsiElementArray(elements)), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-        });
+        return getHierarchyScope(memberClass[0], memberClass[0].getUseScope());
       }
     }
     return super.getSearchScope(editor, element);
+  }
+
+  /**
+   * Narrow given scope to include only those places where methods called on given class qualifier could be defined.
+   * 
+   * @param aClass qualifier type class
+   * @param scope a scope to narrow
+   * @return narrowed scope
+   */
+  public @NotNull static SearchScope getHierarchyScope(@NotNull PsiClass aClass, @NotNull SearchScope scope) {
+    return CachedValuesManager.getCachedValue(aClass, () -> {
+      final List<PsiClass> classesToSearch = new ArrayList<>();
+      classesToSearch.add(aClass);
+      classesToSearch.addAll(ClassInheritorsSearch.search(aClass, scope, true).findAll());
+
+      final Set<PsiClass> supers = new HashSet<>();
+      for (PsiClass psiClass : classesToSearch) {
+        supers.addAll(InheritanceUtil.getSuperClasses(psiClass));
+      }
+
+      final List<PsiElement> elements = new ArrayList<>();
+      elements.addAll(classesToSearch);
+      elements.addAll(supers);
+      elements.addAll(FunctionalExpressionSearch.search(aClass, scope).findAll());
+
+      return new CachedValueProvider.Result<SearchScope>(new LocalSearchScope(PsiUtilCore.toPsiElementArray(elements)), 
+                                                         PsiModificationTracker.MODIFICATION_COUNT);
+    });
   }
 
   private static class PsiElementFindProcessor<T extends PsiClass> implements Processor<T> {
