@@ -18,9 +18,6 @@ internal class LegacyBridgeModifiableModuleLibraryTable(private val modifiableMo
     LegacyBridgeLibraryImpl(this, modifiableModel.project, it.libraryId, modifiableModel.entityStoreOnDiff, this, modifiableModel.diff)
   }
 
-  override fun commit() {
-  }
-
   override fun getLibraryIterator(): Iterator<Library> {
     return libraries.iterator()
   }

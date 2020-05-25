@@ -15,7 +15,7 @@ internal class LegacyBridgeModifiableModelCommitterService : ModifiableModelComm
     diffs += (moduleModel as LegacyBridgeModifiableModuleModel).collectChanges()
     for (rootModel in rootModels) {
       if (rootModel.isChanged) {
-        diffs += (rootModel as LegacyBridgeModifiableRootModel).collectChanges() ?: continue
+        diffs += (rootModel as LegacyBridgeModifiableRootModel).collectChangesAndDispose() ?: continue
       }
       else rootModel.dispose()
     }

@@ -284,8 +284,9 @@ class LegacyBridgeModifiableRootModel(
     }
   }
 
-  fun collectChanges(): TypedEntityStorageBuilder? {
+  fun collectChangesAndDispose(): TypedEntityStorageBuilder? {
     assertModelIsLive()
+    Disposer.dispose(moduleLibraryTable)
     if (!isChanged) return null
 
     if (extensionsDelegate.isInitialized() && extensions.any { it.isChanged }) {
@@ -335,8 +336,7 @@ class LegacyBridgeModifiableRootModel(
   }
 
   override fun commit() {
-    Disposer.dispose(moduleLibraryTable)
-    val diff = collectChanges() ?: return
+    val diff = collectChangesAndDispose() ?: return
     val moduleDiff = module.diff
     if (moduleDiff != null) {
       moduleDiff.addDiff(diff)
