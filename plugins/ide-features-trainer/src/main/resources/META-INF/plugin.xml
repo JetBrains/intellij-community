@@ -1,0 +1,32 @@
+<idea-plugin>
+    <id>org.intellij.featureSuggester</id>
+    <name>IDEA Feature Suggester</name>
+    <vendor email="support@jetbrains.com"
+            url="http://www.jetbrains.com">JetBrains</vendor>
+
+    <description>Provides feature suggesting utility that helps users</description>
+    <category>Code tools</category>
+
+    <!-- please see https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+         on how to target different products -->
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensionPoints>
+        <extensionPoint name="featureSuggester" interface="org.jetbrains.plugins.feature.suggester.FeatureSuggester"/>
+    </extensionPoints>
+
+    <extensions defaultExtensionNs="org.intellij">
+        <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.LineCommentingSuggester"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="org.jetbrains.plugins.feature.suggester.settings.FeatureSuggesterSettings"/>
+    </extensions>
+
+    <projectListeners>
+        <listener class="org.jetbrains.plugins.feature.suggester.FeatureSuggestersManager" topic="com.intellij.openapi.project.impl.ProjectLifecycleListener"/>
+    </projectListeners>
+
+    <actions>
+    </actions>
+</idea-plugin>
