@@ -348,6 +348,9 @@ public class ProgressIndicatorUtils {
       }
       catch (TimeoutException | RejectedExecutionException ignore) {
       }
+      catch (InterruptedException e) {
+        throw new ProcessCanceledException(e);
+      }
       catch (Throwable e) {
         Throwable cause = e.getCause();
         if (cause instanceof ProcessCanceledException) {
