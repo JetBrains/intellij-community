@@ -23,9 +23,10 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
 
   companion object {
     fun createFromMethod(method: GrMethod,
-                         virtualMethod: GrMethod,
+                         virtualMethodPointer: SmartPsiElementPointer<GrMethod>,
                          generator: NameGenerator,
                          options: SignatureInferenceOptions): InferenceDriver {
+      val virtualMethod = virtualMethodPointer.element ?: return EmptyDriver
       val builder = ClosureParametersStorageBuilder(generator, virtualMethod)
       val visitedParameters = builder.extractClosuresFromOuterCalls(method, virtualMethod, options.calls.value)
       virtualMethod.forEachParameterUsage { parameter, instructions ->

@@ -262,11 +262,12 @@ private fun String.insert(position: Int, content: String): String {
   return "${take(position)}$content${drop(position)}"
 }
 
-fun createVirtualMethod(method: GrMethod, typeParameterList: PsiTypeParameterList? = null, omitBody: Boolean = false): GrMethod? {
+fun createVirtualMethod(method: GrMethod, typeParameterList: PsiTypeParameterList? = null, omitBody: Boolean = false): SmartPsiElementPointer<GrMethod>? {
   val (fileText, offset) = buildVirtualEnvironmentForMethod(method, typeParameterList?.text, omitBody) ?: return null
   val factory = GroovyPsiElementFactory.getInstance(method.project)
   val newFile = factory.createGroovyFile(fileText, false, method)
-  return newFile.findElementAt(offset)?.parentOfType() ?: return null
+  val virtualMethod = newFile.findElementAt(offset)?.parentOfType<GrMethod>() ?: return null
+  return SmartPointerManager.createPointer(virtualMethod)
 }
 
 fun convertToGroovyMethod(method: PsiMethod): GrMethod? {

@@ -45,10 +45,11 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
     }
 
     fun createFromMethod(method: GrMethod,
-                         virtualMethod: GrMethod,
+                         virtualMethodPointer: SmartPsiElementPointer<GrMethod>,
                          generator: NameGenerator,
                          options: SignatureInferenceOptions): InferenceDriver {
-      val elementFactory = GroovyPsiElementFactory.getInstance(virtualMethod.project)
+      val elementFactory = GroovyPsiElementFactory.getInstance(virtualMethodPointer.project)
+      val virtualMethod = virtualMethodPointer.element ?: return EmptyDriver
       val targetParameters = setUpParameterMapping(method, virtualMethod)
         .filter { it.key.eligibleForExtendedInference() }
         .map { it.value }
@@ -57,7 +58,7 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
       for (parameter in targetParameters) {
         val newTypeParameter = elementFactory.createProperTypeParameter(generator.name, null)
         typeParameters.add(newTypeParameter)
-        virtualMethod.typeParameterList!!.add(newTypeParameter)
+        virtualMethodPointer.element!!.typeParameterList!!.add(newTypeParameter)
         parameter.setTypeWithoutFormatting(newTypeParameter.type())
       }
       val varargParameter = targetParameters.find { it.isVarArgs }
@@ -121,11 +122,14 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
         newParameter.setTypeWithoutFormatting(newType.type)
       }
     }
-    val copiedVirtualMethod = createVirtualMethod(targetMethod) ?: return EmptyDriver
+    val copiedVirtualMethodPointer: SmartPsiElementPointer<GrMethod> = createVirtualMethod(targetMethod) ?: return EmptyDriver
     val enrichedOptions = options.copy(signatureInferenceContext = options.signatureInferenceContext.ignoreMethod(originalMethod))
-    val closureDriver = ClosureDriver.createFromMethod(originalMethod, copiedVirtualMethod, manager.nameGenerator, enrichedOptions)
+    val closureDriver = ClosureDriver.createFromMethod(originalMethod, copiedVirtualMethodPointer, manager.nameGenerator, enrichedOptions)
     val signatureSubstitutor = closureDriver.collectSignatureSubstitutor()
-    val virtualToActualSubstitutor = createVirtualToActualSubstitutor(copiedVirtualMethod, targetMethod)
+    val virtualToActualSubstitutor = run {
+      val virtualMethod = copiedVirtualMethodPointer.element ?: return EmptyDriver
+      createVirtualToActualSubstitutor(virtualMethod, targetMethod)
+    }
     val erasureSubstitutor = RecursiveMethodAnalyzer.methodTypeParametersErasureSubstitutor(targetMethod)
     val newClosureDriver = closureDriver.createParameterizedDriver(manager, targetMethod,
                                                                    signatureSubstitutor compose (virtualToActualSubstitutor compose erasureSubstitutor))
