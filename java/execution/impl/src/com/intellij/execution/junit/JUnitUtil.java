@@ -290,7 +290,8 @@ public class JUnitUtil {
     if (psiClass.isAnnotationType()) return false;
 
     if (JavaPsiFacade.getInstance(psiClass.getProject())
-          .findClass(CUSTOM_TESTABLE_ANNOTATION, psiClass.getResolveScope()) == null) {
+          .findClass(CUSTOM_TESTABLE_ANNOTATION, psiClass.getResolveScope()) == null
+    && !MetaAnnotationUtil.hasMetaAnnotatedMethods(psiClass,Collections.singleton(CUSTOM_TESTABLE_ANNOTATION))) {
       return false;
     }
 
