@@ -147,6 +147,10 @@ class XDebugSessionTab2(
   override fun getFramesContentId() = debuggerContentId
 
   override fun setWatchesInVariablesImpl() {
+    setWatchesInVariablesImpl(true)
+  }
+
+  private fun setWatchesInVariablesImpl(attach: Boolean) {
     val session = mySession ?: return
 
     unregisterView(DebuggerContentInfo.VARIABLES_CONTENT)
@@ -188,7 +192,7 @@ class XDebugSessionTab2(
 
     framesView.setThreadsVisible(threadsIsVisible)
     splitter.firstComponent = xThreadsFramesView.mainPanel
-    setWatchesInVariablesImpl()
+    setWatchesInVariablesImpl(false)
 
     val name = debuggerContentId
     val content = myUi.createContent(name, splitter, XDebuggerBundle.message("xdebugger.debugger.tab.title"), null, framesView.defaultFocusedComponent).apply {
