@@ -33,6 +33,10 @@ internal class MutableEntitiesBarrel(
   fun remove(id: Int, clazz: Int) {
     val entityFamily = getMutableEntityFamily(clazz)
     entityFamily.remove(id)
+    if (entityFamily.isEmpty()) {
+      entities.remove(entityFamily)
+      ClassToIntConverter.releaseInt(clazz)
+    }
   }
 
   fun getEntityDataForModification(id: PId): PEntityData<*> {

@@ -2,17 +2,25 @@
 package com.intellij.workspace.api.pstorage
 
 import com.google.common.collect.HashBiMap
+import it.unimi.dsi.fastutil.ints.IntArrayList
 import java.util.concurrent.atomic.AtomicInteger
 
 internal object ClassToIntConverter {
   private val class2Int = HashBiMap.create<Class<*>, Int>()
   private val idGenerator = AtomicInteger()
+  private val releasedInts = IntArrayList()
 
   @Synchronized
-  fun getInt(clazz: Class<*>): Int = class2Int.getOrPut(clazz) { idGenerator.getAndIncrement() }
+  fun getInt(clazz: Class<*>): Int = class2Int.getOrPut(clazz) {
+    if (!releasedInts.isEmpty) return@getOrPut releasedInts.popInt()
+    idGenerator.getAndIncrement()
+  }
 
   @Synchronized
   fun getClassOrDie(id: Int): Class<*> = class2Int.inverse().getValue(id)
+
+  @Synchronized
+  fun releaseInt(id: Int) = class2Int.inverse().remove(id)?.let { releasedInts.push(id) }
 }
 
 internal fun Class<*>.toClassId(): Int = ClassToIntConverter.getInt(this)
