@@ -236,11 +236,15 @@ public class GitExecutableManager {
     }
   }
 
+  @CalledInBackground
+  @NotNull
+  public GitVersion identifyVersion(@NotNull String pathToGit) throws GitVersionIdentificationException {
+    return identifyVersion(getExecutable(pathToGit));
+  }
+
   /**
    * Try to identify version of git executable
    *
-   * @param pathToGit path to executable file
-   * @return version of git executable
    * @throws GitVersionIdentificationException if there is a problem running executable or parsing version output
    */
   @CalledInBackground
