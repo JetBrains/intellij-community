@@ -17,17 +17,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class JavaDfaSliceValueFilter implements SliceValueFilter {
-  private final @Nullable JavaDfaSliceValueFilter myNextFilter;
+final class DfaBasedFilter {
+  private final @Nullable DfaBasedFilter myNextFilter;
 
   private final @NotNull DfType myDfType;
 
-  private JavaDfaSliceValueFilter(@Nullable JavaDfaSliceValueFilter nextFilter, @NotNull DfType type) {
+  private DfaBasedFilter(@Nullable DfaBasedFilter nextFilter, @NotNull DfType type) {
     myNextFilter = nextFilter;
     myDfType = type;
   }
 
-  public JavaDfaSliceValueFilter(@NotNull DfType type) {
+  DfaBasedFilter(@NotNull DfType type) {
     this(null, type);
   }
 
@@ -35,16 +35,15 @@ public class JavaDfaSliceValueFilter implements SliceValueFilter {
     return myDfType;
   }
   
-  JavaDfaSliceValueFilter wrap() {
-    return new JavaDfaSliceValueFilter(this, DfTypes.TOP);
+  DfaBasedFilter wrap() {
+    return new DfaBasedFilter(this, DfTypes.TOP);
   }
   
-  JavaDfaSliceValueFilter unwrap() {
+  DfaBasedFilter unwrap() {
     return myNextFilter;
   }
 
-  @Override
-  public boolean allowed(@NotNull PsiElement element) {
+  boolean allowed(@NotNull PsiElement element) {
     return allowed(element, true);
   }
 
@@ -64,7 +63,7 @@ public class JavaDfaSliceValueFilter implements SliceValueFilter {
     return dfType.meet(myDfType) != DfTypes.BOTTOM;
   }
 
-  @Nullable JavaDfaSliceValueFilter mergeFilter(@NotNull PsiElement element) {
+  @Nullable DfaBasedFilter mergeFilter(@NotNull PsiElement element) {
     DfType type = getElementDfType(element, true);
     if (type instanceof DfReferenceType) {
       type = ((DfReferenceType)type).dropLocality().dropMutability();
@@ -72,7 +71,7 @@ public class JavaDfaSliceValueFilter implements SliceValueFilter {
     DfType meet = type.meet(myDfType);
     if (meet == DfTypes.TOP && myNextFilter == null) return null;
     if (meet == DfTypes.BOTTOM || meet.equals(myDfType)) return this;
-    return new JavaDfaSliceValueFilter(myNextFilter, meet);
+    return new DfaBasedFilter(myNextFilter, meet);
   }
 
   private @NotNull DfType getElementDfType(@NotNull PsiElement element, boolean assertionsDisabled) {
@@ -96,7 +95,6 @@ public class JavaDfaSliceValueFilter implements SliceValueFilter {
     return myDfType.toString();
   }
 
-  @Override
   public @NotNull @Nls String getPresentationText(@NotNull PsiElement element) {
     if (element instanceof PsiLiteralExpression ||
         element instanceof PsiExpression && JavaPsiMathUtil.getNumberFromLiteral((PsiExpression)element) != null) {

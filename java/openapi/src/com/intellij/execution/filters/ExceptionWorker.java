@@ -438,14 +438,17 @@ public class ExceptionWorker {
       if (originalEditor != null) {
         Document origDocument = originalEditor.getDocument();
         supplier = () -> {
-          List<StackLine> nextLines = new ArrayList<>();
           int stackLineNumber = origDocument.getLineNumber(myTextEndOffset);
+          if (stackLineNumber < 1) return Collections.emptyList();
           int lineCount = Math.min(origDocument.getLineCount(), stackLineNumber + 100);
-          for (int i = stackLineNumber + 1; i < lineCount; i++) {
+          List<StackLine> nextLines = new ArrayList<>();
+          for (int i = stackLineNumber - 1; i < lineCount; i++) {
             String traceLine = origDocument.getText(TextRange.create(origDocument.getLineStartOffset(i), origDocument.getLineEndOffset(i)));
             ParsedLine line = parseExceptionLine(traceLine);
             if (line == null) break;
-            StackLine stackLine = new StackLine(line.classFqnRange.substring(traceLine), line.methodNameRange.substring(traceLine));
+            String methodName = line.methodNameRange.substring(traceLine);
+            if (methodName.startsWith("access$")) continue;
+            StackLine stackLine = new StackLine(line.classFqnRange.substring(traceLine), methodName);
             nextLines.add(stackLine);
           }
           return nextLines;

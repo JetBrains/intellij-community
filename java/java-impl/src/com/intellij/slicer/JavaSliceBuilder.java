@@ -1,11 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.slicer;
 
+import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import gnu.trove.THashMap;
@@ -16,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 
 import java.util.Map;
+import java.util.function.UnaryOperator;
 
 /**
  * A helper class to build new {@link JavaSliceUsage} and pass it to the processor
@@ -25,30 +28,32 @@ final class JavaSliceBuilder {
   private final @NotNull PsiSubstitutor mySubstitutor;
   private final @Range(from = 0, to = Integer.MAX_VALUE) int myIndexNesting;
   private final @NotNull String mySyntheticField;
-  private final @NotNull SliceAnalysisParams myAnalysisParams;
+  private final @NotNull JavaValueFilter myFilter;
 
   private JavaSliceBuilder(@NotNull SliceUsage parent,
                            @NotNull PsiSubstitutor substitutor,
                            @Range(from = 0, to = Integer.MAX_VALUE) int indexNesting,
                            @NotNull String syntheticField,
-                           @NotNull SliceAnalysisParams analysisParams) {
+                           @Nullable SliceValueFilter filter) {
     assert indexNesting >= 0 : indexNesting;
     myParent = parent;
     mySubstitutor = substitutor;
     myIndexNesting = indexNesting;
     mySyntheticField = syntheticField;
-    myAnalysisParams = analysisParams;
+    myFilter = filter instanceof JavaValueFilter
+               ? (JavaValueFilter)filter
+               : JavaValueFilter.ALLOW_EVERYTHING;
   }
 
   @Contract(pure = true)
   @NotNull JavaSliceBuilder withSubstitutor(@NotNull PsiSubstitutor substitutor) {
-    return new JavaSliceBuilder(myParent, substitutor, myIndexNesting, mySyntheticField, myAnalysisParams);
+    return new JavaSliceBuilder(myParent, substitutor, myIndexNesting, mySyntheticField, myFilter);
   }
 
   @Contract(pure = true)
   @NotNull JavaSliceBuilder withSyntheticField(@NotNull String syntheticField) {
     if (syntheticField.equals(mySyntheticField)) return this;
-    return new JavaSliceBuilder(myParent, mySubstitutor, myIndexNesting, syntheticField, myAnalysisParams);
+    return new JavaSliceBuilder(myParent, mySubstitutor, myIndexNesting, syntheticField, myFilter);
   }
 
   @Contract(pure = true)
@@ -59,28 +64,16 @@ final class JavaSliceBuilder {
   @Contract(pure = true)
   @NotNull JavaSliceBuilder dropNesting() {
     if (myIndexNesting == 0) return this;
-    return new JavaSliceBuilder(myParent, mySubstitutor, 0, mySyntheticField, myAnalysisParams)
-      .withFilter(null);
-  }
-
-  @Contract(pure = true)
-  @NotNull JavaSliceBuilder withFilter(@Nullable SliceValueFilter filter) {
-    if (filter == myAnalysisParams.valueFilter) return this;
-    SliceAnalysisParams params = new SliceAnalysisParams(myAnalysisParams);
-    params.valueFilter = filter;
-    return new JavaSliceBuilder(myParent, mySubstitutor, myIndexNesting, mySyntheticField, params);
+    return new JavaSliceBuilder(myParent, mySubstitutor, 0, mySyntheticField, myFilter.withType(DfTypes.TOP));
   }
 
   boolean process(PsiElement element, Processor<? super SliceUsage> processor) {
     final PsiElement realExpression = element.getParent() instanceof DummyHolder ? element.getParent().getContext() : element;
     assert realExpression != null;
     if (!(realExpression instanceof PsiCompiledElement)) {
-      JavaDfaSliceValueFilter curFilter = myAnalysisParams.valueFilter instanceof JavaDfaSliceValueFilter
-                                          ? (JavaDfaSliceValueFilter)myAnalysisParams.valueFilter
-                                          : new JavaDfaSliceValueFilter(DfTypes.TOP);
-      JavaDfaSliceValueFilter filter = curFilter.mergeFilter(realExpression);
-      SliceAnalysisParams params = myAnalysisParams;
-      if (filter != curFilter) {
+      JavaValueFilter filter = myFilter.mergeFilter(realExpression);
+      SliceAnalysisParams params = myParent.params;
+      if (filter != params.valueFilter) {
         params = new SliceAnalysisParams(params);
         params.valueFilter = filter;
       }
@@ -107,19 +100,25 @@ final class JavaSliceBuilder {
   }
 
   @Contract(pure = true)
+  @NotNull JavaSliceBuilder withFilter(UnaryOperator<JavaValueFilter> filterTransformer) {
+    JavaValueFilter filter = filterTransformer.apply(myFilter);
+    if (filter == myFilter) return this;
+    return new JavaSliceBuilder(myParent, mySubstitutor, myIndexNesting, mySyntheticField, filter);
+  }
+
+  @NotNull SearchScope getSearchScope() {
+    AnalysisScope scope = myParent.getScope();
+    return myFilter.correctScope(scope.getProject(), scope.toSearchScope());
+  }
+
+  @Contract(pure = true)
   @NotNull JavaSliceBuilder incrementNesting() {
-    SliceValueFilter filter = myAnalysisParams.valueFilter;
-    filter = filter instanceof JavaDfaSliceValueFilter ? ((JavaDfaSliceValueFilter)filter).wrap() : null;
-    return new JavaSliceBuilder(myParent, mySubstitutor, myIndexNesting + 1, mySyntheticField, myAnalysisParams)
-      .withFilter(filter);
+    return new JavaSliceBuilder(myParent, mySubstitutor, myIndexNesting + 1, mySyntheticField, myFilter.wrap());
   }
 
   @Contract(pure = true)
   @NotNull JavaSliceBuilder decrementNesting() {
-    SliceValueFilter filter = myAnalysisParams.valueFilter;
-    filter = filter instanceof JavaDfaSliceValueFilter ? ((JavaDfaSliceValueFilter)filter).unwrap() : null;
-    return new JavaSliceBuilder(myParent, mySubstitutor, myIndexNesting - 1, mySyntheticField, myAnalysisParams)
-      .withFilter(filter);
+    return new JavaSliceBuilder(myParent, mySubstitutor, myIndexNesting - 1, mySyntheticField, myFilter.unwrap());
   }
 
   boolean hasNesting() {
@@ -136,6 +135,7 @@ final class JavaSliceBuilder {
     return mySubstitutor;
   }
   
+  @Contract(pure = true)
   PsiType substitute(@Nullable PsiType type) {
     return mySubstitutor.substitute(type);
   }
@@ -145,17 +145,23 @@ final class JavaSliceBuilder {
     return mySyntheticField;
   }
 
+  @Contract(pure = true)
+  @NotNull JavaValueFilter getFilter() {
+    return myFilter;
+  }
+
   /**
    * @param parent parent usage
    * @return new JavaSliceBuilder that inherits the parent properties
    */
   @Contract(pure = true)
-  static @NotNull JavaSliceBuilder create(SliceUsage parent) {
+  static @NotNull JavaSliceBuilder create(@NotNull SliceUsage parent) {
+    SliceValueFilter filter = parent.params.valueFilter;
     if (parent instanceof JavaSliceUsage) {
       JavaSliceUsage javaParent = (JavaSliceUsage)parent;
-      return new JavaSliceBuilder(parent, javaParent.getSubstitutor(), javaParent.indexNesting, javaParent.syntheticField, parent.params);
+      return new JavaSliceBuilder(parent, javaParent.getSubstitutor(), javaParent.indexNesting, javaParent.syntheticField, filter);
     }
-    return new JavaSliceBuilder(parent, PsiSubstitutor.EMPTY, 0, "", parent.params);
+    return new JavaSliceBuilder(parent, PsiSubstitutor.EMPTY, 0, "", filter);
   }
 
   @Nullable JavaSliceBuilder combineSubstitutor(@NotNull PsiSubstitutor substitutor, @NotNull Project project) {

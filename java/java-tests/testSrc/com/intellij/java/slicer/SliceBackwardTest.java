@@ -17,13 +17,17 @@ package com.intellij.java.slicer;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.execution.filters.ExceptionAnalysisProvider;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.slicer.*;
+import com.intellij.util.ArrayUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -35,6 +39,10 @@ public class SliceBackwardTest extends SliceTestCase {
   }
 
   private void doTest(@NotNull String filter) throws Exception {
+    doTest(filter, ArrayUtil.EMPTY_STRING_ARRAY);
+  }
+
+  private void doTest(@NotNull String filter, @NotNull String @NotNull... stack) throws Exception {
     configureByFile("/codeInsight/slice/backward/"+getTestName(false)+".java");
     Map<String, RangeMarker> sliceUsageName2Offset = SliceTestUtil.extractSliceOffsetsFromDocument(getEditor().getDocument());
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
@@ -47,9 +55,13 @@ public class SliceBackwardTest extends SliceTestCase {
     params.scope = new AnalysisScope(getProject());
     params.dataFlowToThis = true;
     SliceLanguageSupportProvider provider = LanguageSlicing.getProvider(element);
-    if (!filter.isEmpty()) {
-      params.valueFilter = provider.parseFilter(element, filter);
-    }
+    params.valueFilter = filter.isEmpty() ? JavaValueFilter.ALLOW_EVERYTHING : provider.parseFilter(element, filter);
+    List<ExceptionAnalysisProvider.StackLine> lines = StreamEx.of(stack).map(line -> {
+      String[] parts = line.split(":");
+      return new ExceptionAnalysisProvider.StackLine(parts[0], parts[1]);
+    }).toList();
+    assertTrue(params.valueFilter instanceof JavaValueFilter);
+    params.valueFilter = ((JavaValueFilter)params.valueFilter).withStack(lines);
 
     SliceUsage usage = provider.createRootUsage(element, params);
     SliceTestUtil.checkUsages(usage, tree);
@@ -90,8 +102,11 @@ public class SliceBackwardTest extends SliceTestCase {
   public void testFinalVarAssignedBeforePassingToAnonymous() throws Exception { doTest();}
   public void testLocalVarDeclarationAndAssignment() throws Exception { doTest();}
   public void testSearchOverriddenMethodsInThisClassHierarchy() throws Exception { doTest();}
+  public void testSearchOverriddenMethodsInThisClassHierarchyParam() throws Exception { doTest();}
+  public void testSearchOverriddenMethodsInThisClassHierarchyParamDfa() throws Exception { doTest();}
   public void testAppend() throws Exception { doTest();}
   public void testRequireNonNull() throws Exception { doTest();}
+  
   public void testFilterIntRange() throws Exception { doTest(">=0");}
   public void testFilterIntRangeArray() throws Exception { doTest(">=0");}
   public void testFilterNull() throws Exception { doTest("null");}
@@ -101,4 +116,7 @@ public class SliceBackwardTest extends SliceTestCase {
   public void testFilterPropagateBoolean2() throws Exception { doTest("false");}
   public void testFilterAssertionViolation() throws Exception { doTest("-1");}
   public void testReturnParameter() throws Exception { doTest(); }
+  
+  public void testStackFilterSimple() throws Exception { doTest("null",
+                                                                "MainTest:test", "MainTest:foo", "MainTest:main");}
 }
