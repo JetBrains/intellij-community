@@ -138,7 +138,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
       loadingIcon.isVisible = loader.loading
     }
 
-    val errorPanel = GHHtmlErrorPanel.create(errorModel, JComponent.CENTER_ALIGNMENT)
+    val errorPanel = GHHtmlErrorPanel.create(errorModel)
     val timelinePanel = ScrollablePanel().apply {
       isOpaque = false
       border = JBUI.Borders.empty(24, 20)

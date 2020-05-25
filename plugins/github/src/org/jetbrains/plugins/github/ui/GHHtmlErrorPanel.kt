@@ -16,6 +16,7 @@ import java.awt.event.KeyEvent
 import javax.swing.Action
 import javax.swing.JComponent
 import javax.swing.KeyStroke
+import javax.swing.SwingConstants
 import javax.swing.event.HyperlinkEvent
 
 object GHHtmlErrorPanel {
@@ -24,12 +25,12 @@ object GHHtmlErrorPanel {
 
   fun create(errorPrefix: String, error: Throwable,
              errorAction: Action? = null,
-             horizontalAlignment: Float = JComponent.CENTER_ALIGNMENT): JComponent {
+             horizontalAlignment: Int = SwingConstants.CENTER): JComponent {
     val model = GHImmutableErrorPanelModel(errorPrefix, error, errorAction)
     return create(model, horizontalAlignment)
   }
 
-  fun create(model: GHErrorPanelModel, horizontalAlignment: Float = JComponent.CENTER_ALIGNMENT): JComponent {
+  fun create(model: GHErrorPanelModel, horizontalAlignment: Int = SwingConstants.CENTER): JComponent {
 
     val pane = HtmlEditorPane().apply {
       foreground = UIUtil.getErrorForeground()
@@ -57,11 +58,11 @@ object GHHtmlErrorPanel {
 
   private class Controller(private val model: GHErrorPanelModel,
                            private val pane: HtmlEditorPane,
-                           horizontalAlignment: Float = JComponent.CENTER_ALIGNMENT) {
+                           horizontalAlignment: Int) {
 
     private val alignmentText = when (horizontalAlignment) {
-      JComponent.LEFT_ALIGNMENT -> "left"
-      JComponent.RIGHT_ALIGNMENT -> "right"
+      SwingConstants.LEFT -> "left"
+      SwingConstants.RIGHT -> "right"
       else -> "center"
     }
 

@@ -147,7 +147,7 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
                                                                      override fun actionPerformed(e: ActionEvent?) {
                                                                        stateModel.reloadMergeabilityState()
                                                                      }
-                                                                   }, JComponent.LEFT_ALIGNMENT)
+                                                                   }, SwingConstants.LEFT)
 
       private fun createLoadedComponent(mergeabilityModel: SingleValueModel<GHPRMergeabilityState>): JComponent {
         val statusChecks = GHPRStatusChecksComponent.create(mergeabilityModel)

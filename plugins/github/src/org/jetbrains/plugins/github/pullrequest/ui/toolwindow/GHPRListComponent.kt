@@ -133,7 +133,7 @@ internal object GHPRListComponent {
     listLoader.addErrorChangeListener(disposable) {
       errorModel.error = listLoader.error
     }
-    val errorPane = GHHtmlErrorPanel.create(errorModel, JComponent.CENTER_ALIGNMENT)
+    val errorPane = GHHtmlErrorPanel.create(errorModel)
 
     val controlsPanel = JPanel(VerticalLayout(0)).apply {
       isOpaque = false
