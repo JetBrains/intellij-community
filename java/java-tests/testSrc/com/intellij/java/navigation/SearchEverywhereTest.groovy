@@ -88,7 +88,8 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     def mixingEnabled = Experiments.getInstance().isFeatureEnabled("search.everywhere.mixed.results")
     mySearchUI = mixingEnabled ? new SearchEverywhereUIMixedResults(project, contributors)
                                : new SearchEverywhereUI(project, contributors)
-    mySearchUI.switchToContributor(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID)
+    def tab = contributors.size() > 1 ? SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID : contributors.get(0).getSearchProviderId()
+    mySearchUI.switchToContributor(tab)
     return mySearchUI
   }
 

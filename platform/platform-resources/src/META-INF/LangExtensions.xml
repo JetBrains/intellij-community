@@ -1186,6 +1186,8 @@
                              order="before moveFileOrDir"/>
 
     <!-- Search everywhere services/objects -->
+    <applicationService serviceInterface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager"
+                    serviceImplementation="com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl"/>
     <projectService serviceInterface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager"
                     serviceImplementation="com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl"/>
     <projectService serviceImplementation="com.intellij.ide.actions.runAnything.RunAnythingManager"/>
