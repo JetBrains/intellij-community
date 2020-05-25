@@ -47,7 +47,7 @@ public final class JBCefApp {
   private static final Logger LOG = Logger.getInstance(JBCefApp.class);
 
   // [tav] todo: retrieve the version at compile time from the "jcef" maven lib
-  private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 80;
+  private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 77;
 
   @NotNull private final CefApp myCefApp;
 
