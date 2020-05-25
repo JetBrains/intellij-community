@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -128,5 +129,11 @@ public class SurroundWithArrayFix extends PsiElementBaseIntentionAction {
     assert expressionType != null;
     final PsiType arrayComponentType = TypeConversionUtil.erasure(expressionType);
     return "new " + arrayComponentType.getCanonicalText() + "[]{" + expression.getText()+ "}";
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new SurroundWithArrayFix(PsiTreeUtil.findSameElementInCopy(myMethodCall, target),
+                                    PsiTreeUtil.findSameElementInCopy(myExpression, target));
   }
 }
