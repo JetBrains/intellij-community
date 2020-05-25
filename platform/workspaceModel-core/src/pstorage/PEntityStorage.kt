@@ -107,7 +107,7 @@ internal class PEntityStorageBuilder(
     // Extract entity classes
     val unmodifiableEntityClass = ClassConversion.modifiableEntityToEntity(clazz.kotlin).java
     val entityDataClass = ClassConversion.entityToEntityData(unmodifiableEntityClass.kotlin)
-    val unmodifiableEntityClassId = unmodifiableEntityClass.toInt()
+    val unmodifiableEntityClassId = unmodifiableEntityClass.toClassId()
 
     // Construct entity data
     val pEntityData = entityDataClass.java.newInstance()
@@ -508,7 +508,7 @@ internal class PEntityStorageBuilder(
         }
         else {
           // This is a new entity for this store. Perform add operation
-          val entityClass = ClassConversion.entityDataToEntity(matchedEntityData.javaClass).toInt()
+          val entityClass = ClassConversion.entityDataToEntity(matchedEntityData.javaClass).toClassId()
           val newEntity = this.entitiesByType.cloneAndAdd(matchedEntityData as PEntityData<TypedEntity>, entityClass)
           val newPid = newEntity.createPid()
           replaceMap[newPid] = oldPid
@@ -524,7 +524,7 @@ internal class PEntityStorageBuilder(
     //   After previous operation localMatchedEntities contain only entities that exist in local store, but don't exist in replaceWith store.
     //   Those entities should be just removed.
     for (localEntity in localMatchedEntities.values()) {
-      val entityClass = ClassToIntConverter.getInt(ClassConversion.entityDataToEntity(localEntity.javaClass))
+      val entityClass = ClassConversion.entityDataToEntity(localEntity.javaClass).toClassId()
       this.entitiesByType.remove(localEntity.id, entityClass)
       val entityId = localEntity.createPid()
       removeFromIndices(entityId)
@@ -629,14 +629,14 @@ internal class PEntityStorageBuilder(
       when (change) {
         is ChangeEntry.AddEntity<*> -> {
           val addedEntity = change.entityData.createEntity(this) as PTypedEntity
-          changes[addedEntity.id] = ClassToIntConverter.getClassSlowlyOrDie(addedEntity.id.clazz) to EntityChange.Added(addedEntity)
+          changes[addedEntity.id] = addedEntity.id.clazz.findEntityClass<TypedEntity>() to EntityChange.Added(addedEntity)
         }
         is ChangeEntry.RemoveEntity -> {
           val removedData = originalImpl.entityDataById(change.id)
           val oldChange = changes.remove(change.id)
           if (oldChange?.second !is EntityChange.Added && removedData != null) {
             val removedEntity = removedData.createEntity(originalImpl) as PTypedEntity
-            changes[removedEntity.id] = ClassToIntConverter.getClassSlowlyOrDie(change.id.clazz) to EntityChange.Removed(removedEntity)
+            changes[removedEntity.id] = change.id.clazz.findEntityClass<TypedEntity>() to EntityChange.Removed(removedEntity)
           }
         }
         is ChangeEntry.ReplaceEntity<*> -> {
@@ -644,14 +644,14 @@ internal class PEntityStorageBuilder(
           val oldChange = changes.remove(id)
           if (oldChange?.second is EntityChange.Added) {
             val addedEntity = change.newData.createEntity(this) as PTypedEntity
-            changes[addedEntity.id] = ClassToIntConverter.getClassSlowlyOrDie(addedEntity.id.clazz) to EntityChange.Added(addedEntity)
+            changes[addedEntity.id] = addedEntity.id.clazz.findEntityClass<TypedEntity>() to EntityChange.Added(addedEntity)
           }
           else {
             val oldData = originalImpl.entityDataById(id)
             if (oldData != null) {
               val replacedData = oldData.createEntity(originalImpl) as PTypedEntity
               val replaceToData = change.newData.createEntity(this) as PTypedEntity
-              changes[replacedData.id] = ClassToIntConverter.getClassSlowlyOrDie(replacedData.id.clazz) to EntityChange.Replaced(
+              changes[replacedData.id] = replacedData.id.clazz.findEntityClass<TypedEntity>() to EntityChange.Replaced(
                 replacedData, replaceToData)
             }
           }
@@ -875,13 +875,13 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
   }
 
   private fun assertCorrectEntityClass(connectionClass: Int, entityId: PId) {
-    assert(connectionClass.toClass<TypedEntity>().isAssignableFrom(ClassToIntConverter.getClassSlowlyOrDie(entityId.clazz))) {
+    assert(connectionClass.findEntityClass<TypedEntity>().isAssignableFrom(entityId.clazz.findEntityClass<TypedEntity>())) {
       "Entity storage with connection class $connectionClass contains entity data of wrong type $entityId"
     }
   }
 
   override fun <E : TypedEntity> entities(entityClass: Class<E>): Sequence<E> {
-    return entitiesByType[ClassToIntConverter.getInt(entityClass)]?.all()?.map { it.createEntity(this) } as? Sequence<E> ?: emptySequence()
+    return entitiesByType[entityClass.toClassId()]?.all()?.map { it.createEntity(this) } as? Sequence<E> ?: emptySequence()
   }
 
   internal fun entityDataById(id: PId): PEntityData<out TypedEntity>? {
@@ -960,7 +960,7 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
       entities.all().forEach {
         if (sourceFilter(it.entitySource)) {
           val mutableMapRes = res.getOrPut(it.entitySource, { mutableMapOf() })
-          mutableMapRes.getOrPut(i.toClass(), { mutableListOf() }).add(it.createEntity(this))
+          mutableMapRes.getOrPut(i.findEntityClass(), { mutableListOf() }).add(it.createEntity(this))
         }
       }
     }

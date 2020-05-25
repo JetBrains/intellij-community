@@ -9,7 +9,7 @@ internal open class ImmutableEntitiesBarrel internal constructor(
 ) : EntitiesBarrel() {
   fun assertConsistency() {
     entities.forEachIndexed { i, family ->
-      val clazz = i.toClass<TypedEntity>()
+      val clazz = i.findEntityClass<TypedEntity>()
       family.assertConsistency { entityData ->
         val immutableClass = ClassConversion.entityDataToEntity(entityData.javaClass)
         assert(clazz == immutableClass) {

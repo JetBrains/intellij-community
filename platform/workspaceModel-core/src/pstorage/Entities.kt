@@ -80,7 +80,7 @@ internal data class PId(val arrayId: Int, val clazz: Int) {
     if (arrayId < 0) error("ArrayId cannot be negative: $arrayId")
   }
 
-  override fun toString(): String = ClassToIntConverter.getClassSlowlyOrDie(clazz).simpleName + "-:-" + arrayId.toString()
+  override fun toString(): String = clazz.findEntityClass<TypedEntity>().simpleName + "-:-" + arrayId.toString()
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -112,7 +112,7 @@ abstract class PEntityData<E : TypedEntity> : Cloneable {
   lateinit var entitySource: EntitySource
   var id: Int = -1
 
-  internal fun createPid(): PId = PId(id, ClassToIntConverter.getInt(ClassConversion.entityDataToEntity(this.javaClass)))
+  internal fun createPid(): PId = PId(id, ClassConversion.entityDataToEntity(this.javaClass).toClassId())
 
   abstract fun createEntity(snapshot: TypedEntityStorage): E
 
