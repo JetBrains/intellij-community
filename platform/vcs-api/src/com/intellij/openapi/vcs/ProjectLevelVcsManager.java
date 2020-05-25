@@ -119,6 +119,8 @@ public abstract class ProjectLevelVcsManager {
 
   public abstract void addMessageToConsoleWindow(@Nullable String message, @NotNull ConsoleViewContentType contentType);
 
+  public abstract void addMessageToConsoleWindow(@Nullable VcsConsoleLine line);
+
   public abstract @NotNull VcsShowSettingOption getStandardOption(@NotNull VcsConfiguration.StandardOption option,
                                                                   @NotNull AbstractVcs vcs);
 
