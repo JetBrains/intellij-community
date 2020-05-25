@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.ex.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -1980,12 +1981,14 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         }
       }
 
-      JLabel openProblemsViewLabel = new TrackableLinkLabel(EditorBundle.message("iw.open.problems.view"), () -> {
-        hidePopup();
-        controller.openProblemsView();
-      });
-      myContent.add(openProblemsViewLabel,
-                    gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().coverLine().weightx(1).insets(10, 10, 10, 0));
+      if (Experiments.getInstance().isFeatureEnabled("problems.view.enabled")) {
+        JLabel openProblemsViewLabel = new TrackableLinkLabel(EditorBundle.message("iw.open.problems.view"), () -> {
+          hidePopup();
+          controller.openProblemsView();
+        });
+        myContent.add(openProblemsViewLabel,
+                      gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().coverLine().weightx(1).insets(10, 10, 10, 0));
+      }
 
       myContent.add(createLowerPanel(controller),
                     gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().coverLine().weightx(1));
