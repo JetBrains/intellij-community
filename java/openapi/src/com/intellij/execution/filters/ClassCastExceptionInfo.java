@@ -79,33 +79,18 @@ public class ClassCastExceptionInfo extends ExceptionInfo {
     if (type instanceof PsiArrayType) {
       if (className.startsWith("[") && className.length() > 1) {
         PsiType componentType = ((PsiArrayType)type).getComponentType();
-        switch (className.charAt(1)) {
-          case '[':
-            return castClassMatches(componentType, className.substring(1));
-          case 'B':
-            return componentType.equals(PsiType.BYTE);
-          case 'C':
-            return componentType.equals(PsiType.CHAR);
-          case 'D':
-            return componentType.equals(PsiType.DOUBLE);
-          case 'F':
-            return componentType.equals(PsiType.FLOAT);
-          case 'Z':
-            return componentType.equals(PsiType.BOOLEAN);
-          case 'I':
-            return componentType.equals(PsiType.INT);
-          case 'J':
-            return componentType.equals(PsiType.LONG);
-          case 'S':
-            return componentType.equals(PsiType.SHORT);
-          case 'L':
-            if (className.charAt(className.length() - 1) == ';') {
-              return castClassMatches(componentType, className.substring(2, className.length() - 1));
-            }
-            return false;
-          default:
-            return false;
+        char descriptorChar = className.charAt(1);
+        PsiPrimitiveType expected = PsiPrimitiveType.fromJvmTypeDescriptor(descriptorChar);
+        if (expected != null) {
+          return componentType.equals(expected);
         }
+        if (descriptorChar == '[') {
+          return castClassMatches(componentType, className.substring(1));
+        }
+        if (descriptorChar == 'L' && className.charAt(className.length() - 1) == ';') {
+          return castClassMatches(componentType, className.substring(2, className.length() - 1));
+        }
+        return false;
       }
     }
     if (type instanceof PsiClassType) {
@@ -123,7 +108,7 @@ public class ClassCastExceptionInfo extends ExceptionInfo {
       for (PsiClassType bound : ((PsiTypeParameter)psiClass).getExtendsList().getReferencedTypes()) {
         if (classTypeMatches(className, bound, visited)) return true;
       }
-      return false;
+      return className.equals(CommonClassNames.JAVA_LANG_OBJECT); // e.g. cast to Object[] array
     }
     String name = classType.getClassName();
     if (name == null) return true;
