@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.feature.suggester
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import org.jetbrains.plugins.feature.suggester.changes.UserAction
-import org.jetbrains.plugins.feature.suggester.changes.UserAnAction
+import org.jetbrains.plugins.feature.suggester.cache.UserActionsCache
+import org.jetbrains.plugins.feature.suggester.cache.UserAnActionsCache
 
 interface FeatureSuggester {
 
@@ -15,7 +15,7 @@ interface FeatureSuggester {
     val needToClearLookup: Boolean
         get() = false
 
-    fun getSuggestion(actions: List<UserAction>, anActions: List<UserAnAction>) : Suggestion
+    fun getSuggestion(actions: UserActionsCache, anActions: UserAnActionsCache): Suggestion
 
     fun getId(): String
 }

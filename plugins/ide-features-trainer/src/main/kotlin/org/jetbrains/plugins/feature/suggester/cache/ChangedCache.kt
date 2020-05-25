@@ -20,6 +20,10 @@ open class ChangedCache<EventType>(val maxCacheSize: Int) {
         return cache[cache.size - index - 1]
     }
 
+    fun contains(action: EventType): Boolean {
+        return cache.contains(action)
+    }
+
     private fun checkOverflow() {
         if (cache.size > maxCacheSize) {
             cache.removeAt(0)

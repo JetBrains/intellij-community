@@ -7,7 +7,12 @@ import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.PopupSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
-import org.jetbrains.plugins.feature.suggester.changes.*
+import org.jetbrains.plugins.feature.suggester.cache.UserActionsCache
+import org.jetbrains.plugins.feature.suggester.cache.UserAnActionsCache
+import org.jetbrains.plugins.feature.suggester.changes.ChildAddedAction
+import org.jetbrains.plugins.feature.suggester.changes.ChildRemovedAction
+import org.jetbrains.plugins.feature.suggester.changes.ChildReplacedAction
+import org.jetbrains.plugins.feature.suggester.changes.UserAction
 
 class LineCommentingSuggester : FeatureSuggester {
 
@@ -17,13 +22,13 @@ class LineCommentingSuggester : FeatureSuggester {
 
     private var uncommentingActionStart: UserAction? = null
 
-    override fun getSuggestion(actions: List<UserAction>, anActions: List<UserAnAction>): Suggestion {
+    override fun getSuggestion(actions: UserActionsCache, anActions: UserAnActionsCache): Suggestion {
         val name = CommandProcessor.getInstance().currentCommandName
         if (name != null) {
             return NoSuggestion
         }
 
-        when (val lastAction = actions.last()) {
+        when (val lastAction = actions.last) {
             is ChildAddedAction -> {
                 val child = lastAction.newChild
                 if (isOneLineComment(child)
@@ -56,7 +61,7 @@ class LineCommentingSuggester : FeatureSuggester {
                 if (child is PsiErrorElement
                     && child.text == "/"
                     && uncommentingActionStart != null
-                    && actions.contains(uncommentingActionStart)
+                    && actions.contains(uncommentingActionStart!!)
                 ) {
                     uncommentingActionStart = null
                     return createSuggestion(DESCRIPTOR_ID, UNCOMMENTING_POPUP_MESSAGE)
