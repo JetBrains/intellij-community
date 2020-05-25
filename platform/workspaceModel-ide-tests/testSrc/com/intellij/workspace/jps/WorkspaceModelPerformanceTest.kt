@@ -86,7 +86,7 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
   }
 
   @Test
-  fun `test base projedct actions`() = WriteCommandAction.runWriteCommandAction(project) {
+  fun `test base project actions`() = WriteCommandAction.runWriteCommandAction(project) {
     // To enable execution at new project model set -Dide.new.project.model=true in Run Configuration
     // To enable execution at old project model set -Dide.workspace.model.jps.enabled=false in Run Configuration
     val antLibName = "ant"

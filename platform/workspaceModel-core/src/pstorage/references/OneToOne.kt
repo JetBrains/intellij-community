@@ -20,7 +20,7 @@ class OneToOneParent private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(thisRef.javaClass, childClass, ONE_TO_ONE, isParentInChildNullable, false)
       }
-      return thisRef.snapshot.extractOneToOneChild(connectionId!!, thisRef.id as PId)!!
+      return thisRef.snapshot.extractOneToOneChild(connectionId!!, thisRef.id)!!
     }
   }
 
@@ -32,7 +32,7 @@ class OneToOneParent private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(thisRef.javaClass, childClass, ONE_TO_ONE, isParentInChildNullable, true)
       }
-      return thisRef.snapshot.extractOneToOneChild(connectionId!!, thisRef.id as PId)
+      return thisRef.snapshot.extractOneToOneChild(connectionId!!, thisRef.id)
     }
   }
 }
@@ -58,7 +58,7 @@ class OneToOneChild private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, thisRef.javaClass, ONE_TO_ONE, true, isChildInParentNullable)
       }
-      return thisRef.snapshot.extractOneToOneParent(connectionId!!, thisRef.id as PId)
+      return thisRef.snapshot.extractOneToOneParent(connectionId!!, thisRef.id)
     }
   }
 }
@@ -76,7 +76,7 @@ class MutableOneToOneParent private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, isParentInChildNullable, false)
       }
-      return thisRef.diff.extractOneToOneChild(connectionId!!, thisRef.id as PId)!!
+      return thisRef.diff.extractOneToOneChild(connectionId!!, thisRef.id)!!
     }
 
     override fun setValue(thisRef: MODT, property: KProperty<*>, value: SUBT) {
@@ -86,7 +86,7 @@ class MutableOneToOneParent private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, isParentInChildNullable, false)
       }
-      thisRef.diff.updateOneToOneChildOfParent(connectionId!!, thisRef.id as PId, value)
+      thisRef.diff.updateOneToOneChildOfParent(connectionId!!, thisRef.id, value)
     }
   }
 
@@ -102,7 +102,7 @@ class MutableOneToOneParent private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, isParentInChildNullable, true)
       }
-      return thisRef.diff.extractOneToOneChild(connectionId!!, thisRef.id as PId)!!
+      return thisRef.diff.extractOneToOneChild(connectionId!!, thisRef.id)!!
     }
 
     override fun setValue(thisRef: MODT, property: KProperty<*>, value: SUBT?) {
@@ -112,7 +112,7 @@ class MutableOneToOneParent private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, isParentInChildNullable, true)
       }
-      thisRef.diff.updateOneToOneChildOfParent(connectionId!!, thisRef.id as PId, value)
+      thisRef.diff.updateOneToOneChildOfParent(connectionId!!, thisRef.id, value)
     }
   }
 }
@@ -129,7 +129,7 @@ class MutableOneToOneChild private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, false, isChildInParentNullable)
       }
-      return thisRef.diff.extractOneToOneParent(connectionId!!, thisRef.id as PId)!!
+      return thisRef.diff.extractOneToOneParent(connectionId!!, thisRef.id)!!
     }
 
     override fun setValue(thisRef: MODSUBT, property: KProperty<*>, value: T) {
@@ -139,7 +139,7 @@ class MutableOneToOneChild private constructor() {
       if (connectionId == null) {
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, false, isChildInParentNullable)
       }
-      thisRef.diff.updateOneToOneParentOfChild(connectionId!!, thisRef.id as PId, value)
+      thisRef.diff.updateOneToOneParentOfChild(connectionId!!, thisRef.id, value)
     }
   }
 
@@ -154,7 +154,7 @@ class MutableOneToOneChild private constructor() {
       if (connectionId == null){
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, true, isChildInParentNullable)
       }
-      return thisRef.diff.extractOneToOneParent(connectionId!!, thisRef.id as PId)
+      return thisRef.diff.extractOneToOneParent(connectionId!!, thisRef.id)
     }
 
     override fun setValue(thisRef: MODSUBT, property: KProperty<*>, value: T?) {
@@ -164,7 +164,7 @@ class MutableOneToOneChild private constructor() {
       if (connectionId == null){
         connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, true, isChildInParentNullable)
       }
-      thisRef.diff.updateOneToOneParentOfChild(connectionId!!, thisRef.id as PId, value)
+      thisRef.diff.updateOneToOneParentOfChild(connectionId!!, thisRef.id, value)
     }
   }
 }

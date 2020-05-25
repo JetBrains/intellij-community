@@ -43,7 +43,7 @@ internal class PEntityStorage constructor(
   override val externalIndices: Map<String, ExternalEntityIndex<*>>
 ) : AbstractPEntityStorage() {
   override fun assertConsistency() {
-    //entitiesByType.assertConsistency()
+    entitiesByType.assertConsistency()
 
     assertConsistencyBase()
   }
@@ -105,13 +105,13 @@ internal class PEntityStorageBuilder(
     // Extract entity classes
     val unmodifiableEntityClass = ClassConversion.modifiableEntityToEntity(clazz.kotlin).java
     val entityDataClass = ClassConversion.entityToEntityData(unmodifiableEntityClass.kotlin)
+    val unmodifiableEntityClassId = unmodifiableEntityClass.toInt()
 
     // Construct entity data
     val pEntityData = entityDataClass.java.newInstance()
     pEntityData.entitySource = source
 
     // Add entity data to the structure
-    val unmodifiableEntityClassId = ClassToIntConverter.getInt(unmodifiableEntityClass)
     entitiesByType.add(pEntityData, unmodifiableEntityClassId)
 
     // Wrap it with modifiable and execute initialization code
@@ -223,7 +223,7 @@ internal class PEntityStorageBuilder(
     }
 
     // Add an entry to changelog
-    val pid = e.id as PId
+    val pid = e.id
     val parents = this.refs.getParentRefsOfChild(pid)
     val children = this.refs.getChildrenRefsOfParentBy(pid)
     updateChangeLog { it.add(ChangeEntry.ReplaceEntity(copiedData, children, parents)) }
@@ -389,7 +389,7 @@ internal class PEntityStorageBuilder(
     }
   }
 
-  override fun <E : TypedEntity> createReference(e: E): EntityReference<E> = PEntityReference((e as PTypedEntity).id as PId)
+  override fun <E : TypedEntity> createReference(e: E): EntityReference<E> = PEntityReference((e as PTypedEntity).id)
 
   private fun PEntityData<*>.hasPersistentId(): Boolean {
     val entity = this.createEntity(this@PEntityStorageBuilder)
@@ -506,7 +506,7 @@ internal class PEntityStorageBuilder(
         }
         else {
           // This is a new entity for this store. Perform add operation
-          val entityClass = ClassToIntConverter.getInt(ClassConversion.entityDataToEntity(matchedEntityData.javaClass))
+          val entityClass = ClassConversion.entityDataToEntity(matchedEntityData.javaClass).toInt()
           val newEntity = this.entitiesByType.cloneAndAdd(matchedEntityData as PEntityData<TypedEntity>, entityClass)
           val newPid = newEntity.createPid()
           replaceMap[newPid] = oldPid

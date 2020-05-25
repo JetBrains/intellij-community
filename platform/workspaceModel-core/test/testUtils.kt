@@ -25,15 +25,14 @@ class TestEntityTypesResolver: EntityTypesResolver {
 fun verifyPSerializationRoundTrip(storage: TypedEntityStorage, virtualFileManager: VirtualFileUrlManager): ByteArray {
   storage as PEntityStorage
 
-/*
   fun assertStorageEquals(expected: PEntityStorage, actual: PEntityStorage) {
     assertEquals(
-      actual.entitiesByType.all().keys.sortedBy { it.canonicalName },
-      expected.entitiesByType.all().keys.sortedBy { it.canonicalName }
+      actual.entitiesByType.all(),
+      expected.entitiesByType.all()
     )
 
-    for ((clazz, expectedEntityFamily) in expected.entitiesByType.all()) {
-      val actualEntityFamily = actual.entitiesByType.all().getValue(clazz)
+    for ((clazz, expectedEntityFamily) in expected.entitiesByType.all().withIndex()) {
+      val actualEntityFamily = actual.entitiesByType.all().get(clazz)
 
       val expectedEntities = expectedEntityFamily.entities
       val actualEntities = actualEntityFamily.entities
@@ -80,7 +79,6 @@ fun verifyPSerializationRoundTrip(storage: TypedEntityStorage, virtualFileManage
       }
     }
   }
-*/
 
   val serializer = PSerializer(virtualFileManager)
 
@@ -90,7 +88,7 @@ fun verifyPSerializationRoundTrip(storage: TypedEntityStorage, virtualFileManage
   val byteArray = stream.toByteArray()
   val deserialized = (serializer.deserializeCache(ByteArrayInputStream(byteArray)) as PEntityStorageBuilder).toStorage()
 
-  //assertStorageEquals(storage, deserialized)
+  assertStorageEquals(storage, deserialized)
 
   return byteArray
 }

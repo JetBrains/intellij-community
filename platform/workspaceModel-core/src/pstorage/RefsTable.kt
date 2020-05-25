@@ -58,7 +58,7 @@ internal class ConnectionId private constructor(
       isChildNullable: Boolean
     ): ConnectionId {
       val connectionId = ConnectionId(parentClass.toInt(), childClass.toInt(), connectionType, isParentNullable, isChildNullable)
-      return interner.intern(connectionId) as ConnectionId
+      return interner.intern(connectionId)
     }
 
     private val interner = HashSetInterner<ConnectionId>()
