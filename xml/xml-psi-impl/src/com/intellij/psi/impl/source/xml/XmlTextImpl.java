@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -414,7 +415,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
       if (childElement.getNextSibling() != null) {
         result.rawAddChildren((TreeElement)childElement.getNextSibling());
       }
-      ((TreeElement)childElement).rawRemove();
+      DebugUtil.performPsiModification("xmlText split",  () -> ((TreeElement)childElement).rawRemove());
       this.rawAddChildren(leftElement);
     }
     else {
