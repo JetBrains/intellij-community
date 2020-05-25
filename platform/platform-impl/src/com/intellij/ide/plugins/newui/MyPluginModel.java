@@ -825,7 +825,9 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
       return;
     }
 
-    if (PluginManagerCore.isIncompatible(descriptor) || hasProblematicDependencies(pluginId)) {
+    if (PluginManagerCore.isIncompatible(descriptor) ||
+        PluginManagerCore.isBrokenPlugin(descriptor) ||
+        hasProblematicDependencies(pluginId)) {
       myErrorPluginsToDisable.add(pluginId);
     }
   }
