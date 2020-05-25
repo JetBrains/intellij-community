@@ -84,9 +84,16 @@ public class FileTypeChooser extends ComboBoxAction implements DumbAware {
   public void setSelectedItem(@NotNull LanguageFileType type, @Nullable Language dialect, @Nullable PatternContext context) {
     for (FileTypeInfo info : myFileTypeInfos) {
       if (info.isEqualTo(type, dialect, context)) {
-        mySelectedItem = info;
+        setSelectedItem(info);
         return;
       }
+    }
+  }
+
+  private void setSelectedItem(FileTypeInfo info) {
+    mySelectedItem = info;
+    if (myConsumer != null) {
+      myConsumer.accept(info);
     }
   }
 
@@ -133,8 +140,6 @@ public class FileTypeChooser extends ComboBoxAction implements DumbAware {
     return action -> ((FileTypeInfoAction)action).getFileTypeInfo() == mySelectedItem;
   }
 
-
-
   private class FileTypeInfoAction extends DumbAwareAction {
 
     private final FileTypeInfo myFileTypeInfo;
@@ -148,8 +153,7 @@ public class FileTypeChooser extends ComboBoxAction implements DumbAware {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      mySelectedItem = myFileTypeInfo;
-      myConsumer.accept(myFileTypeInfo);
+      setSelectedItem(myFileTypeInfo);
     }
 
     FileTypeInfo getFileTypeInfo() {

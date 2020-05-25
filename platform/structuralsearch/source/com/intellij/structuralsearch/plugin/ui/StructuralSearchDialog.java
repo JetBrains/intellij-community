@@ -624,6 +624,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     }
     myFileTypeChooser.setSelectedItem(myFileType, myDialect, myPatternContext);
     myFileTypeChooser.setFileTypeInfoConsumer(info -> {
+      myOptionsToolbar.updateActionsImmediately();
       myFileType = info.getFileType();
       myFilterPanel.setFileType(myFileType);
 
