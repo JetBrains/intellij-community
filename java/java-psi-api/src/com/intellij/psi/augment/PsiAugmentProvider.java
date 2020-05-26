@@ -8,19 +8,19 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeElement;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.*;
+import com.intellij.psi.util.*;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -32,13 +32,36 @@ import java.util.Set;
  */
 public abstract class PsiAugmentProvider {
   public static final ExtensionPointName<PsiAugmentProvider> EP_NAME = ExtensionPointName.create("com.intellij.lang.psiAugmentProvider");
+  @SuppressWarnings("rawtypes")
+  private /* non-static */ final Key<CachedValue<Map<Class, List>>> myCacheKey = Key.create(getClass().getName());
 
   //<editor-fold desc="Methods to override in implementations.">
 
   /**
    * An extension that enables one to add children to some PSI elements, e.g. methods to Java classes.
    * The class code remains the same, but its method accessors also include the results returned from {@link PsiAugmentProvider}s.
+   * An augmenter can be called several times with the same parameters in the same state of the code model,
+   * and the PSI returned from these invocations should be equivalent (as in {@link PsiElement#isEquivalentTo} or {@link #equals}).
+   * @param nameHint the expected name of the requested augmented members, or null if all members of the specified class are to be returned.
+   *                 Implementations can ignore this parameter or use it for optimizations.
    */
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  @NotNull
+  protected <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element,
+                                                           @NotNull Class<Psi> type,
+                                                           @Nullable String nameHint) {
+    Map<Class, List> cache = CachedValuesManager.getCachedValue(element, myCacheKey, () -> {
+      Map<Class, List> map = ConcurrentFactoryMap.createMap(c -> getAugments(element, c));
+      return CachedValueProvider.Result.create(map, PsiModificationTracker.MODIFICATION_COUNT);
+    });
+    return (List<Psi>)cache.get(type);
+  }
+
+  /**
+   * @deprecated invoke and override {@link #getAugments(PsiElement, Class, String)}.
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   @NotNull
   protected <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element, @NotNull Class<Psi> type) {
     return Collections.emptyList();
@@ -65,12 +88,27 @@ public abstract class PsiAugmentProvider {
 
   //<editor-fold desc="API and the inner kitchen.">
 
+  /**
+   * @deprecated use {@link #collectAugments(PsiElement, Class, String)}
+   */
   @NotNull
+  @Deprecated
   public static <Psi extends PsiElement> List<Psi> collectAugments(@NotNull PsiElement element, @NotNull Class<? extends Psi> type) {
+    return collectAugments(element, type, null);
+  }
+
+  @NotNull
+  public static <Psi extends PsiElement> List<Psi> collectAugments(@NotNull PsiElement element, @NotNull Class<? extends Psi> type,
+                                                                   @Nullable String nameHint) {
     List<Psi> result = new SmartList<>();
 
     forEach(element.getProject(), provider -> {
-      result.addAll(provider.getAugments(element, type));
+      List<? extends Psi> augments = provider.getAugments(element, type, nameHint);
+      for (Psi augment : augments) {
+        if (nameHint == null || !(augment instanceof PsiNamedElement) || nameHint.equals(((PsiNamedElement)augment).getName())) {
+          result.add(augment);
+        }
+      }
       return true;
     });
 
