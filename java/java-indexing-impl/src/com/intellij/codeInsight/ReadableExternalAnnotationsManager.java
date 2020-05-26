@@ -17,6 +17,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -61,6 +62,7 @@ public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsM
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myPsiManager.getProject()).getFileIndex();
     Set<VirtualFile> result = new LinkedHashSet<>();
     for (OrderEntry entry : fileIndex.getOrderEntriesForFile(libraryFile)) {
+      ProgressManager.checkCanceled();
       if (!(entry instanceof ModuleOrderEntry)) {
         Collections.addAll(result, AnnotationOrderRootType.getFiles(entry));
       }
