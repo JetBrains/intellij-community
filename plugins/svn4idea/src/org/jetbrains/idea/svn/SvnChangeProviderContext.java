@@ -20,8 +20,10 @@ import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.history.PropertyRevision;
 import org.jetbrains.idea.svn.history.SimplePropertyRevision;
 import org.jetbrains.idea.svn.info.Info;
+import org.jetbrains.idea.svn.properties.PropertyData;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
 
@@ -334,34 +336,37 @@ class SvnChangeProviderContext implements StatusReceiver {
 
   private void patchWithPropertyChange(@NotNull Change change, @NotNull Status svnStatus, @Nullable Status deletedStatus)
     throws SvnBindException {
-    if (svnStatus.isProperty(StatusType.STATUS_CONFLICTED, StatusType.CHANGED, StatusType.STATUS_ADDED, StatusType.STATUS_DELETED,
-                             StatusType.STATUS_MODIFIED, StatusType.STATUS_REPLACED, StatusType.MERGED)) {
-      change.addAdditionalLayerElement(SvnChangeProvider.PROPERTY_LAYER, createPropertyChange(change, svnStatus, deletedStatus));
+    if (!svnStatus.isProperty(StatusType.STATUS_CONFLICTED, StatusType.CHANGED, StatusType.STATUS_ADDED, StatusType.STATUS_DELETED,
+                              StatusType.STATUS_MODIFIED, StatusType.STATUS_REPLACED, StatusType.MERGED)) {
+      return;
     }
-  }
 
-  @NotNull
-  private Change createPropertyChange(@NotNull Change change, @NotNull Status svnStatus, @Nullable Status deletedStatus)
-    throws SvnBindException {
-    final File ioFile = ChangesUtil.getFilePath(change).getIOFile();
-    final File beforeFile = deletedStatus != null ? deletedStatus.getFile() : ioFile;
-
-    ContentRevision beforeRevision =
-      !svnStatus.isProperty(StatusType.STATUS_ADDED) || deletedStatus != null ? createPropertyRevision(change, beforeFile, true) : null;
-    ContentRevision afterRevision = !svnStatus.isProperty(StatusType.STATUS_DELETED) ? createPropertyRevision(change, ioFile, false) : null;
+    PropertyRevision before = createBeforePropertyRevision(change, svnStatus, deletedStatus);
+    PropertyRevision after = createAfterPropertyRevision(change, svnStatus);
     FileStatus status = deletedStatus != null ? FileStatus.MODIFIED : Status.convertPropertyStatus(svnStatus.getPropertyStatus());
 
-    return new Change(beforeRevision, afterRevision, status);
+    change.addAdditionalLayerElement(SvnChangeProvider.PROPERTY_LAYER, new Change(before, after, status));
   }
 
   @Nullable
-  private ContentRevision createPropertyRevision(@NotNull Change change, @NotNull File file, boolean isBeforeRevision)
-    throws SvnBindException {
-    FilePath path = ChangesUtil.getFilePath(change);
-    ContentRevision contentRevision = isBeforeRevision ? change.getBeforeRevision() : change.getAfterRevision();
-    Revision revision = isBeforeRevision ? Revision.BASE : Revision.WORKING;
+  private PropertyRevision createBeforePropertyRevision(@NotNull Change change,
+                                                        @NotNull Status svnStatus,
+                                                        @Nullable Status deletedStatus) throws SvnBindException {
+    if (svnStatus.isProperty(StatusType.STATUS_ADDED) && deletedStatus == null) return null;
 
-    return new SimplePropertyRevision(getPropertyList(myVcs, file, revision), path, getRevisionNumber(contentRevision));
+    FilePath path = ChangesUtil.getFilePath(change);
+    File file = deletedStatus != null ? deletedStatus.getFile() : path.getIOFile();
+    List<PropertyData> properties = getPropertyList(myVcs, file, Revision.BASE);
+    return new SimplePropertyRevision(properties, path, getRevisionNumber(change.getBeforeRevision()));
+  }
+
+  @Nullable
+  private PropertyRevision createAfterPropertyRevision(@NotNull Change change, @NotNull Status svnStatus) throws SvnBindException {
+    if (svnStatus.isProperty(StatusType.STATUS_DELETED)) return null;
+
+    FilePath path = ChangesUtil.getFilePath(change);
+    List<PropertyData> properties = getPropertyList(myVcs, path.getIOFile(), Revision.WORKING);
+    return new SimplePropertyRevision(properties, path, getRevisionNumber(change.getAfterRevision()));
   }
 
   @Nullable
