@@ -62,7 +62,6 @@ SHELL_SCRIPT
         PsiElement(=~)('=~')
         PsiWhiteSpace(' ')
         REGEX_PATTERN
-          PsiElement(word)('^')
-          PsiElement(word)('$')
+          PsiElement(word)('^$')
       PsiWhiteSpace(' ')
       PsiElement(]])(']]')
