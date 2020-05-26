@@ -7,9 +7,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.content.Content;
@@ -140,13 +140,7 @@ abstract class OccurenceNavigatorActionBase extends AnAction implements DumbAwar
       return null;
     }
 
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-    String id = toolWindowManager instanceof ToolWindowManagerEx
-                ? ((ToolWindowManagerEx)toolWindowManager).getLastActiveToolWindowId(component -> findNavigator(component) != null) : null;
-    if (id == null) {
-      return null;
-    }
-    return (Component)findNavigator(toolWindowManager.getToolWindow(id).getComponent());
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getLastActiveToolWindow(component -> findNavigator(component) != null);
+    return toolWindow == null ? null : (Component)findNavigator(toolWindow.getComponent());
   }
-
 }
