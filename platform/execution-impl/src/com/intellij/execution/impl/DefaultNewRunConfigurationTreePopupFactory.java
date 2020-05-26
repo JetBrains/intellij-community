@@ -5,6 +5,8 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +23,17 @@ public class DefaultNewRunConfigurationTreePopupFactory extends NewRunConfigurat
   private NodeDescriptor<?> other;
   private List<ConfigurationType> myTypesToShow;
   private List<ConfigurationType> myOtherTypes;
+
+  public DefaultNewRunConfigurationTreePopupFactory() {
+    ConfigurationType.CONFIGURATION_TYPE_EP.addExtensionPointListener(new ExtensionPointListener<ConfigurationType>() {
+      @Override
+      public void extensionRemoved(@NotNull ConfigurationType extension, @NotNull PluginDescriptor pluginDescriptor) {
+        myTypesToShow = null;
+        myOtherTypes = null;
+        myGroups = null;
+      }
+    }, null);
+  }
 
   @Override
   public void initStructure(@NotNull Project project) {
