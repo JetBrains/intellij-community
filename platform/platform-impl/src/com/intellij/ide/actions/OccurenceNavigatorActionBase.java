@@ -24,26 +24,27 @@ import java.util.LinkedList;
 
 abstract class OccurenceNavigatorActionBase extends AnAction implements DumbAware {
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
+  public final void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    if (project == null) return;
+    if (project == null) {
+      return;
+    }
 
     OccurenceNavigator navigator = getNavigator(e.getDataContext());
-    if (navigator == null) {
+    if (navigator == null || !hasOccurenceToGo(navigator)) {
       return;
     }
-    if (!hasOccurenceToGo(navigator)) {
-      return;
-    }
+
     OccurenceNavigator.OccurenceInfo occurenceInfo = go(navigator);
     if (occurenceInfo == null) {
       return;
     }
+
     Navigatable descriptor = occurenceInfo.getNavigateable();
     if (descriptor != null && descriptor.canNavigate()) {
       descriptor.navigate(true);
     }
-    if(occurenceInfo.getOccurenceNumber()==-1||occurenceInfo.getOccurencesCount()==-1){
+    if (occurenceInfo.getOccurenceNumber() == -1 || occurenceInfo.getOccurencesCount() == -1) {
       return;
     }
     WindowManager.getInstance().getStatusBar(project).setInfo(
@@ -101,9 +102,11 @@ abstract class OccurenceNavigatorActionBase extends AnAction implements DumbAwar
     queue.addLast(parent);
     while (!queue.isEmpty()) {
       JComponent component = queue.removeFirst();
-      if (component instanceof OccurenceNavigator) return (OccurenceNavigator)component;
+      if (component instanceof OccurenceNavigator) {
+        return (OccurenceNavigator)component;
+      }
       if (component instanceof JTabbedPane) {
-        final JComponent selectedComponent = (JComponent)((JTabbedPane)component).getSelectedComponent();
+        JComponent selectedComponent = (JComponent)((JTabbedPane)component).getSelectedComponent();
         if (selectedComponent != null) {
           queue.addLast(selectedComponent);
         }
@@ -111,7 +114,9 @@ abstract class OccurenceNavigatorActionBase extends AnAction implements DumbAwar
       else if (component != null){
         for (int i = 0; i < component.getComponentCount(); i++) {
           Component child = component.getComponent(i);
-          if (!(child instanceof JComponent)) continue;
+          if (!(child instanceof JComponent)) {
+            continue;
+          }
           queue.addLast((JComponent)child);
         }
       }
@@ -121,7 +126,6 @@ abstract class OccurenceNavigatorActionBase extends AnAction implements DumbAwar
 
   private static @Nullable Component getOccurenceNavigatorFromContext(DataContext dataContext) {
     Window window = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
-
     if (window != null) {
       Component component = window.getFocusOwner();
       for (Component c = component; c != null; c = c.getParent()) {
@@ -137,7 +141,8 @@ abstract class OccurenceNavigatorActionBase extends AnAction implements DumbAwar
     }
 
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-    String id = toolWindowManager instanceof ToolWindowManagerEx ? ((ToolWindowManagerEx)toolWindowManager).getLastActiveToolWindowId(component -> findNavigator(component) != null) : null;
+    String id = toolWindowManager instanceof ToolWindowManagerEx
+                ? ((ToolWindowManagerEx)toolWindowManager).getLastActiveToolWindowId(component -> findNavigator(component) != null) : null;
     if (id == null) {
       return null;
     }
