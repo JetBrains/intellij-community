@@ -217,7 +217,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
           SwingUtilities.invokeLater(() -> {
             if (!result.myCompletionBase.equals(getCompletionBase())) return;
 
-            int pos = selectCompletionRemoveText(result, selectReplacedText);
+            selectCompletionRemoveText(result, selectReplacedText);
 
             showCompletionPopup(result, isExplicitCall);
           });
@@ -758,7 +758,6 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     myPathTextField.setText(text);
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   private void processListSelection(final KeyEvent e) {
     if (togglePopup(e)) return;
 
@@ -820,7 +819,6 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     return true;
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   private boolean togglePopup(KeyEvent e) {
     final KeyStroke stroke = KeyStroke.getKeyStroke(e.getKeyCode(), e.getModifiers());
     final Object action = ((InputMap)UIManager.get("ComboBox.ancestorInputMap")).get(stroke);
