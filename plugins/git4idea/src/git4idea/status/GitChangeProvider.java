@@ -18,7 +18,6 @@ import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
-import git4idea.commands.Git;
 import git4idea.repo.GitConflictsHolder;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -40,33 +39,29 @@ public final class GitChangeProvider implements ChangeProvider {
 
   @Override
   public void getChanges(@NotNull VcsDirtyScope dirtyScope,
-                         @NotNull final ChangelistBuilder builder,
-                         @NotNull final ProgressIndicator progress,
-                         @NotNull final ChangeListManagerGate addGate) throws VcsException {
-    final GitVcs vcs = GitVcs.getInstance(project);
-    GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
+                         @NotNull ChangelistBuilder builder,
+                         @NotNull ProgressIndicator progress,
+                         @NotNull ChangeListManagerGate addGate) throws VcsException {
     LOG.debug("initial dirty scope: ", dirtyScope);
-    appendNestedVcsRootsToDirt(dirtyScope, vcs, ProjectLevelVcsManager.getInstance(project));
+    appendNestedVcsRootsToDirt((VcsModifiableDirtyScope)dirtyScope);
     LOG.debug("after adding nested vcs roots to dirt: ", dirtyScope);
 
-    final Collection<VirtualFile> affected = dirtyScope.getAffectedContentRoots();
-    Set<GitRepository> repos = ContainerUtil.map2SetNotNull(affected, repositoryManager::getRepositoryForRoot);
-
-    List<FilePath> newDirtyPaths = new ArrayList<>();
+    GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
+    Collection<VirtualFile> affectedRoots = dirtyScope.getAffectedContentRoots();
+    Set<GitRepository> repos = ContainerUtil.map2SetNotNull(affectedRoots, repositoryManager::getRepositoryForRoot);
 
     try {
-      final NonChangedHolder holder = new NonChangedHolder(project, addGate);
+      List<FilePath> newDirtyPaths = new ArrayList<>();
+      NonChangedHolder holder = new NonChangedHolder(project, addGate);
 
-      Map<VirtualFile, List<FilePath>> dirtyPaths =
-        GitChangesCollector.collectDirtyPaths(vcs, dirtyScope, ChangeListManager.getInstance(project),
-                                              ProjectLevelVcsManager.getInstance(project));
+      Map<VirtualFile, List<FilePath>> dirtyPaths = GitChangesCollector.collectDirtyPaths(dirtyScope);
 
       for (GitRepository repo : repos) {
         LOG.debug("checking root: ", repo.getRoot());
         List<FilePath> rootDirtyPaths = ContainerUtil.notNullize(dirtyPaths.get(repo.getRoot()));
-        GitChangesCollector collector = GitChangesCollector.collect(project, Git.getInstance(), repo, rootDirtyPaths);
+        GitChangesCollector collector = GitChangesCollector.collect(project, repo, rootDirtyPaths);
 
-        final Collection<Change> changes = collector.getChanges();
+        Collection<Change> changes = collector.getChanges();
         for (Change change : changes) {
           LOG.debug("process change: ", change);
           builder.processChange(change, GitVcs.getKey());
@@ -109,13 +104,15 @@ public final class GitChangeProvider implements ChangeProvider {
     }
   }
 
-  private static void appendNestedVcsRootsToDirt(final VcsDirtyScope dirtyScope, GitVcs vcs, final ProjectLevelVcsManager vcsManager) {
+  private static void appendNestedVcsRootsToDirt(@NotNull VcsModifiableDirtyScope dirtyScope) {
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(dirtyScope.getProject());
+
     final Set<FilePath> recursivelyDirtyDirectories = dirtyScope.getRecursivelyDirtyDirectories();
     if (recursivelyDirtyDirectories.isEmpty()) {
       return;
     }
 
-    VirtualFile[] rootsUnderGit = vcsManager.getRootsUnderVcs(vcs);
+    VirtualFile[] rootsUnderGit = vcsManager.getRootsUnderVcs(dirtyScope.getVcs());
 
     Set<VirtualFile> dirtyDirs = new HashSet<>();
     for (FilePath dir : recursivelyDirtyDirectories) {
@@ -131,7 +128,7 @@ public final class GitChangeProvider implements ChangeProvider {
       for (VirtualFile dirtyDir : dirtyDirs) {
         if (VfsUtilCore.isAncestor(dirtyDir, root, false)) {
           LOG.debug("adding git root for check. root: ", root, ", dir: ", dirtyDir);
-          ((VcsModifiableDirtyScope)dirtyScope).addDirtyDirRecursively(VcsUtil.getFilePath(root));
+          dirtyScope.addDirtyDirRecursively(VcsUtil.getFilePath(root));
           break;
         }
       }

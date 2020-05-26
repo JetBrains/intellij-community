@@ -43,7 +43,6 @@ class GitChangesCollector {
   private static final Logger LOG = Logger.getInstance(GitChangesCollector.class);
 
   @NotNull private final Project myProject;
-  @NotNull private final Git myGit;
   @NotNull private final VirtualFile myVcsRoot;
 
   private final VcsRevisionNumber myHead;
@@ -56,12 +55,11 @@ class GitChangesCollector {
    */
   @NotNull
   static GitChangesCollector collect(@NotNull Project project,
-                                     @NotNull Git git,
                                      @NotNull GitRepository repository,
                                      @NotNull Collection<FilePath> dirtyPaths) throws VcsException {
     VcsRevisionNumber head = getHead(repository);
 
-    GitChangesCollector collector = new GitChangesCollector(project, git, repository, head);
+    GitChangesCollector collector = new GitChangesCollector(project, repository, head);
     collector.collectChanges(dirtyPaths);
     return collector;
   }
@@ -76,11 +74,9 @@ class GitChangesCollector {
   }
 
   private GitChangesCollector(@NotNull Project project,
-                              @NotNull Git git,
                               @NotNull GitRepository repository,
                               @NotNull VcsRevisionNumber head) {
     myProject = project;
-    myGit = git;
     myVcsRoot = repository.getRoot();
     myHead = head;
   }
@@ -92,10 +88,12 @@ class GitChangesCollector {
    * The paths will be automatically collapsed later if the summary length more than limit, see {@link GitHandler#isLargeCommandLine()}.
    */
   @NotNull
-  static Map<VirtualFile, List<FilePath>> collectDirtyPaths(@NotNull AbstractVcs vcs,
-                                                            @NotNull VcsDirtyScope dirtyScope,
-                                                            @NotNull ChangeListManager changeListManager,
-                                                            @NotNull ProjectLevelVcsManager vcsManager) {
+  static Map<VirtualFile, List<FilePath>> collectDirtyPaths(@NotNull VcsDirtyScope dirtyScope) {
+    Project project = dirtyScope.getProject();
+    AbstractVcs vcs = dirtyScope.getVcs();
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+
     Map<VirtualFile, List<FilePath>> result = new HashMap<>();
 
     for (FilePath p : dirtyScope.getRecursivelyDirtyDirectories()) {
@@ -166,7 +164,7 @@ class GitChangesCollector {
     if (dirtyPaths.isEmpty()) return;
 
     GitLineHandler handler = GitUtil.createHandlerWithPaths(dirtyPaths, () -> statusHandler());
-    String output = myGit.runCommand(handler).getOutputOrThrow();
+    String output = Git.getInstance().runCommand(handler).getOutputOrThrow();
     List<FilePath> bothModifiedPaths = parseOutput(output, handler);
 
     collectStagedUnstagedModifications(bothModifiedPaths);
