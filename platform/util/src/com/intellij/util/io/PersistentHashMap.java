@@ -357,7 +357,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   @TestOnly // public for tests
   @SuppressWarnings("WeakerAccess") // used in upsource for some reason
   public boolean makesSenseToCompact() {
-    if (myIsReadOnly || myIntMapping) return false;
+    if (!isCompactionSupported()) return false;
 
     final long fileSize = myValueStorage.getSize();
     final int megabyte = 1024 * 1024;
@@ -843,8 +843,9 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   }
 
   // make it visible for tests
+  @ApiStatus.Internal
   public void compact() throws IOException {
-    if (myIsReadOnly || myIntMapping) throw new IncorrectOperationException();
+    if (!isCompactionSupported()) throw new IncorrectOperationException();
     synchronized (getDataAccessLock()) {
       force();
       LOG.info("Compacting " + myEnumerator.myFile);
@@ -917,6 +918,11 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
       myEnumerator.putMetaData2(myLargeIndexWatermarkId);
       if (myDoTrace) LOG.assertTrue(myEnumerator.isDirty());
     }
+  }
+
+  @ApiStatus.Internal
+  public boolean isCompactionSupported() {
+    return !myIsReadOnly && !myIntMapping;
   }
 
   private static File[] getFilesInDirectoryWithNameStartingWith(@NotNull Path fileFromDirectory) throws IOException {
