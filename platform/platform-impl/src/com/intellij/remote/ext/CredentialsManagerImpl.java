@@ -27,7 +27,7 @@ public class CredentialsManagerImpl extends CredentialsManager {
       }
     }
     final UnknownCredentialsHolder credentials = CredentialsType.UNKNOWN.createCredentials();
-    credentials.setInterpreterPath(interpreterPath);
+    credentials.setSdkId(interpreterPath);
     credentials.load(element);
     data.setCredentials(CredentialsType.UNKNOWN_CREDENTIALS, credentials);
   }

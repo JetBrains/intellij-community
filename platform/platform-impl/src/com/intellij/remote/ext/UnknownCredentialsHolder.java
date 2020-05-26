@@ -12,20 +12,20 @@ import java.util.Objects;
  * @author Irina.Chernushina on 7/29/2016.
  */
 public class UnknownCredentialsHolder {
-  private @NotNull String myInterpreterPath;
+  private @NotNull String mySdkId;
 
   private @Nullable Element myElement;
 
   public UnknownCredentialsHolder() {
-    myInterpreterPath = "";
+    mySdkId = "";
   }
 
-  public @NotNull String getInterpreterPath() {
-    return myInterpreterPath;
+  public @NotNull String getSdkId() {
+    return mySdkId;
   }
 
-  public void setInterpreterPath(@NotNull String interpreterPath) {
-    myInterpreterPath = interpreterPath;
+  public void setSdkId(@NotNull String sdkId) {
+    mySdkId = sdkId;
   }
 
   public void save(@NotNull Element element) {
@@ -43,12 +43,12 @@ public class UnknownCredentialsHolder {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     UnknownCredentialsHolder holder = (UnknownCredentialsHolder)o;
-    return Objects.equals(myInterpreterPath, holder.myInterpreterPath) &&
+    return Objects.equals(mySdkId, holder.mySdkId) &&
            Objects.equals(myElement, holder.myElement);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myInterpreterPath, myElement);
+    return Objects.hash(mySdkId, myElement);
   }
 }
