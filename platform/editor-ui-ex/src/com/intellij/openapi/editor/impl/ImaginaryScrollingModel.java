@@ -82,11 +82,11 @@ public class ImaginaryScrollingModel implements ScrollingModel {
 
   @Override
   public void addVisibleAreaListener(@NotNull VisibleAreaListener listener) {
-    throw notImplemented();
+    // no-op
   }
 
   @Override
   public void removeVisibleAreaListener(@NotNull VisibleAreaListener listener) {
-    throw notImplemented();
+    // no-op
   }
 }
