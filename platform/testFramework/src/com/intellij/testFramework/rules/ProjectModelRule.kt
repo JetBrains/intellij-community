@@ -1,13 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.rules
 
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.rd.attach
@@ -31,24 +31,23 @@ import java.io.File
 
 class ProjectModelRule : TestRule {
   val baseProjectDir = TempDirectory()
-  private val projectDelegate = lazy { val project = createHeavyProject(baseProjectDir.root.toPath())
-    invokeAndWaitIfNeeded {
-      ProjectManagerEx.getInstanceEx().openTestProject(project)
-    }
-    project
-  }
   private val disposableRule = DisposableRule()
-  val project by projectDelegate
-  private val closeProject = object : ExternalResource() {
+  lateinit var project: Project
+  private val projectResource = object : ExternalResource() {
+    override fun before() {
+      project = createHeavyProject(baseProjectDir.root.toPath())
+      runInEdtAndWait {
+        ProjectManagerEx.getInstanceEx().openTestProject(project)
+      }
+    }
+
     override fun after() {
-      if (projectDelegate.isInitialized()) {
-        runInEdtAndWait {
-          ProjectManagerEx.getInstanceEx().forceCloseProject(project)
-        }
+      runInEdtAndWait {
+        ProjectManagerEx.getInstanceEx().forceCloseProject(project)
       }
     }
   }
-  private val ruleChain = RuleChain(baseProjectDir, closeProject, disposableRule)
+  private val ruleChain = RuleChain(baseProjectDir, projectResource, disposableRule)
 
   override fun apply(base: Statement, description: Description): Statement {
     return ruleChain.apply(base, description)
