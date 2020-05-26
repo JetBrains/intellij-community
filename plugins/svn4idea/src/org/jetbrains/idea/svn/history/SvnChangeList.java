@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.svn.history;
 
@@ -555,7 +555,11 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
   private SvnLazyPropertyContentRevision createPropertyRevision(@NotNull FilePath filePath,
                                                                 @Nullable ContentRevision revision,
                                                                 @NotNull Url url) {
-    return revision == null ? null : new SvnLazyPropertyContentRevision(myVcs, filePath, revision.getRevisionNumber(), url);
+    if (revision == null) return null;
+
+    SvnRevisionNumber number = (SvnRevisionNumber)revision.getRevisionNumber();
+    Target target = Target.on(url, number.getRevision());
+    return new SvnLazyPropertyContentRevision(myVcs, filePath, number, target);
   }
 
   @Override

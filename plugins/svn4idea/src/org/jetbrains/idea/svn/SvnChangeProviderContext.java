@@ -17,13 +17,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.history.PropertyRevision;
-import org.jetbrains.idea.svn.history.SimplePropertyRevision;
+import org.jetbrains.idea.svn.history.SvnLazyPropertyContentRevision;
 import org.jetbrains.idea.svn.info.Info;
-import org.jetbrains.idea.svn.properties.PropertyData;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
 
@@ -36,7 +36,6 @@ import java.util.Map;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static org.jetbrains.idea.svn.SvnUtil.append;
 import static org.jetbrains.idea.svn.SvnUtil.getRelativePath;
-import static org.jetbrains.idea.svn.history.SvnLazyPropertyContentRevision.getPropertyList;
 
 class SvnChangeProviderContext implements StatusReceiver {
   private static final Logger LOG = Logger.getInstance(SvnChangeProviderContext.class);
@@ -354,24 +353,25 @@ class SvnChangeProviderContext implements StatusReceiver {
                                                         @Nullable Status deletedStatus) throws SvnBindException {
     if (svnStatus.isProperty(StatusType.STATUS_ADDED) && deletedStatus == null) return null;
 
+    ContentRevision before = change.getBeforeRevision();
+    if (before == null) return null;
+
     FilePath path = ChangesUtil.getFilePath(change);
     File file = deletedStatus != null ? deletedStatus.getFile() : path.getIOFile();
-    List<PropertyData> properties = getPropertyList(myVcs, file, Revision.BASE);
-    return new SimplePropertyRevision(properties, path, getRevisionNumber(change.getBeforeRevision()));
+    Target target = Target.on(file, Revision.BASE);
+    return new SvnLazyPropertyContentRevision(myVcs, path, before.getRevisionNumber(), target);
   }
 
   @Nullable
   private PropertyRevision createAfterPropertyRevision(@NotNull Change change, @NotNull Status svnStatus) throws SvnBindException {
     if (svnStatus.isProperty(StatusType.STATUS_DELETED)) return null;
 
-    FilePath path = ChangesUtil.getFilePath(change);
-    List<PropertyData> properties = getPropertyList(myVcs, path.getIOFile(), Revision.WORKING);
-    return new SimplePropertyRevision(properties, path, getRevisionNumber(change.getAfterRevision()));
-  }
+    ContentRevision after = change.getAfterRevision();
+    if (after == null) return null;
 
-  @Nullable
-  private static String getRevisionNumber(@Nullable ContentRevision revision) {
-    return revision != null ? revision.getRevisionNumber().asString() : null;
+    FilePath path = ChangesUtil.getFilePath(change);
+    Target target = Target.on(path.getIOFile(), Revision.WORKING);
+    return new SvnLazyPropertyContentRevision(myVcs, path, after.getRevisionNumber(), target);
   }
 
   @NotNull
