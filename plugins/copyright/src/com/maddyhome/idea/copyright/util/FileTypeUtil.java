@@ -2,6 +2,8 @@
 
 package com.maddyhome.idea.copyright.util;
 
+import com.intellij.ide.highlighter.HtmlFileType;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.Disposable;
@@ -226,8 +228,8 @@ public class FileTypeUtil implements Disposable {
   }
 
   private void createMappings() {
-    noSeparators.add(StdFileTypes.XML);
-    noSeparators.add(StdFileTypes.HTML);
+    noSeparators.add(XmlFileType.INSTANCE);
+    noSeparators.add(HtmlFileType.INSTANCE);
     noSeparators.add(StdFileTypes.JSP);
     noSeparators.add(StdFileTypes.JSPX);
   }

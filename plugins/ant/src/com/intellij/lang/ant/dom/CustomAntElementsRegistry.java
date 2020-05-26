@@ -15,15 +15,16 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.ant.AntFilesProvider;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.ReflectedProject;
 import com.intellij.lang.ant.config.impl.AntResourcesClassLoader;
 import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -387,10 +388,8 @@ public class CustomAntElementsRegistry {
                   final InputStream stream = loader.getResourceAsStream(antLibResource);
                   if (stream != null) {
                     try {
-                      final XmlFile xmlFile = (XmlFile)loadContentAsFile(xmlElement.getProject(), stream, StdFileTypes.XML);
-                      if (xmlFile != null) {
-                        loadDefinitionsFromAntlib(xmlFile, uri, loader, null, myAntProject);
-                      }
+                      final XmlFile xmlFile = (XmlFile)loadContentAsFile(xmlElement.getProject(), stream, XmlFileType.INSTANCE);
+                      loadDefinitionsFromAntlib(xmlFile, uri, loader, null, myAntProject);
                     }
                     catch (IOException e) {
                       LOG.info(e);
@@ -535,10 +534,10 @@ public class CustomAntElementsRegistry {
         if (stream != null) {
           try {
             if (isXmlFormat(typedef, resource)) {
-              xmlFile = (XmlFile)loadContentAsFile(project, stream, StdFileTypes.XML);
+              xmlFile = (XmlFile)loadContentAsFile(project, stream, XmlFileType.INSTANCE);
             }
             else {
-              propFile = (PropertiesFile)loadContentAsFile(project, stream, StdFileTypes.PROPERTIES);
+              propFile = (PropertiesFile)loadContentAsFile(project, stream, PropertiesFileType.INSTANCE);
             }
           }
           catch (IOException e) {
@@ -553,10 +552,10 @@ public class CustomAntElementsRegistry {
         final PsiFileSystemItem file = typedef.getFile().getValue();
         if (file instanceof PsiFile) {
           if (isXmlFormat(typedef, file.getName())) {
-            xmlFile = file instanceof XmlFile ? (XmlFile)file : (XmlFile)loadContentAsFile((PsiFile)file, StdFileTypes.XML);
+            xmlFile = file instanceof XmlFile ? (XmlFile)file : (XmlFile)loadContentAsFile((PsiFile)file, XmlFileType.INSTANCE);
           }
           else { // assume properties format
-            propFile = file instanceof PropertiesFile ? (PropertiesFile)file : (PropertiesFile)loadContentAsFile((PsiFile)file, StdFileTypes.PROPERTIES);
+            propFile = file instanceof PropertiesFile ? (PropertiesFile)file : (PropertiesFile)loadContentAsFile((PsiFile)file, PropertiesFileType.INSTANCE);
           }
         }
       }
