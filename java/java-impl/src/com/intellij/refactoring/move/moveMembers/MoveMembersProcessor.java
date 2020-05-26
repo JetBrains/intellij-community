@@ -47,7 +47,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.BiConsumer;
 
 /**
  * created at Sep 11, 2001
@@ -165,14 +164,8 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected BiConsumer<UsageInfo @NotNull [], ModelBranch> performRefactoringInBranch() {
-    return (usages, branch) -> {
-      PsiClass targetClass = JavaPsiFacade.getInstance(myProject).findClass(myOptions.getTargetClassName(),
-                                                                            GlobalSearchScope.projectScope(myProject));
-      if (targetClass == null) return;
-
-      performAsync(usages, branch, targetClass);
-    };
+  protected boolean canPerformRefactoringInBranch() {
+    return true;
   }
 
   @Override
@@ -186,7 +179,12 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     afterAllMovements(movedMembers);
   }
 
-  private void performAsync(UsageInfo @NotNull [] originalUsages, @NotNull ModelBranch branch, @NotNull PsiClass targetClass) {
+  @Override
+  protected void performRefactoringInBranch(UsageInfo @NotNull [] originalUsages, ModelBranch branch) {
+    PsiClass targetClass = JavaPsiFacade.getInstance(myProject).findClass(myOptions.getTargetClassName(),
+                                                                          GlobalSearchScope.projectScope(myProject));
+    if (targetClass == null) return;
+
     PsiClass targetCopy = branch.obtainPsiCopy(targetClass);
     Set<PsiMember> membersToMove = new LinkedHashSet<>(ContainerUtil.map(myMembersToMove, branch::obtainPsiCopy));
     List<MoveMembersUsageInfo> usages = ContainerUtil.map(originalUsages, u -> ((MoveMembersUsageInfo)u).branched(branch));
