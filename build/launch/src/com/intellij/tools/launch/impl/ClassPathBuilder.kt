@@ -79,7 +79,7 @@ internal class ClassPathBuilder(private val paths: PathsProvider, private val mo
       .dependencies(module)
       .recursively()
       .satisfying { if (it is JpsModuleDependency) !isModuleExcluded(it.module) else true }
-      .includedIn(JpsJavaClasspathKind.runtime(false))
+      .includedIn(JpsJavaClasspathKind.runtime(modules.includeTestDependencies))
       .classes().roots.map { teamCityClasspathFixer(it.canonicalPath) }.toList()
   }
 
