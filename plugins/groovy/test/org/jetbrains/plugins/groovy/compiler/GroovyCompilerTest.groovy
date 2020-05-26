@@ -129,26 +129,35 @@ abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     assertOutput("Bar", "239")
   }
 
-  void testTransitiveJavaDependencyThroughGroovy() throws Throwable {
-    myFixture.addClass("public class IFoo { void foo() {} }").getContainingFile().getVirtualFile()
-    myFixture.addFileToProject("Foo.groovy", "class Foo {\n" +
-                                             "  static IFoo f\n" +
-                                             "  public int foo() { return 239; }\n" +
-                                             "}")
-    final PsiFile bar = myFixture.addFileToProject("Bar.groovy", "class Bar extends Foo {" +
-                                                                 "public static void main(String[] args) { " +
-                                                                 "  System.out.println(new Foo().foo());" +
-                                                                 "}" +
-                                                                 "}")
+  void testTransitiveJavaDependencyThroughGroovy() {
+    doTestTransitiveJavaDependencyThroughGroovy(false)
+  }
+
+  protected final void doTestTransitiveJavaDependencyThroughGroovy(boolean expectRebuild) {
+    def iFoo = myFixture.addClass "public class IFoo { void foo() {} }" containingFile
+    myFixture.addFileToProject "Foo.groovy", '''\
+class Foo {
+  static IFoo f
+  public int foo() { return 239; }
+}
+'''
+    def bar = myFixture.addFileToProject "Bar.groovy", '''
+class Bar extends Foo {
+  public static void main(String[] args) {
+    System.out.println(new Foo().foo());
+  }
+}
+'''
     assertEmpty(make())
-    assertOutput("Bar", "239")
 
-    deleteClassFile("IFoo")
-    touch(bar.getVirtualFile())
-
-    //assertTrue(assertOneElement(make()).contains("WARNING: Groovyc error"));
-    assertEmpty make()
-    assertOutput("Bar", "239")
+    touch(iFoo.virtualFile)
+    touch(bar.virtualFile)
+    if (expectRebuild) {
+      assert make().collect { it.message } == chunkRebuildMessage('Groovy stub generator')
+    }
+    else {
+      assertEmpty make()
+    }
   }
 
   void testTransitiveGroovyDependency() throws Throwable {

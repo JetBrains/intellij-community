@@ -14,6 +14,24 @@ class Groovyc25Test extends GroovycTestBase {
     GroovyProjectDescriptors.LIB_GROOVY_2_5
   }
 
+  /**
+   * @see org.codehaus.groovy.control.ClassNodeResolver#tryAsLoaderClassOrScript(java.lang.String, org.codehaus.groovy.control.CompilationUnit)
+   */
+  @Override
+  void testTransitiveJavaDependencyThroughGroovy() {
+    // in 2.4:
+    // - the Foo is not well-formed (IFoo doesn't exist), so we throw NCDFE;
+    // - NCDFE forces loading Foo class node from Foo.groovy file;
+    // - Foo.groovy is added to the current compile session;
+    // => no chunk rebuild
+    //
+    // in 2.5:
+    // - the Foo is loaded as decompiled node;
+    // - when the Bar stub is being written on the disk, it throws NCDFE when trying to resolve IFoo;
+    // => chunk rebuild
+    doTestTransitiveJavaDependencyThroughGroovy(true)
+  }
+
   @Override
   void 'test changed groovy refers to java which refers to changed groovy and fails in stub generator'() {
     'do test changed groovy refers to java which refers to changed groovy and fails in stub generator'(false)
@@ -27,12 +45,6 @@ class Groovyc25Test extends GroovycTestBase {
   @Override
   void "test inner java class references with incremental recompilation"() {
     'do test inner java class references with incremental recompilation'(false)
-  }
-
-  @Bombed(user = 'daniil', year = 2029, month = Calendar.JANUARY, day = 4)
-  @Override
-  void testTransitiveJavaDependencyThroughGroovy() {
-    super.testTransitiveJavaDependencyThroughGroovy()
   }
 
   @Bombed(user = 'daniil', year = 2029, month = Calendar.JANUARY, day = 4)
