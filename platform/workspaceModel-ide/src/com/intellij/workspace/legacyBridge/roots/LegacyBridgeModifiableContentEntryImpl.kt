@@ -213,6 +213,14 @@ internal class LegacyBridgeModifiableContentEntryImpl(
     }
   }
 
+  override fun equals(other: Any?): Boolean {
+    return (other as? ContentEntry)?.url == url
+  }
+
+  override fun hashCode(): Int {
+    return url.hashCode()
+  }
+
   override fun addSourceFolder(file: VirtualFile, isTestSource: Boolean) = addSourceFolder(file, isTestSource, "")
 
   override fun addSourceFolder(file: VirtualFile, isTestSource: Boolean, packagePrefix: String): SourceFolder =

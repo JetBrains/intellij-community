@@ -55,6 +55,14 @@ internal class ContentEntryViaTypedEntity(internal val model: LegacyBridgeModule
     return result
   }
 
+  override fun equals(other: Any?): Boolean {
+    return (other as? ContentEntry)?.url == url
+  }
+
+  override fun hashCode(): Int {
+    return url.hashCode()
+  }
+
   override fun isSynthetic() = false
   override fun getRootModel() = model
   override fun getSourceFolders(rootType: JpsModuleSourceRootType<*>): List<SourceFolder> = getSourceFolders(setOf(rootType))
