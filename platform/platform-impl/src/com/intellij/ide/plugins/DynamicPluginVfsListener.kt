@@ -33,7 +33,7 @@ class DynamicPluginVfsListener : AsyncFileListener {
   }
 
   override fun prepareChange(events: MutableList<out VFileEvent>): AsyncFileListener.ChangeApplier? {
-    if (SystemProperties.`is`(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY)) return null
+    if (!SystemProperties.`is`(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY)) return null
 
     val pluginsToReload = hashSetOf<IdeaPluginDescriptorImpl>()
     for (event in events) {
