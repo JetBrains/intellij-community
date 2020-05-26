@@ -577,9 +577,13 @@ class Indirect {
 
   protected abstract List<String> chunkRebuildMessage(String builder)
 
-  void testClassLoadingDuringBytecodeGeneration() {
+  void 'test changed groovy refers to java which refers to changed groovy and fails in compiler'() {
+    'do test changed groovy refers to java which refers to changed groovy and fails in compiler'(true)
+  }
+
+  protected final void 'do test changed groovy refers to java which refers to changed groovy and fails in compiler'(boolean expectRebuild) {
     def used = myFixture.addFileToProject('Used.groovy', 'class Used { }')
-    def java = myFixture.addFileToProject('Java.java', '''
+    myFixture.addFileToProject('Java.java', '''
 abstract class Java {
   Object getProp() { return null; }
   abstract void foo(Used used);
@@ -595,7 +599,13 @@ class Main {
 
     touch(used.virtualFile)
     touch(main)
-    assert make().collect { it.message } == chunkRebuildMessage("Groovy compiler")
+    def messages = make()
+    if (expectRebuild) {
+      assert messages.collect { it.message } == chunkRebuildMessage("Groovy compiler")
+    }
+    else {
+      assertEmpty messages
+    }
   }
 
   void testMakeInDependentModuleAfterChunkRebuild() {

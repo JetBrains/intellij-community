@@ -14,10 +14,9 @@ class Groovyc25Test extends GroovycTestBase {
     GroovyProjectDescriptors.LIB_GROOVY_2_5
   }
 
-  @Bombed(user = 'daniil', year = 2029, month = Calendar.JANUARY, day = 4)
   @Override
-  void testClassLoadingDuringBytecodeGeneration() {
-    super.testClassLoadingDuringBytecodeGeneration()
+  void "test changed groovy refers to java which refers to changed groovy and fails in compiler"() {
+    'do test changed groovy refers to java which refers to changed groovy and fails in compiler'(false)
   }
 
   @Bombed(user = 'daniil', year = 2029, month = Calendar.JANUARY, day = 4)
