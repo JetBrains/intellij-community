@@ -110,17 +110,23 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.ant.fixcrlf(srcdir: "${unixDistPath}/bin", includes: "*.sh", eol: "unix")
 
     // Android Studio: build game tools entry points (go/project-aplos)
-    buildGameToolsScripts(classPath, unixDistPath, fullName, vmOptionsFileName)
+    buildGameToolsScripts(buildContext, unixDistPath)
   }
 
   // Android Studio: build game tools entry points (go/project-aplos)
-  private void buildGameToolsScripts(String classPath, String unixDistPath, String fullName, String vmOptionsFileName) {
+  static void buildGameToolsScripts(BuildContext buildContext, String unixDistPath) {
+    String platformClassPath = "CLASSPATH=\"\$IDE_HOME/lib/${buildContext.bootClassPathJarNames[0]}\"\n"
+    platformClassPath += buildContext.bootClassPathJarNames[1..-1].collect { "CLASSPATH=\"\$CLASSPATH:\$IDE_HOME/lib/${it}\"" }.join("\n")
+    if (buildContext.productProperties.toolsJarRequired) {
+      platformClassPath += "\nCLASSPATH=\"\$CLASSPATH:\$JDK/lib/tools.jar\""
+    }
+
     // We manually set the classpath to include everything the game tools need and disable all plugin loading at runtime with
     // `-Didea.load.plugins=false`. This change on classpath is needed since AndroidStudioGameToolsPlugin.xml, the starting plugin XML, is
     // located in plugins/android/lib/game-tools.jar, which is not in classpath by default. In addition, AndroidStudioGameToolsPlugin.xml
     // directly references all needed Intellij platform components so that the unneeded ones (for example, shift-shift to find everything)
     // are ignored. See go/project-aplos-design for more details.
-    String gameToolsClassPath = classPath + "\n" + [
+    String gameToolsClassPath = platformClassPath + "\n" + [
       "plugins/android/lib/*",
       "plugins/android/resources/*",
       "plugins/java/lib/java-api.jar",
@@ -133,9 +139,10 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/linux/scripts")
 
       filterset(begintoken: "__", endtoken: "__") {
-        filter(token: "product_full", value: fullName + "GameTools")
+        filter(token: "product_full", value: buildContext.applicationInfo.productName + "GameTools")
         filter(token: "product_uc", value: buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo))
-        filter(token: "vm_options", value: vmOptionsFileName)
+        filter(token: "product_vendor", value: buildContext.applicationInfo.shortCompanyName)
+        filter(token: "vm_options", value: buildContext.productProperties.baseFileName)
         filter(token: "system_selector", value: "AndroidStudioGameTools")
         // Here we overwrite idea.platform.prefix to start the distinct entry point of game tools.
         filter(token: "ide_jvm_args", value:
