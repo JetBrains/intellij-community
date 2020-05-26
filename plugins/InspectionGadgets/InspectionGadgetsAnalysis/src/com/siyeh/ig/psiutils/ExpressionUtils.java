@@ -1414,7 +1414,8 @@ public class ExpressionUtils {
       PsiPolyadicExpression childPolyadic = (PsiPolyadicExpression)replacement;
       IElementType parentTokenType = parentPolyadic.getOperationTokenType();
       IElementType childTokenType = childPolyadic.getOperationTokenType();
-      if (PsiPrecedenceUtil.getPrecedenceForOperator(parentTokenType) == PsiPrecedenceUtil.getPrecedenceForOperator(childTokenType)) {
+      if (PsiPrecedenceUtil.getPrecedenceForOperator(parentTokenType) == PsiPrecedenceUtil.getPrecedenceForOperator(childTokenType) &&
+          !PsiPrecedenceUtil.areParenthesesNeeded(childPolyadic, parentPolyadic, false)) {
         PsiElement[] children = parentPolyadic.getChildren();
         int idx = ArrayUtil.indexOf(children, expressionToReplace);
         if (idx > 0 || (idx == 0 && parentTokenType == childTokenType)) {
