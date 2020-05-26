@@ -145,7 +145,7 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     }
   }
 
-  public static void replaceWithUnknownRootType(Project project, Collection<JpsModuleSourceRootPropertiesSerializer<?>> unregisteredSerializers) {
+  private static void replaceWithUnknownRootType(Project project, Collection<JpsModuleSourceRootPropertiesSerializer<?>> unregisteredSerializers) {
     if (unregisteredSerializers.isEmpty()) {
       return;
     }
@@ -174,7 +174,7 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     }
   }
 
-  public static void updateCustomRootTypes(Project project, Collection<JpsModuleSourceRootPropertiesSerializer<?>> registeredSerializers) {
+  private static void updateCustomRootTypes(Project project, Collection<JpsModuleSourceRootPropertiesSerializer<?>> registeredSerializers) {
     if (registeredSerializers.isEmpty()) {
       return;
     }

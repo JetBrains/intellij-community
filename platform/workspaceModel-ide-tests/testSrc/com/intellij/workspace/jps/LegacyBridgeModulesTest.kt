@@ -456,6 +456,8 @@ class LegacyBridgeModulesTest {
 
   @Test
   fun `test custom source root loading`() {
+    TestCustomRootModelSerializerExtension.registerTestCustomSourceRootType(temporaryDirectoryRule.newPath().toFile(),
+                                                                            disposableRule.disposable)
     val tempDir = temporaryDirectoryRule.newPath().toFile()
     val moduleImlFile = File(tempDir, "my.iml")
     Files.createDirectories(moduleImlFile.parentFile.toPath())
@@ -534,6 +536,7 @@ class LegacyBridgeModulesTest {
   @Test
   fun `test custom source root saving`() {
     val tempDir = temporaryDirectoryRule.newPath().toFile()
+    TestCustomRootModelSerializerExtension.registerTestCustomSourceRootType(temporaryDirectoryRule.newPath().toFile(), disposableRule.disposable)
 
     val moduleImlFile = File(tempDir, "my.iml")
     Files.createDirectories(moduleImlFile.parentFile.toPath())
@@ -581,17 +584,17 @@ class LegacyBridgeModulesTest {
       val tempDir = temporaryDirectoryRule.newPath().toFile()
       val url = VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(tempDir.path))
       val contentEntry = model.addContentEntry(url)
-      contentEntry.addSourceFolder("$url/$antLibraryFolder", TestCustomSourceRootType.INSTANCE)
+      contentEntry.addSourceFolder("$url/$antLibraryFolder", false)
     }
     StoreUtil.saveDocumentsAndProjectSettings(project)
     assertTrue(moduleFile.readText().contains(antLibraryFolder))
     val entityStore = WorkspaceModel.getInstance(project).entityStore
     assertEquals(1, entityStore.current.entities(ContentRootEntity::class.java).count())
-    assertEquals(1, entityStore.current.entities(CustomSourceRootPropertiesEntity::class.java).count())
+    assertEquals(1, entityStore.current.entities(JavaSourceRootEntity::class.java).count())
 
     ModuleManager.getInstance(project).disposeModule(module)
     assertEmpty(entityStore.current.entities(ContentRootEntity::class.java).toList())
-    assertEmpty(entityStore.current.entities(CustomSourceRootPropertiesEntity::class.java).toList())
+    assertEmpty(entityStore.current.entities(JavaSourceRootEntity::class.java).toList())
   }
 
   @Test
@@ -610,7 +613,7 @@ class LegacyBridgeModulesTest {
       val tempDir = temporaryDirectoryRule.newPath().toFile()
       val url = VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(tempDir.path))
       val contentEntry = model.addContentEntry(url)
-      contentEntry.addSourceFolder("$url/$antLibraryFolder", TestCustomSourceRootType.INSTANCE)
+      contentEntry.addSourceFolder("$url/$antLibraryFolder", false)
     }
 
     val entityStore = WorkspaceModel.getInstance(project).entityStore

@@ -4,7 +4,6 @@ package com.intellij.roots;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.jps.impl.JpsIdePluginManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.module.Module;
@@ -21,19 +20,16 @@ import com.intellij.testFramework.JavaModuleTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.jps.model.JpsElement;
-import org.jetbrains.jps.model.java.JavaSourceRootProperties;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
-import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
-import org.jetbrains.jps.model.module.UnknownSourceRootType;
-import org.jetbrains.jps.model.module.UnknownSourceRootTypeProperties;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
@@ -150,70 +146,6 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
       JDOMUtil.writeElement(JDOMUtil.load(moduleFile).getChild("component"))
     );
   }
-
-  public void testChangeRootType() throws JDOMException, IOException {
-    File content = new File(getProject().getBasePath());
-    File source = new File(content, "source");
-    File testSource = new File(content, "testSource");
-    FileUtil.createDirectory(source);
-    FileUtil.createDirectory(testSource);
-    final VirtualFile contentFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(content);
-    assertNotNull(contentFile);
-    refreshRecursively(contentFile);
-    final VirtualFile sourceFile = LocalFileSystem.getInstance().findFileByIoFile(source);
-    assertNotNull(sourceFile);
-    final VirtualFile testSourceFile = LocalFileSystem.getInstance().findFileByIoFile(testSource);
-    assertNotNull(testSourceFile);
-
-    final File moduleFile = new File(content, "test.iml");
-    final Module module = createModule(moduleFile);
-
-    PsiTestUtil.addContentRoot(module, contentFile);
-    PsiTestUtil.addSourceRoot(
-      module, sourceFile, JavaSourceRootType.SOURCE, JpsJavaExtensionService.getInstance().createSourceRootProperties("org.jetbrains", true)
-    );
-    PsiTestUtil.addSourceRoot(
-      module, testSourceFile, JavaSourceRootType.TEST_SOURCE, JpsJavaExtensionService.getInstance().createSourceRootProperties("org.jetbrains", false)
-    );
-
-    StoreUtil.saveDocumentsAndProjectSettings(myProject);
-
-    String expectedXml = "<component name=\"NewModuleRootManager\" inherit-compiler-output=\"true\">\n" +
-                         "  <exclude-output />\n" +
-                         "  <content url=\"file://$MODULE_DIR$\">\n" +
-                         "    <sourceFolder url=\"file://$MODULE_DIR$/source\" isTestSource=\"false\" packagePrefix=\"org.jetbrains\" generated=\"true\" />\n" +
-                         "    <sourceFolder url=\"file://$MODULE_DIR$/testSource\" isTestSource=\"true\" packagePrefix=\"org.jetbrains\" />\n" +
-                         "  </content>\n" +
-                         "  <orderEntry type=\"sourceFolder\" forTests=\"false\" />\n" +
-                         "</component>";
-    
-    assertEquals(expectedXml, JDOMUtil.writeElement(JDOMUtil.load(moduleFile).getChild("component")));
-
-    JpsIdePluginManagerImpl.replaceWithUnknownRootType(myProject, findSerializers(Arrays.asList(JavaSourceRootType.SOURCE, JavaSourceRootType.TEST_SOURCE)));
-    for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
-      for (SourceFolder folder : entry.getSourceFolders()) {
-        assertTrue("Root type expected to be 'Unknown' for " + folder.getUrl(), folder.getRootType() instanceof UnknownSourceRootType);
-        JpsElement properties = folder.getJpsElement().getProperties(folder.getRootType());
-        assertTrue(properties instanceof UnknownSourceRootTypeProperties<?>);
-        assertTrue(((UnknownSourceRootTypeProperties<?>)properties).getPropertiesData() instanceof Element);
-      }
-    }
-    StoreUtil.saveSettings(myProject, true);
-    assertEquals(expectedXml, JDOMUtil.writeElement(JDOMUtil.load(moduleFile).getChild("component")));
-
-    JpsIdePluginManagerImpl.updateCustomRootTypes(myProject, findSerializers(Arrays.asList(JavaSourceRootType.SOURCE, JavaSourceRootType.TEST_SOURCE)));
-    for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
-      for (SourceFolder folder : entry.getSourceFolders()) {
-        assertFalse("'Unknown' root type is not expected: " + folder.getUrl(), folder.getRootType() instanceof UnknownSourceRootType);
-        JpsElement properties = folder.getJpsElement().getProperties(folder.getRootType());
-        assertTrue(properties instanceof JavaSourceRootProperties);
-        assertEquals("org.jetbrains", ((JavaSourceRootProperties)properties).getPackagePrefix());
-      }
-    }
-    StoreUtil.saveSettings(myProject, true);
-    assertEquals(expectedXml, JDOMUtil.writeElement(JDOMUtil.load(moduleFile).getChild("component")));
-  }
-
 
   private static Collection<JpsModuleSourceRootPropertiesSerializer<?>> findSerializers(Collection<JpsModuleSourceRootType<?>> rootTypes) {
     final Set<JpsModuleSourceRootType<?>> typesSet = rootTypes instanceof Set ? (Set<JpsModuleSourceRootType<?>>)rootTypes : new HashSet<>(rootTypes);

@@ -118,12 +118,18 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
   @Override
   public final void registerExtension(@NotNull T extension, @NotNull LoadingOrder order) {
-    doRegisterExtension(extension, order, null);
+    doRegisterExtension(extension, order, getPluginDescriptor(), null);
   }
 
   @Override
   public final void registerExtension(@NotNull T extension, @NotNull Disposable parentDisposable) {
-    doRegisterExtension(extension, LoadingOrder.ANY, parentDisposable);
+    registerExtension(extension, getPluginDescriptor(), parentDisposable);
+  }
+
+  @Override
+  public final void registerExtension(@NotNull T extension,
+                                      @NotNull PluginDescriptor pluginDescriptor, @NotNull Disposable parentDisposable) {
+    doRegisterExtension(extension, LoadingOrder.ANY, pluginDescriptor, parentDisposable);
   }
 
   @Override
@@ -133,14 +139,15 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
   @Override
   public final void registerExtension(@NotNull T extension, @NotNull LoadingOrder order, @NotNull Disposable parentDisposable) {
-    doRegisterExtension(extension, order, parentDisposable);
+    doRegisterExtension(extension, order, getPluginDescriptor(), parentDisposable);
   }
 
   public final ComponentManager getComponentManager() {
     return componentManager;
   }
 
-  private synchronized void doRegisterExtension(@NotNull T extension, @NotNull LoadingOrder order, @Nullable Disposable parentDisposable) {
+  private synchronized void doRegisterExtension(@NotNull T extension, @NotNull LoadingOrder order,
+                                                @NotNull PluginDescriptor pluginDescriptor, @Nullable Disposable parentDisposable) {
     assertNotReadOnlyMode();
     checkExtensionType(extension, getExtensionClass(), null);
 
@@ -151,7 +158,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
       }
     }
 
-    ObjectComponentAdapter<T> adapter = new ObjectComponentAdapter<>(extension, getPluginDescriptor(), order);
+    ObjectComponentAdapter<T> adapter = new ObjectComponentAdapter<>(extension, pluginDescriptor, order);
     addExtensionAdapter(adapter);
     notifyListeners(false, Collections.singletonList(adapter), myListeners);
 

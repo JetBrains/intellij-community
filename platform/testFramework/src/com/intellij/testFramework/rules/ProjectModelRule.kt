@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.rules
 
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.EmptyModuleType
@@ -30,7 +31,12 @@ import java.io.File
 
 class ProjectModelRule : TestRule {
   val baseProjectDir = TempDirectory()
-  private val projectDelegate = lazy { createHeavyProject(baseProjectDir.root.toPath()) }
+  private val projectDelegate = lazy { val project = createHeavyProject(baseProjectDir.root.toPath())
+    invokeAndWaitIfNeeded {
+      ProjectManagerEx.getInstanceEx().openTestProject(project)
+    }
+    project
+  }
   private val disposableRule = DisposableRule()
   val project by projectDelegate
   private val closeProject = object : ExternalResource() {
@@ -50,8 +56,9 @@ class ProjectModelRule : TestRule {
 
   fun createModule(name: String = "module"): Module {
     val imlFile = File(baseProjectDir.root, "$name/$name.iml")
+    val manager = moduleManager
     return runWriteActionAndWait {
-      moduleManager.newModule(imlFile.systemIndependentPath, EmptyModuleType.EMPTY_MODULE)
+      manager.newModule(imlFile.systemIndependentPath, EmptyModuleType.EMPTY_MODULE)
     }
   }
 

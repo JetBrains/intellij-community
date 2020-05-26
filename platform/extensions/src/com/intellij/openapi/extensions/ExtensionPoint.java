@@ -35,6 +35,9 @@ public interface ExtensionPoint<@NotNull T> {
   @TestOnly
   void registerExtension(@NotNull T extension, @NotNull Disposable parentDisposable);
 
+  @TestOnly
+  void registerExtension(@NotNull T extension, @NotNull PluginDescriptor pluginDescriptor, @NotNull Disposable parentDisposable);
+
   /**
    * Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions}
    * to register extension as first or to completely replace existing extensions in tests.

@@ -1,17 +1,45 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.jps
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("unused")
 
-import com.intellij.openapi.util.JDOMUtil
+package com.intellij.openapi.roots
+
+import com.intellij.jps.impl.JpsPluginBean
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.lang.UrlClassLoader
 import org.jdom.Element
 import org.jetbrains.jps.model.ex.JpsElementBase
 import org.jetbrains.jps.model.ex.JpsElementTypeBase
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension
 import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer
+import java.io.File
 
 class TestCustomRootModelSerializerExtension : JpsModelSerializerExtension() {
   override fun getModuleSourceRootPropertiesSerializers(): List<JpsModuleSourceRootPropertiesSerializer<*>> =
     listOf(TestCustomSourceRootPropertiesSerializer(TestCustomSourceRootType.INSTANCE, TestCustomSourceRootType.TYPE_ID))
+
+  companion object {
+    fun registerTestCustomSourceRootType(tempPluginRoot: File, disposable: Disposable) {
+      val jpsPluginDisposable = Disposer.newDisposable()
+      Disposer.register(disposable, Disposable {
+        runWriteActionAndWait {
+          Disposer.dispose(jpsPluginDisposable)
+        }
+      })
+
+      FileUtil.writeToFile(File(tempPluginRoot, "META-INF/services/${JpsModelSerializerExtension::class.java.name}"),
+                           TestCustomRootModelSerializerExtension::class.java.name)
+      val pluginClassLoader = UrlClassLoader.build().parent(TestCustomRootModelSerializerExtension::class.java.classLoader).urls(tempPluginRoot.toURI().toURL()).get()
+      val pluginDescriptor = DefaultPluginDescriptor(PluginId.getId("com.intellij.custom.source.root.test"), pluginClassLoader)
+      JpsPluginBean.EP_NAME.point.registerExtension(JpsPluginBean(), pluginDescriptor, jpsPluginDisposable)
+    }
+
+  }
 }
 
 class TestCustomSourceRootType private constructor() : JpsElementTypeBase<TestCustomSourceRootProperties>(), JpsModuleSourceRootType<TestCustomSourceRootProperties> {
@@ -48,9 +76,6 @@ class TestCustomSourceRootPropertiesSerializer(
   : JpsModuleSourceRootPropertiesSerializer<TestCustomSourceRootProperties>(type, typeId) {
 
   override fun loadProperties(sourceRootTag: Element): TestCustomSourceRootProperties {
-    if (sourceRootTag.getAttributeValue("url") == null) error("url is missing in '${JDOMUtil.writeElement(sourceRootTag)}'")
-    if (sourceRootTag.getAttributeValue("type") != typeId) error("expected type '$typeId' in '${JDOMUtil.writeElement(sourceRootTag)}'")
-
     val testString = sourceRootTag.getAttributeValue("testString")
     return TestCustomSourceRootProperties(testString)
   }
