@@ -707,6 +707,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
 
   private class ProgressPanelProgressIndicator extends MyInlineProgressIndicator {
     private final ProgressPanel myProgressPanel;
+    private final InplaceButton myCancelButton;
     private final Runnable mySuspendUpdateRunnable;
 
     ProgressPanelProgressIndicator(@NotNull TaskInfo task, @NotNull ProgressIndicatorEx original) {
@@ -714,9 +715,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
 
       ProgressPanelBuilder builder = new ProgressPanelBuilder(myProgress).withTopSeparator();
 
-      if (task.isCancellable()) {
-        builder.withCancel(this::cancelRequest);
-      }
+      builder.withCancel(this::cancelRequest);
 
       Runnable suspendRunnable = createSuspendRunnable();
       builder.withPause(suspendRunnable).withResume(suspendRunnable);
@@ -724,6 +723,9 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
       myComponent = builder.createPanel();
       myProgressPanel = Objects.requireNonNull(ProgressPanel.getProgressPanel(myProgress));
       UIUtil.putClientProperty(myComponent, ProcessPopup.KEY, myProgressPanel);
+
+      myCancelButton = Objects.requireNonNull(myProgressPanel.getCancelButton());
+      myCancelButton.setPainting(task.isCancellable());
 
       mySuspendUpdateRunnable = createSuspendUpdateRunnable(Objects.requireNonNull(myProgressPanel.getSuspendButton()));
 
@@ -768,12 +770,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     @Override
     public void updateProgressNow() {
       super.updateProgressNow();
-
-      InplaceButton cancelButton = myProgressPanel.getCancelButton();
-      if (cancelButton != null) {
-        cancelButton.setPainting(!isStopping());
-      }
-
+      myCancelButton.setPainting(getInfo().isCancellable() && !isStopping());
       mySuspendUpdateRunnable.run();
     }
   }
