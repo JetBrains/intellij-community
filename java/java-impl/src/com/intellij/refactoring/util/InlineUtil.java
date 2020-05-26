@@ -398,14 +398,12 @@ public class InlineUtil {
           if (!result.equals(inferenceResult)) {
             final String inferredTypeText = StringUtil.join(inferenceResult.getTypes(),
                                                             psiType -> psiType.getCanonicalText(), ", ");
-            final PsiExpressionList argumentList = ((PsiNewExpression)initializer).getArgumentList();
-            if (argumentList != null) {
-              final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)initializer).getClassOrAnonymousClassReference();
-              LOG.assertTrue(classReference != null);
-              final PsiExpression expression = JavaPsiFacade.getElementFactory(initializer.getProject())
-                .createExpressionFromText("new " + classReference.getReferenceName() + "<" + inferredTypeText + ">" + argumentList.getText(), initializer);
-              return ref.replace(expression);
-            }
+            final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)initializer).getClassOrAnonymousClassReference();
+            final PsiNewExpression expandedDiamond = (PsiNewExpression)JavaPsiFacade.getElementFactory(initializer.getProject())
+              .createExpressionFromText("new " + Objects.requireNonNull(classReference).getReferenceName() + "<" + inferredTypeText + ">()", initializer);
+            PsiNewExpression newExpression = (PsiNewExpression)initializer.copy();
+            Objects.requireNonNull(newExpression.getClassOrAnonymousClassReference()).replace(Objects.requireNonNull(expandedDiamond.getClassReference()));
+            return ref.replace(newExpression);
           }
         }
       }
