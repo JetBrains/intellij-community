@@ -250,7 +250,7 @@ public final class StartupUtil {
       Activity activity = StartUpMeasurer.startMainActivity("eua showing");
       boolean agreementDialogWasShown = euaDocument != null && showUserAgreementAndConsentsIfNeeded(log, initUiTask, euaDocument);
 
-      if (agreementDialogWasShown) {
+      if (configImportNeeded) {
         activity = activity.endAndStart("screen reader checking");
         runInEdtAndWait(log, AccessibilityUtils::enableScreenReaderSupportIfNecessary, initUiTask);
       }

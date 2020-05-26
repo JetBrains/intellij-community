@@ -18,12 +18,10 @@ public final class AccessibilityUtils {
     }
 
     if (isScreenReaderDetected()) {
-      AccessibilityUsageTrackerCollector.SCREEN_READER_DETECTED.log();
       int answer = Messages.showYesNoDialog(ApplicationBundle.message("confirmation.screen.reader.enable"),
                                             ApplicationBundle.message("title.screen.reader.support"),
                                             Messages.getQuestionIcon());
       if (answer == Messages.YES) {
-        AccessibilityUsageTrackerCollector.SCREEN_READER_SUPPORT_ENABLED.log();
         System.setProperty(GeneralSettings.SCREEN_READERS_DETECTED_PROPERTY, "true");
       }
     }
