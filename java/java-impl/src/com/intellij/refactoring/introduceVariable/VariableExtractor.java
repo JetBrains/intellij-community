@@ -271,7 +271,15 @@ class VariableExtractor {
           nullables.addAll(manager.getNullables());
         }
         return Arrays.stream(annotations)
-          .filter(annotation -> !nullables.contains(annotation.getQualifiedName()))
+          .filter(annotation -> {
+            String qualifiedName = annotation.getQualifiedName();
+            if (!manager.getNotNulls().contains(qualifiedName) &&
+                !manager.getNullables().contains(qualifiedName)) {
+              return false;
+            }
+
+            return !nullables.contains(qualifiedName);
+          })
           .toArray(PsiAnnotation[]::new);
       }
     });
