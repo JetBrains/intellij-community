@@ -3,6 +3,7 @@ package com.intellij.openapi.progress.impl
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.testFramework.LightPlatformTestCase
@@ -13,6 +14,42 @@ import org.junit.Ignore
 import java.util.concurrent.atomic.AtomicInteger
 
 class ProgressManagerContractsTest : LightPlatformTestCase() {
+  @TestFor(issues = ["IDEA-241785"])
+  fun `test leaked exception from backgroundable task`() {
+    DefaultLogger.disableStderrDumping(testRootDisposable)
+    val message = "this is test exception message to ignore"
+    try {
+      object : Task.Backgroundable(project, "foo", true) {
+        override fun run(indicator: ProgressIndicator) {
+          throw RuntimeException(message)
+        }
+      }.queue()
+      error("exception was expected")
+    }
+    catch (e: Throwable) {
+      assertThat(e.message).contains(message)
+    }
+  }
+
+  @TestFor(issues = ["IDEA-241785"])
+  fun `test leaked invokeLater exception from backgroundable task`() {
+    DefaultLogger.disableStderrDumping(testRootDisposable)
+    val message = "this is test exception message to ignore"
+    try {
+      object : Task.Backgroundable(project, "foo", true) {
+        override fun run(indicator: ProgressIndicator) {
+          ApplicationManager.getApplication().invokeAndWait {
+            throw RuntimeException(message)
+          }
+        }
+      }.queue()
+      error("exception was expected")
+    }
+    catch (e: Throwable) {
+      assertThat(e.message).contains(message)
+    }
+  }
+
   @TestFor(issues = ["IDEA-241785"])
   fun `test backgroundable modality in GUI`() = runWithGuiTasksMode { `test backgroundable modality in tests`() }
 
