@@ -643,6 +643,7 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.RegistryApplicationUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.project.IndexableFilesCollector"/>
 
+    <statistics.counterUsagesCollector groupId="live.templates" version="46"/>
     <statistics.counterUsagesCollector groupId="vcs.diff.trigger" version="1"/>
     <statistics.counterUsagesCollector groupId="vcs.back.forward.trigger" version="1"/>
     <statistics.counterUsagesCollector groupId="ide.self.update" version="2"/>
