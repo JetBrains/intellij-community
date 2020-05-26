@@ -6,10 +6,12 @@ import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +20,12 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * Provides documentation for PSI elements.
+ * This extension point allows to contribute content to the following IDE features:
+ * <ul>
+ *   <li>Quick Documentation (invoked via explicit action or shown on mouse hover)</li>
+ *   <li>Navigation info (shown in editor on Ctrl/Cmd+mouse hover)</li>
+ *   <li>Rendered representation of documentation comments</li>
+ * </ul>
  * <p>
  * Extend {@link AbstractDocumentationProvider}.
  *
@@ -127,9 +134,28 @@ public interface DocumentationProvider {
   /**
    * This defines documentation comments in file, which can be rendered in place. HTML content to be displayed will be obtained using
    * {@link #generateRenderedDoc(PsiDocCommentBase)} method.
+   * <p>
+   * To support cases, when rendered fragment doesn't have representing {@code PsiDocCommentBase} element (e.g. for the sequence of line
+   * comments in languages not having a block comment concept), fake elements (not existing in the {@code file}) might be returned. In such
+   * a case, {@link #findDocComment(PsiFile, TextRange)} should also be implemented by the documentation provider, for the rendered
+   * documentation view to work correctly.
    */
   @ApiStatus.Experimental
   default void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {}
+
+  /**
+   * This method is needed to support rendered representation of documentation comments in editor. It should return doc comment located at
+   * the provided text range in a file. Overriding the default implementation only makes sense for languages which use fake
+   * {@code PsiDocCommentBase} implementations (e.g. in cases when rendered view is provided for a set of adjacent line comments, and
+   * there's no real {@code PsiDocCommentBase} element in a file representing the range to render).
+   *
+   * @see #collectDocComments(PsiFile, Consumer)
+   */
+  @ApiStatus.Experimental
+  default @Nullable PsiDocCommentBase findDocComment(@NotNull PsiFile file, @NotNull TextRange range) {
+    PsiDocCommentBase comment = PsiTreeUtil.getParentOfType(file.findElementAt(range.getStartOffset()), PsiDocCommentBase.class, false);
+    return comment == null || !range.equals(comment.getTextRange()) ? null : comment;
+  }
 
   @Nullable
   default PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
