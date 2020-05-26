@@ -160,7 +160,6 @@ public class TestNGUtil {
       for (String qn : CONFIG_ANNOTATIONS_FQN) {
         if (qName.equals(qn)) return true;
       }
-      if (qName.equals(TEST_ANNOTATION_FQN)) return true;
       for (String qn : CONFIG_ANNOTATIONS_FQN) {
         if (qName.equals(qn)) return true;
       }
