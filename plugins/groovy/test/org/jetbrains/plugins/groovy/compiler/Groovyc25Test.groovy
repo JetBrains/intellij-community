@@ -51,8 +51,8 @@ class Groovyc25Test extends GroovycTestBase {
   }
 
   @Override
-  void testMakeIndependentModuleAfterChunkRebuild() {
-    doTestMakeIndependentModuleAfterChunkRebuild(false)
+  void testMakeInDependentModuleAfterChunkRebuild() {
+    doTestMakeInDependentModuleAfterChunkRebuild(false)
   }
 
   @Override

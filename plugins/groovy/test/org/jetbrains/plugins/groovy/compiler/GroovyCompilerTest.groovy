@@ -626,11 +626,11 @@ class Main {
     }
   }
 
-  void testMakeIndependentModuleAfterChunkRebuild() {
-    doTestMakeIndependentModuleAfterChunkRebuild(true)
+  void testMakeInDependentModuleAfterChunkRebuild() {
+    doTestMakeInDependentModuleAfterChunkRebuild(true)
   }
 
-  protected final void doTestMakeIndependentModuleAfterChunkRebuild(boolean expectRebuild) {
+  protected final void doTestMakeInDependentModuleAfterChunkRebuild(boolean expectRebuild) {
     def used = myFixture.addFileToProject('Used.groovy', 'class Used { }')
     def java = myFixture.addFileToProject('Java.java', 'class Java { void foo(Used used) {} }')
     def main = myFixture.addFileToProject('Main.groovy', 'class Main extends Java {  }').virtualFile
