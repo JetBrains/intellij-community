@@ -674,17 +674,14 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
     return entityDataById(pid)?.createEntity(this) as E?
   }
 
+  // Do not remove cast to Class<out TypedEntity>. kotlin fails without it
+  @Suppress("USELESS_CAST")
   override fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out TypedEntity>, List<TypedEntity>>> {
-    val res = HashMap<EntitySource, MutableMap<Class<out TypedEntity>, MutableList<TypedEntity>>>()
-    entitiesByType.allEntities().forEachIndexed { i, entities ->
-      entities.all().forEach {
-        if (sourceFilter(it.entitySource)) {
-          val mutableMapRes = res.getOrPut(it.entitySource, { mutableMapOf() })
-          mutableMapRes.getOrPut(i.findEntityClass(), { mutableListOf() }).add(it.createEntity(this))
-        }
-      }
+    return indexes.entitySourceIndex.entries().asSequence().filter { sourceFilter(it) }.associateWith { source ->
+      indexes.entitySourceIndex
+        .getIdsByEntry(source)!!.map { this.entityDataByIdOrDie(it).createEntity(this) }
+        .groupBy { it.javaClass as Class<out TypedEntity> }
     }
-    return res
   }
 
   @Suppress("UNCHECKED_CAST")
