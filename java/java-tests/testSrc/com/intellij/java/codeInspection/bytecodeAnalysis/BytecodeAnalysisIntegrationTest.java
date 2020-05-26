@@ -216,7 +216,7 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
     JavaRecursiveElementVisitor visitor = new PackageVisitor(GlobalSearchScope.moduleWithLibrariesScope(getModule())) {
       @Override
       protected void visitSubPackage(PsiPackage aPackage, PsiClass[] classes) {
-        System.out.println(aPackage.getQualifiedName());
+        LOG.debug(aPackage.getQualifiedName());
         Map<String, Map<String, PsiNameValuePair[]>> annotations = new TreeMap<>();
         for (PsiClass aClass : classes) processClass(aClass, annotations);
         saveXmlForPackage(aPackage.getQualifiedName(), annotations, annotationsRoot);
