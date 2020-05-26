@@ -63,11 +63,12 @@ class ShShellcheckUtil {
         else {
           ShSettings.setShellcheckPath(shellcheckPath);
         }
+        if (!shellcheck.canExecute()) FileUtil.setExecutable(shellcheck);
         ApplicationManager.getApplication().invokeLater(onSuccess);
         return;
       }
       catch (IOException e) {
-        LOG.debug("Can't evaluate shellcheck path", e);
+        LOG.warn("Can't evaluate shellcheck path or make it executable", e);
         ApplicationManager.getApplication().invokeLater(onFailure);
         return;
       }
