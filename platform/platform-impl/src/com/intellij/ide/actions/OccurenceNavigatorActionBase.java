@@ -87,9 +87,10 @@ abstract class OccurenceNavigatorActionBase extends AnAction implements DumbAwar
     ContentManager contentManager = ContentManagerUtil.getContentManagerFromContext(dataContext, false);
     if (contentManager != null) {
       Content content = contentManager.getSelectedContent();
-      if (content == null) return null;
-      JComponent component = content.getComponent();
-      return findNavigator(component);
+      OccurenceNavigator navigator = content != null ? findNavigator(content.getComponent()) : null;
+      if (navigator != null) {
+        return navigator;
+      }
     }
 
     return (OccurenceNavigator)getOccurenceNavigatorFromContext(dataContext);
