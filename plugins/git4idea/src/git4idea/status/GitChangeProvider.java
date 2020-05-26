@@ -45,9 +45,9 @@ public final class GitChangeProvider implements ChangeProvider {
                          @NotNull final ChangeListManagerGate addGate) throws VcsException {
     final GitVcs vcs = GitVcs.getInstance(project);
     GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
-    if (LOG.isDebugEnabled()) LOG.debug("initial dirty scope: " + dirtyScope);
+    LOG.debug("initial dirty scope: ", dirtyScope);
     appendNestedVcsRootsToDirt(dirtyScope, vcs, ProjectLevelVcsManager.getInstance(project));
-    if (LOG.isDebugEnabled()) LOG.debug("after adding nested vcs roots to dirt: " + dirtyScope);
+    LOG.debug("after adding nested vcs roots to dirt: ", dirtyScope);
 
     final Collection<VirtualFile> affected = dirtyScope.getAffectedContentRoots();
     Set<GitRepository> repos = ContainerUtil.map2SetNotNull(affected, repositoryManager::getRepositoryForRoot);
@@ -62,13 +62,13 @@ public final class GitChangeProvider implements ChangeProvider {
                                               ProjectLevelVcsManager.getInstance(project));
 
       for (GitRepository repo : repos) {
-        LOG.debug("checking root: " + repo.getRoot().getPath());
+        LOG.debug("checking root: ", repo.getRoot());
         List<FilePath> rootDirtyPaths = ContainerUtil.notNullize(dirtyPaths.get(repo.getRoot()));
         GitChangesCollector collector = GitChangesCollector.collect(project, Git.getInstance(), repo, rootDirtyPaths);
 
         final Collection<Change> changes = collector.getChanges();
         for (Change change : changes) {
-          LOG.debug("process change: " + ChangesUtil.getFilePath(change).getPath());
+          LOG.debug("process change: ", change);
           builder.processChange(change, GitVcs.getKey());
 
           FilePath beforePath = ChangesUtil.getBeforePath(change);
@@ -79,6 +79,7 @@ public final class GitChangeProvider implements ChangeProvider {
 
           if (change.isMoved() || change.isRenamed()) {
             if (dirtyScope.belongsTo(beforePath) != dirtyScope.belongsTo(afterPath)) {
+              LOG.debug("schedule rename check for: ", change);
               newDirtyPaths.add(beforePath);
               newDirtyPaths.add(afterPath);
             }
@@ -129,7 +130,7 @@ public final class GitChangeProvider implements ChangeProvider {
 
       for (VirtualFile dirtyDir : dirtyDirs) {
         if (VfsUtilCore.isAncestor(dirtyDir, root, false)) {
-          LOG.debug("adding git root for check. root: " + root.getPath() + ", dir: " + dirtyDir.getPath());
+          LOG.debug("adding git root for check. root: ", root, ", dir: ", dirtyDir);
           ((VcsModifiableDirtyScope)dirtyScope).addDirtyDirRecursively(VcsUtil.getFilePath(root));
           break;
         }
@@ -182,7 +183,7 @@ public final class GitChangeProvider implements ChangeProvider {
         Change change = new Change(GitContentRevision.createRevision(filePath, beforeRevisionNumber, myProject),
                                    GitContentRevision.createRevision(filePath, null, myProject), FileStatus.MODIFIED);
 
-        LOG.debug("process in-memory change " + change);
+        LOG.debug("process in-memory change ", change);
         builder.processChange(change, gitKey);
       }
     }
