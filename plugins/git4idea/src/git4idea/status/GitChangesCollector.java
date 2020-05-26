@@ -44,9 +44,9 @@ class GitChangesCollector {
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
-  @NotNull private final GitRepository myRepository;
   @NotNull private final VirtualFile myVcsRoot;
 
+  private final VcsRevisionNumber myHead;
   private final Collection<Change> myChanges = new HashSet<>();
   private final Collection<GitConflict> myConflicts = new HashSet<>();
 
@@ -59,7 +59,11 @@ class GitChangesCollector {
                                      @NotNull Git git,
                                      @NotNull GitRepository repository,
                                      @NotNull Collection<FilePath> dirtyPaths) throws VcsException {
-    return new GitChangesCollector(project, git, repository, dirtyPaths);
+    VcsRevisionNumber head = getHead(repository);
+
+    GitChangesCollector collector = new GitChangesCollector(project, git, repository, head);
+    collector.collectChanges(dirtyPaths);
+    return collector;
   }
 
   @NotNull
@@ -74,15 +78,11 @@ class GitChangesCollector {
   private GitChangesCollector(@NotNull Project project,
                               @NotNull Git git,
                               @NotNull GitRepository repository,
-                              @NotNull Collection<FilePath> dirtyPaths) throws VcsException {
+                              @NotNull VcsRevisionNumber head) {
     myProject = project;
     myGit = git;
-    myRepository = repository;
     myVcsRoot = repository.getRoot();
-
-    if (!dirtyPaths.isEmpty()) {
-      collectChanges(dirtyPaths);
-    }
+    myHead = head;
   }
 
   /**
@@ -163,13 +163,13 @@ class GitChangesCollector {
 
   // calls 'git status' and parses the output, feeding myChanges.
   private void collectChanges(Collection<? extends FilePath> dirtyPaths) throws VcsException {
-    VcsRevisionNumber head = getHead();
+    if (dirtyPaths.isEmpty()) return;
 
     GitLineHandler handler = GitUtil.createHandlerWithPaths(dirtyPaths, () -> statusHandler());
     String output = myGit.runCommand(handler).getOutputOrThrow();
-    List<FilePath> bothModifiedPaths = parseOutput(output, head, handler);
+    List<FilePath> bothModifiedPaths = parseOutput(output, handler);
 
-    collectStagedUnstagedModifications(bothModifiedPaths, head);
+    collectStagedUnstagedModifications(bothModifiedPaths);
   }
 
   private GitLineHandler statusHandler() {
@@ -188,7 +188,7 @@ class GitChangesCollector {
    * @return list of MM paths, that should be checked explicitly (in case if staged and unstaged modifications cancel each other)
    */
   @NotNull
-  private List<FilePath> parseOutput(@NotNull String output, @NotNull VcsRevisionNumber head, @NotNull GitHandler handler) {
+  private List<FilePath> parseOutput(@NotNull String output, @NotNull GitHandler handler) {
     List<FilePath> bothModifiedPaths = new ArrayList<>();
 
     final String[] split = output.split("\u0000");
@@ -225,22 +225,22 @@ class GitChangesCollector {
       switch (xStatus) {
         case ' ':
           if (yStatus == 'M') {
-            reportModified(filepath, head);
+            reportModified(filepath);
           }
           else if (yStatus == 'D') {
-            reportDeleted(filepath, head);
+            reportDeleted(filepath);
           }
           else if (yStatus == 'A' || yStatus == 'C') {
             reportAdded(filepath);
           }
           else if (yStatus == 'T') {
-            reportTypeChanged(filepath, head);
+            reportTypeChanged(filepath);
           }
           else if (yStatus == 'U') {
-            reportConflict(filepath, head, Status.MODIFIED, Status.MODIFIED);
+            reportConflict(filepath, Status.MODIFIED, Status.MODIFIED);
           }
           else if (yStatus == 'R') {
-            reportRename(filepath, oldFilepath, head);
+            reportRename(filepath, oldFilepath);
           }
           else {
             throwYStatus(output, handler, line, xStatus, yStatus);
@@ -252,10 +252,10 @@ class GitChangesCollector {
             bothModifiedPaths.add(filepath); // schedule 'git diff HEAD' command to detect staged changes, that were reverted
           }
           else if (yStatus == ' ' || yStatus == 'T') {
-            reportModified(filepath, head);
+            reportModified(filepath);
           }
           else if (yStatus == 'D') {
-            reportDeleted(filepath, head);
+            reportDeleted(filepath);
           }
           else {
             throwYStatus(output, handler, line, xStatus, yStatus);
@@ -271,10 +271,10 @@ class GitChangesCollector {
             // added + deleted => no change (from IDEA point of view).
           }
           else if (yStatus == 'U') { // AU - unmerged, added by us
-            reportConflict(filepath, head, Status.ADDED, Status.MODIFIED);
+            reportConflict(filepath, Status.ADDED, Status.MODIFIED);
           }
           else if (yStatus == 'A') { // AA - unmerged, both added
-            reportConflict(filepath, head, Status.ADDED, Status.ADDED);
+            reportConflict(filepath, Status.ADDED, Status.ADDED);
           }
           else {
             throwYStatus(output, handler, line, xStatus, yStatus);
@@ -283,23 +283,23 @@ class GitChangesCollector {
 
         case 'D':
           if (yStatus == 'M' || yStatus == ' ' || yStatus == 'T') {
-            reportDeleted(filepath, head);
+            reportDeleted(filepath);
           }
           else if (yStatus == 'U') { // DU - unmerged, deleted by us
-            reportConflict(filepath, head, Status.DELETED, Status.MODIFIED);
+            reportConflict(filepath, Status.DELETED, Status.MODIFIED);
           }
           else if (yStatus == 'D') { // DD - unmerged, both deleted
-            reportConflict(filepath, head, Status.DELETED, Status.DELETED);
+            reportConflict(filepath, Status.DELETED, Status.DELETED);
           }
           else if (yStatus == 'C') {
-            reportModified(filepath, head);
+            reportModified(filepath);
           }
           else if (yStatus == 'R') {
-            reportRename(filepath, oldFilepath, head);
+            reportRename(filepath, oldFilepath);
           }
           else if (yStatus == 'A') {
             // [DA] status is not documented, but might be reported by git
-            reportModified(filepath, head);
+            reportModified(filepath);
           }
           else {
             throwYStatus(output, handler, line, xStatus, yStatus);
@@ -308,13 +308,13 @@ class GitChangesCollector {
 
         case 'U':
           if (yStatus == 'U' || yStatus == 'T') { // UU - unmerged, both modified
-            reportConflict(filepath, head, Status.MODIFIED, Status.MODIFIED);
+            reportConflict(filepath, Status.MODIFIED, Status.MODIFIED);
           }
           else if (yStatus == 'A') { // UA - unmerged, added by them
-            reportConflict(filepath, head, Status.MODIFIED, Status.ADDED);
+            reportConflict(filepath, Status.MODIFIED, Status.ADDED);
           }
           else if (yStatus == 'D') { // UD - unmerged, deleted by them
-            reportConflict(filepath, head, Status.MODIFIED, Status.DELETED);
+            reportConflict(filepath, Status.MODIFIED, Status.DELETED);
           }
           else {
             throwYStatus(output, handler, line, xStatus, yStatus);
@@ -323,10 +323,10 @@ class GitChangesCollector {
 
         case 'R':
           if (yStatus == 'D') {
-            reportDeleted(oldFilepath, head);
+            reportDeleted(oldFilepath);
           }
           else if (yStatus == ' ' || yStatus == 'M' || yStatus == 'T') {
-            reportRename(filepath, oldFilepath, head);
+            reportRename(filepath, oldFilepath);
           }
           else {
             throwYStatus(output, handler, line, xStatus, yStatus);
@@ -335,13 +335,13 @@ class GitChangesCollector {
 
         case 'T'://TODO
           if (yStatus == ' ' || yStatus == 'M') {
-            reportTypeChanged(filepath, head);
+            reportTypeChanged(filepath);
           }
           else if (yStatus == 'D') {
-            reportDeleted(filepath, head);
+            reportDeleted(filepath);
           }
           else if (yStatus == 'T') {
-            reportConflict(filepath, head, Status.MODIFIED, Status.MODIFIED);
+            reportConflict(filepath, Status.MODIFIED, Status.MODIFIED);
           }
           else {
             throwYStatus(output, handler, line, xStatus, yStatus);
@@ -363,8 +363,7 @@ class GitChangesCollector {
     return bothModifiedPaths;
   }
 
-  private void collectStagedUnstagedModifications(@NotNull List<FilePath> bothModifiedPaths,
-                                                  @NotNull VcsRevisionNumber head) throws VcsException {
+  private void collectStagedUnstagedModifications(@NotNull List<FilePath> bothModifiedPaths) throws VcsException {
     if (bothModifiedPaths.isEmpty()) return;
 
     Collection<GitDiffChange> changes = GitChangeUtils.getWorkingTreeChanges(myProject, myVcsRoot, bothModifiedPaths, false);
@@ -375,17 +374,17 @@ class GitChangesCollector {
     for (GitDiffChange change : changes) {
       FilePath filePath = change.getFilePath();
       if (expectedPaths.contains(filePath)) {
-        reportModified(filePath, head);
+        reportModified(filePath);
       }
     }
   }
 
   @NotNull
-  private VcsRevisionNumber getHead() throws VcsException {
+  private static VcsRevisionNumber getHead(@NotNull GitRepository repository) {
     // we force update the GitRepository, because update is asynchronous, and thus the GitChangeProvider may be asked for changes
     // before the GitRepositoryUpdater has captures the current revision change and has updated the GitRepository.
-    myRepository.update();
-    final String rev = myRepository.getCurrentRevision();
+    repository.update();
+    final String rev = repository.getCurrentRevision();
     return rev != null ? new GitRevisionNumber(rev) : VcsRevisionNumber.NULL;
   }
 
@@ -399,14 +398,14 @@ class GitChangesCollector {
                                                message, xStatus, yStatus, line.replace('\u0000', '!'), handler, output));
   }
 
-  private void reportModified(FilePath filepath, VcsRevisionNumber head) {
-    ContentRevision before = GitContentRevision.createRevision(filepath, head, myProject);
+  private void reportModified(FilePath filepath) {
+    ContentRevision before = GitContentRevision.createRevision(filepath, myHead, myProject);
     ContentRevision after = GitContentRevision.createRevision(filepath, null, myProject);
     reportChange(FileStatus.MODIFIED, before, after);
   }
 
-  private void reportTypeChanged(FilePath filepath, VcsRevisionNumber head) {
-    ContentRevision before = GitContentRevision.createRevision(filepath, head, myProject);
+  private void reportTypeChanged(FilePath filepath) {
+    ContentRevision before = GitContentRevision.createRevision(filepath, myHead, myProject);
     ContentRevision after = GitContentRevision.createRevisionForTypeChange(filepath, null, myProject);
     reportChange(FileStatus.MODIFIED, before, after);
   }
@@ -417,24 +416,24 @@ class GitChangesCollector {
     reportChange(FileStatus.ADDED, before, after);
   }
 
-  private void reportDeleted(FilePath filepath, VcsRevisionNumber head) {
-    ContentRevision before = GitContentRevision.createRevision(filepath, head, myProject);
+  private void reportDeleted(FilePath filepath) {
+    ContentRevision before = GitContentRevision.createRevision(filepath, myHead, myProject);
     ContentRevision after = null;
     reportChange(FileStatus.DELETED, before, after);
   }
 
-  private void reportRename(FilePath filepath, FilePath oldFilepath, VcsRevisionNumber head) {
-    ContentRevision before = GitContentRevision.createRevision(oldFilepath, head, myProject);
+  private void reportRename(FilePath filepath, FilePath oldFilepath) {
+    ContentRevision before = GitContentRevision.createRevision(oldFilepath, myHead, myProject);
     ContentRevision after = GitContentRevision.createRevision(filepath, null, myProject);
     reportChange(FileStatus.MODIFIED, before, after);
   }
 
-  private void reportConflict(FilePath filepath, VcsRevisionNumber head, Status oursStatus, Status theirsStatus) {
+  private void reportConflict(FilePath filepath, Status oursStatus, Status theirsStatus) {
     myConflicts.add(new GitConflict(myVcsRoot, filepath, oursStatus, theirsStatus));
 
     // TODO: currently not displaying "both deleted" conflicts, because they can't be handled by GitMergeProvider (see IDEA-63156)
     if (oursStatus != Status.DELETED || theirsStatus != Status.DELETED) {
-      ContentRevision before = GitContentRevision.createRevision(filepath, head, myProject);
+      ContentRevision before = GitContentRevision.createRevision(filepath, myHead, myProject);
       ContentRevision after = GitContentRevision.createRevision(filepath, null, myProject);
       reportChange(FileStatus.MERGED_WITH_CONFLICTS, before, after);
     }
