@@ -107,7 +107,7 @@ public class ResolveMethod15Test extends LightResolveTestCase {
     final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)configureByFile();
     final JavaResolveResult result = ref.advancedResolve(false);
     PsiElement element = result.getElement();
-    assertTrue(!result.isValidResult());
+    assertFalse(result.isValidResult());
     assertThat(element, instanceOf(PsiMethod.class));
     final PsiMethod method = (PsiMethod)element;
     PsiMethod parentMethod = PsiTreeUtil.getParentOfType(ref.getElement(), PsiMethod.class);
@@ -126,7 +126,7 @@ public class ResolveMethod15Test extends LightResolveTestCase {
     assertThat(element, instanceOf(PsiMethod.class));
     final PsiMethod method = (PsiMethod)element;
     assertEquals("method", method.getName());
-    assertEquals(method.getTypeParameters().length, 0);
+    assertEquals(0, method.getTypeParameters().length);
     assertThat(ref, instanceOf(PsiReferenceExpression.class));
     final PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;
     final JavaResolveResult[] resolveResults = refExpr.multiResolve(false);
@@ -154,7 +154,8 @@ public class ResolveMethod15Test extends LightResolveTestCase {
     final PsiElement resolve = refExpr.resolve();
     assertTrue(resolve != null ? resolve.toString() : null, resolve instanceof PsiMethod);
     final PsiClass containingClass = ((PsiMethod)resolve).getContainingClass();
-    assertTrue(containingClass != null ? containingClass.getName() : null, containingClass instanceof PsiAnonymousClass);
+    assertNotNull(containingClass);
+    assertEquals(CommonClassNames.JAVA_LANG_OBJECT, containingClass.getQualifiedName());
   }
 
   public void testListEquals() throws Exception {
@@ -165,7 +166,7 @@ public class ResolveMethod15Test extends LightResolveTestCase {
     assertTrue(resolve != null ? resolve.toString() : null, resolve instanceof PsiMethod);
     final PsiClass containingClass = ((PsiMethod)resolve).getContainingClass();
     assertNotNull(containingClass);
-    assertTrue(containingClass.toString(), CommonClassNames.JAVA_UTIL_LIST.equals(containingClass.getQualifiedName()));
+    assertEquals(containingClass.toString(), CommonClassNames.JAVA_UTIL_LIST, containingClass.getQualifiedName());
   }
 
   public void testCovariantReturnTypeAnonymous() throws Exception {
@@ -175,7 +176,7 @@ public class ResolveMethod15Test extends LightResolveTestCase {
     final PsiElement resolve = refExpr.resolve();
     assertTrue(resolve != null ? resolve.toString() : null, resolve instanceof PsiMethod);
     final PsiClass containingClass = ((PsiMethod)resolve).getContainingClass();
-    assertTrue(containingClass != null ? containingClass.getName() : null, !(containingClass instanceof PsiAnonymousClass));
+    assertFalse(containingClass != null ? containingClass.getName() : null, containingClass instanceof PsiAnonymousClass);
   }
 
   public void testNonPublicAnonymous() throws Exception {
@@ -185,7 +186,7 @@ public class ResolveMethod15Test extends LightResolveTestCase {
     final PsiElement resolve = refExpr.resolve();
     assertTrue(resolve != null ? resolve.toString() : null, resolve instanceof PsiMethod);
     final PsiClass containingClass = ((PsiMethod)resolve).getContainingClass();
-    assertTrue(containingClass != null ? containingClass.getName() : null, !(containingClass instanceof PsiAnonymousClass));
+    assertFalse(containingClass != null ? containingClass.getName() : null, containingClass instanceof PsiAnonymousClass);
   }
 
   public void testFilterFixedVsVarargs1() throws Exception {
@@ -231,7 +232,7 @@ public class ResolveMethod15Test extends LightResolveTestCase {
     PsiElement element = resolveResult.getElement();
     assertNotNull(element);
     assertTrue(resolveResult.isValidResult());
-    assertTrue(!((PsiMethod) element).isVarArgs());
+    assertFalse(((PsiMethod)element).isVarArgs());
   }
 
   public void testFilterFixedVsVarargs6() throws Exception {
@@ -255,7 +256,7 @@ public class ResolveMethod15Test extends LightResolveTestCase {
     PsiElement element = resolveResult.getElement();
     assertNotNull(element);
     assertTrue(resolveResult.isValidResult());
-    assertTrue(!((PsiMethod) element).isVarArgs());
+    assertFalse(((PsiMethod)element).isVarArgs());
   }
 
   public void testFilterFixedVsVarargs8() throws Exception {
@@ -267,7 +268,7 @@ public class ResolveMethod15Test extends LightResolveTestCase {
     PsiElement element = resolveResult.getElement();
     assertNotNull(element);
     assertTrue(resolveResult.isValidResult());
-    assertTrue(!((PsiMethod) element).isVarArgs());
+    assertFalse(((PsiMethod)element).isVarArgs());
   }
   public void testFilterFixedVsVarargs9() throws Exception {
     RecursionManager.assertOnRecursionPrevention(getTestRootDisposable());
@@ -305,7 +306,7 @@ public class ResolveMethod15Test extends LightResolveTestCase {
     PsiElement element = resolveResult.getElement();
     assertNotNull(element);
     assertTrue(resolveResult.isValidResult());
-    assertEquals(((PsiMethod)element).getParameterList().getParametersCount(), 3);
+    assertEquals(3, ((PsiMethod)element).getParameterList().getParametersCount());
   }
 
   public void testFilterVarargsVsVarargs2() throws Exception {
