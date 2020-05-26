@@ -654,7 +654,7 @@ public final class PluginManagerCore {
 
       for (PluginId moduleId : incompatibleModuleIds) {
         IdeaPluginDescriptorImpl dep = idToDescriptorMap.apply(moduleId);
-        if (uniqueCheck.add(dep)) {
+        if (dep != null && uniqueCheck.add(dep)) {
           plugins.add(dep);
         }
       }

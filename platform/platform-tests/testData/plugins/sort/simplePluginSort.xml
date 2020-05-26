@@ -159,4 +159,9 @@
     <depends>com.intellij.modules.core</depends>
     <incompatible-with>com.intellij.modules.plugin0</incompatible-with>
   </idea-plugin>
+  <idea-plugin url="file://incompatible_with_unknown_module.xml">
+    <id>incompatible_with_unknown_module</id>
+    <depends>com.intellij.modules.core</depends>
+    <incompatible-with>com.intellij.modules.non.existent</incompatible-with>
+  </idea-plugin>
 </root>
