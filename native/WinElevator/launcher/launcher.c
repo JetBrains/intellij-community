@@ -54,16 +54,13 @@ static WCHAR* _GetCommandLineNoProgram()
 	WCHAR* sCommandLine = GetCommandLine();
 	int nNumberOfArgs;
 	WCHAR** args = CommandLineToArgvW(sCommandLine, &nNumberOfArgs);
-	WCHAR* sProgram = args[0];
-	size_t nProgramLengthChars = wcslen(sProgram);
-	LocalFree(args);
-	if (sCommandLine[0] == L'"')
-	{
-		nProgramLengthChars += 2; //Program name is in quotes
+	WCHAR* sProgram = args[2];
+	const BOOL bIsQuoted = wcsstr(sCommandLine, L"\"") != NULL;
+	WCHAR* sCommandLineAfterProgram = wcsstr(sCommandLine, sProgram);
+	if (bIsQuoted) {
+		sCommandLineAfterProgram -= 1;
 	}
-	WCHAR * sCommandLineAfterProgram = sCommandLine + nProgramLengthChars;
-	for (; sCommandLineAfterProgram[0] == L' '; sCommandLineAfterProgram++) {} // Remove spaces after program
-
+	LocalFree(args);
 	return sCommandLineAfterProgram;
 }
 
@@ -234,6 +231,7 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 	size_t chCurrentSize = 1;
 	WCHAR* sNewCommandLine = calloc(1, sizeof(WCHAR));
 
+	_AddStringToCommandLine(&chCurrentSize, &sNewCommandLine, argv[1], TRUE);
 	_AddStringToCommandLine(&chCurrentSize, &sNewCommandLine, sPid, TRUE);
 	_AddStringToCommandLine(&chCurrentSize, &sNewCommandLine, sCurrentDirectory, TRUE);
 	WCHAR sDescriptorFlags[3];
@@ -243,7 +241,6 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 
 	_AddStringToCommandLine(&chCurrentSize, &sNewCommandLine, ELEV_COMMAND_LINE_SEPARATOR, FALSE);
 
-	
 	// Add arguments provided by user to the tail of command line
 	// https://blogs.msdn.microsoft.com/twistylittlepassagesallalike/2011/04/23/everyone-quotes-command-line-arguments-the-wrong-way/
 	WCHAR * sOriginalCommandLineNoProgram = _GetCommandLineNoProgram();

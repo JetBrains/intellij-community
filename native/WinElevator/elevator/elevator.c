@@ -16,8 +16,8 @@
 
 #include <Windows.h>
 #include <elevTools.h>
-#include<stdio.h>
-
+#include <stdio.h>
+#include <string.h>
 
 #define ERR_INVALID_HANDLE -1
 #define ERR_CANT_INHERIT -2
@@ -33,6 +33,8 @@
 #define ERR_LAUNCHING - 12
 #define ERR_WAITING - 13
 #define ERR_PARENT_DIED -14
+#define ERR_CANT_OPEN_ENV_FILE -15
+#define ERR_CANT_READ_OPEN_ENV_FILE -16
 
 
 // UAC-enabled (in manifset) tool to launch ptocesses.
@@ -84,9 +86,10 @@ static DWORD _ConnectIfNeededPipe(DWORD nParentPid, DWORD nDescriptor, FILE* str
 }
 
 // PID Directory DescriptorFlags ProgramToRun Arguments
-#define _ARG_PID 1
-#define _ARG_DIR 2
-#define _ARG_DESCRIPTORS 3
+#define _ARG_ENV_PATH 1
+#define _ARG_PID 2
+#define _ARG_DIR 3
+#define _ARG_DESCRIPTORS 4
 
 int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 {
@@ -98,6 +101,9 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 		fwprintf(stderr, L"Bad command line");
 		return ERR_BAD_COMMAND_LINE;
 	}
+
+	WCHAR* envFilePath = argv[_ARG_ENV_PATH];
+
 	if (!SetCurrentDirectory(argv[_ARG_DIR]))
 	{
 		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_SET_DIR, NULL, 0, 0, NULL, NULL);
@@ -184,7 +190,24 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 	}
 	
 	PROCESS_INFORMATION processInfo;
-	
+
+  // "-" is a special value that means "there's no env file"
+	if (envFilePath != L"-") {
+		FILE* f = NULL;
+		errno_t openStatus = _wfopen_s(&f, envFilePath, L"r");
+		if (openStatus != 0) {
+			ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_CANT_OPEN_ENV_FILE, NULL, 0, 0, NULL, NULL);
+			fwprintf(stderr, L"Error opening env file. Exit code '%ls'", envFilePath);
+			return ERR_CANT_OPEN_ENV_FILE;
+		}
+		const int maxEnvVarLenth = 32767;
+		char* buf = malloc(maxEnvVarLenth);
+		while (fgets(buf, maxEnvVarLenth, f) != NULL) {
+			_putenv(buf);
+		}
+		fclose(f);
+	}
+
 	if (!CreateProcess(NULL, sCommandLine, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &startupInfo, &processInfo))
 	{
 		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_LAUNCHING, NULL, 0, 0, NULL, NULL);
