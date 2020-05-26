@@ -2,6 +2,7 @@
 package com.intellij.diff.impl
 
 import com.intellij.diff.tools.fragmented.UnifiedDiffTool
+import com.intellij.diff.tools.simple.SimpleDiffTool
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.components.PersistentStateComponent
@@ -67,7 +68,7 @@ class DiffSettingsHolder : PersistentStateComponent<DiffSettingsHolder.State> {
   private fun defaultPlaceSettings(place: String): PlaceSettings {
     val settings = PlaceSettings()
     if (place == DiffPlaces.VCS_LOG_VIEW) {
-      settings.DIFF_TOOLS_ORDER = listOf(UnifiedDiffTool::class.java.canonicalName)
+      settings.DIFF_TOOLS_ORDER = listOf(SimpleDiffTool::class.java.canonicalName, UnifiedDiffTool::class.java.canonicalName)
     }
     if (place == DiffPlaces.CHANGES_VIEW) {
       settings.DIFF_TOOLS_ORDER = listOf(UnifiedDiffTool::class.java.canonicalName)
