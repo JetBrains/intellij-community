@@ -82,7 +82,7 @@ public abstract class TemplateContextType {
 
   /**
    * @return syntax highlighter that going to be used in live template editor for template with context type enabled. If several context
-   * types enabled - first registered wins.
+   * types are enabled - first registered wins.
    */
   @Nullable
   public SyntaxHighlighter createHighlighter() {
@@ -109,7 +109,7 @@ public abstract class TemplateContextType {
   }
 
   /**
-   * @return document for live template editor. Used for live templates with this context type enabled. If several context types enabled -
+   * @return document for live template editor. Used for live templates with this context type enabled. If several context types are enabled -
    * first registered wins.
    */
   public Document createDocument(CharSequence text, Project project) {
