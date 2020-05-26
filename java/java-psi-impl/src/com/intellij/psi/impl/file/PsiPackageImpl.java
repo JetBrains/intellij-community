@@ -234,7 +234,12 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       List<PsiClass> fastClasses = new ArrayList<>();
       for (PsiDirectory directory : getDirectories(scope)) {
         List<PsiFile> sameNamed = ContainerUtil.filter(directory.getFiles(), file -> file.getName().contains(name));
-        Collections.addAll(fastClasses, CoreJavaDirectoryService.getPsiClasses(directory, sameNamed.toArray(PsiFile.EMPTY_ARRAY)));
+        PsiClass[] classes = CoreJavaDirectoryService.getPsiClasses(directory, sameNamed.toArray(PsiFile.EMPTY_ARRAY));
+        for (PsiClass aClass : classes) {
+          if (name.equals(aClass.getName())) {
+            fastClasses.add(aClass);
+          }
+        }
       }
       if (!fastClasses.isEmpty()) {
         partial.put(Pair.create(scope, name), result = fastClasses.toArray(PsiClass.EMPTY_ARRAY));
