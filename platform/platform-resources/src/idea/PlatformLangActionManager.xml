@@ -117,8 +117,6 @@
         <reference ref="ProblemsView.SortByName"/>
       </group>
       <reference ref="ProblemsView.ShowPreview"/>
-      <action id="ProblemsView.HighlightingConfigure"
-              class="com.intellij.analysis.problemsView.toolWindow.HighlightingConfigureAction"/>
     </group>
 
     <group id="ProblemsView.ToolWindow.TreePopup">
