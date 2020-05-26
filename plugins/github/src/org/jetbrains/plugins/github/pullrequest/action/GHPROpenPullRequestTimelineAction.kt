@@ -24,7 +24,7 @@ class GHPROpenPullRequestTimelineAction
     val dataContext = e.getRequiredData(GHPRActionKeys.DATA_CONTEXT)
     val actionDataContext = e.getRequiredData(GHPRActionKeys.ACTION_DATA_CONTEXT)
 
-    val file = GHPRVirtualFile(dataContext, actionDataContext.pullRequestDetails)
+    val file = GHPRVirtualFile(dataContext, actionDataContext.pullRequest)
     FileEditorManager.getInstance(project).openFile(file, true)
   }
 }

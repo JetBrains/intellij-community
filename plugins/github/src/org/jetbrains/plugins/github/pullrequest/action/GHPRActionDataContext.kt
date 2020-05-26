@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.openapi.editor.Document
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 
@@ -10,7 +10,7 @@ interface GHPRActionDataContext {
 
   val gitRepositoryCoordinates: GitRemoteUrlCoordinates
 
-  val pullRequestDetails: GHPullRequestShort
+  val pullRequest: GHPRIdentifier
   val pullRequestDataProvider: GHPRDataProvider
 
   val submitReviewCommentDocument: Document

@@ -21,7 +21,6 @@ import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.action.GHPRActionDataContext
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContext
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
@@ -108,12 +107,12 @@ internal class GHPRComponentFactory(private val project: Project) {
     val changesLoadingModel = createChangesLoadingModel(commitsModel, cumulativeChangesModel, diffHelper, dataProvider.changesData,
                                                         disposable)
 
-    val actionDataContext = GHPRFixedActionDataContext(dataContext, dataProvider) {
-      detailsLoadingModel.result ?: details
+    val infoComponent = createInfoComponent(dataContext, dataProvider, detailsLoadingModel, changesLoadingModel, disposable).also {
+      installActionData(it, dataContext, details, dataProvider)
     }
-
-    val infoComponent = createInfoComponent(dataContext, actionDataContext, detailsLoadingModel, changesLoadingModel, disposable)
-    val commitsComponent = createCommitsComponent(dataContext, actionDataContext, changesLoadingModel, disposable)
+    val commitsComponent = createCommitsComponent(dataContext, dataProvider, changesLoadingModel, disposable).also {
+      installActionData(it, dataContext, details, dataProvider)
+    }
 
     val infoTabInfo = TabInfo(infoComponent).apply {
       text = GithubBundle.message("pull.request.info")
@@ -140,6 +139,18 @@ internal class GHPRComponentFactory(private val project: Project) {
     }
   }
 
+  private fun installActionData(component: JComponent,
+                                dataContext: GHPRDataContext,
+                                details: GHPullRequestShort,
+                                dataProvider: GHPRDataProvider) {
+    DataManager.registerDataProvider(component) { dataId ->
+      when {
+        GHPRActionKeys.ACTION_DATA_CONTEXT.`is`(dataId) -> GHPRFixedActionDataContext(dataContext, details, dataProvider)
+        else -> null
+      }
+    }
+  }
+
   private fun createReturnToListSideComponent(returnToListListener: () -> Unit): JComponent {
     return BorderLayoutPanel()
       .addToRight(LinkLabel<Any>(GithubBundle.message("pull.request.back.to.list"), AllIcons.Actions.Back) { _, _ ->
@@ -152,11 +163,10 @@ internal class GHPRComponentFactory(private val project: Project) {
   }
 
   private fun createInfoComponent(dataContext: GHPRDataContext,
-                                  actionDataContext: GHPRActionDataContext,
+                                  dataProvider: GHPRDataProvider,
                                   detailsLoadingModel: GHSimpleLoadingModel<GHPullRequest>,
                                   changesLoadingModel: GHPRChangesLoadingModel,
                                   disposable: Disposable): JComponent {
-    val dataProvider = actionDataContext.pullRequestDataProvider
 
     val detailsLoadingPanel = GHLoadingPanel.create(detailsLoadingModel, {
       val detailsModel = GHPRDetailsModelImpl(detailsLoadingModel,
@@ -186,21 +196,11 @@ internal class GHPRComponentFactory(private val project: Project) {
 
       firstComponent = detailsLoadingPanel
       secondComponent = changesBrowser
-    }.also {
-      DataManager.registerDataProvider(it) { dataId ->
-        if (Disposer.isDisposed(disposable)) null
-        else when {
-          GHPRActionKeys.ACTION_DATA_CONTEXT.`is`(dataId) -> GHPRFixedActionDataContext(dataContext, dataProvider) {
-            detailsLoadingModel.result ?: actionDataContext.pullRequestDetails
-          }
-          else -> null
-        }
-      }
     }
   }
 
   private fun createCommitsComponent(dataContext: GHPRDataContext,
-                                     actionDataContext: GHPRActionDataContext,
+                                     dataProvider: GHPRDataProvider,
                                      changesLoadingModel: GHPRChangesLoadingModel,
                                      disposable: Disposable): JComponent {
 
@@ -212,7 +212,7 @@ internal class GHPRComponentFactory(private val project: Project) {
                                                     disposable,
                                                     GithubBundle.message("cannot.load.commits"),
                                                     GHLoadingErrorHandlerImpl(project, dataContext.account) {
-                                                      actionDataContext.pullRequestDataProvider.changesData.reloadChanges()
+                                                      dataProvider.changesData.reloadChanges()
                                                     })
 
     val changesBrowser = GHPRChangesBrowser.create(project,
@@ -229,13 +229,6 @@ internal class GHPRComponentFactory(private val project: Project) {
       secondComponent = changesBrowser
     }.also {
       ActionManager.getInstance().getAction("Github.PullRequest.Changes.Reload").registerCustomShortcutSet(it, disposable)
-      DataManager.registerDataProvider(it) { dataId ->
-        if (Disposer.isDisposed(disposable)) null
-        else when {
-          GHPRActionKeys.ACTION_DATA_CONTEXT.`is`(dataId) -> actionDataContext
-          else -> null
-        }
-      }
     }
   }
 

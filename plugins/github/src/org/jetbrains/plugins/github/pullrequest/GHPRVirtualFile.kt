@@ -2,17 +2,17 @@
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.testFramework.LightVirtualFile
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 
-internal class GHPRVirtualFile(val dataContext: GHPRDataContext, val pullRequest: GHPullRequestShort)
-  : LightVirtualFile(pullRequest.title, GHPRFileType.INSTANCE, "") {
+internal class GHPRVirtualFile(val dataContext: GHPRDataContext, val pullRequest: GHPRIdentifier)
+  : LightVirtualFile("Pull Request #${pullRequest.number}", GHPRFileType.INSTANCE, "") {
 
   init {
     isWritable = false
   }
 
-  override fun getPath(): String = pullRequest.url
+  override fun getPath(): String = dataContext.repositoryCoordinates.toUrl() + "/pulls/" + pullRequest.number
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

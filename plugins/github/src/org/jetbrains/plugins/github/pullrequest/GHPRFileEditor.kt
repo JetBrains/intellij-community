@@ -1,53 +1,106 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorLocation
-import com.intellij.openapi.fileEditor.FileEditorState
-import com.intellij.openapi.ui.ComponentContainer
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.UserDataHolderBase
-import java.beans.PropertyChangeListener
-import java.beans.PropertyChangeSupport
+import com.intellij.diff.util.FileEditorBase
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.project.Project
+import com.intellij.ui.AnimatedIcon
+import com.intellij.util.ui.SingleComponentCenteringLayout
+import com.intellij.util.ui.UIUtil
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
+import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
+import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContext
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRFileEditorComponentFactory
+import org.jetbrains.plugins.github.util.GithubUIUtil
+import org.jetbrains.plugins.github.util.handleOnEdt
+import java.awt.BorderLayout
 import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
 
-internal class GHPRFileEditor(private val name: String,
-                              componentSupplier: () -> ComponentContainer)
-  : UserDataHolderBase(), FileEditor {
+internal class GHPRFileEditor(private val project: Project,
+                              private val dataContext: GHPRDataContext,
+                              private val pullRequest: GHPRIdentifier)
+  : FileEditorBase() {
 
-  private val propertyChangeSupport = PropertyChangeSupport(this)
-  private val container by lazy(LazyThreadSafetyMode.NONE) {
-    componentSupplier().also {
-      Disposer.register(this, it)
+  val securityService = dataContext.securityService
+  val avatarIconsProviderFactory = dataContext.avatarIconsProviderFactory
+  val account = dataContext.account
+
+  private val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, this)
+  val detailsData = dataProvider.detailsData
+  val stateData = dataProvider.stateData
+  val changesData = dataProvider.changesData
+  val reviewData = dataProvider.reviewData
+  val commentsData = dataProvider.commentsData
+
+  val timelineLoader = dataProvider.acquireTimelineLoader(this)
+
+  override fun getName() = "Pull Request Timeline"
+
+  private val content by lazy(LazyThreadSafetyMode.NONE, ::createContent)
+
+  override fun getComponent() = content
+
+  private fun createContent(): JComponent {
+    return doCreateContent().also {
+      GithubUIUtil.overrideUIDependentProperty(it) {
+        isOpaque = true
+        background = EditorColorsManager.getInstance().globalScheme.defaultBackground
+      }
+
+      DataManager.registerDataProvider(it, DataProvider { dataId ->
+        if (GHPRActionKeys.ACTION_DATA_CONTEXT.`is`(dataId)) {
+          GHPRFixedActionDataContext(dataContext, pullRequest, dataProvider)
+        }
+        else null
+      })
     }
   }
 
-  override fun getName(): String = name
+  private fun doCreateContent(): JComponent {
+    val details = getCurrentDetails()
+    if (details != null) {
+      return GHPRFileEditorComponentFactory(project, this, details).create()
+    }
+    else {
+      val panel = JPanel(SingleComponentCenteringLayout()).apply {
+        add(JLabel().apply {
+          foreground = UIUtil.getContextHelpForeground()
+          text = ApplicationBundle.message("label.loading.page.please.wait")
+          icon = AnimatedIcon.Default()
+        })
+      }
 
-  override fun getComponent(): JComponent = container.component
-  override fun getPreferredFocusedComponent(): JComponent? = container.preferredFocusableComponent
-
-  override fun isModified(): Boolean = false
-  override fun isValid(): Boolean = true
-
-  override fun selectNotify() {
-    val action = ActionManager.getInstance().getAction("Github.PullRequest.Timeline.Update")
-    ActionUtil.invokeAction(action, component, ActionPlaces.UNKNOWN, null, null)
+      detailsData.loadDetails().handleOnEdt(this) { loadedDetails, error ->
+        if (loadedDetails != null) {
+          panel.layout = BorderLayout()
+          panel.removeAll()
+          panel.add(GHPRFileEditorComponentFactory(project, this, loadedDetails).create())
+        }
+        else if (error != null) {
+          //TODO: handle error
+          throw error
+        }
+      }
+      return panel
+    }
   }
 
-  override fun deselectNotify() {}
 
-  override fun addPropertyChangeListener(listener: PropertyChangeListener) = propertyChangeSupport.addPropertyChangeListener(listener)
-  override fun removePropertyChangeListener(listener: PropertyChangeListener) = propertyChangeSupport.removePropertyChangeListener(listener)
+  private fun getCurrentDetails(): GHPullRequestShort? {
+    return detailsData.loadedDetails ?: dataContext.listLoader.loadedData.find { it.id == pullRequest.id }
+  }
 
-  override fun setState(state: FileEditorState) {}
-  override fun getBackgroundHighlighter(): BackgroundEditorHighlighter? = null
+  override fun getPreferredFocusedComponent(): JComponent? = null
 
-  override fun getCurrentLocation(): FileEditorLocation? = null
-
-  override fun dispose() {}
+  override fun selectNotify() {
+    if (timelineLoader.loadedData.isNotEmpty())
+      timelineLoader.loadMore(true)
+  }
 }

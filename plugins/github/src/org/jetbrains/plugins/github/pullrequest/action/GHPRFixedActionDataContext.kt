@@ -2,20 +2,16 @@
 package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.openapi.editor.EditorFactory
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 
 class GHPRFixedActionDataContext internal constructor(dataContext: GHPRDataContext,
-                                                      dataProvider: GHPRDataProvider,
-                                                      private val detailsProvider: () -> GHPullRequestShort)
+                                                      override val pullRequest: GHPRIdentifier,
+                                                      override val pullRequestDataProvider: GHPRDataProvider)
   : GHPRActionDataContext {
 
   override val gitRepositoryCoordinates = dataContext.gitRepositoryCoordinates
-
-  override val pullRequestDetails
-    get() = detailsProvider()
-  override val pullRequestDataProvider = dataProvider
 
   override val submitReviewCommentDocument by lazy(LazyThreadSafetyMode.NONE) { EditorFactory.getInstance().createDocument("") }
 }

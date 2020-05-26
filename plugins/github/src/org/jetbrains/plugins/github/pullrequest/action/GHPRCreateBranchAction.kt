@@ -31,13 +31,13 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
     val context = e.getRequiredData(GHPRActionKeys.ACTION_DATA_CONTEXT)
     val repository = context.gitRepositoryCoordinates.repository
     val repositoryList = listOf(repository)
-    val details = context.pullRequestDetails
+    val pullRequest = context.pullRequest
     val dataProvider = context.pullRequestDataProvider
 
     val options = GitBranchUtil.getNewBranchNameFromUser(project, listOf(repository),
                                                          GithubBundle.message("pull.request.branch.checkout.create.dialog.title",
-                                                                              details.number),
-                                                         "pull/${details.number}") ?: return
+                                                                              pullRequest.number),
+                                                         "pull/${pullRequest.number}") ?: return
 
     if (!options.checkout) {
       object : Task.Backgroundable(project, GithubBundle.message("pull.request.branch.checkout.create.task.title"), true) {
