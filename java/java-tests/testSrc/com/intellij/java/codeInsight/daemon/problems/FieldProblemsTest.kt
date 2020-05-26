@@ -72,6 +72,43 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
     }
   }
 
+  fun testTwoClassesWithSameFieldName() {
+    val aClass = myFixture.addClass("""
+      package foo;
+      public class A {
+        public static String mySpecialField;
+      }
+    """.trimIndent())
+
+    val bClass = myFixture.addClass("""
+      package foo;
+      public class B {
+      }
+    """.trimIndent())
+
+    val refClass = myFixture.addClass("""
+      package foo;
+      public class C {
+        void test() {
+          int i = new A().mySpecialField / 2;
+        }
+      }
+    """.trimIndent())
+
+    doTest(bClass) {
+      val factory = JavaPsiFacade.getInstance(project).elementFactory
+      val field = factory.createFieldFromText("public static String mySpecialField;", bClass)
+      WriteCommandAction.runWriteCommandAction(project) { bClass.add(field) }
+      myFixture.doHighlighting()
+      assertEmpty(getProblems(bClass.containingFile))
+
+      myFixture.openFileInEditor(aClass.containingFile.virtualFile)
+      myFixture.doHighlighting()
+      changeField(aClass) { it.modifierList?.setModifierProperty(PsiModifier.STATIC, false) }
+      assertTrue(hasReportedProblems<PsiLocalVariable>(aClass, refClass))
+    }
+  }
+
   fun testAmbiguousReference() {
     myFixture.addClass("""
       package foo;

@@ -121,18 +121,27 @@ internal class ProblemSearcher(private val file: PsiFile) : JavaElementVisitor()
 
   companion object {
 
-    internal fun getProblems(usage: PsiElement): Set<PsiElement> {
-      val startElement = getSearchStartElement(usage) ?: return emptySet()
+    internal fun getProblems(usage: PsiElement, targetFile: PsiFile): Set<PsiElement> {
+      val startElement = getSearchStartElement(usage, targetFile) ?: return emptySet()
       val psiFile = startElement.containingFile
       val searcher = ProblemSearcher(psiFile)
       startElement.accept(searcher)
       return searcher.problems
     }
 
-    private fun getSearchStartElement(usage: PsiElement) = when (usage) {
-      is PsiMethod -> usage.modifierList.findAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE) ?: usage
-      is PsiJavaCodeReferenceElement -> usage.referenceNameElement
-      else -> usage
+    private fun getSearchStartElement(usage: PsiElement, targetFile: PsiFile): PsiElement? {
+      when (usage) {
+        is PsiMethod -> return usage.modifierList.findAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE) ?: usage
+        is PsiJavaCodeReferenceElement -> {
+          val resolveResult = usage.advancedResolve(false)
+          if (resolveResult.isValidResult) {
+            val containingFile = resolveResult.element?.containingFile
+            if (containingFile != null && containingFile != targetFile) return null
+          }
+          return usage.referenceNameElement
+        }
+        else -> return usage
+      }
     }
   }
 }
