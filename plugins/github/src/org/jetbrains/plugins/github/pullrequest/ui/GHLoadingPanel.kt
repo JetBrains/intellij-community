@@ -100,7 +100,7 @@ constructor(model: GHLoadingModel,
         isOpaque = false
         add(JLabel().apply {
           foreground = UIUtil.getContextHelpForeground()
-          text = "Loading..."
+          text = ApplicationBundle.message("label.loading.page.please.wait")
           icon = AnimatedIcon.Default()
         })
       }
