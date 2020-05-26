@@ -22,7 +22,6 @@ import com.intellij.workspace.legacyBridge.externalSystem.ExternalSystemModulePr
 import com.intellij.workspace.legacyBridge.facet.FacetManagerViaWorkspaceModel
 import org.picocontainer.MutablePicoContainer
 import java.io.File
-import java.util.concurrent.atomic.AtomicBoolean
 
 internal class LegacyBridgeModuleImpl(
   override var moduleEntityId: ModuleId,
@@ -56,17 +55,16 @@ internal class LegacyBridgeModuleImpl(
   override fun registerComponents(plugins: List<DescriptorToLoad>, listenerCallbacks: List<Runnable>?) {
     super.registerComponents(plugins, null)
 
-    val pluginDescriptor = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)
-                           ?: error("Could not find plugin by id: ${PluginManagerCore.CORE_ID}")
+    val corePlugin = plugins.asSequence().map { it.descriptor }.find { it.pluginId == PluginManagerCore.CORE_ID }
 
-    if (plugins.any { it.descriptor.pluginId == PluginManagerCore.CORE_ID }) {
-      registerComponent(ModuleRootManager::class.java, LegacyBridgeModuleRootComponent::class.java, pluginDescriptor, true)
-      registerComponent(FacetManager::class.java, FacetManagerViaWorkspaceModel::class.java, pluginDescriptor, true)
+    if (corePlugin != null) {
+      registerComponent(ModuleRootManager::class.java, LegacyBridgeModuleRootComponent::class.java, corePlugin, true)
+      registerComponent(FacetManager::class.java, FacetManagerViaWorkspaceModel::class.java, corePlugin, true)
       (picoContainer as MutablePicoContainer).unregisterComponent(DeprecatedModuleOptionManager::class.java)
 
-      registerService(LegacyBridgeFilePointerProvider::class.java, LegacyBridgeFilePointerProviderImpl::class.java, pluginDescriptor, false)
-      registerService(IComponentStore::class.java, LegacyBridgeModuleStoreImpl::class.java, pluginDescriptor, true)
-      registerService(ExternalSystemModulePropertyManager::class.java, ExternalSystemModulePropertyManagerForWorkspaceModel::class.java, pluginDescriptor, true)
+      registerService(LegacyBridgeFilePointerProvider::class.java, LegacyBridgeFilePointerProviderImpl::class.java, corePlugin, false)
+      registerService(IComponentStore::class.java, LegacyBridgeModuleStoreImpl::class.java, corePlugin, true)
+      registerService(ExternalSystemModulePropertyManager::class.java, ExternalSystemModulePropertyManagerForWorkspaceModel::class.java, corePlugin, true)
       (picoContainer as MutablePicoContainer).unregisterComponent(FacetFromExternalSourcesStorage::class.java.name)
     }
   }
