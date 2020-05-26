@@ -3,14 +3,11 @@ package com.intellij.workspace.api.pstorage
 
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.HashBiMap
-import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.workspace.api.*
 import com.intellij.workspace.api.pstorage.external.ExternalEntityIndex
 import com.intellij.workspace.api.pstorage.external.ExternalEntityIndex.MutableExternalEntityIndex
-import com.intellij.workspace.api.pstorage.indices.EntityStorageInternalIndex.MutableEntityStorageInternalIndex
-import com.intellij.workspace.api.pstorage.indices.VirtualFileIndex.MutableVirtualFileIndex
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -36,7 +33,7 @@ internal class PEntityStorage constructor(
   override val entitiesByType: ImmutableEntitiesBarrel,
   override val refs: RefsTable,
   override val indexes: StorageIndexes
-  ) : AbstractPEntityStorage() {
+) : AbstractPEntityStorage() {
   override fun assertConsistency() {
     entitiesByType.assertConsistency()
 
@@ -118,61 +115,6 @@ internal class PEntityStorageBuilder(
     return pEntityData.createEntity(this)
   }
 
-  private fun <T : TypedEntity> createAddEvent(pEntityData: PEntityData<T>) {
-    val pid = pEntityData.createPid()
-    val parents = refs.getParentRefsOfChild(pid)
-    val children = refs.getChildrenRefsOfParentBy(pid)
-    updateChangeLog { it.add(ChangeEntry.AddEntity(pEntityData, pid.clazz, children, parents)) }
-  }
-
-  private fun <T : TypedEntity> cloneEntity(entity: PEntityData<T>, clazz: Int,
-                                            replaceMap: MutableMap<PId, PId>): Pair<PEntityData<T>, PId> {
-    // Add new entity to store (without references)
-    val cloned = entitiesByType.cloneAndAdd(entity, clazz)
-    val clonedPid = cloned.createPid()
-    if (clonedPid != entity.createPid()) {
-      replaceMap[entity.createPid()] = clonedPid
-    }
-
-    // Restore links to soft references
-    if (cloned is PSoftLinkable) indexes.updateSoftLinksIndex(cloned)
-
-    return cloned to clonedPid
-  }
-
-  // modificationCount is not incremented
-  private fun updateEntityRefs(entityId: PId, updatedChildren: ChildrenConnectionsInfo,
-                               updatedParents: ParentConnectionsInfo) {
-    // Restore children references of the entity
-    for ((connectionId, children) in updatedChildren) {
-      refs.updateChildrenOfParent(connectionId, entityId, children.toList())
-    }
-
-    // Restore parent references of the entity
-    for ((connection, parent) in updatedParents) {
-      refs.updateParentOfChild(connection, entityId, parent)
-    }
-  }
-
-  // modificationCount is not incremented
-  private fun <T : TypedEntity> replaceEntityWithRefs(newEntity: PEntityData<T>,
-                                                      clazz: Int,
-                                                      updatedChildren: ChildrenConnectionsInfo,
-                                                      updatedParents: ParentConnectionsInfo) {
-
-    val id = newEntity.createPid()
-    val existingEntityData = entityDataById(id)
-    val beforePersistentId = existingEntityData?.persistentId(this)
-    val beforeSoftLinks = if (existingEntityData is PSoftLinkable) existingEntityData.getLinks() else null
-
-    /// Replace entity data. id should not be changed
-    entitiesByType.replaceById(newEntity, clazz)
-
-    // Restore soft references
-    indexes.updateSoftReferences(beforePersistentId, beforeSoftLinks, entityDataByIdOrDie(id), this)
-    updateEntityRefs(id, updatedChildren, updatedParents)
-  }
-
   override fun <M : ModifiableTypedEntity<T>, T : TypedEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T {
     // Get entity data that will be modified
     val copiedData = entitiesByType.getEntityDataForModification((e as PTypedEntity).id) as PEntityData<T>
@@ -220,53 +162,7 @@ internal class PEntityStorageBuilder(
     updateChangeLog { it.add(ChangeEntry.RemoveEntity(e.id)) }
   }
 
-  // modificationCount is not incremented
-  private fun removeEntity(idx: PId) {
-    val accumulator: MutableSet<PId> = mutableSetOf(idx)
-
-    accumulateEntitiesToRemove(idx, accumulator)
-
-    for (id in accumulator) {
-      val entityData = entityDataById(id)
-      if (entityData is PSoftLinkable) indexes.removeFromSoftLinksIndex(entityData)
-      entitiesByType.remove(id.arrayId, id.clazz)
-    }
-
-    // Update index
-    //   Please don't join it with the previous loop
-    for (id in accumulator) indexes.removeFromIndices(id)
-  }
-
-  /**
-   * Cleanup references and accumulate hard linked entities in [accumulator]
-   */
-  private fun accumulateEntitiesToRemove(id: PId, accumulator: MutableSet<PId>) {
-    val children = refs.getChildrenRefsOfParentBy(id)
-    for ((connectionId, children) in children) {
-      for (child in children) {
-        if (child in accumulator) continue
-        accumulator.add(child)
-        accumulateEntitiesToRemove(child, accumulator)
-        refs.removeRefsByParent(connectionId, id)
-      }
-    }
-
-    val parents = refs.getParentRefsOfChild(id)
-    for ((connectionId, parent) in parents) {
-      refs.removeParentToChildRef(connectionId, parent, id)
-    }
-  }
-
   override fun <E : TypedEntity> createReference(e: E): EntityReference<E> = PEntityReference((e as PTypedEntity).id)
-
-  private fun PEntityData<*>.hasPersistentId(): Boolean {
-    val entity = this.createEntity(this@PEntityStorageBuilder)
-    return entity is TypedEntityWithPersistentId
-  }
-
-  private fun PEntityData<*>.identificator(storage: AbstractPEntityStorage): Any {
-    return this.persistentId(storage) ?: this.hashCode()
-  }
 
   private fun ArrayListMultimap<Any, PEntityData<out TypedEntity>>.find(entity: PEntityData<out TypedEntity>,
                                                                         storage: AbstractPEntityStorage): PEntityData<out TypedEntity>? {
@@ -615,6 +511,107 @@ internal class PEntityStorageBuilder(
     indexes.externalIndices.remove(identifier)
   }
 
+  // modificationCount is not incremented
+  private fun removeEntity(idx: PId) {
+    val accumulator: MutableSet<PId> = mutableSetOf(idx)
+
+    accumulateEntitiesToRemove(idx, accumulator)
+
+    for (id in accumulator) {
+      val entityData = entityDataById(id)
+      if (entityData is PSoftLinkable) indexes.removeFromSoftLinksIndex(entityData)
+      entitiesByType.remove(id.arrayId, id.clazz)
+    }
+
+    // Update index
+    //   Please don't join it with the previous loop
+    for (id in accumulator) indexes.removeFromIndices(id)
+  }
+
+  private fun PEntityData<*>.hasPersistentId(): Boolean {
+    val entity = this.createEntity(this@PEntityStorageBuilder)
+    return entity is TypedEntityWithPersistentId
+  }
+
+  private fun PEntityData<*>.identificator(storage: AbstractPEntityStorage): Any {
+    return this.persistentId(storage) ?: this.hashCode()
+  }
+
+  private fun <T : TypedEntity> createAddEvent(pEntityData: PEntityData<T>) {
+    val pid = pEntityData.createPid()
+    val parents = refs.getParentRefsOfChild(pid)
+    val children = refs.getChildrenRefsOfParentBy(pid)
+    updateChangeLog { it.add(ChangeEntry.AddEntity(pEntityData, pid.clazz, children, parents)) }
+  }
+
+  private fun <T : TypedEntity> cloneEntity(entity: PEntityData<T>, clazz: Int,
+                                            replaceMap: MutableMap<PId, PId>): Pair<PEntityData<T>, PId> {
+    // Add new entity to store (without references)
+    val cloned = entitiesByType.cloneAndAdd(entity, clazz)
+    val clonedPid = cloned.createPid()
+    if (clonedPid != entity.createPid()) {
+      replaceMap[entity.createPid()] = clonedPid
+    }
+
+    // Restore links to soft references
+    if (cloned is PSoftLinkable) indexes.updateSoftLinksIndex(cloned)
+
+    return cloned to clonedPid
+  }
+
+  // modificationCount is not incremented
+  private fun updateEntityRefs(entityId: PId, updatedChildren: ChildrenConnectionsInfo,
+                               updatedParents: ParentConnectionsInfo) {
+    // Restore children references of the entity
+    for ((connectionId, children) in updatedChildren) {
+      refs.updateChildrenOfParent(connectionId, entityId, children.toList())
+    }
+
+    // Restore parent references of the entity
+    for ((connection, parent) in updatedParents) {
+      refs.updateParentOfChild(connection, entityId, parent)
+    }
+  }
+
+  // modificationCount is not incremented
+  private fun <T : TypedEntity> replaceEntityWithRefs(newEntity: PEntityData<T>,
+                                                      clazz: Int,
+                                                      updatedChildren: ChildrenConnectionsInfo,
+                                                      updatedParents: ParentConnectionsInfo) {
+
+    val id = newEntity.createPid()
+    val existingEntityData = entityDataById(id)
+    val beforePersistentId = existingEntityData?.persistentId(this)
+    val beforeSoftLinks = if (existingEntityData is PSoftLinkable) existingEntityData.getLinks() else null
+
+    /// Replace entity data. id should not be changed
+    entitiesByType.replaceById(newEntity, clazz)
+
+    // Restore soft references
+    indexes.updateSoftReferences(beforePersistentId, beforeSoftLinks, entityDataByIdOrDie(id), this)
+    updateEntityRefs(id, updatedChildren, updatedParents)
+  }
+
+  /**
+   * Cleanup references and accumulate hard linked entities in [accumulator]
+   */
+  private fun accumulateEntitiesToRemove(id: PId, accumulator: MutableSet<PId>) {
+    val children = refs.getChildrenRefsOfParentBy(id)
+    for ((connectionId, children) in children) {
+      for (child in children) {
+        if (child in accumulator) continue
+        accumulator.add(child)
+        accumulateEntitiesToRemove(child, accumulator)
+        refs.removeRefsByParent(connectionId, id)
+      }
+    }
+
+    val parents = refs.getParentRefsOfChild(id)
+    for ((connectionId, parent) in parents) {
+      refs.removeParentToChildRef(connectionId, parent, id)
+    }
+  }
+
   companion object {
 
     private val LOG = logger<PEntityStorageBuilder>()
@@ -648,6 +645,54 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
   internal abstract val indexes: StorageIndexes
 
   abstract fun assertConsistency()
+
+  override fun <E : TypedEntity> entities(entityClass: Class<E>): Sequence<E> {
+    return entitiesByType[entityClass.toClassId()]?.all()?.map { it.createEntity(this) } as? Sequence<E> ?: emptySequence()
+  }
+
+  internal fun entityDataById(id: PId): PEntityData<out TypedEntity>? = entitiesByType[id.clazz]?.get(id.arrayId)
+
+  internal fun entityDataByIdOrDie(id: PId): PEntityData<out TypedEntity> {
+    return entitiesByType[id.clazz]?.get(id.arrayId) ?: error("Cannot find an entity by id $id")
+  }
+
+  override fun <E : TypedEntity, R : TypedEntity> referrers(e: E, entityClass: KClass<R>,
+                                                            property: KProperty1<R, EntityReference<E>>): Sequence<R> {
+    TODO()
+    //return entities(entityClass.java).filter { property.get(it).resolve(this) == e }
+  }
+
+  override fun <E : TypedEntityWithPersistentId, R : TypedEntity> referrers(id: PersistentEntityId<E>, entityClass: Class<R>): Sequence<R> {
+    TODO("Not yet implemented")
+  }
+
+  override fun <E : TypedEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
+    val pids = indexes.persistentIdIndex.getIdsByEntry(id) ?: return null
+    if (pids.isEmpty()) return null
+    if (pids.size > 1) error("Cannot resolve persistent id. The store contains more than one associated entities")
+    val pid = pids.single()
+    return entityDataById(pid)?.createEntity(this) as E?
+  }
+
+  override fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out TypedEntity>, List<TypedEntity>>> {
+    val res = HashMap<EntitySource, MutableMap<Class<out TypedEntity>, MutableList<TypedEntity>>>()
+    entitiesByType.allEntities().forEachIndexed { i, entities ->
+      entities.all().forEach {
+        if (sourceFilter(it.entitySource)) {
+          val mutableMapRes = res.getOrPut(it.entitySource, { mutableMapOf() })
+          mutableMapRes.getOrPut(i.findEntityClass(), { mutableListOf() }).add(it.createEntity(this))
+        }
+      }
+    }
+    return res
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  override fun <T> getExternalIndex(identifier: String): ExternalEntityIndex<T>? {
+    val index = indexes.externalIndices[identifier] as? ExternalEntityIndex<T>
+    index?.setTypedEntityStorage(this)
+    return index
+  }
 
   protected fun assertConsistencyBase() {
     // Rules:
@@ -707,57 +752,6 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
     assert(connectionClass.findEntityClass<TypedEntity>().isAssignableFrom(entityId.clazz.findEntityClass<TypedEntity>())) {
       "Entity storage with connection class $connectionClass contains entity data of wrong type $entityId"
     }
-  }
-
-  override fun <E : TypedEntity> entities(entityClass: Class<E>): Sequence<E> {
-    return entitiesByType[entityClass.toClassId()]?.all()?.map { it.createEntity(this) } as? Sequence<E> ?: emptySequence()
-  }
-
-  internal fun entityDataById(id: PId): PEntityData<out TypedEntity>? {
-    return entitiesByType[id.clazz]?.get(id.arrayId)
-  }
-
-  internal fun entityDataByIdOrDie(id: PId): PEntityData<out TypedEntity> {
-    return entitiesByType[id.clazz]?.get(id.arrayId) ?: error("Cannot find an entity by id $id")
-  }
-
-  override fun <E : TypedEntity, R : TypedEntity> referrers(e: E,
-                                                            entityClass: KClass<R>,
-                                                            property: KProperty1<R, EntityReference<E>>): Sequence<R> {
-    TODO()
-    //return entities(entityClass.java).filter { property.get(it).resolve(this) == e }
-  }
-
-  override fun <E : TypedEntityWithPersistentId, R : TypedEntity> referrers(id: PersistentEntityId<E>, entityClass: Class<R>): Sequence<R> {
-    TODO("Not yet implemented")
-  }
-
-  override fun <E : TypedEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
-    val pids = indexes.persistentIdIndex.getIdsByEntry(id) ?: return null
-    if (pids.isEmpty()) return null
-    if (pids.size > 1) error("Cannot resolve persistent id. The store contains more than one associated entities")
-    val pid = pids.single()
-    return entityDataById(pid)?.createEntity(this) as E?
-  }
-
-  override fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out TypedEntity>, List<TypedEntity>>> {
-    val res = HashMap<EntitySource, MutableMap<Class<out TypedEntity>, MutableList<TypedEntity>>>()
-    entitiesByType.allEntities().forEachIndexed { i, entities ->
-      entities.all().forEach {
-        if (sourceFilter(it.entitySource)) {
-          val mutableMapRes = res.getOrPut(it.entitySource, { mutableMapOf() })
-          mutableMapRes.getOrPut(i.findEntityClass(), { mutableListOf() }).add(it.createEntity(this))
-        }
-      }
-    }
-    return res
-  }
-
-  @Suppress("UNCHECKED_CAST")
-  override fun <T> getExternalIndex(identifier: String): ExternalEntityIndex<T>? {
-    val index = indexes.externalIndices[identifier] as? ExternalEntityIndex<T>
-    index?.setTypedEntityStorage(this)
-    return index
   }
 }
 
