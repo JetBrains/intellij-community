@@ -14,15 +14,16 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.EnumSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class RandomAccessDataFile implements Forceable, Closeable {
   protected static final Logger LOG = Logger.getInstance(RandomAccessDataFile.class);
 
   private static final OpenChannelsCache ourCache = new OpenChannelsCache(150,
-                                                                          StandardOpenOption.READ,
-                                                                          StandardOpenOption.WRITE,
-                                                                          StandardOpenOption.CREATE);
+                                                                          EnumSet.of(StandardOpenOption.READ,
+                                                                                     StandardOpenOption.WRITE,
+                                                                                     StandardOpenOption.CREATE));
   private static final AtomicInteger ourFilesCount = new AtomicInteger();
 
   private final int myCount = ourFilesCount.incrementAndGet();

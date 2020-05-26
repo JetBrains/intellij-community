@@ -109,7 +109,7 @@ public class RefCountingStorage extends AbstractStorage {
   }
 
   @Override
-  protected void appendBytes(int record, ByteArraySequence bytes) throws IOException {
+  protected void appendBytes(int record, ByteArraySequence bytes) {
     throw new IncorrectOperationException("Appending is not supported");
   }
 
@@ -146,7 +146,7 @@ public class RefCountingStorage extends AbstractStorage {
       doWrite(record, fixedSize, s);
       myPendingWriteRequestsSize -= bytes.getLength();
       myPendingWriteRequests.remove(record);
-                             });
+    });
   }
 
   private void doWrite(int record, boolean fixedSize, BufferExposingByteArrayOutputStream s) throws IOException {

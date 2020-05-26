@@ -5,24 +5,25 @@
  */
 package com.intellij.util.io;
 
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 
 public class OpenChannelsCache { // TODO: Will it make sense to have a background thread, that flushes the cache by timeout?
   private final int myCacheSizeLimit;
-  private final Set<? extends OpenOption> myOpenOptions;
+  @NotNull
+  private final Set<StandardOpenOption> myOpenOptions;
+  @NotNull
   private final Map<Path, ChannelDescriptor> myCache;
 
-  public OpenChannelsCache(final int cacheSizeLimit, @NonNls OpenOption... openOptions) {
+  public OpenChannelsCache(final int cacheSizeLimit, @NotNull Set<StandardOpenOption> openOptions) {
     myCacheSizeLimit = cacheSizeLimit;
-    myOpenOptions = ContainerUtil.newHashSet(openOptions);
+    myOpenOptions = openOptions;
     myCache = new LinkedHashMap<>(cacheSizeLimit, 0.5f, true);
   }
 
