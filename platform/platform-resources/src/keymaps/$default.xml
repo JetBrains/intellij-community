@@ -966,6 +966,9 @@
   <action id="SafeDelete">
     <keyboard-shortcut first-keystroke="alt DELETE"/>
   </action>
+  <action id="SelectVirtualTemplateElement">
+    <keyboard-shortcut first-keystroke="TAB"/>
+  </action>
   <action id="NextTemplateVariable">
     <keyboard-shortcut first-keystroke="TAB"/>
     <keyboard-shortcut first-keystroke="ENTER"/>
