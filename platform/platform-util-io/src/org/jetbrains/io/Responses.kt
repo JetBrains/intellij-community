@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("Responses")
 package org.jetbrains.io
 
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
 import io.netty.buffer.ByteBuf
@@ -16,8 +15,6 @@ import io.netty.util.CharsetUtil
 import java.nio.CharBuffer
 import java.nio.charset.Charset
 import java.util.*
-
-private var SERVER_HEADER_VALUE: String? = null
 
 fun response(contentType: String?, content: ByteBuf?): FullHttpResponse {
   val response = if (content == null)
@@ -34,12 +31,6 @@ fun response(content: CharSequence, charset: Charset = CharsetUtil.US_ASCII): Fu
   return DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(content, charset))
 }
 
-fun HttpResponse.setDate() {
-  if (!headers().contains(HttpHeaderNames.DATE)) {
-    headers().set(HttpHeaderNames.DATE, Calendar.getInstance().time)
-  }
-}
-
 fun HttpResponse.addNoCache(): HttpResponse {
   @Suppress("SpellCheckingInspection")
   headers().add(HttpHeaderNames.CACHE_CONTROL, "no-cache, no-store, must-revalidate, max-age=0")
@@ -47,28 +38,10 @@ fun HttpResponse.addNoCache(): HttpResponse {
   return this
 }
 
-val serverHeaderValue: String?
-  get() {
-    if (SERVER_HEADER_VALUE == null) {
-      val app = ApplicationManager.getApplication()
-      if (app != null && !app.isDisposed) {
-        SERVER_HEADER_VALUE = ApplicationInfo.getInstance().fullApplicationName
-      }
-    }
-    return SERVER_HEADER_VALUE
-  }
-
-fun HttpResponse.addServer() {
-  serverHeaderValue?.let {
-    headers().add(HttpHeaderNames.SERVER, it)
-  }
-}
-
 @JvmOverloads
 fun HttpResponse.send(channel: Channel, request: HttpRequest?, extraHeaders: HttpHeaders? = null) {
-  if (status() !== HttpResponseStatus.NOT_MODIFIED && !HttpUtil.isContentLengthSet(this)) {
-    HttpUtil.setContentLength(this,
-      (if (this is FullHttpResponse) content().readableBytes() else 0).toLong())
+  if (status() != HttpResponseStatus.NOT_MODIFIED && !HttpUtil.isContentLengthSet(this)) {
+    HttpUtil.setContentLength(this, (if (this is FullHttpResponse) content().readableBytes() else 0).toLong())
   }
 
   addCommonHeaders()
@@ -90,16 +63,20 @@ fun HttpResponse.addKeepAliveIfNeeded(request: HttpRequest): Boolean {
 fun HttpResponse.addKeepAliveIfNeed(request: HttpRequest): Boolean = addKeepAliveIfNeeded(request)
 
 fun HttpResponse.addCommonHeaders() {
-  addServer()
-  setDate()
-  if (!headers().contains("X-Frame-Options")) {
-    headers().set("X-Frame-Options", "SameOrigin")
+  if (!headers().contains(HttpHeaderNames.DATE)) {
+    headers().set(HttpHeaderNames.DATE, Calendar.getInstance().time)
+  }
+
+  if (!headers().contains(HttpHeaderNames.X_FRAME_OPTIONS)) {
+    headers().set(HttpHeaderNames.X_FRAME_OPTIONS, "SameOrigin")
   }
   @Suppress("SpellCheckingInspection")
   headers().set("X-Content-Type-Options", "nosniff")
   headers().set("x-xss-protection", "1; mode=block")
 
-  headers().set(HttpHeaderNames.ACCEPT_RANGES, "bytes")
+  if (status() < HttpResponseStatus.MULTIPLE_CHOICES) {
+    headers().set(HttpHeaderNames.ACCEPT_RANGES, "bytes")
+  }
 }
 
 fun HttpResponse.send(channel: Channel, close: Boolean) {
@@ -132,8 +109,8 @@ fun HttpResponseStatus.orInSafeMode(safeStatus: HttpResponseStatus): HttpRespons
   }
 }
 
-private fun createStatusResponse(responseStatus: HttpResponseStatus, request: HttpRequest?, description: String?): HttpResponse {
-  if (request != null && request.method() === HttpMethod.HEAD) {
+internal fun createStatusResponse(responseStatus: HttpResponseStatus, request: HttpRequest?, description: String? = null): HttpResponse {
+  if (request != null && request.method() == HttpMethod.HEAD) {
     return DefaultFullHttpResponse(HttpVersion.HTTP_1_1, responseStatus, Unpooled.EMPTY_BUFFER)
   }
 
@@ -143,9 +120,8 @@ private fun createStatusResponse(responseStatus: HttpResponseStatus, request: Ht
   if (description != null) {
     builder.append("<p>").append(description).append("</p>")
   }
-  builder.append("<hr/><p style=\"text-align: center\">").append(serverHeaderValue ?: "").append("</p>")
 
-  val response = DefaultFullHttpResponse(HttpVersion.HTTP_1_1, responseStatus, ByteBufUtil.encodeString(ByteBufAllocator.DEFAULT, CharBuffer.wrap(builder), CharsetUtil.UTF_8))
+  val response = DefaultFullHttpResponse(HttpVersion.HTTP_1_1, responseStatus, ByteBufUtil.encodeString(ByteBufAllocator.DEFAULT, CharBuffer.wrap(builder), Charsets.UTF_8))
   response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html")
   return response
 }
