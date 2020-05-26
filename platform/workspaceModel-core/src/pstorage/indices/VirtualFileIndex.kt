@@ -69,7 +69,7 @@ class VirtualFileUrlProperty<T : PModifiableTypedEntity<out PTypedEntity>> : Rea
     val field = thisRef.original.javaClass.getDeclaredField(property.name)
     field.isAccessible = true
     field.set(thisRef.original, value)
-    thisRef.diff.virtualFileIndex.index(thisRef.id, listOf(value))
+    thisRef.diff.indexes.virtualFileIndex.index(thisRef.id, listOf(value))
   }
 }
 
@@ -87,7 +87,7 @@ class VirtualFileUrlNullableProperty<T : PModifiableTypedEntity<out PTypedEntity
     val field = thisRef.original.javaClass.getDeclaredField(property.name)
     field.isAccessible = true
     field.set(thisRef.original, value)
-    thisRef.diff.virtualFileIndex.index(thisRef.id, value?.let { listOf(value) })
+    thisRef.diff.indexes.virtualFileIndex.index(thisRef.id, value?.let { listOf(value) })
   }
 }
 
@@ -105,6 +105,6 @@ class VirtualFileUrlListProperty<T : PModifiableTypedEntity<out PTypedEntity>> :
     val field = thisRef.original.javaClass.getDeclaredField(property.name)
     field.isAccessible = true
     field.set(thisRef.original, value)
-    thisRef.diff.virtualFileIndex.index(thisRef.id, value)
+    thisRef.diff.indexes.virtualFileIndex.index(thisRef.id, value)
   }
 }

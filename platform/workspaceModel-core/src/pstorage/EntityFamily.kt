@@ -129,7 +129,9 @@ internal class MutableEntityFamily<E : TypedEntity>(
   }
 
   companion object {
-    fun createEmptyMutable() = MutableEntityFamily(ArrayList(), false)
+    // Do not remove parameter. Kotlin fails with compilation without it
+    @Suppress("RemoveExplicitTypeArguments")
+    fun createEmptyMutable() = MutableEntityFamily<TypedEntity>(ArrayList(), false)
   }
 }
 

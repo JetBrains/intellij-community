@@ -39,21 +39,21 @@ class PersistentIdIndexTest {
     val newName = "newName"
     val builder = PEntityStorageBuilder.create()
     val entity = builder.addPersistentIdEntity(oldName)
-    val persistentId = builder.persistentIdIndex.getEntryById(entity.id)
+    val persistentId = builder.indexes.persistentIdIndex.getEntryById(entity.id)
     Assert.assertEquals(oldName, persistentId!!.presentableName)
-    Assert.assertEquals(entity.id, builder.persistentIdIndex.getIdsByEntry(persistentId)?.get(0))
+    Assert.assertEquals(entity.id, builder.indexes.persistentIdIndex.getIdsByEntry(persistentId)?.get(0))
 
     val newEntity = builder.modifyEntity(ModifiablePPersistentIdEntity::class.java, entity) {
       data = newName
     }
-    val newPersistentId = builder.persistentIdIndex.getEntryById(newEntity.id)
+    val newPersistentId = builder.indexes.persistentIdIndex.getEntryById(newEntity.id)
     Assert.assertEquals(newName, newPersistentId!!.presentableName)
-    Assert.assertEquals(entity.id, builder.persistentIdIndex.getIdsByEntry(newPersistentId)?.get(0))
-    Assert.assertNull(builder.persistentIdIndex.getIdsByEntry(persistentId))
+    Assert.assertEquals(entity.id, builder.indexes.persistentIdIndex.getIdsByEntry(newPersistentId)?.get(0))
+    Assert.assertNull(builder.indexes.persistentIdIndex.getIdsByEntry(persistentId))
 
     builder.removeEntity(entity)
-    Assert.assertNull(builder.persistentIdIndex.getIdsByEntry(persistentId))
-    Assert.assertNull(builder.persistentIdIndex.getIdsByEntry(newPersistentId))
+    Assert.assertNull(builder.indexes.persistentIdIndex.getIdsByEntry(persistentId))
+    Assert.assertNull(builder.indexes.persistentIdIndex.getIdsByEntry(newPersistentId))
   }
 
   @Test
@@ -62,22 +62,22 @@ class PersistentIdIndexTest {
     val newName = "newName"
     val builder = PEntityStorageBuilder.create()
     val entity = builder.addPersistentIdEntity(oldName)
-    val persistentId = builder.persistentIdIndex.getEntryById(entity.id)
+    val persistentId = builder.indexes.persistentIdIndex.getEntryById(entity.id)
     Assert.assertEquals(oldName, persistentId!!.presentableName)
-    Assert.assertEquals(entity.id, builder.persistentIdIndex.getIdsByEntry(persistentId)?.get(0))
+    Assert.assertEquals(entity.id, builder.indexes.persistentIdIndex.getIdsByEntry(persistentId)?.get(0))
 
     val diff = PEntityStorageBuilder.from(builder.toStorage())
-    Assert.assertEquals(entity.id, diff.persistentIdIndex.getIdsByEntry(persistentId)?.get(0))
+    Assert.assertEquals(entity.id, diff.indexes.persistentIdIndex.getIdsByEntry(persistentId)?.get(0))
 
     val secondEntity = diff.addPersistentIdEntity(newName)
-    val secondPersistentId = diff.persistentIdIndex.getEntryById(secondEntity.id)
+    val secondPersistentId = diff.indexes.persistentIdIndex.getEntryById(secondEntity.id)
     Assert.assertEquals(newName, secondPersistentId!!.presentableName)
-    Assert.assertNull(builder.persistentIdIndex.getIdsByEntry(secondPersistentId)?.get(0))
-    Assert.assertEquals(secondEntity.id, diff.persistentIdIndex.getIdsByEntry(secondPersistentId)?.get(0))
+    Assert.assertNull(builder.indexes.persistentIdIndex.getIdsByEntry(secondPersistentId)?.get(0))
+    Assert.assertEquals(secondEntity.id, diff.indexes.persistentIdIndex.getIdsByEntry(secondPersistentId)?.get(0))
 
     builder.addDiff(diff)
-    Assert.assertEquals(entity.id, builder.persistentIdIndex.getIdsByEntry(persistentId)?.get(0))
-    Assert.assertEquals(secondEntity.id, builder.persistentIdIndex.getIdsByEntry(secondPersistentId)?.get(0))
+    Assert.assertEquals(entity.id, builder.indexes.persistentIdIndex.getIdsByEntry(persistentId)?.get(0))
+    Assert.assertEquals(secondEntity.id, builder.indexes.persistentIdIndex.getIdsByEntry(secondPersistentId)?.get(0))
   }
 
   @Test
@@ -85,19 +85,19 @@ class PersistentIdIndexTest {
     val oldName = "oldName"
     val builder = PEntityStorageBuilder.create()
     val entity = builder.addPersistentIdEntity(oldName)
-    val persistentId = builder.persistentIdIndex.getEntryById(entity.id)
+    val persistentId = builder.indexes.persistentIdIndex.getEntryById(entity.id)
     Assert.assertEquals(oldName, persistentId!!.presentableName)
-    Assert.assertEquals(entity.id, builder.persistentIdIndex.getIdsByEntry(persistentId)?.get(0))
+    Assert.assertEquals(entity.id, builder.indexes.persistentIdIndex.getIdsByEntry(persistentId)?.get(0))
 
     val diff = PEntityStorageBuilder.from(builder.toStorage())
-    Assert.assertEquals(entity.id, diff.persistentIdIndex.getIdsByEntry(persistentId)?.get(0))
+    Assert.assertEquals(entity.id, diff.indexes.persistentIdIndex.getIdsByEntry(persistentId)?.get(0))
 
     diff.removeEntity(entity)
-    Assert.assertEquals(entity.id, builder.persistentIdIndex.getIdsByEntry(persistentId)?.get(0))
-    Assert.assertNull(diff.persistentIdIndex.getIdsByEntry(persistentId)?.get(0))
+    Assert.assertEquals(entity.id, builder.indexes.persistentIdIndex.getIdsByEntry(persistentId)?.get(0))
+    Assert.assertNull(diff.indexes.persistentIdIndex.getIdsByEntry(persistentId)?.get(0))
 
     builder.addDiff(diff)
-    Assert.assertNull(builder.persistentIdIndex.getIdsByEntry(persistentId))
+    Assert.assertNull(builder.indexes.persistentIdIndex.getIdsByEntry(persistentId))
   }
 
   @Test
@@ -106,23 +106,23 @@ class PersistentIdIndexTest {
     val newName = "newName"
     val builder = PEntityStorageBuilder.create()
     val entity = builder.addPersistentIdEntity(oldName)
-    val persistentId = builder.persistentIdIndex.getEntryById(entity.id)
+    val persistentId = builder.indexes.persistentIdIndex.getEntryById(entity.id)
     Assert.assertEquals(oldName, persistentId!!.presentableName)
-    Assert.assertEquals(entity.id, builder.persistentIdIndex.getIdsByEntry(persistentId)?.get(0))
+    Assert.assertEquals(entity.id, builder.indexes.persistentIdIndex.getIdsByEntry(persistentId)?.get(0))
 
     val diff = PEntityStorageBuilder.from(builder.toStorage())
-    Assert.assertEquals(entity.id, diff.persistentIdIndex.getIdsByEntry(persistentId)?.get(0))
+    Assert.assertEquals(entity.id, diff.indexes.persistentIdIndex.getIdsByEntry(persistentId)?.get(0))
 
     val newEntity = diff.modifyEntity(ModifiablePPersistentIdEntity::class.java, entity) {
       data = newName
     }
-    val newPersistentId = diff.persistentIdIndex.getEntryById(newEntity.id)
+    val newPersistentId = diff.indexes.persistentIdIndex.getEntryById(newEntity.id)
     Assert.assertEquals(newName, newPersistentId!!.presentableName)
-    Assert.assertEquals(newEntity.id, diff.persistentIdIndex.getIdsByEntry(newPersistentId)?.get(0))
-    Assert.assertEquals(entity.id, builder.persistentIdIndex.getIdsByEntry(persistentId)?.get(0))
+    Assert.assertEquals(newEntity.id, diff.indexes.persistentIdIndex.getIdsByEntry(newPersistentId)?.get(0))
+    Assert.assertEquals(entity.id, builder.indexes.persistentIdIndex.getIdsByEntry(persistentId)?.get(0))
 
     builder.addDiff(diff)
-    Assert.assertNull(builder.persistentIdIndex.getIdsByEntry(persistentId))
-    Assert.assertEquals(newEntity.id, builder.persistentIdIndex.getIdsByEntry(newPersistentId)?.get(0))
+    Assert.assertNull(builder.indexes.persistentIdIndex.getIdsByEntry(persistentId))
+    Assert.assertEquals(newEntity.id, builder.indexes.persistentIdIndex.getIdsByEntry(newPersistentId)?.get(0))
   }
 }

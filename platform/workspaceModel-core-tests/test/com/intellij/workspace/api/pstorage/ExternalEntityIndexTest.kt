@@ -131,7 +131,7 @@ class ExternalEntityIndexTest {
     assertEquals(1, index.getDataByEntity(entity))
 
     val diff = PEntityStorageBuilder.from(builder.toStorage())
-    diff.removeExternalIndex<Int>(INDEX_ID)
+    diff.removeExternalIndex(INDEX_ID)
     assertNull(diff.getExternalIndex<Int>(INDEX_ID))
     assertEquals(1, index.getDataByEntity(entity))
 
