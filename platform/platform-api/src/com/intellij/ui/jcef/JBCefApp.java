@@ -75,8 +75,9 @@ public final class JBCefApp {
     settings.log_severity = getLogLevel();
     Color bg = JBColor.background();
     settings.background_color = settings.new ColorType(bg.getAlpha(), bg.getRed(), bg.getGreen(), bg.getBlue());
-    if (ApplicationManager.getApplication().isInternal()) {
-      settings.remote_debugging_port = Registry.intValue("ide.browser.jcef.debug.port");
+    int port = Registry.intValue("ide.browser.jcef.debug.port");
+    if (ApplicationManager.getApplication().isInternal() && port > 0) {
+      settings.remote_debugging_port = port;
     }
     CefApp.addAppHandler(new MyCefAppHandler(config.getAppArgs()));
     myCefApp = CefApp.getInstance(settings);
