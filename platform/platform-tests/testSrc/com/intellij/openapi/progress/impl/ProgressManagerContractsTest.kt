@@ -9,29 +9,10 @@ import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
+import org.junit.Ignore
 import java.util.concurrent.atomic.AtomicInteger
 
 class ProgressManagerContractsTest : LightPlatformTestCase() {
-  fun `test backgroundable task exception is thrown directly in GUI`() = runWithGuiTasksMode {
-    `test backgroundable task exception is thrown directly in tests`()
-  }
-
-  fun `test backgroundable task exception is thrown directly in tests`() {
-    val msg = "This is our failure message to test"
-
-    val task = object : Task.Backgroundable(project, "mock", true) {
-      override fun run(indicator: ProgressIndicator) {
-        throw RuntimeException(msg)
-      }
-    }
-
-    try {
-      task.queue()
-    } catch (t: Throwable) {
-      assertThat(t.message).contains(msg)
-    }
-  }
-
   @TestFor(issues = ["IDEA-241785"])
   fun `test backgroundable modality in GUI`() = runWithGuiTasksMode { `test backgroundable modality in tests`() }
 
