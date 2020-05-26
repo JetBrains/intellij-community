@@ -10,11 +10,11 @@ internal object FileNavigationLogger {
   private const val GROUP_ID = "file.prediction"
 
   fun logEvent(project: Project,
-               event: String,
                sessionId: Int,
                features: FileFeaturesComputationResult,
                filePath: String,
                prevFilePath: String?,
+               opened: Boolean,
                totalDuration: Long,
                refsComputation: Long,
                predictionDuration: Long? = null,
@@ -23,6 +23,7 @@ internal object FileNavigationLogger {
       .addData("session_id", sessionId)
       .addAnonymizedPath(filePath)
       .addAnonymizedValue("prev_file_path", prevFilePath)
+      .addData("opened", opened)
       .addData("total_ms", totalDuration)
       .addData("refs_ms", refsComputation)
       .addData("features_ms", features.duration)
@@ -38,7 +39,7 @@ internal object FileNavigationLogger {
     for (feature in features.value) {
       feature.value.addToEventData(feature.key, data)
     }
-    FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, event, data)
+    FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, "candidate.calculated", data)
   }
 
   private fun roundProbability(value: Double): Double {

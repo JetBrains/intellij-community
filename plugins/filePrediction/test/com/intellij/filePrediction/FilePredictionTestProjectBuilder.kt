@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import com.intellij.util.PathUtilRt
 import junit.framework.TestCase
 
 internal class FilePredictionTestProjectBuilder(mainPath: String? = null, imports: String? = null) {
@@ -143,13 +144,13 @@ internal class FilePredictionTestProjectBuilder(mainPath: String? = null, import
       builder.append("class $name {}")
       return builder.toString()
     }
-    return name!!
+    return name
   }
 
   private fun isMainFile(path: String) = StringUtil.equals(DEFAULT_MAIN_FILE, getFileName(path))
 
-  private fun getFileName(path: String) =
-    FileUtilRt.getRelativePath(OSAgnosticPathUtil.getParent(path)!!, FileUtilRt.getNameWithoutExtension(path), '/')
+  private fun getFileName(path: String): String =
+    FileUtilRt.getNameWithoutExtension(PathUtilRt.getFileName(path))
 }
 
 private data class FileAction(val filePath: String, val actionType: FileActionType)
