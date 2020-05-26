@@ -812,12 +812,17 @@ string
   }
 
   void "test inner java class references with incremental recompilation"() {
+    'do test inner java class references with incremental recompilation'(true)
+  }
+
+  protected final void 'do test inner java class references with incremental recompilation'(boolean expectRebuild) {
     def bar1 = myFixture.addFileToProject('bar/Bar1.groovy', 'package bar; class Bar1 extends Bar2 { } ')
     myFixture.addFileToProject('bar/Bar2.java', 'package bar; class Bar2 extends Bar3 { } ')
     def bar3 = myFixture.addFileToProject('bar/Bar3.groovy', 'package bar; class Bar3 { Bar1 property } ')
 
     myFixture.addClass("package foo; public class Outer { public static class Inner extends bar.Bar1 { } }")
-    def using = myFixture.addFileToProject('UsingInner.groovy', 'import foo.Outer; class UsingInner extends bar.Bar1 { Outer.Inner property } ')
+    def using = myFixture.addFileToProject('UsingInner.groovy',
+                                           'import foo.Outer; class UsingInner extends bar.Bar1 { Outer.Inner property } ')
 
     assertEmpty make()
 
@@ -825,7 +830,12 @@ string
     touch bar3.virtualFile
     touch using.virtualFile
 
-    assert make().collect { it.message } == chunkRebuildMessage('Groovy compiler')
+    if (expectRebuild) {
+      assert make().collect { it.message } == chunkRebuildMessage('Groovy compiler')
+    }
+    else {
+      assertEmpty make()
+    }
   }
 
   void "test rename class to java and touch its usage"() {

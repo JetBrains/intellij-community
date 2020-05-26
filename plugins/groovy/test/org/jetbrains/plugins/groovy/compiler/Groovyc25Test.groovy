@@ -24,10 +24,9 @@ class Groovyc25Test extends GroovycTestBase {
     'do test changed groovy refers to java which refers to changed groovy and fails in compiler'(false)
   }
 
-  @Bombed(user = 'daniil', year = 2029, month = Calendar.JANUARY, day = 4)
   @Override
   void "test inner java class references with incremental recompilation"() {
-    super.'test inner java class references with incremental recompilation'()
+    'do test inner java class references with incremental recompilation'(false)
   }
 
   @Bombed(user = 'daniil', year = 2029, month = Calendar.JANUARY, day = 4)
