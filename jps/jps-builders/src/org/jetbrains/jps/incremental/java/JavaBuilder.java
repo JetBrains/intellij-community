@@ -1100,6 +1100,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
   @Override
   public void chunkBuildFinished(CompileContext context, ModuleChunk chunk) {
     JavaBuilderUtil.cleanupChunkResources(context);
+    ExternalJavacManager extJavacManager = ExternalJavacManager.KEY.get(context);
+    if (extJavacManager != null) {
+      extJavacManager.shutdownIdleProcesses();
+    }
   }
 
   private static Map<File, Set<File>> buildOutputDirectoriesMap(CompileContext context, ModuleChunk chunk) {
