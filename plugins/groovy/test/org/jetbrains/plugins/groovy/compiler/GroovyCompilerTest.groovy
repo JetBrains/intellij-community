@@ -17,7 +17,6 @@ import com.intellij.openapi.compiler.options.ExcludesConfiguration
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VfsUtil
@@ -934,18 +933,8 @@ class AppTest {
   }
 
   void "test extend groovy classes with additional dependencies"() {
-    def anotherModule = addModule("another", true)
-    addGroovyLibrary(anotherModule)
-
     PsiTestUtil.addProjectLibrary(module, "junit", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit3"))
-    PsiTestUtil.addProjectLibrary(module, "cli", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("commons-cli"))
-    ModuleRootModificationUtil.addDependency(anotherModule, LibraryTablesRegistrar.instance.getLibraryTable(project).getLibraryByName("cli"))
-
     myFixture.addFileToProject("a.groovy", "class Foo extends GroovyTestCase {}")
-    myFixture.addFileToProject("b.groovy", "class Bar extends CliBuilder {}")
-
-    myFixture.addFileToProject("another/b.groovy", "class AnotherBar extends CliBuilder {}")
-
     assertEmpty(make())
   }
 

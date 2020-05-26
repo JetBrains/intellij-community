@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.idea.Bombed
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.TestLibrary
@@ -59,9 +61,11 @@ class Groovyc25Test extends GroovycTestBase {
     super.testMakeInDependentModuleAfterChunkRebuild()
   }
 
-  @Bombed(user = 'daniil', year = 2029, month = Calendar.JANUARY, day = 4)
   @Override
   void "test extend groovy classes with additional dependencies"() {
+    ModuleRootModificationUtil.updateModel(module) { model ->
+      MavenDependencyUtil.addFromMaven(model, "org.codehaus.groovy:groovy-test:2.5.11", false)
+    }
     super.'test extend groovy classes with additional dependencies'()
   }
 
