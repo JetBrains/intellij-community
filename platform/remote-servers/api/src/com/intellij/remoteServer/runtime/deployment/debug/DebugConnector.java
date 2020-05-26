@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class DebugConnector<D extends DebugConnectionData, R extends DeploymentRuntime> {
   /**
-   * @see com.intellij.remoteServer.runtime.deployment.debug.JavaDebuggerLauncher#getInstance()
+   * @see JavaDebuggerLauncher#getInstance()
    */
   @NotNull
   public abstract DebuggerLauncher<D> getLauncher();

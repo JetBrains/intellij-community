@@ -27,7 +27,7 @@ public class ReadOnlyAttributeUtil {
    *
    * @param file           file which read-only attribute to be changed.
    * @param readOnlyStatus new read-only status.
-   * @throws java.lang.IllegalArgumentException
+   * @throws IllegalArgumentException
    *                     if passed {@code file} doesn't
    *                     belong to the local file system.
    * @throws IOException if some {@code IOException} occurred.

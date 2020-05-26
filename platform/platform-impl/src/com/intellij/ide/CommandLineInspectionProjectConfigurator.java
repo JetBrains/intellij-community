@@ -38,7 +38,7 @@ public interface CommandLineInspectionProjectConfigurator {
      * Use this filter in the implementation to avoid configuring parts of the project
      * that are not intended to be (e.g. testData). It is up to user to provide filters.
      *
-     * @see PatchProjectUtil#patchProject(com.intellij.openapi.project.Project)
+     * @see PatchProjectUtil#patchProject(Project)
      */
     @NotNull Predicate<Path> getFilesFilter();
 

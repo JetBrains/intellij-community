@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * This group hides itself when there's no registered children.
  *
- * @see com.intellij.ide.actions.SmartPopupActionGroup
- * @see com.intellij.ide.actions.NonTrivialActionGroup
+ * @see SmartPopupActionGroup
+ * @see NonTrivialActionGroup
  */
 public class NonEmptyActionGroup extends DefaultActionGroup implements DumbAware {
   public NonEmptyActionGroup() {

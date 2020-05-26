@@ -28,8 +28,8 @@ import java.awt.*;
 import java.util.Collections;
 
 /**
- * Supported value type: {@link ListWithSelection} and {@link java.lang.Enum}.
- * Value type can implement {@link com.intellij.openapi.util.Iconable} to display icon.
+ * Supported value type: {@link ListWithSelection} and {@link Enum}.
+ * Value type can implement {@link Iconable} to display icon.
  */
 public class ComboBoxTableCellEditor extends DefaultCellEditor {
   public static final ComboBoxTableCellEditor INSTANCE = new ComboBoxTableCellEditor();

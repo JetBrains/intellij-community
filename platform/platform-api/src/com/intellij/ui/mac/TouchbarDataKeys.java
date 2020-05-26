@@ -33,7 +33,7 @@ public interface TouchbarDataKeys {
   static DlgButtonDesc putDialogButtonDescriptor(@NotNull JButton button, int orderIndex, boolean isMainGroup) {
     DlgButtonDesc result = ComponentUtil.getClientProperty(button, DIALOG_BUTTON_DESCRIPTOR_KEY);
     if (result == null) {
-      com.intellij.ui.mac.TouchbarDataKeys.DlgButtonDesc value = result = new DlgButtonDesc(orderIndex);
+      TouchbarDataKeys.DlgButtonDesc value = result = new DlgButtonDesc(orderIndex);
       ComponentUtil.putClientProperty(button, DIALOG_BUTTON_DESCRIPTOR_KEY, value);
     }
     result.setMainGroup(isMainGroup);

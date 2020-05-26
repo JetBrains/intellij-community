@@ -22,11 +22,11 @@ import org.jetbrains.annotations.Nullable;
  * Should be implemented by a test together with annotation @RunWith(com.intellij.testFramework.Parameterized.class)
  * in order to get test run on all test data files located in directory. The desired directory could be configured 
  * whether by implementing {@link FileBasedTestCaseHelperEx#getRelativeBasePath()} or by annotating test case 
- * with {@link com.intellij.testFramework.TestDataPath} (annotation would enable additional test assistance support, e.g. 
+ * with {@link TestDataPath} (annotation would enable additional test assistance support, e.g. 
  * navigation from test data to test class/method as well as starting tests right from test data files). 
  * <br/><br/>
  * BTW @RunWith works also on abstract super classes.
- * @see LightPlatformCodeInsightTestCase#params(java.lang.Class<?>)
+ * @see LightPlatformCodeInsightTestCase#params(Class)
  */
 public interface FileBasedTestCaseHelper {
   /**

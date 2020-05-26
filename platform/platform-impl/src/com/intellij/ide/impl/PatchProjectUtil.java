@@ -48,7 +48,7 @@ import java.util.regex.Pattern;
  * Utility to patch project model by excluding folders/files from content roots.
  * Can be used for running offline inspections (from command-line directly or in teamcity).
  *
- * The main logic is in the method {@link #patchProject(com.intellij.openapi.project.Project)}.
+ * The main logic is in the method {@link #patchProject(Project)}.
  *
  * @see com.intellij.codeInspection.InspectionApplication
  */

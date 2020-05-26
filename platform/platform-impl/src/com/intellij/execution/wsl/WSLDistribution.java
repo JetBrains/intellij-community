@@ -433,8 +433,8 @@ public class WSLDistribution {
 
   /**
    * @return UNC root for the distribution, e.g. {@code \\wsl$\Ubuntu}
-   * @see VfsUtil#findFileByIoFile(java.io.File, boolean)
-   * @implNote there is a hack in {@link LocalFileSystemBase#getAttributes(com.intellij.openapi.vfs.VirtualFile)} which causes all network
+   * @see VfsUtil#findFileByIoFile(File, boolean)
+   * @implNote there is a hack in {@link LocalFileSystemBase#getAttributes(VirtualFile)} which causes all network
    * virtual files to exists all the time. So we need to check explicitly that root exists. After implementing proper non-blocking check
    * for the network resource availability, this method may be simplified to findFileByIoFile
    */

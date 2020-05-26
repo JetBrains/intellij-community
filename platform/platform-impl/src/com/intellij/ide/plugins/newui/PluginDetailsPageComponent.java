@@ -37,6 +37,7 @@ import javax.swing.text.Element;
 import javax.swing.text.View;
 import javax.swing.text.ViewFactory;
 import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.ImageView;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -347,7 +348,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
           @Override
           public View create(Element e) {
             View view = super.create(e);
-            if (view instanceof javax.swing.text.html.ImageView) {
+            if (view instanceof ImageView) {
               imageViewHandler.accept(view);
             }
             return view;

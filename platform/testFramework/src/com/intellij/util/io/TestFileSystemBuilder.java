@@ -3,7 +3,7 @@ package com.intellij.util.io;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Consider using {@link com.intellij.util.io.DirectoryContentBuilder} instead, it provides more convenient Kotlin DSL.
+ * Consider using {@link DirectoryContentBuilder} instead, it provides more convenient Kotlin DSL.
  */
 public class TestFileSystemBuilder {
   private final TestFileSystemItem myItem;

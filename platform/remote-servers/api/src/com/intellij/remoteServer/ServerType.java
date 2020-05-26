@@ -46,7 +46,7 @@ public abstract class ServerType<C extends ServerConfiguration> {
   }
 
   /**
-   * This method must be overriden and a proper ID must be returned from it (it'll be used as a key in run configuration file).
+   * This method must be overridden and a proper ID must be returned from it (it'll be used as a key in run configuration file).
    */
   @NotNull @NonNls
   public String getDeploymentConfigurationFactoryId() {
@@ -84,7 +84,7 @@ public abstract class ServerType<C extends ServerConfiguration> {
   }
 
   /**
-   * @deprecated override {@link #createServerConfigurable(com.intellij.remoteServer.configuration.ServerConfiguration)} instead
+   * @deprecated override {@link #createServerConfigurable(ServerConfiguration)} instead
    */
   @Deprecated
   @NotNull
