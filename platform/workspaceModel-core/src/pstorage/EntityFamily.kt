@@ -14,8 +14,6 @@ internal class ImmutableEntityFamily<E : TypedEntity>(
 
   override fun size(): Int = entities.size - emptySlotsSize
 
-  override fun isEmpty(): Boolean = entities.isEmpty() || entities.size - emptySlotsSize == 0
-
   inline fun assertConsistency(entityAssertion: (PEntityData<E>) -> Unit = {}) {
     var emptySlotsCounter = 0
 
@@ -110,8 +108,6 @@ internal class MutableEntityFamily<E : TypedEntity>(
 
   override fun size(): Int = entities.size - amountOfGapsInEntities
 
-  override fun isEmpty(): Boolean = entities.isEmpty() || entities.size - amountOfGapsInEntities == 0
-
   /** This method should always be called before any modification */
   private fun startWrite() {
     if (!freezed) return
@@ -141,6 +137,6 @@ internal sealed class EntityFamily<E : TypedEntity> {
   operator fun get(idx: Int) = entities.getOrNull(idx)
   fun exists(id: Int) = get(id) != null
   fun all() = entities.asSequence().filterNotNull()
+  fun isEmpty(): Boolean = entities.isEmpty()
   abstract fun size(): Int
-  abstract fun isEmpty(): Boolean
 }
