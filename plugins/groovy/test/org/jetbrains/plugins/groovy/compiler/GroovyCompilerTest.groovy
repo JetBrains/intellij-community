@@ -278,18 +278,23 @@ class Bar extends Foo {
   }
 
   void testStubForGroovyExtendingJava() throws Exception {
+    doTestStubForGroovyExtendingJava(false)
+  }
+
+  protected final void doTestStubForGroovyExtendingJava(boolean expectRebuild) {
     def foo = myFixture.addFileToProject("Foo.groovy", "class Foo extends Goo { }")
     myFixture.addFileToProject("Goo.groovy", "class Goo extends Main { void bar() { println 'hello' } }")
     def main = myFixture.addClass("public class Main { public static void main(String[] args) { new Goo().bar(); } }")
-
     assertEmpty(make())
-    assertOutput 'Main', 'hello'
 
     touch(foo.virtualFile)
     touch(main.containingFile.virtualFile)
-    assertEmpty(make())
-
-    assertOutput 'Main', 'hello'
+    if (expectRebuild) {
+      assert make().collect { it.message } == chunkRebuildMessage('Groovy stub generator')
+    }
+    else {
+      assertEmpty(make())
+    }
   }
 
   void testDontApplyTransformsFromSameModule() throws Exception {

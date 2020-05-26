@@ -33,6 +33,12 @@ class Groovyc25Test extends GroovycTestBase {
   }
 
   @Override
+  void testStubForGroovyExtendingJava() {
+    // same as in testTransitiveJavaDependencyThroughGroovy
+    doTestStubForGroovyExtendingJava(true)
+  }
+
+  @Override
   void 'test changed groovy refers to java which refers to changed groovy and fails in stub generator'() {
     'do test changed groovy refers to java which refers to changed groovy and fails in stub generator'(false)
   }
@@ -57,12 +63,6 @@ class Groovyc25Test extends GroovycTestBase {
   @Override
   void "test extend groovy classes with additional dependencies"() {
     super.'test extend groovy classes with additional dependencies'()
-  }
-
-  @Bombed(user = 'daniil', year = 2029, month = Calendar.JANUARY, day = 4)
-  @Override
-  void testStubForGroovyExtendingJava() {
-    super.testStubForGroovyExtendingJava()
   }
 
   @Bombed(user = 'daniil', year = 2029, month = Calendar.JANUARY, day = 4)
