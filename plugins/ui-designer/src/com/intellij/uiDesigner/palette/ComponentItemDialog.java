@@ -2,6 +2,7 @@
 package com.intellij.uiDesigner.palette;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
@@ -84,7 +85,7 @@ public final class ComponentItemDialog extends DialogWrapper {
     myItemToBeEdited = itemToBeEdited;
     myOneOff = oneOff;
 
-    myEditorTextField = new EditorTextField("", project, StdFileTypes.JAVA);
+    myEditorTextField = new EditorTextField("", project, JavaFileType.INSTANCE);
     myEditorTextField.setFontInheritedFromLAF(true);
     myTfClassName = new ComponentWithBrowseButton<>(myEditorTextField, new MyChooseClassActionListener(project));
 

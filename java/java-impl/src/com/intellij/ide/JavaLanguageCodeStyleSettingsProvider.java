@@ -19,11 +19,11 @@ import com.intellij.application.options.*;
 import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAccessor;
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertiesUtil;
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
@@ -310,7 +310,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   @Override
   public PsiFile createFileFromText(final Project project, final String text) {
     final PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(
-      "sample.java", StdFileTypes.JAVA, text, LocalTimeCounter.currentTime(), false, false
+      "sample.java", JavaFileType.INSTANCE, text, LocalTimeCounter.currentTime(), false, false
     );
     file.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
     return file;

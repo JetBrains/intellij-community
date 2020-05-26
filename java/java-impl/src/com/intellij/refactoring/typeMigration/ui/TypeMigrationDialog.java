@@ -3,13 +3,13 @@ package com.intellij.refactoring.typeMigration.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.find.FindSettings;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -164,7 +164,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
       final Document document = documentManager.getDocument(myTypeCodeFragment);
       assert document != null;
-      myToTypeEditor = new EditorComboBox(document, project, StdFileTypes.JAVA);
+      myToTypeEditor = new EditorComboBox(document, project, JavaFileType.INSTANCE);
       final String[] types = getValidTypes(project, root);
       myToTypeEditor.setHistory(types != null ? types : new String[]{document.getText()});
       document.addDocumentListener(new DocumentListener() {

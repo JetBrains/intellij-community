@@ -16,6 +16,7 @@
 
 package com.intellij.codeEditor.printing;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -38,7 +39,7 @@ public class HyperlinksToClassesOption extends PrintOption {
   public TreeMap<Integer, PsiReference> collectReferences(PsiFile psiFile, Map<PsiFile, PsiFile> filesMap) {
     if (isGenerateHyperlinksToClasses) {
       FileType fileType = psiFile.getFileType();
-      if (StdFileTypes.JAVA == fileType || StdFileTypes.JSP == fileType) {
+      if (JavaFileType.INSTANCE == fileType || StdFileTypes.JSP == fileType) {
         final TreeMap<Integer, PsiReference> refMap = new TreeMap<>();
         findClassReferences(psiFile, refMap, filesMap, psiFile);
         return refMap;

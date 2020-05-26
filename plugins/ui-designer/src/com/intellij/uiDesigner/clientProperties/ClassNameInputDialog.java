@@ -2,7 +2,7 @@
 
 package com.intellij.uiDesigner.clientProperties;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
@@ -29,7 +29,7 @@ public class ClassNameInputDialog extends DialogWrapper {
   }
 
   private void createUIComponents() {
-    myEditorTextField1 = new EditorTextField("", myProject, StdFileTypes.JAVA);
+    myEditorTextField1 = new EditorTextField("", myProject, JavaFileType.INSTANCE);
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(myProject);
     PsiPackage defaultPackage = JavaPsiFacade.getInstance(myProject).findPackage("");
     final PsiCodeFragment fragment = factory.createReferenceCodeFragment("", defaultPackage, true, true);

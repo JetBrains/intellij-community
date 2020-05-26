@@ -6,6 +6,7 @@ import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.GenerationInfo;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.ide.IdeView;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -15,7 +16,6 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
@@ -99,7 +99,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
         final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
         final PsiTypeCodeFragment codeFragment = factory.createTypeCodeFragment("", null, true, JavaCodeFragmentFactory.ALLOW_VOID);
         final Document document = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
-        final EditorTextField editorTextField = new EditorTextField(document, project, StdFileTypes.JAVA);
+        final EditorTextField editorTextField = new EditorTextField(document, project, JavaFileType.INSTANCE);
         labeledComponent.setComponent(editorTextField);
         editorTextField.addDocumentListener(new DocumentListener() {
           @Override

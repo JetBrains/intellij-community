@@ -15,9 +15,9 @@
  */
 package com.intellij.ide;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexUtil;
 import com.intellij.openapi.util.Comparing;
@@ -38,7 +38,7 @@ public class JavaFileIconPatcher implements FileIconPatcher {
     }
 
     FileType fileType = file.getFileType();
-    if (fileType == StdFileTypes.JAVA && !FileIndexUtil.isJavaSourceFile(project, file)) {
+    if (fileType == JavaFileType.INSTANCE && !FileIndexUtil.isJavaSourceFile(project, file)) {
       return PlatformIcons.JAVA_OUTSIDE_SOURCE_ICON;
     }
 

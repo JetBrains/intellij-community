@@ -4,8 +4,8 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -43,7 +43,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
     this(typeContext, defaultValueContext,
          new JavaTypeColumn(typeContext.getProject()),
          new JavaNameColumn(typeContext.getProject()),
-         new DefaultValueColumn<ParameterInfoImpl, ParameterTableModelItemBase<ParameterInfoImpl>>(typeContext.getProject(), StdFileTypes.JAVA) {
+         new DefaultValueColumn<ParameterInfoImpl, ParameterTableModelItemBase<ParameterInfoImpl>>(typeContext.getProject(), JavaFileType.INSTANCE) {
            @Override
            public TableCellEditor doCreateEditor(ParameterTableModelItemBase<ParameterInfoImpl> item) {
              return new EditorWithExpectedType(typeContext);
@@ -180,7 +180,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
 
   public static class JavaTypeColumn extends TypeColumn<ParameterInfoImpl, ParameterTableModelItemBase<ParameterInfoImpl>> {
     public JavaTypeColumn(Project project) {
-      super(project, StdFileTypes.JAVA);
+      super(project, JavaFileType.INSTANCE);
     }
 
     @Override

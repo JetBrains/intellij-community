@@ -4,16 +4,19 @@ package com.intellij.psi.impl.source.codeStyle;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.ImportFilter;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.PackageEntry;
+import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
@@ -127,9 +130,9 @@ public class ImportHelper{
       for (PsiElement nonImport : nonImports) {
         text.append("\n").append(nonImport.getText());
       }
-      String ext = StdFileTypes.JAVA.getDefaultExtension();
+      String ext = JavaFileType.INSTANCE.getDefaultExtension();
       PsiFileFactory factory = PsiFileFactory.getInstance(file.getProject());
-      final PsiJavaFile dummyFile = (PsiJavaFile)factory.createFileFromText("_Dummy_." + ext, StdFileTypes.JAVA, text);
+      final PsiJavaFile dummyFile = (PsiJavaFile)factory.createFileFromText("_Dummy_." + ext, JavaFileType.INSTANCE, text);
       CodeStyle.reformatWithFileContext(dummyFile, file);
 
       PsiImportList newImportList = dummyFile.getImportList();

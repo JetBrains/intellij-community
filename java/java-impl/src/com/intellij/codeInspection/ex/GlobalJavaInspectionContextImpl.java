@@ -8,6 +8,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,7 +16,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -228,7 +228,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
           return true;
         }
         //e.g. xml files were not included in the graph, so usages there should be processed as external
-        boolean inGraph = processedReferences ? refManager.isInGraph(file) : FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.JAVA);
+        boolean inGraph = processedReferences ? refManager.isInGraph(file) : FileTypeRegistry.getInstance().isFileOfType(file, JavaFileType.INSTANCE);
         return !inGraph;
       }
 

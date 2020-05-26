@@ -15,7 +15,7 @@
  */
 package com.intellij.refactoring.changeSignature.inCallers;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiMember;
 import com.intellij.refactoring.changeSignature.CallerChooserBase;
@@ -29,7 +29,7 @@ import java.util.Set;
 public abstract class AbstractJavaMemberCallerChooser<M extends PsiMember> extends CallerChooserBase<M> {
 
   public AbstractJavaMemberCallerChooser(M member, Project project, @Nls(capitalization = Nls.Capitalization.Title) String title, Tree previousTree, Consumer<? super Set<M>> callback) {
-    super(member, project, title, previousTree, "dummy." + StdFileTypes.JAVA.getDefaultExtension(), callback);
+    super(member, project, title, previousTree, "dummy." + JavaFileType.INSTANCE.getDefaultExtension(), callback);
   }
 
   @NotNull

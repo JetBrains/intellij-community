@@ -2,6 +2,7 @@
 
 package com.intellij.uiDesigner.palette;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -122,7 +123,7 @@ public class AddComponentAction extends AnAction {
     if (psiFile.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {
       return psiFile;
     }
-    else if (psiFile.getFileType().equals(StdFileTypes.JAVA)) {
+    else if (psiFile.getFileType().equals(JavaFileType.INSTANCE)) {
       final PsiClass psiClass = PsiTreeUtil.getChildOfType(psiFile, PsiClass.class);
       Project project = psiFile.getProject();
       final PsiClass componentClass =

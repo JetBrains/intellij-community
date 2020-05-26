@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiExpression;
@@ -89,7 +89,7 @@ public class TypeConversionDescriptor extends TypeConversionDescriptorBase {
     Project project = expression.getProject();
     final ReplaceOptions options = new ReplaceOptions();
     final MatchOptions matchOptions = options.getMatchOptions();
-    matchOptions.setFileType(StdFileTypes.JAVA);
+    matchOptions.setFileType(JavaFileType.INSTANCE);
     final String replacement = Replacer.testReplace(expression.getText(), stringToReplace, replaceByString, options, project);
     return (PsiExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(expression.replace(
       JavaPsiFacade.getElementFactory(project).createExpressionFromText(replacement, expression)));

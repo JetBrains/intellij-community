@@ -3,10 +3,10 @@ package com.intellij.codeInspection.java18StreamApi;
 
 
 import com.intellij.codeInsight.intention.impl.config.ActionUsagePanel;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -170,8 +170,8 @@ public class AddMethodsDialog extends DialogWrapper {
     setOKActionEnabled(isEnabled);
     myExamplePanel.setEnabled(isEnabled);
     if (!isEnabled) {
-      myBeforeActionPanel.reset("", StdFileTypes.JAVA);
-      myAfterActionPanel.reset("", StdFileTypes.JAVA);
+      myBeforeActionPanel.reset("", JavaFileType.INSTANCE);
+      myAfterActionPanel.reset("", JavaFileType.INSTANCE);
     }
   }
 
@@ -188,8 +188,8 @@ public class AddMethodsDialog extends DialogWrapper {
     LOG.assertTrue(psiExpression instanceof PsiMethodCallExpression);
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)psiExpression;
     template.convertToStream(methodCallExpression, method, false);
-    myBeforeActionPanel.reset("void example() {\n  <spot>" + methodCallExpression.getText() + "</spot>;\n}", StdFileTypes.JAVA);
-    myAfterActionPanel.reset("void example() {\n  <spot>" + template.convertToStream(methodCallExpression, method, true).getText() + "</spot>\n}", StdFileTypes.JAVA);
+    myBeforeActionPanel.reset("void example() {\n  <spot>" + methodCallExpression.getText() + "</spot>;\n}", JavaFileType.INSTANCE);
+    myAfterActionPanel.reset("void example() {\n  <spot>" + template.convertToStream(methodCallExpression, method, true).getText() + "</spot>\n}", JavaFileType.INSTANCE);
   }
 
   @Override

@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,7 +28,7 @@ public class ReferenceEditorComboWithBrowseButton extends ComponentWithBrowseBut
                                               @NotNull final Project project,
                                               boolean toAcceptClasses,
                                               final JavaCodeFragment.VisibilityChecker visibilityChecker, final String recentsKey) {
-    super(new EditorComboBox(JavaReferenceEditorUtil.createDocument(StringUtil.isEmpty(text) ? "" : text, project, toAcceptClasses, visibilityChecker), project, StdFileTypes.JAVA),
+    super(new EditorComboBox(JavaReferenceEditorUtil.createDocument(StringUtil.isEmpty(text) ? "" : text, project, toAcceptClasses, visibilityChecker), project, JavaFileType.INSTANCE),
           browseActionListener);
     final List<String> recentEntries = RecentsManager.getInstance(project).getRecentEntries(recentsKey);
     if (recentEntries != null) {

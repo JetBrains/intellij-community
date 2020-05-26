@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.psi.I18nizedTextGenerator;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -14,7 +15,6 @@ import com.intellij.lang.properties.references.I18nizeQuickFixDialog;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -104,7 +104,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
       PsiExpressionCodeFragment expressionCodeFragment =
         codeFragmentFactory.createExpressionCodeFragment(defaultVarName, myLiteralExpression, myResourceBundleType, true);
       Document document = PsiDocumentManager.getInstance(myProject).getDocument(expressionCodeFragment);
-      myRBEditorTextField = new EditorComboBox(document, myProject, StdFileTypes.JAVA);
+      myRBEditorTextField = new EditorComboBox(document, myProject, JavaFileType.INSTANCE);
       myResourceBundleSuggester.add(UI.PanelFactory.panel(myRBEditorTextField)
                                       .withLabel(JavaI18nBundle.message("i18n.quickfix.code.panel.resource.bundle.expression.label"))
                                       .withComment(JavaI18nBundle.message("comment.if.the.resource.bundle.is.invalid.either.declare.it.as.an.object"))
