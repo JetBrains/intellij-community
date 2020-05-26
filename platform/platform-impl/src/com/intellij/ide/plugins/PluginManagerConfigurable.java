@@ -495,8 +495,7 @@ public class PluginManagerConfigurable
                 return Arrays.asList("downloads", "name", "rating", "updated");
               case ORGANIZATION:
                 if (ContainerUtil.isEmpty(myVendorsSorted)) { // XXX
-                  List<String> customRepositoriesVendors = MyPluginModel.getVendors(getCustomRepositoryPlugins());
-                  LinkedHashSet<String> vendors = new LinkedHashSet<>(customRepositoriesVendors);
+                  LinkedHashSet<String> vendors = new LinkedHashSet<>();
                   try {
                     ProcessIOExecutorService.INSTANCE.submit(() -> {
                       vendors.addAll(MarketplaceRequests.getInstance().getAllPluginsVendors());
