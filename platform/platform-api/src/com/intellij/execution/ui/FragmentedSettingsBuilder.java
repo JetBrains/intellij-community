@@ -9,6 +9,7 @@ import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.PanelWithAnchor;
+import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.components.labels.DropDownLink;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.containers.ContainerUtil;
@@ -104,9 +105,10 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
       fragments.remove(label);
     }
     if (myMain != null) {
-      panel.add(new JLabel(myMain.getGroup()), BorderLayout.WEST);
+      panel.add(SeparatorFactory.createSeparator(myMain.getGroup(), null), BorderLayout.CENTER);
     }
     myLinkLabel = new DropDownLink<>(OptionsBundle.message(myMain == null? "settings.editor.modify.options" : "settings.editor.modify"), () -> showOptions());
+    myLinkLabel.setBorder(JBUI.Borders.emptyLeft(5));
     panel.add(myLinkLabel, BorderLayout.EAST);
     return panel;
   }
