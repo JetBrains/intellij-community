@@ -183,7 +183,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     }
   }
 
-  void processStatus(@NotNull FilePath filePath, @NotNull Status status) throws SvnBindException {
+  void processStatus(@NotNull FilePath filePath, @NotNull Status status) {
     WorkingCopyFormat format = myVcs.getWorkingCopyFormat(filePath.getIOFile());
     if (!WorkingCopyFormat.UNKNOWN.equals(format) && format.less(WorkingCopyFormat.ONE_DOT_SEVEN)) {
       loadEntriesFile(filePath);
@@ -239,7 +239,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     }
   }
 
-  public void addModifiedNotSavedChange(@NotNull VirtualFile file) throws SvnBindException {
+  public void addModifiedNotSavedChange(@NotNull VirtualFile file) {
     final FilePath filePath = VcsUtil.getFilePath(file);
     final Info svnInfo = myVcs.getInfo(file);
 
@@ -255,7 +255,7 @@ class SvnChangeProviderContext implements StatusReceiver {
   private void processChangeInList(@Nullable ContentRevision beforeRevision,
                                    @Nullable ContentRevision afterRevision,
                                    @NotNull FileStatus fileStatus,
-                                   @NotNull Status status) throws SvnBindException {
+                                   @NotNull Status status) {
     Change change = createChange(beforeRevision, afterRevision, fileStatus, status);
 
     myChangelistBuilder.processChangeInList(change, SvnUtil.getChangelistName(status), SvnVcs.getKey());
@@ -304,7 +304,7 @@ class SvnChangeProviderContext implements StatusReceiver {
   Change createMovedChange(@NotNull ContentRevision before,
                            @NotNull ContentRevision after,
                            @Nullable Status copiedStatus,
-                           @NotNull Status deletedStatus) throws SvnBindException {
+                           @NotNull Status deletedStatus) {
     // todo no convertion needed for the contents status?
     ConflictedSvnChange change =
       new ConflictedSvnChange(before, after, ConflictState.mergeState(getState(copiedStatus), getState(deletedStatus)),
@@ -322,7 +322,7 @@ class SvnChangeProviderContext implements StatusReceiver {
   private Change createChange(@Nullable ContentRevision before,
                               @Nullable ContentRevision after,
                               @NotNull FileStatus fStatus,
-                              @NotNull Status svnStatus) throws SvnBindException {
+                              @NotNull Status svnStatus) {
     ConflictedSvnChange change =
       new ConflictedSvnChange(before, after, fStatus, getState(svnStatus), after == null ? before.getFile() : after.getFile());
 
@@ -333,8 +333,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     return change;
   }
 
-  private void patchWithPropertyChange(@NotNull Change change, @NotNull Status svnStatus, @Nullable Status deletedStatus)
-    throws SvnBindException {
+  private void patchWithPropertyChange(@NotNull Change change, @NotNull Status svnStatus, @Nullable Status deletedStatus) {
     if (!svnStatus.isProperty(StatusType.STATUS_CONFLICTED, StatusType.CHANGED, StatusType.STATUS_ADDED, StatusType.STATUS_DELETED,
                               StatusType.STATUS_MODIFIED, StatusType.STATUS_REPLACED, StatusType.MERGED)) {
       return;
@@ -348,9 +347,7 @@ class SvnChangeProviderContext implements StatusReceiver {
   }
 
   @Nullable
-  private PropertyRevision createBeforePropertyRevision(@NotNull Change change,
-                                                        @NotNull Status svnStatus,
-                                                        @Nullable Status deletedStatus) throws SvnBindException {
+  private PropertyRevision createBeforePropertyRevision(@NotNull Change change, @NotNull Status svnStatus, @Nullable Status deletedStatus) {
     if (svnStatus.isProperty(StatusType.STATUS_ADDED) && deletedStatus == null) return null;
 
     ContentRevision before = change.getBeforeRevision();
@@ -363,7 +360,7 @@ class SvnChangeProviderContext implements StatusReceiver {
   }
 
   @Nullable
-  private PropertyRevision createAfterPropertyRevision(@NotNull Change change, @NotNull Status svnStatus) throws SvnBindException {
+  private PropertyRevision createAfterPropertyRevision(@NotNull Change change, @NotNull Status svnStatus) {
     if (svnStatus.isProperty(StatusType.STATUS_DELETED)) return null;
 
     ContentRevision after = change.getAfterRevision();

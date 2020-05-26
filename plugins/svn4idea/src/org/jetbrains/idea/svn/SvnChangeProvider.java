@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.map2SetNotNull;
 import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
 import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
@@ -89,7 +88,7 @@ public class SvnChangeProvider implements ChangeProvider {
 
   private static void processUnsaved(@NotNull VcsDirtyScope dirtyScope,
                                      @NotNull ChangeListManagerGate addGate,
-                                     @NotNull SvnChangeProviderContext context) throws SvnBindException {
+                                     @NotNull SvnChangeProviderContext context) {
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
 
     for (Document unsavedDocument : fileDocumentManager.getUnsavedDocuments()) {
@@ -103,13 +102,12 @@ public class SvnChangeProvider implements ChangeProvider {
     }
   }
 
-  private void processCopiedAndDeleted(@NotNull SvnChangeProviderContext context, @Nullable VcsDirtyScope dirtyScope)
-    throws SvnBindException {
-    for(SvnChangedFile copiedFile: context.getCopiedFiles()) {
+  private void processCopiedAndDeleted(@NotNull SvnChangeProviderContext context, @Nullable VcsDirtyScope dirtyScope) {
+    for (SvnChangedFile copiedFile : context.getCopiedFiles()) {
       context.checkCanceled();
       processCopiedFile(copiedFile, context, dirtyScope);
     }
-    for(SvnChangedFile deletedFile: context.getDeletedFiles()) {
+    for (SvnChangedFile deletedFile : context.getDeletedFiles()) {
       context.checkCanceled();
       context.processStatus(deletedFile.getFilePath(), deletedFile.getStatus());
     }
@@ -124,7 +122,7 @@ public class SvnChangeProvider implements ChangeProvider {
 
   private void processCopiedFile(@NotNull SvnChangedFile copiedFile,
                                  @NotNull SvnChangeProviderContext context,
-                                 @Nullable VcsDirtyScope dirtyScope) throws SvnBindException {
+                                 @Nullable VcsDirtyScope dirtyScope) {
     boolean foundRename = false;
     final Status copiedStatus = copiedFile.getStatus();
     Url copyFromURL = Objects.requireNonNull(copiedFile.getCopyFromURL());
@@ -199,7 +197,7 @@ public class SvnChangeProvider implements ChangeProvider {
                                 @NotNull Set<SvnChangedFile> deletedToDelete,
                                 @NotNull SvnChangedFile deletedFile,
                                 @Nullable Status copiedStatus,
-                                @Nullable String clName) throws SvnBindException {
+                                @Nullable String clName) {
     final Change change = context
       .createMovedChange(createBeforeRevision(deletedFile, true), CurrentContentRevision.create(oldPath), copiedStatus,
                          deletedFile.getStatus());
