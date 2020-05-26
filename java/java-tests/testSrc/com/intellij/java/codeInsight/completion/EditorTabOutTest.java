@@ -99,6 +99,52 @@ public class EditorTabOutTest extends AbstractParameterInfoTestCase {
     checkResult("class C { void m() { System.exit(1);<caret> } }");
   }
 
+  public void testScopeRange() {
+    configureJava("class C { static { new HashM<caret> }}");
+    complete("HashMap");
+    checkResult("import java.util.HashMap;\n\nclass C { static { new HashMap<<caret>>()\n}}");
+    tabOut();
+    checkResult("import java.util.HashMap;\n\nclass C { static { new HashMap<>(<caret>)\n}}");
+    tabOut();
+    checkResult("import java.util.HashMap;\n\nclass C { static { new HashMap<>()<caret>\n}}");
+  }
+
+  public void testScopeRangeInjected() {
+    configureJava("import org.intellij.lang.annotations.Language;" +
+                  "class Main { " +
+                  "  static {" +
+                  "    injected(\"class C { static { new HashM<caret> }}\");" +
+                  "  } " +
+                  "  static void injected(@Language(\"JAVA\") String value){}" +
+                  "}");
+    complete("HashMap");
+    checkResult("import org.intellij.lang.annotations.Language;" +
+                "class Main { " +
+                "  static {" +
+                "    injected(\"import java.util.HashMap;class C { static { new HashMap<<caret>>() }}\");" +
+                "  } " +
+                "  static void injected(@Language(\"JAVA\") String value){}" +
+                "}");
+    tabOut();
+    checkResult("import org.intellij.lang.annotations.Language;" +
+                "class Main { " +
+                "  static {" +
+                "    injected(\"import java.util.HashMap;class C { static { new HashMap<>(<caret>) }}\");" +
+                "  } " +
+                "  static void injected(@Language(\"JAVA\") String value){}" +
+                "}"
+    );
+    tabOut();
+    checkResult("import org.intellij.lang.annotations.Language;" +
+                "class Main { " +
+                "  static {" +
+                "    injected(\"import java.util.HashMap;class C { static { new HashMap<>()<caret> }}\");" +
+                "  } " +
+                "  static void injected(@Language(\"JAVA\") String value){}" +
+                "}"
+    );
+  }
+
   private void tabOut() {
     myFixture.performEditorAction(IdeActions.ACTION_BRACE_OR_QUOTE_OUT);
   }
