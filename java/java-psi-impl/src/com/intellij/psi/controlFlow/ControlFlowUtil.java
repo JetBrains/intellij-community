@@ -1274,6 +1274,8 @@ public final class ControlFlowUtil {
    */
   public static boolean[] getVariablePossiblyUnassignedOffsets(@NotNull PsiVariable variable, @NotNull ControlFlow flow) {
     class MyVisitor extends InstructionClientVisitor<boolean[]> {
+      final PsiManager psiManager = variable.getManager();
+
       // true if from this point below there may be branch with no variable assignment
       private final boolean[] maybeUnassigned = new boolean[flow.getSize() + 1];
 
@@ -1283,7 +1285,7 @@ public final class ControlFlowUtil {
 
       @Override
       public void visitWriteVariableInstruction(WriteVariableInstruction instruction, int offset, int nextOffset) {
-        if (instruction.variable == variable) {
+        if (psiManager.areElementsEquivalent(instruction.variable, variable)) {
           maybeUnassigned[offset] = false;
         }
         else {
