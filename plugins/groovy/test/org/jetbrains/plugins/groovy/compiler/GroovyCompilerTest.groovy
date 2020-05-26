@@ -550,19 +550,24 @@ class Indirect {
     assert oldBaseStamp == findClassFile("Base").timeStamp
   }
 
-  void testPartialCrossRecompile() {
+  void 'test changed groovy refers to java which refers to changed groovy and fails in stub generator'() {
+    'do test changed groovy refers to java which refers to changed groovy and fails in stub generator'(true)
+  }
+
+  protected final void 'do test changed groovy refers to java which refers to changed groovy and fails in stub generator'(boolean expectRebuild) {
     def used = myFixture.addFileToProject('Used.groovy', 'class Used { }')
     def java = myFixture.addFileToProject('Java.java', 'class Java { void foo(Used used) {} }')
     def main = myFixture.addFileToProject('Main.groovy', 'class Main extends Java {  }').virtualFile
-
-    assertEmpty compileModule(module)
+    assertEmpty make()
 
     touch(used.virtualFile)
     touch(main)
-    assert make().collect { it.message } == chunkRebuildMessage('Groovy stub generator')
-
-    assertEmpty compileModule(module)
-    assertEmpty compileModule(module)
+    if (expectRebuild) {
+      assert make().collect { it.message } == chunkRebuildMessage('Groovy stub generator')
+    }
+    else {
+      assertEmpty make()
+    }
 
     setFileText(used, 'class Used2 {}')
     shouldFail { make() }

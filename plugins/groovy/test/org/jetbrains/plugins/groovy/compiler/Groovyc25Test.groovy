@@ -15,6 +15,11 @@ class Groovyc25Test extends GroovycTestBase {
   }
 
   @Override
+  void 'test changed groovy refers to java which refers to changed groovy and fails in stub generator'() {
+    'do test changed groovy refers to java which refers to changed groovy and fails in stub generator'(false)
+  }
+
+  @Override
   void "test changed groovy refers to java which refers to changed groovy and fails in compiler"() {
     'do test changed groovy refers to java which refers to changed groovy and fails in compiler'(false)
   }
@@ -53,12 +58,6 @@ class Groovyc25Test extends GroovycTestBase {
   @Override
   void "test recompile one file that triggers chunk rebuild inside"() {
     super.'test recompile one file that triggers chunk rebuild inside'()
-  }
-
-  @Bombed(user = 'daniil', year = 2029, month = Calendar.JANUARY, day = 4)
-  @Override
-  void testPartialCrossRecompile() {
-    super.testPartialCrossRecompile()
   }
 
   void 'test dependent trait'() {
