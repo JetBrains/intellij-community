@@ -75,6 +75,11 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon GroupByTestProduction = load("/actions/groupByTestProduction.svg");
     /** 16x16 */ public static final @NotNull Icon Help = load("/actions/help.svg");
     /** 16x16 */ public static final @NotNull Icon Highlighting = load("/actions/highlighting.svg");
+    /** 12x12 */ public static final @NotNull Icon InlayGear = load("/actions/inlayGear.svg");
+    /** 12x12 */ public static final @NotNull Icon InlayRenameInComments = load("/actions/inlayRenameInComments.svg");
+    /** 12x12 */ public static final @NotNull Icon InlayRenameInCommentsActive = load("/actions/inlayRenameInCommentsActive.svg");
+    /** 12x12 */ public static final @NotNull Icon InlayRenameInNoCodeFiles = load("/actions/inlayRenameInNoCodeFiles.svg");
+    /** 12x12 */ public static final @NotNull Icon InlayRenameInNoCodeFilesActive = load("/actions/inlayRenameInNoCodeFilesActive.svg");
     /** 16x16 */ public static final @NotNull Icon InSelection = load("/actions/inSelection.svg");
     /** 16x16 */ public static final @NotNull Icon Install = load("/actions/install.svg");
     /** 16x16 */ public static final @NotNull Icon IntentionBulb = load("/actions/intentionBulb.svg");
