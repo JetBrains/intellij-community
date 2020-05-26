@@ -15,11 +15,12 @@
  */
 package com.intellij.java.refactoring.convertToInstanceMethod;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 
-public class ConvertToInstance8MethodTest extends ConvertToInstanceMethodTest {
+public abstract class ConvertToInstance8MethodTest extends ConvertToInstanceMethodTest {
   @Override
   protected String getBasePath() {
     return "/refactoring/convertToInstance8Method/";
@@ -57,5 +58,15 @@ public class ConvertToInstance8MethodTest extends ConvertToInstanceMethodTest {
   @Override
   protected LanguageLevel getLanguageLevel() {
     return LanguageLevel.JDK_1_8;
+  }
+
+  public static class SyncTest extends ConvertToInstance8MethodTest { }
+
+  public static class BranchTest extends ConvertToInstance8MethodTest {
+    @Override
+    protected void setUp() throws Exception {
+      super.setUp();
+      Registry.get("run.refactorings.in.model.branch").setValue(true, getTestRootDisposable());
+    }
   }
 }

@@ -16,10 +16,9 @@
 package com.intellij.refactoring.convertToInstanceMethod;
 
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.history.LocalHistory;
-import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -41,6 +40,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +50,7 @@ import java.util.*;
 /**
  * @author dsl
  */
-public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
+public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG =
     Logger.getInstance(ConvertToInstanceMethodProcessor.class);
   private PsiMethod myMethod;
@@ -220,21 +220,55 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     return showConflicts(conflicts, usagesIn);
   }
 
+
   @Override
-  protected void performRefactoring(UsageInfo @NotNull [] usages) {
-    LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName());
-    try {
-      doRefactoring(usages);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
-    finally {
-      a.finish();
-    }
+  protected boolean canPerformRefactoringInBranch() {
+    return true;
   }
 
-  private void doRefactoring(UsageInfo[] usages) throws IncorrectOperationException {
+  @Override
+  protected void performRefactoringInBranch(UsageInfo @NotNull [] usages, ModelBranch branch) {
+    ConvertToInstanceMethodProcessor processor = new ConvertToInstanceMethodProcessor(
+      myProject, branch.obtainPsiCopy(myMethod),
+      myTargetParameter == null ? null : branch.obtainPsiCopy(myTargetParameter),
+      myNewVisibility);
+    UsageInfo[] convertedUsages = ContainerUtil.mapNotNull(usages, usage -> obtainBranchCopy(branch, usage)).toArray(UsageInfo.EMPTY_ARRAY);
+    PsiMethod result = processor.doRefactoring(convertedUsages);
+    branch.runAfterMerge(() -> {
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      PsiMethod toOpen = branch.findOriginalPsi(result);
+      if (toOpen != null) {
+        EditorHelper.openInEditor(toOpen);
+      }
+    });
+  }
+
+  @Nullable
+  private static UsageInfo obtainBranchCopy(ModelBranch branch, UsageInfo usage) {
+    if (usage instanceof MethodCallUsageInfo) {
+      return new MethodCallUsageInfo(branch.obtainPsiCopy(((MethodCallUsageInfo)usage).getMethodCall()));
+    }
+    if (usage instanceof ParameterUsageInfo) {
+      PsiElement element = ((ParameterUsageInfo)usage).getReferenceExpression().getElement();
+      return new ParameterUsageInfo(branch.obtainPsiCopy(element).getReference());
+    }
+    if (usage instanceof ImplementingClassUsageInfo) {
+      return new ImplementingClassUsageInfo(branch.obtainPsiCopy(((ImplementingClassUsageInfo)usage).getPsiClass()));
+    }
+    if (usage instanceof MethodReferenceUsageInfo) {
+      return new MethodReferenceUsageInfo(branch.obtainPsiCopy(((MethodReferenceUsageInfo)usage).getExpression()),
+                                          ((MethodReferenceUsageInfo)usage).isApplicableBySecondSearch());
+    }
+    return null;
+  }
+
+  @Override
+  protected void performRefactoring(UsageInfo @NotNull [] usages) {
+    EditorHelper.openInEditor(doRefactoring(usages));
+  }
+
+  @NotNull
+  private PsiMethod doRefactoring(UsageInfo[] usages) throws IncorrectOperationException {
     myTypeParameterReplacements = buildTypeParameterReplacements();
     List<PsiClass> inheritors = new ArrayList<>();
 
@@ -259,21 +293,22 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     prepareTypeParameterReplacement();
     if (myTargetParameter != null) myTargetParameter.delete();
     ChangeContextUtil.encodeContextInfo(myMethod, true);
+    PsiMethod result;
     if (!myTargetClass.isInterface()) {
-      PsiMethod method = addMethodToClass(myTargetClass);
-      fixVisibility(method, usages);
-      EditorHelper.openInEditor(method);
+      result = addMethodToClass(myTargetClass);
+      fixVisibility(result, usages);
+      EditorHelper.openInEditor(result);
     }
     else {
-      final PsiMethod interfaceMethod = addMethodToClass(myTargetClass);
-      final PsiModifierList modifierList = interfaceMethod.getModifierList();
+      result = addMethodToClass(myTargetClass);
+      final PsiModifierList modifierList = result.getModifierList();
       final boolean markAsDefault = PsiUtil.isLanguageLevel8OrHigher(myTargetClass);
       if (markAsDefault) {
         modifierList.setModifierProperty(PsiModifier.DEFAULT, true);
       }
-      RefactoringUtil.makeMethodAbstract(myTargetClass, interfaceMethod);
+      RefactoringUtil.makeMethodAbstract(myTargetClass, result);
 
-      EditorHelper.openInEditor(interfaceMethod);
+      EditorHelper.openInEditor(result);
 
       if (!markAsDefault) {
         for (final PsiClass psiClass : inheritors) {
@@ -284,6 +319,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
       }
     }
     myMethod.delete();
+    return result;
   }
 
   private void processMethodReference(MethodReferenceUsageInfo usage) {
