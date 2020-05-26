@@ -5,7 +5,7 @@ import org.junit.Test;
 
 import java.util.*;
 
-class MyTest {
+public class AssertNotSameBetweenInconvertibleTypes {
 
     @Test
     public void test() {

@@ -55,7 +55,17 @@ public class AssertEqualsBetweenInconvertibleTypesInspectionTest extends LightJa
       "import java.lang.annotation.Target;" +
       "@Retention(RetentionPolicy.RUNTIME)" +
       "@Target(ElementType.METHOD)" +
+      "public @interface Test {}", 
+
+      "package org.junit.jupiter.api;" +
+      "import java.lang.annotation.ElementType;" +
+      "import java.lang.annotation.Retention;" +
+      "import java.lang.annotation.RetentionPolicy;" +
+      "import java.lang.annotation.Target;" +
+      "@Retention(RetentionPolicy.RUNTIME)" +
+      "@Target(ElementType.METHOD)" +
       "public @interface Test {}",
+      
       "package org.junit;" +
       "public class Assert {" +
       "  static public void assertEquals(double expected, double actual, double delta) {}" +
