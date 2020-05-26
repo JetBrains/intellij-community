@@ -10,26 +10,36 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.InconvertibleTypesChecker;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.Set;
 
 public abstract class BaseAssertEqualsBetweenInconvertibleTypesInspection extends BaseInspection {
   private static final CallMatcher ASSERTJ_IS_EQUAL = CallMatcher.instanceCall(
-    "org.assertj.core.api.Assert", "isEqualTo", "isSameAs").parameterTypes(CommonClassNames.JAVA_LANG_OBJECT);
+    "org.assertj.core.api.Assert", "isEqualTo", "isSameAs", "isNotEqualTo", "isNotSameAs")
+    .parameterTypes(CommonClassNames.JAVA_LANG_OBJECT);
   private static final CallMatcher ASSERTJ_DESCRIBED = CallMatcher.instanceCall(
     "org.assertj.core.api.Descriptable", "describedAs", "as");
   private static final CallMatcher ASSERTJ_ASSERT_THAT = CallMatcher.staticCall(
     "org.assertj.core.api.Assertions", "assertThat").parameterCount(1);
+  private static final Set<String> ASSERT_NOT_EQUALS_METHODS = new THashSet<>(Arrays.asList(
+    "assertNotEquals", "assertNotSame", "isNotEqualTo", "isNotSameAs"));
 
   protected abstract boolean checkTestNG();
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    final PsiType comparedType = (PsiType)infos[0];
-    final PsiType comparisonType = (PsiType)infos[1];
+    final String methodName = (String)infos[0];
+    if (ASSERT_NOT_EQUALS_METHODS.contains(methodName)) {
+      return InspectionGadgetsBundle.message("assertnotequals.between.inconvertible.types.problem.descriptor");
+    }
+    final PsiType comparedType = (PsiType)infos[1];
+    final PsiType comparisonType = (PsiType)infos[2];
     return InspectionGadgetsBundle.message("assertequals.between.inconvertible.types.problem.descriptor",
                                            StringUtil.escapeXmlEntities(comparedType.getPresentableText()),
                                            StringUtil.escapeXmlEntities(comparisonType.getPresentableText()));
@@ -50,7 +60,9 @@ public abstract class BaseAssertEqualsBetweenInconvertibleTypesInspection extend
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       processAssertEquals(expression);
+      processAssertNotEquals(expression);
       processAssertSame(expression);
+      processAssertNotSame(expression);
       processAssertJ(expression);
     }
 
@@ -58,8 +70,16 @@ public abstract class BaseAssertEqualsBetweenInconvertibleTypesInspection extend
       processAssertHint(AssertHint.createAssertEqualsHint(expression, checkTestNG()), expression);
     }
 
+    private void processAssertNotEquals(@NotNull PsiMethodCallExpression expression) {
+      processAssertHint(AssertHint.createAssertNotEqualsHint(expression, checkTestNG()), expression);
+    }
+
     private void processAssertSame(@NotNull PsiMethodCallExpression expression) {
       processAssertHint(AssertHint.createAssertSameHint(expression, checkTestNG()), expression);
+    }
+
+    private void processAssertNotSame(@NotNull PsiMethodCallExpression expression) {
+      processAssertHint(AssertHint.createAssertNotSameHint(expression, checkTestNG()), expression);
     }
 
     private void processAssertJ(@NotNull PsiMethodCallExpression call) {
@@ -93,7 +113,7 @@ public abstract class BaseAssertEqualsBetweenInconvertibleTypesInspection extend
       InconvertibleTypesChecker.TypeMismatch mismatch = InconvertibleTypesChecker.checkTypes(type1, type2, lookForMutualSubclass);
       if (mismatch != null) {
         PsiElement name = Objects.requireNonNull(expression.getMethodExpression().getReferenceNameElement());
-        registerError(name, mismatch.getLeft(), mismatch.getRight(), mismatch.isConvertible());
+        registerError(name, name.getText(), mismatch.getLeft(), mismatch.getRight());
       }
     }
   }

@@ -71,12 +71,20 @@ public class AssertHint {
     return create(expression, methodName -> "assertEquals".equals(methodName) ? 2 : null, checkTestNG);
   }
 
+  public static AssertHint createAssertNotEqualsHint(PsiMethodCallExpression expression, boolean checkTestNG) {
+    return create(expression, methodName -> "assertNotEquals".equals(methodName) ? 2 : null, checkTestNG);
+  }
+
   public static AssertHint createAssertTrueFalseHint(PsiMethodCallExpression expression, boolean checkTestNG) {
     return create(expression, methodName -> "assertTrue".equals(methodName) || "assertFalse".equals(methodName) ? 1 : null, checkTestNG);
   }
 
   public static AssertHint createAssertSameHint(PsiMethodCallExpression expression, boolean checkTestNG) {
     return create(expression, methodName -> "assertSame".equals(methodName) ? 2 : null, checkTestNG);
+  }
+
+  public static AssertHint createAssertNotSameHint(PsiMethodCallExpression expression, boolean checkTestNG) {
+    return create(expression, methodName -> "assertNotSame".equals(methodName) ? 2 : null, checkTestNG);
   }
 
   public static AssertHint create(PsiMethodCallExpression expression,
