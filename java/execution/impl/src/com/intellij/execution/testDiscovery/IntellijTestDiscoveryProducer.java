@@ -281,7 +281,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
       return query.compute();
     }
     catch (IOException e) {
-      LOG.error("Can't execute remote query", e);
+      LOG.warn("Can't execute remote query", e);
       return Collections.emptyList();
     }
   }
