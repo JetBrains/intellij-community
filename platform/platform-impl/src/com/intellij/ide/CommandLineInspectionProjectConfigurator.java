@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +63,19 @@ public interface CommandLineInspectionProjectConfigurator {
       return null;
     }
   }
+
+  /**
+   * @return stable identifier that can be used to disable a configurator from user scripts
+   */
+  @NotNull
+  String getName();
+
+  /**
+   * @return human readable description on the configurator actions
+   */
+  @NotNull
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  String getDescription();
 
   /**
    * @returns true if any additional configuration is required to inspect the project at the given path.
