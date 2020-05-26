@@ -2,7 +2,7 @@
   {
     "consentId": "rsch.send.usage.stat",
     "version": "1.0",
-    "text": "Allow Google to collect anonymous usage data for Android Studio and its related tools—such as how you use features and resources, and how you configure plugins. This data helps improve Android Studio and is collected in accordance with <a href=\"http://www.google.com/policies/privacy/\">Google's Privacy Policy</a>. Anonymous and aggregated usage data may be shared with Google's partners to improve Android Studio.",
+    "text": "Allow Google to collect usage data for Android Studio and its related tools, such as how you use features and resource usage, software identifiers such as package name and class names and plugin configuration. This data helps improve Android Studio and is collected in accordance with <a href=\"http://www.google.com/policies/privacy/\">Google's Privacy Policy</a>. Anonymous and aggregated usage data may be shared with Google's partners to improve Android Studio.",
     "printableName": "Send usage statistics to Google",
     "accepted": "false"
   }
