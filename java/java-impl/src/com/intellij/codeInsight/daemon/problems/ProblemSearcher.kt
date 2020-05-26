@@ -12,14 +12,21 @@ import com.intellij.psi.util.PsiTreeUtil
 internal class ProblemSearcher(private val file: PsiFile) : JavaElementVisitor() {
 
   private val problems = mutableSetOf<PsiElement>()
+  private var seenReference = false
 
   override fun visitElement(element: PsiElement) {
     findProblem(element)
     element.parent?.accept(this)
   }
 
+  override fun visitReferenceElement(reference: PsiJavaCodeReferenceElement?) {
+    if (seenReference) return
+    seenReference = true
+    super.visitReferenceElement(reference)
+  }
+
   override fun visitReferenceExpression(expression: PsiReferenceExpression) {
-    visitElement(expression)
+    visitReferenceElement(expression)
   }
 
   override fun visitCallExpression(callExpression: PsiCallExpression) {
