@@ -578,7 +578,6 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
         val moduleStore = module.stateStore as ModuleStoreBase
         LocalFileSystem.getInstance().refreshAndFindFileByPath(modulePath)
         moduleStore.setPath(modulePath, null, isNew)
-        moduleStore.storageManager.addMacro("MODULE_FILE", modulePath)
       }
       catch (t: Throwable) {
         logger<LegacyBridgeModuleManagerComponent>().error(t)
