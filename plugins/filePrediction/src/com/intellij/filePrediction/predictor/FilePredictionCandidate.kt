@@ -6,6 +6,7 @@ import com.intellij.filePrediction.FileFeaturesComputationResult
 class FilePredictionCandidate(
   val features: FileFeaturesComputationResult,
   val path: String,
+  val source: String,
   val duration: Long? = null,
   val probability: Double? = null
 )

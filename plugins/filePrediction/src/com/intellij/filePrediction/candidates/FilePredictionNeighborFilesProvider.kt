@@ -6,16 +6,16 @@ import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.vfs.VirtualFile
 
 internal class FilePredictionNeighborFilesProvider : FilePredictionBaseCandidateProvider(20) {
-  override fun provideCandidates(project: Project, file: VirtualFile?, refs: Set<VirtualFile>, limit: Int): Collection<VirtualFile> {
+  override fun provideCandidates(project: Project, file: VirtualFile?, refs: Set<VirtualFile>, limit: Int): Collection<FilePredictionCandidateFile> {
     if (file == null) {
       return emptySet()
     }
 
-    val result = HashSet<VirtualFile>()
+    val result = HashSet<FilePredictionCandidateFile>()
     val fileIndex = FileIndexFacade.getInstance(project)
     var parent = file.parent
     while (parent != null && parent.isDirectory && result.size < limit && fileIndex.isInProjectScope(parent)) {
-      addWithLimit(parent.children.iterator(), result, file, limit)
+      addWithLimit(parent.children.iterator(), result, "neighbor", file, limit)
       parent = parent.parent
     }
     return result

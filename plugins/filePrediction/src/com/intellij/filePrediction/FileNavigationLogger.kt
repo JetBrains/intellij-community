@@ -14,6 +14,7 @@ internal object FileNavigationLogger {
                features: FileFeaturesComputationResult,
                filePath: String,
                prevFilePath: String?,
+               source: String,
                opened: Boolean,
                totalDuration: Long,
                refsComputation: Long,
@@ -23,6 +24,7 @@ internal object FileNavigationLogger {
       .addData("session_id", sessionId)
       .addAnonymizedPath(filePath)
       .addAnonymizedValue("prev_file_path", prevFilePath)
+      .addData("source", source)
       .addData("opened", opened)
       .addData("total_ms", totalDuration)
       .addData("refs_ms", refsComputation)

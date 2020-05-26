@@ -12,17 +12,20 @@ private val EP_NAME = ExtensionPointName<FilePredictionCandidateProvider>("com.i
 interface FilePredictionCandidateProvider {
   fun getWeight(): Int
 
-  fun provideCandidates(project: Project, file: VirtualFile?, refs: Set<VirtualFile>, limit: Int): Collection<VirtualFile>
+  fun provideCandidates(project: Project, file: VirtualFile?, refs: Set<VirtualFile>, limit: Int): Collection<FilePredictionCandidateFile>
 }
 
 internal abstract class FilePredictionBaseCandidateProvider(private val weight: Int) : FilePredictionCandidateProvider {
   override fun getWeight(): Int = weight
 
-  internal fun addWithLimit(from: Iterator<VirtualFile>, to: MutableSet<VirtualFile>, skip: VirtualFile?, limit: Int) {
+  internal fun addWithLimit(from: Iterator<VirtualFile>,
+                            to: MutableSet<FilePredictionCandidateFile>,
+                            source: String,
+                            skip: VirtualFile?, limit: Int) {
     while (to.size < limit && from.hasNext()) {
       val next = from.next()
       if (!next.isDirectory && skip != next) {
-        to.add(next)
+        to.add(FilePredictionCandidateFile(next, source))
       }
     }
   }
@@ -37,13 +40,30 @@ open class CompositeCandidateProvider : FilePredictionCandidateProvider {
     return EP_NAME.extensionList.sortedBy { it.getWeight() }
   }
 
-  override fun provideCandidates(project: Project, file: VirtualFile?, refs: Set<VirtualFile>, limit: Int): Collection<VirtualFile> {
-    val result = HashSet<VirtualFile>()
+  override fun provideCandidates(project: Project, file: VirtualFile?, refs: Set<VirtualFile>, limit: Int): Collection<FilePredictionCandidateFile> {
+    val result = HashSet<FilePredictionCandidateFile>()
     val providers = getProviders()
     for ((index, provider) in providers.withIndex()) {
       val providerLimit = (limit - result.size) / (providers.size - index)
       result.addAll(provider.provideCandidates(project, file, refs, providerLimit))
     }
     return result
+  }
+}
+
+data class FilePredictionCandidateFile(val file: VirtualFile, val source: String) {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as FilePredictionCandidateFile
+
+    if (file != other.file) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return file.hashCode()
   }
 }
