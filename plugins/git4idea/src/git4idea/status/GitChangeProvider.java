@@ -9,15 +9,14 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
-import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.changes.GitChangeUtils;
 import git4idea.repo.GitConflictsHolder;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -59,7 +58,10 @@ public final class GitChangeProvider implements ChangeProvider {
       for (GitRepository repo : repos) {
         LOG.debug("checking root: ", repo.getRoot());
         List<FilePath> rootDirtyPaths = ContainerUtil.notNullize(dirtyPaths.get(repo.getRoot()));
+        if (rootDirtyPaths.isEmpty()) continue;
+
         GitChangesCollector collector = GitChangesCollector.collect(project, repo, rootDirtyPaths);
+        holder.markHeadRevision(repo.getRoot(), collector.getHead());
 
         Collection<Change> changes = collector.getChanges();
         for (Change change : changes) {
@@ -140,6 +142,7 @@ public final class GitChangeProvider implements ChangeProvider {
     private final ChangeListManagerGate myAddGate;
 
     private final Set<FilePath> myProcessedPaths = new HashSet<>();
+    private final Map<VirtualFile, VcsRevisionNumber> myHeadRevisions = new HashMap<>();
 
     private NonChangedHolder(Project project, ChangeListManagerGate addGate) {
       myProject = project;
@@ -150,10 +153,12 @@ public final class GitChangeProvider implements ChangeProvider {
       myProcessedPaths.add(path);
     }
 
+    public void markHeadRevision(@NotNull VirtualFile root, @NotNull VcsRevisionNumber revision) {
+      myHeadRevisions.put(root, revision);
+    }
+
     public void feedBuilder(@NotNull VcsDirtyScope dirtyScope, @NotNull ChangelistBuilder builder) throws VcsException {
       final VcsKey gitKey = GitVcs.getKey();
-
-      Map<VirtualFile, GitRevisionNumber> baseRevisions = new HashMap<>();
 
       FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
       for (Document document : fileDocumentManager.getUnsavedDocuments()) {
@@ -171,10 +176,10 @@ public final class GitChangeProvider implements ChangeProvider {
         VirtualFile root = repository.getRoot();
 
 
-        GitRevisionNumber beforeRevisionNumber = baseRevisions.get(root);
+        VcsRevisionNumber beforeRevisionNumber = myHeadRevisions.get(root);
         if (beforeRevisionNumber == null) {
-          beforeRevisionNumber = GitChangeUtils.resolveReference(myProject, root, "HEAD");
-          baseRevisions.put(root, beforeRevisionNumber);
+          beforeRevisionNumber = GitChangesCollector.getHead(repository);
+          myHeadRevisions.put(root, beforeRevisionNumber);
         }
 
         Change change = new Change(GitContentRevision.createRevision(filePath, beforeRevisionNumber, myProject),

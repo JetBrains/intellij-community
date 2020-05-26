@@ -65,10 +65,16 @@ class GitChangesCollector {
   }
 
   @NotNull
+  VcsRevisionNumber getHead() {
+    return myHead;
+  }
+
+  @NotNull
   Collection<Change> getChanges() {
     return myChanges;
   }
 
+  @NotNull
   Collection<GitConflict> getConflicts() {
     return myConflicts;
   }
@@ -378,7 +384,7 @@ class GitChangesCollector {
   }
 
   @NotNull
-  private static VcsRevisionNumber getHead(@NotNull GitRepository repository) {
+  static VcsRevisionNumber getHead(@NotNull GitRepository repository) {
     // we force update the GitRepository, because update is asynchronous, and thus the GitChangeProvider may be asked for changes
     // before the GitRepositoryUpdater has captures the current revision change and has updated the GitRepository.
     repository.update();
