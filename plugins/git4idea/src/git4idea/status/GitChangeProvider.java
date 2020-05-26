@@ -81,7 +81,9 @@ public final class GitChangeProvider implements ChangeProvider {
             }
           }
         }
-        for (FilePath path : collector.getUnversionedFilePaths()) {
+
+        Collection<FilePath> untracked = repo.getUntrackedFilesHolder().retrieveUntrackedFilePaths();
+        for (FilePath path : untracked) {
           builder.processUnversionedFile(path);
           holder.unversioned(path);
         }

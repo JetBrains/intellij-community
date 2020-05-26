@@ -23,7 +23,6 @@ import git4idea.diff.GitSubmoduleContentRevision;
 import git4idea.repo.GitConflict;
 import git4idea.repo.GitConflict.Status;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitUntrackedFilesHolder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -49,7 +48,6 @@ class GitChangesCollector {
   @NotNull private final VirtualFile myVcsRoot;
 
   private final Collection<Change> myChanges = new HashSet<>();
-  private final Set<FilePath> myUnversionedFiles = new HashSet<>();
   private final Collection<GitConflict> myConflicts = new HashSet<>();
 
   /**
@@ -62,11 +60,6 @@ class GitChangesCollector {
                                      @NotNull GitRepository repository,
                                      @NotNull Collection<FilePath> dirtyPaths) throws VcsException {
     return new GitChangesCollector(project, git, repository, dirtyPaths);
-  }
-
-  @NotNull
-  Collection<FilePath> getUnversionedFilePaths() {
-    return myUnversionedFiles;
   }
 
   @NotNull
@@ -89,7 +82,6 @@ class GitChangesCollector {
 
     if (!dirtyPaths.isEmpty()) {
       collectChanges(dirtyPaths);
-      collectUnversionedFiles();
     }
   }
 
@@ -178,11 +170,6 @@ class GitChangesCollector {
     List<FilePath> bothModifiedPaths = parseOutput(output, head, handler);
 
     collectStagedUnstagedModifications(bothModifiedPaths, head);
-  }
-
-  private void collectUnversionedFiles() throws VcsException {
-    GitUntrackedFilesHolder untrackedFilesHolder = myRepository.getUntrackedFilesHolder();
-    myUnversionedFiles.addAll(untrackedFilesHolder.retrieveUntrackedFilePaths());
   }
 
   private GitLineHandler statusHandler() {
