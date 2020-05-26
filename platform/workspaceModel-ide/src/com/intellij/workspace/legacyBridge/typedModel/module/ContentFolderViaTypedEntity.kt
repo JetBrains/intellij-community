@@ -3,12 +3,14 @@ package com.intellij.workspace.legacyBridge.typedModel.module
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.ContentFolder
 import com.intellij.openapi.roots.ExcludeFolder
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspace.api.*
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProvider
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerScope
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleRootComponent
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -100,7 +102,7 @@ internal class SourceFolderViaTypedEntity(private val entry: ContentEntryViaType
   }
 
   override fun <P : JpsElement> changeType(newType: JpsModuleSourceRootType<P>, properties: P) {
-    sourceRootType = newType
+    (ModuleRootManager.getInstance(contentEntry.rootModel.module) as LegacyBridgeModuleRootComponent).dropRootModelCache()
   }
 
   override fun hashCode() = entry.url.hashCode()
@@ -140,7 +142,6 @@ internal class SourceFolderViaTypedEntity(private val entry: ContentEntryViaType
       if (javaResourceRoot != null) return
 
       updater { diff ->
-        // TODO Replace TempEntitySource with sourceRootEntity.source
         diff.addJavaSourceRootEntity(sourceRootEntity, false, packagePrefix, sourceRootEntity.entitySource)
       }
     } else {

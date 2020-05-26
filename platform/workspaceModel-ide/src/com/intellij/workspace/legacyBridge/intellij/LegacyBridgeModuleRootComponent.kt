@@ -53,11 +53,11 @@ class LegacyBridgeModuleRootComponent(
   init {
     MODULE_EXTENSION_NAME.getPoint(legacyBridgeModule).addExtensionPointListener(object : ExtensionPointListener<ModuleExtension?> {
       override fun extensionAdded(extension: ModuleExtension, pluginDescriptor: PluginDescriptor) {
-        modelValue.dropCache()
+        dropRootModelCache()
       }
 
       override fun extensionRemoved(extension: ModuleExtension, pluginDescriptor: PluginDescriptor) {
-        modelValue.dropCache()
+        dropRootModelCache()
       }
     }, false, null)
   }
@@ -75,6 +75,10 @@ class LegacyBridgeModuleRootComponent(
 
   override fun dropCaches() {
     orderRootsCache.clearCache()
+    dropRootModelCache()
+  }
+
+  internal fun dropRootModelCache() {
     modelValue.dropCache()
   }
 

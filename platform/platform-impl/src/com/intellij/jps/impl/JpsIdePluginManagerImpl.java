@@ -7,8 +7,10 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -32,6 +34,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 
 public final class JpsIdePluginManagerImpl extends JpsPluginManager {
   private final List<PluginDescriptor> myExternalBuildPlugins = new CopyOnWriteArrayList<>();
@@ -89,6 +92,8 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
   }
 
   private void handlePluginRemoved(@NotNull PluginDescriptor pluginDescriptor) {
+    if (!myExternalBuildPlugins.contains(pluginDescriptor)) return;
+
     Map<JpsModuleSourceRootType<?>, JpsModuleSourceRootPropertiesSerializer<?>> removed = new HashMap<>();
     for (JpsModelSerializerExtension extension : loadExtensions(JpsModelSerializerExtension.class)) {
       for (JpsModuleSourceRootPropertiesSerializer<?> serializer : extension.getModuleSourceRootPropertiesSerializers()) {
@@ -96,14 +101,7 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
       }
     }
 
-    if (myExternalBuildPlugins.remove(pluginDescriptor)) {
-      myModificationStamp.incrementAndGet();
-    }
-    else{
-      return;
-    }
-
-    for (JpsModelSerializerExtension extension : loadExtensions(JpsModelSerializerExtension.class)) {
+    for (JpsModelSerializerExtension extension : loadExtensions(JpsModelSerializerExtension.class, descriptor -> !descriptor.equals(pluginDescriptor))) {
       for (JpsModuleSourceRootPropertiesSerializer<?> serializer : extension.getModuleSourceRootPropertiesSerializers()) {
         removed.remove(serializer.getType());
       }
@@ -114,6 +112,8 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
         replaceWithUnknownRootType(project, removed.values());
       }
     }
+    myExternalBuildPlugins.remove(pluginDescriptor);
+    myModificationStamp.incrementAndGet();
   }
 
   private void handlePluginAdded(@NotNull PluginDescriptor pluginDescriptor) {
@@ -183,24 +183,32 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
       serializers.put(ser.getTypeId(), ser);
     }
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      ModuleRootModificationUtil.modifyModel(module, model -> {
-        boolean shouldCommit = false;
-        for (ContentEntry contentEntry : model.getContentEntries()) {
-          for (SourceFolder folder : contentEntry.getSourceFolders()) {
-            if (folder.getRootType() instanceof UnknownSourceRootType) {
-              UnknownSourceRootType type = (UnknownSourceRootType)folder.getRootType();
-              JpsModuleSourceRootPropertiesSerializer<?> serializer = serializers.get(type.getUnknownTypeId());
-              if (serializer != null) {
-                UnknownSourceRootTypeProperties<?> properties = folder.getJpsElement().getProperties(type);
-                Object data = properties != null? properties.getPropertiesData() : null;
-                changeType(folder, serializer, data instanceof Element ? (Element)data : null);
-                shouldCommit = true;
-              }
+      Map<SourceFolder, Pair<JpsModuleSourceRootPropertiesSerializer<?>, Element>> foldersToUpdate = new HashMap<>();
+      for (ContentEntry contentEntry : ModuleRootManager.getInstance(module).getContentEntries()) {
+        for (SourceFolder folder : contentEntry.getSourceFolders()) {
+          if (folder.getRootType() instanceof UnknownSourceRootType) {
+            UnknownSourceRootType type = (UnknownSourceRootType)folder.getRootType();
+            JpsModuleSourceRootPropertiesSerializer<?> serializer = serializers.get(type.getUnknownTypeId());
+            if (serializer != null) {
+              UnknownSourceRootTypeProperties<?> properties = folder.getJpsElement().getProperties(type);
+              Object data = properties != null ? properties.getPropertiesData() : null;
+              foldersToUpdate.put(folder, new Pair<>(serializer, data instanceof Element ? (Element)data : null));
             }
           }
         }
-        return shouldCommit;
-      });
+      }
+      if (!foldersToUpdate.isEmpty()) {
+        ModuleRootModificationUtil.updateModel(module, model -> {
+          for (ContentEntry contentEntry : model.getContentEntries()) {
+            for (SourceFolder folder : contentEntry.getSourceFolders()) {
+              Pair<JpsModuleSourceRootPropertiesSerializer<?>, Element> pair = foldersToUpdate.get(folder);
+              if (pair != null) {
+                changeType(folder, pair.first, pair.second);
+              }
+            }
+          }
+        });
+      }
     }
   }
 
@@ -230,9 +238,16 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
   @NotNull
   @Override
   public <T> Collection<T> loadExtensions(@NotNull Class<T> extensionClass) {
+    return loadExtensions(extensionClass, null);
+  }
+
+  @NotNull
+  private <T> Collection<T> loadExtensions(@NotNull Class<T> extensionClass, @Nullable Predicate<PluginDescriptor> filter) {
     Set<ClassLoader> loaders = new LinkedHashSet<>();
     for (PluginDescriptor plugin : myExternalBuildPlugins) {
-      ContainerUtil.addIfNotNull(loaders, plugin.getPluginClassLoader());
+      if (filter == null || filter.test(plugin)) {
+        ContainerUtil.addIfNotNull(loaders, plugin.getPluginClassLoader());
+      }
     }
     if (loaders.isEmpty()) {
       loaders.add(getClass().getClassLoader());

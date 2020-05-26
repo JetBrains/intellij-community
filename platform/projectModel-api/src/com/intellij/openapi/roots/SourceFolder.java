@@ -57,5 +57,10 @@ public interface SourceFolder extends ContentFolder {
   @NotNull
   JpsModuleSourceRoot getJpsElement();
 
+  /**
+   * This method is used internally to change root type to 'unknown' and back when the plugin which provides the custom root type is
+   * unloaded or loader. It isn't intended to change root type to some other arbitrary type and must not be used in plugins.
+   */
+  @ApiStatus.Internal
   <P extends JpsElement> void changeType(JpsModuleSourceRootType<P> newType, P properties);
 }
