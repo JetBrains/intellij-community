@@ -257,7 +257,7 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
 
   private void registerLibrary(@NotNull VirtualFile root, @Nullable Condition<VirtualFile> excludePattern) {
     WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(
-      () -> AdditionalLibraryRootsProvider.EP_NAME.getPoint(null).registerExtension(new AdditionalLibraryRootsProvider() {
+      () -> AdditionalLibraryRootsProvider.EP_NAME.getPoint().registerExtension(new AdditionalLibraryRootsProvider() {
               @NotNull
               @Override
               public Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {

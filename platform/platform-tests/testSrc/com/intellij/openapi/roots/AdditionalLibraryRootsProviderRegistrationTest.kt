@@ -26,7 +26,7 @@ class AdditionalLibraryRootsProviderRegistrationTest : HeavyPlatformTestCase() {
   }
 
   private fun registerProvider(sourceRoot: VirtualFile, disposable: Disposable) {
-    AdditionalLibraryRootsProvider.EP_NAME.getPoint(null).registerExtension(object : AdditionalLibraryRootsProvider() {
+    AdditionalLibraryRootsProvider.EP_NAME.getPoint().registerExtension(object : AdditionalLibraryRootsProvider() {
       override fun getAdditionalProjectLibraries(project: Project): Collection<SyntheticLibrary> {
         return listOf(SyntheticLibrary.newImmutableLibrary(listOf(sourceRoot)))
       }

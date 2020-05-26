@@ -638,7 +638,7 @@ public interface Test {
   static def registerCompletionContributor(Class contributor, Disposable parentDisposable, LoadingOrder order) {
     def extension = new CompletionContributorEP(language: 'any', implementationClass: contributor.name)
     extension.setPluginDescriptor(new DefaultPluginDescriptor("registerCompletionContributor"))
-    CompletionContributor.EP.getPoint(null).registerExtension(extension, order, parentDisposable)
+    CompletionContributor.EP.getPoint().registerExtension(extension, order, parentDisposable)
   }
 
   void testLeftRightMovements() {

@@ -281,7 +281,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   }
 
   private void withCycleConsoleNoFolding(int capacityKB, Consumer<? super ConsoleViewImpl> runnable) {
-    ExtensionPoint<ConsoleFolding> point = ConsoleFolding.EP_NAME.getPoint(null);
+    ExtensionPoint<ConsoleFolding> point = ConsoleFolding.EP_NAME.getPoint();
 
     UISettings uiSettings = UISettings.getInstance();
     boolean oldUse = uiSettings.getOverrideConsoleCycleBufferSize();
@@ -496,7 +496,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
         return Collections.singletonList(Pair.create("+!" + text + "-!", contentType));
       }
     };
-    ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS.getPoint(null).registerExtension(crazyProvider, getTestRootDisposable());
+    ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS.getPoint().registerExtension(crazyProvider, getTestRootDisposable());
     myConsole = createConsole();
     StringBuilder expectedText = new StringBuilder();
     List<Pair<String, ConsoleViewContentType>> expectedRegisteredTokens = new ArrayList<>();

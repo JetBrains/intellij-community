@@ -524,7 +524,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testFieldUsedBeforeInitialization() { doTest(); }
 
   public void testImplicitlyInitializedField() {
-    ImplicitUsageProvider.EP_NAME.getPoint(null).registerExtension(new ImplicitUsageProvider() {
+    ImplicitUsageProvider.EP_NAME.getPoint().registerExtension(new ImplicitUsageProvider() {
       @Override
       public boolean isImplicitUsage(@NotNull PsiElement element) {
         return false;

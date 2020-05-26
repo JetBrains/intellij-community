@@ -203,7 +203,7 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
       }
     };
 
-    EntryPointsManagerBase.DEAD_CODE_EP_NAME.getPoint(null).registerExtension(myUnusedCodeExtension, myFixture.getProjectDisposable());
+    EntryPointsManagerBase.DEAD_CODE_EP_NAME.getPoint().registerExtension(myUnusedCodeExtension, myFixture.getProjectDisposable());
   }
 
   @Override

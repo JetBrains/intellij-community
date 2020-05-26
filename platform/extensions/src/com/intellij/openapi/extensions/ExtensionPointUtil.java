@@ -20,7 +20,7 @@ public final class ExtensionPointUtil {
 
   public static @NotNull <T> Disposable createExtensionDisposable(@NotNull T extensionObject,
                                                                   @NotNull ExtensionPointName<T> extensionPointName) {
-    return createExtensionDisposable(extensionObject, extensionPointName.getPoint(null));
+    return createExtensionDisposable(extensionObject, extensionPointName.getPoint());
   }
 
   public static @NotNull <T> Disposable createExtensionDisposable(@NotNull T extensionObject, @NotNull ExtensionPoint<T> extensionPoint) {

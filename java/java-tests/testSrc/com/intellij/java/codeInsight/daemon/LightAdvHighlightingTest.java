@@ -262,7 +262,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testUnusedNonPrivateMembers2() {
-    ExtensionPoint<EntryPoint> point = EntryPointsManagerBase.DEAD_CODE_EP_NAME.getPoint(null);
+    ExtensionPoint<EntryPoint> point = EntryPointsManagerBase.DEAD_CODE_EP_NAME.getPoint();
     EntryPoint extension = new EntryPoint() {
       @NotNull
       @Override

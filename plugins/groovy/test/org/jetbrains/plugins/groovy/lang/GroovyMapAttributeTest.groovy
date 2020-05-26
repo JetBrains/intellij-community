@@ -436,7 +436,7 @@ class Test {
   }
 
   private doTestCompletionWithinMap(String text, String text2 = null) {
-    GroovyNamedArgumentProvider.EP_NAME.getPoint(null).registerExtension(new GroovyNamedArgumentProvider() {
+    GroovyNamedArgumentProvider.EP_NAME.getPoint().registerExtension(new GroovyNamedArgumentProvider() {
       @NotNull
       @Override
       Map<String, NamedArgumentDescriptor> getNamedArguments(@NotNull GrListOrMap literal) {

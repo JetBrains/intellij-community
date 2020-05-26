@@ -129,7 +129,7 @@ public class CanBeFinalTest extends JavaInspectionTestCase {
   }
 
   public void testfieldImplicitWrite() {
-    ImplicitUsageProvider.EP_NAME.getPoint(null).registerExtension(new ImplicitUsageProvider() {
+    ImplicitUsageProvider.EP_NAME.getPoint().registerExtension(new ImplicitUsageProvider() {
       @Override
       public boolean isImplicitUsage(@NotNull PsiElement element) {
         return isImplicitWrite(element);

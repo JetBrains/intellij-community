@@ -202,7 +202,7 @@ class Test implements A {
 
   void testTypeAnnotationsInImplementedMethod() {
     def handler = new OverrideImplementsAnnotationsHandler() { @Override String[] getAnnotations(Project project) { return ["TA"] } }
-    OverrideImplementsAnnotationsHandler.EP_NAME.getPoint(null).registerExtension(handler, testRootDisposable)
+    OverrideImplementsAnnotationsHandler.EP_NAME.getPoint().registerExtension(handler, testRootDisposable)
 
     myFixture.addClass """\
       import java.lang.annotation.*;

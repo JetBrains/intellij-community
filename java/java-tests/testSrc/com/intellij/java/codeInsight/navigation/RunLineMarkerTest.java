@@ -214,7 +214,7 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.configureByText("Main.java", "public class Main {\n" +
                                            "    public static void ma<caret>in(String[] args) {}\n" +
                                            "}");
-    RunConfigurationProducer.EP_NAME.getPoint(null).registerExtension(new ApplicationConfigurationProducer() {
+    RunConfigurationProducer.EP_NAME.getPoint().registerExtension(new ApplicationConfigurationProducer() {
       @Override
       protected boolean setupConfigurationFromContext(@NotNull ApplicationConfiguration configuration,
                                                       @NotNull ConfigurationContext context,

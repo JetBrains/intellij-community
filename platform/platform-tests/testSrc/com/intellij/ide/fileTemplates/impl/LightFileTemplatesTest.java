@@ -230,7 +230,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
   }
 
   public void testInternalTemplatePlugin() {
-    ExtensionPoint<InternalTemplateBean> point = InternalTemplateBean.EP_NAME.getPoint(null);
+    ExtensionPoint<InternalTemplateBean> point = InternalTemplateBean.EP_NAME.getPoint();
     InternalTemplateBean bean = new InternalTemplateBean();
     bean.name = "Unknown";
     bean.setPluginDescriptor(new DefaultPluginDescriptor("test"));

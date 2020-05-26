@@ -310,7 +310,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
         return 48;
       }
     };
-    FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint(null).registerExtension(detector, getTestRootDisposable());
+    FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint().registerExtension(detector, getTestRootDisposable());
     FileTypeManagerImpl.toLog = true;
 
     try {
@@ -496,7 +496,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     //String s = JDOMUtil.writeElement(element);
 
     final AbstractFileType typeFromPlugin = new AbstractFileType(new SyntaxTable());
-    FileTypeFactory.FILE_TYPE_FACTORY_EP.getPoint(null).registerExtension(new FileTypeFactory() {
+    FileTypeFactory.FILE_TYPE_FACTORY_EP.getPoint().registerExtension(new FileTypeFactory() {
       @Override
       public void createFileTypes(@NotNull FileTypeConsumer consumer) {
         consumer.consume(typeFromPlugin, "fromPlugin");
@@ -524,7 +524,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     Disposable disposable = Disposer.newDisposable();
     try {
       myFileTypeManager.clearForTests();
-      FileTypeFactory.FILE_TYPE_FACTORY_EP.getPoint(null).registerExtension(factory, disposable);
+      FileTypeFactory.FILE_TYPE_FACTORY_EP.getPoint().registerExtension(factory, disposable);
       initStandardFileTypes();
       myFileTypeManager.loadState(element);
       myFileTypeManager.initializeComponent();
@@ -546,7 +546,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       //log(JDOMUtil.writeElement(element));
 
       disposable = Disposer.newDisposable();
-      FileTypeFactory.FILE_TYPE_FACTORY_EP.getPoint(null).registerExtension(factory, disposable);
+      FileTypeFactory.FILE_TYPE_FACTORY_EP.getPoint().registerExtension(factory, disposable);
       myFileTypeManager.clearForTests();
       initStandardFileTypes();
       myFileTypeManager.loadState(element);
@@ -628,7 +628,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
         return 48;
       }
     };
-    FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint(null).registerExtension(detector, getTestRootDisposable());
+    FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint().registerExtension(detector, getTestRootDisposable());
     FileTypeManagerImpl.toLog = true;
 
     try {
@@ -836,7 +836,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
         return "#!archive".length();
       }
     };
-    FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint(null).registerExtension(detector, getTestRootDisposable());
+    FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint().registerExtension(detector, getTestRootDisposable());
 
     assertTrue(myFileTypeManager.isFileOfType(vFile, ArchiveFileType.INSTANCE));
     assertTrue(myFileTypeManager.isFileOfType(vFile, ArchiveFileType.INSTANCE));
@@ -876,7 +876,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     String hashBangSuffix = "detectedFileType";
     FileType detectedFileType = createTestFileType();
     HashBangFileTypeDetector detector = new HashBangFileTypeDetector(detectedFileType, hashBangSuffix);
-    FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint(null).registerExtension(detector, getTestRootDisposable());
+    FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint().registerExtension(detector, getTestRootDisposable());
     
     VirtualFile file = createTempFile(extension, null, "#!/" + hashBangSuffix + "\n", CharsetToolkit.UTF8_CHARSET);
     assertEquals(detectedFileType, file.getFileType());
@@ -917,7 +917,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     Disposable disposable = Disposer.newDisposable();
     Disposer.register(getTestRootDisposable(), disposable);
     ApplicationManager.getApplication().runWriteAction(
-      () -> FileTypeManagerImpl.EP_NAME.getPoint(null).registerExtension(bean, disposable)
+      () -> FileTypeManagerImpl.EP_NAME.getPoint().registerExtension(bean, disposable)
     );
     return disposable;
   }

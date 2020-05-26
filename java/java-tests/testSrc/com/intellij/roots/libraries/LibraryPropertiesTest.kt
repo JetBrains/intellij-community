@@ -114,7 +114,7 @@ class LibraryPropertiesTest : ModuleRootManagerTestCase() {
         Disposer.dispose(libraryTypeDisposable)
       }
     })
-    LibraryType.EP_NAME.getPoint(null).registerExtension(MockLibraryType(), libraryTypeDisposable)
+    LibraryType.EP_NAME.getPoint().registerExtension(MockLibraryType(), libraryTypeDisposable)
   }
 
 }
