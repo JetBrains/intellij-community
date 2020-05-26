@@ -94,7 +94,7 @@ public abstract class TemplateContextType {
    * <ol>
    *   <li>Context types hierarchy shown as a tree in template editor</li>
    *   <li>When template applicability is computed, IDE finds all deepest applicable context types for the current {@link TemplateActionContext}
-   *   and exclude checking of all of their parent contexts. Then, IDE checks that at least one of these deepest applicable contexts is
+   *   and excludes checking of all of their parent contexts. Then, IDE checks that at least one of these deepest applicable contexts is
    *   enabled for the template.</li>
    * </ol>
    */
