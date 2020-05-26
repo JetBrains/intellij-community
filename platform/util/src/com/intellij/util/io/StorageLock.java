@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
 @ApiStatus.Internal
-class StorageLock {
+public class StorageLock {
   private static final Logger LOG = Logger.getInstance(StorageLock.class);
 
   static final int MAX_PAGES_COUNT = 0xFFFF;
@@ -83,8 +83,8 @@ class StorageLock {
   private volatile long mySizeLimit;
   private volatile int myMappingChangeCount;
 
-  StorageLock() {
-    myDefaultContext = new StorageLockContext(this, true);
+  public StorageLock() {
+    myDefaultContext = new StorageLockContext(this, true, false);
 
     mySizeLimit = UPPER_LIMIT;
     mySegments = new LinkedHashMap<Integer, ByteBufferWrapper>(10, 0.75f, true) {
@@ -128,7 +128,7 @@ class StorageLock {
     return myIndex2Storage.get(index);
   }
 
-  ByteBufferWrapper get(Integer key) throws IOException {
+  ByteBufferWrapper get(Integer key, boolean read) throws IOException {
     ByteBufferWrapper wrapper;
     try {         // fast path
       mySegmentsAccessLock.lock();
@@ -151,7 +151,7 @@ class StorageLock {
       }
 
       long started = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
-      wrapper = createValue(key);
+      wrapper = createValue(key, read);
 
       if (IOStatistics.DEBUG) {
         long finished = System.currentTimeMillis();
@@ -207,11 +207,11 @@ class StorageLock {
   }
 
   @NotNull
-  private ByteBufferWrapper createValue(Integer key) {
+  private ByteBufferWrapper createValue(Integer key, boolean read) {
     final int storageIndex = key & FILE_INDEX_MASK;
     PagedFileStorage owner = getRegisteredPagedFileStorageByIndex(storageIndex);
     assert owner != null: "No storage for index " + storageIndex;
-    owner.getStorageLockContext().checkThreadAccess();
+    owner.getStorageLockContext().checkThreadAccess(read);
     long off = (long)(key & MAX_PAGES_COUNT) * owner.myPageSize;
     long ownerLength = owner.length();
     if (off > ownerLength) {
@@ -271,10 +271,10 @@ class StorageLock {
   }
 
   @Nullable
-  private Map<Integer, ByteBufferWrapper> getBuffersOrderedForOwner(int index, StorageLockContext storageLockContext) {
+  private Map<Integer, ByteBufferWrapper> getBuffersOrderedForOwner(int index, StorageLockContext storageLockContext, boolean read) {
     mySegmentsAccessLock.lock();
     try {
-      storageLockContext.checkThreadAccess();
+      storageLockContext.checkThreadAccess(read);
       Map<Integer, ByteBufferWrapper> mineBuffers = null;
       for (Map.Entry<Integer, ByteBufferWrapper> entry : mySegments.entrySet()) {
         if ((entry.getKey() & FILE_INDEX_MASK) == index) {
@@ -291,8 +291,8 @@ class StorageLock {
     }
   }
 
-  void unmapBuffersForOwner(int index, StorageLockContext storageLockContext) {
-    final Map<Integer, ByteBufferWrapper> buffers = getBuffersOrderedForOwner(index, storageLockContext);
+  void unmapBuffersForOwner(int index, StorageLockContext storageLockContext, boolean read) {
+    final Map<Integer, ByteBufferWrapper> buffers = getBuffersOrderedForOwner(index, storageLockContext, read);
 
     if (buffers != null) {
       mySegmentsAccessLock.lock();
@@ -315,7 +315,7 @@ class StorageLock {
   }
 
   void flushBuffersForOwner(int index, StorageLockContext storageLockContext) {
-    Map<Integer, ByteBufferWrapper> buffers = getBuffersOrderedForOwner(index, storageLockContext);
+    Map<Integer, ByteBufferWrapper> buffers = getBuffersOrderedForOwner(index, storageLockContext, false);
 
     if (buffers != null) {
       mySegmentsAllocationLock.lock();

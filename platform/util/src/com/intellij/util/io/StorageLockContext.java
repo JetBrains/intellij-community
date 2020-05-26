@@ -2,40 +2,76 @@
 package com.intellij.util.io;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+@ApiStatus.Internal
 public final class StorageLockContext {
   private final boolean myCheckThreadAccess;
-  private final ReentrantLock myLock;
+  @NotNull
+  private final ReentrantReadWriteLock myLock;
+  @NotNull
   private final StorageLock myStorageLock;
+  private final boolean myUseReadWriteLock;
 
-  StorageLockContext(StorageLock lock, boolean checkAccess) {
-    myLock = new ReentrantLock();
+  public StorageLockContext(@NotNull StorageLock lock, boolean checkAccess, boolean useReadWriteLock) {
+    myLock = new ReentrantReadWriteLock();
     myStorageLock = lock;
     myCheckThreadAccess = checkAccess;
+    myUseReadWriteLock = useReadWriteLock;
+  }
+
+  public StorageLockContext(boolean checkAccess, boolean useReadWriteLock) {
+    this(PagedFileStorage.ourLock, checkAccess, useReadWriteLock);
   }
 
   public StorageLockContext(boolean checkAccess) {
-    this(PagedFileStorage.ourLock, checkAccess);
+    this(PagedFileStorage.ourLock, checkAccess, false);
   }
 
-  public void lock() {
-    myLock.lock();
+  public void lockRead() {
+    if (myUseReadWriteLock) {
+      myLock.readLock().lock();
+    }
+    else {
+      myLock.writeLock().lock();
+    }
   }
-  public void unlock() {
-    myLock.unlock();
+
+  public void unlockRead() {
+    if (myUseReadWriteLock) {
+      myLock.readLock().unlock();
+    }
+    else {
+      myLock.writeLock().unlock();
+    }
+  }
+
+  public void lockWrite() {
+    myLock.writeLock().lock();
+  }
+  public void unlockWrite() {
+    myLock.writeLock().unlock();
   }
 
   @ApiStatus.Internal
+  @NotNull
   StorageLock getStorageLock() {
     return myStorageLock;
   }
 
   @ApiStatus.Internal
-  void checkThreadAccess() {
-    if (myCheckThreadAccess && !myLock.isHeldByCurrentThread()) {
-      throw new IllegalStateException("Must hold StorageLock lock to access PagedFileStorage");
+  void checkThreadAccess(boolean read) {
+    if (myCheckThreadAccess) {
+      if (read) {
+        if (myLock.getReadHoldCount() > 0 || myLock.writeLock().isHeldByCurrentThread()) return;
+        throw new IllegalStateException("Must hold StorageLock read lock to access PagedFileStorage");
+      }
+      else {
+        if (myLock.writeLock().isHeldByCurrentThread()) return;
+        throw new IllegalStateException("Must hold StorageLock write lock to access PagedFileStorage");
+      }
     }
   }
 }

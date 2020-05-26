@@ -14,8 +14,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class AppendableStorageBackedByResizableMappedFile<Data> extends ResizeableMappedFile implements AppendableObjectStorage<Data> {
-  private final MyDataIS myReadStream;
-  private byte[] myAppendBuffer;
+  private static final ThreadLocal<MyDataIS> ourReadStream = ThreadLocal.withInitial(() -> new MyDataIS());
+  private volatile byte[] myAppendBuffer;
   private volatile int myFileLength;
   private volatile int myBufferPosition;
   private static final int ourAppendBufferLength = 4096;
@@ -30,7 +30,6 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
                                                       @NotNull KeyDescriptor<Data> dataDescriptor) {
     super(file, initialSize, lockContext, pageSize, valuesAreBufferAligned);
     myDataDescriptor = dataDescriptor;
-    myReadStream = new MyDataIS(this);
     myFileLength = (int)length();
   }
 
@@ -52,6 +51,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
   public void close() {
     flushKeyStoreBuffer();
     super.close();
+    ourReadStream.remove();
   }
 
   @Override
@@ -71,8 +71,10 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
       return myDataDescriptor.read(new DataInputStream(new UnsyncByteArrayInputStream(myAppendBuffer, bufferOffset, myBufferPosition)));
     }
     // we do not need to flushKeyBuffer since we store complete records
-    myReadStream.setup(addr, myFileLength);
-    return myDataDescriptor.read(myReadStream);
+    MyDataIS rs = ourReadStream.get();
+
+    rs.setup(this, addr, myFileLength);
+    return myDataDescriptor.read(rs);
   }
 
   @Override
@@ -147,13 +149,23 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
   }
 
   @Override
-  public void lock() {
-    getPagedFileStorage().lock();
+  public void lockRead() {
+    getPagedFileStorage().lockRead();
   }
 
   @Override
-  public void unlock() {
-    getPagedFileStorage().unlock();
+  public void unlockRead() {
+    getPagedFileStorage().unlockRead();
+  }
+
+  @Override
+  public void lockWrite() {
+    getPagedFileStorage().lockWrite();
+  }
+
+  @Override
+  public void unlockWrite() {
+    getPagedFileStorage().unlockWrite();
   }
 
   @NotNull
@@ -210,24 +222,32 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
   }
 
   private static class MyDataIS extends DataInputStream {
-    private MyDataIS(ResizeableMappedFile raf) {
-      super(new MyBufferedIS(new MappedFileInputStream(raf, 0, 0)));
+    private MyDataIS() {
+      super(new MyBufferedIS());
     }
 
-    void setup(long pos, long limit) {
-      ((MyBufferedIS)in).setup(pos, limit);
+    void setup(ResizeableMappedFile is, long pos, long limit) {
+      ((MyBufferedIS)in).setup(is, pos, limit);
     }
   }
 
   private static class MyBufferedIS extends BufferedInputStream {
-    MyBufferedIS(final InputStream in) {
-      super(in, 512);
+    MyBufferedIS() {
+      super(TOMBSTONE, 512);
     }
 
-    void setup(long pos, long limit) {
+    void setup(ResizeableMappedFile in, long pos, long limit) {
       this.pos = 0;
       this.count = 0;
-      ((MappedFileInputStream)in).setup(pos, limit);
+      this.in = new MappedFileInputStream(in, pos, limit);
     }
   }
+
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  private static final InputStream TOMBSTONE = new InputStream() {
+    @Override
+    public int read() {
+      throw new IllegalStateException("should not happen");
+    }
+  };
 }

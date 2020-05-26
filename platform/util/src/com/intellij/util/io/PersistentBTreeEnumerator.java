@@ -91,7 +91,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
     if (myBTree == null) {
       try {
-        lockStorage();
+        lockStorageWrite();
         storeVars(false);
         initBtree(false);
         storeBTreeVars(false);
@@ -114,7 +114,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
         throw new CorruptedException(file);
       }
       finally {
-        unlockStorage();
+        unlockStorageWrite();
       }
     }
   }
@@ -216,7 +216,8 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   @Override
   public boolean traverseAllRecords(@NotNull final RecordsProcessor p) throws IOException {
     try {
-      lockStorage();
+      // TODO downgrade to read
+      lockStorageWrite();
       return myBTree.processMappings(new IntToIntBtree.KeyValueProcessor() {
         @Override
         public boolean process(int key, int value) throws IOException {
@@ -241,7 +242,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       throw corruptedException;
     }
     finally {
-      unlockStorage();
+      unlockStorageWrite();
     }
   }
 
@@ -297,7 +298,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   long getNonNegativeValue(Data key) throws IOException {
     assert myInlineKeysNoMapping;
     try {
-      lockStorage();
+      lockStorageRead();
       final boolean hasMapping = myBTree.get(((InlineKeyDescriptor<Data>)myDataDescriptor).toInt(key), myResultBuf);
       if (!hasMapping) {
         return NULL_ID;
@@ -311,7 +312,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       throw exception;
     }
     finally {
-      unlockStorage();
+      unlockStorageRead();
     }
   }
 
@@ -324,7 +325,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     assert value >= 0;
     assert myInlineKeysNoMapping;
     try {
-      lockStorage();
+      lockStorageWrite();
 
       int intKey = ((InlineKeyDescriptor<Data>)myDataDescriptor).toInt(key);
 
@@ -354,7 +355,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       throw exception;
     }
     finally {
-      unlockStorage();
+      unlockStorageWrite();
     }
   }
 
@@ -376,7 +377,13 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   protected int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
     synchronized (getDataAccessLock()) {
       try {
-        lockStorage();
+        if (onlyCheckForExisting) {
+          lockStorageRead();
+        }
+        else {
+          lockStorageWrite();
+        }
+
         if (IntToIntBtree.doDump) System.out.println(value);
         final int valueHC = myDataDescriptor.getHashCode(value);
 
@@ -487,7 +494,12 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
         throw exception;
       }
       finally {
-        unlockStorage();
+        if (onlyCheckForExisting) {
+          unlockStorageRead();
+        }
+        else {
+          unlockStorageWrite();
+        }
       }
     }
   }
@@ -525,7 +537,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   private static class RecordBufferHandler extends PersistentEnumeratorBase.RecordBufferHandler<PersistentBTreeEnumerator<?>> {
-    private byte[] myBuffer;
+    private ThreadLocal<byte[]> myBuffer;
 
     @Override
     int recordWriteOffset(@NotNull PersistentBTreeEnumerator<?> enumerator, byte @NotNull [] buf) {
@@ -552,9 +564,9 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     @Override
     byte @NotNull [] getRecordBuffer(@NotNull PersistentBTreeEnumerator<?> enumerator) {
       if (myBuffer == null) {
-        myBuffer = enumerator.myInlineKeysNoMapping ? ArrayUtilRt.EMPTY_BYTE_ARRAY : new byte[RECORD_SIZE];
+        myBuffer = ThreadLocal.withInitial(() -> enumerator.myInlineKeysNoMapping ? ArrayUtilRt.EMPTY_BYTE_ARRAY : new byte[RECORD_SIZE]);
       }
-      return myBuffer;
+      return myBuffer.get();
     }
 
     @Override

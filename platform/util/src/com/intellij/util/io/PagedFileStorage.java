@@ -25,6 +25,8 @@ public class PagedFileStorage implements Forceable {
   // It is important to have ourLock after previous static constants as it depends on them
   static final StorageLock ourLock = new StorageLock();
 
+  public static final ThreadLocal<StorageLockContext> THREAD_LOCAL_STORAGE_LOCK_CONTEXT = new ThreadLocal<>();
+
   private final StorageLockContext myStorageLockContext;
   private final boolean myNativeBytesOrder;
   private int myStorageIndex; // -1 when closed
@@ -43,6 +45,15 @@ public class PagedFileStorage implements Forceable {
                           boolean valuesAreBufferAligned,
                           boolean nativeBytesOrder) {
     myFile = file;
+
+    StorageLockContext context = THREAD_LOCAL_STORAGE_LOCK_CONTEXT.get();
+    if (context != null) {
+      if (storageLockContext != null && storageLockContext != context) {
+        throw new IllegalStateException();
+      }
+      storageLockContext = context;
+    }
+
     myStorageLockContext = storageLockContext != null ? storageLockContext : ourLock.myDefaultContext;
     myPageSize = Math.max(pageSize > 0 ? pageSize : BUFFER_SIZE, Page.PAGE_SIZE);
     myValuesAreBufferAligned = valuesAreBufferAligned;
@@ -54,12 +65,20 @@ public class PagedFileStorage implements Forceable {
     return myPageSize;
   }
 
-  public void lock() {
-    myStorageLockContext.lock();
+  public void lockRead() {
+    myStorageLockContext.lockRead();
   }
 
-  public void unlock() {
-    myStorageLockContext.unlock();
+  public void unlockRead() {
+    myStorageLockContext.unlockRead();
+  }
+
+  public void lockWrite() {
+    myStorageLockContext.lockWrite();
+  }
+
+  public void unlockWrite() {
+    myStorageLockContext.unlockWrite();
   }
 
   public StorageLockContext getStorageLockContext() {
@@ -204,7 +223,7 @@ public class PagedFileStorage implements Forceable {
   }
 
   private void unmapAll() {
-    myStorageLockContext.getStorageLock().unmapBuffersForOwner(myStorageIndex, myStorageLockContext);
+    myStorageLockContext.getStorageLock().unmapBuffersForOwner(myStorageIndex, myStorageLockContext, false);
     myLastAccessedBufferCache.clear();
   }
 
@@ -292,7 +311,7 @@ public class PagedFileStorage implements Forceable {
       if (myStorageIndex == -1) {
         throw new IOException("storage is already closed; path " + myFile);
       }
-      ByteBufferWrapper byteBufferWrapper = myStorageLockContext.getStorageLock().get(myStorageIndex | (int)page); // TODO: long page
+      ByteBufferWrapper byteBufferWrapper = myStorageLockContext.getStorageLock().get(myStorageIndex | (int)page, !modify); // TODO: long page
       if (modify) markDirty(byteBufferWrapper);
       ByteBuffer buf = byteBufferWrapper.getBuffer();
       if (myNativeBytesOrder && buf.order() != ourNativeByteOrder) {

@@ -39,7 +39,7 @@ public class ResizeableMappedFile implements Forceable {
   private static final boolean truncateOnClose = SystemProperties.getBooleanProperty("idea.resizeable.file.truncate.on.close", false);
   private long myLogicalSize;
   private long myLastWrittenLogicalSize;
-  private final PagedFileStorage myStorage;
+  protected final PagedFileStorage myStorage;
   private final int myInitialSize;
 
   static final int DEFAULT_ALLOCATION_ROUND_FACTOR = 4096;

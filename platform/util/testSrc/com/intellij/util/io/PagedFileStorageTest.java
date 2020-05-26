@@ -124,12 +124,12 @@ public class PagedFileStorageTest {
   }
 
   private static void withLock(StorageLockContext lock, ThrowableRunnable<IOException> block) throws IOException {
-    lock.lock();
+    lock.lockWrite();
     try {
       block.run();
     }
     finally {
-      lock.unlock();
+      lock.unlockWrite();
     }
   }
 

@@ -185,7 +185,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
     myStorage = storage;
 
-    lockStorage();
+    lockStorageWrite();
     try {
       if (myStorage.length() == 0) {
         try {
@@ -230,7 +230,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       }
     }
     finally {
-      unlockStorage();
+      unlockStorageWrite();
     }
 
     if (dataDescriptor instanceof InlineKeyDescriptor) {
@@ -258,12 +258,20 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     return this;
   }
 
-  void lockStorage() {
-    myStorage.getPagedFileStorage().lock();
+  void lockStorageRead() {
+    myStorage.getPagedFileStorage().lockRead();
   }
 
-  void unlockStorage() {
-    myStorage.getPagedFileStorage().unlock();
+  void unlockStorageRead() {
+    myStorage.getPagedFileStorage().unlockRead();
+  }
+
+  void lockStorageWrite() {
+    myStorage.getPagedFileStorage().lockWrite();
+  }
+
+  void unlockStorageWrite() {
+    myStorage.getPagedFileStorage().unlockWrite();
   }
 
   protected abstract void setupEmptyFile() throws IOException;
@@ -332,42 +340,42 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   protected void putMetaData(long data) {
-    lockStorage();
+    lockStorageWrite();
     try {
       if (myStorage.length() < META_DATA_OFFSET + 8 || getMetaData() != data) myStorage.putLong(META_DATA_OFFSET, data);
     }
     finally {
-      unlockStorage();
+      unlockStorageWrite();
     }
   }
 
   protected long getMetaData() {
-    lockStorage();
+    lockStorageRead();
     try {
       return myStorage.getLong(META_DATA_OFFSET);
     }
     finally {
-      unlockStorage();
+      unlockStorageRead();
     }
   }
 
   void putMetaData2(long data) {
-    lockStorage();
+    lockStorageWrite();
     try {
       if (myStorage.length() < META_DATA_OFFSET + 16 || getMetaData2() != data) myStorage.putLong(META_DATA_OFFSET + 8, data);
     }
     finally {
-      unlockStorage();
+      unlockStorageWrite();
     }
   }
 
   long getMetaData2() {
-    lockStorage();
+    lockStorageRead();
     try {
       return myStorage.getLong(META_DATA_OFFSET + 8);
     }
     finally {
-      unlockStorage();
+      unlockStorageRead();
     }
   }
 
@@ -452,12 +460,12 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   public boolean iterateData(@NotNull Processor<? super Data> processor) throws IOException {
-    lockStorage(); // todo locking in key storage
+    lockStorageWrite(); // todo locking in key storage
     try {
       myKeyStorage.force();
     }
     finally {
-      unlockStorage();
+      unlockStorageWrite();
     }
 
     return myKeyStorage.processAll(processor);
@@ -472,14 +480,14 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     if (idx <= NULL_ID) return null;
     try {
 
-      lockStorage();
+      lockStorageRead();
       try {
         int addr = indexToAddr(idx);
 
         return myKeyStorage.read(addr);
       }
       finally {
-        unlockStorage();
+        unlockStorageRead();
       }
     }
     catch (NoDataException e) {
@@ -510,7 +518,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   @Override
   public void close() throws IOException {
     synchronized (getDataAccessLock()) {
-      lockStorage();
+      lockStorageWrite();
       try {
         if (!myClosed) {
           myClosed = true;
@@ -518,7 +526,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         }
       }
       finally {
-        unlockStorage();
+        unlockStorageWrite();
       }
     }
   }
@@ -554,14 +562,14 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
   private void flush() throws IOException {
     synchronized (getDataAccessLock()) {
-      lockStorage();
+      lockStorageWrite();
       try {
         if (myStorage.isDirty() || isDirty()) {
           doFlush();
         }
       }
       finally {
-        unlockStorage();
+        unlockStorageWrite();
       }
     }
   }
@@ -574,7 +582,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   @Override
   public void force() {
     synchronized (getDataAccessLock()) {
-      lockStorage();
+      lockStorageWrite();
 
       try {
         myKeyStorage.force();
@@ -584,7 +592,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         throw new RuntimeException(e);
       }
       finally {
-        unlockStorage();
+        unlockStorageWrite();
       }
     }
   }
@@ -592,7 +600,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   protected final void markDirty(boolean dirty) throws IOException {
     synchronized (getDataAccessLock()) {
       if (dirty && myDirty && !myDirtyStatusUpdateInProgress) return;
-      lockStorage();
+      lockStorageWrite();
       try {
         if (myDirty) {
           if (!dirty) {
@@ -615,7 +623,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         }
       }
       finally {
-        unlockStorage();
+        unlockStorageWrite();
       }
     }
   }

@@ -46,7 +46,7 @@ public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<Str
     this(file, initialSize, false, lockContext);
   }
 
-  private PersistentStringEnumerator(@NotNull Path file,
+  public PersistentStringEnumerator(@NotNull Path file,
                                      final int initialSize,
                                      boolean cacheLastMappings,
                                      @Nullable StorageLockContext lockContext) throws IOException {

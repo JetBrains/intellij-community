@@ -17,9 +17,13 @@ public interface AppendableObjectStorage<Data> extends Forceable, Closeable {
 
   boolean checkBytesAreTheSame(int addr, Data value) throws IOException;
 
-  void lock();
+  void lockRead();
 
-  void unlock();
+  void unlockRead();
+
+  void lockWrite();
+
+  void unlockWrite();
 
   int getCurrentLength();
 }

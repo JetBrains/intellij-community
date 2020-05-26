@@ -69,8 +69,8 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   private static final long USED_LONG_VALUE_MASK = 1L << 62;
   private static final int POSITIVE_VALUE_SHIFT = 1;
   private final int myParentValueRefOffset;
-  private final byte @NotNull [] myRecordBuffer;
-  private final byte @NotNull [] mySmallRecordBuffer;
+  private final ThreadLocal<byte @NotNull []> myRecordBuffer;
+  private final ThreadLocal<byte @NotNull []> mySmallRecordBuffer;
   private final boolean myIntMapping;
   private final boolean myDirectlyStoreLongFileOffsetMode;
   private final boolean myCanReEnumerate;
@@ -173,8 +173,10 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
     myIntMapping = valueExternalizer instanceof IntInlineKeyDescriptor && wantNonNegativeIntegralValues();
     myDirectlyStoreLongFileOffsetMode = keyDescriptor instanceof InlineKeyDescriptor && myEnumerator instanceof PersistentBTreeEnumerator;
 
-    myRecordBuffer = myDirectlyStoreLongFileOffsetMode ? ArrayUtilRt.EMPTY_BYTE_ARRAY : new byte[myParentValueRefOffset + 8];
-    mySmallRecordBuffer = myDirectlyStoreLongFileOffsetMode ? ArrayUtilRt.EMPTY_BYTE_ARRAY : new byte[myParentValueRefOffset + 4];
+    myRecordBuffer = ThreadLocal
+      .withInitial(() -> myDirectlyStoreLongFileOffsetMode ? ArrayUtilRt.EMPTY_BYTE_ARRAY : new byte[myParentValueRefOffset + 8]);
+    mySmallRecordBuffer = ThreadLocal
+      .withInitial(() -> myDirectlyStoreLongFileOffsetMode ? ArrayUtilRt.EMPTY_BYTE_ARRAY : new byte[myParentValueRefOffset + 4]);
 
     myEnumerator.setRecordHandler(new PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase<?>>() {
       @Override
@@ -184,7 +186,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
 
       @Override
       byte @NotNull [] getRecordBuffer(PersistentEnumeratorBase<?> enumerator) {
-        return myIntAddressForNewRecord ? mySmallRecordBuffer : myRecordBuffer;
+        return myIntAddressForNewRecord ? mySmallRecordBuffer.get() : myRecordBuffer.get();
       }
 
       @Override
@@ -267,7 +269,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
 
       @Override
       protected void onDropFromCache(final Key key, @NotNull final BufferExposingByteArrayOutputStream bytes) {
-        myEnumerator.lockStorage();
+        myEnumerator.lockStorageWrite();
         try {
           long previousRecord;
           final int id;
@@ -303,7 +305,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
           throw new RuntimeException(e);
         }
         finally {
-          myEnumerator.unlockStorage();
+          myEnumerator.unlockStorageWrite();
         }
       }
     };
@@ -331,12 +333,12 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   }
 
   protected void doDropMemoryCaches() {
-    myEnumerator.lockStorage();
+    myEnumerator.lockStorageWrite();
     try {
       clearAppenderCaches();
     }
     finally {
-      myEnumerator.unlockStorage();
+      myEnumerator.unlockStorageWrite();
     }
   }
 
@@ -432,7 +434,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
       newValueOffset = myValueStorage.appendBytes(bytes.toByteArraySequence(), 0);
     }
 
-    myEnumerator.lockStorage();
+    myEnumerator.lockStorageWrite();
     try {
       myEnumerator.markDirty(true);
       if (myAppendCache != null) {
@@ -467,7 +469,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
       }
     }
     finally {
-      myEnumerator.unlockStorage();
+      myEnumerator.unlockStorageWrite();
     }
   }
 
@@ -610,14 +612,14 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
 
   @Nullable
   protected Value doGet(Key key) throws IOException {
-    myEnumerator.lockStorage();
+    if (myAppendCache != null) {
+      myAppendCache.remove(key);
+    }
+
+    myEnumerator.lockStorageRead();
     final long valueOffset;
     final int id;
     try {
-      if (myAppendCache != null) {
-        myAppendCache.remove(key);
-      }
-
       if (myDirectlyStoreLongFileOffsetMode) {
         valueOffset = ((PersistentBTreeEnumerator<Key>)myEnumerator).getNonNegativeValue(key);
         if (myIntMapping) {
@@ -645,7 +647,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
       }
     }
     finally {
-      myEnumerator.unlockStorage();
+      myEnumerator.unlockStorageRead();
     }
 
     final PersistentHashMapValueStorage.ReadResult readResult = myValueStorage.readBytes(valueOffset);
@@ -663,7 +665,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
         }
       }, readResult);
 
-      myEnumerator.lockStorage();
+      myEnumerator.lockStorageWrite();
       try {
         myEnumerator.markDirty(true);
 
@@ -677,7 +679,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
         myReadCompactionGarbageSize += readResult.buffer.length;
       }
       finally {
-        myEnumerator.unlockStorage();
+        myEnumerator.unlockStorageWrite();
       }
     }
     return valueRead;
@@ -690,11 +692,12 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   }
 
   private boolean doContainsMapping(Key key) throws IOException {
-    myEnumerator.lockStorage();
+    if (myAppendCache != null) {
+      myAppendCache.remove(key);
+    }
+
+    myEnumerator.lockStorageRead();
     try {
-      if (myAppendCache != null) {
-        myAppendCache.remove(key);
-      }
       if (myDirectlyStoreLongFileOffsetMode) {
         return ((PersistentBTreeEnumerator<Key>)myEnumerator).getNonNegativeValue(key) != NULL_ADDR;
       }
@@ -708,7 +711,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
       }
     }
     finally {
-      myEnumerator.unlockStorage();
+      myEnumerator.unlockStorageRead();
     }
   }
 
@@ -720,9 +723,8 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   }
 
   protected void doRemove(Key key) throws IOException {
-    myEnumerator.lockStorage();
+    myEnumerator.lockStorageWrite();
     try {
-
       if (myAppendCache != null) {
         myAppendCache.remove(key);
       }
@@ -751,7 +753,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
       }
     }
     finally {
-      myEnumerator.unlockStorage();
+      myEnumerator.unlockStorageWrite();
     }
   }
 
@@ -765,7 +767,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   }
 
   protected void doForce() {
-    myEnumerator.lockStorage();
+    myEnumerator.lockStorageWrite();
     try {
       try {
         clearAppenderCaches();
@@ -775,7 +777,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
       }
     }
     finally {
-      myEnumerator.unlockStorage();
+      myEnumerator.unlockStorageWrite();
     }
   }
 
@@ -794,7 +796,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   }
 
   private void doClose() throws IOException {
-    myEnumerator.lockStorage();
+    myEnumerator.lockStorageWrite();
     try {
       try {
         try {
@@ -822,7 +824,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
       }
     }
     finally {
-      myEnumerator.unlockStorage();
+      myEnumerator.unlockStorageWrite();
     }
   }
 
@@ -961,7 +963,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
 
     started = System.currentTimeMillis();
     try {
-      myEnumerator.lockStorage();
+      myEnumerator.lockStorageWrite();
 
       for (CompactionRecordInfo info : infos) {
         updateValueId(info.address, info.newValueAddress, info.valueAddress, null, info.key);
@@ -969,7 +971,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
       }
     }
     finally {
-      myEnumerator.unlockStorage();
+      myEnumerator.unlockStorageWrite();
     }
     LOG.info("Updated mappings:" + (System.currentTimeMillis() - started) + " ms");
   }

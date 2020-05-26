@@ -72,7 +72,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   }
 
   private boolean traverseRecords(int vectorStart, int slotsCount, @NotNull RecordsProcessor p) throws IOException {
-    lockStorage();
+    lockStorageRead();
     try {
       for (int slotIdx = 0; slotIdx < slotsCount; slotIdx++) {
         final int vector = myStorage.getInt(vectorStart + slotIdx * 4L);
@@ -88,14 +88,19 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
       return true;
     }
     finally {
-      unlockStorage();
+      unlockStorageRead();
     }
   }
 
   @Override
   protected int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
     synchronized (getDataAccessLock()) {
-      lockStorage();
+      if (onlyCheckForExisting) {
+        lockStorageWrite();
+      }
+      else {
+        lockStorageWrite();
+      }
       try {
         int depth = 0;
         final int valueHC = myDataDescriptor.getHashCode(value);
@@ -181,7 +186,12 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
         }
       }
       finally {
-        unlockStorage();
+        if (onlyCheckForExisting) {
+          unlockStorageWrite();
+        }
+        else {
+          unlockStorageWrite();
+        }
       }
     }
   }
@@ -228,7 +238,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   }
 
   private static class RecordBufferHandler extends PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumerator<?>> {
-    private final byte[] myBuffer = new byte[RECORD_SIZE];
+    private final ThreadLocal<byte[]> myBuffer = ThreadLocal.withInitial(() -> new byte[RECORD_SIZE]);
 
     @Override
     protected int recordWriteOffset(@NotNull PersistentEnumerator<?> enumerator, byte[] buf) {
@@ -237,7 +247,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
 
     @Override
     byte @NotNull [] getRecordBuffer(PersistentEnumerator<?> t) {
-      return myBuffer;
+      return myBuffer.get();
     }
 
     @Override
