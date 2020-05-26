@@ -499,25 +499,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
           continue;
         }
 
-        InspectionElementsMerger.addMerger(shortName, new InspectionElementsMergerBase() {
-          @Override
-          public @NotNull String getMergedToolName() {
-            return shortName;
-          }
-
-          @Override
-          public String @NotNull [] getSourceToolNames() {
-            return ArrayUtil.EMPTY_STRING_ARRAY;
-          }
-
-          @Override
-          protected boolean areSettingsMerged(@NotNull Map<String, Element> settings, @NotNull Element element) {
-            // returns true when settings are default, so defaults will not be saved in profile
-            return Boolean.parseBoolean(element.getAttributeValue("enabled")) == wrapper.isEnabledByDefault() &&
-                   wrapper.getDefaultLevel().toString().equals(element.getAttributeValue("level")) &&
-                   Boolean.parseBoolean(element.getAttributeValue("enabled_by_default")) == wrapper.isEnabledByDefault();
-          }
-        });
+        InspectionElementsMerger.addMerger(shortName, new MyInspectionElementsMerger(shortName, wrapper));
       }
       myLockedProfile = isLocked;
     }
@@ -918,6 +900,35 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     profile.setToolEnabled(shortName, newState, project, false);
     for (ScopeToolState scopeToolState : profile.getTools(shortName, project).getTools()) {
       scopeToolState.setEnabled(newState);
+    }
+  }
+
+  private static class MyInspectionElementsMerger extends InspectionElementsMergerBase {
+
+    private final String myShortName;
+    private final LocalInspectionToolWrapper myWrapper;
+
+    private MyInspectionElementsMerger(@NotNull String shortName, @NotNull LocalInspectionToolWrapper wrapper) {
+      myShortName = shortName;
+      myWrapper = wrapper;
+    }
+
+    @Override
+    public @NotNull String getMergedToolName() {
+      return myShortName;
+    }
+
+    @Override
+    public String @NotNull [] getSourceToolNames() {
+      return ArrayUtil.EMPTY_STRING_ARRAY;
+    }
+
+    @Override
+    protected boolean areSettingsMerged(@NotNull Map<String, Element> settings, @NotNull Element element) {
+      // returns true when settings are default, so defaults will not be saved in profile
+      return Boolean.parseBoolean(element.getAttributeValue("enabled")) == myWrapper.isEnabledByDefault() &&
+             myWrapper.getDefaultLevel().toString().equals(element.getAttributeValue("level")) &&
+             Boolean.parseBoolean(element.getAttributeValue("enabled_by_default")) == myWrapper.isEnabledByDefault();
     }
   }
 }
