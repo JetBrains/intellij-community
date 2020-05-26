@@ -5,6 +5,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.ApiStatus;
@@ -140,43 +141,19 @@ public interface ApplicationEx extends Application {
    */
   @ApiStatus.Internal
   default boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
-                                                      @NotNull String progressTitle,
+                                                      @NotNull @NlsContexts.ProgressTitle String progressTitle,
                                                       boolean canBeCanceled,
                                                       Project project) {
-    return runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, project, null);
+    return runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, true, project, null, null);
   }
 
   /**
-   * Runs modal process. For internal use only, see {@link Task}
-   */
-  @ApiStatus.Internal
-  default boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
-                                                      @NotNull String progressTitle,
-                                                      boolean canBeCanceled,
-                                                      @Nullable Project project,
-                                                      JComponent parentComponent) {
-    return runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, project, parentComponent, null);
-  }
-
-  /**
-   * Runs modal process. For internal use only, see {@link Task}
-   */
-  @ApiStatus.Internal
-  default boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
-                                                      @NotNull String progressTitle,
-                                                      boolean canBeCanceled,
-                                                      @Nullable Project project,
-                                                      JComponent parentComponent,
-                                                      @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText) {
-    return runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, true, project, parentComponent, cancelText);
-  }
-
-  /**
-   * Runs modal or non-modal process. For internal use only, see {@link Task}
+   * Runs modal or non-modal process.
+   * For internal use only, see {@link Task}
    */
   @ApiStatus.Internal
   boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
-                                              @NotNull String progressTitle,
+                                              @NotNull @NlsContexts.ProgressTitle String progressTitle,
                                               boolean canBeCanceled,
                                               boolean shouldShowModalWindow,
                                               @Nullable Project project,
