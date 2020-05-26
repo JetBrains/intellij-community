@@ -126,10 +126,11 @@ public class ShShfmtFormatterUtil {
       else {
         ShSettings.setShfmtPath(formatterPath);
       }
+      if (!formatter.canExecute()) FileUtil.setExecutable(formatter);
       ApplicationManager.getApplication().invokeLater(onSuccess);
     }
     catch (IOException e) {
-      LOG.debug("Can't evaluate formatter path", e);
+      LOG.warn("Can't evaluate formatter path or make it executable", e);
       ApplicationManager.getApplication().invokeLater(onFailure);
     }
   }
