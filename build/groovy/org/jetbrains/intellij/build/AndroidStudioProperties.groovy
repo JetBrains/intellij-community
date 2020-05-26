@@ -76,6 +76,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
                                                     "intellij.cidr.core",
                                                     "intellij.cidr.modulemap.language",
                                                     "intellij.cidr.projectModel",
+                                                    "intellij.cidr.util.serializer",
                                                     "intellij.cidr.workspaceModel",
                                                     "intellij.cmake.psi",
                                                   ] +

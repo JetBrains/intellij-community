@@ -548,6 +548,7 @@
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-modulemap-language/intellij.cidr.modulemap.language.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-modulemap-language/intellij.cidr.modulemap.language.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-projectModel/intellij.cidr.projectModel.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-projectModel/intellij.cidr.projectModel.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/intellij.cidr.util.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/intellij.cidr.util.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/serializer/intellij.cidr.util.serializer.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/serializer/intellij.cidr.util.serializer.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/ui/intellij.cidr.util.ui.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/ui/intellij.cidr.util.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-workspaceModel/intellij.cidr.workspaceModel.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-workspaceModel/intellij.cidr.workspaceModel.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cmake-psi/intellij.cmake.psi.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cmake-psi/intellij.cmake.psi.iml" />
