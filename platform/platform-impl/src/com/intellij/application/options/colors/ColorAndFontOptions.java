@@ -1279,7 +1279,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   }
 
   @Nullable
-  public SearchableConfigurable findSubConfigurable(@NotNull Class pageClass) {
+  public SearchableConfigurable findSubConfigurable(@NotNull Class<?> pageClass) {
     if (mySubPanelFactories == null) {
       getConfigurables();
     }
