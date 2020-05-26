@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.compiler
 
-import com.intellij.idea.Bombed
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import groovy.transform.CompileStatic
@@ -68,10 +67,9 @@ class Groovyc25Test extends GroovycTestBase {
     super.'test extend groovy classes with additional dependencies'()
   }
 
-  @Bombed(user = 'daniil', year = 2029, month = Calendar.JANUARY, day = 4)
   @Override
   void "test recompile one file that triggers chunk rebuild inside"() {
-    super.'test recompile one file that triggers chunk rebuild inside'()
+    'do test recompile one file that triggers chunk rebuild inside'(false)
   }
 
   void 'test dependent trait'() {

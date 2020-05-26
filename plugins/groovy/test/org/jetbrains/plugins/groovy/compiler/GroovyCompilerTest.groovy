@@ -974,6 +974,10 @@ class AppTest {
   }
 
   void "test recompile one file that triggers chunk rebuild inside"() {
+    'do test recompile one file that triggers chunk rebuild inside'(this instanceof GroovycTestBase)
+  }
+
+  protected final void 'do test recompile one file that triggers chunk rebuild inside'(boolean expectRebuild) {
     myFixture.addFileToProject('BuildContext.groovy', '''
 @groovy.transform.CompileStatic 
 class BuildContext {
@@ -994,12 +998,15 @@ class BuildContextImpl extends BuildContext {
     assertEmpty(make())
 
     setFileText(sub, subText + ' ')
-    assert make().collect { it.message } == chunkRebuildMessage('Groovy compiler')
+    def makeMessages = make()
     def fileMessages = compileFiles(sub.virtualFile)
-    if (this instanceof GroovycTestBase) {
+    if (expectRebuild) {
+      assert makeMessages.collect { it.message } == chunkRebuildMessage('Groovy compiler')
       assert fileMessages.collect { it.message == 'Consider building whole project or rebuilding the module' }
-    } else {
-      assert fileMessages.empty
+    }
+    else {
+      assertEmpty makeMessages
+      assertEmpty fileMessages
     }
   }
 
