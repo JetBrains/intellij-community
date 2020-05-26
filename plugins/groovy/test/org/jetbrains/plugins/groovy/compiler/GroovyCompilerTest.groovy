@@ -626,7 +626,11 @@ class Main {
     }
   }
 
-  void testMakeInDependentModuleAfterChunkRebuild() {
+  void testMakeIndependentModuleAfterChunkRebuild() {
+    doTestMakeIndependentModuleAfterChunkRebuild(true)
+  }
+
+  protected final void doTestMakeIndependentModuleAfterChunkRebuild(boolean expectRebuild) {
     def used = myFixture.addFileToProject('Used.groovy', 'class Used { }')
     def java = myFixture.addFileToProject('Java.java', 'class Java { void foo(Used used) {} }')
     def main = myFixture.addFileToProject('Main.groovy', 'class Main extends Java {  }').virtualFile
@@ -641,7 +645,12 @@ class Main {
     touch(main)
     setFileText(dep, 'class Dep { String prop = new Used().getProp(); }')
 
-    assert make().collect { it.message } == chunkRebuildMessage('Groovy stub generator')
+    if (expectRebuild) {
+      assert make().collect { it.message } == chunkRebuildMessage('Groovy stub generator')
+    }
+    else {
+      assertEmpty make()
+    }
   }
 
   void "test extend package-private class from another module"() {

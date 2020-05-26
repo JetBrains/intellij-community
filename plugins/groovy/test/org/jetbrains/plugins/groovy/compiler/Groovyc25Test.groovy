@@ -51,14 +51,13 @@ class Groovyc25Test extends GroovycTestBase {
   }
 
   @Override
-  void "test inner java class references with incremental recompilation"() {
-    'do test inner java class references with incremental recompilation'(false)
+  void testMakeIndependentModuleAfterChunkRebuild() {
+    doTestMakeIndependentModuleAfterChunkRebuild(false)
   }
 
-  @Bombed(user = 'daniil', year = 2029, month = Calendar.JANUARY, day = 4)
   @Override
-  void testMakeInDependentModuleAfterChunkRebuild() {
-    super.testMakeInDependentModuleAfterChunkRebuild()
+  void "test inner java class references with incremental recompilation"() {
+    'do test inner java class references with incremental recompilation'(false)
   }
 
   @Override
