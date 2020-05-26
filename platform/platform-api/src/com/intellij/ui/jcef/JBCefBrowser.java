@@ -102,7 +102,19 @@ public class JBCefBrowser implements JBCefDisposable {
     myCefClient = client;
     myIsDefaultClient = isDefaultClient;
 
-    myComponent = new JPanel(new BorderLayout());
+    myComponent = SystemInfoRt.isWindows ?
+      new JPanel(new BorderLayout()) {
+        @Override
+        public void removeNotify() {
+          if (myCefBrowser.getUIComponent().hasFocus()) {
+            // pass focus before removal
+            myCefBrowser.setFocus(false);
+          }
+          super.removeNotify();
+        }
+      } :
+      new JPanel(new BorderLayout());
+
     myComponent.setBackground(JBColor.background());
 
     myCefBrowser = cefBrowser != null ?
@@ -136,6 +148,9 @@ public class JBCefBrowser implements JBCefDisposable {
       @Override
       public boolean onSetFocus(CefBrowser browser, FocusSource source) {
         if (source == FocusSource.FOCUS_SOURCE_NAVIGATION) {
+          if (SystemInfoRt.isWindows) {
+            myCefBrowser.setFocus(false);
+          }
           return true; // suppress focusing the browser on navigation events
         }
         if (SystemInfoRt.isLinux) {
