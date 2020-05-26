@@ -645,6 +645,60 @@ class PySuggestedRefactoringTest : PyTestCase() {
     )
   }
 
+  // PY-42285
+  fun testRetypedParameter1() {
+    doChangeSignatureTest(
+      """
+        def __func__0(a<caret>):
+            return a.swapcase()
+        d = {'1': __func__0(__func__0("abc")), '2': __func__0(__func__0("abc"))}
+      """.trimIndent(),
+      """
+        def __func__0(b):
+            return b.swapcase()
+        d = {'1': __func__0(__func__0("abc")), '2': __func__0(__func__0("abc"))}
+      """.trimIndent(),
+      { performBackspace() },
+      { myFixture.type("b") }
+    )
+  }
+
+  // PY-42285
+  fun testRetypedParameter2() {
+    doChangeSignatureTest(
+      """
+        def __func__0(a<caret>):
+            return a.swapcase()
+        d = {'1': __func__0(__func__0("abc")), '2': __func__0(__func__0("abc"))}
+      """.trimIndent(),
+      """
+        def __func__0(bbb):
+            return bbb.swapcase()
+        d = {'1': __func__0(__func__0("abc")), '2': __func__0(__func__0("abc"))}
+      """.trimIndent(),
+      { performBackspace() },
+      { myFixture.type("bbb") }
+    )
+  }
+
+  // PY-42285
+  fun testRetypedParameter3() {
+    doChangeSignatureTest(
+      """
+        def __func__0(aaa<caret>):
+            return aaa.swapcase()
+        d = {'1': __func__0(__func__0("abc")), '2': __func__0(__func__0("abc"))}
+      """.trimIndent(),
+      """
+        def __func__0(b):
+            return b.swapcase()
+        d = {'1': __func__0(__func__0("abc")), '2': __func__0(__func__0("abc"))}
+      """.trimIndent(),
+      { repeat("aaa".length) { performBackspace() } },
+      { myFixture.type("b") }
+    )
+  }
+
   private fun doRenameTest(before: String, after: String, oldName: String, newName: String, type: String, intention: String? = null) {
     myFixture.configureByText(PythonFileType.INSTANCE, before)
     myFixture.checkHighlighting()

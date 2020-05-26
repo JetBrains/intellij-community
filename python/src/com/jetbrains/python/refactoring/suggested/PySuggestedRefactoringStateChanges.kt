@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.suggested
 
+import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNameIdentifierOwner
@@ -10,6 +12,7 @@ import com.intellij.psi.util.elementType
 import com.intellij.refactoring.suggested.SuggestedRefactoringState
 import com.intellij.refactoring.suggested.SuggestedRefactoringStateChanges
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
+import com.intellij.refactoring.suggested.range
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.PyFunction
@@ -30,6 +33,15 @@ internal class PySuggestedRefactoringStateChanges(support: PySuggestedRefactorin
     return findStateChanges(declaration).parameterMarkerRanges(declaration)
   }
 
+  override fun updateState(state: SuggestedRefactoringState, declaration: PsiElement): SuggestedRefactoringState {
+    return findStateChanges(declaration).updateNewState(state, declaration, super.updateState(state, declaration))
+  }
+
+  override fun guessParameterIdByMarkers(markerRange: TextRange, prevState: SuggestedRefactoringState): Any? {
+    return super.guessParameterIdByMarkers(markerRange, prevState)
+           ?: findStateChanges(prevState.declaration).guessParameterIdByMarker(markerRange, prevState)
+  }
+
   private fun findStateChanges(declaration: PsiElement): StateChangesInternal {
     return sequenceOf(ChangeSignatureStateChanges(this), RenameStateChanges).first { it.isApplicable(declaration) }
   }
@@ -39,9 +51,20 @@ internal class PySuggestedRefactoringStateChanges(support: PySuggestedRefactorin
     fun isApplicable(declaration: PsiElement): Boolean
     fun signature(declaration: PsiElement, prevState: SuggestedRefactoringState?): SuggestedRefactoringSupport.Signature?
     fun parameterMarkerRanges(declaration: PsiElement): List<TextRange?>
+
+    fun updateNewState(prevState: SuggestedRefactoringState,
+                       declaration: PsiElement,
+                       newState: SuggestedRefactoringState): SuggestedRefactoringState = newState
+
+    fun guessParameterIdByMarker(markerRange: TextRange, prevState: SuggestedRefactoringState): Any? = null
   }
 
   private class ChangeSignatureStateChanges(private val mainStateChanges: PySuggestedRefactoringStateChanges) : StateChangesInternal {
+
+    companion object {
+      private val DISAPPEARED_RANGES =
+        Key.create<Map<RangeMarker, Any>>("PySuggestedRefactoringStateChanges.ChangeSignature.DISAPPEARED_RANGES")
+    }
 
     override fun isApplicable(declaration: PsiElement): Boolean = PySuggestedRefactoringSupport.isAvailableForChangeSignature(declaration)
 
@@ -53,6 +76,35 @@ internal class PySuggestedRefactoringStateChanges(support: PySuggestedRefactorin
 
     override fun parameterMarkerRanges(declaration: PsiElement): List<TextRange?> {
       return (declaration as PyFunction).parameterList.parameters.map(this::getParameterMarker)
+    }
+
+    override fun updateNewState(prevState: SuggestedRefactoringState,
+                                declaration: PsiElement,
+                                newState: SuggestedRefactoringState): SuggestedRefactoringState {
+      val initialSignature = prevState.oldSignature
+      val prevSignature = prevState.newSignature
+      val newSignature = newState.newSignature
+
+      val idsPresent = newSignature.parameters.map { it.id }.toSet()
+
+      val disappearedRanges = (prevState.additionalData[DISAPPEARED_RANGES] ?: emptyMap())
+        .filter { it.key.isValid && it.value !in idsPresent }
+        .toMutableMap()
+
+      prevSignature.parameters
+        .asSequence()
+        .map { it.id }
+        .filter { id -> id !in idsPresent && initialSignature.parameterById(id) != null }
+        .mapNotNull { id -> prevState.parameterMarkers.firstOrNull { it.parameterId == id } }
+        .filter { it.rangeMarker.isValid }
+        .associateByTo(disappearedRanges, { it.rangeMarker }, { it.parameterId })
+
+      return newState.withAdditionalData(DISAPPEARED_RANGES, disappearedRanges)
+    }
+
+    override fun guessParameterIdByMarker(markerRange: TextRange, prevState: SuggestedRefactoringState): Any? {
+      val disappearedRanges = prevState.additionalData[DISAPPEARED_RANGES] ?: return null
+      return disappearedRanges.entries.firstOrNull { it.key.isValid && it.key.range == markerRange }?.value
     }
 
     private fun createSignatureData(function: PyFunction): SuggestedRefactoringSupport.Signature? {
