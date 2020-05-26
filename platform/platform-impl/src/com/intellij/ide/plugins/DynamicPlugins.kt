@@ -39,6 +39,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
@@ -139,7 +140,7 @@ object DynamicPlugins {
     }
 
     if (descriptor.isRequireRestart) {
-      return "Plugin ${descriptor.pluginId} is explicitly marked as requiring restart";
+      return "Plugin ${descriptor.pluginId} is explicitly marked as requiring restart"
     }
 
     val loadedPluginDescriptor = if (descriptor.pluginId == null) null else PluginManagerCore.getPlugin(descriptor.pluginId) as? IdeaPluginDescriptorImpl
@@ -425,6 +426,10 @@ object DynamicPlugins {
           (NotificationsManager.getNotificationsManager() as NotificationsManagerImpl).expireAll()
 
           (ApplicationManager.getApplication().messageBus as MessageBusEx).clearPublisherCache()
+          val projectManager = ProjectManagerEx.getInstanceExIfCreated()
+          if (projectManager != null && projectManager.isDefaultProjectInitialized) {
+            Disposer.dispose(projectManager.defaultProject)
+          }
 
           if (disable) {
             // update list of disabled plugins
@@ -489,14 +494,14 @@ object DynamicPlugins {
     val application = ApplicationManager.getApplication() as ApplicationImpl
     (ActionManager.getInstance() as ActionManagerImpl).unloadActions(pluginDescriptor)
 
-    val openProjects = ProjectUtil.getOpenProjects()
+    val openedProjects = ProjectUtil.getOpenProjects().asList()
     val appExtensionArea = application.extensionArea
     val unloadListeners = mutableListOf<Runnable>()
     pluginDescriptor.extensions?.let { extensions ->
       for ((epName, epExtensions) in extensions) {
         val isAppLevelEp = appExtensionArea.unregisterExtensions(epName, loadedPluginDescriptor, epExtensions, unloadListeners)
         if (!isAppLevelEp) {
-          for (project in openProjects) {
+          for (project in openedProjects) {
             val isProjectLevelEp = (project.extensionArea as ExtensionsAreaImpl).unregisterExtensions(epName, loadedPluginDescriptor, epExtensions, unloadListeners)
             if (!isProjectLevelEp) {
               for (module in ModuleManager.getInstance(project).modules) {
@@ -509,7 +514,7 @@ object DynamicPlugins {
 
       // todo clear extension cache granularly
       appExtensionArea.clearUserCache()
-      for (project in openProjects) {
+      for (project in openedProjects) {
         (project.extensionArea as ExtensionsAreaImpl).clearUserCache()
       }
     }
@@ -519,16 +524,16 @@ object DynamicPlugins {
     }
 
     // first, reset all plugin extension points before unregistering, so that listeners don't see plugin in semi-torn-down state
-    processExtensionPoints(pluginDescriptor, openProjects) { points, area -> area.resetExtensionPoints(points) }
+    processExtensionPoints(pluginDescriptor, openedProjects) { points, area -> area.resetExtensionPoints(points) }
     // unregister plugin extension points
-    processExtensionPoints(pluginDescriptor, openProjects) { points, area -> area.unregisterExtensionPoints(points) }
+    processExtensionPoints(pluginDescriptor, openedProjects) { points, area -> area.unregisterExtensionPoints(points) }
 
     val pluginId = pluginDescriptor.pluginId ?: loadedPluginDescriptor.pluginId
     application.unloadServices(pluginDescriptor.appContainerDescriptor.getServices(), pluginId)
     val appMessageBus = application.messageBus as MessageBusEx
     appMessageBus.unsubscribeLazyListeners(pluginId, pluginDescriptor.appContainerDescriptor.getListeners())
 
-    for (project in openProjects) {
+    for (project in openedProjects) {
       (project as ProjectImpl).unloadServices(pluginDescriptor.projectContainerDescriptor.getServices(), pluginId)
       (project.messageBus as MessageBusEx).unsubscribeLazyListeners(pluginId, pluginDescriptor.projectContainerDescriptor.getListeners())
 
@@ -544,7 +549,7 @@ object DynamicPlugins {
   }
 
   private inline fun processExtensionPoints(pluginDescriptor: IdeaPluginDescriptorImpl,
-                                            projects: Array<Project>,
+                                            projects: List<Project>,
                                             processor: (points: List<ExtensionPointImpl<*>>, area: ExtensionsAreaImpl) -> Unit) {
     pluginDescriptor.appContainerDescriptor.extensionPoints?.let {
       processor(it, ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
