@@ -27,6 +27,16 @@
     </orderEntry>
     <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-templates" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-xml" level="project" />
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library name="org.codehaus.groovy:groovy-cli-commons" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.codehaus.groovy:groovy-cli-commons:2.5.11" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-cli-commons/2.5.11/groovy-cli-commons-2.5.11.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <orderEntry type="library" scope="RUNTIME" name="gant-groovy" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="gson" level="project" />
   </component>

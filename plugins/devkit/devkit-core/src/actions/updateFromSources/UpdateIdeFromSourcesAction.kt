@@ -23,13 +23,16 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.task.ProjectTaskManager
+import com.intellij.util.PathUtil
 import com.intellij.util.Restarter
 import com.intellij.util.SystemProperties
 import org.jetbrains.idea.devkit.util.PsiUtil
@@ -290,17 +293,6 @@ internal open class UpdateIdeFromSourcesAction
     params.isUseClasspathJar = true
     params.setDefaultCharset(project)
     params.jdk = sdk
-    //todo use org.jetbrains.idea.maven.utils.MavenUtil.resolveLocalRepository instead
-    val m2Repo = File(SystemProperties.getUserHome(), ".m2/repository").systemIndependentPath
-
-    //todo get from project configuration
-    val coreClassPath = listOf(
-      "$m2Repo/org/codehaus/groovy/groovy-all/2.4.17/groovy-all-2.4.17.jar",
-      "$m2Repo/commons-cli/commons-cli/1.2/commons-cli-1.2.jar",
-      "$devIdeaHome/community/lib/ant/lib/ant.jar",
-      "$devIdeaHome/community/lib/ant/lib/ant-launcher.jar"
-    )
-    params.classPath.addAll(coreClassPath)
 
     params.mainClass = "org.codehaus.groovy.tools.GroovyStarter"
     params.programParametersList.add("--classpath")
@@ -312,7 +304,20 @@ internal open class UpdateIdeFromSourcesAction
     }
     val classpath = OrderEnumerator.orderEntries(buildScriptsModule)
       .recursively().withoutSdk().runtimeOnly().productionOnly().classes().pathsList
+
+    val classesFromCoreJars = listOf(
+      params.mainClass,
+      "org.apache.tools.ant.BuildException",   //ant
+      "org.apache.tools.ant.launch.AntMain",   //ant-launcher
+      "org.apache.commons.cli.ParseException", //commons-cli
+      "groovy.util.CliBuilder"                 //groovy-cli-commons
+    )
+    val coreClassPath = classpath.rootDirs.filter { root ->
+      classesFromCoreJars.any { LibraryUtil.isClassAvailableInLibrary(listOf(root), it) }
+    }.mapNotNull { PathUtil.getLocalPath(it) }
+    params.classPath.addAll(coreClassPath)
     coreClassPath.forEach { classpath.remove(FileUtil.toSystemDependentName(it)) }
+
     params.programParametersList.add(classpath.pathsString)
     params.programParametersList.add("--main")
     params.programParametersList.add("gant.Gant")
