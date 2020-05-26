@@ -55,7 +55,7 @@ public final class GitChangeProvider implements ChangeProvider {
     List<FilePath> newDirtyPaths = new ArrayList<>();
 
     try {
-      final MyNonChangedHolder holder = new MyNonChangedHolder(project, addGate);
+      final NonChangedHolder holder = new NonChangedHolder(project, addGate);
 
       Map<VirtualFile, List<FilePath>> dirtyPaths =
         GitChangesCollector.collectDirtyPaths(vcs, dirtyScope, ChangeListManager.getInstance(project),
@@ -65,16 +65,19 @@ public final class GitChangeProvider implements ChangeProvider {
         LOG.debug("checking root: " + repo.getRoot().getPath());
         List<FilePath> rootDirtyPaths = ContainerUtil.notNullize(dirtyPaths.get(repo.getRoot()));
         GitChangesCollector collector = GitChangesCollector.collect(project, Git.getInstance(), repo, rootDirtyPaths);
+
         final Collection<Change> changes = collector.getChanges();
-        holder.changed(changes);
-        for (Change file : changes) {
-          LOG.debug("process change: " + ChangesUtil.getFilePath(file).getPath());
-          builder.processChange(file, GitVcs.getKey());
+        for (Change change : changes) {
+          LOG.debug("process change: " + ChangesUtil.getFilePath(change).getPath());
+          builder.processChange(change, GitVcs.getKey());
 
-          if (file.isMoved() || file.isRenamed()) {
-            FilePath beforePath = Objects.requireNonNull(ChangesUtil.getBeforePath(file));
-            FilePath afterPath = Objects.requireNonNull(ChangesUtil.getAfterPath(file));
+          FilePath beforePath = ChangesUtil.getBeforePath(change);
+          FilePath afterPath = ChangesUtil.getAfterPath(change);
 
+          if (beforePath != null) holder.markPathProcessed(beforePath);
+          if (afterPath != null) holder.markPathProcessed(afterPath);
+
+          if (change.isMoved() || change.isRenamed()) {
             if (dirtyScope.belongsTo(beforePath) != dirtyScope.belongsTo(afterPath)) {
               newDirtyPaths.add(beforePath);
               newDirtyPaths.add(afterPath);
@@ -85,7 +88,7 @@ public final class GitChangeProvider implements ChangeProvider {
         Collection<FilePath> untracked = repo.getUntrackedFilesHolder().retrieveUntrackedFilePaths();
         for (FilePath path : untracked) {
           builder.processUnversionedFile(path);
-          holder.unversioned(path);
+          holder.markPathProcessed(path);
         }
 
         GitConflictsHolder conflictsHolder = repo.getConflictsHolder();
@@ -134,35 +137,18 @@ public final class GitChangeProvider implements ChangeProvider {
     }
   }
 
-  private static class MyNonChangedHolder {
+  private static class NonChangedHolder {
     private final Project myProject;
-    private final Set<FilePath> myProcessedPaths;
     private final ChangeListManagerGate myAddGate;
 
-    private MyNonChangedHolder(Project project, ChangeListManagerGate addGate) {
+    private final Set<FilePath> myProcessedPaths = new HashSet<>();
+
+    private NonChangedHolder(Project project, ChangeListManagerGate addGate) {
       myProject = project;
-      myProcessedPaths = new HashSet<>();
       myAddGate = addGate;
     }
 
-    public void changed(final Collection<? extends Change> changes) {
-      for (Change change : changes) {
-        final FilePath beforePath = ChangesUtil.getBeforePath(change);
-        if (beforePath != null) {
-          myProcessedPaths.add(beforePath);
-        }
-        final FilePath afterPath = ChangesUtil.getAfterPath(change);
-        if (afterPath != null) {
-          myProcessedPaths.add(afterPath);
-        }
-      }
-    }
-
-    public void unversioned(FilePath path) {
-      // NB: There was an exception that happened several times: path == null.
-      // Populating myUnversioned in the ChangeCollector makes nulls not possible in myUnversioned,
-      // so proposing that the exception was fixed.
-      // More detailed analysis will be needed in case the exception appears again. 2010-12-09.
+    public void markPathProcessed(@NotNull FilePath path) {
       myProcessedPaths.add(path);
     }
 
