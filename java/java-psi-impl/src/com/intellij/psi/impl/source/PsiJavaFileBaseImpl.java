@@ -5,7 +5,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
@@ -532,19 +531,10 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     LanguageLevel forcedLanguageLevel = getUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY);
     if (forcedLanguageLevel != null) return forcedLanguageLevel;
 
-    VirtualFile virtualFile = getVirtualFile();
-    if (virtualFile == null) virtualFile = getUserData(IndexingDataKeys.VIRTUAL_FILE);
+    VirtualFile virtualFile = getUserData(IndexingDataKeys.VIRTUAL_FILE);
+    if (virtualFile == null) virtualFile = getViewProvider().getVirtualFile();
 
-    final Project project = getProject();
-    if (virtualFile == null) {
-      final PsiFile originalFile = getOriginalFile();
-      if (originalFile instanceof PsiJavaFile && originalFile != this) {
-        return ((PsiJavaFile)originalFile).getLanguageLevel();
-      }
-      return LanguageLevel.HIGHEST;
-    }
-
-    return JavaPsiImplementationHelper.getInstance(project).getEffectiveLanguageLevel(virtualFile);
+    return JavaPsiImplementationHelper.getInstance(getProject()).getEffectiveLanguageLevel(virtualFile);
   }
 
   private static class MyCacheBuilder implements CachedValueProvider<MostlySingularMultiMap<String, ResultWithContext>> {
