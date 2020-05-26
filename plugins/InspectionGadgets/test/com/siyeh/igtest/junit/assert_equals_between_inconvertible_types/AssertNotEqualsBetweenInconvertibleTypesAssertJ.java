@@ -1,0 +1,11 @@
+package com.siyeh.igtest.junit.assert_equals_between_inconvertible_types;
+
+import org.assertj.core.api.Assertions;
+
+class MyTest {
+  void myTest() {
+    Assertions.assertThat("java").as("test").<warning descr="Assertion never fails. Redundant assertion: incompatible types are compared 'int' and 'String'">isNotEqualTo</warning>(1);
+    Assertions.assertThat(new int[0]).describedAs("test").<warning descr="Assertion never fails. Redundant assertion: incompatible types are compared 'double' and 'int[]'">isNotEqualTo</warning>(1.0);
+    Assertions.assertThat(new int[0]).isNotEqualTo(new int[1]); //ok
+  }
+}

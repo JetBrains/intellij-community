@@ -11,10 +11,19 @@ public class AssertEqualsBetweenInconvertibleTypesInspectionTest extends LightJa
   public void testAssertEqualsBetweenInconvertibleTypes() {
     doTest();
   }
+  public void testAssertEqualsBetweenInconvertibleTypesAssertJ() {
+    doTest();
+  }
   public void testAssertEqualsBetweenInconvertibleTypesJUnit5() {
     doTest();
   }
-  public void testAssertEqualsBetweenInconvertibleTypesAssertJ() {
+  public void testAssertNotEqualsBetweenInconvertibleTypes() {
+    doTest();
+  }
+  public void testAssertNotEqualsBetweenInconvertibleTypesAssertJ() {
+    doTest();
+  }
+  public void testAssertNotEqualsBetweenInconvertibleTypesJUnit5() {
     doTest();
   }
   public void testAssertSameBetweenInconvertibleTypes() {
@@ -24,6 +33,15 @@ public class AssertEqualsBetweenInconvertibleTypesInspectionTest extends LightJa
     doTest();
   }
   public void testAssertSameBetweenInconvertibleTypesJUnit5() {
+    doTest();
+  }
+  public void testAssertNotSameBetweenInconvertibleTypes() {
+    doTest();
+  }
+  public void testAssertNotSameBetweenInconvertibleTypesAssertJ() {
+    doTest();
+  }
+  public void testAssertNotSameBetweenInconvertibleTypesJUnit5() {
     doTest();
   }
 
@@ -42,7 +60,10 @@ public class AssertEqualsBetweenInconvertibleTypesInspectionTest extends LightJa
       "public class Assert {" +
       "  static public void assertEquals(double expected, double actual, double delta) {}" +
       "  static public void assertEquals(Object expected, Object actual){}" +
+      "  static public void assertNotEquals(Object expected, Object actual){}" +
+
       "  static public void assertSame(Object expected, Object actual){}" +
+      "  static public void assertNotSame(Object expected, Object actual){}" +
       "}",
 
       "package org.junit.jupiter.api;\n" +
@@ -53,11 +74,17 @@ public class AssertEqualsBetweenInconvertibleTypesInspectionTest extends LightJa
       "    public static void assertEquals(double expected, double actual, Supplier<String> messageSupplier) {}\n" +
       "    public static void assertEquals(Object expected, Object actual) {}\n" +
       "    public static void assertEquals(Object expected, Object actual, String message) {}\n" +
-      "    public static void assertEquals(Object expected, Object actual, Supplier<String> messageSupplier) {}\n" +
+      "    public static void assertEquals(Object expected, Object actual, Supplier<String> messageSupplier) {}\n" +"    " +
+      "    public static void assertNotEquals(Object expected, Object actual) {}\n" +
+      "    public static void assertNotEquals(Object expected, Object actual, String message) {}\n" +
+      "    public static void assertNotEquals(Object expected, Object actual, Supplier<String> messageSupplier) {}\n" +
 
       "    public static void assertSame(Object expected, Object actual) {}\n" +
       "    public static void assertSame(Object expected, Object actual, String message) {}\n" +
       "    public static void assertSame(Object expected, Object actual, Supplier<String> messageSupplier) {}\n" +
+      "    public static void assertNotSame(Object expected, Object actual) {}\n" +
+      "    public static void assertNotSame(Object expected, Object actual, String message) {}\n" +
+      "    public static void assertNotSame(Object expected, Object actual, Supplier<String> messageSupplier) {}\n" +
       "}",
 
       "package org.assertj.core.api;\n" +
@@ -71,7 +98,10 @@ public class AssertEqualsBetweenInconvertibleTypesInspectionTest extends LightJa
       "package org.assertj.core.api;\n" +
       "public class Assert<SELF extends Assert<SELF, ACTUAL>, ACTUAL> extends Descriptable<SELF> {\n" +
       "  public SELF isEqualTo(Object expected);\n" +
+      "  public SELF isNotEqualTo(Object expected);\n" +
+
       "  public SELF isSameAs(Object expected);\n" +
+      "  public SELF isNotSameAs(Object expected);\n" +
       "}",
 
       "package org.assertj.core.api;\n" +

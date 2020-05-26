@@ -35,14 +35,14 @@ public abstract class BaseAssertEqualsBetweenInconvertibleTypesInspection extend
   @NotNull
   public String buildErrorString(Object... infos) {
     final String methodName = (String)infos[0];
+    final String comparedTypeText = ((PsiType)infos[1]).getPresentableText();
+    final String comparisonTypeText = ((PsiType)infos[2]).getPresentableText();
     if (ASSERT_NOT_EQUALS_METHODS.contains(methodName)) {
-      return InspectionGadgetsBundle.message("assertnotequals.between.inconvertible.types.problem.descriptor");
+      return InspectionGadgetsBundle.message("assertnotequals.between.inconvertible.types.problem.descriptor", comparedTypeText, comparisonTypeText);
     }
-    final PsiType comparedType = (PsiType)infos[1];
-    final PsiType comparisonType = (PsiType)infos[2];
     return InspectionGadgetsBundle.message("assertequals.between.inconvertible.types.problem.descriptor",
-                                           StringUtil.escapeXmlEntities(comparedType.getPresentableText()),
-                                           StringUtil.escapeXmlEntities(comparisonType.getPresentableText()));
+                                           StringUtil.escapeXmlEntities(comparedTypeText),
+                                           StringUtil.escapeXmlEntities(comparisonTypeText));
   }
 
   @Override
