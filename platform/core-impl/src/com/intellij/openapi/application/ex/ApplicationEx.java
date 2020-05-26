@@ -139,28 +139,46 @@ public interface ApplicationEx extends Application {
    * Runs modal process. For internal use only, see {@link Task}
    */
   @ApiStatus.Internal
-  boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
-                                              @NotNull String progressTitle,
-                                              boolean canBeCanceled,
-                                              Project project);
+  default boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
+                                                      @NotNull String progressTitle,
+                                                      boolean canBeCanceled,
+                                                      Project project) {
+    return runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, project, null);
+  }
 
   /**
    * Runs modal process. For internal use only, see {@link Task}
    */
   @ApiStatus.Internal
-  boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
-                                              @NotNull String progressTitle,
-                                              boolean canBeCanceled,
-                                              @Nullable Project project,
-                                              JComponent parentComponent);
+  default boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
+                                                      @NotNull String progressTitle,
+                                                      boolean canBeCanceled,
+                                                      @Nullable Project project,
+                                                      JComponent parentComponent) {
+    return runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, project, parentComponent, null);
+  }
 
   /**
    * Runs modal process. For internal use only, see {@link Task}
    */
   @ApiStatus.Internal
+  default boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
+                                                      @NotNull String progressTitle,
+                                                      boolean canBeCanceled,
+                                                      @Nullable Project project,
+                                                      JComponent parentComponent,
+                                                      @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText) {
+    return runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, true, project, parentComponent, cancelText);
+  }
+
+  /**
+   * Runs modal or non-modal process. For internal use only, see {@link Task}
+   */
+  @ApiStatus.Internal
   boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
                                               @NotNull String progressTitle,
                                               boolean canBeCanceled,
+                                              boolean shouldShowModalWindow,
                                               @Nullable Project project,
                                               JComponent parentComponent,
                                               @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText);

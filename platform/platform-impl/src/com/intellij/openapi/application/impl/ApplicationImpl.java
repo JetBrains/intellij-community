@@ -388,25 +388,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   public boolean runProcessWithProgressSynchronously(final @NotNull Runnable process,
-                                                     @NotNull String progressTitle,
-                                                     boolean canBeCanceled,
-                                                     Project project) {
-    return runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, project, null);
-  }
-
-  @Override
-  public boolean runProcessWithProgressSynchronously(final @NotNull Runnable process,
                                                      final @NotNull String progressTitle,
                                                      final boolean canBeCanceled,
-                                                     final @Nullable Project project,
-                                                     final JComponent parentComponent) {
-    return runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, project, parentComponent, null);
-  }
-
-  @Override
-  public boolean runProcessWithProgressSynchronously(final @NotNull Runnable process,
-                                                     final @NotNull String progressTitle,
-                                                     final boolean canBeCanceled,
+                                                     final boolean shouldShowModalWindow,
                                                      final @Nullable Project project,
                                                      final JComponent parentComponent,
                                                      final String cancelText) {
@@ -426,7 +410,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
 
     final CompletableFuture<ProgressWindow> progress =
-      createProgressWindowAsyncIfNeeded(progressTitle, canBeCanceled, project, parentComponent, cancelText);
+      createProgressWindowAsyncIfNeeded(progressTitle, canBeCanceled, shouldShowModalWindow, project, parentComponent, cancelText);
 
     ProgressRunner<?, ?> progressRunner = new ProgressRunner<>(process)
       .sync()
@@ -460,7 +444,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
 
     final CompletableFuture<ProgressWindow> progress =
-      createProgressWindowAsyncIfNeeded(progressTitle, canBeCanceled, project, parentComponent, cancelText);
+      createProgressWindowAsyncIfNeeded(progressTitle, canBeCanceled, true, project, parentComponent, cancelText);
 
     ProgressResult<?> result = new ProgressRunner<>(() -> runReadAction(process))
       .sync()
@@ -652,23 +636,25 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private @NotNull CompletableFuture<ProgressWindow> createProgressWindowAsyncIfNeeded(@NotNull String progressTitle,
                                                                                        boolean canBeCanceled,
+                                                                                       boolean shouldShowModalWindow,
                                                                                        @Nullable Project project,
                                                                                        JComponent parentComponent,
                                                                                        String cancelText) {
     if (SwingUtilities.isEventDispatchThread()) {
-      return CompletableFuture.completedFuture(createProgressWindow(progressTitle, canBeCanceled, project, parentComponent, cancelText));
+      return CompletableFuture.completedFuture(createProgressWindow(progressTitle, canBeCanceled, shouldShowModalWindow, project, parentComponent, cancelText));
     }
     else {
-      return CompletableFuture.supplyAsync(() -> createProgressWindow(progressTitle, canBeCanceled, project, parentComponent, cancelText),
+      return CompletableFuture.supplyAsync(() -> createProgressWindow(progressTitle, canBeCanceled, shouldShowModalWindow, project, parentComponent, cancelText),
                                            EdtExecutorService.getInstance());
     }
   }
 
   private @NotNull ProgressWindow createProgressWindow(@NotNull String progressTitle,
                                                        boolean canBeCanceled,
+                                                       boolean shouldShowModalWindow,
                                                        @Nullable Project project,
                                                        JComponent parentComponent, String cancelText) {
-    final ProgressWindow progress = new ProgressWindow(canBeCanceled, false, project, parentComponent, cancelText);
+    final ProgressWindow progress = new ProgressWindow(canBeCanceled, !shouldShowModalWindow, project, parentComponent, cancelText);
     // in case of abrupt application exit when 'ProgressManager.getInstance().runProcess(process, progress)' below
     // does not have a chance to run, and as a result the progress won't be disposed
     Disposer.register(this, progress);
@@ -960,7 +946,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       });
     }
 
-    final ProgressWindow progress = createProgressWindow(title, cancelText != null, project, parentComponent, cancelText);
+    final ProgressWindow progress = createProgressWindow(title, cancelText != null, true, project, parentComponent, cancelText);
 
     ProgressResult<Object> result = new ProgressRunner<>(() -> runWriteAction(() -> action.consume(progress)))
       .sync()
