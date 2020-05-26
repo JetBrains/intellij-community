@@ -20,7 +20,6 @@ import com.intellij.tasks.TaskRepository;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.FixingLayoutMatcherUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -281,7 +280,7 @@ public class TaskUtil {
       builder.append("* ");
     }
 
-    return FixingLayoutMatcherUtil.buildLayoutFixingMatcher(builder.toString(), NameUtil.MatchingCaseSensitivity.NONE);
+    return NameUtil.buildMatcher(builder.toString(), NameUtil.MatchingCaseSensitivity.NONE);
   }
 
   static String updateToVelocity(String format) {

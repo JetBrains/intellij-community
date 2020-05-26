@@ -2,18 +2,11 @@
 package com.intellij.psi.codeStyle;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.function.Function;
 
 class FixingLayoutTypoTolerantMatcher {
-
-  static MinusculeMatcher create(@NotNull String pattern,
-                                 @NotNull NameUtil.MatchingCaseSensitivity options,
-                                 String hardSeparators,
-                                 @Nullable Function<Character, Character> asciiToCharConverter) {
+  static MinusculeMatcher create(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, String hardSeparators) {
     TypoTolerantMatcher mainMatcher = new TypoTolerantMatcher(pattern, options, hardSeparators);
-    String s = FixingLayoutMatcher.fixLayout(pattern, asciiToCharConverter);
+    String s = FixingLayoutMatcher.fixLayout(pattern);
 
     if (s != null && !s.equals(pattern)) {
       TypoTolerantMatcher fallbackMatcher = new TypoTolerantMatcher(s, options, hardSeparators);

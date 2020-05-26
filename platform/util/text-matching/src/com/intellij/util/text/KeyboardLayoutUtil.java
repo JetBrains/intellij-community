@@ -1,12 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.ui;
+package com.intellij.util.text;
 
-import com.intellij.openapi.util.SystemInfo;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,7 +20,7 @@ public class KeyboardLayoutUtil {
     Character c = ourLLtoASCII.get(a);
     if (c != null) return c;
 
-    if (ourLLtoASCII.isEmpty() || SystemInfo.isLinux) {
+    if (ourLLtoASCII.isEmpty() || SystemInfoRt.isLinux) {
       // Linux note:
       // KeyEvent provides 'rawCode' (a physical |row|column| coordinate) instead of 'keyCode'.
       // ASCII rawCodes can be collected to map chars via their rawCode in future.
@@ -35,33 +33,24 @@ public class KeyboardLayoutUtil {
     return null;
   }
 
-  public static void storeAsciiForChar(@NotNull KeyEvent e) {
-    int id = e.getID();
-    if (id != KeyEvent.KEY_PRESSED) return;
-    int mods = e.getModifiers();
-    int code = e.getKeyCode();
-    char aChar = e.getKeyChar();
-    if ((mods & ~InputEvent.SHIFT_MASK & ~InputEvent.SHIFT_DOWN_MASK) != 0) return;
+  public static void storeAsciiForChar(int keyCode, char keyChar, TextRange asciiKeyCodesRange) {
+    if (!asciiKeyCodesRange.contains(keyCode)) return;
+    if ('a' <= keyChar && keyChar <= 'z' || 'A' <= keyChar && keyChar <= 'Z') return;
+    if (ourLLtoASCII.containsKey(keyChar)) return;
 
-    if (code < KeyEvent.VK_A || code > KeyEvent.VK_Z) return;
-    if (aChar == KeyEvent.CHAR_UNDEFINED) return;
-    if ('a' <= aChar && aChar <= 'z' || 'A' <= aChar && aChar <= 'Z') return;
-    if (ourLLtoASCII.containsKey(aChar)) return;
-
-    char converted = (char)((int)'a' + (code - KeyEvent.VK_A));
-    if (Character.isUpperCase(aChar)) {
+    char converted = (char)((int)'a' + (keyCode - asciiKeyCodesRange.getStartOffset()));
+    if (Character.isUpperCase(keyChar)) {
       converted = Character.toUpperCase(converted);
     }
-    ourLLtoASCII.put(aChar, converted);
+    ourLLtoASCII.put(keyChar, converted);
   }
-
 
   private static class HardCoded {
     private static final Map<Character, Character> LL = new HashMap<>(33);
 
     static {
       // keyboard layouts in lowercase
-      char[] layout = new char[] {
+      char[] layout = new char[]{
         // Russian-PC
         'й', 'q', 'ц', 'w', 'у', 'e', 'к', 'r', 'е', 't', 'н', 'y', 'г', 'u',
         'ш', 'i', 'щ', 'o', 'з', 'p', 'х', '[', 'ъ', ']', 'ф', 'a', 'ы', 's',
@@ -75,5 +64,4 @@ public class KeyboardLayoutUtil {
       }
     }
   }
-
 }

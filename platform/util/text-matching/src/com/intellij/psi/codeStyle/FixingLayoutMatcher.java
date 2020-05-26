@@ -3,38 +3,26 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
+import com.intellij.util.text.KeyboardLayoutUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.function.Function;
 
 /**
  * @author Dmitry Avdeev
  * @see NameUtil#buildMatcher(String)
  */
 public class FixingLayoutMatcher extends MatcherWithFallback {
-  /**
-   * @deprecated use {@link this#FixingLayoutMatcher(String, NameUtil.MatchingCaseSensitivity, String, Function)}
-   */
-  @Deprecated
   public FixingLayoutMatcher(@NotNull String pattern,
                              @NotNull NameUtil.MatchingCaseSensitivity options,
                              String hardSeparators) {
-    this(pattern, options, hardSeparators, null);
-  }
-
-  public FixingLayoutMatcher(@NotNull String pattern,
-                             @NotNull NameUtil.MatchingCaseSensitivity options,
-                             String hardSeparators,
-                             @Nullable Function<Character, Character> asciiToCharConverter) {
     super(
       new MinusculeMatcherImpl(pattern, options, hardSeparators),
-      withFixedLayout(pattern, options, hardSeparators, asciiToCharConverter)
+      withFixedLayout(pattern, options, hardSeparators)
     );
   }
 
   @Nullable
-  public static String fixLayout(String pattern, @Nullable Function<Character, Character> asciiToCharConverter) {
+  public static String fixLayout(String pattern) {
     boolean hasLetters = false;
     boolean onlyWrongLetters = true;
     for (int i = 0; i < pattern.length(); i++) {
@@ -52,7 +40,7 @@ public class FixingLayoutMatcher extends MatcherWithFallback {
       char[] alternatePattern = new char[pattern.length()];
       for (int i = 0; i < pattern.length(); i++) {
         char c = pattern.charAt(i);
-        Character newC = asciiToCharConverter != null ? asciiToCharConverter.apply(c) : null;
+        Character newC = KeyboardLayoutUtil.getAsciiForChar(c);
         alternatePattern[i] = newC == null ? c : newC;
       }
 
@@ -64,9 +52,8 @@ public class FixingLayoutMatcher extends MatcherWithFallback {
   @Nullable
   private static MinusculeMatcher withFixedLayout(@NotNull String pattern,
                                                   @NotNull NameUtil.MatchingCaseSensitivity options,
-                                                  String hardSeparators,
-                                                  @Nullable Function<Character, Character> asciiToCharConverter) {
-    String s = fixLayout(pattern, asciiToCharConverter);
+                                                  String hardSeparators) {
+    String s = fixLayout(pattern);
     if (s != null && !s.equals(pattern)) {
       return new MinusculeMatcherImpl(s, options, hardSeparators);
     }

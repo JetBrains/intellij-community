@@ -322,7 +322,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
           return;
         }
 
-        MinusculeMatcher matcher = FixingLayoutMatcherUtil.buildLayoutFixingMatcher("*" + mySearchField.getText(), NameUtil.MatchingCaseSensitivity.NONE);
+        MinusculeMatcher matcher = NameUtil.buildMatcher("*" + mySearchField.getText(), NameUtil.MatchingCaseSensitivity.NONE);
         model.setFilter(pair -> {
           Object obj = ((Pair)pair).second;
           String value;

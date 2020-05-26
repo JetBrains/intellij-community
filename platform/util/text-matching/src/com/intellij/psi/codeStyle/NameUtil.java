@@ -5,7 +5,6 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.text.NameUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -272,40 +271,23 @@ public final class NameUtil {
     boolean matches(@NotNull String name);
   }
 
-
-  /**
-   * @deprecated use {@link this#buildMatcher(String, int, boolean, boolean, Function)} instead.
-   * <p>
-   * For AWT application {@link com.intellij.util.ui.KeyboardLayoutUtil#getAsciiForChar(char)} can be used as a converter.
-   */
-  @NotNull
-  @Deprecated
-  public static com.intellij.util.text.Matcher buildMatcher(@NotNull String pattern, int exactPrefixLen,
-                                                            boolean allowToUpper, boolean allowToLower) {
-    return buildMatcher(pattern, exactPrefixLen, allowToUpper, allowToLower, null);
-  }
-
-  /**
-   * For AWT application {@link com.intellij.util.ui.KeyboardLayoutUtil#getAsciiForChar(char)} can be used as a chars converter.
-   */
   public static com.intellij.util.text.Matcher buildMatcher(@NotNull String pattern,
                                                             int exactPrefixLen,
                                                             boolean allowToUpper,
-                                                            boolean allowToLower,
-                                                            @Nullable Function<Character, Character> asciiToCharConverter) {
+                                                            boolean allowToLower) {
     MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL
                                                                      : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER
                                                                                           : MatchingCaseSensitivity.NONE;
-    return buildMatcher(pattern, options, asciiToCharConverter);
+    return buildMatcher(pattern, options);
   }
 
   /**
-   * @deprecated Parameter {@code lowerCaseWords} is ignored, same as {@link #buildMatcher(String, int, boolean, boolean, Function)} )}
+   * @deprecated Parameter {@code lowerCaseWords} is ignored, same as {@link #buildMatcher(String, int, boolean, boolean)} )}
    */
   @Deprecated
   @NotNull
   public static com.intellij.util.text.Matcher buildMatcher(@NotNull String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower, @SuppressWarnings("unused") boolean lowerCaseWords) {
-    return buildMatcher(pattern, exactPrefixLen, allowToUpper, allowToLower, null);
+    return buildMatcher(pattern, exactPrefixLen, allowToUpper, allowToLower);
   }
 
   public static class MatcherBuilder {
@@ -314,7 +296,6 @@ public final class NameUtil {
     private MatchingCaseSensitivity caseSensitivity = MatchingCaseSensitivity.NONE;
     private boolean typoTolerant = false;
     private boolean preferStartMatches = false;
-    @Nullable private Function<Character, Character> asciiToCharConverter;
 
     public MatcherBuilder(String pattern) {
       this.pattern = pattern;
@@ -340,58 +321,29 @@ public final class NameUtil {
       return this;
     }
 
-    /**
-     * For AWT application {@link com.intellij.util.ui.KeyboardLayoutUtil#getAsciiForChar(char)} can be used as a chars converter.
-     */
-    public MatcherBuilder withAsciiToCharConverter(@Nullable Function<Character, Character> asciiToCharConverter) {
-      this.asciiToCharConverter = asciiToCharConverter;
-      return this;
-    }
-
     public MinusculeMatcher build() {
-      MinusculeMatcher matcher = typoTolerant ? FixingLayoutTypoTolerantMatcher.create(pattern, caseSensitivity, separators, asciiToCharConverter)
-                                              : new FixingLayoutMatcher(pattern, caseSensitivity, separators, asciiToCharConverter);
+      MinusculeMatcher matcher = typoTolerant ? FixingLayoutTypoTolerantMatcher.create(pattern, caseSensitivity, separators)
+                                              : new FixingLayoutMatcher(pattern, caseSensitivity, separators);
       return preferStartMatches ? new PreferStartMatchMatcherWrapper(matcher) : matcher;
     }
   }
 
-  /**
-   * @see com.intellij.util.ui.KeyboardLayoutUtil#buildLayoutFixingMatcher(String, MatchingCaseSensitivity)
-   */
   @NotNull
   public static MatcherBuilder buildMatcher(@NotNull String pattern) {
     return new MatcherBuilder(pattern);
   }
 
-  /**
-   * @deprecated use {@link com.intellij.util.ui.KeyboardLayoutUtil#buildLayoutFixingMatcher(String, MatchingCaseSensitivity)} or
-   * {@link this#buildMatcher(String, MatchingCaseSensitivity, Function)} instead.
-   * <p>
-   * For AWT application {@link com.intellij.util.ui.KeyboardLayoutUtil#getAsciiForChar(char)} can be used as a chars converter.
-   */
-  @Deprecated
   @NotNull
   public static MinusculeMatcher buildMatcher(@NotNull String pattern, @NotNull MatchingCaseSensitivity options) {
-    return buildMatcher(pattern, options, null);
-  }
-
-  /**
-   * For AWT application {@link com.intellij.util.ui.KeyboardLayoutUtil#getAsciiForChar(char)} can be used as a chars converter.
-   */
-  @NotNull
-  public static MinusculeMatcher buildMatcher(@NotNull String pattern,
-                                              @NotNull MatchingCaseSensitivity options,
-                                              @Nullable Function<Character, Character> asciiToCharConverter) {
-    return buildMatcher(pattern).withCaseSensitivity(options).withAsciiToCharConverter(asciiToCharConverter).build();
+    return buildMatcher(pattern).withCaseSensitivity(options).build();
   }
 
   public static MinusculeMatcher buildMatcherWithFallback(@NotNull String pattern,
                                                           @NotNull String fallbackPattern,
-                                                          @NotNull MatchingCaseSensitivity options,
-                                                          @Nullable Function<Character, Character> asciiToCharConverter) {
-    return pattern.equals(fallbackPattern) ?
-           buildMatcher(pattern, options, asciiToCharConverter) :
-           new MatcherWithFallback(buildMatcher(pattern, options, asciiToCharConverter), buildMatcher(fallbackPattern, options, asciiToCharConverter));
+                                                          @NotNull MatchingCaseSensitivity options) {
+    return pattern.equals(fallbackPattern)
+           ? buildMatcher(pattern, options)
+           : new MatcherWithFallback(buildMatcher(pattern, options), buildMatcher(fallbackPattern, options));
   }
 
   @NotNull

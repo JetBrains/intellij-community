@@ -8,7 +8,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
 
 /**
  * {@link FixingLayoutMatcher} extension that returns all matches (not just the first one)
@@ -17,11 +16,10 @@ import java.util.function.Function;
 public class AllOccurrencesMatcher extends MinusculeMatcher {
   private final MinusculeMatcher delegate;
 
-  public AllOccurrencesMatcher(@NotNull String pattern,
+  private AllOccurrencesMatcher(@NotNull String pattern,
                                @NotNull NameUtil.MatchingCaseSensitivity options,
-                               String hardSeparators,
-                               @Nullable Function<Character, Character> asciiToCharConverter) {
-    delegate = new FixingLayoutMatcher(pattern, options, hardSeparators, asciiToCharConverter);
+                               String hardSeparators) {
+    delegate = new FixingLayoutMatcher(pattern, options, hardSeparators);
   }
 
   @NotNull
@@ -66,5 +64,9 @@ public class AllOccurrencesMatcher extends MinusculeMatcher {
     return "AllOccurrencesMatcher{" +
            "delegate=" + delegate +
            '}';
+  }
+
+  public static MinusculeMatcher create(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, String hardSeparators) {
+    return new AllOccurrencesMatcher(pattern, options, hardSeparators);
   }
 }

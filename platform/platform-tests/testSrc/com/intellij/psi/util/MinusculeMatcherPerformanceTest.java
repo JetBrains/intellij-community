@@ -6,7 +6,6 @@ import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.FixingLayoutMatcherUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.junit.Assert;
@@ -26,10 +25,10 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
     final List<MinusculeMatcher> nonMatching = new ArrayList<>();
 
     for (String s : ContainerUtil.ar("*", "*i", "*a", "*u", "T", "ti", longName, longName.substring(0, 20))) {
-      matching.add(FixingLayoutMatcherUtil.buildLayoutFixingMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
+      matching.add(NameUtil.buildMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
     }
     for (String s : ContainerUtil.ar("A", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "tag")) {
-      nonMatching.add(FixingLayoutMatcherUtil.buildLayoutFixingMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
+      nonMatching.add(NameUtil.buildMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
     }
 
     PlatformTestUtil.startPerformanceTest("Matching", 5_500, () -> {

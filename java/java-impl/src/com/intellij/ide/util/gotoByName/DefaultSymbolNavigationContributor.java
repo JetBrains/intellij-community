@@ -14,6 +14,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -22,7 +23,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
-import com.intellij.util.ui.FixingLayoutMatcherUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -152,7 +152,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
 
     if (completePattern.contains(".") || completePattern.contains("#")) {
       String normalized = StringUtil.replace(StringUtil.replace(completePattern, "#", ".*"), ".", ".*");
-      MinusculeMatcher matcher = FixingLayoutMatcherUtil.buildLayoutFixingMatcher("*" + normalized).build();
+      MinusculeMatcher matcher = NameUtil.buildMatcher("*" + normalized).build();
       return member -> {
         String qualifiedName = PsiUtil.getMemberQualifiedName(member);
         return qualifiedName != null && matcher.matches(qualifiedName);

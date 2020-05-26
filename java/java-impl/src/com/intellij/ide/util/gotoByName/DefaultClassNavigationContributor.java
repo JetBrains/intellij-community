@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -21,7 +22,6 @@ import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
-import com.intellij.util.ui.FixingLayoutMatcherUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,7 +70,7 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
         hasDollar = namePattern.contains("$");
       }
     }
-    final MinusculeMatcher innerMatcher = hasDollar ? FixingLayoutMatcherUtil.buildLayoutFixingMatcher("*" + namePattern).build() : null;
+    final MinusculeMatcher innerMatcher = hasDollar ? NameUtil.buildMatcher("*" + namePattern).build() : null;
     FileBasedIndex.getInstance().ignoreDumbMode(() -> {
       PsiShortNamesCache.getInstance(parameters.getProject()).processClassesWithName(name, new Processor<PsiClass>() {
         final boolean isAnnotation = parameters.getLocalPatternName().startsWith("@");

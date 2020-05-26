@@ -19,7 +19,6 @@ import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.text.Matcher;
-import com.intellij.util.ui.FixingLayoutMatcherUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -105,7 +104,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
                                                            UIUtil.getListForeground(isSelected),
                                                            JBColor.RED,
                                                            SimpleTextAttributes.STYLE_PLAIN);
-      Matcher matcher = FixingLayoutMatcherUtil.buildLayoutFixingMatcher("*" + query, NameUtil.MatchingCaseSensitivity.NONE);
+      Matcher matcher = NameUtil.buildMatcher("*" + query, NameUtil.MatchingCaseSensitivity.NONE);
 
       String category = myPluginDescriptor.getCategory() == null ? null : StringUtil.toUpperCase(myPluginDescriptor.getCategory());
       if (category != null) {

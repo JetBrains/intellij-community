@@ -35,6 +35,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
@@ -50,7 +51,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.KeyboardLayoutUtil;
+import com.intellij.util.text.KeyboardLayoutUtil;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -132,7 +133,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
    */
   public boolean dispatchKeyEvent(final KeyEvent e){
     if (myDisposed) return false;
-    KeyboardLayoutUtil.storeAsciiForChar(e);
+
+    if (e.getID() == KeyEvent.KEY_PRESSED) {
+      storeAsciiForChar(e);
+    }
 
     if (e.isConsumed()) {
       return false;
@@ -238,6 +242,15 @@ public final class IdeKeyEventDispatcher implements Disposable {
     finally {
       myContext.clear();
     }
+  }
+
+  private static void storeAsciiForChar(@NotNull KeyEvent e) {
+    char aChar = e.getKeyChar();
+    if (aChar == KeyEvent.CHAR_UNDEFINED) return;
+    int mods = e.getModifiers();
+    if ((mods & ~InputEvent.SHIFT_MASK & ~InputEvent.SHIFT_DOWN_MASK) != 0) return;
+
+    KeyboardLayoutUtil.storeAsciiForChar(e.getKeyCode(), aChar, TextRange.create(KeyEvent.VK_A, KeyEvent.VK_Z));
   }
 
   private static boolean isSpeedSearchEditing(KeyEvent e) {

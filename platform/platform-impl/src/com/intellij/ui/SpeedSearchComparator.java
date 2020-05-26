@@ -4,8 +4,8 @@ package com.intellij.ui;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.text.NameUtilCore;
-import com.intellij.util.ui.FixingLayoutMatcherUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +56,7 @@ public class SpeedSearchComparator {
 
   @NotNull
   protected MinusculeMatcher createMatcher(@NotNull String pattern) {
-    return FixingLayoutMatcherUtil.buildLayoutFixingMatcher(pattern).build();
+    return NameUtil.buildMatcher(pattern).build();
   }
 
   public String getRecentSearchText() {

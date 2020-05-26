@@ -14,7 +14,6 @@ import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.ui.FixingLayoutMatcherUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,7 +129,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
   private MinusculeMatcher createMatcher(final boolean caseSensitive) {
     String prefix = applyMiddleMatching(myPrefix);
 
-    NameUtil.MatcherBuilder builder = FixingLayoutMatcherUtil.buildLayoutFixingMatcher(prefix);
+    NameUtil.MatcherBuilder builder = NameUtil.buildMatcher(prefix);
     if (caseSensitive) {
       int setting = CodeInsightSettings.getInstance().getCompletionCaseSensitive();
       if (setting == CodeInsightSettings.FIRST_LETTER) {
