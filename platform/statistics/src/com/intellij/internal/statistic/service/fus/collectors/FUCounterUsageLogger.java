@@ -66,7 +66,7 @@ public class FUCounterUsageLogger {
   private static final String[] GENERAL_GROUPS = new String[]{
     "event.log", "performance", "ui.dialogs", "ui.settings",
     "toolwindow", "intentions", "run.configuration.exec",
-    "productivity", "live.templates", "completion.postfix", "notifications"
+    "productivity", "completion.postfix", "notifications"
   };
 
   private static final Logger LOG = Logger.getInstance(FUCounterUsageLogger.class);
