@@ -13,16 +13,20 @@ import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
@@ -36,8 +40,8 @@ import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
+import java.util.Objects;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenFocusManager.installFocusable;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.*;
@@ -270,18 +274,14 @@ public class WelcomeScreenComponentFactory {
     return title;
   }
 
-  public static class ToolbarTextButtonWrapper extends AnActionButton.AnActionButtonWrapper implements CustomComponentAction {
-    JButton myButton;
+  static class ToolbarTextButtonWrapper extends AnActionButton.AnActionButtonWrapper implements CustomComponentAction {
+    final JButton myButton;
 
-    public ToolbarTextButtonWrapper(@NotNull AnAction action) {
+    ToolbarTextButtonWrapper(@NotNull AnAction action) {
       super(action.getTemplatePresentation(), action);
       myButton = new JButton(getTemplateText());
       myButton.setOpaque(false);
-      myButton.addActionListener(l -> {
-        ActionToolbar toolbar = ComponentUtil.getParentOfType(ActionToolbar.class, myButton);
-        DataContext dataContext = toolbar != null ? toolbar.getToolbarDataContext() : DataManager.getInstance().getDataContext(myButton);
-        actionPerformed(AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, dataContext));
-      });
+      myButton.addActionListener(createActionListenerForComponent(myButton, action));
     }
 
     @Override
@@ -299,6 +299,77 @@ public class WelcomeScreenComponentFactory {
 
     public static ToolbarTextButtonWrapper wrapAsTextButton(@NotNull AnAction action) {
       return new ToolbarTextButtonWrapper(action);
+    }
+  }
+
+  @NotNull
+  static ActionListener createActionListenerForComponent(@NotNull JComponent component, @NotNull AnAction action) {
+    return l -> {
+      ActionToolbar toolbar = ComponentUtil.getParentOfType(ActionToolbar.class, component);
+      DataContext dataContext = toolbar != null ? toolbar.getToolbarDataContext() : DataManager.getInstance().getDataContext(component);
+      action.actionPerformed(AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, dataContext));
+    };
+  }
+
+  static class LargeIconWithTextWrapper extends AnActionButton.AnActionButtonWrapper implements CustomComponentAction {
+    final JButton myIconButton;
+    final JBLabel myLabel;
+    private final JPanel myPanel;
+
+    LargeIconWithTextWrapper(@NotNull AnAction action) {
+      super(action.getTemplatePresentation(), action);
+      myIconButton = new JButton();
+      myIconButton.setBorder(JBUI.Borders.empty());
+      myIconButton.setHorizontalAlignment(SwingConstants.CENTER);
+      myIconButton.setPreferredSize(new JBDimension(60, 60));
+      myIconButton.putClientProperty("JButton.focusedBackgroundColor", getActionsButtonBackground(true));
+      myIconButton.putClientProperty("JButton.backgroundColor", getActionsButtonBackground(false));
+
+      myIconButton.addFocusListener(new FocusListener() {
+        @Override
+        public void focusGained(FocusEvent e) {
+          updateIconBackground(true);
+        }
+
+        @Override
+        public void focusLost(FocusEvent e) {
+          updateIconBackground(false);
+        }
+      });
+      myIconButton.addActionListener(createActionListenerForComponent(myIconButton, action));
+      Wrapper iconWrapper = new Wrapper(myIconButton);
+      iconWrapper.setBorder(JBUI.Borders.empty(0, 30));
+
+      myLabel = new JBLabel(Objects.requireNonNull(getTemplateText()), SwingConstants.CENTER);
+      myLabel.setOpaque(false);
+
+      myPanel = new NonOpaquePanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, JBUI.scale(12), false, false));
+      myPanel.add(iconWrapper);
+      myPanel.add(myLabel);
+    }
+
+    void updateIconBackground(boolean selected) {
+      myIconButton.setSelected(selected);
+      myIconButton.putClientProperty("JButton.backgroundColor", getActionsButtonBackground(selected));
+      myIconButton.repaint();
+    }
+
+    @Override
+    public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+      return myPanel;
+    }
+
+    @Override
+    public void updateButton(@NotNull AnActionEvent e) {
+      getDelegate().update(e);
+      myIconButton.setIcon(e.getPresentation().getIcon());
+      myIconButton.setSelectedIcon(e.getPresentation().getSelectedIcon());
+      myLabel.setText(e.getPresentation().getText());
+      UIUtil.setEnabled(myPanel, e.getPresentation().isEnabled(), true);
+    }
+
+    public static @NotNull WelcomeScreenComponentFactory.LargeIconWithTextWrapper wrapAsBigIconWithText(AnAction action) {
+      return new LargeIconWithTextWrapper(action);
     }
   }
 }

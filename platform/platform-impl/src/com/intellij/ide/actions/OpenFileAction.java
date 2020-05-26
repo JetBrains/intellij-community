@@ -79,6 +79,7 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
   public static class OnWelcomeScreen extends OpenFileAction {
     @Override
     public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setSelectedIcon(AllIcons.Welcome.OpenSelected);
       if (!NewWelcomeScreen.isNewWelcomeScreen(e)) {
         e.getPresentation().setEnabledAndVisible(false);
       }

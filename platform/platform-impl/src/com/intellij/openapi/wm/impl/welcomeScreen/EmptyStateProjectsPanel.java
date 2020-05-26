@@ -23,6 +23,7 @@ import java.awt.*;
 import java.util.Arrays;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.ProjectsTabFactory.PRIMARY_BUTTONS_NUM;
+import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.LargeIconWithTextWrapper.wrapAsBigIconWithText;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.getApplicationTitle;
 
 public class EmptyStateProjectsPanel extends JPanel {
@@ -41,9 +42,8 @@ public class EmptyStateProjectsPanel extends JPanel {
     DefaultActionGroup group = new DefaultActionGroup();
     WelcomeScreenComponentFactory.collectAllActions(group, quickStartActionGroup);
     AnAction[] actions = group.getChildren(null);
-    ActionGroup mainActionGroup = new DefaultActionGroup(Arrays.copyOfRange(actions, 0, PRIMARY_BUTTONS_NUM));
 
-    ActionToolbarImpl actionsToolbar = createActionsToolbar(mainActionGroup);
+    ActionToolbarImpl actionsToolbar = createActionsToolbar(Arrays.copyOfRange(actions, 0, PRIMARY_BUTTONS_NUM));
     mainPanel.add(new Wrapper(new FlowLayout(), actionsToolbar.getComponent()));
 
     if (PRIMARY_BUTTONS_NUM < actions.length) {
@@ -58,9 +58,13 @@ public class EmptyStateProjectsPanel extends JPanel {
   }
 
   @NotNull
-  static ActionToolbarImpl createActionsToolbar(@NotNull ActionGroup mainActionGroup) {
+  static ActionToolbarImpl createActionsToolbar(AnAction... actions) {
+    DefaultActionGroup mainActionGroup = new DefaultActionGroup();
+    for (AnAction action : actions) {
+      mainActionGroup.addAction(wrapAsBigIconWithText(action));
+    }
     ActionToolbarImpl actionToolbar = new ActionToolbarImpl(ActionPlaces.WELCOME_SCREEN, mainActionGroup, true);
-    actionToolbar.setMinimumButtonSize(new Dimension(60, 60));
+    actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     actionToolbar.setBorder(JBUI.Borders.emptyTop(50));
     return actionToolbar;
   }
