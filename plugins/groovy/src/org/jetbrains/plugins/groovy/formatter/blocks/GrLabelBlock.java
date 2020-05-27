@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.formatter.blocks;
 
 import com.intellij.formatting.Block;
@@ -26,7 +26,7 @@ public class GrLabelBlock extends GroovyBlockWithRange {
     super(node, indent, createTextRange(subStatements), wrap, context);
 
     final GroovyBlockGenerator generator = new GroovyBlockGenerator(this);
-    myBlocks = generator.generateSubBlocks(subStatements, false);
+    myBlocks = generator.generateSubBlocks(subStatements);
   }
 
   private static TextRange createTextRange(List<ASTNode> subStatements) {

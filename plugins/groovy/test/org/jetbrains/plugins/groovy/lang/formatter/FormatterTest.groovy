@@ -169,6 +169,8 @@ class FormatterTest extends GroovyFormatterTestCase {
 
   void testAlignMultipleVariables() throws Throwable { doTest() }
 
+  void testAlignMultipleVariablesLabeled() throws Throwable { doTest() }
+
   void testSpockTableWithStringComment() throws Throwable { doTest() }
 
   void testSpockTableWithComments() throws Throwable { doTest() }
