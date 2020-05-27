@@ -93,6 +93,12 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     assert actionMatches('invcach', action) == MatchMode.NAME
   }
 
+  void "test fixing layout match"() {
+    def action = ActionManager.instance.getAction("InvalidateCaches")
+    assert actionMatches('штм', action) == MatchMode.NAME
+    assert actionMatches('штм сфср', action) == MatchMode.NAME
+  }
+
   void "test CamelCase text in action names"() {
     def options = [
       new OptionDescription("CamelCase option", null, null),
@@ -270,7 +276,7 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
 
     patterns.forEach { String pattern ->
       def elements = ChooseByNameTest.calcContributorElements(contributor, pattern)
-      assert elements.any { matchedValue -> isNavigableOption(((MatchedValue) matchedValue).value)
+      assert elements.any { matchedValue -> isNavigableOption(((MatchedValue)matchedValue).value)
       }
     }
   }

@@ -11,7 +11,8 @@ public class WordPrefixMatcher implements Matcher {
   private final String[] myPatternWords;
 
   public WordPrefixMatcher(String pattern) {
-    myPatternWords = NameUtil.nameToWords(pattern);
+    String fixedLayout = FixingLayoutMatcher.fixLayout(pattern);
+    myPatternWords = NameUtil.nameToWords(fixedLayout != null && !fixedLayout.equals(pattern) ? fixedLayout : pattern);
   }
 
   @Override
