@@ -95,7 +95,6 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
     myTree.setCellRenderer(new MyRenderer());
     myTree.setRootVisible(false);
-    myTree.setShowsRootHandles(false);
     myTree.setExpandableItemsEnabled(false);
     RelativeFont.BOLD.install(myTree);
     setComponentPopupMenuTo(myTree);
