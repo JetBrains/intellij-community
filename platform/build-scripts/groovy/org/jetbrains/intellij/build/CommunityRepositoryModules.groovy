@@ -89,6 +89,11 @@ class CommunityRepositoryModules {
     plugin("intellij.laf.macos") {
       bundlingRestrictions.supportedOs = [OsFamily.MACOS]
     },
+    plugin("intellij.webp"){
+      withResource("lib/libwebp/linux", "lib/libwebp/linux")
+      withResource("lib/libwebp/mac", "lib/libwebp/mac")
+      withResource("lib/libwebp/win", "lib/libwebp/win")
+    },
     plugin("intellij.laf.win10") {
       bundlingRestrictions.supportedOs = [OsFamily.WINDOWS]
     },
@@ -359,10 +364,6 @@ class CommunityRepositoryModules {
       withResourceFromModule("intellij.android.artwork", "resources/device-art-resources", "lib/device-art-resources")
       withResourceFromModule("intellij.android.core", "lib/sampleData", "lib/sampleData")
       withResourceArchive("../android/annotations", "lib/androidAnnotations.jar")
-
-      withResourceFromModule("intellij.android.adt.ui", "lib/libwebp/linux", "lib/libwebp/linux")
-      withResourceFromModule("intellij.android.adt.ui", "lib/libwebp/mac", "lib/libwebp/mac")
-      withResourceFromModule("intellij.android.adt.ui", "lib/libwebp/win", "lib/libwebp/win")
 
       // here go some differences from original Android Studio layout
       def getSingleFile = { BuildContext context, String projectLibName ->
