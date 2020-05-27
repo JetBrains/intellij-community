@@ -18,6 +18,7 @@ package com.siyeh.ig.junit;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.siyeh.ig.testFrameworks.AssertWithoutMessageInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,11 @@ public class JUnitAssertsWithoutMessagesInspectionTest extends LightJavaInspecti
 
   public void testFailWithMessage() {
     doTest();
+  }
+
+  @Override
+  protected String getBasePath() {
+    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/junit/junit_asserts_without_messages";
   }
 
   @Override
@@ -60,6 +66,6 @@ public class JUnitAssertsWithoutMessagesInspectionTest extends LightJavaInspecti
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new JUnitAssertsWithoutMessagesInspection();
+    return new AssertWithoutMessageInspection();
   }
 }

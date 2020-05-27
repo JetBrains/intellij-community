@@ -24,14 +24,12 @@ import java.util.Set;
 /**
  * @author Bas Leijdekkers
  */
-public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends BaseInspection {
+public class MisorderedAssertEqualsArgumentsInspection extends BaseInspection {
 
   @NonNls
   private static final Set<String> methodNames =
     ContainerUtil.newHashSet("assertEquals", "assertEqualsNoOrder", "assertNotEquals", "assertArrayEquals", "assertSame",
                              "assertNotSame", "failNotSame", "failNotEquals");
-
-  public abstract boolean checkTestNG();
 
   @Override
   @NotNull
@@ -68,8 +66,8 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
       if (hint == null) {
         return;
       }
-      final PsiExpression expectedArgument = hint.getExpected(checkTestNG());
-      final PsiExpression actualArgument = hint.getActual(checkTestNG());
+      final PsiExpression expectedArgument = hint.getExpected();
+      final PsiExpression actualArgument = hint.getActual();
       final PsiElement copy = expectedArgument.copy();
       expectedArgument.replace(actualArgument);
       actualArgument.replace(copy);
@@ -77,7 +75,7 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
   }
 
   AssertHint createAssertHint(@NotNull PsiMethodCallExpression expression) {
-    return AssertHint.create(expression, methodName -> methodNames.contains(methodName) ? 2 : null, checkTestNG());
+    return AssertHint.create(expression, methodName -> methodNames.contains(methodName) ? 2 : null);
   }
 
   static boolean looksLikeExpectedArgument(PsiExpression expression) {
@@ -161,7 +159,7 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
       if (hint == null) {
         return;
       }
-      if (looksLikeExpectedArgument(hint.getExpected(checkTestNG())) || !looksLikeExpectedArgument(hint.getActual(checkTestNG()))) {
+      if (looksLikeExpectedArgument(hint.getExpected()) || !looksLikeExpectedArgument(hint.getActual())) {
         return;
       }
       registerMethodCallError(expression);

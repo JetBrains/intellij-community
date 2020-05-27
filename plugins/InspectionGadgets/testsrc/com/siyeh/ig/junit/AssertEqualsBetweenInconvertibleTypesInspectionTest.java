@@ -3,6 +3,7 @@ package com.siyeh.ig.junit;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.siyeh.ig.testFrameworks.AssertBetweenInconvertibleTypesInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -129,9 +130,14 @@ public class AssertEqualsBetweenInconvertibleTypesInspectionTest extends LightJa
     return JAVA_8;
   }
 
+  @Override
+  protected String getBasePath() {
+    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/junit/assert_equals_between_inconvertible_types";
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new AssertEqualsBetweenInconvertibleTypesInspection();
+    return new AssertBetweenInconvertibleTypesInspection();
   }
 }

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-public abstract class ConstantAssertArgumentInspectionBase extends BaseInspection {
+public class ConstantAssertArgumentInspection extends BaseInspection {
   @NonNls
   private static final Set<String> ASSERT_METHODS = new HashSet<>();
 
@@ -31,18 +31,16 @@ public abstract class ConstantAssertArgumentInspectionBase extends BaseInspectio
       "constant.junit.assert.argument.problem.descriptor");
   }
 
-  protected abstract boolean checkTestNG();
-
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ConstantAssertArgumentVisitor();
   }
 
-  private class ConstantAssertArgumentVisitor extends BaseInspectionVisitor {
+  private static class ConstantAssertArgumentVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-      AssertHint assertHint = AssertHint.create(expression, methodName -> ASSERT_METHODS.contains(methodName) ? 1 : null, checkTestNG());
+      AssertHint assertHint = AssertHint.create(expression, methodName -> ASSERT_METHODS.contains(methodName) ? 1 : null);
       if (assertHint == null) {
         return;
       }

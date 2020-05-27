@@ -1,11 +1,11 @@
 <html>
 <body>
-Reports any TestNG <b>assert</b> calls which can be replaced by simpler but equivalent calls.
+Reports any <b>assert</b> calls which can be replaced by simpler but equivalent calls.
 <table>
   <tr><th>Example</th><th>&rarr;</th><th>Replacement</th></tr>
 
   <tr>
-    <td><code>assertEquals(x(), <b>true</b>);</code></td>
+    <td><code>assertEquals(<b>true</b>, x());</code></td>
     <td></td>
     <td><code>assertTrue(x());</code></td>
   </tr>
@@ -30,6 +30,8 @@ Reports any TestNG <b>assert</b> calls which can be replaced by simpler but equi
     <td><code>fail();</code></td>
   </tr>
 </table>
-<small>New in 2017.1</small>
+<!-- tooltip end -->
+<p>
+
 </body>
 </html>

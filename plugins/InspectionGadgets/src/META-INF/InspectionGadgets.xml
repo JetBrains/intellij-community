@@ -1348,10 +1348,12 @@
                      implementationClass="com.siyeh.ig.jdk.VarargParameterInspection"/>
 
     <!--group.names.junit.issues-->
-    <localInspection groupPath="Java" language="JAVA" shortName="AssertEqualsBetweenInconvertibleTypes" bundle="messages.InspectionGadgetsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="AssertBetweenInconvertibleTypes" bundle="messages.InspectionGadgetsBundle"
                      key="assertequals.between.inconvertible.types.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.AssertEqualsBetweenInconvertibleTypesInspection"/>
+                     groupKey="group.names.test.frameworks.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.testFrameworks.AssertBetweenInconvertibleTypesInspection"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.testFrameworks.AssertBetweenInconvertibleTypesMerger"/>
+
     <localInspection groupPath="Java" language="JAVA" shortName="AssertEqualsMayBeAssertSame" bundle="messages.InspectionGadgetsBundle"
                      key="assertequals.may.be.assertsame.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
@@ -1366,10 +1368,10 @@
     <localInspection groupPath="Java" language="JAVA" shortName="JUnitDatapoint" bundle="messages.InspectionGadgetsBundle"
                      key="junit.datapoint.display.name" implementationClass="com.siyeh.ig.junit.JUnitDatapointInspection"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="MessageMissingOnJUnitAssertion" shortName="AssertsWithoutMessages"
+    <localInspection groupPath="Java" language="JAVA" shortName="AssertWithoutMessage"
                      bundle="messages.InspectionGadgetsBundle" key="asserts.without.messages.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.JUnitAssertsWithoutMessagesInspection"/>
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.test.frameworks.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.testFrameworks.AssertWithoutMessageInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="BeforeOrAfterWithIncorrectSignature" shortName="BeforeClassOrAfterClassIsPublicStaticVoidNoArg"
                      bundle="messages.InspectionGadgetsBundle" key="before.class.or.after.class.is.public.static.void.no.arg.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
@@ -1386,10 +1388,11 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.ParameterizedParametersStaticCollectionInspection"
                      key="inspection.parameterized.parameters.static.collection.display.name" bundle="messages.InspectionGadgetsBundle"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ConstantJUnitAssertArgument" bundle="messages.InspectionGadgetsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="ConstantAssertArgument" bundle="messages.InspectionGadgetsBundle"
                      key="constant.junit.assert.argument.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.ConstantJUnitAssertArgumentInspection"/>
+                     groupKey="group.names.test.frameworks.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.testFrameworks.ConstantAssertArgumentInspection"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.testFrameworks.ConstantAssertArgumentMerger"/>
     <localInspection groupPath="Java" language="JAVA" shortName="IgnoredJUnitTest" bundle="messages.InspectionGadgetsBundle" key="ignored.junit.test.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.IgnoredJUnitTestInspection"/>
@@ -1409,10 +1412,11 @@
                      key="malformed.set.up.tear.down.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.MalformedSetUpTearDownInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="MisorderedAssertEqualsArguments" alternativeId="MisorderedAssertEqualsArguments" shortName="MisorderedAssertEqualsParameters"
+    <localInspection groupPath="Java" language="JAVA" shortName="MisorderedAssertEqualsArguments"
                      bundle="messages.InspectionGadgetsBundle" key="misordered.assert.equals.arguments.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.MisorderedAssertEqualsParametersInspection"/>
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.test.frameworks.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.testFrameworks.MisorderedAssertEqualsArgumentsInspection"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.testFrameworks.MisorderedAssertEqualsArgumentsMerger"/>
     <localInspection groupPath="Java" language="JAVA" shortName="MultipleExceptionsDeclaredOnTestMethod" bundle="messages.InspectionGadgetsBundle"
                      key="multiple.exceptions.declared.on.test.method.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
@@ -1421,10 +1425,11 @@
                      bundle="messages.InspectionGadgetsBundle" key="test.case.with.constructor.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.TestCaseWithConstructorInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="SimplifiableJUnitAssertion" bundle="messages.InspectionGadgetsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="SimplifiableAssertion" bundle="messages.InspectionGadgetsBundle"
                      key="simplifiable.junit.assertion.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.SimplifiableJUnitAssertionInspection"/>
+                     groupKey="group.names.test.frameworks.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.testFrameworks.SimplifiableAssertionInspection"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.testFrameworks.SimplifiableAssertionMerger"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="SuiteNotDeclaredStatic" shortName="StaticSuite" bundle="messages.InspectionGadgetsBundle"
                      key="static.suite.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues"
                      enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.junit.StaticSuiteInspection"/>

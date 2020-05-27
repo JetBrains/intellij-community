@@ -17,28 +17,30 @@ package com.siyeh.ig.testFrameworks;
 
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
-
-public abstract class AssertsWithoutMessagesInspection extends BaseInspection {
-  protected abstract Map<String, Integer> getAssertMethods();
+public class AssertWithoutMessageInspection extends BaseInspection {
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new AssertionsWithoutMessagesVisitor();
   }
 
-  protected abstract boolean checkTestNG();
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("asserts.without.messages.problem.descriptor");
+  }
 
-  private class AssertionsWithoutMessagesVisitor extends BaseInspectionVisitor {
+  private static class AssertionsWithoutMessagesVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      AssertHint assertHint = AssertHint.create(expression, methodName -> getAssertMethods().get(methodName), checkTestNG());
+      AssertHint assertHint = AssertHint.create(expression, methodName -> AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT.get(methodName));
       if (assertHint == null) {
         return;
       }

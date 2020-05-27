@@ -18,7 +18,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
 
-public abstract class BaseAssertEqualsBetweenInconvertibleTypesInspection extends BaseInspection {
+public class AssertBetweenInconvertibleTypesInspection extends BaseInspection {
   private static final CallMatcher ASSERTJ_IS_EQUAL = CallMatcher.instanceCall(
     "org.assertj.core.api.Assert", "isEqualTo", "isSameAs", "isNotEqualTo", "isNotSameAs")
     .parameterTypes(CommonClassNames.JAVA_LANG_OBJECT);
@@ -28,8 +28,6 @@ public abstract class BaseAssertEqualsBetweenInconvertibleTypesInspection extend
     "org.assertj.core.api.Assertions", "assertThat").parameterCount(1);
   private static final Set<String> ASSERT_NOT_EQUALS_METHODS = new THashSet<>(Arrays.asList(
     "assertNotEquals", "assertNotSame", "isNotEqualTo", "isNotSameAs"));
-
-  protected abstract boolean checkTestNG();
 
   @Override
   @NotNull
@@ -55,31 +53,15 @@ public abstract class BaseAssertEqualsBetweenInconvertibleTypesInspection extend
     return true;
   }
 
-  private class AssertEqualsBetweenInconvertibleTypesVisitor extends BaseInspectionVisitor {
+  private static class AssertEqualsBetweenInconvertibleTypesVisitor extends BaseInspectionVisitor {
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      processAssertEquals(expression);
-      processAssertNotEquals(expression);
-      processAssertSame(expression);
-      processAssertNotSame(expression);
+      processAssertHint(AssertHint.createAssertEqualsHint(expression), expression);
+      processAssertHint(AssertHint.createAssertNotEqualsHint(expression), expression);
+      processAssertHint(AssertHint.createAssertSameHint(expression), expression);
+      processAssertHint(AssertHint.createAssertNotSameHint(expression), expression);
       processAssertJ(expression);
-    }
-
-    private void processAssertEquals(@NotNull PsiMethodCallExpression expression) {
-      processAssertHint(AssertHint.createAssertEqualsHint(expression, checkTestNG()), expression);
-    }
-
-    private void processAssertNotEquals(@NotNull PsiMethodCallExpression expression) {
-      processAssertHint(AssertHint.createAssertNotEqualsHint(expression, checkTestNG()), expression);
-    }
-
-    private void processAssertSame(@NotNull PsiMethodCallExpression expression) {
-      processAssertHint(AssertHint.createAssertSameHint(expression, checkTestNG()), expression);
-    }
-
-    private void processAssertNotSame(@NotNull PsiMethodCallExpression expression) {
-      processAssertHint(AssertHint.createAssertNotSameHint(expression, checkTestNG()), expression);
     }
 
     private void processAssertJ(@NotNull PsiMethodCallExpression call) {
