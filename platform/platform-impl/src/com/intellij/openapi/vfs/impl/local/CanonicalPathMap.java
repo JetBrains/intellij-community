@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.impl.local;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,7 @@ final class CanonicalPathMap {
       .parallel()
       .forEach(root -> {
         String canonicalRoot = FileSystemUtil.resolveSymLink(root);
-        if (canonicalRoot != null && WatchRootsUtil.FILE_NAME_COMPARATOR.compare(canonicalRoot, root) != 0) {
+        if (canonicalRoot != null && OSAgnosticPathUtil.COMPARATOR.compare(canonicalRoot, root) != 0) {
           canonicalPathMappings.put(root, canonicalRoot);
         }
       });

@@ -771,9 +771,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static int comparePaths(@Nullable String path1, @Nullable String path2) {
-    path1 = path1 == null ? null : toSystemIndependentName(path1);
-    path2 = path2 == null ? null : toSystemIndependentName(path2);
-    return StringUtil.compare(path1, path2, !SystemInfo.isFileSystemCaseSensitive);
+    return OSAgnosticPathUtil.COMPARATOR.compare(path1, path2);
   }
 
   public static int fileHashCode(@Nullable File file) {

@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -14,8 +15,6 @@ import java.util.function.Predicate;
  * Care should be taken though to make sure that within each call of a method parameters are of the same breed.
  */
 class WatchRootsUtil {
-  static final Comparator<String> FILE_NAME_COMPARATOR = FileUtil::comparePaths;
-
   static boolean isCoveredRecursively(@NotNull NavigableSet<String> recursiveRoots, @NotNull String path) {
     String recursiveRoot = recursiveRoots.floor(path);
     return recursiveRoot != null && FileUtil.startsWith(path, recursiveRoot);
@@ -69,11 +68,11 @@ class WatchRootsUtil {
   }
 
   static @NotNull NavigableSet<String> createFileNavigableSet() {
-    return new TreeSet<>(FILE_NAME_COMPARATOR);
+    return new TreeSet<>(OSAgnosticPathUtil.COMPARATOR);
   }
 
   static <T> @NotNull NavigableMap<String, T> createFileNavigableMap() {
-    return new TreeMap<>(FILE_NAME_COMPARATOR);
+    return new TreeMap<>(OSAgnosticPathUtil.COMPARATOR);
   }
 
   static boolean removeRecursivePath(@NotNull NavigableSet<String> optimizedRecursiveRoots,
