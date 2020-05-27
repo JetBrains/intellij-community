@@ -47,6 +47,9 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
   override fun loadEntities(builder: TypedEntityStorageBuilder,
                             reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager) {
+    val isImlExists = fileUrl.file?.exists() ?: false
+    if (!isImlExists) return
+
     val moduleOptions = readModuleOptions(reader)
     val (externalSystemOptions, externalSystemId) = readExternalSystemOptions(reader, moduleOptions)
     val entitySource = createEntitySource(externalSystemId)
