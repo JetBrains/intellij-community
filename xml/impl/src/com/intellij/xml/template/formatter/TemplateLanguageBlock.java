@@ -25,6 +25,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
   private final CodeStyleSettings mySettings;
   private final AbstractXmlTemplateFormattingModelBuilder myBuilder;
   private final XmlFormattingPolicy myXmlFormattingPolicy;
+  @Nullable
   private Indent myIndent;
   private BlockWithParent myParent;
   private boolean myContainsErrorElements = false;
@@ -35,7 +36,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
                                   @Nullable Alignment alignment,
                                   CodeStyleSettings settings,
                                   XmlFormattingPolicy xmlFormattingPolicy,
-                                  Indent indent) {
+                                  @Nullable Indent indent) {
     super(node, wrap, alignment);
     myNode = node;
     mySettings = settings;
@@ -191,7 +192,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
   }
 
   @Override
-  public Indent getIndent() {
+  public @Nullable Indent getIndent() {
     return myIndent;
   }
 
@@ -209,7 +210,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
   }
 
   @Override
-  public void setIndent(Indent indent) {
+  public void setIndent(@Nullable Indent indent) {
     myIndent = indent;
   }
 
