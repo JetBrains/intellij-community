@@ -1,17 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.formatter;
 
 import com.intellij.formatting.Alignment;
-import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Max Medvedev
@@ -26,21 +21,24 @@ public class AlignmentProvider {
     addPair(e1, e2, allowBackwardShift, null);
   }
 
-  public void addPair(@NotNull PsiElement e1, @NotNull PsiElement e2, @Nullable Boolean allowBackwardShift, @Nullable Alignment.Anchor anchor) {
+  private void addPair(@NotNull PsiElement e1,
+                       @NotNull PsiElement e2,
+                       @Nullable Boolean allowBackwardShift,
+                       @Nullable Alignment.Anchor anchor) {
     assert e1 != e2;
 
     final Set<PsiElement> set1 = myTree.get(e1);
     final Set<PsiElement> set2 = myTree.get(e2);
 
     if (set1 != null && set2 != null) {
-      assert (!myAlignments.containsKey(set1) || !myAlignments.containsKey(set2));
-      assert(myAllowBackwardShift.get(set1).booleanValue() == myAllowBackwardShift.get(set2).booleanValue());
-      assert(myAnchor.get(set1) == myAnchor.get(set2));
+      assert !myAlignments.containsKey(set1) || !myAlignments.containsKey(set2);
+      assert myAllowBackwardShift.get(set1).booleanValue() == myAllowBackwardShift.get(set2).booleanValue();
+      assert myAnchor.get(set1) == myAnchor.get(set2);
       if (allowBackwardShift != null) {
-        assert(myAllowBackwardShift.get(set1).booleanValue() == allowBackwardShift.booleanValue());
+        assert myAllowBackwardShift.get(set1).booleanValue() == allowBackwardShift.booleanValue();
       }
       if (anchor != null) {
-        assert(myAnchor.get(set1) == anchor);
+        assert myAnchor.get(set1) == anchor;
       }
 
       if (myAlignments.containsKey(set2)) {
@@ -100,14 +98,6 @@ public class AlignmentProvider {
         return myhash;
       }
     };
-  }
-
-  public void addPair(@NotNull ASTNode node1, @NotNull ASTNode node2, boolean allowBackwardShift) {
-    addPair(node1.getPsi(), node2.getPsi(), allowBackwardShift);
-  }
-
-  private void add(@NotNull PsiElement element, boolean allowBackwardShift) {
-    add(element, allowBackwardShift, Alignment.Anchor.LEFT);
   }
 
   private void add(@NotNull PsiElement element, boolean allowBackwardShift, @NotNull Alignment.Anchor anchor) {
