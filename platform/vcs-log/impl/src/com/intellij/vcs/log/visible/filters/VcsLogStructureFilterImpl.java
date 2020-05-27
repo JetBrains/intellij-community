@@ -23,7 +23,7 @@ public class VcsLogStructureFilterImpl implements VcsLogDetailsFilter, VcsLogStr
   @NotNull private final Collection<FilePath> myFiles;
 
   /**
-   * Use {@link com.intellij.vcs.log.visible.filters.VcsLogFilterObject#fromPaths(Collection)}
+   * Use {@link VcsLogFilterObject#fromPaths(Collection)}
    */
   protected VcsLogStructureFilterImpl(@NotNull Collection<FilePath> files) {
     myFiles = files;

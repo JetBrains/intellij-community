@@ -30,8 +30,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Alexander Lobas
@@ -185,7 +185,7 @@ public abstract class RadComponent extends PropertiesContainer {
    * target component's coordinate system. The model coordinate system refers to
    * the same coordinate system as the bounds returned by {@link #getBounds()}.
    * <p/>
-   * This means that calling {@link #getBounds(java.awt.Component)} is equivalent
+   * This means that calling {@link #getBounds(Component)} is equivalent
    * to calling this method and passing in {@link #getBounds()}.
    * <p/>
    * Returns a new {@link Rectangle}, so callers are free to modify the result.

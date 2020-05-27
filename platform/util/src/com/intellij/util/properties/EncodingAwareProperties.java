@@ -21,11 +21,12 @@ import com.intellij.util.text.StringTokenizer;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Properties;
 
 /**
  * @author MYakovlev
  */
-public class EncodingAwareProperties extends java.util.Properties{
+public class EncodingAwareProperties extends Properties{
   public void load(File file, String encoding) throws IOException{
     String propText = FileUtil.loadFile(file, encoding);
     propText = StringUtil.convertLineSeparators(propText);

@@ -22,13 +22,13 @@ import java.util.Map;
  * Simple processing context can contain a shared processing context inside, which should be used when iterating over several patterns 
  * or extensions, possibly from different plugins. They may still wish to reuse some cached information that a previous extension has already calculated.
  * <p/>
- * In this case, a separate ProcessingContext object is created for each of those extensions, but the same {@link com.intellij.util.SharedProcessingContext}
+ * In this case, a separate ProcessingContext object is created for each of those extensions, but the same {@link SharedProcessingContext}
  * is passed to their constructors. To reuse shared context, extensions are required to work with {@link #getSharedContext()} result.
  * <p/>
  * Not thread-safe.
  *
- * @see #get(com.intellij.openapi.util.Key) 
- * @see #put(com.intellij.openapi.util.Key, Object)
+ * @see #get(Key) 
+ * @see #put(Key, Object)
  * @see #ProcessingContext(SharedProcessingContext) 
  * @author peter
  */

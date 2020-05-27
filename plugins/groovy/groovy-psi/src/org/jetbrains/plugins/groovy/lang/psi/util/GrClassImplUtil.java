@@ -546,7 +546,7 @@ public class GrClassImplUtil {
         signatures.add(signature, method);
       }
 
-      Set<MethodSignature> result = new java.util.HashSet<>();
+      Set<MethodSignature> result = new HashSet<>();
       for (MethodSignature signature : signatures.keySet()) {
         if (signatures.valuesForKey(signature) > 1) {
           result.add(signature);

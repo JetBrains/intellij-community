@@ -14,8 +14,8 @@ import java.util.List;
  * Container for files which have been affected by an update/integrate/status operation.
  * The files are grouped by file status.
  *
- * @see com.intellij.openapi.vcs.update.UpdateEnvironment#fillGroups
- * @see com.intellij.openapi.vcs.update.UpdateEnvironment#updateDirectories
+ * @see UpdateEnvironment#fillGroups
+ * @see UpdateEnvironment#updateDirectories
  */
 public class UpdatedFiles implements JDOMExternalizable {
   private final List<FileGroup> myGroups = new ArrayList<>();

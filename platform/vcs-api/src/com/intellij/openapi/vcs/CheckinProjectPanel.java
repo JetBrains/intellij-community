@@ -19,9 +19,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitContext;
-import com.intellij.vcs.commit.CommitWorkflowHandler;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.commit.CommitWorkflowHandler;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -61,7 +61,7 @@ public interface CheckinProjectPanel extends Refreshable, CommitMessageI {
   Collection<Change> getSelectedChanges();
 
   /**
-   * Returns the list of files selected for checkin, as {@link java.io.File} objects. The returned list
+   * Returns the list of files selected for checkin, as {@link File} objects. The returned list
    * includes files which will be deleted from the VCS during the check-in operation.
    *
    * @return the files selected for checkin.

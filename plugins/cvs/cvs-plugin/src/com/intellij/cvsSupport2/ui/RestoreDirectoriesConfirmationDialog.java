@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.ui;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.ui.OptionsDialog;
@@ -32,7 +33,7 @@ public class RestoreDirectoriesConfirmationDialog extends OptionsDialog{
 
   public RestoreDirectoriesConfirmationDialog() {
     super(null);
-    setTitle(com.intellij.CvsBundle.message("dialog.title.restore.directories.information"));
+    setTitle(CvsBundle.message("dialog.title.restore.directories.information"));
     init();
   }
 
@@ -57,7 +58,7 @@ public class RestoreDirectoriesConfirmationDialog extends OptionsDialog{
   @Override
   protected Action @NotNull [] createActions() {
     Action okAction = getOKAction();
-    UIUtil.setActionNameAndMnemonic(com.intellij.CvsBundle.message("button.text.close"), okAction);
+    UIUtil.setActionNameAndMnemonic(CvsBundle.message("button.text.close"), okAction);
     return new Action[]{okAction};
   }
 

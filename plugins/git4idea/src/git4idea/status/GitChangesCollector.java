@@ -30,7 +30,7 @@ import java.util.*;
 
 /**
  * <p>
- * Collects changes from the Git repository in the given {@link com.intellij.openapi.vcs.changes.VcsDirtyScope}
+ * Collects changes from the Git repository in the given {@link VcsDirtyScope}
  * by calling {@code 'git status --porcelain -z'} on it.
  * Works only on Git 1.7.0 and later.
  * </p>

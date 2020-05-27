@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.actions;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContextWrapper;
@@ -51,7 +52,7 @@ public class EditAction extends AbstractActionFromEditGroup {
 
   @Override
   protected String getTitle(VcsContext context) {
-    return com.intellij.CvsBundle.message("action.name.edit");
+    return CvsBundle.message("action.name.edit");
   }
 
   @Override

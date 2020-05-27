@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Reports exceptions thrown from frequently called methods (e.g. {@link java.awt.Component#paint(Graphics)}),
+ * Reports exceptions thrown from frequently called methods (e.g. {@link Component#paint(Graphics)}),
  * so that instead of polluting the log with hundreds of {@link Logger#error(Throwable) LOG.errors} it prints the error message
  * and the stacktrace once in a while.
  */

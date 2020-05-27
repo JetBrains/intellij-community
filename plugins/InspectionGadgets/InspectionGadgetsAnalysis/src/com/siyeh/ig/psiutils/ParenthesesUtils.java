@@ -93,7 +93,7 @@ public class ParenthesesUtils {
   }
 
   /**
-   * @deprecated use {@link PsiUtil#skipParenthesizedExprDown(com.intellij.psi.PsiExpression)} directly instead
+   * @deprecated use {@link PsiUtil#skipParenthesizedExprDown(PsiExpression)} directly instead
    */
   @Deprecated
   @Contract("null -> null")

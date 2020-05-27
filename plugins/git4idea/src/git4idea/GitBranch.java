@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>It contains information about the branch name and the hash it points to.
  *    Note that the object (including the hash) is immutable. That means that if branch reference move along, you have to get new instance
- *    of the GitBranch object, probably from {@link GitRepository#getBranches()} or {@link git4idea.repo.GitRepository#getCurrentBranch()}.
+ *    of the GitBranch object, probably from {@link GitRepository#getBranches()} or {@link GitRepository#getCurrentBranch()}.
  * </p>
  *
  * <p>GitBranches are equal, if their full names are equal. That means that if two GitBranch objects have different hashes, they

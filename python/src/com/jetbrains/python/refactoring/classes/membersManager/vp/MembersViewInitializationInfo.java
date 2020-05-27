@@ -25,7 +25,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Configuration for {@link com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedView}
+ * Configuration for {@link MembersBasedView}
  *
  * @author Ilya.Kazakevich
  */
@@ -38,7 +38,7 @@ public class MembersViewInitializationInfo {
 
   /**
    * @param memberInfoModel model to be used in members panel
-   * @param memberInfos     members to displau
+   * @param memberInfos     members to display
    */
   public MembersViewInitializationInfo(@NotNull final MemberInfoModel<PyElement, PyMemberInfo<PyElement>> memberInfoModel,
                                        @NotNull final Collection<PyMemberInfo<PyElement>> memberInfos) {

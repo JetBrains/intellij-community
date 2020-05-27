@@ -36,7 +36,7 @@ public abstract class PropertyEditor<V> {
   /**
    * @return edited value. Note that {@code null} is the legal.
    *
-   * @exception java.lang.Exception the method throws exception
+   * @exception Exception the method throws exception
    * if user enters wrong value and it cannot be applied. Note, that
    * exception's message will be shown to the user.
    */
@@ -67,7 +67,7 @@ public abstract class PropertyEditor<V> {
 
   /**
    * Property editor can return preferred focused component (if any) inside the component
-   * which is returned by the {@link #getComponent(com.intellij.uiDesigner.radComponents.RadComponent,V,InplaceContext) } method.
+   * which is returned by the {@link #getComponent(RadComponent,V,InplaceContext) } method.
    * This method is used as a hint to implement better focus handling.
    * {@code null} values means that editor relies on the UI editor in
    * determing preferred focused component.
@@ -81,7 +81,7 @@ public abstract class PropertyEditor<V> {
   /**
    * Editor should update UI of all its internal components to fit current
    * IDEA Look And Feel. We cannot directly update UI of the component
-   * that is returned by {@link #getComponent(com.intellij.uiDesigner.radComponents.RadComponent,V,InplaceContext) } method
+   * that is returned by {@link #getComponent(RadComponent,V,InplaceContext) } method
    * because hidden components that are not in the Swing tree can exist.
    */
   public abstract void updateUI();

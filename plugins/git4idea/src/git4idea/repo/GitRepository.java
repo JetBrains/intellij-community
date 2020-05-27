@@ -20,7 +20,7 @@ import java.util.Collection;
  *   All get-methods (like {@link #getCurrentRevision()}) are just getters of the correspondent fields and thus are very fast.
  * </p>
  * <p>
- *   The GitRepository is updated "externally" by the {@link git4idea.repo.GitRepositoryUpdater}, when correspondent {@code .git/} service files
+ *   The GitRepository is updated "externally" by the {@link GitRepositoryUpdater}, when correspondent {@code .git/} service files
  *   change.
  * </p>
  * <p>

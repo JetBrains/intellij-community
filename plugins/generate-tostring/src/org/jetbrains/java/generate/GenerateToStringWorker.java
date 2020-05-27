@@ -56,7 +56,7 @@ public class GenerateToStringWorker {
   /**
    * Creates the {@code toString} method.
    *
-   * @param selectedMembers the selected members as both {@link com.intellij.psi.PsiField} and {@link com.intellij.psi.PsiMethod}.
+   * @param selectedMembers the selected members as both {@link PsiField} and {@link PsiMethod}.
    * @param policy          conflict resolution policy
    * @param params          additional parameters stored with key/value in the map.
    * @param template        the template to use

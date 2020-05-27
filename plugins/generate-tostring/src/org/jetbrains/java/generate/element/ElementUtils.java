@@ -60,7 +60,7 @@ public class ElementUtils {
     /**
      * Gets the list of members to be put in the VelocityContext.
      *
-     * @param members a list of {@link com.intellij.psi.PsiMember} objects.
+     * @param members a list of {@link PsiMember} objects.
      * @return a filtered list of only the methods as a {@link MethodElement} objects.
      */
     public static List<MethodElement> getOnlyAsMethodElements(Collection<? extends PsiMember> members) {

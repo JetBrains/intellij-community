@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.actions;
 
+import com.intellij.CvsBundle;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import org.netbeans.lib.cvsclient.command.watch.WatchMode;
 
@@ -24,7 +25,7 @@ import org.netbeans.lib.cvsclient.command.watch.WatchMode;
 public class WatchOffAction extends AbstractWatchOnOffAction {
   @Override
   protected String getTitle(VcsContext context) {
-    return com.intellij.CvsBundle.message("operation.name.watching.off");
+    return CvsBundle.message("operation.name.watching.off");
   }
 
   @Override

@@ -535,7 +535,7 @@ public class GitChangeUtils {
 
     @NotNull
     public FilePath getFilePath() {
-      com.intellij.openapi.vcs.@Nullable FilePath t = afterPath != null ? afterPath : beforePath;
+      @Nullable FilePath t = afterPath != null ? afterPath : beforePath;
       return Objects.requireNonNull(t);
     }
 

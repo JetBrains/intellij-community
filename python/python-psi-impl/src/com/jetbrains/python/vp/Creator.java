@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Creates view and presenter allowing them to have links to each other.
- * Implement it and pass to {@link com.jetbrains.python.vp.ViewPresenterUtils#linkViewWithPresenterAndLaunch(Class, Class, Creator)}
+ * Implement it and pass to {@link ViewPresenterUtils#linkViewWithPresenterAndLaunch(Class, Class, Creator)}
  *
  * @author Ilya.Kazakevich
  * @param <V> view interface

@@ -18,9 +18,11 @@ package com.jetbrains.python.psi.types;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
- * A pack of constraints that limit behavior of {@link com.jetbrains.python.psi.types.TypeEvalContext}.
- * Any two  {@link com.jetbrains.python.psi.types.TypeEvalContext}s may share their cache if their constraints are equal and no PSI changes
+ * A pack of constraints that limit behavior of {@link TypeEvalContext}.
+ * Any two  {@link TypeEvalContext}s may share their cache if their constraints are equal and no PSI changes
  * happened between their creation.
  * <p/>
  * This class created to support hash/equals for context.
@@ -34,7 +36,7 @@ class TypeEvalConstraints {
   @Nullable final PsiFile myOrigin;
 
   /**
-   * @see com.jetbrains.python.psi.types.TypeEvalContext
+   * @see TypeEvalContext
    */
   TypeEvalConstraints(final boolean allowDataFlow, final boolean allowStubToAST, final boolean allowCallContext,
                       @Nullable final PsiFile origin) {
@@ -51,12 +53,10 @@ class TypeEvalConstraints {
 
     TypeEvalConstraints that = (TypeEvalConstraints)o;
 
-    if (myAllowDataFlow != that.myAllowDataFlow) return false;
-    if (myAllowStubToAST != that.myAllowStubToAST) return false;
-    if (myAllowCallContext != that.myAllowCallContext) return false;
-    if (myOrigin != null ? !myOrigin.equals(that.myOrigin) : that.myOrigin != null) return false;
-
-    return true;
+    return myAllowDataFlow == that.myAllowDataFlow && 
+           myAllowStubToAST == that.myAllowStubToAST &&
+           myAllowCallContext == that.myAllowCallContext &&
+           Objects.equals(myOrigin, that.myOrigin);
   }
 
   @Override

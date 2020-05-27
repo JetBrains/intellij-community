@@ -18,6 +18,7 @@ package org.intellij.plugins.xpathView.support.jaxen.extensions;
 import org.intellij.lang.xpath.context.functions.FunctionImpl;
 import org.intellij.lang.xpath.context.functions.Parameter;
 import org.intellij.lang.xpath.psi.XPathType;
+import org.jaxen.Function;
 
 public abstract class FunctionImplementation extends FunctionImpl {
 
@@ -25,5 +26,5 @@ public abstract class FunctionImplementation extends FunctionImpl {
         super(name, returnType, parameters);
     }
 
-    public abstract org.jaxen.Function getImplementation();
+    public abstract Function getImplementation();
 }

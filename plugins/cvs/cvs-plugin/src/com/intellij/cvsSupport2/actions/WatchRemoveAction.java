@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.actions;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.cvsoperations.cvsWatch.ui.WatcherDialog;
 import com.intellij.openapi.vcs.actions.VcsContext;
@@ -27,7 +28,7 @@ import org.netbeans.lib.cvsclient.command.watch.WatchMode;
 public class WatchRemoveAction extends AbstractWatchAction {
   @Override
   protected String getTitle(VcsContext context) {
-    return com.intellij.CvsBundle.message("operation.name.watching.remove");
+    return CvsBundle.message("operation.name.watching.remove");
   }
 
   @Override

@@ -30,7 +30,7 @@ class JBZipOutputStream {
 
   private final CRC32 crc = new CRC32();
 
-  private long writtenOnDisk = 0;
+  private long writtenOnDisk;
 
   /**
    * The encoding to use for filenames and the file comment.
@@ -46,7 +46,7 @@ class JBZipOutputStream {
    * <p/>
    * <p>This attribute is only protected to provide a level of API
    * backwards compatibility.  This class used to extend {@link
-   * java.util.zip.DeflaterOutputStream DeflaterOutputStream} up to
+   * DeflaterOutputStream DeflaterOutputStream} up to
    * Revision 1.13.</p>
    */
   private final Deflater def = new Deflater(level, true);
@@ -63,9 +63,8 @@ class JBZipOutputStream {
    *
    * @param file the file to zip to
    * @param currentCDOffset
-   * @throws IOException on error
    */
-  JBZipOutputStream(JBZipFile file, long currentCDOffset) throws IOException {
+  JBZipOutputStream(JBZipFile file, long currentCDOffset) {
     myFile = file;
     raf = myFile.archive;
     writtenOnDisk = currentCDOffset;
@@ -94,7 +93,7 @@ class JBZipOutputStream {
   }
 
   /**
-   * Finishs writing the contents and closes this as well as the
+   * Finishes writing the contents and closes this as well as the
    * underlying stream.
    *
    * @throws IOException on error
@@ -102,8 +101,8 @@ class JBZipOutputStream {
   public void finish() throws IOException {
     long cdOffset = getWritten();
     final List<JBZipEntry> entries = myFile.getEntries();
-    for (int i = 0, entriesSize = entries.size(); i < entriesSize; i++) {
-      writeCentralFileHeader(entries.get(i));
+    for (JBZipEntry entry : entries) {
+      writeCentralFileHeader(entry);
     }
     long cdLength = getWritten() - cdOffset;
     writeCentralDirectoryEnd(cdLength, cdOffset);
@@ -327,6 +326,8 @@ class JBZipOutputStream {
     writeOut(data, 0, data.length);
   }
 
+  private final BufferExposingByteArrayOutputStream myBuffer = new BufferExposingByteArrayOutputStream();
+
   /**
    * Write bytes to output or random access file.
    *
@@ -335,8 +336,6 @@ class JBZipOutputStream {
    * @param length the number of bytes to write
    * @throws IOException on error
    */
-  private final BufferExposingByteArrayOutputStream myBuffer = new BufferExposingByteArrayOutputStream();
-
   private void writeOut(byte[] data, int offset, int length) throws IOException {
     myBuffer.write(data, offset, length);
     if (myBuffer.size() > 8192) {

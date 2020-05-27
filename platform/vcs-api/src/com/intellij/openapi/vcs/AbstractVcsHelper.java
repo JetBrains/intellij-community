@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.ide.errorTreeView.HotfixData;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
@@ -17,7 +18,6 @@ import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,7 +88,7 @@ public abstract class AbstractVcsHelper {
   public abstract @NotNull List<VirtualFile> showMergeDialog(List<? extends VirtualFile> files, MergeProvider provider, @NotNull MergeDialogCustomizer mergeDialogCustomizer);
 
   /**
-   * {@link #showMergeDialog(java.util.List, com.intellij.openapi.vcs.merge.MergeProvider)} without description.
+   * {@link #showMergeDialog(List, MergeProvider, MergeDialogCustomizer)} without description.
    */
   @NotNull
   public final List<VirtualFile> showMergeDialog(List<? extends VirtualFile> files, MergeProvider provider) {
@@ -96,7 +96,7 @@ public abstract class AbstractVcsHelper {
   }
 
   /**
-   * {@link #showMergeDialog(java.util.List, com.intellij.openapi.vcs.merge.MergeProvider)} without description and with default merge provider
+   * {@link #showMergeDialog(java.util.List, MergeProvider)} without description and with default merge provider
    * for the current VCS.
    */
   @NotNull

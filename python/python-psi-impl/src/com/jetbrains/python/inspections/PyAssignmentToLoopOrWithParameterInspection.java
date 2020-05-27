@@ -54,7 +54,7 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
     }
 
     /**
-     * Finds first parent of specific type (See {@link #isRequiredStatement(com.intellij.psi.PsiElement)})
+     * Finds first parent of specific type (See {@link #isRequiredStatement(PsiElement)})
      * that declares one of names, declared in this statement
      */
     private void checkNotReDeclaringUpperLoopOrStatement(@NotNull final PsiElement statement) {
@@ -78,7 +78,7 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
    *
    * @param elementToCheck element to check
    * @param forStatement   statement to obtain "else" part from
-   * @return true if declated in "Else" block
+   * @return true if declared in "Else" block
    */
   private static boolean isDeclaredInElse(@NotNull final PsiElement elementToCheck, @NotNull final PyForStatement forStatement) {
     final PyElsePart elsePart = forStatement.getElsePart();
@@ -92,7 +92,7 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
 
   /**
    * Filters list of parents trying to find parent that declares var that refers to {@link #myNode}
-   * Returns {@link com.jetbrains.python.codeInsight.controlflow.ScopeOwner} if nothing found.
+   * Returns {@link ScopeOwner} if nothing found.
    * Returns parent otherwise.
    */
   private static class Filter implements Condition<PsiElement> {

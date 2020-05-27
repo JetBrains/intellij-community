@@ -23,7 +23,7 @@ public class ChangesViewContentEP implements PluginAware {
   public static final ProjectExtensionPointName<ChangesViewContentEP> EP_NAME = new ProjectExtensionPointName<>("com.intellij.changesViewContent");
 
   /**
-   * Used to determine specific tab content in {@link com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager#selectContent}
+   * Used to determine specific tab content in {@link ChangesViewContentManager#selectContent}
    * <p>
    * To provide localized tab name use {@link #displayNameSupplierClassName}
    */

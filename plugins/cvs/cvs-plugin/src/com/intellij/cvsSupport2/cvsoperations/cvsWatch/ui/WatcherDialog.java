@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.cvsWatch.ui;
 
+import com.intellij.CvsBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.netbeans.lib.cvsclient.command.Watch;
 
@@ -25,7 +26,7 @@ import javax.swing.*;
  */
 public class WatcherDialog extends DialogWrapper{
   private JPanel myPanel;
-  private JComboBox myWatchingActions;
+  private JComboBox<Watch> myWatchingActions;
   public WatcherDialog(Watch defaultWatch, String title) {
     super(true);
 
@@ -36,7 +37,7 @@ public class WatcherDialog extends DialogWrapper{
 
     myWatchingActions.setSelectedItem(defaultWatch);
 
-    setTitle(com.intellij.CvsBundle.message("dialog.title.watchers.or.editors.settings", title));
+    setTitle(CvsBundle.message("dialog.title.watchers.or.editors.settings", title));
 
     init();
   }

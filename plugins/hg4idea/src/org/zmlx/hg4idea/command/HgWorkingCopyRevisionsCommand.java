@@ -49,7 +49,7 @@ public class HgWorkingCopyRevisionsCommand {
    * Current repository revision(s).
    * @param repo repository to work on.
    * @return List of parent's revision numbers.
-   * @see #parents(com.intellij.openapi.vfs.VirtualFile, com.intellij.openapi.vfs.VirtualFile, org.zmlx.hg4idea.HgRevisionNumber)
+   * @see #parents(VirtualFile, VirtualFile, HgRevisionNumber)
    * TODO: return Pair
    */
   @NotNull
@@ -58,7 +58,7 @@ public class HgWorkingCopyRevisionsCommand {
   }
 
   /**
-   * @see #parents(com.intellij.openapi.vfs.VirtualFile, com.intellij.openapi.vfs.VirtualFile, org.zmlx.hg4idea.HgRevisionNumber)
+   * @see #parents(VirtualFile, VirtualFile, HgRevisionNumber)
    */
   @NotNull
   public Couple<HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable VirtualFile file) {

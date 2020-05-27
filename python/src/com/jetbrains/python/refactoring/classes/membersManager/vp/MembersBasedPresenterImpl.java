@@ -30,8 +30,8 @@ import java.util.Collection;
 /**
  * All presenters that use members inherits this class.
  * <strong>Warning</strong>: Do not inherit it directly.
- * Check {@link com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedPresenterNoPreviewImpl}
- * or {@link com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedPresenterWithPreviewImpl} instead
+ * Check {@link MembersBasedPresenterNoPreviewImpl}
+ * or {@link MembersBasedPresenterWithPreviewImpl} instead
  *
  * @param <T> view for that presenter
  * @param <M> Type of model {@link #myModel}
@@ -92,7 +92,7 @@ abstract class MembersBasedPresenterImpl<T extends MembersBasedView<?>,
   /**
    * Validates view (used by presenter to check if view is valid).
    * When overwrite, <strong>always</strong> call "super" <strong>first</strong>!
-   * Throw {@link com.jetbrains.python.refactoring.classes.membersManager.vp.BadDataException} in case of error.
+   * Throw {@link BadDataException} in case of error.
    * Do nothing, otherwise.
    * Method is designed to be overwritten and exception is used to simplify this process: children do not need parent's result.
    * They just call super.

@@ -29,7 +29,7 @@ import java.util.Collection;
  * First, configure it with {@link #configure(MembersViewInitializationInfo)}.
  * Then, display with {@link #initAndShow()}
  *
- * @param <C> initialization info for this view. See {@link com.jetbrains.python.refactoring.classes.membersManager.vp.MembersViewInitializationInfo}
+ * @param <C> initialization info for this view. See {@link MembersViewInitializationInfo}
  *            for more info
  * @author Ilya.Kazakevich
  */
@@ -71,7 +71,7 @@ public interface MembersBasedView<C extends MembersViewInitializationInfo> {
   Collection<PyMemberInfo<PyElement>> getSelectedMemberInfos();
 
   /**
-   * Runs refactoring based on {@link com.intellij.refactoring.BaseRefactoringProcessor}.
+   * Runs refactoring based on {@link BaseRefactoringProcessor}.
    * It may display "preview" first.
    *
    * @param processor refactoring processor

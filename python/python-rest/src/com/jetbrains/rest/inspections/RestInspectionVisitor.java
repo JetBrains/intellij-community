@@ -65,7 +65,7 @@ public abstract class RestInspectionVisitor extends RestElementVisitor {
 
   /**
    * The most full-blown version.
-   * @see com.intellij.codeInspection.ProblemDescriptor
+   * @see ProblemDescriptor
    */
   protected final void registerProblem(
     @NotNull final PsiElement psiElement,
@@ -78,7 +78,7 @@ public abstract class RestInspectionVisitor extends RestElementVisitor {
 
   /**
    * The most full-blown version.
-   * @see com.intellij.codeInspection.ProblemDescriptor
+   * @see ProblemDescriptor
    */
   protected final void registerProblem(
     @NotNull final PsiElement psiElement,

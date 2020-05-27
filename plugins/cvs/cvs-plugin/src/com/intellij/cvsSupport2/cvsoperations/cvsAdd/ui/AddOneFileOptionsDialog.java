@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.cvsAdd.ui;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddedFileInfo;
 import com.intellij.cvsSupport2.ui.Options;
 import com.intellij.openapi.project.Project;
@@ -35,7 +36,7 @@ public class AddOneFileOptionsDialog extends AbstractAddOptionsDialog{
     super(project, options);
     myAddedFileInfo = file;
     myAddedFileInfo.setIncluded(true);
-    setTitle(com.intellij.CvsBundle.message("dialog.title.add.file.to.cvs", file.getFile().getName()));
+    setTitle(CvsBundle.message("dialog.title.add.file.to.cvs", file.getFile().getName()));
     init();
   }
 
