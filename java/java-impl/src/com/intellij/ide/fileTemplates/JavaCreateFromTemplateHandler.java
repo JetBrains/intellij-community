@@ -24,6 +24,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -74,7 +75,7 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
     if (addedElement instanceof PsiJavaFile) {
       psiJavaFile = (PsiJavaFile)addedElement;
       if(reformat){
-        CodeStyle.scheduleReformatWhenSettingsComputed(psiJavaFile);
+        CodeStyleManager.getInstance(project).scheduleReformatWhenSettingsComputed(psiJavaFile);
       }
 
       return psiJavaFile.getClasses()[0];

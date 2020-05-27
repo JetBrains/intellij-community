@@ -346,4 +346,8 @@ public abstract class CodeStyleManager  {
   public DocCommentSettings getDocCommentSettings(@NotNull PsiFile file) {
     return DocCommentSettings.DEFAULTS;
   }
+
+  public void scheduleReformatWhenSettingsComputed(final @NotNull PsiFile file) {
+    throw new UnsupportedOperationException();
+  }
 }
