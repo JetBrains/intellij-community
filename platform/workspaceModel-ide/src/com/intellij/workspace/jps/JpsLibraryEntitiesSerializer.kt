@@ -37,6 +37,8 @@ private const val LIBRARY_TABLE_COMPONENT_NAME = "libraryTable"
 
 internal class JpsLibrariesFileSerializer(entitySource: JpsFileEntitySource.ExactFile, libraryTableId: LibraryTableId)
   : JpsLibraryEntitiesSerializer(entitySource.file, entitySource, libraryTableId), JpsFileEntityTypeSerializer<LibraryEntity> {
+  override val isExternalStorage: Boolean
+    get() = false
   override val entityFilter: (LibraryEntity) -> Boolean
     get() = { it.tableId == libraryTableId && (it.entitySource as? JpsImportedEntitySource)?.storedExternally != true }
 }
@@ -44,6 +46,8 @@ internal class JpsLibrariesFileSerializer(entitySource: JpsFileEntitySource.Exac
 internal class JpsLibrariesExternalFileSerializer(private val externalFile: JpsFileEntitySource.ExactFile,
                                                   private val internalLibrariesDirUrl: VirtualFileUrl)
   : JpsLibraryEntitiesSerializer(externalFile.file, externalFile, LibraryTableId.ProjectLibraryTableId), JpsFileEntityTypeSerializer<LibraryEntity> {
+  override val isExternalStorage: Boolean
+    get() = true
   override val entityFilter: (LibraryEntity) -> Boolean
     get() = { it.tableId == LibraryTableId.ProjectLibraryTableId && (it.entitySource as? JpsImportedEntitySource)?.storedExternally == true }
 

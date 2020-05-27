@@ -531,6 +531,9 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String) : Jps
       ModuleImlFileEntitiesSerializer(ModulePath(JpsPathUtil.urlToPath(fileUrl.filePath), null), fileUrl, source)
   }
 
+  override val isExternalStorage: Boolean
+    get() = false
+
   open val componentName: String
     get() = "ProjectModuleManager"
 

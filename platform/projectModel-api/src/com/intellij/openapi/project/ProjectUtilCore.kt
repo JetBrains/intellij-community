@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.LocalFileProvider
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import com.intellij.util.PlatformUtils
+import org.jetbrains.annotations.TestOnly
 
 fun displayUrlRelativeToProject(file: VirtualFile, url: String, project: Project, isIncludeFilePath: Boolean, moduleOnTheLeft: Boolean): String {
   var result = url
@@ -67,6 +68,8 @@ fun appendModuleName(file: VirtualFile,
   }
 }
 
+private var enableExternalStorageByDefaultInTests = true
+
 val Project.isExternalStorageEnabled: Boolean
   get() {
     if (projectFilePath?.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) == true) {
@@ -74,5 +77,21 @@ val Project.isExternalStorageEnabled: Boolean
     }
 
     val manager = ServiceManager.getService(this, ExternalStorageConfigurationManager::class.java) ?: return false
-    return manager.isEnabled || (ApplicationManager.getApplication()?.isUnitTestMode ?: false)
+    if (manager.isEnabled) return true
+    val testMode = ApplicationManager.getApplication()?.isUnitTestMode ?: false
+    return testMode && enableExternalStorageByDefaultInTests
   }
+
+/**
+ * By default external storage is enabled in tests. Wrap code which loads the project into this call to always use explicit option value.
+ */
+@TestOnly
+fun doNotEnableExternalStorageByDefaultInTests(action: () -> Unit) {
+  enableExternalStorageByDefaultInTests = false
+  try {
+    action()
+  }
+  finally {
+    enableExternalStorageByDefaultInTests = true
+  }
+}

@@ -34,6 +34,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                                 private val entityTypeSerializers: List<JpsFileEntityTypeSerializer<*>>,
                                 private val configLocation: JpsProjectConfigLocation,
                                 private val externalStorageMapping: JpsExternalStorageMapping,
+                                enableExternalStorage: Boolean,
                                 private val virtualFileManager: VirtualFileUrlManager) : JpsProjectSerializers {
   internal val moduleSerializers = BidirectionalMap<JpsFileEntitiesSerializer<*>, JpsModuleListSerializer>()
   internal val serializerToDirectoryFactory = BidirectionalMap<JpsFileEntitiesSerializer<*>, JpsDirectoryEntitiesSerializerFactory<*>>()
@@ -46,13 +47,16 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       createDirectorySerializers(factory).associateWithTo(serializerToDirectoryFactory) { factory }
     }
     for (factory in moduleListSerializers) {
-      val fileList = factory.loadFileList(reader, virtualFileManager)
-      fileList
-        .map { factory.createSerializer(createFileInDirectorySource(it.parent!!, it.file!!.name), it) }
-        .associateWithTo(moduleSerializers) { factory }
+      if (enableExternalStorage || !factory.isExternalStorage) {
+        val fileList = factory.loadFileList(reader, virtualFileManager)
+        fileList
+          .map { factory.createSerializer(createFileInDirectorySource(it.parent!!, it.file!!.name), it) }
+          .associateWithTo(moduleSerializers) { factory }
+      }
     }
 
-    val allFileSerializers = entityTypeSerializers + serializerToDirectoryFactory.keys + moduleSerializers.keys
+    val allFileSerializers = entityTypeSerializers.filter { enableExternalStorage || !it.isExternalStorage } +
+                             serializerToDirectoryFactory.keys + moduleSerializers.keys
     allFileSerializers.forEach {
       fileSerializersByUrl.putValue(it.fileUrl.url, it)
     }

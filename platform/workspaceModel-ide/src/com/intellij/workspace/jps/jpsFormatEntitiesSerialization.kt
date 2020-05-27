@@ -37,6 +37,7 @@ interface JpsFileEntitiesSerializer<E : TypedEntity> {
  * Represents a serializer which is responsible for serializing all entities of the given type (e.g. libraries in *.ipr file).
  */
 interface JpsFileEntityTypeSerializer<E : TypedEntity> : JpsFileEntitiesSerializer<E> {
+  val isExternalStorage: Boolean
   val entityFilter: (E) -> Boolean
     get() = { true }
 }
@@ -63,6 +64,7 @@ interface JpsDirectoryEntitiesSerializerFactory<E : TypedEntity> {
  */
 interface JpsModuleListSerializer {
   val fileUrl: String
+  val isExternalStorage: Boolean
   val entitySourceFilter: (EntitySource) -> Boolean
     get() = { true }
 
@@ -85,9 +87,10 @@ interface JpsProjectSerializers {
                           configLocation: JpsProjectConfigLocation,
                           reader: JpsFileContentReader,
                           externalStorageMapping: JpsExternalStorageMapping,
+                          enableExternalStorage: Boolean,
                           virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
       return JpsProjectSerializersImpl(directorySerializersFactories, moduleListSerializers, reader, entityTypeSerializers, configLocation,
-                                       externalStorageMapping, virtualFileManager)
+                                       externalStorageMapping, enableExternalStorage, virtualFileManager)
     }
   }
 
