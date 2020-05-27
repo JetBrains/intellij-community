@@ -259,6 +259,7 @@ public final class DefUseUtil {
   public static PsiElement @NotNull [] getDefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref, boolean rethrow) {
     try {
       RefsDefs refsDefs = new RefsDefs(body) {
+        final PsiManager psiManager = def.getManager();
         private final IntArrayList[] myBackwardTraces = getBackwardTraces(instructions);
 
         @Override
@@ -280,8 +281,7 @@ public final class DefUseUtil {
         protected void processInstruction(@NotNull final Set<? super PsiElement> res, @NotNull final Instruction instruction, int index) {
           if (instruction instanceof WriteVariableInstruction) {
             WriteVariableInstruction instructionW = (WriteVariableInstruction)instruction;
-            if (instructionW.variable == def) {
-
+            if (psiManager.areElementsEquivalent(instructionW.variable, def)) {
               final PsiElement element = flow.getElement(index);
               element.accept(new JavaRecursiveElementWalkingVisitor() {
                 @Override
@@ -295,7 +295,7 @@ public final class DefUseUtil {
 
                 @Override
                 public void visitVariable(PsiVariable var) {
-                  if (var == def && (var instanceof PsiParameter || var.hasInitializer())) {
+                  if (psiManager.areElementsEquivalent(var, def) && (var instanceof PsiParameter || var.hasInitializer())) {
                     res.add(var);
                   }
                 }
@@ -321,6 +321,7 @@ public final class DefUseUtil {
   public static PsiElement[] getRefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref, boolean rethrow) {
     try {
       RefsDefs refsDefs = new RefsDefs(body) {
+        final PsiManager psiManager = def.getManager();
         @Override
         protected int nNext(int index) {
           return instructions.get(index).nNext();
@@ -340,13 +341,13 @@ public final class DefUseUtil {
         protected void processInstruction(@NotNull final Set<? super PsiElement> res, @NotNull final Instruction instruction, int index) {
           if (instruction instanceof ReadVariableInstruction) {
             ReadVariableInstruction instructionR = (ReadVariableInstruction)instruction;
-            if (instructionR.variable == def) {
+            if (psiManager.areElementsEquivalent(instructionR.variable, def)) {
 
               final PsiElement element = flow.getElement(index);
               element.accept(new JavaRecursiveElementWalkingVisitor() {
                 @Override
                 public void visitReferenceExpression(PsiReferenceExpression ref) {
-                  if (ref.resolve() == def) {
+                  if (ref.isReferenceTo(def)) {
                     res.add(ref);
                   }
                 }
@@ -412,6 +413,7 @@ public final class DefUseUtil {
 
         IntArrayList workQueue = new IntArrayList();
         workQueue.add(startIndex);
+        PsiManager psiManager = body.getManager();
 
         while (!workQueue.isEmpty()) {
           int index = workQueue.removeInt(workQueue.size() - 1);
@@ -425,7 +427,7 @@ public final class DefUseUtil {
             processInstruction(res, instruction, index);
             if (instruction instanceof WriteVariableInstruction) {
               WriteVariableInstruction instructionW = (WriteVariableInstruction)instruction;
-              if (instructionW.variable == def) {
+              if (psiManager.areElementsEquivalent(instructionW.variable, def)) {
                 continue;
               }
             }
@@ -447,7 +449,7 @@ public final class DefUseUtil {
                 final Instruction instruction = instructions.get(prev);
                 if (instruction instanceof WriteVariableInstruction) {
                   WriteVariableInstruction instructionW = (WriteVariableInstruction)instruction;
-                  if (instructionW.variable == def) {
+                  if (psiManager.areElementsEquivalent(instructionW.variable, def)) {
                     continue;
                   }
                 }

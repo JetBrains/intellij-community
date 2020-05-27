@@ -1351,13 +1351,14 @@ public final class ControlFlowUtil {
 
   public static boolean isVariableDefinitelyNotAssigned(@NotNull PsiVariable variable, @NotNull ControlFlow flow) {
     class MyVisitor extends InstructionClientVisitor<Boolean> {
+      final PsiManager psiManager = variable.getManager();
       // true if from this point below there may be branch with variable assignment
       private final boolean[] maybeAssigned = new boolean[flow.getSize() + 1];
 
       @Override
       public void visitWriteVariableInstruction(WriteVariableInstruction instruction, int offset, int nextOffset) {
         if (nextOffset > flow.getSize()) nextOffset = flow.getSize();
-        boolean assigned = instruction.variable == variable || maybeAssigned[nextOffset];
+        boolean assigned = psiManager.areElementsEquivalent(instruction.variable, variable) || maybeAssigned[nextOffset];
         maybeAssigned[offset] |= assigned;
       }
 

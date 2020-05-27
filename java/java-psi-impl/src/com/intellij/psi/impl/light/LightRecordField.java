@@ -114,4 +114,17 @@ public class LightRecordField extends LightField implements LightRecordMember {
   private static boolean hasApplicableAnnotationTarget(PsiAnnotation annotation) {
     return AnnotationTargetUtil.findAnnotationTarget(annotation, PsiAnnotation.TargetType.TYPE_USE, PsiAnnotation.TargetType.FIELD) != null;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    return o instanceof LightRecordField &&
+           myRecordComponent.equals(((LightRecordField)o).myRecordComponent);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myRecordComponent);
+  }
+
 }
