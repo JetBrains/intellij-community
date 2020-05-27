@@ -117,7 +117,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final List<NodeRenderer> myRenderers = new ArrayList<>();
 
   // we use null key here
-  private final Map<Type, NodeRenderer> myNodeRenderersMap = new HashMap<>();
+  private final Map<Type, Object> myNodeRenderersMap = new HashMap<>();
 
   private final SuspendManagerImpl mySuspendManager = new SuspendManagerImpl(this);
   protected CompoundPositionManager myPositionManager = CompoundPositionManager.EMPTY;
@@ -209,10 +209,15 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
 
     try {
-      return myNodeRenderersMap.computeIfAbsent(type, t ->
-        myRenderers.stream().
-          filter(r -> DebuggerUtilsImpl.suppressExceptions(() -> r.isApplicable(type), false, true, ClassNotPreparedException.class)).
-          findFirst().orElseGet(() -> getDefaultRenderer(type)));
+      Object res = myNodeRenderersMap.get(type);
+      if (res instanceof NodeRenderer) {
+        return (NodeRenderer)res;
+      }
+      NodeRenderer renderer = myRenderers.stream().
+        filter(r -> DebuggerUtilsImpl.suppressExceptions(() -> r.isApplicable(type), false, true, ClassNotPreparedException.class)).
+        findFirst().orElseGet(() -> getDefaultRenderer(type));
+      myNodeRenderersMap.put(type, renderer);
+      return renderer;
     }
     catch (ClassNotPreparedException e) {
       LOG.info(e);
@@ -249,20 +254,30 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
 
     try {
-      NodeRenderer renderer = myNodeRenderersMap.get(type);
-      if (renderer != null) {
-        return CompletableFuture.completedFuture(renderer);
+      Object renderer = myNodeRenderersMap.get(type);
+      if (renderer instanceof NodeRenderer) {
+        return CompletableFuture.completedFuture((NodeRenderer)renderer);
       }
-      return getApplicableRenderers(type).thenApply(renderers -> {
+      else if (renderer instanceof CompletableFuture) {
+        //noinspection unchecked
+        return (CompletableFuture<NodeRenderer>)renderer;
+      }
+      CompletableFuture<NodeRenderer> res = getApplicableRenderers(type).handle((renderers, throwable) -> {
+        DebuggerManagerThreadImpl.assertIsManagerThread();
         NodeRenderer r = ContainerUtil.getFirstItem(renderers);
-        if (r == null) {
+        if (r == null || throwable != null) {
           r = getDefaultRenderer(type); // do not cache the fallback renderer
+          myNodeRenderersMap.remove(type);
         }
         else {
+          // TODO: may add a new (possibly incorrect) value after the cleanup in reloadRenderers
           myNodeRenderersMap.put(type, r);
         }
         return r;
       });
+      // check if future is already done
+      myNodeRenderersMap.putIfAbsent(type, res);
+      return res;
     }
     catch (ClassNotPreparedException e) {
       LOG.info(e);
