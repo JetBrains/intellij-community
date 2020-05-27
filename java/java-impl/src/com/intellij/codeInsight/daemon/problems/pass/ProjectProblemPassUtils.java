@@ -57,8 +57,8 @@ public class ProjectProblemPassUtils {
     int columnWidth = EditorUtil.getPlainSpaceWidth(editor);
     SpacePresentation usagesOffset = new SpacePresentation(column * columnWidth, 0);
     InlayPresentation textPresentation = factory.smallText(JavaBundle.message("project.problems.broken.usages", brokenUsages.size()));
-    TextAttributes errorAttrs = editor.getColorsScheme().getAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
-    InlayPresentation errorTextPresentation = new AttributesTransformerPresentation(textPresentation, __ -> errorAttrs);
+    InlayPresentation errorTextPresentation = new AttributesTransformerPresentation(textPresentation, __ ->
+      editor.getColorsScheme().getAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES));
     InlayPresentation usagesPresentation = factory.referenceOnHover(errorTextPresentation, (e, p) -> showUsages(member, brokenUsages));
 
     JPopupMenu popupMenu = new JPopupMenu();
