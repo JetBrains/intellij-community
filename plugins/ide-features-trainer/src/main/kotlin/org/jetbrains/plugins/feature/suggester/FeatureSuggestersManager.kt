@@ -1,5 +1,11 @@
 package org.jetbrains.plugins.feature.suggester
 
+import com.intellij.codeInsight.hint.HintManager
+import com.intellij.codeInsight.hint.HintManagerImpl
+import com.intellij.codeInsight.hint.HintUtil
+import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
+import com.intellij.ide.IdeTooltipManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -10,10 +16,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
+import com.intellij.ui.LightweightHint
 import org.jetbrains.plugins.feature.suggester.cache.UserActionsCache
 import org.jetbrains.plugins.feature.suggester.cache.UserAnActionsCache
 import org.jetbrains.plugins.feature.suggester.changes.*
 import org.jetbrains.plugins.feature.suggester.settings.FeatureSuggesterSettings
+import java.awt.Point
 
 class FeatureSuggestersManager(val project: Project) : FileEditorManagerListener {
     private val MAX_ACTIONS_NUMBER: Int = 100
@@ -28,7 +36,28 @@ class FeatureSuggestersManager(val project: Project) : FileEditorManagerListener
             if (!isEnabled(suggester)) continue
             val suggestion = suggester.getSuggestion(actionsCache, anActionsCache)
             if (suggestion is PopupSuggestion) {
-                println("Action performed: ${suggestion.message}")
+                println("Action performed (before): ${suggestion.message}")
+
+                val virtualFile = action.parent?.containingFile?.virtualFile ?: return
+                val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return
+                if (suggester.needToClearLookup) {
+                    //todo: this is hack to avoid exception in spection completion case
+                    val lookupManager = LookupManager.getInstance(project)
+                    lookupManager as LookupManagerImpl
+                    lookupManager.clearLookup()
+                }
+                val label = HintUtil.createQuestionLabel(suggestion.message)
+                //val hint: LightweightHint = PatchedLightweightHint(label)     can't create java.lang.NoClassDefFoundError PatchedLightweightHint
+                //todo: this is hack to avoid hiding on parameter info popup
+                val hint = LightweightHint(label)
+                val hintManager = HintManager.getInstance()
+                hintManager as HintManagerImpl
+                val point: Point = hintManager.getHintPosition(hint, editor, HintManager.ABOVE)
+                IdeTooltipManager.getInstance().hideCurrentNow(false)
+                hintManager.showEditorHint(hint, editor, point, HintManager.HIDE_BY_ESCAPE, 0, false)
+
+                println("Action performed (after): ${suggestion.message}")
+                return
             }
         }
     }
