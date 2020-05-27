@@ -2,10 +2,10 @@
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,17 +23,17 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.util.FieldConflictsResolver;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.ThreeState;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * Performs actual write action (see {@link #extractVariable()}) which introduces new variable and replaces all occurrences.
@@ -252,37 +252,12 @@ class VariableExtractor {
     Project project = expression.getProject();
     NullabilityAnnotationInfo nullabilityAnnotationInfo = 
       NullableNotNullManager.getInstance(project).findExplicitNullability((PsiLocalVariable)probe.getDeclaredElements()[0]);
-
-    final PsiAnnotation[] annotations = type.getAnnotations();
-    return type.annotate(new TypeAnnotationProvider() {
-      @Override
-      public PsiAnnotation @NotNull [] getAnnotations() {
-        final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
-        final Set<String> nullables = new HashSet<>();
-        Nullability nullability = nullabilityAnnotationInfo != null ? nullabilityAnnotationInfo.getNullability() : Nullability.UNKNOWN;
-        if (nullability == Nullability.UNKNOWN) {
-          nullables.addAll(manager.getNotNulls());
-          nullables.addAll(manager.getNullables());
-        }
-        else if (nullability == Nullability.NOT_NULL) {
-          nullables.addAll(manager.getNotNulls());
-        }
-        else if (nullability == Nullability.NULLABLE){
-          nullables.addAll(manager.getNullables());
-        }
-        return Arrays.stream(annotations)
-          .filter(annotation -> {
-            String qualifiedName = annotation.getQualifiedName();
-            if (!manager.getNotNulls().contains(qualifiedName) &&
-                !manager.getNullables().contains(qualifiedName)) {
-              return false;
-            }
-
-            return !nullables.contains(qualifiedName);
-          })
-          .toArray(PsiAnnotation[]::new);
-      }
-    });
+    NullabilityAnnotationInfo info = DfaPsiUtil.getTypeNullabilityInfo(type);
+    if (info != null && nullabilityAnnotationInfo != null && info.getNullability() != nullabilityAnnotationInfo.getNullability() &&
+        ArrayUtil.contains(info.getAnnotation(), type.getAnnotations())) {
+      return type.annotate(TypeAnnotationProvider.Static.create(new PsiAnnotation[]{info.getAnnotation()}));
+    }
+    return type.annotate(TypeAnnotationProvider.EMPTY);
   }
 
   @NotNull

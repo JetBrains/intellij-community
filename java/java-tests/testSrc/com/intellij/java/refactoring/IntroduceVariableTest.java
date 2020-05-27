@@ -397,6 +397,14 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testChooseTypeExpressionWhenNotDenotable() { doTest("m", false, false, false, "Foo"); }
   public void testChooseTypeExpressionWhenNotDenotable1() { doTest("m", false, false, false, "Foo<?>"); }
 
+  public void testNullabilityAnnotationConflict() {
+    doTest("x", true, false, false, "java.lang.@org.eclipse.jdt.annotation.Nullable String"); 
+  }
+
+  public void testNullabilityAnnotationNoConflict() {
+    doTest("x", true, false, false, "java.lang.@org.eclipse.jdt.annotation.NonNull String"); 
+  }
+
   private void doTestWithVarType(IntroduceVariableBase testMe) {
     Boolean asVarType = JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE;
     try {
