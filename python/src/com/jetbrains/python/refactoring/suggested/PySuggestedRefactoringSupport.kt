@@ -7,6 +7,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.util.hasErrorElementInRange
 import com.intellij.refactoring.suggested.*
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyParameter
@@ -19,6 +20,7 @@ class PySuggestedRefactoringSupport : SuggestedRefactoringSupport {
   companion object {
     internal fun isAvailableForChangeSignature(element: PsiElement): Boolean {
       return element is PyFunction &&
+             element.name.let { it != null && PyNames.isIdentifier(it) } &&
              element.property == null &&
              element.annotation == null &&
              element.parameterList.parameters.none { it.asNamed?.annotation != null } &&
@@ -31,6 +33,7 @@ class PySuggestedRefactoringSupport : SuggestedRefactoringSupport {
 
     internal fun isAvailableForRename(element: PsiElement): Boolean {
       return element is PsiNameIdentifierOwner &&
+             element.name.let { it != null && PyNames.isIdentifier(it) } &&
              (element !is PyParameter || containingFunction(element).let { it != null && !isAvailableForChangeSignature(it) }) &&
              !PyiUtil.isOverload(element, TypeEvalContext.codeAnalysis(element.project, element.containingFile))
     }

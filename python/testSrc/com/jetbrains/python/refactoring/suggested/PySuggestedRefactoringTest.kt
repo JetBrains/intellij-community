@@ -699,6 +699,20 @@ class PySuggestedRefactoringTest : PyTestCase() {
     )
   }
 
+  // PY-42285
+  fun testRenameToUnsupportedIdentifier() {
+    doNoIntentionTest(
+      """
+        class A:
+          def print_r<caret>(self): pass
+          
+          
+        A().print_r()
+      """.trimIndent(),
+      { repeat("_r".length, this::performBackspace) }
+    )
+  }
+
   private fun doRenameTest(before: String, after: String, oldName: String, newName: String, type: String, intention: String? = null) {
     myFixture.configureByText(PythonFileType.INSTANCE, before)
     myFixture.checkHighlighting()
