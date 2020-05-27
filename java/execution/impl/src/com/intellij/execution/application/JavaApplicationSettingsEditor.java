@@ -86,7 +86,7 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
                                                    configuration -> configuration.isSwingInspectorEnabled(),
                                                    (configuration, enabled) -> configuration.setSwingInspectorEnabled(enabled)));
 
-    fragments.add(new LogsFragment());
+    fragments.add(new LogsFragment<>());
     fragments.addAll(BeforeRunFragment.createGroup());
     return fragments;
   }

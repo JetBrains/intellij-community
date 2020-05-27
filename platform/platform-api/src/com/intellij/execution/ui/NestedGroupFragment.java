@@ -4,20 +4,24 @@ package com.intellij.execution.ui;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditorListener;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.function.Predicate;
 
 public abstract class NestedGroupFragment<S extends FragmentedSettings> extends SettingsEditorFragment<S, JComponent> {
 
   private final List<SettingsEditorFragment<S, ?>> myChildren;
+  private JComponent myGroupComponent;
 
   protected NestedGroupFragment(String id,
                                 @Nls(capitalization = Nls.Capitalization.Sentence) String name,
-                                @Nls(capitalization = Nls.Capitalization.Sentence) String group) {
-    super(id, name, group, null, null, null, null);
+                                @Nls(capitalization = Nls.Capitalization.Sentence) String group,
+                                Predicate<S> initialSelection) {
+    super(id, name, group, null, null, null, initialSelection);
     myChildren = createChildren();
     SettingsEditorListener<S> listener = editor -> fireEditorStateChanged();
     for (SettingsEditorFragment<S, ?> child : myChildren) {
@@ -32,10 +36,21 @@ public abstract class NestedGroupFragment<S extends FragmentedSettings> extends 
   }
 
   @Override
+  public void setSelected(boolean selected) {
+    super.setSelected(selected);
+    updateVisibility();
+  }
+
+  private void updateVisibility() {
+    myGroupComponent.setVisible(isSelected() || ContainerUtil.exists(getChildren(), fragment -> fragment.isSelected()));
+  }
+
+  @Override
   protected void resetEditorFrom(@NotNull S s) {
     for (SettingsEditorFragment<S, ?> child : getChildren()) {
       child.resetEditorFrom(s);
     }
+    updateVisibility();
   }
 
   @Override
@@ -49,6 +64,8 @@ public abstract class NestedGroupFragment<S extends FragmentedSettings> extends 
 
     @Override
   protected @NotNull JComponent createEditor() {
-     return new FragmentedSettingsBuilder<>(getChildren(), this).createCompoundEditor();
+     myGroupComponent = new FragmentedSettingsBuilder<>(getChildren(), this).createCompoundEditor();
+     updateVisibility();
+     return myGroupComponent;
   }
 }

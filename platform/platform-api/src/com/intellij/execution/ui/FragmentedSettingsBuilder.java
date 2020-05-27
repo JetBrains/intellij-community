@@ -29,22 +29,18 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
   private final JPanel myPanel = new JPanel(new GridBagLayout());
   private final GridBagConstraints myConstraints =
     new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.insetsTop(5), 0, 0);
-  private final java.util.List<SettingsEditorFragment<Settings, ?>> myFragments;
+  private final Collection<SettingsEditorFragment<Settings, ?>> myFragments;
   private final SettingsEditorFragment<Settings, ?> myMain;
   private LinkLabel<?> myLinkLabel;
 
-  FragmentedSettingsBuilder(List<SettingsEditorFragment<Settings, ?>> fragments, SettingsEditorFragment<Settings, ?> main) {
+  FragmentedSettingsBuilder(Collection<SettingsEditorFragment<Settings, ?>> fragments, SettingsEditorFragment<Settings, ?> main) {
     myFragments = fragments;
     myMain = main;
   }
 
-  private List<SettingsEditorFragment<Settings, ?>> getFragments() {
-    return myFragments;
-  }
-
   @Override
   public Collection<SettingsEditor<Settings>> getEditors() {
-    return new ArrayList<>(getFragments());
+    return new ArrayList<>(myFragments);
   }
 
   @Override
@@ -53,7 +49,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
       myPanel.setBorder(JBUI.Borders.emptyLeft(5));
       addLine(new JSeparator());
     }
-    List<SettingsEditorFragment<Settings, ?>> fragments = getFragments();
+    List<SettingsEditorFragment<Settings, ?>> fragments = new ArrayList<>(myFragments);
     fragments.sort(Comparator.comparingInt(SettingsEditorFragment::getCommandLinePosition));
     buildBeforeRun(fragments);
     addLine(buildHeader(fragments));
@@ -115,7 +111,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
 
   private void showOptions() {
     List<SettingsEditorFragment<Settings, ?>> fragments =
-      ContainerUtil.filter(getFragments(), fragment -> fragment.getName() != null);
+      ContainerUtil.filter(myFragments, fragment -> fragment.getName() != null);
     DefaultActionGroup actionGroup = buildGroup(fragments);
     DataContext dataContext = DataManager.getInstance().getDataContext(myLinkLabel);
     JBPopupFactory.getInstance().createActionGroupPopup(IdeBundle.message("popup.title.add.run.options"),

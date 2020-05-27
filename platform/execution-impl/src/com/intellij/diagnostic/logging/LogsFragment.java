@@ -2,13 +2,19 @@
 package com.intellij.diagnostic.logging;
 
 import com.intellij.diagnostic.DiagnosticBundle;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.LogFileOptions;
 import com.intellij.execution.configurations.PredefinedLogFile;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.ui.NestedGroupFragment;
 import com.intellij.execution.ui.SettingsEditorFragment;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.TextComponentAccessor;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.TableUtil;
@@ -36,7 +42,8 @@ public class LogsFragment<T extends RunConfigurationBase<?>> extends NestedGroup
   private final ListTableModel<LogFileOptions> myModel;
 
   public LogsFragment() {
-    super("log.monitor", DiagnosticBundle.message("log.monitor.fragment.name"), DiagnosticBundle.message("log.monitor.fragment.group"));
+    super("log.monitor", DiagnosticBundle.message("log.monitor.fragment.name"), DiagnosticBundle.message("log.monitor.fragment.group"),
+          t -> !t.getLogFiles().isEmpty() || t.isSaveOutputToFile());
 
     ColumnInfo<LogFileOptions, String> TAB_NAME = new TabNameColumnInfo();
     ColumnInfo<LogFileOptions, String> FILE = new FileColumnInfo();
@@ -177,14 +184,30 @@ public class LogsFragment<T extends RunConfigurationBase<?>> extends NestedGroup
   }
 
   @Override
-  public List<SettingsEditorFragment<T, ?>> createChildren() {
+  protected List<SettingsEditorFragment<T, ?>> createChildren() {
+    TextFieldWithBrowseButton myOutputFile = new TextFieldWithBrowseButton();
+    myOutputFile.addBrowseFolderListener(ExecutionBundle.message("choose.file.to.save.console.output"),
+                                         ExecutionBundle.message("console.output.would.be.saved.to.the.specified.file"), null,
+                                         FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor(),
+                                         TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    LabeledComponent<TextFieldWithBrowseButton> component =
+      LabeledComponent.create(myOutputFile, ExecutionBundle.message("save.output.console.to.file"), BorderLayout.WEST);
+    SettingsEditorFragment<T, LabeledComponent<TextFieldWithBrowseButton>> fragment =
+      new SettingsEditorFragment<>("logs.save.output", ExecutionBundle.message("save.output.console.to.file.option"), null, component,
+                                   (t, component1) -> component1.getComponent().setText(
+                                     StringUtil.notNullize(t.getOutputFilePath())),
+                                   (t, component1) -> {
+                                     t.setFileOutputPath(component1.getComponent().getText());
+                                     t.setSaveOutputToFile(StringUtil.isNotEmpty(component.getComponent().getText()));
+                                   },
+                                   t -> t.isSaveOutputToFile());
     SettingsEditorFragment<T, JButton> stdOut = SettingsEditorFragment
       .createTag("logs.stdout", DiagnosticBundle.message("log.monitor.fragment.stdout"), null, t -> t.isShowConsoleOnStdOut(),
                  (t, value) -> t.setShowConsoleOnStdOut(value));
     SettingsEditorFragment<T, JButton> stdErr = SettingsEditorFragment
       .createTag("logs.stderr", DiagnosticBundle.message("log.monitor.fragment.stderr"), null, t -> t.isShowConsoleOnStdErr(),
                  (t, value) -> t.setShowConsoleOnStdErr(value));
-    return Arrays.asList(stdOut, stdErr);
+    return Arrays.asList(fragment, stdOut, stdErr);
   }
 
   @Override

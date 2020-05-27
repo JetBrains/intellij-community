@@ -8,11 +8,10 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettings> extends CompositeSettingsEditor<Settings> {
 
@@ -21,15 +20,19 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
 
   protected abstract Collection<SettingsEditorFragment<Settings, ?>> createFragments();
 
-  protected final List<SettingsEditorFragment<Settings, ?>> getFragments() {
-    return new ArrayList<>(myFragments.getValue());
+  protected final Collection<SettingsEditorFragment<Settings, ?>> getFragments() {
+    return myFragments.getValue();
+  }
+
+  private Stream<SettingsEditorFragment<Settings, ?>> getAllFragments() {
+    return getFragments().stream().flatMap(fragment -> Stream.concat(fragment.getChildren().stream(), Stream.of(fragment)));
   }
 
   @Override
   public void resetEditorFrom(@NotNull Settings settings) {
     super.resetEditorFrom(settings);
     @Nullable Set<String> visibleFragments = settings.getSelectedOptions();
-    for (SettingsEditorFragment<Settings, ?> fragment : getFragments()) {
+    for (SettingsEditorFragment<Settings, ?> fragment : getAllFragments().collect(Collectors.toList())) {
       fragment.setSelected(visibleFragments.isEmpty() ?
                            fragment.isInitiallyVisible(settings) :
                            visibleFragments.contains(fragment.getId()));
@@ -40,7 +43,7 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
   public void applyEditorTo(@NotNull Settings settings) throws ConfigurationException {
     super.applyEditorTo(settings);
     settings.setSelectedOptions(
-      getFragments().stream().filter(fragment -> fragment.isSelected()).map(fragment -> fragment.getId()).collect(Collectors.toSet()));
+      getAllFragments().filter(fragment -> fragment.isSelected()).map(fragment -> fragment.getId()).collect(Collectors.toSet()));
   }
 
   @Override
