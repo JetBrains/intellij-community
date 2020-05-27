@@ -16,14 +16,21 @@ internal class FileUsagePredictionLogger(private val logTopLimit: Int, private v
       logCalculatedCandidate(project, sessionId, prevPath, candidate, total, refs, false)
     }
 
+    val numOfRecentCandidates = head.filter { isRecentCandidate(it) }.count()
     if (candidates.size > logTopLimit) {
-      val tail = candidates.subList(logTopLimit, candidates.size)
+      var tail = candidates.subList(logTopLimit, candidates.size)
+      if (numOfRecentCandidates > logTopLimit / 2) {
+        tail = tail.filter { !isRecentCandidate(it) }
+      }
+
       val randomToLog = tail.shuffled().take(logTotalLimit - logTopLimit)
       for (candidate in randomToLog) {
         logCalculatedCandidate(project, sessionId, prevPath, candidate, total, refs, false)
       }
     }
   }
+
+  private fun isRecentCandidate(candidate: FilePredictionCandidate) = candidate.source == "open" || candidate.source == "recent"
 
   private fun logCalculatedCandidate(project: Project,
                                      sessionId: Int,
