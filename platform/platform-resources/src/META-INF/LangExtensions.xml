@@ -1128,7 +1128,6 @@
     <statusBarWidgetFactory id="inspectionProfileWidget" implementation="com.intellij.openapi.wm.impl.status.InspectionProfileWidgetFactory" order="after readOnlyWidget"/>
     <statusBarWidgetFactory id="notificationsWidget" implementation="com.intellij.notification.impl.widget.NotificationWidgetFactory" order="after inspectionProfileWidget"/>
     <statusBarWidgetFactory id="fatalErrorWidget" implementation="com.intellij.openapi.wm.impl.status.FatalErrorWidgetFactory" order="after notificationsWidget"/>
-    <statusBarWidgetFactory id="buildNumberWidget" implementation="com.intellij.openapi.wm.impl.status.BuildNumberStatusWidgetFactory" order="after writeActionWidget"/>
     <statusBarWidgetFactory id="writeActionWidget" implementation="com.intellij.openapi.wm.impl.status.WriteThreadIndicatorWidgetFactory" order="after fatalErrorWidget"/>
     <statusBarWidgetFactory id="memoryUsageWidget" implementation="com.intellij.openapi.wm.impl.status.MemoryIndicatorWidgetFactory" order="last"/>
 
