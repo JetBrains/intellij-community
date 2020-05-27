@@ -2,7 +2,6 @@
 package com.intellij.filePrediction
 
 import com.intellij.filePrediction.features.history.FilePredictionHistory
-import com.intellij.filePrediction.features.history.context.FilePredictionContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
@@ -21,7 +20,7 @@ class FilePredictionHandler : Disposable {
   private var manager: FilePredictionSessionManager
     = FilePredictionSessionManager(50, 5, 10, CALCULATE_CANDIDATE_PROBABILITY)
 
-  fun onFileSelected(project: Project, newFile: VirtualFile, prevFile: VirtualFile?) {
+  fun onFileSelected(project: Project, newFile: VirtualFile) {
     if (ProjectManagerImpl.isLight(project)) {
       return
     }
@@ -34,23 +33,6 @@ class FilePredictionHandler : Disposable {
         manager.startSession(project, newFile)
       })
     }
-    FilePredictionContext.getInstance(project).onFileSelected(newFile.url)
-  }
-
-  fun onFileOpened(project: Project, file: VirtualFile) {
-    if (ProjectManagerImpl.isLight(project)) {
-      return
-    }
-
-    FilePredictionContext.getInstance(project).onFileOpened(file.url)
-  }
-
-  fun onFileClosed(project: Project, file: VirtualFile) {
-    if (ProjectManagerImpl.isLight(project)) {
-      return
-    }
-
-    FilePredictionContext.getInstance(project).onFileClosed(file.url)
   }
 
   override fun dispose() {

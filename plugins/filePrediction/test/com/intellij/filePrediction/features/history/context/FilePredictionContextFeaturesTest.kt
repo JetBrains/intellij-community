@@ -31,15 +31,8 @@ class FilePredictionContextFeaturesTest : FilePredictionHistoryBaseTest() {
     val prevFile = manager.selectedEditor?.file
     assertTrue("Cannot open main file because it's already opened", prevFile != file)
 
-    if (manager.isFileOpen(file!!)) {
-      manager.setSelectedEditor(file, TextEditorProvider.getInstance().editorTypeId)
-    }
-    else {
-      manager.openFile(file, true)
-    }
-
     val provider = FilePredictionContextFeatures()
-    val actual = provider.calculateFileFeatures(myFixture.project, file, prevFile, FAILED_COMPUTATION)
+    val actual = provider.calculateFileFeatures(myFixture.project, file!!, prevFile, FAILED_COMPUTATION)
     val expected = featuresProvider.produce(myFixture.project)
     for (feature in expected.entries) {
       assertTrue("Cannot find feature '${feature.key}' in $actual", actual.containsKey(feature.key))
