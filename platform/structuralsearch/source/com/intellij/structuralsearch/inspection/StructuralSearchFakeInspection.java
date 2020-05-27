@@ -292,6 +292,9 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
       final Configuration configuration = dialog.getConfiguration();
       configuration.setUuid(myMainConfiguration.getUuid());
       configuration.setName(myMainConfiguration.getName());
+      configuration.setDescription(null);
+      configuration.setSuppressId(null);
+      configuration.setProblemDescriptor(null);
       final MyListModel model = (MyListModel)myList.getModel();
       final int size = model.getSize();
       configuration.setOrder(size);
