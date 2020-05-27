@@ -284,7 +284,9 @@ public class GroovyBlockGenerator {
       return generateCodeSubBlocks(visibleChildren(myNode));
     }
     if (classLevel) {
-      return generateSubBlocks(visibleChildren(myNode), true);
+      List<ASTNode> children = visibleChildren(myNode);
+      calculateAlignments(children, true);
+      return generateSubBlocks(children);
     }
 
     if (blockPsi instanceof GrTraditionalForClause) {
@@ -426,9 +428,8 @@ public class GroovyBlockGenerator {
     return subBlocks;
   }
 
-  List<Block> generateSubBlocks(List<ASTNode> children, boolean classLevel) {
+  List<Block> generateSubBlocks(List<ASTNode> children) {
     final List<Block> subBlocks = new ArrayList<>();
-    calculateAlignments(children, classLevel);
     for (ASTNode childNode : children) {
       subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
     }
