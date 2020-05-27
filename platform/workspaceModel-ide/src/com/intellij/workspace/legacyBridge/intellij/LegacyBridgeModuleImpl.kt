@@ -32,6 +32,7 @@ internal class LegacyBridgeModuleImpl(
   override var diff: TypedEntityStorageDiffBuilder?
 ) : ModuleImpl(name, project, filePath), LegacyBridgeModule {
   private val directoryPath: String? = filePath?.let { File(it).parent }
+  private var vfsRefreshWasCalled = false
 
   init {
     // default project doesn't have modules
@@ -71,7 +72,18 @@ internal class LegacyBridgeModuleImpl(
 
   override fun getModuleFile(): VirtualFile? {
     if (directoryPath == null) return null
-    return LocalFileSystem.getInstance().findFileByIoFile(File(moduleFilePath))
+    val localFileSystem = LocalFileSystem.getInstance()
+    val moduleFile = File(moduleFilePath)
+    val fileWithoutRefresh = localFileSystem.findFileByIoFile(moduleFile)
+    // Call refreshAndFind only once if simple find's result was null on first call
+    return if (fileWithoutRefresh != null) {
+      vfsRefreshWasCalled = true
+      fileWithoutRefresh
+    } else {
+      if (vfsRefreshWasCalled) return null
+      vfsRefreshWasCalled = true
+      localFileSystem.refreshAndFindFileByIoFile(moduleFile)
+    }
   }
 
   override fun getOptionValue(key: String): String? {
