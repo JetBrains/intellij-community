@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.PredefinedLogFile;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.ui.NestedGroupFragment;
 import com.intellij.execution.ui.SettingsEditorFragment;
+import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.BooleanTableCellRenderer;
@@ -65,6 +66,7 @@ public class LogsFragment<T extends RunConfigurationBase<?>> extends NestedGroup
     myFilesTable.setIntercellSpacing(new Dimension(0, 0));
 
     myComponent = ToolbarDecorator.createDecorator(myFilesTable)
+      .setToolbarPosition(ActionToolbarPosition.BOTTOM)
       .setAddAction(button -> {
         ArrayList<LogFileOptions> newList = new ArrayList<>(myModel.getItems());
         LogFileOptions newOptions = new LogFileOptions("", "", true);
