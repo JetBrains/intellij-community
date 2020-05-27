@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.indices.MavenIndex;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
@@ -27,22 +26,24 @@ public class MavenCompletionProviderFactory implements DependencySearchProviders
 
   @Override
   public boolean isApplicable(Project project) {
-    return MavenProjectsManager.getInstance(project).isMavenizedProject();
+    return true;
   }
 
   @NotNull
   @Override
   public List<DependencySearchProvider> getProviders(Project project) {
     List<DependencySearchProvider> result = new ArrayList<>();
+    
     result.add(new ProjectModulesCompletionProvider(project));
-
     addLocalIndex(project, result);
-    addRemoteIndices(project, result);
+
+    if (MavenProjectsManager.getInstance(project).isMavenizedProject()) {
+      addRemoteIndices(project, result);
+    }
 
     if (Registry.is("maven.packagesearch.enabled")) {
       addPackageSearchService(result);
     }
-
 
     return result;
   }
