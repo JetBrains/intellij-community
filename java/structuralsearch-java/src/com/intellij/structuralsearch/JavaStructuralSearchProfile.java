@@ -11,7 +11,6 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
@@ -626,7 +625,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override
   public LanguageFileType getDefaultFileType(LanguageFileType currentDefaultFileType) {
-    return StdFileTypes.JAVA;
+    return JavaFileType.INSTANCE;
   }
 
   @Override

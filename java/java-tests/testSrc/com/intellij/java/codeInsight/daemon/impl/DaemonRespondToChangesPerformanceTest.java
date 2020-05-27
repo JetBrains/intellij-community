@@ -9,12 +9,12 @@ import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
@@ -48,7 +48,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
       text.append(".append(").append(i).append(")\n");
     }
     text.append(".toString();<caret>}");
-    configureByText(StdFileTypes.JAVA, text.toString());
+    configureByText(JavaFileType.INSTANCE, text.toString());
 
     PlatformTestUtil.startPerformanceTest("highlighting deep call chain", 95_000, () -> {
       List<HighlightInfo> infos = highlightErrors();
@@ -66,7 +66,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
                   "  String[] s = {" + listBody + "};\n" +
                   "  void foo(String... s) { foo(" + listBody + "); }\n" +
                   "}";
-    configureByText(StdFileTypes.JAVA, text);
+    configureByText(JavaFileType.INSTANCE, text);
 
     PlatformTestUtil.startPerformanceTest("highlighting many string literals", 11_000, () -> {
       assertEmpty(highlightErrors());
@@ -87,7 +87,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
                   "class S { void x(Goo g) { g\n" +
                   StringUtil.repeat(".foo()\n", 2000) +
                   ".toString(); } }";
-    configureByText(StdFileTypes.JAVA, text);
+    configureByText(JavaFileType.INSTANCE, text);
 
     PlatformTestUtil.startPerformanceTest("highlighting deep call chain", 50_000, () -> {
       assertEmpty(highlightErrors());

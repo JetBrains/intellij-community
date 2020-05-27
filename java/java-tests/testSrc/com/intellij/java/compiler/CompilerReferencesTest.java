@@ -5,7 +5,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -181,13 +181,13 @@ public class CompilerReferencesTest extends CompilerReferencesTestBase {
   private CompilerDirectHierarchyInfo getDirectInheritorsFor(PsiClass classAtCaret) {
     return CompilerReferenceService.getInstance(myFixture.getProject()).getDirectInheritors(classAtCaret,
                                                                                             assertInstanceOf(classAtCaret.getUseScope(), GlobalSearchScope.class),
-                                                                                            StdFileTypes.JAVA);
+                                                                                            JavaFileType.INSTANCE);
   }
 
   private CompilerDirectHierarchyInfo getFunExpressionsFor(PsiClass classAtCaret) {
     return CompilerReferenceService.getInstance(myFixture.getProject()).getFunExpressions(classAtCaret,
                                                                                           assertInstanceOf(classAtCaret.getUseScope(), GlobalSearchScope.class),
-                                                                                          StdFileTypes.JAVA);
+                                                                                          JavaFileType.INSTANCE);
   }
 
   private Set<VirtualFile> getReferentFilesForElementUnderCaret() {

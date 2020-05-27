@@ -18,8 +18,8 @@ package com.intellij.java.codeInsight.completion
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.JavaCompletionUtil
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.psi.*
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.PairFunction
@@ -92,7 +92,7 @@ class FragmentCompletionTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testQualifierCastingInExpressionCodeFragment() throws Throwable {
     final ctxText = "class Bar {{ Object o; o=null }}"
-    final ctxFile = createLightFile(StdFileTypes.JAVA, ctxText)
+    final ctxFile = createLightFile(JavaFileType.INSTANCE, ctxText)
     final context = ctxFile.findElementAt(ctxText.indexOf("o="))
     assert context
 
@@ -104,7 +104,7 @@ class FragmentCompletionTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testNoGenericQualifierCastingWithRuntimeType() throws Throwable {
     final ctxText = "import java.util.*; class Bar {{ Map<Integer,Integer> map = new HashMap<Integer,Integer>(); map=null; }}"
-    final ctxFile = createLightFile(StdFileTypes.JAVA, ctxText)
+    final ctxFile = createLightFile(JavaFileType.INSTANCE, ctxText)
     final context = ctxFile.findElementAt(ctxText.indexOf("map="))
     assert context
     

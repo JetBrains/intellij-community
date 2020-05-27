@@ -2,9 +2,9 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -106,7 +106,7 @@ public abstract class StructuralSearchTestCase extends LightQuickFixTestCase {
   }
 
   protected int findMatchesCount(String in, String pattern) {
-    return findMatchesCount(in, pattern, StdFileTypes.JAVA);
+    return findMatchesCount(in, pattern, JavaFileType.INSTANCE);
   }
 
   protected String loadFile(String fileName) throws IOException {

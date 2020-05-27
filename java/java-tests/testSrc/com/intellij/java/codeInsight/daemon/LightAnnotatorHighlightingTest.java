@@ -14,6 +14,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.annotation.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -54,7 +55,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
   }
 
   public void testAnnotatorWorksWithFileLevel() {
-    DaemonRespondToChangesTest.useAnnotatorsIn(StdFileTypes.JAVA.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyTopFileAnnotator()}, () -> {
+    DaemonRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyTopFileAnnotator()}, () -> {
       configureByFile(LightAdvHighlightingTest.BASE_PATH + "/" + getTestName(false) + ".java");
       ((EditorEx)getEditor()).getScrollPane().getViewport().setSize(new Dimension(1000,1000)); // whole file fit onscreen
       doHighlighting();
@@ -116,7 +117,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
   }
 
   public void testAnnotatorMustNotSpecifyCrazyRangeForCreatedAnnotation() {
-    DaemonRespondToChangesTest.useAnnotatorsIn(StdFileTypes.JAVA.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyCrazyAnnotator()}, this::runMyAnnotators);
+    DaemonRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyCrazyAnnotator()}, this::runMyAnnotators);
   }
   private void runMyAnnotators() {
     @org.intellij.lang.annotations.Language("JAVA")
@@ -450,7 +451,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
   }
 
   public void testAnnotationBuilderMethodsAllowedToBeCalledOnlyOnce() {
-    DaemonRespondToChangesTest.useAnnotatorsIn(StdFileTypes.JAVA.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyStupidRepetitiveAnnotator()}, () -> runMyAnnotators()
+    DaemonRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyStupidRepetitiveAnnotator()}, () -> runMyAnnotators()
     );
   }
 }

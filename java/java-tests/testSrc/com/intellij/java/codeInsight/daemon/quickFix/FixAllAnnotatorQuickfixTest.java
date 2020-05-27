@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
@@ -28,7 +29,6 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -40,7 +40,7 @@ import org.jetbrains.annotations.NotNull;
 public class FixAllAnnotatorQuickfixTest extends LightQuickFixTestCase {
   public void testAnnotator() {
     Annotator annotator = new MyAnnotator();
-    Language javaLanguage = StdFileTypes.JAVA.getLanguage();
+    Language javaLanguage = JavaFileType.INSTANCE.getLanguage();
     LanguageAnnotators.INSTANCE.addExplicitExtension(javaLanguage, annotator);
     enableInspectionTool(new DefaultHighlightVisitorBasedInspection.AnnotatorBasedInspection());
     try {

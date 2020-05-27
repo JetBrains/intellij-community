@@ -1,13 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -2131,7 +2129,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     MatchOptions options = new MatchOptions();
     options.fillSearchCriteria("try  { '_st*; } catch('_Type 't+) { '_st2*; }");
-    options.setFileType(StdFileTypes.JAVA);
+    options.setFileType(JavaFileType.INSTANCE);
 
     List<MatchResult> results = new ArrayList<>();
     for(PsiVariable var:vars) {
@@ -2774,12 +2772,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Find multi catch with variables", 1, findMatchesCount(source, pattern6));
 
     String pattern7 = "try { '_St1*; } catch ('E '_e) { '_St2*; }";
-    final List<MatchResult> matches = findMatches(source, pattern7, StdFileTypes.JAVA);
+    final List<MatchResult> matches = findMatches(source, pattern7, JavaFileType.INSTANCE);
     assertEquals(3, matches.size());
     assertEquals("NullPointerException  | UnsupportedOperationException", matches.get(1).getMatchImage());
 
     String pattern8 = "try { '_St1*; } catch ('_E '_e{2,2}) { '_St2*; }";
-    final List<MatchResult> matches2 = findMatches(source, pattern8, StdFileTypes.JAVA);
+    final List<MatchResult> matches2 = findMatches(source, pattern8, JavaFileType.INSTANCE);
     assertEquals(1, matches2.size());
     assertEquals("Find try with exactly 2 catch blocks",
                  "try {\n" +
@@ -2791,7 +2789,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  matches2.get(0).getMatchImage());
 
     String pattern9 = "try { '_st1*; } catch ('_E '_e{0,0}) { '_St2*; }";
-    final List<MatchResult> matches3 = findMatches(source, pattern9, StdFileTypes.JAVA);
+    final List<MatchResult> matches3 = findMatches(source, pattern9, JavaFileType.INSTANCE);
     assertEquals(1, matches3.size());
     assertEquals("Should find try without catch blocks",
                  "try (InputStream in = new FileInputStream(\"tmp\")) {\n" +
@@ -2803,7 +2801,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "  try {} finally {}" +
                      "}}";
     String pattern10 = "try { '_st1*; } catch ('_E '_e{0,0}) { '_St2*; } finally { '_St3*; }";
-    final List<MatchResult> matches4 = findMatches(source2, pattern10, StdFileTypes.JAVA);
+    final List<MatchResult> matches4 = findMatches(source2, pattern10, JavaFileType.INSTANCE);
     assertEquals(1, matches4.size());
     assertEquals("Should find try without catch blocks",
                  "try {} finally {}",

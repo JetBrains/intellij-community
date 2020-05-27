@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +17,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     final MatchOptions matchOptions = options.getMatchOptions();
-    matchOptions.setFileType(StdFileTypes.JAVA);
+    matchOptions.setFileType(JavaFileType.INSTANCE);
   }
 
   public void testReplaceInLiterals() {

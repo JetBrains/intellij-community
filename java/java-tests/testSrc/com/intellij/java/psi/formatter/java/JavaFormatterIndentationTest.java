@@ -15,7 +15,7 @@
  */
 package com.intellij.java.psi.formatter.java;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
 
@@ -59,7 +59,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
   public void testNestedMethodsIndentation() {
     // Inspired by IDEA-43962
 
-    getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 4;
+    getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).CONTINUATION_INDENT_SIZE = 4;
 
     doMethodTest(
       "BigDecimal.ONE\n" +
@@ -88,7 +88,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
   public void testShiftedChainedIfElse() {
     getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2;
     getSettings().ELSE_ON_NEW_LINE = true;
-    getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 4;
+    getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).INDENT_SIZE = 4;
     doMethodTest(
       "long a = System.currentTimeMillis();\n" +
       "    if (a == 0){\n" +
@@ -126,7 +126,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
 
   public void testAlignedSubBlockIndentation() {
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-    getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 8;
+    getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).CONTINUATION_INDENT_SIZE = 8;
 
     // Inspired by IDEA-54671
     doTextTest(

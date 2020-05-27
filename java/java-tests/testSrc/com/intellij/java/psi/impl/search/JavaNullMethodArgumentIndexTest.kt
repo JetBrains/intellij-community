@@ -15,16 +15,15 @@
  */
 package com.intellij.java.psi.impl.search
 
-import com.intellij.openapi.fileTypes.StdFileTypes
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.indexing.FileContentImpl
-import com.intellij.util.indexing.IndexingDataKeys
 
 class JavaNullMethodArgumentIndexTest : BasePlatformTestCase() {
 
   fun testIndex() {
-    val file = myFixture.configureByText(StdFileTypes.JAVA, """
+    val file = myFixture.configureByText(JavaFileType.INSTANCE, """
             package org.some;
 
             class Main111 {
