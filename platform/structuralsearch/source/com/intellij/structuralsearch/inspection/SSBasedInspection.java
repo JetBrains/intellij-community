@@ -158,6 +158,10 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   }
 
   public static void register(Configuration configuration) {
+    if (configuration.getOrder() != 0) {
+      // not a main configuration containing meta data
+      return;
+    }
     final String shortName = configuration.getUuid().toString();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key != null) {
