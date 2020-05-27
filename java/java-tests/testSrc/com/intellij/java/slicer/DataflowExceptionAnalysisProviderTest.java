@@ -22,7 +22,7 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
 
   public void testClassCast() {
     doTest("java.lang.ClassCastException: class X cannot be cast to class java.lang.Number",
-           "Find why 'obj' could be instanceof X (not-null)",
+           "Find why 'obj' could be X (not-null)",
            "class X {static void test(Object obj) {System.out.println(((Number) obj).intValue());}}");
   }
   
@@ -53,13 +53,13 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
   
   public void testClassCastFromNested() {
     doTest("java.lang.ClassCastException: class MainTest$X cannot be cast to class java.lang.String",
-           "Find why 'obj' could be instanceof MainTest.X (not-null)",
+           "Find why 'obj' could be MainTest.X (not-null)",
            "class MainTest {static String cast(Object obj) {return (String)obj;}static class X {}}");
   }
   
   public void testClassCastFromLocal() {
     doTest("java.lang.ClassCastException: class MainTest$1X cannot be cast to class java.lang.String",
-           "Find why 'obj' could be instanceof X (not-null)",
+           "Find why 'obj' could be X (not-null)",
            "class MainTest {static String cast(Object obj) {return (String)obj;}" +
            "public static void main(String[] args) { class X{}cast(new X()); }}");
   }

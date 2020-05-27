@@ -3,10 +3,7 @@ package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.dataFlow.ContractReturnValue;
-import com.intellij.codeInspection.dataFlow.ContractValue;
-import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
-import com.intellij.codeInspection.dataFlow.MethodContract;
+import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.execution.filters.*;
@@ -267,7 +264,7 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
     if (actualClass != null) {
       PsiType psiType = getPsiType(actualClass);
       if (psiType != null) {
-        return new AnalysisStartingPoint(DfTypes.typedObject(psiType, Nullability.NOT_NULL), ref);
+        return new AnalysisStartingPoint(TypeConstraints.exact(psiType).asDfType().meet(DfTypes.NOT_NULL_OBJECT), ref);
       }
     }
     PsiType castType = castExpression.getType();
