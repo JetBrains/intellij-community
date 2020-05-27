@@ -928,8 +928,8 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     })).get();
   }
 
-  public void test_performWhenAllCommitted_does_not_race_with_background_light_commits_resulting_in_exceptions(){
-    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(), 10);
+  public void testPerformWhenAllCommittedDoesNotRaceWithBackgroundLightCommitsResultingInExceptions(){
+    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getTestName(false), 10);
 
     PsiFile mainFile = findFile(createFile());
     Document mainDoc = getDocument(mainFile);
