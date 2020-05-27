@@ -28,4 +28,11 @@ object FeatureSuggesterSettings : PersistentStateComponent<FeatureSuggesterSetti
     override fun loadState(state: FeatureSuggesterSettings) {
         XmlSerializerUtil.copyBean(state, this)
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other?.javaClass != javaClass) return false
+        other as FeatureSuggesterSettings
+        return disabledSuggesters == other.disabledSuggesters
+    }
 }
