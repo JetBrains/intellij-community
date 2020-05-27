@@ -203,6 +203,8 @@ public interface AnnotationHolder {
    *
    * @param severity The severity of the annotation.
    * @param message  The message this annotation will show in the status bar and the tooltip.
+   * @apiNote builder created by this method is already initialized by current element. E.g. psiElement currently visited by inspection
+   * visitor. Meaning you need to set explicit range or element for the annotation only if it differs from current element. E.g. name identifier.
    */
   @Contract(pure = true)
   @NotNull
@@ -217,6 +219,8 @@ public interface AnnotationHolder {
    * For example: <p>{@code holder.newSilentAnnotation(HighlightSeverity.WARNING).textAttributes(MY_ATTRIBUTES_KEY).create();}</p>
    *
    * @param severity The severity of the annotation.
+   * @apiNote builder created by this method is already initialized by current element. E.g. psiElement currently visited by inspection
+   * visitor. Meaning you need to set explicit range or element for the annotation only if it differs from current element. E.g. name identifier.
    */
   @Contract(pure = true)
   @NotNull
