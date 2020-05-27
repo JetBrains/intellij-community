@@ -30,7 +30,6 @@
     <filePrediction.candidateProvider implementation="com.intellij.filePrediction.candidates.FilePredictionRecentFilesProvider"/>
 
     <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.FilePredictionGeneralFeatures"/>
-    <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.FilePredictionFileTypeFeatures"/>
     <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.history.FilePredictionHistoryFeatures"/>
     <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.history.context.FilePredictionContextFeatures"/>
 

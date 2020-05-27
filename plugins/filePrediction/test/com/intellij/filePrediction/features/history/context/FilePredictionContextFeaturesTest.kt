@@ -8,6 +8,8 @@ import com.intellij.filePrediction.FilePredictionTestProjectBuilder
 import com.intellij.filePrediction.features.ConstFileFeaturesProducer
 import com.intellij.filePrediction.features.FileFeaturesProducer
 import com.intellij.filePrediction.features.history.FilePredictionHistoryBaseTest
+import com.intellij.filePrediction.references.ExternalReferencesResult
+import com.intellij.filePrediction.references.ExternalReferencesResult.Companion.FAILED_COMPUTATION
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 
@@ -37,7 +39,7 @@ class FilePredictionContextFeaturesTest : FilePredictionHistoryBaseTest() {
     }
 
     val provider = FilePredictionContextFeatures()
-    val actual = provider.calculateFileFeatures(myFixture.project, file, prevFile)
+    val actual = provider.calculateFileFeatures(myFixture.project, file, prevFile, FAILED_COMPUTATION)
     val expected = featuresProvider.produce(myFixture.project)
     for (feature in expected.entries) {
       assertTrue("Cannot find feature '${feature.key}' in $actual", actual.containsKey(feature.key))

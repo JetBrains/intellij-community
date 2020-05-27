@@ -1,9 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.filePrediction
 
-import com.intellij.filePrediction.predictor.FilePredictionCandidate
-import com.intellij.filePrediction.predictor.FileUsagePredictor
-import com.intellij.filePrediction.predictor.FileUsagePredictorProvider
+import com.intellij.filePrediction.predictor.*
+import com.intellij.filePrediction.predictor.FilePredictionCompressedCandidatesHolder
 import com.intellij.filePrediction.references.FilePredictionReferencesHelper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -16,12 +15,12 @@ internal class FilePredictionSession(val prevPath: String?, threshold: Double) {
   val id: Int = counter.incrementAndGet()
   val shouldLog: Boolean = Math.random() < threshold
 
-  var candidates: List<FilePredictionCandidate> = emptyList()
+  var candidatesHolder: FilePredictionCandidatesHolder? = null
   var totalDuration: Long = -1
   var refsDuration: Long = -1
 
-  fun candidatesCalculated(nextFileCandidates: List<FilePredictionCandidate>, total: Long, refs: Long) {
-    candidates = nextFileCandidates
+  fun candidatesCalculated(holder: FilePredictionCandidatesHolder, total: Long, refs: Long) {
+    candidatesHolder = holder
     totalDuration = total
     refsDuration = refs
   }
@@ -53,8 +52,9 @@ internal class FilePredictionSessionManager(private val candidatesLimit: Int,
       val refs = FilePredictionReferencesHelper.calculateExternalReferences(project, file)
       val candidatesToCalculate = if (!predictor.isDummy) candidatesLimit else logTotalLimit
       val candidates = predictor.predictNextFile(project, file, refs, candidatesToCalculate)
+      val holder = FilePredictionCompressedCandidatesHolder.create(candidates)
       val totalDuration = System.currentTimeMillis() - start
-      newSession.candidatesCalculated(candidates, totalDuration, refs.duration)
+      newSession.candidatesCalculated(holder, totalDuration, refs.duration)
     }
     session = newSession
   }
@@ -64,7 +64,7 @@ internal class FilePredictionSessionManager(private val candidatesLimit: Int,
     val shouldLog = session?.shouldLog ?: false
     if (shouldLog) {
       session?.let { currentSession ->
-        val candidates = currentSession.candidates
+        val candidates = currentSession.candidatesHolder?.getCandidates() ?: emptyList()
         val prevPath = currentSession.prevPath
         val sessionId = currentSession.id
         val refsDuration = currentSession.refsDuration

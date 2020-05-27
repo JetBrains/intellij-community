@@ -2,7 +2,10 @@
 package com.intellij.filePrediction.features
 
 import com.intellij.filePrediction.features.FilePredictionFeature.Companion.binary
+import com.intellij.filePrediction.features.FilePredictionFeature.Companion.categorical
 import com.intellij.filePrediction.features.FilePredictionFeature.Companion.numerical
+import com.intellij.filePrediction.references.ExternalReferencesResult
+import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -13,13 +16,38 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtil.toLowerCase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
+import com.intellij.util.ThreeState
 import java.io.File
 
 class FilePredictionGeneralFeatures: FilePredictionFeatureProvider {
   override fun getName(): String = ""
 
-  override fun calculateFileFeatures(project: Project, newFile: VirtualFile, prevFile: VirtualFile?): Map<String, FilePredictionFeature> {
+  override fun getFeatures(): Array<String> = arrayOf(
+    "file_type",
+    "prev_file_type",
+    "in_project",
+    "in_source",
+    "in_library",
+    "excluded",
+    "same_module",
+    "name_prefix",
+    "path_prefix",
+    "relative_path_prefix",
+    "same_dir",
+    "in_ref"
+  )
+
+  override fun calculateFileFeatures(project: Project,
+                                     newFile: VirtualFile,
+                                     prevFile: VirtualFile?,
+                                     refs: ExternalReferencesResult): Map<String, FilePredictionFeature> {
     val result = HashMap<String, FilePredictionFeature>()
+    val isInRef = refs.contains(newFile)
+    if (isInRef != ThreeState.UNSURE) {
+      result["in_ref"] = binary(isInRef == ThreeState.YES)
+    }
+
+    addFileTypeFeatures(result, newFile, prevFile)
     ApplicationManager.getApplication().runReadAction {
       if (newFile.isValid) {
         val fileIndex = FileIndexFacade.getInstance(project)
@@ -44,17 +72,27 @@ class FilePredictionGeneralFeatures: FilePredictionFeatureProvider {
       val prevFilePath = unify(prevFile.path)
       result["path_prefix"] = numerical(StringUtil.commonPrefixLength(newFilePath, prevFilePath))
 
-      val baseDir = project.guessProjectDir()?.path?.let { unify(it) }
-      if (baseDir != null) {
-        val newRelativePath = FileUtil.getRelativePath(baseDir, newFilePath, File.separatorChar, false)
-        val prevRelativePath = FileUtil.getRelativePath(baseDir, prevFilePath, File.separatorChar, false)
-        if (newRelativePath != null && prevRelativePath != null) {
-          result["relative_path_prefix"] = numerical(StringUtil.commonPrefixLength(newRelativePath, prevRelativePath))
+      if (!project.isDisposed) {
+        val baseDir = project.guessProjectDir()?.path?.let { unify(it) }
+        if (baseDir != null) {
+          val newRelativePath = FileUtil.getRelativePath(baseDir, newFilePath, File.separatorChar, false)
+          val prevRelativePath = FileUtil.getRelativePath(baseDir, prevFilePath, File.separatorChar, false)
+          if (newRelativePath != null && prevRelativePath != null) {
+            result["relative_path_prefix"] = numerical(StringUtil.commonPrefixLength(newRelativePath, prevRelativePath))
+          }
         }
       }
       result["same_dir"] = binary(PathUtil.getParentPath(newFilePath) == PathUtil.getParentPath(prevFilePath))
     }
     return result
+  }
+
+  private fun addFileTypeFeatures(result: MutableMap<String, FilePredictionFeature>, newFile: VirtualFile, prevFile: VirtualFile?) {
+    result["file_type"] = categorical(FileTypeUsagesCollector.getSafeFileTypeName(newFile.fileType))
+
+    if (prevFile != null) {
+      result["prev_file_type"] = categorical(FileTypeUsagesCollector.getSafeFileTypeName(prevFile.fileType))
+    }
   }
 
   private fun unify(path: String) : String {

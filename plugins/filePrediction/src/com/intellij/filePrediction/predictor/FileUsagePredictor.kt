@@ -36,7 +36,7 @@ private class FileUsageSimplePredictor(candidateProvider: FilePredictionCandidat
     for (candidate in candidateFiles) {
       val features =
         FilePredictionFeaturesHelper.calculateFileFeatures(project, candidate.file, refs.value, currentFile)
-      candidates.add(FilePredictionCandidate(features, candidate.file.path, candidate.source))
+      candidates.add(FilePredictionCandidate(candidate.file.path, candidate.source, features.value, features.duration))
     }
     return candidates
   }
@@ -55,7 +55,7 @@ private class FileUsageMLPredictor(candidateProvider: FilePredictionCandidatePro
       val start = System.currentTimeMillis()
       val probability = model.predict(features.value)
       val duration = System.currentTimeMillis() - start
-      candidates.add(FilePredictionCandidate(features, candidate.file.path, candidate.source, duration, probability))
+      candidates.add(FilePredictionCandidate(candidate.file.path, candidate.source, features.value, features.duration, duration, probability))
     }
     candidates.sortByDescending { it.probability }
     return candidates

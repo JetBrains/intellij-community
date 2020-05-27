@@ -34,7 +34,7 @@ internal class FileUsagePredictionLogger(private val logTopLimit: Int, private v
                                      opened: Boolean) {
     FileNavigationLogger.logEvent(
       project, sessionId, candidate.features, candidate.path, prevPath, candidate.source, opened,
-      totalDuration, refsComputation, candidate.duration, candidate.probability
+      totalDuration, candidate.featuresComputation, refsComputation, candidate.duration, candidate.probability
     )
   }
 }

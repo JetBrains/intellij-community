@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.filePrediction
 
+import com.intellij.filePrediction.features.FilePredictionFeature
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.openapi.project.Project
@@ -11,12 +12,13 @@ internal object FileNavigationLogger {
 
   fun logEvent(project: Project,
                sessionId: Int,
-               features: FileFeaturesComputationResult,
+               features: Map<String, FilePredictionFeature>,
                filePath: String,
                prevFilePath: String?,
                source: String,
                opened: Boolean,
                totalDuration: Long,
+               featuresComputation: Long,
                refsComputation: Long,
                predictionDuration: Long? = null,
                probability: Double? = null) {
@@ -28,7 +30,7 @@ internal object FileNavigationLogger {
       .addData("opened", opened)
       .addData("total_ms", totalDuration)
       .addData("refs_ms", refsComputation)
-      .addData("features_ms", features.duration)
+      .addData("features_ms", featuresComputation)
 
     if (predictionDuration != null) {
       data.addData("predict_ms", predictionDuration)
@@ -38,7 +40,7 @@ internal object FileNavigationLogger {
       data.addData("probability", roundProbability(probability))
     }
 
-    for (feature in features.value) {
+    for (feature in features) {
       feature.value.addToEventData(feature.key, data)
     }
     FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, "candidate.calculated", data)
