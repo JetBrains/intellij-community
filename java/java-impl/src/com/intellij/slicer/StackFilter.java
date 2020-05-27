@@ -2,11 +2,11 @@
 package com.intellij.slicer;
 
 import com.intellij.execution.filters.ExceptionAnalysisProvider;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -41,20 +41,11 @@ class StackFilter {
     if (base instanceof GlobalSearchScope && myExtraFrames == 0) {
       PsiManager instance = PsiManager.getInstance(project);
       String packageName = StringUtil.getPackageName(myClassName);
-      return new GlobalSearchScope() {
-        @Override
-        public boolean isSearchInModuleContent(@NotNull Module aModule) {
-          return ((GlobalSearchScope)base).isSearchInModuleContent(aModule);
-        }
-
-        @Override
-        public boolean isSearchInLibraries() {
-          return ((GlobalSearchScope)base).isSearchInLibraries();
-        }
+      return new DelegatingGlobalSearchScope((GlobalSearchScope)base) {
 
         @Override
         public boolean contains(@NotNull VirtualFile file) {
-          if (!base.contains(file)) return false;
+          if (!super.contains(file)) return false;
           PsiFile psiFile = instance.findFile(file);
           if (!(psiFile instanceof PsiClassOwner)) return false;
           // Do not filter by exact class for now

@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -127,20 +128,10 @@ public class UnusedPropertyInspection extends PropertiesInspectionBase {
 
   @NotNull
   private static GlobalSearchScope createExceptPropertyFilesScope(@NotNull GlobalSearchScope origin) {
-    return new GlobalSearchScope() {
-      @Override
-      public boolean isSearchInModuleContent(@NotNull Module aModule) {
-        return origin.isSearchInModuleContent(aModule);
-      }
-
-      @Override
-      public boolean isSearchInLibraries() {
-        return origin.isSearchInLibraries();
-      }
-
+    return new DelegatingGlobalSearchScope(origin) {
       @Override
       public boolean contains(@NotNull VirtualFile file) {
-        return !FileTypeRegistry.getInstance().isFileOfType(file, PropertiesFileType.INSTANCE);
+        return super.contains(file) && !FileTypeRegistry.getInstance().isFileOfType(file, PropertiesFileType.INSTANCE);
       }
     };
   }
