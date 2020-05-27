@@ -1602,15 +1602,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static boolean startsWith(@NotNull CharSequence text, @NotNull CharSequence prefix) {
-    int l1 = text.length();
-    int l2 = prefix.length();
-    if (l1 < l2) return false;
-
-    for (int i = 0; i < l2; i++) {
-      if (text.charAt(i) != prefix.charAt(i)) return false;
-    }
-
-    return true;
+    return StringUtilRt.startsWith(text, prefix);
   }
 
   @Contract(pure = true)
