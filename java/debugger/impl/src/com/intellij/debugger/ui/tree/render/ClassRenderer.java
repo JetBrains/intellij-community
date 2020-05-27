@@ -90,7 +90,7 @@ public class ClassRenderer extends NodeRendererImpl{
     return calcLabelAsync(descriptor, evaluationContext, labelListener);
   }
 
-  protected static String calcLabelAsync(ValueDescriptor descriptor,
+  private static String calcLabelAsync(ValueDescriptor descriptor,
                                          EvaluationContext evaluationContext,
                                          DescriptorLabelListener labelListener)
     throws EvaluateException {
@@ -103,6 +103,12 @@ public class ClassRenderer extends NodeRendererImpl{
     else {
       future = CompletableFuture.completedFuture(calcLabel(descriptor, evaluationContext));
     }
+    return calcLabelFromFuture(future, descriptor, labelListener);
+  }
+
+  private static String calcLabelFromFuture(CompletableFuture<String> future,
+                                           ValueDescriptor descriptor,
+                                           DescriptorLabelListener labelListener) {
     if (!future.isDone()) {
       future.whenComplete((s, throwable) -> {
         if (throwable != null) {

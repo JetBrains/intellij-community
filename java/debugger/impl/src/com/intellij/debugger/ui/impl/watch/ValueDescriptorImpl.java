@@ -305,7 +305,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     EvaluateException valueException = myValueException;
     CompletableFuture<Boolean> expandableFuture;
     if (valueException == null || valueException.getExceptionFromTargetVM() != null) {
-      expandableFuture = getChildrenRenderer(debugProcess).isExpandableAsync(getValue(), context, this);
+      expandableFuture = getChildrenRendererAsync(debugProcess)
+        .thenCompose(r -> r.isExpandableAsync(getValue(), context, this));
     }
     else {
       expandableFuture = CompletableFuture.completedFuture(false);
@@ -345,18 +346,15 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     }
 
     // only call labelChanged when we have expandable value
-    if (expandableFuture.isDone()) {
-      myIsExpandable = expandableFuture.join();
+    expandableFuture.whenComplete((res, ex) ->  {
+      if (ex == null) {
+        myIsExpandable = res;
+      }
+      else {
+        LOG.error(ex);
+      }
       labelListener.labelChanged();
-    }
-    else {
-      expandableFuture.thenAccept(r -> {
-        if (r != myIsExpandable) {
-          myIsExpandable = r;
-          labelListener.labelChanged();
-        }
-      });
-    }
+    });
 
     return ""; // we have overridden getLabel
   }
@@ -453,6 +451,13 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return OnDemandRenderer.isOnDemandForced(debugProcess) ? DebugProcessImpl.getDefaultRenderer(getValue()) : getRenderer(debugProcess);
   }
 
+  public CompletableFuture<NodeRenderer> getChildrenRendererAsync(DebugProcessImpl debugProcess) {
+    if (OnDemandRenderer.isOnDemandForced(debugProcess)) {
+      return CompletableFuture.completedFuture(DebugProcessImpl.getDefaultRenderer(getValue()));
+    }
+    return getRendererAsync(debugProcess);
+  }
+
   public CompletableFuture<NodeRenderer> getRendererAsync(DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return DebuggerUtilsAsync.type(getValue())
@@ -475,11 +480,18 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   private CompletableFuture<NodeRenderer> getRendererAsync(Type type, DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (type != null && myRenderer != null && myRenderer.isApplicable(type)) {
-      return CompletableFuture.completedFuture(myRenderer);
+    CompletableFuture<Boolean> customCheck = CompletableFuture.completedFuture(false);
+    if (type != null && myRenderer != null) {
+      customCheck = myRenderer.isApplicableAsync(type);
     }
-
-    return debugProcess.getAutoRendererAsync(type).thenApply(r -> myAutoRenderer = r);
+    return customCheck.thenCompose(custom -> {
+      if (custom) {
+        return CompletableFuture.completedFuture(myRenderer);
+      }
+      else {
+        return debugProcess.getAutoRendererAsync(type).thenApply(r -> myAutoRenderer = r);
+      }
+    });
   }
 
   public void setRenderer(NodeRenderer renderer) {

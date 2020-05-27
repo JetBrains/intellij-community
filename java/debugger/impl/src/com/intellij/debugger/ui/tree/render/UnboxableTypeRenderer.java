@@ -27,16 +27,23 @@ public abstract class UnboxableTypeRenderer extends CompoundReferenceRenderer {
         if (future.isDone()) {
           return DebuggerUtils.getValueAsString(evaluationContext, future.join());
         }
-        future.thenAccept(r -> {
-          try {
-            descriptor.setValueLabel(DebuggerUtils.getValueAsString(evaluationContext, r));
+        return future.handle((r, ex) -> {
+          String res = "";
+          if (ex == null) {
+            try {
+              res = DebuggerUtils.getValueAsString(evaluationContext, r);
+              descriptor.setValueLabel(res);
+            }
+            catch (EvaluateException e) {
+              descriptor.setValueLabelFailed(e);
+            }
           }
-          catch (EvaluateException e) {
-            descriptor.setValueLabelFailed(e);
+          else {
+            descriptor.setValueLabelFailed(new EvaluateException(null, ex));
           }
           labelListener.labelChanged();
-        });
-        return XDebuggerUIConstants.getCollectingDataMessage();
+          return res;
+        }).getNow(XDebuggerUIConstants.getCollectingDataMessage());
       }
 
       @Override

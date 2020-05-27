@@ -280,10 +280,27 @@ public class DebuggerUtilsAsync {
           public void contextAction(@NotNull SuspendContextImpl suspendContext) {
             completeFuture(r, ex, res);
           }
+
+          @Override
+          protected void commandCancelled() {
+            // TODO: better exception
+            res.completeExceptionally(new Exception("Cancelled"));
+          }
         });
       }
       else {
-        thread.schedule(priority, () -> completeFuture(r, ex, res));
+        thread.schedule(new DebuggerCommandImpl(priority) {
+          @Override
+          protected void action() {
+            completeFuture(r, ex, res);
+          }
+
+          @Override
+          protected void commandCancelled() {
+            // TODO: better exception
+            res.completeExceptionally(new Exception("Cancelled"));
+          }
+        });
       }
     });
     return res;

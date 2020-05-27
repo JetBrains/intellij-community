@@ -60,6 +60,7 @@ import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.classFilter.DebuggerClassFilterProvider;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
@@ -221,7 +222,26 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @NotNull
-  public CompletableFuture<NodeRenderer> getAutoRendererAsync(Type type) {
+  public CompletableFuture<List<NodeRenderer>> getApplicableRenderers(Type type) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    CompletableFuture<Boolean>[] futures = myRenderers.stream().map(r -> r.isApplicableAsync(type)).toArray(CompletableFuture[]::new);
+    return CompletableFuture.allOf(futures).thenApply(__ -> {
+      List<NodeRenderer> res = new SmartList<>();
+      for (int i = 0; i < futures.length; i++) {
+        try {
+          if (futures[i].join()) {
+            res.add(myRenderers.get(i));
+          }
+        } catch (Exception e) {
+          LOG.debug(e);
+        }
+      }
+      return res;
+    });
+  }
+
+  @NotNull
+  public CompletableFuture<NodeRenderer> getAutoRendererAsync(@Nullable Type type) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     // in case evaluation is not possible, force default renderer
     if (!isEvaluationPossible()) {
@@ -233,16 +253,15 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       if (renderer != null) {
         return CompletableFuture.completedFuture(renderer);
       }
-      CompletableFuture<Boolean>[] futures = myRenderers.stream().map(r -> r.isApplicableAsync(type)).toArray(CompletableFuture[]::new);
-      return CompletableFuture.allOf(futures).thenApply(__ -> {
-        List<Boolean> res = StreamEx.of(futures).map(CompletableFuture::join).toList();
-        int idx = res.indexOf(true);
-        if (idx > -1) {
-          NodeRenderer r = myRenderers.get(idx);
-          myNodeRenderersMap.put(type, r);
-          return r;
+      return getApplicableRenderers(type).thenApply(renderers -> {
+        NodeRenderer r = ContainerUtil.getFirstItem(renderers);
+        if (r == null) {
+          r = getDefaultRenderer(type); // do not cache the fallback renderer
         }
-        return null;
+        else {
+          myNodeRenderersMap.put(type, r);
+        }
+        return r;
       });
     }
     catch (ClassNotPreparedException e) {

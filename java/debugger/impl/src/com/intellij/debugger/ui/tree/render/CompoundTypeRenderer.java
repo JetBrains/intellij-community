@@ -18,6 +18,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Type;
 import org.jetbrains.annotations.NonNls;
@@ -188,12 +189,23 @@ public class CompoundTypeRenderer extends CompoundNodeRenderer {
       throws EvaluateException {
       NodeRendererSettings nodeRendererSettings = NodeRendererSettings.getInstance();
       ToStringRenderer toStringRenderer = nodeRendererSettings.getToStringRenderer();
-      if (toStringRenderer.isEnabled() && toStringRenderer.isApplicable(descriptor.getType())) {
-        return toStringRenderer.calcLabel(descriptor, evaluationContext, listener);
+      CompletableFuture<Boolean> toStringApplicable = CompletableFuture.completedFuture(false);
+      if (toStringRenderer.isEnabled()) {
+        toStringApplicable = toStringRenderer.isApplicableAsync(descriptor.getType());
       }
-      else {
-        return nodeRendererSettings.getClassRenderer().calcLabel(descriptor, evaluationContext, listener);
-      }
+      CompletableFuture<String> res = toStringApplicable
+        .thenApply(applicable -> applicable ? toStringRenderer : nodeRendererSettings.getClassRenderer())
+        .thenApply(renderer -> {
+          try {
+              return renderer.calcLabel(descriptor, evaluationContext, listener);
+          }
+          catch (EvaluateException e) {
+            descriptor.setValueLabelFailed(e);
+            listener.labelChanged();
+            return "";
+          }
+        });
+      return res.getNow(XDebuggerUIConstants.getCollectingDataMessage());
     }
   }
 }

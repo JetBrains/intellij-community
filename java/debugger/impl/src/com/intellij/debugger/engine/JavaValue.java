@@ -292,95 +292,98 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-        myValueDescriptor.getChildrenRenderer(myEvaluationContext.getDebugProcess())
-          .buildChildren(myValueDescriptor.getValue(), new ChildrenBuilder() {
-          @Override
-          public NodeDescriptorFactory getDescriptorManager() {
-            return myNodeManager;
-          }
+        myValueDescriptor.getChildrenRendererAsync(myEvaluationContext.getDebugProcess())
+          .thenAccept(r -> {
+            r.buildChildren(myValueDescriptor.getValue(), new ChildrenBuilder() {
+              @Override
+              public NodeDescriptorFactory getDescriptorManager() {
+                return myNodeManager;
+              }
 
-          @Override
-          public NodeManager getNodeManager() {
-            return myNodeManager;
-          }
+              @Override
+              public NodeManager getNodeManager() {
+                return myNodeManager;
+              }
 
-          @Override
-          public ValueDescriptor getParentDescriptor() {
-            return myValueDescriptor;
-          }
+              @Override
+              public ValueDescriptor getParentDescriptor() {
+                return myValueDescriptor;
+              }
 
-          @Override
-          public void initChildrenArrayRenderer(ArrayRenderer renderer, int arrayLength) {
-            renderer.START_INDEX = 0;
-            if (myChildrenRemaining >= 0) {
-              renderer.START_INDEX = Math.max(0, arrayLength - myChildrenRemaining);
-            }
-          }
-
-          @Override
-          public void addChildren(List<? extends DebuggerTreeNode> nodes, boolean last) {
-            XValueChildrenList childrenList = XValueChildrenList.EMPTY;
-            if (!nodes.isEmpty()) {
-              childrenList = new XValueChildrenList(nodes.size());
-              for (DebuggerTreeNode treeNode : nodes) {
-                NodeDescriptor descriptor = treeNode.getDescriptor();
-                if (descriptor instanceof ValueDescriptorImpl) {
-                  // Value is calculated already in NodeManagerImpl
-                  childrenList.add(create(JavaValue.this, (ValueDescriptorImpl)descriptor, myEvaluationContext, myNodeManager, false));
-                }
-                else if (descriptor instanceof MessageDescriptor) {
-                  childrenList.add(
-                    new JavaStackFrame.DummyMessageValueNode(descriptor.getLabel(), DebuggerTreeRenderer.getDescriptorIcon(descriptor)));
+              @Override
+              public void initChildrenArrayRenderer(ArrayRenderer renderer, int arrayLength) {
+                renderer.START_INDEX = 0;
+                if (myChildrenRemaining >= 0) {
+                  renderer.START_INDEX = Math.max(0, arrayLength - myChildrenRemaining);
                 }
               }
-            }
-            node.addChildren(childrenList, last);
-          }
 
-          @Override
-          public void setChildren(List<? extends DebuggerTreeNode> nodes) {
-            addChildren(nodes, true);
-          }
+              @Override
+              public void addChildren(List<? extends DebuggerTreeNode> nodes, boolean last) {
+                XValueChildrenList childrenList = XValueChildrenList.EMPTY;
+                if (!nodes.isEmpty()) {
+                  childrenList = new XValueChildrenList(nodes.size());
+                  for (DebuggerTreeNode treeNode : nodes) {
+                    NodeDescriptor descriptor = treeNode.getDescriptor();
+                    if (descriptor instanceof ValueDescriptorImpl) {
+                      // Value is calculated already in NodeManagerImpl
+                      childrenList.add(create(JavaValue.this, (ValueDescriptorImpl)descriptor, myEvaluationContext, myNodeManager, false));
+                    }
+                    else if (descriptor instanceof MessageDescriptor) {
+                      childrenList.add(
+                        new JavaStackFrame.DummyMessageValueNode(descriptor.getLabel(),
+                                                                 DebuggerTreeRenderer.getDescriptorIcon(descriptor)));
+                    }
+                  }
+                }
+                node.addChildren(childrenList, last);
+              }
 
-          @Override
-          public void setMessage(@NotNull String message,
-                                 @Nullable Icon icon,
-                                 @NotNull SimpleTextAttributes attributes,
-                                 @Nullable XDebuggerTreeNodeHyperlink link) {
-            node.setMessage(message, icon, attributes, link);
-          }
+              @Override
+              public void setChildren(List<? extends DebuggerTreeNode> nodes) {
+                addChildren(nodes, true);
+              }
 
-          @Override
-          public void addChildren(@NotNull XValueChildrenList children, boolean last) {
-            node.addChildren(children, last);
-          }
+              @Override
+              public void setMessage(@NotNull String message,
+                                     @Nullable Icon icon,
+                                     @NotNull SimpleTextAttributes attributes,
+                                     @Nullable XDebuggerTreeNodeHyperlink link) {
+                node.setMessage(message, icon, attributes, link);
+              }
 
-          @Override
-          public void tooManyChildren(int remaining) {
-            myChildrenRemaining = remaining;
-            node.tooManyChildren(remaining);
-          }
+              @Override
+              public void addChildren(@NotNull XValueChildrenList children, boolean last) {
+                node.addChildren(children, last);
+              }
 
-          @Override
-          public void setAlreadySorted(boolean alreadySorted) {
-            node.setAlreadySorted(alreadySorted);
-          }
+              @Override
+              public void tooManyChildren(int remaining) {
+                myChildrenRemaining = remaining;
+                node.tooManyChildren(remaining);
+              }
 
-          @Override
-          public void setErrorMessage(@NotNull String errorMessage) {
-            node.setErrorMessage(errorMessage);
-          }
+              @Override
+              public void setAlreadySorted(boolean alreadySorted) {
+                node.setAlreadySorted(alreadySorted);
+              }
 
-          @Override
-          public void setErrorMessage(@NotNull String errorMessage, @Nullable XDebuggerTreeNodeHyperlink link) {
-            node.setErrorMessage(errorMessage, link);
-          }
+              @Override
+              public void setErrorMessage(@NotNull String errorMessage) {
+                node.setErrorMessage(errorMessage);
+              }
 
-          @Override
-          public boolean isObsolete() {
-            return node.isObsolete();
-          }
-        }, myEvaluationContext);
+              @Override
+              public void setErrorMessage(@NotNull String errorMessage, @Nullable XDebuggerTreeNodeHyperlink link) {
+                node.setErrorMessage(errorMessage, link);
+              }
+
+              @Override
+              public boolean isObsolete() {
+                return node.isObsolete();
+              }
+            }, myEvaluationContext);
+          });
       }
     });
   }
