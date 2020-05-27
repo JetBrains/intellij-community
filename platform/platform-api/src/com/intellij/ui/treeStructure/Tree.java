@@ -600,11 +600,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
   }
 
-  @Override
-  public boolean isExpanded(TreePath path) {
-    return isAlwaysExpanded(path) || super.isExpanded(path);
-  }
-
   private boolean isAlwaysExpanded(TreePath path) {
     return path != null && TreeUtil.getNodeDepth(this, path) <= 0;
   }
