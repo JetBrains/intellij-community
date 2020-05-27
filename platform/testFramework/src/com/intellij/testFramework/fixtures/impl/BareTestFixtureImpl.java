@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.HeavyPlatformTestCase;
@@ -33,6 +34,7 @@ public class BareTestFixtureImpl extends BaseFixture implements BareTestFixture 
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     new RunAll(
+      ()-> JarFileSystemImpl.cleanupForNextTest(),
       () -> EdtTestUtil.runInEdtAndWait(() -> HeavyPlatformTestCase.cleanupApplicationCaches(null)),
       () -> super.tearDown()
     ).run();

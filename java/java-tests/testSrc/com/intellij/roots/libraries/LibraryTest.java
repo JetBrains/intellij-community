@@ -310,13 +310,13 @@ public class LibraryTest extends ModuleRootManagerTestCase {
 
     FileUtil.copy(new File(originalLibJar.getPath()), new File(libDir.getPath(), originalLibJar.getName()));
     libDir.refresh(false, false);
+    assertTrue(rootsChanged.get());
     libJar = libDir.findFileByRelativePath(originalLibJar.getName());
     assertNotNull(libJar);
 
     UIUtil.dispatchAllInvocationEvents();
     aClass = JavaPsiFacade.getInstance(getProject()).findClass("l.InLib", GlobalSearchScope.allScope(getProject()));
     assertNotNull(aClass);
-    assertTrue(rootsChanged.get());
   }
 
   private static void commit(final Library.ModifiableModel modifiableModel) {

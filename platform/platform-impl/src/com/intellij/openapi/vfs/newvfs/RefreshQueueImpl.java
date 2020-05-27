@@ -113,7 +113,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
     }
   }
 
-  private static Runnable runAsyncListeners(@NotNull RefreshSessionImpl session) {
+  private static @NotNull Runnable runAsyncListeners(@NotNull RefreshSessionImpl session) {
     List<? extends VFileEvent> events = ContainerUtil.filter(session.getEvents(), e -> {
       VirtualFile file = e instanceof VFileCreateEvent ? ((VFileCreateEvent)e).getParent() : e.getFile();
       return file == null || file.isValid();

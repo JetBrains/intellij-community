@@ -29,11 +29,11 @@ import java.util.Map;
 /**
  * @author yole
  */
-public class CoreJarHandler extends ZipHandler {
+class CoreJarHandler extends ZipHandler {
   private final CoreJarFileSystem myFileSystem;
   private final VirtualFile myRoot;
 
-  public CoreJarHandler(@NotNull CoreJarFileSystem fileSystem, @NotNull String path) {
+  CoreJarHandler(@NotNull CoreJarFileSystem fileSystem, @NotNull String path) {
     super(path);
     myFileSystem = fileSystem;
 
@@ -72,12 +72,12 @@ public class CoreJarHandler extends ZipHandler {
   }
 
   @Nullable
-  public VirtualFile findFileByPath(@NotNull String pathInJar) {
+  VirtualFile findFileByPath(@NotNull String pathInJar) {
     return myRoot != null ? myRoot.findFileByRelativePath(pathInJar) : null;
   }
 
   @NotNull
-  public CoreJarFileSystem getFileSystem() {
+  CoreJarFileSystem getFileSystem() {
     return myFileSystem;
   }
 }

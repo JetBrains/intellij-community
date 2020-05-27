@@ -45,7 +45,7 @@ public class CoreJarFileSystem extends DeprecatedVirtualFileSystem {
   }
 
   @NotNull
-  protected Couple<String> splitPath(@NotNull String path) {
+  static Couple<String> splitPath(@NotNull String path) {
     int separator = path.indexOf("!/");
     if (separator < 0) {
       throw new IllegalArgumentException("Path in JarFileSystem must contain a separator: " + path);

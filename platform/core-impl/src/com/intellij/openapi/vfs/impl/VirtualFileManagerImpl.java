@@ -105,7 +105,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
     return selectFileSystem(protocol, systems);
   }
 
-  protected @Nullable VirtualFileSystem selectFileSystem(@NotNull String protocol, @NotNull List<VirtualFileSystem> candidates) {
+  private static VirtualFileSystem selectFileSystem(@NotNull String protocol, @NotNull List<? extends VirtualFileSystem> candidates) {
     int size = candidates.size();
     if (size == 0) {
       return null;

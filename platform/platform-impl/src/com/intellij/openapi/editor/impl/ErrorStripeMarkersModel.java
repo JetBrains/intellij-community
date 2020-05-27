@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * A mirror of highlighters which should be rendered on the error stripe.
  * */
-public class ErrorStripeMarkersModel implements MarkupModelListener {
+class ErrorStripeMarkersModel implements MarkupModelListener {
   private final EditorImpl myEditor;
   private final ErrorStripeRangeMarkerTree myTree;
   private final ErrorStripeRangeMarkerTree myTreeForLines;
@@ -32,7 +32,7 @@ public class ErrorStripeMarkersModel implements MarkupModelListener {
     myTreeForLines = new ErrorStripeRangeMarkerTree(myEditor.getDocument());
   }
 
-  public void addErrorMarkerListener(ErrorStripeListener listener, Disposable parent) {
+  void addErrorMarkerListener(ErrorStripeListener listener, Disposable parent) {
     ContainerUtil.add(listener, myListeners, parent);
   }
 
@@ -117,7 +117,7 @@ public class ErrorStripeMarkersModel implements MarkupModelListener {
     }
   }
 
-  public MarkupIterator<ErrorStripeMarkerImpl> overlappingIterator(int startOffset, int endOffset) {
+  MarkupIterator<ErrorStripeMarkerImpl> overlappingIterator(int startOffset, int endOffset) {
     startOffset = Math.max(0, startOffset);
     endOffset = Math.max(startOffset, endOffset);
 
@@ -132,11 +132,11 @@ public class ErrorStripeMarkersModel implements MarkupModelListener {
     return errorStripeMarker.getHighlighter().getTargetArea() == HighlighterTargetArea.EXACT_RANGE ? myTree : myTreeForLines;
   }
 
-  public void clear() {
+  void clear() {
     myTree.clear();
     myTreeForLines.clear();
   }
 
-  Comparator<ErrorStripeMarkerImpl> BY_AFFECTED_START_OFFSET =
+  private static final Comparator<ErrorStripeMarkerImpl> BY_AFFECTED_START_OFFSET =
     Comparator.comparingInt(marker -> marker.getHighlighter().getAffectedAreaStartOffset());
 }
