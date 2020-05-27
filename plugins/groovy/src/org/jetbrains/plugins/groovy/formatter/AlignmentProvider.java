@@ -17,14 +17,11 @@ public class AlignmentProvider {
   private final Map<Set<PsiElement>, Boolean> myAllowBackwardShift = new HashMap<>();
   private final Map<Set<PsiElement>, Alignment.Anchor> myAnchor = new HashMap<>();
 
-  public void addPair(@NotNull PsiElement e1, @NotNull PsiElement e2, @Nullable Boolean allowBackwardShift) {
+  public void addPair(@NotNull PsiElement e1, @NotNull PsiElement e2, boolean allowBackwardShift) {
     addPair(e1, e2, allowBackwardShift, null);
   }
 
-  private void addPair(@NotNull PsiElement e1,
-                       @NotNull PsiElement e2,
-                       @Nullable Boolean allowBackwardShift,
-                       @Nullable Alignment.Anchor anchor) {
+  private void addPair(@NotNull PsiElement e1, @NotNull PsiElement e2, boolean allowBackwardShift, @Nullable Alignment.Anchor anchor) {
     assert e1 != e2;
 
     final Set<PsiElement> set1 = myTree.get(e1);
@@ -34,9 +31,7 @@ public class AlignmentProvider {
       assert !myAlignments.containsKey(set1) || !myAlignments.containsKey(set2);
       assert myAllowBackwardShift.get(set1).booleanValue() == myAllowBackwardShift.get(set2).booleanValue();
       assert myAnchor.get(set1) == myAnchor.get(set2);
-      if (allowBackwardShift != null) {
-        assert myAllowBackwardShift.get(set1).booleanValue() == allowBackwardShift.booleanValue();
-      }
+      assert myAllowBackwardShift.get(set1).booleanValue() == allowBackwardShift;
       if (anchor != null) {
         assert myAnchor.get(set1) == anchor;
       }
