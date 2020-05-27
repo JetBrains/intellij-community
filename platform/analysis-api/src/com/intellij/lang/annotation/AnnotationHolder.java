@@ -203,9 +203,9 @@ public interface AnnotationHolder {
    *
    * @param severity The severity of the annotation.
    * @param message  The message this annotation will show in the status bar and the tooltip.
-   * @apiNote the builder created by this method is already initialized by the current element, i.e. psiElement currently visited by inspection
-   * visitor. You'll need to call {@link AnnotationBuilder#range()} explicitly only if target element differs from current element. E.g. name identifier.
-   * Please note, that range set with any {@link AnnotationBuilder#range()} must be inside the range of the current element.
+   * @apiNote The builder created by this method is already initialized by the current element, i.e. the psiElement currently visited by inspection
+   * visitor. You'll need to call {@link AnnotationBuilder#range(TextRange)} or similar method explicitly only if target element differs from current element.
+   * Please note, that the range in {@link AnnotationBuilder#range(TextRange)} must be inside the range of the current element.
    */
   @Contract(pure = true)
   @NotNull
@@ -220,9 +220,9 @@ public interface AnnotationHolder {
    * For example: <p>{@code holder.newSilentAnnotation(HighlightSeverity.WARNING).textAttributes(MY_ATTRIBUTES_KEY).create();}</p>
    *
    * @param severity The severity of the annotation.
-   * @apiNote the builder created by this method is already initialized by the current element, i.e. psiElement currently visited by inspection
-   * visitor. You'll need to call {@link AnnotationBuilder#range()} explicitly only if target element differs from current element. E.g. name identifier.
-   * Please note, that range set with any {@link AnnotationBuilder#range()} must be inside the range of the current element.
+   * @apiNote The builder created by this method is already initialized by the current element, i.e. the psiElement currently visited by inspection
+   * visitor. You'll need to call {@link AnnotationBuilder#range(TextRange)} or similar method explicitly only if target element differs from current element.
+   * Please note, that the range in {@link AnnotationBuilder#range(TextRange)} must be inside the range of the current element.
    */
   @Contract(pure = true)
   @NotNull
