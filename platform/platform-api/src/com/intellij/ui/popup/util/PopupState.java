@@ -14,7 +14,7 @@ import static com.intellij.openapi.util.registry.Registry.intValue;
  * This helper class is intended to prevent opening a popup right after its closing.
  */
 public class PopupState implements JBPopupListener, PopupMenuListener {
-  private final long threshold = intValue("ide.popup.hide.show.threshold", 1000);
+  private final long threshold = intValue("ide.popup.hide.show.threshold", 200);
   private boolean hidden;
   private long time;
 
