@@ -254,6 +254,8 @@ class VariableExtractor {
       NullableNotNullManager.getInstance(project).findExplicitNullability((PsiLocalVariable)probe.getDeclaredElements()[0]);
     NullabilityAnnotationInfo info = DfaPsiUtil.getTypeNullabilityInfo(type);
     if (info != null && nullabilityAnnotationInfo != null && info.getNullability() != nullabilityAnnotationInfo.getNullability() &&
+        // The type nullability could be inherited from hierarchy. E.g. if the type is type parameter T,
+        // which is defined as <T extends @NotNull Foo>. In this case we should not add @NotNull explicitly
         ArrayUtil.contains(info.getAnnotation(), type.getAnnotations())) {
       return type.annotate(TypeAnnotationProvider.Static.create(new PsiAnnotation[]{info.getAnnotation()}));
     }
