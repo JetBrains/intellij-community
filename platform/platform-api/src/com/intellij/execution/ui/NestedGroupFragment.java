@@ -23,7 +23,7 @@ public abstract class NestedGroupFragment<S extends FragmentedSettings> extends 
                                 Predicate<S> initialSelection) {
     super(id, name, group, null, null, null, initialSelection);
     myChildren = createChildren();
-    SettingsEditorListener<S> listener = editor -> fireEditorStateChanged();
+    SettingsEditorListener<S> listener = editor -> { updateVisibility(); fireEditorStateChanged(); };
     for (SettingsEditorFragment<S, ?> child : myChildren) {
       Disposer.register(this, child);
       child.addSettingsEditorListener(listener);
