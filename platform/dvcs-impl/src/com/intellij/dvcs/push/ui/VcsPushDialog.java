@@ -350,7 +350,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     return null;
   }
 
-  private class ComplexPushAction extends AbstractAction implements OptionAction {
+  private static class ComplexPushAction extends AbstractAction implements OptionAction {
     private final ActionWrapper myDefaultAction;
     private final List<? extends ActionWrapper> myOptions;
 
@@ -375,7 +375,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
     @Override
     public Action @NotNull [] getOptions() {
-      return myPushActions.toArray(new ActionWrapper[0]);
+      return myOptions.toArray(new ActionWrapper[0]);
     }
   }
 
