@@ -64,6 +64,16 @@ public interface TargetEnvironmentRequest {
   @NotNull
   TargetValue<Integer> bindTargetPort(int targetPort);
 
+  /**
+   * Creates the requirement to make a service listening on the provided port
+   * on the local machine available for the process in the target environment.
+   * <p>
+   * The returned value contains the host and the port, which the target
+   * process should connect to to access the local service.
+   */
+  @NotNull
+  TargetValue<HostPort> bindLocalPort(int localPort);
+
   interface Volume {
     @NotNull
     Platform getPlatform();

@@ -3,6 +3,7 @@ package com.intellij.execution.target.local;
 
 import com.intellij.execution.Platform;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.target.HostPort;
 import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.target.TargetPlatform;
 import com.intellij.execution.target.value.TargetValue;
@@ -61,6 +62,11 @@ public class LocalTargetEnvironmentRequest implements TargetEnvironmentRequest {
   @Override
   public TargetValue<Integer> bindTargetPort(int targetPort) {
     return TargetValue.fixed(targetPort);
+  }
+
+  @Override
+  public @NotNull TargetValue<HostPort> bindLocalPort(int localPort) {
+    return TargetValue.fixed(new HostPort("localhost", localPort));
   }
 
   @NotNull
