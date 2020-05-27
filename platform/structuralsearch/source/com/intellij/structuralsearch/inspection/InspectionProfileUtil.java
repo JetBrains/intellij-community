@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.inspection;
 
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -17,7 +18,7 @@ public class InspectionProfileUtil {
 
   private InspectionProfileUtil() {}
 
-  public static SSBasedInspection getStructuralSearchInspection(InspectionProfileImpl profile) {
+  public static SSBasedInspection getStructuralSearchInspection(InspectionProfile profile) {
     final InspectionToolWrapper<?, ?> wrapper = profile.getInspectionTool(SSBasedInspection.SHORT_NAME, (Project)null);
     assert wrapper != null;
     return (SSBasedInspection)wrapper.getTool();
