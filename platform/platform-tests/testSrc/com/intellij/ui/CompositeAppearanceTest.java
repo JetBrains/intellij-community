@@ -30,7 +30,7 @@ public class CompositeAppearanceTest extends TestCase {
     CompositeAppearance appearance2 = new CompositeAppearance();
     checkEquals(appearance1, appearance2);
     appearance1.getEnding().addText("abc", ATTRIBUTES);
-    assertNotEquals(ATTRIBUTES, appearance2);
+    assertNotEquals(appearance1, appearance2);
     appearance2.getEnding().addText("abc", ATTRIBUTES);
     checkEquals(appearance1, appearance2);
     appearance1.getEnding().addText("123", new TextAttributes(null, null, null, null, Font.PLAIN));
