@@ -926,12 +926,12 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     }
     int newSize = adapters.size();
 
+    clearCache();
     ExtensionPointListener<T>[] listeners = myListeners;
     if (listenerCallbacks == null || listeners.length == 0) {
       return;
     }
 
-    clearCache();
 
     List<ExtensionComponentAdapter> addedAdapters = Collections.emptyList();
     for (ExtensionPointListener<T> listener : listeners) {
