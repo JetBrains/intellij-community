@@ -58,7 +58,9 @@ public interface TabOutScopesTracker {
    *
    * @param tabOutOffset position where caret should be moved when Tab is used to exit the scope (should be larger than {@code offset})
    */
-  void registerEmptyScope(@NotNull Editor editor, int offset, int tabOutOffset);
+  default void registerEmptyScope(@NotNull Editor editor, int offset, int tabOutOffset) {
+    registerScopeRange(editor, offset, offset, tabOutOffset);
+  }
 
   /**
    * Checks whether given offset is at the end of tracked scope (so if caret is located at that offset, Tab key can be used to move out of
