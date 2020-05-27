@@ -96,5 +96,7 @@ internal sealed class EntitiesBarrel {
 
   open operator fun get(clazz: Int): EntityFamily<out TypedEntity>? = entities.getOrNull(clazz)
 
+  fun size() = entities.size
+
   internal fun allEntities() = entities.filterNotNull()
 }

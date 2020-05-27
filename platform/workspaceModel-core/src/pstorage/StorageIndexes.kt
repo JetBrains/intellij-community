@@ -17,6 +17,13 @@ internal open class StorageIndexes(
   internal open val persistentIdIndex: EntityStorageInternalIndex<PersistentEntityId<*>>,
   internal open val externalIndices: Map<String, ExternalEntityIndex<*>>
 ) {
+
+  constructor(softLinks: Multimap<PersistentEntityId<*>, PId>,
+              virtualFileIndex: VirtualFileIndex,
+              entitySourceIndex: EntityStorageInternalIndex<EntitySource>,
+              persistentIdIndex: EntityStorageInternalIndex<PersistentEntityId<*>>
+  ) : this(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex, emptyMap())
+
   companion object {
     val EMPTY = StorageIndexes(HashMultimap.create(), VirtualFileIndex(), EntityStorageInternalIndex(), EntityStorageInternalIndex(),
                                HashMap())

@@ -38,11 +38,7 @@ open class VirtualFileIndex private constructor(
       index = copyIndex()
     }
 
-    private fun copyIndex(): BidirectionalMultiMap<VirtualFileUrl, PId> {
-      val copy = BidirectionalMultiMap<VirtualFileUrl, PId>()
-      index.keys.forEach { key -> index.getValues(key).forEach { value -> copy.put(key, value) } }
-      return copy
-    }
+    private fun copyIndex(): BidirectionalMultiMap<VirtualFileUrl, PId> = index.copy()
 
     fun toImmutable(): VirtualFileIndex {
       freezed = true
@@ -53,6 +49,12 @@ open class VirtualFileIndex private constructor(
       fun from(other: VirtualFileIndex): MutableVirtualFileIndex = MutableVirtualFileIndex(other.index)
     }
   }
+}
+
+internal fun <A, B> BidirectionalMultiMap<A, B>.copy():BidirectionalMultiMap<A, B> {
+  val copy = BidirectionalMultiMap<A, B>()
+  this.keys.forEach { key -> this.getValues(key).forEach { value -> copy.put(key, value) } }
+  return copy
 }
 
 //---------------------------------------------------------------------

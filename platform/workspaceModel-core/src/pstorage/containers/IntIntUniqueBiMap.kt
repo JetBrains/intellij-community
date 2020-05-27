@@ -107,6 +107,22 @@ sealed class IntIntUniqueBiMap {
 
   abstract fun toImmutable(): ImmutableIntIntUniqueBiMap
 
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is IntIntUniqueBiMap) return false
+
+    if (key2Value != other.key2Value) return false
+    if (value2Key != other.value2Key) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = key2Value.hashCode()
+    result = 31 * result + value2Key.hashCode()
+    return result
+  }
+
   @PublishedApi
   internal val `access$key2Value`: Int2IntMap
     get() = key2Value

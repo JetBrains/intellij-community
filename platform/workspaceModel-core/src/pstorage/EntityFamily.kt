@@ -139,4 +139,19 @@ internal sealed class EntityFamily<E : TypedEntity> {
   fun all() = entities.asSequence().filterNotNull()
   fun isEmpty(): Boolean = entities.isEmpty()
   abstract fun size(): Int
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is EntityFamily<*>) return false
+
+    if (entities != other.entities) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int = entities.hashCode()
+
+  override fun toString(): String {
+    return "EntityFamily(entities=$entities)"
+  }
 }

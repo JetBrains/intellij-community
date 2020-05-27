@@ -37,11 +37,7 @@ open class EntityStorageInternalIndex<T> private constructor(
       index = copyIndex()
     }
 
-    private fun copyIndex(): BidirectionalMap<PId, T> {
-      val copy = BidirectionalMap<PId, T>()
-      index.keys.forEach { key -> index[key]?.also { value -> copy[key] = value } }
-      return copy
-    }
+    private fun copyIndex(): BidirectionalMap<PId, T> = index.copy()
 
     fun toImmutable(): EntityStorageInternalIndex<T> {
       freezed = true
@@ -55,3 +51,10 @@ open class EntityStorageInternalIndex<T> private constructor(
     }
   }
 }
+
+internal fun <A, B> BidirectionalMap<A, B>.copy(): BidirectionalMap<A, B> {
+  val copy = BidirectionalMap<A, B>()
+  keys.forEach { key -> this[key]?.also { value -> copy[key] = value } }
+  return copy
+}
+

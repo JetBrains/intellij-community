@@ -46,9 +46,12 @@ internal class ConnectionId private constructor(
     return result
   }
 
+  override fun toString(): String {
+    return "ConnectionId(parentClass=$parentClass, childClass=$childClass, connectionType=$connectionType, isParentNullable=$isParentNullable, isChildNullable=$isChildNullable)"
+  }
+
   companion object {
     /** This function should be [@Synchronized] because interner is not thread-save */
-    @Suppress("UNCHECKED_CAST")
     @Synchronized
     fun <T : TypedEntity, SUBT : TypedEntity> create(
       parentClass: Class<T>,

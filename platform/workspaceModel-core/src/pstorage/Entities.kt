@@ -152,6 +152,12 @@ abstract class PEntityData<E : TypedEntity> : Cloneable {
       .fold(31) { acc, i -> acc * 17 + i }
   }
 
+  override fun toString(): String {
+    val fields = this.javaClass.declaredFields.toList().onEach { it.isAccessible = true }
+      .joinToString(separator = ", ") { f -> "${f.name}= ${f.get(this)}" }
+    return "${this::class.simpleName}($fields)"
+  }
+
   /**
    * Temporally solution.
    * Get persistent Id without creating of TypedEntity. Should be in sync with TypedEntityWithPersistentId.
