@@ -19,8 +19,8 @@ internal class ProblemSearcher(private val file: PsiFile) : JavaElementVisitor()
     element.parent?.accept(this)
   }
 
-  override fun visitReferenceElement(reference: PsiJavaCodeReferenceElement?) {
-    if (seenReference) return
+  override fun visitReferenceElement(reference: PsiJavaCodeReferenceElement) {
+    if (seenReference && reference.resolve() != null) return
     seenReference = true
     super.visitReferenceElement(reference)
   }
