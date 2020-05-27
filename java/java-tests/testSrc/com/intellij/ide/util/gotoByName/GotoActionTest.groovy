@@ -13,6 +13,7 @@ import com.intellij.java.navigation.ChooseByNameTest
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.testFramework.PlatformTestUtil
@@ -97,6 +98,11 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     def action = ActionManager.instance.getAction("InvalidateCaches")
     assert actionMatches('штм', action) == MatchMode.NAME
     assert actionMatches('штм сфср', action) == MatchMode.NAME
+    assert actionMatches('привет мир', new DumbAwareAction("привет, мир") {
+      @Override
+      void actionPerformed(@NotNull AnActionEvent e) {
+      }
+    }) == MatchMode.NAME
   }
 
   void "test CamelCase text in action names"() {
