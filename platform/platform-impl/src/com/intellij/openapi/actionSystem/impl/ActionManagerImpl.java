@@ -94,6 +94,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private static final String MOUSE_SHORTCUT_ELEMENT_NAME = "mouse-shortcut";
   private static final String DESCRIPTION = "description";
   private static final String TEXT_ATTR_NAME = "text";
+  private static final String KEY_ATTR_NAME = "key";
   private static final String POPUP_ATTR_NAME = "popup";
   private static final String COMPACT_ATTR_NAME = "compact";
   private static final String SEPARATOR_ELEMENT_NAME = "separator";
@@ -810,7 +811,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
           }
         }
         else if (SEPARATOR_ELEMENT_NAME.equals(name)) {
-          processSeparatorNode((DefaultActionGroup)group, child, plugin.getPluginId());
+          processSeparatorNode((DefaultActionGroup)group, child, plugin.getPluginId(), bundle);
         }
         else if (GROUP_ELEMENT_NAME.equals(name)) {
           AnAction action = processGroupElement(child, plugin, bundle);
@@ -952,13 +953,15 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
    *                    case separator will be added to group described in the <add-to-group ....> subelement.
    * @param element     XML element which represent separator.
    */
-  private void processSeparatorNode(@Nullable DefaultActionGroup parentGroup, Element element, PluginId pluginId) {
+  private void processSeparatorNode(@Nullable DefaultActionGroup parentGroup, @NotNull Element element, PluginId pluginId, @Nullable ResourceBundle bundle) {
     if (!SEPARATOR_ELEMENT_NAME.equals(element.getName())) {
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
       return;
     }
     String text = element.getAttributeValue(TEXT_ATTR_NAME);
-    Separator separator = text != null ? new Separator(text) : Separator.getInstance();
+    String key = element.getAttributeValue(KEY_ATTR_NAME);
+    Separator separator =
+      text != null ? new Separator(text) : key != null ? createSeparator(bundle, key) : Separator.getInstance();
     if (parentGroup != null) {
       parentGroup.add(separator, this);
     }
@@ -968,6 +971,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         processAddToGroupNode(separator, child, pluginId, isSecondary(child));
       }
     }
+  }
+
+  @NotNull
+  private static Separator createSeparator(@Nullable ResourceBundle bundle, @NotNull String key) {
+    String text = bundle != null ? AbstractBundle.messageOrNull(bundle, key) : null;
+    return text != null ? new Separator(text) : Separator.getInstance();
   }
 
   private void processUnregisterNode(Element element, PluginId pluginId) {
@@ -1089,7 +1098,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         processGroupElement(child, plugin, bundle);
         break;
       case SEPARATOR_ELEMENT_NAME:
-        processSeparatorNode(null, child, plugin.getPluginId());
+        processSeparatorNode(null, child, plugin.getPluginId(), bundle);
         break;
       case REFERENCE_ELEMENT_NAME:
         processReferenceNode(child, plugin.getPluginId(), initialStartup);
