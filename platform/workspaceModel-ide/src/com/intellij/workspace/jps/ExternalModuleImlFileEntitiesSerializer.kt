@@ -84,8 +84,8 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
   }
 }
 
-internal class ExternalModuleSerializersFactory(private val externalStorageRoot: VirtualFileUrl) :
-  ModuleSerializersFactory(externalStorageRoot.append("project/modules.xml").url) {
+internal class ExternalModuleListSerializer(private val externalStorageRoot: VirtualFileUrl) :
+  ModuleListSerializerImpl(externalStorageRoot.append("project/modules.xml").url) {
   override val componentName: String
     get() = "ExternalProjectModuleManager"
 

@@ -172,9 +172,9 @@ fun JpsProjectSerializersImpl.checkConsistency(projectBaseDirUrl: String, storag
     assertEquals(directoryFileUrls.sorted(), fileSerializers.map { getNonNullActualFileUrl(it.internalEntitySource) }.sorted())
   }
 
-  fileSerializerFactoriesByUrl.forEach { (url, fileSerializer) ->
+  moduleListSerializersByUrl.forEach { (url, fileSerializer) ->
     assertEquals(url, fileSerializer.fileUrl)
-    val fileSerializers = serializerToFileFactory.getKeysByValue(fileSerializer) ?: emptyList()
+    val fileSerializers = moduleSerializers.getKeysByValue(fileSerializer) ?: emptyList()
     val urlsFromFactory = fileSerializer.loadFileList(CachingJpsFileContentReader(projectBaseDirUrl), virtualFileManager)
     assertEquals(urlsFromFactory.map { it.url }.sorted(), fileSerializers.map { getNonNullActualFileUrl(it.internalEntitySource) }.sorted())
   }
@@ -185,7 +185,7 @@ fun JpsProjectSerializersImpl.checkConsistency(projectBaseDirUrl: String, storag
     }
   }
 
-  serializerToFileFactory.keys.forEach {
+  moduleSerializers.keys.forEach {
     assertTrue(it in fileSerializersByUrl[getNonNullActualFileUrl(it.internalEntitySource)])
   }
 

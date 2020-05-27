@@ -58,22 +58,18 @@ interface JpsDirectoryEntitiesSerializerFactory<E : TypedEntity> {
 }
 
 /**
- * Represents a configuration file which contains references to other configuration files (e.g. .idea/modules.xml which contains references
- * to *.iml files).
+ * Represents a configuration file which contains references to individual modules files (an ipr file, or .idea/modules.xml, or modules.xml
+ * under external_build_system).
  */
-interface JpsFileSerializerFactory<E : TypedEntity> {
+interface JpsModuleListSerializer {
   val fileUrl: String
-  val entityClass: Class<E>
-  val additionalEntityClass: Class<out TypedEntity>
   val entitySourceFilter: (EntitySource) -> Boolean
     get() = { true }
 
-  /** Returns serializers for individual configuration files referenced from [fileUrl] */
   fun loadFileList(reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager): List<VirtualFileUrl>
-  fun createSerializer(internalSource: JpsFileEntitySource, fileUrl: VirtualFileUrl): JpsFileEntitiesSerializer<E>
-  fun saveEntitiesList(entities: Sequence<E>, writer: JpsFileContentWriter)
-  fun getMainEntity(additionalEntity: TypedEntity): E
-  fun getFileName(entity: E): String
+  fun createSerializer(internalSource: JpsFileEntitySource, fileUrl: VirtualFileUrl): JpsFileEntitiesSerializer<ModuleEntity>
+  fun saveEntitiesList(entities: Sequence<ModuleEntity>, writer: JpsFileContentWriter)
+  fun getFileName(entity: ModuleEntity): String
 
   fun deleteObsoleteFile(fileUrl: String, writer: JpsFileContentWriter)
 }
@@ -85,12 +81,12 @@ interface JpsProjectSerializers {
   companion object {
     fun createSerializers(entityTypeSerializers: List<JpsFileEntityTypeSerializer<*>>,
                           directorySerializersFactories: List<JpsDirectoryEntitiesSerializerFactory<*>>,
-                          fileSerializerFactories: List<JpsFileSerializerFactory<*>>,
+                          moduleListSerializers: List<JpsModuleListSerializer>,
                           configLocation: JpsProjectConfigLocation,
                           reader: JpsFileContentReader,
                           externalStorageMapping: JpsExternalStorageMapping,
                           virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
-      return JpsProjectSerializersImpl(directorySerializersFactories, fileSerializerFactories, reader, entityTypeSerializers, configLocation,
+      return JpsProjectSerializersImpl(directorySerializersFactories, moduleListSerializers, reader, entityTypeSerializers, configLocation,
                                        externalStorageMapping, virtualFileManager)
     }
   }

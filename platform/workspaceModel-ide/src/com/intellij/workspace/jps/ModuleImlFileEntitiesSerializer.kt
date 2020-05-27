@@ -525,7 +525,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   }
 }
 
-internal open class ModuleSerializersFactory(override val fileUrl: String) : JpsFileSerializerFactory<ModuleEntity> {
+internal open class ModuleListSerializerImpl(override val fileUrl: String) : JpsModuleListSerializer {
   companion object {
     internal fun createModuleEntitiesSerializer(fileUrl: VirtualFileUrl, source: JpsFileEntitySource) =
       ModuleImlFileEntitiesSerializer(ModulePath(JpsPathUtil.urlToPath(fileUrl.filePath), null), fileUrl, source)
@@ -536,16 +536,6 @@ internal open class ModuleSerializersFactory(override val fileUrl: String) : Jps
 
   override val entitySourceFilter: (EntitySource) -> Boolean
     get() = { it is JpsFileEntitySource || it is JpsImportedEntitySource && !it.storedExternally}
-
-  override val entityClass: Class<ModuleEntity>
-    get() = ModuleEntity::class.java
-
-  override fun getMainEntity(additionalEntity: TypedEntity): ModuleEntity {
-    return (additionalEntity as FacetEntity).module
-  }
-
-  override val additionalEntityClass: Class<out TypedEntity>
-    get() = FacetEntity::class.java
 
   override fun getFileName(entity: ModuleEntity): String {
     return "${entity.name}.iml"
