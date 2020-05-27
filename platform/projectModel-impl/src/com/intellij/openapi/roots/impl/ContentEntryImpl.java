@@ -45,7 +45,8 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   private List<String> myExcludePatterns;
 
   ContentEntryImpl(@NotNull VirtualFile file, @NotNull RootModelImpl m) {
-    this(file.getUrl(), m);
+    super(m);
+    myRoot = VirtualFilePointerManager.getInstance().create(file, this, m.getRootsChangedListener());
   }
 
   ContentEntryImpl(@NotNull String url, @NotNull RootModelImpl m) {
