@@ -2,7 +2,6 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -33,12 +32,12 @@ public class KeyboardLayoutUtil {
     return null;
   }
 
-  public static void storeAsciiForChar(int keyCode, char keyChar, TextRange asciiKeyCodesRange) {
-    if (!asciiKeyCodesRange.contains(keyCode)) return;
+  public static void storeAsciiForChar(int keyCode, char keyChar, int asciiFirstKeyCode, int asciiLastKeyCode) {
+    if (keyChar < asciiFirstKeyCode || asciiLastKeyCode < keyChar) return;
     if ('a' <= keyChar && keyChar <= 'z' || 'A' <= keyChar && keyChar <= 'Z') return;
     if (ourLLtoASCII.containsKey(keyChar)) return;
 
-    char converted = (char)((int)'a' + (keyCode - asciiKeyCodesRange.getStartOffset()));
+    char converted = (char)((int)'a' + (keyCode - asciiFirstKeyCode));
     if (Character.isUpperCase(keyChar)) {
       converted = Character.toUpperCase(converted);
     }

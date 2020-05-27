@@ -35,7 +35,6 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
@@ -250,7 +249,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     int mods = e.getModifiers();
     if ((mods & ~InputEvent.SHIFT_MASK & ~InputEvent.SHIFT_DOWN_MASK) != 0) return;
 
-    KeyboardLayoutUtil.storeAsciiForChar(e.getKeyCode(), aChar, TextRange.create(KeyEvent.VK_A, KeyEvent.VK_Z));
+    KeyboardLayoutUtil.storeAsciiForChar(e.getKeyCode(), aChar, KeyEvent.VK_A, KeyEvent.VK_Z);
   }
 
   private static boolean isSpeedSearchEditing(KeyEvent e) {
