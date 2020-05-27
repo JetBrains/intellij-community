@@ -69,7 +69,7 @@ class RenamingTypeMapper(private val nameMap: Map<in String, String>,
 
   override fun visitClassType(classType: PsiClassType): PsiType {
     val resolved = classType.resolve() ?: return classType
-    if (resolved is PsiTypeParameter && classType.name in nameMap) {
+    if (resolved is PsiTypeParameter && nameMap.containsKey(classType.name)) {
       val newName = nameMap.getValue(classType.name)
       return if (sourceMethod != null && newName in sourceTypeParameterNames!!) {
         sourceMethod.typeParameters.find { it.name == newName }!!.type()
