@@ -160,7 +160,7 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
   }
 
   private static boolean isDefaultNeededForInitializationOfVariable(PsiSwitchBlock switchBlock) {
-    Collection<PsiReferenceExpression> expressions = PsiTreeUtil.findChildrenOfType(switchBlock, PsiReferenceExpression.class);
+    final Collection<PsiReferenceExpression> expressions = PsiTreeUtil.findChildrenOfType(switchBlock, PsiReferenceExpression.class);
     final Set<PsiElement> checked = new THashSet<>();
     for (PsiReferenceExpression expression : expressions) {
       final PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);
@@ -175,7 +175,7 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
         continue;
       }
       final PsiElement target = expression.resolve();
-      if (!checked.add(target)) {
+      if (target != null && !checked.add(target)) {
         continue;
       }
       if (target instanceof PsiLocalVariable || target instanceof PsiField && ((PsiField)target).hasModifierProperty(PsiModifier.FINAL)) {
