@@ -32,6 +32,7 @@ import com.intellij.util.PathUtil
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.*
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleManagerComponent
+import com.intellij.workspace.legacyBridge.intellij.isExternalModuleFile
 import org.jdom.Element
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
@@ -141,7 +142,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
       childActivity = childActivity.endAndStart("(wm) Add changes to store")
       WriteAction.runAndWait<RuntimeException> {
         WorkspaceModel.getInstance(project).updateProjectModel { updater ->
-          updater.replaceBySource({ it is JpsFileEntitySource }, builder.toStorage())
+          updater.replaceBySource({ it is JpsFileEntitySource || it is JpsImportedEntitySource }, builder.toStorage())
         }
       }
       childActivity.end()
@@ -229,11 +230,11 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
 
 private class StorageJpsConfigurationReader(private val project: Project,
                                             private val baseDirUrl: String) : JpsFileContentReader {
-  override fun loadComponent(fileUrl: String, componentName: String): Element? {
+  override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
-    if (FileUtil.extensionEquals(filePath, "iml")) {
+    if (FileUtil.extensionEquals(filePath, "iml") || isExternalModuleFile(filePath)) {
       //todo fetch data from ModuleStore
-      return CachingJpsFileContentReader(baseDirUrl).loadComponent(fileUrl, componentName)
+      return CachingJpsFileContentReader(baseDirUrl).loadComponent(fileUrl, componentName, customModuleFilePath)
     }
     else {
       val storage = getProjectStateStorage(filePath, project.stateStore, project) ?: return null

@@ -18,6 +18,7 @@ import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.JpsImportedEntitySource
 import com.intellij.workspace.ide.JpsProjectConfigLocation
+import com.intellij.workspace.legacyBridge.intellij.isExternalModuleFile
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
@@ -389,21 +390,22 @@ internal class CachingJpsFileContentReader(projectBaseDirUrl: String) : JpsFileC
   private val projectPathMacroManager = LegacyBridgeProjectPathMacroManager(JpsPathUtil.urlToPath(projectBaseDirUrl))
   private val fileContentCache = ConcurrentHashMap<String, Map<String, Element>>()
 
-  override fun loadComponent(fileUrl: String, componentName: String): Element? {
+  override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? {
     val content = fileContentCache.computeIfAbsent(fileUrl) {
-      loadComponents(it)
+      loadComponents(it, customModuleFilePath)
     }
     return content[componentName]
   }
 
-  private fun loadComponents(fileUrl: String): Map<String, Element> {
-    val macroManager = if (FileUtil.extensionEquals(fileUrl, "iml")) {
-      LegacyBridgeModulePathMacroManager(PathMacros.getInstance(), JpsPathUtil.urlToPath(fileUrl))
+  private fun loadComponents(fileUrl: String, customModuleFilePath: String?): Map<String, Element> {
+    val path = JpsPathUtil.urlToPath(fileUrl)
+    val macroManager = if (FileUtil.extensionEquals(fileUrl, "iml") || isExternalModuleFile(path)) {
+      LegacyBridgeModulePathMacroManager(PathMacros.getInstance(), customModuleFilePath ?: path)
     }
     else {
       projectPathMacroManager
     }
-    val file = JpsPathUtil.urlToFile(fileUrl)
+    val file = File(path)
     if (!file.isFile) return emptyMap()
     return loadStorageFile(file, macroManager)
   }

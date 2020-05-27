@@ -21,10 +21,12 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.util.PathUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.exists
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.text.trimMiddle
+import org.jetbrains.annotations.TestOnly
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -138,9 +140,25 @@ fun Module.guessModuleDir(): VirtualFile? {
 
 @JvmOverloads
 fun Project.getProjectCacheFileName(isForceNameUse: Boolean = false, hashSeparator: String = ".", extensionWithDot: String = ""): String {
-  val presentableUrl = presentableUrl
+  return getProjectCacheFileName(presentableUrl, name, isForceNameUse, hashSeparator, extensionWithDot)
+}
+
+/**
+ * This is a variant of [getProjectCacheFileName] which can be used in tests before [Project] instance is created
+ * @param projectPath value of [Project.getPresentableUrl]
+ */
+@TestOnly
+fun getProjectCacheFileName(projectPath: String): String {
+  return getProjectCacheFileName(projectPath, PathUtil.getFileName(projectPath), false, ".", "")
+}
+
+private fun getProjectCacheFileName(presentableUrl: String?,
+                                    projectName: String,
+                                    isForceNameUse: Boolean,
+                                    hashSeparator: String,
+                                    extensionWithDot: String): String {
   var name = when {
-    isForceNameUse || presentableUrl == null -> name
+    isForceNameUse || presentableUrl == null -> projectName
     else -> {
       // lower case here is used for cosmetic reasons (develar - discussed with jeka - leave it as it was, user projects will not have long names as in our tests
       PathUtilRt.getFileName(presentableUrl).toLowerCase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)

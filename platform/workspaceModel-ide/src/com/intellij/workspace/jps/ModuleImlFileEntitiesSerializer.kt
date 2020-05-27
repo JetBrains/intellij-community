@@ -67,13 +67,15 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
     loadExternalSystemOptions(builder, moduleEntity, reader, externalSystemOptions, externalSystemId, entitySource)
 
-    val rootManagerElement = reader.loadComponent(fileUrl.url, MODULE_ROOT_MANAGER_COMPONENT_NAME)?.clone()
+    val rootManagerElement = reader.loadComponent(fileUrl.url, MODULE_ROOT_MANAGER_COMPONENT_NAME, getBaseDirPath())?.clone()
     if (rootManagerElement != null) {
       loadRootManager(rootManagerElement, moduleEntity, builder, virtualFileManager)
     }
 
     createFacetSerializer().loadFacetEntities(builder, moduleEntity, reader)
   }
+
+  protected open fun getBaseDirPath(): String? = null
 
   protected open fun readExternalSystemOptions(reader: JpsFileContentReader,
                                                moduleOptions: Map<String?, String?>): Pair<Map<String?, String?>, String?> {
@@ -84,7 +86,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   }
 
   private fun readModuleOptions(reader: JpsFileContentReader): Map<String?, String?> {
-    val component = reader.loadComponent(fileUrl.url, "DeprecatedModuleOptionManager") ?: return emptyMap()
+    val component = reader.loadComponent(fileUrl.url, "DeprecatedModuleOptionManager", getBaseDirPath()) ?: return emptyMap()
     return component.getChildren("option").associateBy({ it.getAttributeValue("key") },
                                                        { it.getAttributeValue("value") })
   }

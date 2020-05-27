@@ -2,6 +2,7 @@
 package com.intellij.workspace.jps
 
 import com.intellij.openapi.module.impl.ModulePath
+import com.intellij.util.PathUtil
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.JpsImportedEntitySource
@@ -20,7 +21,7 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
 
   override fun readExternalSystemOptions(reader: JpsFileContentReader,
                                          moduleOptions: Map<String?, String?>): Pair<Map<String?, String?>, String?> {
-    val componentTag = reader.loadComponent(fileUrl.url, "ExternalSystem") ?: return Pair(emptyMap(), null)
+    val componentTag = reader.loadComponent(fileUrl.url, "ExternalSystem", null) ?: return Pair(emptyMap(), null)
     val options = componentTag.attributes.associateBy({ it.name }, { it.value })
     return Pair(options, options["externalSystem"])
   }
@@ -77,9 +78,13 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
   override fun createFacetSerializer(): FacetEntitiesSerializer {
     return FacetEntitiesSerializer(fileUrl, internalEntitySource, "ExternalFacetManager", true)
   }
+
+  override fun getBaseDirPath(): String? {
+    return modulePath.path
+  }
 }
 
-internal class ExternalModuleSerializersFactory(externalStorageRoot: VirtualFileUrl) :
+internal class ExternalModuleSerializersFactory(private val externalStorageRoot: VirtualFileUrl) :
   ModuleSerializersFactory(externalStorageRoot.append("project/modules.xml").url) {
   override val componentName: String
     get() = "ExternalProjectModuleManager"
@@ -96,7 +101,14 @@ internal class ExternalModuleSerializersFactory(externalStorageRoot: VirtualFile
   }
 
   override fun createSerializer(internalSource: JpsFileEntitySource, fileUrl: VirtualFileUrl): JpsFileEntitiesSerializer<ModuleEntity> {
-    return ExternalModuleImlFileEntitiesSerializer(ModulePath(JpsPathUtil.urlToPath(fileUrl.filePath), null), fileUrl,
+    val fileName = PathUtil.getFileName(fileUrl.url)
+    val actualFileUrl = if (PathUtil.getFileExtension(fileName) == "iml") {
+      externalStorageRoot.append("modules/${fileName.substringBeforeLast('.')}.xml")
+    }
+    else {
+      fileUrl
+    }
+    return ExternalModuleImlFileEntitiesSerializer(ModulePath(JpsPathUtil.urlToPath(fileUrl.filePath), null), actualFileUrl,
                                                    internalSource)
   }
 }

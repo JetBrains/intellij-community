@@ -12,7 +12,7 @@ import org.jetbrains.annotations.TestOnly
  * reading the same file multiple times.
  */
 interface JpsFileContentReader {
-  fun loadComponent(fileUrl: String, componentName: String): Element?
+  fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String? = null): Element?
 }
 
 interface JpsFileContentWriter {
