@@ -77,9 +77,6 @@ public abstract class ContentFolderBaseImpl extends RootModelComponentBase imple
 
   @Override
   public VirtualFile getFile() {
-    if (!myFilePointer.isValid()) {
-      return null;
-    }
     return myFilePointer.getFile();
   }
 
