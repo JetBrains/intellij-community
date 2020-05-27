@@ -1,15 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.api
 
-import com.intellij.workspace.api.pstorage.PEntityStorage
-import com.intellij.workspace.api.pstorage.PEntityStorageBuilder
-import com.intellij.workspace.api.pstorage.PSerializer
-import junit.framework.Assert.*
-import org.jetbrains.annotations.TestOnly
+import com.intellij.util.containers.BidirectionalMap
+import com.intellij.util.containers.BidirectionalMultiMap
+import com.intellij.workspace.api.pstorage.*
+import com.intellij.workspace.api.pstorage.indices.copy
+import junit.framework.TestCase.assertTrue
+import junit.framework.TestCase.assertEquals
 import org.junit.Assert
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
-import kotlin.reflect.KType
+import java.util.*
+import java.util.function.BiPredicate
 import kotlin.reflect.full.memberProperties
 
 class TestEntityTypesResolver : EntityTypesResolver {
@@ -22,161 +24,124 @@ class TestEntityTypesResolver : EntityTypesResolver {
   }
 }
 
-fun verifyPSerializationRoundTrip(storage: TypedEntityStorage, virtualFileManager: VirtualFileUrlManager): ByteArray {
-  storage as PEntityStorage
+object SerializationRoundTripChecker {
+  fun verifyPSerializationRoundTrip(storage: TypedEntityStorage, virtualFileManager: VirtualFileUrlManager): ByteArray {
+    storage as PEntityStorage
 
-  fun assertStorageEquals(expected: PEntityStorage, actual: PEntityStorage) {
-    assertEquals(
-      actual.entitiesByType.allEntities(),
-      expected.entitiesByType.allEntities()
-    )
+    val serializer = PSerializer(TestEntityTypesResolver(), virtualFileManager)
 
+    val stream = ByteArrayOutputStream()
+    serializer.serializeCache(stream, storage)
+
+    val byteArray = stream.toByteArray()
+    val deserialized = (serializer.deserializeCache(ByteArrayInputStream(byteArray)) as PEntityStorageBuilder).toStorage()
+
+    assertStorageEquals(storage, deserialized)
+
+    return byteArray
+  }
+
+  private fun assertStorageEquals(expected: PEntityStorage, actual: PEntityStorage) {
+    // Assert entity data
+    assertEquals(expected.entitiesByType.size(), actual.entitiesByType.size())
     for ((clazz, expectedEntityFamily) in expected.entitiesByType.allEntities().withIndex()) {
-      val actualEntityFamily = actual.entitiesByType.allEntities().get(clazz)
+      val actualEntityFamily = actual.entitiesByType.allEntities()[clazz]
 
       val expectedEntities = expectedEntityFamily.entities
       val actualEntities = actualEntityFamily.entities
-      assertEquals(expectedEntities.size, actualEntities.size)
 
-      fun KType.isList(): Boolean = this.toString().startsWith("kotlin.collections.List")
-      for (i in expectedEntities.indices) {
-        val expectedEntity = expectedEntities[i]
-        val actualEntity = actualEntities[i]
-        if (expectedEntity == null) {
-          assertNull(actualEntity)
-          continue
-        }
+      assertOrderedEquals(expectedEntities, actualEntities)
+    }
 
-        for (it in expectedEntity::class.memberProperties) {
-          val expectedField = it.getter.call(expectedEntity)
-          if (expectedField == null) {
-            assertNull(it.getter.call(actualEntity))
-            continue
-          }
+    // Assert refs
+    assertMapsEqual(expected.refs.oneToOneContainer, actual.refs.oneToOneContainer)
+    assertMapsEqual(expected.refs.oneToManyContainer, actual.refs.oneToManyContainer)
+    assertMapsEqual(expected.refs.abstractOneToOneContainer, actual.refs.abstractOneToOneContainer)
+    assertMapsEqual(expected.refs.oneToAbstractManyContainer, actual.refs.oneToAbstractManyContainer)
+    // Just checking that all properties have been asserted
+    assertEquals(4, RefsTable::class.memberProperties.size)
 
+    // Assert indexes
+    assertMapsEqual(expected.indexes.softLinks.asMap(), actual.indexes.softLinks.asMap())
+    assertBiMultiMap(expected.indexes.virtualFileIndex.index, actual.indexes.virtualFileIndex.index)
+    assertBiMap(expected.indexes.entitySourceIndex.index, actual.indexes.entitySourceIndex.index)
+    assertBiMap(expected.indexes.persistentIdIndex.index, actual.indexes.persistentIdIndex.index)
+    // External index should not be persisted
+    assertTrue(actual.indexes.externalIndices.isEmpty())
+    // Just checking that all properties have been asserted
+    assertEquals(5, StorageIndexes::class.memberProperties.size)
+  }
 
-          val retType = expectedField::class
-          val objectInstance = retType.objectInstance
-          if (objectInstance != null) continue
+  // Use UsefulTestCase.assertOrderedEquals in case it'd be used in this module
+  private fun <T> assertOrderedEquals(actual: Iterable<T?>, expected: Iterable<T?>) {
+    if (!equals<T>(actual, expected, BiPredicate { a: T?, b: T? -> a == b })) {
+      val expectedString: String = expected.toString()
+      val actualString: String = actual.toString()
+      Assert.assertEquals("", expectedString, actualString)
+      Assert.fail(
+        "Warning! 'toString' does not reflect the difference.\nExpected: $expectedString\nActual: $actualString")
+    }
+  }
 
-          var enableCheck = true
-          (expectedField as? List<Any>)?.forEach {
-            val objInstance = it::class.objectInstance
-            if (objInstance != null) {
-              enableCheck = false
-              return@forEach
-            }
-          }
-          if (!enableCheck) continue
-
-          if (expectedField is LibraryId) {
-            assertEquals(expectedField.name, (it.getter.call(actualEntity) as LibraryId).name)
-            continue
-          }
-
-          assertTrue(expectedField == it.getter.call(actualEntity))
-        }
+  private fun <T> equals(a1: Iterable<T?>, a2: Iterable<T?>, predicate: BiPredicate<in T?, in T?>): Boolean {
+    val it1 = a1.iterator()
+    val it2 = a2.iterator()
+    while (it1.hasNext() || it2.hasNext()) {
+      if (!it1.hasNext() || !it2.hasNext() || !predicate.test(it1.next(), it2.next())) {
+        return false
       }
     }
+    return true
   }
 
-  val serializer = PSerializer(virtualFileManager)
-
-  val stream = ByteArrayOutputStream()
-  serializer.serializeCache(stream, storage)
-
-  val byteArray = stream.toByteArray()
-  val deserialized = (serializer.deserializeCache(ByteArrayInputStream(byteArray)) as PEntityStorageBuilder).toStorage()
-
-  assertStorageEquals(storage, deserialized)
-
-  return byteArray
-}
-
-fun verifySerializationRoundTrip(storage: TypedEntityStorage, virtualFileManager: VirtualFileUrlManager): ByteArray {
-  storage as ProxyBasedEntityStorage
-
-  fun assertEntityDataEquals(expected: EntityData, actual: EntityData) {
-    Assert.assertEquals(expected.id, actual.id)
-    Assert.assertEquals(expected.unmodifiableEntityType, actual.unmodifiableEntityType)
-    Assert.assertEquals(expected.properties, actual.properties)
-    Assert.assertEquals(expected.entitySource, actual.entitySource)
-  }
-
-  fun assertEntityDataSetEquals(expected: Set<EntityData>, actual: Set<EntityData>) {
-    Assert.assertEquals(expected.size, actual.size)
-    val sortedExpected = expected.sortedBy { it.id }
-    val sortedActual = actual.sortedBy { it.id }
-
-    for ((expectedData, actualData) in sortedExpected.zip(sortedActual)) {
-      assertEntityDataEquals(expectedData, actualData)
+  private fun assertMapsEqual(expected: Map<*, *>, actual: Map<*, *>) {
+    val local = HashMap(expected)
+    for ((key, value) in actual) {
+      val expectedValue = local.remove(key)
+      if (expectedValue == null) {
+        Assert.fail(String.format("Expected to find '%s' -> '%s' mapping but it doesn't exist", key, value))
+      }
+      if (expectedValue != value) {
+        Assert.fail(
+          String.format("Expected to find '%s' value for the key '%s' but got '%s'", expectedValue, key, value))
+      }
+    }
+    if (local.isNotEmpty()) {
+      Assert.fail("No mappings found for the following keys: " + local.keys)
     }
   }
 
-  fun assertStorageEquals(expected: ProxyBasedEntityStorage, actual: ProxyBasedEntityStorage) {
-    Assert.assertEquals(expected.referrers.keys, actual.referrers.keys)
-    for (key in expected.referrers.keys) {
-      Assert.assertEquals(expected.referrers.getValue(key).toSet(), actual.referrers.getValue(key).toSet())
-    }
+  private fun <A, B> assertBiMultiMap(expected: BidirectionalMultiMap<A, B>, actual: BidirectionalMultiMap<A, B>) {
+    val local = expected.copy()
+    for (key in actual.keys) {
+      val value = actual.getValues(key)
+      val expectedValue = local.getValues(key)
+      local.removeKey(key)
 
-    Assert.assertEquals(expected.entityById.keys, actual.entityById.keys)
-    for (id in expected.entityById.keys) {
-      assertEntityDataEquals(expected.entityById.getValue(id), actual.entityById.getValue(id))
+      assertOrderedEquals(expectedValue, value)
     }
-
-    Assert.assertEquals(expected.entitiesBySource.keys, actual.entitiesBySource.keys)
-    for (source in expected.entitiesBySource.keys) {
-      assertEntityDataSetEquals(expected.entitiesBySource.getValue(source), actual.entitiesBySource.getValue(source))
-    }
-
-    Assert.assertEquals(expected.entitiesByType.keys, actual.entitiesByType.keys)
-    for (type in expected.entitiesByType.keys) {
-      assertEntityDataSetEquals(expected.entitiesByType.getValue(type), actual.entitiesByType.getValue(type))
-    }
-
-    Assert.assertEquals(expected.entitiesByPersistentIdHash.keys, actual.entitiesByPersistentIdHash.keys)
-    for (idHash in expected.entitiesByPersistentIdHash.keys) {
-      assertEntityDataSetEquals(expected.entitiesByPersistentIdHash.getValue(idHash), actual.entitiesByPersistentIdHash.getValue(idHash))
+    if (!local.isEmpty) {
+      Assert.fail("No mappings found for the following keys: " + local.keys)
     }
   }
 
-  val serializer = KryoEntityStorageSerializer(TestEntityTypesResolver(), virtualFileManager)
+  private fun <A, B> assertBiMap(expected: BidirectionalMap<A, B>, actual: BidirectionalMap<A, B>) {
+    val local = expected.copy()
+    for (key in actual.keys) {
+      val value = actual.getValue(key)
+      val expectedValue = local.remove(key)
 
-  val stream = ByteArrayOutputStream()
-  serializer.serializeCache(stream, storage)
+      if (expectedValue == null) {
+        Assert.fail(String.format("Expected to find '%s' -> '%s' mapping but it doesn't exist", key, value))
+      }
 
-  val byteArray = stream.toByteArray()
-  val deserialized = serializer.deserializeCache(ByteArrayInputStream(byteArray)) as ProxyBasedEntityStorage
-
-  assertStorageEquals(storage, deserialized)
-
-  return byteArray
-}
-
-@TestOnly
-fun TypedEntityStorage.toGraphViz(): String {
-  this as ProxyBasedEntityStorage
-
-  val sb = StringBuilder()
-  sb.appendln("digraph G {")
-
-  val visited = mutableSetOf<Long>()
-
-  for ((id, refs) in referrers) {
-    visited.add(id)
-    for (ref in refs) {
-      visited.add(ref)
-      sb.appendln("""  "${entityById.getValue(ref)}" -> "${entityById.getValue(id)}";""")
+      if (expectedValue != value) {
+        Assert.fail(
+          String.format("Expected to find '%s' value for the key '%s' but got '%s'", expectedValue, key, value))
+      }
+    }
+    if (local.isNotEmpty()) {
+      Assert.fail("No mappings found for the following keys: " + local.keys)
     }
   }
-
-  for ((id, data) in entityById) {
-    if (!visited.contains(id)) {
-      sb.appendln("""  "$data";""")
-    }
-  }
-
-  sb.appendln("}")
-
-  return sb.toString()
 }
