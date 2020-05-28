@@ -144,7 +144,7 @@ class SliceUtil {
         return processFieldUsages((PsiField)variable, builder.dropSyntheticField(), processor);
       }
       else if (variable instanceof PsiParameter) {
-        return processParameterUsages((PsiParameter)variable, builder.withFilter(JavaValueFilter::popFrame), processor);
+        return processParameterUsages((PsiParameter)variable, builder.withFilter(f -> f.popFrame(variable.getProject())), processor);
       }
     }
     if (expression instanceof PsiMethodCallExpression) { // ctr call can't return value or be container get, so don't use PsiCall here

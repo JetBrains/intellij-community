@@ -2,23 +2,27 @@
 package com.intellij.slicer;
 
 import com.intellij.execution.filters.ExceptionAnalysisProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Allows to narrow dataflow-to-here results based on known stacktrace.
- * TODO: support bridge methods
  */
 class StackFilter {
   final int myExtraFrames;
@@ -116,9 +120,43 @@ class StackFilter {
     return new StackFilter(myExtraFrames + 1, myClassName, myMethodName, myFileName, myNext);
   }
   
-  @Nullable StackFilter popFrame() {
-    return myExtraFrames == 0 ? myNext :
-           new StackFilter(myExtraFrames - 1, myClassName, myMethodName, myFileName, myNext);
+  @Nullable StackFilter popFrame(Project project) {
+    if (myExtraFrames == 0) {
+      if (myNext != null && myClassName.equals(myNext.myClassName) &&
+          myMethodName.equals(myNext.myMethodName) && Objects.equals(myFileName, myNext.myFileName)) {
+        PsiClass psiClass = ClassUtil.findPsiClass(PsiManager.getInstance(project), myClassName, null, true);
+        if (psiClass != null) {
+          PsiMethod[] methods = psiClass.findMethodsByName(myMethodName, false);
+          for (PsiMethod method : methods) {
+            if (isBridge(method)) return myNext.myNext;
+          }
+        }
+      }
+      return myNext;
+    }
+    return new StackFilter(myExtraFrames - 1, myClassName, myMethodName, myFileName, myNext);
+  }
+
+  private static boolean isBridge(PsiMethod method) {
+    PsiMethod[] superMethods = method.findSuperMethods();
+    if (superMethods.length == 0) return false;
+    PsiType returnType = TypeConversionUtil.erasure(method.getReturnType());
+    List<PsiType> parameterTypes = ContainerUtil.map(method.getParameterList().getParameters(), 
+                                                     p -> TypeConversionUtil.erasure(p.getType()));
+    for (PsiMethod superMethod : superMethods) {
+      if (!Objects.equals(returnType, TypeConversionUtil.erasure(superMethod.getReturnType()))) {
+        return true;
+      }
+      PsiParameter[] parameters = superMethod.getParameterList().getParameters();
+      if (parameters.length == parameterTypes.size()) {
+        for (int i = 0; i < parameters.length; i++) {
+          if (!Objects.equals(TypeConversionUtil.erasure(parameters[i].getType()), parameterTypes.get(i))) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   static @Nullable StackFilter from(List<ExceptionAnalysisProvider.StackLine> list) {
