@@ -38,8 +38,13 @@ public class AttachmentFactory {
 
   @NotNull
   public static Attachment createAttachment(@NotNull VirtualFile file) {
+    return createAttachment(file.getPresentableUrl(), file);
+  }
+
+  @NotNull
+  public static Attachment createAttachment(@NotNull String path, @NotNull VirtualFile file) {
     try (InputStream inputStream = file.getInputStream()) {
-      return createAttachment(file.getPresentableUrl(), inputStream, file.getLength(), file.getFileType().isBinary());
+      return createAttachment(path, inputStream, file.getLength(), file.getFileType().isBinary());
     }
     catch (IOException e) {
       return handleException(e, file.getPath());
