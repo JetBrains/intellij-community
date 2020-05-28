@@ -25,6 +25,7 @@ import git4idea.GitFileRevision
 import git4idea.GitRevisionNumber
 import git4idea.GitUtil
 import git4idea.history.GitHistoryUtils
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
@@ -38,31 +39,31 @@ open class GHOpenInBrowserActionGroup
                 AllIcons.Vcs.Vendors.Github), DumbAware {
 
   override fun update(e: AnActionEvent) {
-    val repositories = getData(e.dataContext)?.first
-    e.presentation.isEnabledAndVisible = repositories != null && repositories.isNotEmpty()
+    val data = getData(e.dataContext)
+    e.presentation.isEnabledAndVisible = data != null && data.isNotEmpty()
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     e ?: return emptyArray()
     val data = getData(e.dataContext) ?: return emptyArray()
-    if (data.first.size <= 1) return emptyArray()
+    if (data.size <= 1) return emptyArray()
 
-    return data.first.map { GithubOpenInBrowserAction(it, data.second) }.toTypedArray()
+    return data.map { GithubOpenInBrowserAction(it) }.toTypedArray()
   }
 
   override fun isPopup(): Boolean = true
 
   override fun actionPerformed(e: AnActionEvent) {
-    getData(e.dataContext)?.let { GithubOpenInBrowserAction(it.first.first(), it.second) }?.actionPerformed(e)
+    getData(e.dataContext)?.let { GithubOpenInBrowserAction(it.first()) }?.actionPerformed(e)
   }
 
   override fun canBePerformed(context: DataContext): Boolean {
-    return getData(context)?.first?.size == 1
+    return getData(context)?.size == 1
   }
 
   override fun disableIfNoVisibleChildren(): Boolean = false
 
-  protected open fun getData(dataContext: DataContext): Pair<Set<GHRepositoryCoordinates>, Data>? {
+  protected open fun getData(dataContext: DataContext): List<Data>? {
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return null
 
     return getDataFromPullRequest(project, dataContext)
@@ -71,14 +72,12 @@ open class GHOpenInBrowserActionGroup
            ?: getDataFromVirtualFile(project, dataContext)
   }
 
-  private fun getDataFromPullRequest(project: Project, dataContext: DataContext): Pair<Set<GHRepositoryCoordinates>, Data>? {
+  private fun getDataFromPullRequest(project: Project, dataContext: DataContext): List<Data>? {
     val pullRequest = dataContext.getData(GHPRActionKeys.SELECTED_PULL_REQUEST) ?: return null
-    val context = dataContext.getData(GHPRActionKeys.DATA_CONTEXT) ?: return null
-
-    return setOf(context.repositoryCoordinates) to Data.URL(project, pullRequest.url)
+    return listOf(Data.URL(project, pullRequest.url))
   }
 
-  private fun getDataFromHistory(project: Project, dataContext: DataContext): Pair<Set<GHRepositoryCoordinates>, Data>? {
+  private fun getDataFromHistory(project: Project, dataContext: DataContext): List<Data>? {
     val fileRevision = dataContext.getData(VcsDataKeys.VCS_FILE_REVISION) ?: return null
     if (fileRevision !is GitFileRevision) return null
 
@@ -88,10 +87,10 @@ open class GHOpenInBrowserActionGroup
     val accessibleRepositories = service<GithubGitHelper>().getPossibleRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
-    return accessibleRepositories to Data.Revision(project, fileRevision.revisionNumber.asString())
+    return accessibleRepositories.map { Data.Revision(project, it, fileRevision.revisionNumber.asString()) }
   }
 
-  private fun getDataFromLog(project: Project, dataContext: DataContext): Pair<Set<GHRepositoryCoordinates>, Data>? {
+  private fun getDataFromLog(project: Project, dataContext: DataContext): List<Data>? {
     val log = dataContext.getData(VcsLogDataKeys.VCS_LOG) ?: return null
 
     val selectedCommits = log.selectedCommits
@@ -105,10 +104,10 @@ open class GHOpenInBrowserActionGroup
     val accessibleRepositories = service<GithubGitHelper>().getPossibleRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
-    return accessibleRepositories to Data.Revision(project, commit.hash.asString())
+    return accessibleRepositories.map { Data.Revision(project, it, commit.hash.asString()) }
   }
 
-  private fun getDataFromVirtualFile(project: Project, dataContext: DataContext): Pair<Set<GHRepositoryCoordinates>, Data>? {
+  private fun getDataFromVirtualFile(project: Project, dataContext: DataContext): List<Data>? {
     val virtualFile = dataContext.getData(CommonDataKeys.VIRTUAL_FILE) ?: return null
 
     val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(virtualFile)
@@ -122,25 +121,39 @@ open class GHOpenInBrowserActionGroup
 
     val change = changeListManager.getChange(virtualFile)
     return if (change != null && change.type == Change.Type.NEW) null
-    else accessibleRepositories to Data.File(project, repository.root, virtualFile)
+    else accessibleRepositories.map { Data.File(project, it, repository.root, virtualFile) }
   }
 
   protected sealed class Data(val project: Project) {
-    class File(project: Project, val gitRepoRoot: VirtualFile, val virtualFile: VirtualFile) : Data(project)
 
-    class Revision(project: Project, val revisionHash: String) : Data(project)
+    @Nls
+    abstract fun getName(): String
 
-    class URL(project: Project, val htmlUrl: String) : Data(project)
+    class File(project: Project,
+               val repository: GHRepositoryCoordinates,
+               val gitRepoRoot: VirtualFile,
+               val virtualFile: VirtualFile) : Data(project) {
+      override fun getName() = repository.toString().replace('_', ' ')
+    }
+
+    class Revision(project: Project, val repository: GHRepositoryCoordinates, val revisionHash: String) : Data(project) {
+      override fun getName() = repository.toString().replace('_', ' ')
+    }
+
+    class URL(project: Project, val htmlUrl: String) : Data(project) {
+      override fun getName() = htmlUrl
+    }
   }
 
   private companion object {
-    class GithubOpenInBrowserAction(private val repoPath: GHRepositoryCoordinates, val data: Data)
-      : DumbAwareAction({ repoPath.toString().replace('_', ' ') }) {
+    class GithubOpenInBrowserAction(val data: Data)
+      : DumbAwareAction({ data.getName() }) {
 
       override fun actionPerformed(e: AnActionEvent) {
         when (data) {
-          is Data.Revision -> openCommitInBrowser(repoPath, data.revisionHash)
-          is Data.File -> openFileInBrowser(data.project, data.gitRepoRoot, repoPath, data.virtualFile, e.getData(CommonDataKeys.EDITOR))
+          is Data.Revision -> openCommitInBrowser(data.repository, data.revisionHash)
+          is Data.File -> openFileInBrowser(data.project, data.gitRepoRoot, data.repository, data.virtualFile,
+                                            e.getData(CommonDataKeys.EDITOR))
           is Data.URL -> BrowserUtil.browse(data.htmlUrl)
         }
       }
