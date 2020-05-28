@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.IdeBorderFactory
@@ -21,7 +20,6 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.GHPRVirtualFile
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
@@ -91,8 +89,7 @@ internal class GHPRComponentFactory(private val project: Project) {
     }
 
     override fun openPullRequestTimeline(id: GHPRIdentifier, requestFocus: Boolean) {
-      val file = GHPRVirtualFile(dataContext, id)
-      FileEditorManager.getInstance(project).openFile(file, requestFocus)
+      dataContext.filesManager.createAndOpenFile(id, requestFocus)
     }
   }
 

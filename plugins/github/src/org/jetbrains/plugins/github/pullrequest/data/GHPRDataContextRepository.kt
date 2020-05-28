@@ -1,10 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -23,7 +21,6 @@ import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.GHPRVirtualFile
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.*
 import org.jetbrains.plugins.github.pullrequest.search.GHPRSearchQueryHolderImpl
@@ -51,10 +48,6 @@ internal class GHPRDataContextRepository(private val project: Project) {
           }
           else {
             Disposer.register(contextDisposable, ctx)
-            Disposer.register(ctx, Disposable {
-              val editorManager = FileEditorManager.getInstance(project)
-              editorManager.openFiles.filter { it is GHPRVirtualFile && it.dataContext === ctx }.forEach(editorManager::closeFile)
-            })
           }
           ctx
         }
@@ -142,10 +135,16 @@ internal class GHPRDataContextRepository(private val project: Project) {
                                                                               GithubImageResizer.getInstance(),
                                                                               requestExecutor)
 
+    val filesManager = GHPRFilesManagerImpl(project, repositoryCoordinates)
+
     indicator.checkCanceled()
     return GHPRDataContext(gitRemoteCoordinates, repositoryCoordinates, searchHolder, listLoader, listUpdatesChecker,
-                           dataProviderRepository, securityService, repoDataService, avatarIconsProviderFactory)
+                           dataProviderRepository, securityService, repoDataService, avatarIconsProviderFactory, filesManager)
   }
+
+  @CalledInAwt
+  fun findContext(repositoryCoordinates: GHRepositoryCoordinates): GHPRDataContext? =
+    repositories.values.mapNotNull { it.lastLoadedValue }.find { it.repositoryCoordinates == repositoryCoordinates }
 
   companion object {
     fun getInstance(project: Project) = project.service<GHPRDataContextRepository>()

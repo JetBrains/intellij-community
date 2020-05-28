@@ -20,7 +20,8 @@ internal class GHPRDataContext(val gitRepositoryCoordinates: GitRemoteUrlCoordin
                                val dataProviderRepository: GHPRDataProviderRepository,
                                val securityService: GHPRSecurityService,
                                val repositoryDataService: GHPRRepositoryDataService,
-                               val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory) : Disposable {
+                               val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
+                               val filesManager: GHPRFilesManager) : Disposable {
 
   private val listenersDisposable = Disposer.newDisposable("GH PR context listeners disposable")
 
@@ -34,10 +35,17 @@ internal class GHPRDataContext(val gitRepositoryCoordinates: GitRemoteUrlCoordin
     })
     dataProviderRepository.addDetailsLoadedListener(listenersDisposable) { details: GHPullRequest ->
       listLoader.updateData(details)
+      filesManager.updateFilePresentation(details)
+    }
+    filesManager.addBeforeFileOpenedListener(listenersDisposable) { file ->
+      val details = listLoader.loadedData.find { it.id == file.pullRequest.id }
+                    ?: dataProviderRepository.findDataProvider(file.pullRequest)?.detailsData?.loadedDetails
+      if (details != null) filesManager.updateFilePresentation(details)
     }
   }
 
   override fun dispose() {
+    Disposer.dispose(filesManager)
     Disposer.dispose(listenersDisposable)
     Disposer.dispose(dataProviderRepository)
     Disposer.dispose(listLoader)

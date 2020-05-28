@@ -6,15 +6,17 @@ import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 
 internal class GHPREditorProvider : FileEditorProvider, DumbAware {
   override fun accept(project: Project, file: VirtualFile): Boolean {
-    return file is GHPRVirtualFile
+    return file is GHPRVirtualFile && GHPRDataContextRepository.getInstance(project).findContext(file.repository) != null
   }
 
   override fun createEditor(project: Project, file: VirtualFile): GHPRFileEditor {
     file as GHPRVirtualFile
-    return GHPRFileEditor(project, file.dataContext, file.pullRequest)
+    val dataContext = GHPRDataContextRepository.getInstance(project).findContext(file.repository)!!
+    return GHPRFileEditor(project, dataContext, file.pullRequest)
   }
 
   override fun getEditorTypeId(): String = "GHPR"
