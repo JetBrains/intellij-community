@@ -2647,7 +2647,7 @@
                      level="WARNING" implementationClass="com.siyeh.ig.threading.ThreadStopSuspendResumeInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="InstantiatingAThreadWithDefaultRunMethod" shortName="ThreadWithDefaultRunMethod"
                      bundle="messages.InspectionGadgetsBundle" key="thread.with.default.run.method.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.threading.issues" enabledByDefault="false"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.threading.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.threading.ThreadWithDefaultRunMethodInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="CallToThreadYield" shortName="ThreadYield" bundle="messages.InspectionGadgetsBundle"
                      key="thread.yield.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.threading.issues"
