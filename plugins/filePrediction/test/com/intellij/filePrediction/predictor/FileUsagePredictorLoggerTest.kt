@@ -104,8 +104,8 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
     setCustomCandidateProviderModel(testRootDisposable, FilePredictionReferenceProvider(), FilePredictionNeighborFilesProvider())
     val predictor = predictorProvider.invoke(testRootDisposable)
     val events = collectLogEvents {
-      predictor.startSession(myFixture.project, file!!)
-      predictor.finishSession(myFixture.project, nextFile!!)
+      predictor.onSessionStarted(myFixture.project, file!!)
+      predictor.onSessionStarted(myFixture.project, nextFile!!)
     }
     val candidateEvents = events.filter { it.event.id == "candidate.calculated" }
     assertEquals(expectedEvents, candidateEvents.size)

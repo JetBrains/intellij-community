@@ -27,10 +27,9 @@ class FilePredictionHandler(private val project: Project) : Disposable {
 
     NonUrgentExecutor.getInstance().execute {
       BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, Runnable {
-        manager.finishSession(project, newFile)
-
         FilePredictionHistory.getInstance(project).onFileSelected(newFile.url)
-        manager.startSession(project, newFile)
+
+        manager.onSessionStarted(project, newFile)
       })
     }
   }
