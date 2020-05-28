@@ -198,14 +198,6 @@ internal class LegacyBridgeModifiableModuleModel(
       diff.removeEntity(moduleEntity)
     }
 
-    for (entry in myNewNameToModule.entries) {
-      val entity = storage.resolve(entry.value.moduleEntityId) ?:
-        error("Unable to resolve module by id: ${entry.value.moduleEntityId}")
-      diff.modifyEntity(ModifiableModuleEntity::class.java, entity) {
-        name = entry.key
-      }
-    }
-
     return diff
   }
 
@@ -217,8 +209,24 @@ internal class LegacyBridgeModifiableModuleModel(
     myNewNameToModule.inverse().remove(module)
     myNewNameToModule.remove(newName)
 
-    if (module.name != newName) { // if renaming to itself, forget it altogether
-      myNewNameToModule[newName] = module
+    val oldName = module.name
+    val oldId = module.moduleEntityId
+    if (oldName != newName) { // if renaming to itself, forget it altogether
+      val moduleToAdd = myModulesToAdd.remove(oldName)
+      if (moduleToAdd != null) {
+        moduleManager.removeUncommittedModule(oldName)
+        moduleToAdd.rename(newName, false)
+        moduleManager.addUncommittedModule(moduleToAdd)
+        myModulesToAdd[newName] = moduleToAdd
+      }
+      else {
+        myNewNameToModule[newName] = module
+      }
+      val entity = entityStoreOnDiff.current.resolve(oldId) ?: error("Unable to resolve module by id: $oldId")
+      diff.modifyEntity(ModifiableModuleEntity::class.java, entity) {
+        name = newName
+      }
+
     }
     removeUnloadedModule(newName)
 
