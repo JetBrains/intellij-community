@@ -5,12 +5,16 @@ import com.intellij.ide.IdeBundle
 import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.ListSpeedSearch
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBList
 import com.intellij.ui.layout.*
+import com.intellij.ui.speedSearch.SpeedSearchSupply
+import org.jetbrains.annotations.Nullable
 import java.awt.Dimension
 import javax.swing.JCheckBox
+import javax.swing.JList
 import javax.swing.ListSelectionModel
 
 /**
@@ -18,14 +22,13 @@ import javax.swing.ListSelectionModel
  */
 class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : ConfigurableUi<NotificationsConfigurationImpl> {
   private val ui: DialogPanel
-  private var notificationsList: JBList<NotificationSettingsWrapper>
+  private val notificationsList = createNotificationsList()
+  private val speedSearch = ListSpeedSearch(notificationsList) { it.toString() }
   private lateinit var useBalloonNotifications: JCheckBox
   private lateinit var useSystemNotifications: JCheckBox
   private lateinit var notificationSettings: NotificationSettingsUi
 
   init {
-    notificationsList = createNotificationsList()
-
     ui = panel {
       row {
         useBalloonNotifications = checkBox(IdeBundle.message("notifications.configurable.display.balloon.notifications"),
@@ -80,6 +83,12 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
       }
     }
     return false
+  }
+
+  @Nullable
+  override fun enableSearch(option: String?): Runnable? {
+    if (option == null) return null
+    return Runnable {speedSearch.findAndSelectElement(option) }
   }
 
   override fun apply(settings: NotificationsConfigurationImpl) {
