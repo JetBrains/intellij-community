@@ -138,14 +138,16 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
 
     restoreEmptyStatus();
 
-    runOnProgressRelatedChange(this::updateProgressIcon, this);
+    runOnProgressRelatedChange(this::updateProgressIcon, this, true);
   }
 
-  private void runOnProgressRelatedChange(@NotNull Runnable runnable, Disposable parentDisposable) {
+  private void runOnProgressRelatedChange(@NotNull Runnable runnable, Disposable parentDisposable, boolean powerSaveMode) {
     synchronized (myOriginals) {
       if (!myDisposed) {
         MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(parentDisposable);
-        connection.subscribe(PowerSaveMode.TOPIC, () -> UIUtil.invokeLaterIfNeeded(runnable));
+        if (powerSaveMode) {
+          connection.subscribe(PowerSaveMode.TOPIC, () -> UIUtil.invokeLaterIfNeeded(runnable));
+        }
         connection.subscribe(ProgressSuspender.TOPIC, new ProgressSuspender.SuspenderListener() {
           @Override
           public void suspendableProgressAppeared(@NotNull ProgressSuspender suspender) {
@@ -708,6 +710,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
   private class ProgressPanelProgressIndicator extends MyInlineProgressIndicator {
     private final ProgressPanel myProgressPanel;
     private final InplaceButton myCancelButton;
+    private final InplaceButton mySuspendButton;
     private final Runnable mySuspendUpdateRunnable;
 
     ProgressPanelProgressIndicator(@NotNull TaskInfo task, @NotNull ProgressIndicatorEx original) {
@@ -727,11 +730,17 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
       myCancelButton = Objects.requireNonNull(myProgressPanel.getCancelButton());
       myCancelButton.setPainting(task.isCancellable());
 
-      mySuspendUpdateRunnable = createSuspendUpdateRunnable(Objects.requireNonNull(myProgressPanel.getSuspendButton()));
+      mySuspendButton = Objects.requireNonNull(myProgressPanel.getSuspendButton());
+      mySuspendUpdateRunnable = createSuspendUpdateRunnable(mySuspendButton);
 
       setProcessNameValue(task.getTitle());
 
       // TODO: update javadoc for ProgressIndicator
+    }
+
+    @Override
+    protected boolean canCheckPowerSaveMode() {
+      return false;
     }
 
     @Override
@@ -769,9 +778,11 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
 
     @Override
     public void updateProgressNow() {
-      super.updateProgressNow();
-      myCancelButton.setPainting(getInfo().isCancellable() && !isStopping());
+      super_updateProgressNow();
       mySuspendUpdateRunnable.run();
+      boolean painting = getInfo().isCancellable() && !isStopping();
+      myCancelButton.setPainting(painting);
+      myCancelButton.setVisible(painting || !mySuspendButton.isVisible());
     }
   }
 
@@ -790,7 +801,11 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
           updateProgress();
         }
       });
-      runOnProgressRelatedChange(this::queueProgressUpdate, this);
+      runOnProgressRelatedChange(this::queueProgressUpdate, this, canCheckPowerSaveMode());
+    }
+
+    protected boolean canCheckPowerSaveMode() {
+      return true;
     }
 
     @Override
@@ -907,6 +922,10 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
           ApplicationManager.getApplication().invokeLater(update);
         }
       });
+    }
+
+    protected final void super_updateProgressNow() {
+      super.updateProgressNow();
     }
 
     @Override

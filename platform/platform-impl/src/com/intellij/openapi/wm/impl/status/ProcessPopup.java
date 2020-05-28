@@ -14,10 +14,7 @@ import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.ui.JBEmptyBorder;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,6 +50,7 @@ public class ProcessPopup {
         return getEmptyPreferredSize();
       }
     };
+    myContentPanel.setMinimumSize(new JBDimension(300, 60));
     updateContentUI();
   }
 
