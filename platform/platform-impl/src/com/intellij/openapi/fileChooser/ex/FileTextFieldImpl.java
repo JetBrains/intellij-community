@@ -158,6 +158,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     };
   }
 
+  @SuppressWarnings("unused") //used by rider
   public void resetMacroMap(Map<String, String> macroMap) {
     synchronized (myLock) {
       myMacroMap = new TreeMap<>(macroMap);
@@ -453,6 +454,18 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
   }
 
   public void processCompletion(final CompletionResult result) {
+    Map<String, String> macroMap;
+    synchronized (myLock) {
+      macroMap = myMacroMap;
+    }
+    processCompletion(result, myFinder, myFilter, myFileSpitRegExp, macroMap);
+  }
+
+  public static void processCompletion(final CompletionResult result,
+                                       @NotNull Finder finder,
+                                       @NotNull LookupFilter filter,
+                                       @NotNull String fileSpitRegExp,
+                                       @NotNull Map<String, String> macroMap) {
     result.myToComplete = new ArrayList<>();
     result.mySiblings = new ArrayList<>();
     result.myKidsAfterSeparator = new ArrayList<>();
@@ -460,29 +473,29 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
     if (typed == null) return;
 
-    addMacroPaths(result, typed);
+    addMacroPaths(result, typed, finder, macroMap);
 
-    final String typedText = myFinder.normalize(typed);
+    final String typedText = finder.normalize(typed);
 
 
-    result.current = getClosestParent(typed);
+    result.current = getClosestParent(typed, finder, fileSpitRegExp);
     result.myClosestParent = result.current;
 
     if (result.current != null) {
       result.currentParentMatch = SystemInfo.isFileSystemCaseSensitive
-                                         ? typedText.equals(result.current.getAbsolutePath())
-                                         : typedText.equalsIgnoreCase(result.current.getAbsolutePath());
+                                  ? typedText.equals(result.current.getAbsolutePath())
+                                  : typedText.equalsIgnoreCase(result.current.getAbsolutePath());
 
-      result.closedPath = typed.endsWith(myFinder.getSeparator()) && typedText.length() > myFinder.getSeparator().length();
+      result.closedPath = typed.endsWith(finder.getSeparator()) && typedText.length() > finder.getSeparator().length();
       final String currentParentText = result.current.getAbsolutePath();
 
       if (!StringUtil.toUpperCase(typedText).startsWith(StringUtil.toUpperCase(currentParentText))) return;
 
       String prefix = typedText.substring(currentParentText.length());
-      if (prefix.startsWith(myFinder.getSeparator())) {
-        prefix = prefix.substring(myFinder.getSeparator().length());
+      if (prefix.startsWith(finder.getSeparator())) {
+        prefix = prefix.substring(finder.getSeparator().length());
       }
-      else if (typed.endsWith(myFinder.getSeparator())) {
+      else if (typed.endsWith(finder.getSeparator())) {
         prefix = "";
       }
 
@@ -491,11 +504,12 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
       result.currentGrandparent = result.current.getParent();
       if (result.currentGrandparent != null && result.currentParentMatch && !result.closedPath) {
         final String currentGrandparentText = result.currentGrandparent.getAbsolutePath();
-        if (StringUtil.startsWithConcatenation(typedText, currentGrandparentText, myFinder.getSeparator())) {
-          result.grandparentPrefix = currentParentText.substring(currentGrandparentText.length() + myFinder.getSeparator().length());
+        if (StringUtil.startsWithConcatenation(typedText, currentGrandparentText, finder.getSeparator())) {
+          result.grandparentPrefix = currentParentText.substring(currentGrandparentText.length() + finder.getSeparator().length());
         }
       }
-    } else {
+    }
+    else {
       result.effectivePrefix = typedText;
     }
 
@@ -571,7 +585,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
         return parent.getChildren(new LookupFilter() {
           @Override
           public boolean isAccepted(final LookupFile file) {
-            return !file.equals(result.current) && myFilter.isAccepted(file) && matcher.matches(file.getName());
+            return !file.equals(result.current) && filter.isAccepted(file) && matcher.matches(file.getName());
           }
         });
       }
@@ -582,21 +596,19 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     return NameUtil.buildMatcher("*" + prefix, NameUtil.MatchingCaseSensitivity.NONE);
   }
 
-  private void addMacroPaths(final CompletionResult result, final String typedText) {
+  private static void addMacroPaths(final CompletionResult result, 
+                                    final String typedText, 
+                                    @NotNull Finder finder, 
+                                    Map<String, String> macroMap) {
     result.myMacros = new ArrayList<>();
 
     MinusculeMatcher matcher = createMatcher(typedText);
-
-    Map<String, String> macroMap;
-    synchronized (myLock) {
-      macroMap = myMacroMap;
-    }
 
     for (String eachMacro : macroMap.keySet()) {
       if (matcher.matches(eachMacro)) {
         final String eachPath = macroMap.get(eachMacro);
         if (eachPath != null) {
-          final LookupFile macroFile = myFinder.find(eachPath);
+          final LookupFile macroFile = finder.find(eachPath);
           if (macroFile != null && macroFile.exists()) {
             result.myMacros.add(macroFile);
             result.myToComplete.add(macroFile);
@@ -608,9 +620,9 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
   }
 
   @Nullable
-  private LookupFile getClosestParent(final String typed) {
+  private static LookupFile getClosestParent(final String typed, Finder finder, String fileSpitRegExp) {
     if (typed == null) return null;
-    LookupFile lastFound = myFinder.find(typed);
+    LookupFile lastFound = finder.find(typed);
     if (lastFound == null) return null;
     if (typed.isEmpty()) return lastFound;
     if (lastFound.exists()) {
@@ -618,15 +630,15 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
       return lastFound;
     }
 
-    final String[] splits = myFinder.normalize(typed).split(myFileSpitRegExp);
+    final String[] splits = finder.normalize(typed).split(fileSpitRegExp);
     StringBuilder fullPath = new StringBuilder();
     for (int i = 0; i < splits.length; i++) {
       String each = splits[i];
       fullPath.append(each);
       if (i < splits.length - 1) {
-        fullPath.append(myFinder.getSeparator());
+        fullPath.append(finder.getSeparator());
       }
-      final LookupFile file = myFinder.find(fullPath.toString());
+      final LookupFile file = finder.find(fullPath.toString());
       if (file == null || !file.exists()) return lastFound;
       lastFound = file;
     }
