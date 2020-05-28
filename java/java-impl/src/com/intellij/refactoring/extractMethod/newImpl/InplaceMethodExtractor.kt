@@ -1,11 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl
 
-import com.intellij.codeInsight.hints.InlayPresentationFactory
-import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
@@ -16,7 +13,6 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.inplace.*
-import com.intellij.ui.JBColor
 import com.intellij.ui.layout.*
 import java.util.concurrent.atomic.AtomicReference
 
@@ -40,35 +36,11 @@ class InplaceMethodExtractor(val project: Project, val editor: Editor) : Inplace
 
   private val inlayReference = AtomicReference<Inlay<PresentationRenderer>>()
 
-  private fun getInlayPresentation(): SelectableInlayPresentation? {
-    val editor = myEditor as? EditorImpl ?: return null
-    val factory = PresentationFactory(editor)
-
-    val roundedCorners = InlayPresentationFactory.RoundedCorners(6, 6)
-    val padding = InlayPresentationFactory.Padding(4, 4, 4, 4)
-
-    val inactiveIcon = factory.container(
-      presentation =  factory.icon(AllIcons.Actions.InlayGear),
-      padding = padding,
-      roundedCorners = roundedCorners,
-      background = JBColor.LIGHT_GRAY
-    )
-    val activeIcon = factory.container(
-      presentation =  factory.icon(AllIcons.Actions.InlayGear),
-      padding = padding,
-      roundedCorners = roundedCorners,
-      background = JBColor.DARK_GRAY
-    )
-    val inactivePadded = factory.container(inactiveIcon, padding = InlayPresentationFactory.Padding(3, 6, 0, 0))
-    val activePadded = factory.container(activeIcon, padding = InlayPresentationFactory.Padding(3, 6, 0, 0))
-
-    return SelectableInlayButton(editor, inactivePadded, activePadded, activePadded, inlayReference)
-  }
-
   override fun afterTemplateStart() {
     super.afterTemplateStart()
     val templateState = TemplateManagerImpl.getTemplateState(myEditor) ?: return
-    val presentation = getInlayPresentation() ?: return
+    val editor = templateState.editor as? EditorImpl ?: return
+    val presentation = TemplateInlayUtil.createSettingsPresentation(editor, inlayReference)
     val offset = templateState.currentVariableRange?.endOffset ?: return
     val inlay = TemplateInlayUtil.createNavigatableButtonWithPopup(templateState, offset, presentation, popupPanel) ?: return
     inlayReference.set(inlay)
