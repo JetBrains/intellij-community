@@ -106,15 +106,17 @@ public final class StartupUtil {
     return serverFuture == null ? CompletableFuture.completedFuture(null) : serverFuture;
   }
 
-  private static @Nullable Object loadEuaDocument() {
+  private static @Nullable Future<Object> loadEuaDocument(@NotNull ExecutorService executorService) {
     if (!ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()) {
       return null;
     }
 
-    Activity euaActivity = StartUpMeasurer.startActivity("eua getting");
-    EndUserAgreement.Document result = EndUserAgreement.getLatestDocument();
-    euaActivity.end();
-    return result;
+    return executorService.submit(() -> {
+      Activity euaActivity = StartUpMeasurer.startActivity("eua getting");
+      EndUserAgreement.Document result = EndUserAgreement.getLatestDocument();
+      euaActivity.end();
+      return result;
+    });
   }
 
   public interface AppStarter {
@@ -175,7 +177,7 @@ public final class StartupUtil {
 
     activity = activity.endAndStart("LaF init scheduling");
     // EndUserAgreement.Document type is not specified to avoid class loading
-    Future<Object> euaDocument = Main.isHeadless() ? null : executorService.submit(StartupUtil::loadEuaDocument);
+    Future<Object> euaDocument = Main.isHeadless() ? null : loadEuaDocument(executorService);
     CompletableFuture<?> initUiTask = scheduleInitUi(args, executorService, euaDocument);
     activity.end();
 
