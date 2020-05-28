@@ -238,7 +238,7 @@ public final class EditorTestUtil {
     model.reinitSettings();
 
     SoftWrapApplianceManager applianceManager = model.getApplianceManager();
-    applianceManager.setWidthProvider(() -> visibleWidthInPixels);
+    applianceManager.setWidthProvider(new TestWidthProvider(visibleWidthInPixels));
     model.setEditorTextRepresentationHelper(new DefaultEditorTextRepresentationHelper(editor) {
       @Override
       public int charWidth(int c, int fontType) {
@@ -682,6 +682,23 @@ public final class EditorTestUtil {
                       @NotNull Graphics g,
                       @NotNull Rectangle targetRegion,
                       @NotNull TextAttributes textAttributes) {}
+  }
+
+  public static class TestWidthProvider implements SoftWrapApplianceManager.VisibleAreaWidthProvider {
+    private int myWidth;
+
+    public TestWidthProvider(int width) {
+      setVisibleAreaWidth(width);
+    }
+
+    @Override
+    public int getVisibleAreaWidth() {
+      return myWidth;
+    }
+
+    public void setVisibleAreaWidth(int width) {
+      myWidth = width;
+    }
   }
 }
 

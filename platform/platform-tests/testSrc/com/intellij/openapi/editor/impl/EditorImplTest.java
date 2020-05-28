@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -688,5 +689,19 @@ public class EditorImplTest extends AbstractEditorTest {
     assertEquals(Collections.singletonList("CustomFont2"), p2.getRealFontFamilies());
     assertEquals(23, p2.getSize("CustomFont2"));
     assertFalse(p.useLigatures());
+  }
+
+  public void testDocumentChangeAfterWidthChange() {
+    initText("Some long line of text");
+    configureSoftWraps(15);
+
+    // emulate adding editor to a wide component
+    SoftWrapApplianceManager.VisibleAreaWidthProvider widthProvider =
+      ((SoftWrapModelImpl)getEditor().getSoftWrapModel()).getApplianceManager().getWidthProvider();
+    ((EditorTestUtil.TestWidthProvider)widthProvider).setVisibleAreaWidth(1_000_000);
+    new JPanel().add(getEditor().getComponent());
+
+    runWriteCommand(() -> getEditor().getDocument().insertString(0, " "));
+    verifySoftWrapPositions();
   }
 }

@@ -103,10 +103,10 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
 
   @Override
   public void beforeDocumentChange(@NotNull DocumentEvent event) {
+    assertValidState(); // should be called at the start, as it can initiate soft wrap calculations
     myAfterLineEndInlayUpdated = false;
     myDuringDocumentUpdate = true;
     if (myDocument.isInBulkUpdate()) return;
-    assertValidState();
     final int offset = event.getOffset();
     // Although the result of getMoveOffset() can point to invalid offset when used from within beforeDocumentChange(),
     // the actual value is not used until doInvalidateRange() called from documentChanged().
@@ -617,10 +617,11 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
 
   private void assertValidState() {
     if (myDocument.isInBulkUpdate() || myEditor.getInlayModel().isInBatchMode() || myDirty) return;
-    if (myLineWidths.size() != myEditor.getVisibleLineCount()) {
+    // 'getVisibleLineCount' should be called before accessing 'myLineWidths', as it can trigger soft wrap calculations
+    if (myEditor.getVisibleLineCount() != myLineWidths.size()) {
       LOG.error("Inconsistent state", new Attachment("editor.txt", myEditor.dumpState()));
       reset();
-      assert myLineWidths.size() == myEditor.getVisibleLineCount();
+      assert myEditor.getVisibleLineCount() == myLineWidths.size();
     }
   }
 
