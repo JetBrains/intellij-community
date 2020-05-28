@@ -13,7 +13,9 @@ import org.jetbrains.jps.util.JpsPathUtil
 internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
                                                        fileUrl: VirtualFileUrl,
                                                        internalEntitySource: JpsFileEntitySource)
-  : ModuleImlFileEntitiesSerializer(modulePath, fileUrl, internalEntitySource) {
+  : ModuleImlFileEntitiesSerializer(modulePath, fileUrl, internalEntitySource, null) {
+  override fun loadEntities(builder: TypedEntityStorageBuilder, reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager) {
+  }
 
   override fun acceptsSource(entitySource: EntitySource): Boolean {
     return entitySource is JpsImportedEntitySource && entitySource.storedExternally
@@ -85,7 +87,7 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
 }
 
 internal class ExternalModuleListSerializer(private val externalStorageRoot: VirtualFileUrl) :
-  ModuleListSerializerImpl(externalStorageRoot.append("project/modules.xml").url) {
+  ModuleListSerializerImpl(externalStorageRoot.append("project/modules.xml").url, null) {
   override val isExternalStorage: Boolean
     get() = true
 
@@ -111,7 +113,7 @@ internal class ExternalModuleListSerializer(private val externalStorageRoot: Vir
     else {
       fileUrl
     }
-    return ExternalModuleImlFileEntitiesSerializer(ModulePath(JpsPathUtil.urlToPath(fileUrl.filePath), null), actualFileUrl,
-                                                   internalSource)
+    val filePath = JpsPathUtil.urlToPath(fileUrl.filePath)
+    return ExternalModuleImlFileEntitiesSerializer(ModulePath(filePath, null), actualFileUrl, internalSource)
   }
 }

@@ -46,7 +46,7 @@ object JpsProjectEntitiesLoader {
                           builder: TypedEntityStorageBuilder,
                           virtualFileManager: VirtualFileUrlManager) {
     val reader = CachingJpsFileContentReader(configLocation.baseDirectoryUrlString)
-    val serializer = ModuleListSerializerImpl.createModuleEntitiesSerializer(moduleFile.toVirtualFileUrl(virtualFileManager), source)
+    val serializer = ModuleListSerializerImpl.createModuleEntitiesSerializer(moduleFile.toVirtualFileUrl(virtualFileManager), source, null)
     serializer.loadEntities(builder, reader, virtualFileManager)
   }
 
@@ -79,12 +79,13 @@ object JpsProjectEntitiesLoader {
     val internalLibrariesDirUrl = virtualFileManager.fromUrl(librariesDirectoryUrl)
     val externalStorageEnabled = isExternalStorageEnabled(reader, projectDirUrl)
     val librariesExternalStorageFile = JpsFileEntitySource.ExactFile(externalStorageRoot.append("project/libraries.xml"), configLocation)
+    val externalModuleListSerializer = ExternalModuleListSerializer(externalStorageRoot)
     return JpsProjectSerializers.createSerializers(
       entityTypeSerializers = listOf(JpsLibrariesExternalFileSerializer(librariesExternalStorageFile, internalLibrariesDirUrl)),
       directorySerializersFactories = directorySerializersFactories,
       moduleListSerializers = listOf(
-        ModuleListSerializerImpl("$projectDirUrl/.idea/modules.xml"),
-        ExternalModuleListSerializer(externalStorageRoot)
+        ModuleListSerializerImpl("$projectDirUrl/.idea/modules.xml", externalModuleListSerializer),
+        externalModuleListSerializer
       ),
       configLocation = configLocation,
       reader = reader,
@@ -114,7 +115,7 @@ object JpsProjectEntitiesLoader {
     return JpsProjectSerializers.createSerializers(
       entityTypeSerializers = entityTypeSerializers,
       directorySerializersFactories = emptyList(),
-      moduleListSerializers = listOf(ModuleListSerializerImpl(projectFileUrl.url)),
+      moduleListSerializers = listOf(ModuleListSerializerImpl(projectFileUrl.url, null)),
       configLocation = configLocation,
       reader = reader,
       virtualFileManager = virtualFileManager,

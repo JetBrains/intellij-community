@@ -37,7 +37,8 @@ private val STANDARD_MODULE_OPTIONS = setOf(
 
 internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: ModulePath,
                                                     override val fileUrl: VirtualFileUrl,
-                                                    override val internalEntitySource: JpsFileEntitySource) : JpsFileEntitiesSerializer<ModuleEntity> {
+                                                    override val internalEntitySource: JpsFileEntitySource,
+                                                    private val externalModuleListSerializer: JpsModuleListSerializer?) : JpsFileEntitiesSerializer<ModuleEntity> {
   override val mainEntityClass: Class<ModuleEntity>
     get() = ModuleEntity::class.java
 
@@ -47,8 +48,22 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
   override fun loadEntities(builder: TypedEntityStorageBuilder,
                             reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager) {
-    val isImlExists = fileUrl.file?.exists() ?: false
-    if (!isImlExists) return
+    val externalSerializer = externalModuleListSerializer?.createSerializer(internalEntitySource, fileUrl) as ModuleImlFileEntitiesSerializer?
+    val moduleEntity = externalSerializer?.loadModuleEntity(reader, builder, virtualFileManager)
+                       ?: loadModuleEntity(reader, builder, virtualFileManager)
+    if (moduleEntity != null) {
+      createFacetSerializer().loadFacetEntities(builder, moduleEntity, reader)
+      if (externalSerializer != null) {
+        externalSerializer.createFacetSerializer().loadFacetEntities(builder, moduleEntity, reader)
+      }
+    }
+  }
+
+  private fun loadModuleEntity(reader: JpsFileContentReader,
+                               builder: TypedEntityStorageBuilder,
+                               virtualFileManager: VirtualFileUrlManager): ModuleEntity? {
+    val fileExists = fileUrl.file?.exists() ?: false
+    if (!fileExists) return null
 
     val moduleOptions = readModuleOptions(reader)
     val (externalSystemOptions, externalSystemId) = readExternalSystemOptions(reader, moduleOptions)
@@ -74,8 +89,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     if (rootManagerElement != null) {
       loadRootManager(rootManagerElement, moduleEntity, builder, virtualFileManager)
     }
-
-    createFacetSerializer().loadFacetEntities(builder, moduleEntity, reader)
+    return moduleEntity
   }
 
   protected open fun getBaseDirPath(): String? = null
@@ -525,10 +539,13 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   }
 }
 
-internal open class ModuleListSerializerImpl(override val fileUrl: String) : JpsModuleListSerializer {
+internal open class ModuleListSerializerImpl(override val fileUrl: String,
+                                             private val externalModuleListSerializer: JpsModuleListSerializer?) : JpsModuleListSerializer {
   companion object {
-    internal fun createModuleEntitiesSerializer(fileUrl: VirtualFileUrl, source: JpsFileEntitySource) =
-      ModuleImlFileEntitiesSerializer(ModulePath(JpsPathUtil.urlToPath(fileUrl.filePath), null), fileUrl, source)
+    internal fun createModuleEntitiesSerializer(fileUrl: VirtualFileUrl,
+                                                source: JpsFileEntitySource,
+                                                externalModuleListSerializer: JpsModuleListSerializer?) =
+      ModuleImlFileEntitiesSerializer(ModulePath(JpsPathUtil.urlToPath(fileUrl.filePath), null), fileUrl, source, externalModuleListSerializer)
   }
 
   override val isExternalStorage: Boolean
@@ -545,7 +562,7 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String) : Jps
   }
 
   override fun createSerializer(internalSource: JpsFileEntitySource, fileUrl: VirtualFileUrl): JpsFileEntitiesSerializer<ModuleEntity> {
-    return createModuleEntitiesSerializer(fileUrl, internalSource)
+    return createModuleEntitiesSerializer(fileUrl, internalSource, externalModuleListSerializer)
   }
 
   override fun loadFileList(reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager): List<VirtualFileUrl> {

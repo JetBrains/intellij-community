@@ -46,12 +46,13 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     for (factory in directorySerializersFactories) {
       createDirectorySerializers(factory).associateWithTo(serializerToDirectoryFactory) { factory }
     }
-    for (factory in moduleListSerializers) {
-      if (enableExternalStorage || !factory.isExternalStorage) {
-        val fileList = factory.loadFileList(reader, virtualFileManager)
-        fileList
-          .map { factory.createSerializer(createFileInDirectorySource(it.parent!!, it.file!!.name), it) }
-          .associateWithTo(moduleSerializers) { factory }
+    val enabledModuleListSerializers = moduleListSerializers.filter { enableExternalStorage || !it.isExternalStorage }
+    val moduleFiles = enabledModuleListSerializers.flatMap { it.loadFileList(reader, virtualFileManager) }
+    for (moduleFile in moduleFiles) {
+      val internalSource = createFileInDirectorySource(moduleFile.parent!!, moduleFile.file!!.name)
+      for (moduleListSerializer in enabledModuleListSerializers) {
+        val moduleSerializer = moduleListSerializer.createSerializer(internalSource, moduleFile) ?: continue
+        moduleSerializers[moduleSerializer] = moduleListSerializer
       }
     }
 

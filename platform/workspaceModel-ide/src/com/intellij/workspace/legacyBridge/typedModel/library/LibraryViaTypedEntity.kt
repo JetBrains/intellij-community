@@ -11,6 +11,8 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.workspace.api.*
+import com.intellij.workspace.ide.JpsImportedEntitySource
+import com.intellij.workspace.ide.toExternalSource
 import com.intellij.workspace.legacyBridge.intellij.*
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
 import java.io.StringReader
@@ -91,7 +93,6 @@ internal class LibraryViaTypedEntity(
              ?.jarDirectories?.any { it.first == url } ?: false
   }
 
-  // TODO Implement
   val externalSource: ProjectModelExternalSource?
-    get() = null
+    get() = (libraryEntity.entitySource as? JpsImportedEntitySource)?.toExternalSource()
 }
