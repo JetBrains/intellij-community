@@ -196,12 +196,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return myReturnValueWatcher != null;
   }
 
+  /**
+   * @deprecated use {@link #getAutoRendererAsync(Type)}
+   */
+  @Deprecated
   public NodeRenderer getAutoRenderer(ValueDescriptor descriptor) {
-    return getAutoRenderer(descriptor.getType());
-  }
-
-  @NotNull
-  public NodeRenderer getAutoRenderer(Type type) {
+    Type type = descriptor.getType();
     DebuggerManagerThreadImpl.assertIsManagerThread();
     // in case evaluation is not possible, force default renderer
     if (!isEvaluationPossible()) {
