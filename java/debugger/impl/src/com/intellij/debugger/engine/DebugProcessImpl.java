@@ -60,7 +60,6 @@ import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.classFilter.DebuggerClassFilterProvider;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
@@ -227,25 +226,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @NotNull
-  public CompletableFuture<List<NodeRenderer>> getApplicableRenderers(Type type) {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    CompletableFuture<Boolean>[] futures = myRenderers.stream().map(r -> r.isApplicableAsync(type)).toArray(CompletableFuture[]::new);
-    return CompletableFuture.allOf(futures).thenApply(__ -> {
-      List<NodeRenderer> res = new SmartList<>();
-      for (int i = 0; i < futures.length; i++) {
-        try {
-          if (futures[i].join()) {
-            res.add(myRenderers.get(i));
-          }
-        } catch (Exception e) {
-          LOG.debug(e);
-        }
-      }
-      return res;
-    });
-  }
-
-  @NotNull
   public CompletableFuture<NodeRenderer> getAutoRendererAsync(@Nullable Type type) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     // in case evaluation is not possible, force default renderer
@@ -262,17 +242,18 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         //noinspection unchecked
         return (CompletableFuture<NodeRenderer>)renderer;
       }
-      CompletableFuture<NodeRenderer> res = getApplicableRenderers(type).handle((renderers, throwable) -> {
-        DebuggerManagerThreadImpl.assertIsManagerThread();
-        NodeRenderer r = ContainerUtil.getFirstItem(renderers);
-        if (r == null || throwable != null) {
-          r = getDefaultRenderer(type); // do not cache the fallback renderer
-          myNodeRenderersMap.remove(type);
-        }
-        else {
-          // TODO: may add a new (possibly incorrect) value after the cleanup in reloadRenderers
-          myNodeRenderersMap.put(type, r);
-        }
+      CompletableFuture<NodeRenderer> res = DebuggerUtilsImpl.getApplicableRenderers(myRenderers, type)
+        .handle((renderers, throwable) -> {
+          DebuggerManagerThreadImpl.assertIsManagerThread();
+          NodeRenderer r = ContainerUtil.getFirstItem(renderers);
+          if (r == null || throwable != null) {
+            r = getDefaultRenderer(type); // do not cache the fallback renderer
+            myNodeRenderersMap.remove(type);
+          }
+          else {
+            // TODO: may add a new (possibly incorrect) value after the cleanup in reloadRenderers
+            myNodeRenderersMap.put(type, r);
+          }
         return r;
       });
       // check if future is already done

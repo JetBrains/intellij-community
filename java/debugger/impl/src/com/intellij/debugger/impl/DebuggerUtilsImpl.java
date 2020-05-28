@@ -12,6 +12,7 @@ import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.attach.PidRemoteConnection;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
+import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -32,6 +33,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.execution.CommandLineWrapper;
+import com.intellij.util.SmartList;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.xdebugger.XExpression;
@@ -51,6 +53,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 public class DebuggerUtilsImpl extends DebuggerUtilsEx{
@@ -328,5 +331,25 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
       loaded += chunkSize;
     }
     return res;
+  }
+
+  @NotNull
+  public static CompletableFuture<List<NodeRenderer>> getApplicableRenderers(List<NodeRenderer> renderers, Type type) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    CompletableFuture<Boolean>[] futures = renderers.stream().map(r -> r.isApplicableAsync(type)).toArray(CompletableFuture[]::new);
+    return CompletableFuture.allOf(futures).thenApply(__ -> {
+      List<NodeRenderer> res = new SmartList<>();
+      for (int i = 0; i < futures.length; i++) {
+        try {
+          if (futures[i].join()) {
+            res.add(renderers.get(i));
+          }
+        }
+        catch (Exception e) {
+          LOG.debug(e);
+        }
+      }
+      return res;
+    });
   }
 }

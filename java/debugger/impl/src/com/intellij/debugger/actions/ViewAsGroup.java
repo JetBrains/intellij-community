@@ -6,11 +6,14 @@ import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
+import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
@@ -89,8 +92,8 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     return myChildren;
   }
 
-  private void updateChildren(List<JavaValue> values, DebugProcessImpl process, AnActionEvent event) {
-    getApplicableRenderers(values, process).thenAccept(rs -> {
+  private void updateChildren(List<JavaValue> values, Project project, AnActionEvent event) {
+    getApplicableRenderers(values, project).thenAccept(rs -> {
       List<RendererAction> renderers = StreamEx.of(rs).map(RendererAction::new).toList();
       if (ContainerUtil.isEmpty(renderers)) {
         return;
@@ -122,7 +125,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
   }
 
   @NotNull
-  private static CompletableFuture<List<NodeRenderer>> getApplicableRenderers(List<JavaValue> values, DebugProcessImpl process) {
+  private static CompletableFuture<List<NodeRenderer>> getApplicableRenderers(List<JavaValue> values, Project project) {
     List<CompletableFuture<List<NodeRenderer>>> futures = new ArrayList<>(values.size());
     for (JavaValue value : values) {
       if (value instanceof JavaReferringObjectsValue) { // disable for any referrers at all
@@ -132,7 +135,8 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
       if (!valueDescriptor.isValueValid()) {
         return CompletableFuture.completedFuture(Collections.emptyList());
       }
-      futures.add(process.getApplicableRenderers(valueDescriptor.getType()));
+      futures.add(DebuggerUtilsImpl.getApplicableRenderers(NodeRendererSettings.getInstance().getAllRenderers(project),
+                                                            valueDescriptor.getType()));
     }
 
     return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenApply(__ -> {
@@ -173,7 +177,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     process.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-        updateChildren(values, process, event);
+        updateChildren(values, process.getProject(), event);
       }
     });
   }
