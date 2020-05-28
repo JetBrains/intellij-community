@@ -444,7 +444,7 @@ object UpdateChecker {
     for (customPlugin in customPlugins) {
       val pluginId = customPlugin.pluginId
       val plugin = compatiblePluginMap[pluginId]
-      if (plugin == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(plugin, customPlugin.version) > 0) {
+      if (plugin == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(customPlugin.version, plugin) > 0) {
         compatiblePluginMap[pluginId] = customPlugin
       }
     }
@@ -466,8 +466,7 @@ object UpdateChecker {
 
     val pluginVersion = downloader.pluginVersion
     val installedPlugin = PluginManagerCore.getPlugin(pluginId)
-    if (installedPlugin == null || pluginVersion == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(installedPlugin,
-                                                                                                                      pluginVersion) > 0) {
+    if (installedPlugin == null || pluginVersion == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginVersion, installedPlugin) > 0) {
       var descriptor: IdeaPluginDescriptor?
 
       val oldDownloader = ourUpdatedPlugins[pluginId]

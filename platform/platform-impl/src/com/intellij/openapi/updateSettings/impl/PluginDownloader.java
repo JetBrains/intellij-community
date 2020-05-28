@@ -152,7 +152,7 @@ public final class PluginDownloader {
       //store old plugins file
       descriptor = PluginManagerCore.getPlugin(myPluginId);
       LOG.assertTrue(descriptor != null);
-      if (myPluginVersion != null && compareVersionsSkipBrokenAndIncompatible(descriptor, myPluginVersion) <= 0) {
+      if (myPluginVersion != null && compareVersionsSkipBrokenAndIncompatible(myPluginVersion, descriptor) <= 0) {
         LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
         return null;
       }
@@ -193,7 +193,7 @@ public final class PluginDownloader {
       }
 
       myPluginVersion = actualDescriptor.getVersion();
-      if (descriptor != null && compareVersionsSkipBrokenAndIncompatible(descriptor, myPluginVersion) <= 0) {
+      if (descriptor != null && compareVersionsSkipBrokenAndIncompatible(myPluginVersion, descriptor) <= 0) {
         LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
         return null; //was not updated
       }
@@ -210,7 +210,8 @@ public final class PluginDownloader {
     return actualDescriptor;
   }
 
-  public static int compareVersionsSkipBrokenAndIncompatible(@NotNull IdeaPluginDescriptor existingPlugin, String newPluginVersion) {
+  public static int compareVersionsSkipBrokenAndIncompatible(String newPluginVersion,
+                                                             @NotNull IdeaPluginDescriptor existingPlugin) {
     int state = VersionComparatorUtil.compare(newPluginVersion, existingPlugin.getVersion());
     if (state < 0 && (PluginManagerCore.isBrokenPlugin(existingPlugin) || PluginManagerCore.isIncompatible(existingPlugin))) {
       state = 1;
