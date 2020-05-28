@@ -213,6 +213,10 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
   }
 
   private static class AddUtf8CharsetFix extends InspectionGadgetsFix {
+    /**
+     * Refers to the method but it is read-only
+     */
+    @SafeFieldForPreview
     private final CharsetOverload myCharsetOverload;
 
     private AddUtf8CharsetFix(CharsetOverload charsetOverload) {
