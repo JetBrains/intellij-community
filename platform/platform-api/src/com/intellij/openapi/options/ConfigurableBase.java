@@ -60,6 +60,11 @@ public abstract class ConfigurableBase<UI extends ConfigurableUi<S>, S> implemen
     return ui.getComponent();
   }
 
+  @Override
+  public @Nullable Runnable enableSearch(String option) {
+    return ui == null ? null : ui.enableSearch(option);
+  }
+
   protected abstract UI createUi();
 
   @Override
