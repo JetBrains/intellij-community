@@ -63,4 +63,7 @@ public class DefaultLanguageHighlighterColors {
   public static final TextAttributesKey INLINE_PARAMETER_HINT = TextAttributesKey.createTextAttributesKey("INLINE_PARAMETER_HINT");
   public static final TextAttributesKey INLINE_PARAMETER_HINT_HIGHLIGHTED = TextAttributesKey.createTextAttributesKey("INLINE_PARAMETER_HINT_HIGHLIGHTED");
   public static final TextAttributesKey INLINE_PARAMETER_HINT_CURRENT = TextAttributesKey.createTextAttributesKey("INLINE_PARAMETER_HINT_CURRENT");
+  public static final ColorKey INLINE_REFACTORING_SETTINGS_DEFAULT = ColorKey.createColorKey("INLINE_REFACTORING_SETTINGS_DEFAULT");
+  public static final ColorKey INLINE_REFACTORING_SETTINGS_FOCUSED = ColorKey.createColorKey("INLINE_REFACTORING_SETTINGS_FOCUSED");
+  public static final ColorKey INLINE_REFACTORING_SETTINGS_HOVERED = ColorKey.createColorKey("INLINE_REFACTORING_SETTINGS_HOVERED");
 }
