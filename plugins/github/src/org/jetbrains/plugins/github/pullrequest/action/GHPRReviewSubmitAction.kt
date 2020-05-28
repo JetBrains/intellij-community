@@ -20,6 +20,7 @@ import com.intellij.ui.EditorTextField
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.HorizontalBox
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JButtonAction
 import com.intellij.util.ui.UIUtil
@@ -180,7 +181,8 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
           add(title)
           if (pendingReview != null) {
             val commentsCount = pendingReview.comments.totalCount!!
-            add(JLabel("  $commentsCount pending comment${if (commentsCount > 1) "s" else ""}  ")).apply {
+            add(Box.createRigidArea(JBDimension(5, 0)))
+            add(JLabel(GithubBundle.message("pull.request.review.pending.comments.count", commentsCount))).apply {
               foreground = UIUtil.getContextHelpForeground()
             }
           }
