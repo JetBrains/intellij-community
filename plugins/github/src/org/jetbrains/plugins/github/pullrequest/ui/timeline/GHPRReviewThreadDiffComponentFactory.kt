@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.diff.util.DiffDrawUtil
@@ -126,7 +126,7 @@ class GHPRReviewThreadDiffComponentFactory(private val fileTypeRegistry: FileTyp
 
   private fun createEditor(document: Document): EditorEx {
     return (editorFactory.createViewer(document, project, EditorKind.DIFF) as EditorEx).apply {
-      setHorizontalScrollbarVisible(false)
+      setHorizontalScrollbarVisible(true)
       setVerticalScrollbarVisible(false)
       setCaretEnabled(false)
       setBorder(null)
