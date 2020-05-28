@@ -93,11 +93,12 @@ internal fun thisBuildReportableLink() =
 internal fun triggeredBy() =
   System.getProperty("teamcity.build.triggeredBy.username")
     ?.takeIf(String::isNotBlank)
+    ?.takeIf { it != "null" && it != "n/a" }
     ?.let { teamCityGet("users/username:$it/email") }
     ?.removeSuffix(System.lineSeparator())
     ?.takeIf { triggeredByName != null }
     ?.let { email -> Committer(triggeredByName, email) }
-  ?: error("Unable to find who triggered the build")
+  ?: Committer("IconSyncRobot", "icon-sync-robot-no-reply@jetbrains.com")
 
 internal fun isScheduled() = triggeredByName?.contains("Schedule") == true
 
