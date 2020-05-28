@@ -132,7 +132,10 @@ class PluginAdvertiserExtensionsState(private val project: Project) {
     knownExtensions: PluginsAdvertiser.KnownExtensions
   ): PluginAdvertiserExtensionsData? {
     val allPlugins = knownExtensions.find(extensionOrFileName)?.toSet()
-    if (allPlugins == null || allPlugins.isEmpty()) return null
+    if (allPlugins == null || allPlugins.isEmpty()) {
+      LOG.debug("No features for extension $extensionOrFileName")
+      return null
+    }
     val pluginIdsFromMarketplace = MarketplaceRequests.getInstance()
       .getLastCompatiblePluginUpdate(allPlugins.map { it.myPluginId }, null).map { it.pluginId }.toSet()
     val compatiblePlugins = allPlugins.filter {
