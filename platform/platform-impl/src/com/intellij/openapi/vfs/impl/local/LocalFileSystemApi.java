@@ -19,38 +19,35 @@ import java.io.File;
  * filesystem implementation.
  */
 public abstract class LocalFileSystemApi extends LocalFileSystem {
-  @NotNull
-  private VirtualFileLookupImpl getLookup() {
-    return VirtualFileLookupServiceImpl.getInstance().newLookup(this);
-  }
+  private final VirtualFileLookupImpl myLookup = VirtualFileLookupServiceImpl.getInstance().newLookup(this);
 
   @Nullable
   @Override
   public final VirtualFile findFileByPathIfCached(@NotNull String path) {
-    return getLookup().onlyIfCached().fromPath(path);
+    return myLookup.onlyIfCached().fromPath(path);
   }
 
   @Nullable
   @Override
   public final VirtualFile findFileByPath(@NotNull String path) {
-    return getLookup().fromPath(path);
+    return myLookup.fromPath(path);
   }
 
   @Nullable
   @Override
   public final VirtualFile refreshAndFindFileByPath(@NotNull String path) {
-    return getLookup().withRefresh().fromPath(path);
+    return myLookup.withRefresh().fromPath(path);
   }
 
   @Nullable
   @Override
   public final VirtualFile findFileByIoFile(@NotNull File file) {
-    return getLookup().fromIoFile(file);
+    return myLookup.fromIoFile(file);
   }
 
   @Nullable
   @Override
   public final VirtualFile refreshAndFindFileByIoFile(@NotNull File file) {
-    return getLookup().withRefresh().fromIoFile(file);
+    return myLookup.withRefresh().fromIoFile(file);
   }
 }

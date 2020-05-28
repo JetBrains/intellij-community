@@ -25,6 +25,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
   public static final @NotNull ModificationTracker VFS_STRUCTURE_MODIFICATIONS = () -> getInstance().getStructureModificationCount();
 
   private static VirtualFileManager ourInstance = CachedSingletonsRegistry.markCachedField(VirtualFileManager.class);
+  private final VirtualFileLookup myLookup = VirtualFileLookup.newLookup();
 
   /**
    * Gets the instance of {@code VirtualFileManager}.
@@ -80,7 +81,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * @see VirtualFileLookup#fromUrl(String)
    */
   public @Nullable VirtualFile findFileByUrl(@NonNls @NotNull String url) {
-    return VirtualFileLookup.newLookup().fromUrl(url);
+    return myLookup.fromUrl(url);
   }
 
   /**

@@ -10,7 +10,8 @@ import java.nio.file.FileSystems
 import java.nio.file.Path
 
 internal data class VirtualFileLookupImpl(
-  val localFileSystem: LocalFileSystem,
+  val lazyLocalFileSystem: Lazy<LocalFileSystem>,
+  val lazyVirtualFileManager: Lazy<VirtualFileManager> = lazy { VirtualFileManager.getInstance() },
   val withRefresh: Boolean = false,
   val onlyIfCached: Boolean = false
 ) : VirtualFileLookup {
@@ -18,11 +19,12 @@ internal data class VirtualFileLookupImpl(
   override fun onlyIfCached() = copy(onlyIfCached = true)
 
   override fun fromIoFile(file: File): VirtualFile? {
-    if (localFileSystem != LocalFileSystem.getInstance()) return null
+    if (lazyLocalFileSystem.value != LocalFileSystem.getInstance()) return null
     return fromPath(FileUtil.toSystemIndependentName(file.absolutePath))
   }
 
   override fun fromPath(path: String): VirtualFile? {
+    val localFileSystem = lazyLocalFileSystem.value
     return when {
       onlyIfCached -> VfsImplUtil.findFileByPathIfCached(localFileSystem, path)
       withRefresh -> VfsImplUtil.refreshAndFindFileByPath(localFileSystem, path)
@@ -43,8 +45,8 @@ internal data class VirtualFileLookupImpl(
 
   override fun fromUrl(url: String): VirtualFile? {
     val protocol = VirtualFileManager.extractProtocol(url) ?: return null
+    val fs = lazyVirtualFileManager.value.getFileSystem(protocol) ?: return null
     val path = VirtualFileManager.extractPath(url)
-    val fs = VirtualFileManager.getInstance().getFileSystem(protocol) ?: return null
     return when {
       fs is NewVirtualFileSystem && onlyIfCached -> fs.findFileByPathIfCached(path)
       onlyIfCached -> null
@@ -56,11 +58,11 @@ internal data class VirtualFileLookupImpl(
 
 internal class VirtualFileLookupServiceImpl : VirtualFileLookupService {
   override fun newLookup(): VirtualFileLookupImpl {
-    return VirtualFileLookupImpl(LocalFileSystem.getInstance())
+    return VirtualFileLookupImpl(lazy { LocalFileSystem.getInstance() })
   }
 
   fun newLookup(fileSystem: LocalFileSystem): VirtualFileLookupImpl {
-    return VirtualFileLookupImpl(fileSystem)
+    return VirtualFileLookupImpl(lazyOf(fileSystem))
   }
 
   companion object {
