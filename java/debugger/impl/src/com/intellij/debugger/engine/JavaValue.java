@@ -292,7 +292,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-        myValueDescriptor.getChildrenRendererAsync(myEvaluationContext.getDebugProcess())
+        myValueDescriptor.getChildrenRenderer(myEvaluationContext.getDebugProcess())
           .thenAccept(r -> {
             r.buildChildren(myValueDescriptor.getValue(), new ChildrenBuilder() {
               @Override
@@ -500,7 +500,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       return Promises.resolvedPromise(evaluationExpression);
     }
     else {
-      final AsyncPromise<XExpression> res = new AsyncPromise<>();
+      final AsyncPromise<XExpression> result = new AsyncPromise<>();
       myEvaluationContext.getManagerThread().schedule(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
         @Override
         public Priority getPriority() {
@@ -509,31 +509,44 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
         @Override
         public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-          evaluationExpression = ReadAction.compute(() -> {
-            try {
-              PsiElement psiExpression = getDescriptor().getTreeEvaluation(JavaValue.this, getDebuggerContext());
-              if (psiExpression != null) {
-                XExpression res = TextWithImportsImpl.toXExpression(new TextWithImportsImpl(psiExpression));
-                // add runtime imports if any
-                Set<String> imports = psiExpression.getUserData(DebuggerTreeNodeExpression.ADDITIONAL_IMPORTS_KEY);
-                if (imports != null && res != null) {
-                  if (res.getCustomInfo() != null) {
-                    imports.add(res.getCustomInfo());
-                  }
-                  res = new XExpressionImpl(res.getExpression(), res.getLanguage(), StringUtil.join(imports, ","), res.getMode());
+          try {
+            getDescriptor().getTreeEvaluation(JavaValue.this, getDebuggerContext())
+              .whenComplete((psiExpression, ex) -> {
+                if (ex != null) {
+                  result.setError(ex);
                 }
-                return res;
-              }
-            }
-            catch (EvaluateException e) {
-              LOG.info(e);
-            }
-            return null;
-          });
-          res.setResult(evaluationExpression);
+                else if (psiExpression != null) {
+                  ReadAction.run(() -> {
+                    XExpression res = TextWithImportsImpl.toXExpression(new TextWithImportsImpl(psiExpression));
+                    // add runtime imports if any
+                    Set<String> imports = psiExpression.getUserData(DebuggerTreeNodeExpression.ADDITIONAL_IMPORTS_KEY);
+                    if (imports != null && res != null) {
+                      if (res.getCustomInfo() != null) {
+                        imports.add(res.getCustomInfo());
+                      }
+                      res = new XExpressionImpl(res.getExpression(), res.getLanguage(), StringUtil.join(imports, ","), res.getMode());
+                    }
+                    evaluationExpression = res;
+                    result.setResult(res);
+                  });
+                }
+                else {
+                  result.setError("Null");
+                }
+              });
+          }
+          catch (EvaluateException e) {
+            LOG.info(e);
+            result.setError(e);
+          }
+        }
+
+        @Override
+        protected void commandCancelled() {
+          result.setError("Cancelled");
         }
       });
-      return res;
+      return result;
     }
   }
 
