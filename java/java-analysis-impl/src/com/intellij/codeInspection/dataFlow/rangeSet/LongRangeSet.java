@@ -124,7 +124,7 @@ public abstract class LongRangeSet {
    * @param other a sub-set candidate
    * @return true if current set contains all the values from other
    */
-  public abstract boolean contains(LongRangeSet other);
+  public abstract boolean contains(@NotNull LongRangeSet other);
 
   /**
    * Creates a new set which contains all possible values satisfying given predicate regarding the current set.
@@ -964,7 +964,7 @@ public abstract class LongRangeSet {
     }
 
     @Override
-    public boolean contains(LongRangeSet other) {
+    public boolean contains(@NotNull LongRangeSet other) {
       return other.isEmpty();
     }
 
@@ -1159,7 +1159,7 @@ public abstract class LongRangeSet {
     }
 
     @Override
-    public boolean contains(LongRangeSet other) {
+    public boolean contains(@NotNull LongRangeSet other) {
       return other.isEmpty() || equals(other);
     }
 
@@ -1513,7 +1513,7 @@ public abstract class LongRangeSet {
     }
 
     @Override
-    public boolean contains(LongRangeSet other) {
+    public boolean contains(@NotNull LongRangeSet other) {
       return other.isEmpty() || other.min() >= myFrom && other.max() <= myTo;
     }
 
@@ -1848,7 +1848,7 @@ public abstract class LongRangeSet {
     }
 
     @Override
-    public boolean contains(LongRangeSet other) {
+    public boolean contains(@NotNull LongRangeSet other) {
       if (other instanceof ModRange) {
         ModRange modRange = (ModRange)other;
         if (modRange.myFrom < myFrom || modRange.myTo > myTo) return false;
@@ -2129,7 +2129,7 @@ public abstract class LongRangeSet {
     }
 
     @Override
-    public boolean contains(LongRangeSet other) {
+    public boolean contains(@NotNull LongRangeSet other) {
       if (other.isEmpty() || other == this) return true;
       if (other instanceof Point) {
         return contains(((Point)other).myValue);

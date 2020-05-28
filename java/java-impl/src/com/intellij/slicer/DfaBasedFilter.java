@@ -123,7 +123,7 @@ final class DfaBasedFilter {
     if (type instanceof DfIntegralType) {
       LongRangeSet psiRange = LongRangeSet.fromType(psiType);
       LongRangeSet dfRange = ((DfIntegralType)type).getRange();
-      if (dfRange.contains(psiRange)) return "";
+      if (psiRange != null && dfRange.contains(psiRange)) return "";
       // chop 'int' or 'long' prefix
       return dfRange.getPresentationText(psiType);
     }
