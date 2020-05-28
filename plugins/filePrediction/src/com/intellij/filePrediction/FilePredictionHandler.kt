@@ -10,17 +10,17 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.NonUrgentExecutor
 
-class FilePredictionHandler : Disposable {
+class FilePredictionHandler(private val project: Project) : Disposable {
   companion object {
     private const val CALCULATE_CANDIDATE_PROBABILITY: Double = 0.1
 
-    fun getInstance(): FilePredictionHandler? = ServiceManager.getService(FilePredictionHandler::class.java)
+    fun getInstance(project: Project): FilePredictionHandler? = ServiceManager.getService(project, FilePredictionHandler::class.java)
   }
 
   private var manager: FilePredictionSessionManager
     = FilePredictionSessionManager(50, 5, 10, CALCULATE_CANDIDATE_PROBABILITY)
 
-  fun onFileSelected(project: Project, newFile: VirtualFile) {
+  fun onFileSelected(newFile: VirtualFile) {
     if (ProjectManagerImpl.isLight(project)) {
       return
     }

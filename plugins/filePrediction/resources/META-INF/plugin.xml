@@ -35,7 +35,7 @@
 
     <filePrediction.ml.model implementation="com.intellij.filePrediction.predictor.model.FilePredictionMLModelProvider"/>
 
-    <applicationService serviceImplementation="com.intellij.filePrediction.FilePredictionHandler"/>
+    <projectService serviceImplementation="com.intellij.filePrediction.FilePredictionHandler"/>
     <projectService serviceImplementation="com.intellij.filePrediction.features.history.FilePredictionHistory"/>
   </extensions>
 

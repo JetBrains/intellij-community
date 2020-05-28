@@ -10,7 +10,7 @@ internal class FilePredictionEditorManagerListener : FileEditorManagerListener {
   override fun selectionChanged(event: FileEditorManagerEvent) {
     val newFile = event.newFile ?: return
     if (shouldRecord()) {
-      FilePredictionHandler.getInstance()?.onFileSelected(event.manager.project, newFile)
+      FilePredictionHandler.getInstance(event.manager.project)?.onFileSelected(newFile)
     }
   }
 

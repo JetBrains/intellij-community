@@ -18,7 +18,9 @@ internal class FilePredictionContextFeatures: FilePredictionFeatureProvider {
                                      prevFile: VirtualFile?,
                                      refs: ExternalReferencesResult): Map<String, FilePredictionFeature> {
     val result = HashMap<String, FilePredictionFeature>()
-    result["opened"] = FilePredictionFeature.binary(FileEditorManager.getInstance(project).isFileOpen(newFile))
+    if (!project.isDisposed) {
+      result["opened"] = FilePredictionFeature.binary(FileEditorManager.getInstance(project).isFileOpen(newFile))
+    }
     return result
   }
 }
