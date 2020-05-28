@@ -8,11 +8,13 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ColorIcon;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +39,7 @@ public class HighlightDisplayLevel {
                               new ColorizedIcon(CodeInsightColors.WARNINGS_ATTRIBUTES, AllIcons.General.InspectionsWarning));
 
   private static final TextAttributesKey DO_NOT_SHOW_KEY = TextAttributesKey.createTextAttributesKey("DO_NOT_SHOW");
-  public static final HighlightDisplayLevel DO_NOT_SHOW = new HighlightDisplayLevel(HighlightSeverity.INFORMATION, createIconByMask(JBColor.gray));
+  public static final HighlightDisplayLevel DO_NOT_SHOW = new HighlightDisplayLevel(HighlightSeverity.INFORMATION, EmptyIcon.ICON_0);
   /**
    * @deprecated use {@link #WEAK_WARNING} instead
    */
@@ -131,7 +133,10 @@ public class HighlightDisplayLevel {
   }
 
   public static Icon createIconByKey(@NotNull TextAttributesKey key) {
-    return new SingleColorIcon(key);
+    String name = key.getExternalName();
+    return StringUtil.containsIgnoreCase(name, "error") ? new ColorizedIcon(key, AllIcons.General.InspectionsError) :
+           StringUtil.containsIgnoreCase(name, "warning") ? new ColorizedIcon(key, AllIcons.General.InspectionsWarning) :
+           new SingleColorIcon(key);
   }
 
   @NotNull
