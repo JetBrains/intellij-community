@@ -53,7 +53,9 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
   private val detailsModel = SingleValueModel(currentDetails)
 
   private val errorModel = GHHandledErrorPanelModel(GithubBundle.message("pull.request.timeline.cannot.load"),
-                                                    GHLoadingErrorHandlerImpl(project, editor.account, editor.timelineLoader::reset))
+                                                    GHLoadingErrorHandlerImpl(project,
+                                                                              editor.securityService.account,
+                                                                              editor.timelineLoader::reset))
   private val timelineModel = GHPRTimelineMergingModel()
   private val reviewThreadsModelsProvider = GHPRReviewsThreadsModelsProviderImpl(editor.reviewData, uiDisposable)
 

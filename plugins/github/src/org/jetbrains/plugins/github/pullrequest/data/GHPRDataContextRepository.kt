@@ -24,6 +24,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRVirtualFile
+import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.*
 import org.jetbrains.plugins.github.pullrequest.search.GHPRSearchQueryHolderImpl
 import org.jetbrains.plugins.github.util.*
@@ -103,7 +104,8 @@ internal class GHPRDataContextRepository(private val project: Project) {
     val repositoryPath = repoWithPermissions.path
     val repositoryCoordinates = GHRepositoryCoordinates(account.server, repositoryPath)
 
-    val securityService = GHPRSecurityServiceImpl(GithubSharedProjectSettings.getInstance(project), currentUser, currentUserTeams,
+    val securityService = GHPRSecurityServiceImpl(GithubSharedProjectSettings.getInstance(project),
+                                                  account, currentUser, currentUserTeams,
                                                   repoWithPermissions)
     val detailsService = GHPRDetailsServiceImpl(ProgressManager.getInstance(), requestExecutor, repositoryCoordinates)
     val stateService = GHPRStateServiceImpl(ProgressManager.getInstance(), securityService,
@@ -136,10 +138,13 @@ internal class GHPRDataContextRepository(private val project: Project) {
     val repoDataService = GHPRRepositoryDataServiceImpl(ProgressManager.getInstance(), requestExecutor, account.server,
                                                         repositoryPath, repoOwner)
 
+    val avatarIconsProviderFactory = CachingGithubAvatarIconsProvider.Factory(CachingGithubUserAvatarLoader.getInstance(),
+                                                                              GithubImageResizer.getInstance(),
+                                                                              requestExecutor)
+
     indicator.checkCanceled()
-    return GHPRDataContext(gitRemoteCoordinates, repositoryCoordinates, account,
-                           requestExecutor, searchHolder, listLoader, listUpdatesChecker,
-                           dataProviderRepository, securityService, repoDataService)
+    return GHPRDataContext(gitRemoteCoordinates, repositoryCoordinates, searchHolder, listLoader, listUpdatesChecker,
+                           dataProviderRepository, securityService, repoDataService, avatarIconsProviderFactory)
   }
 
   companion object {

@@ -24,7 +24,6 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRVirtualFile
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContext
-import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRChangesDataProvider
@@ -52,9 +51,7 @@ internal class GHPRComponentFactory(private val project: Project) {
                                         private val wrapper: Wrapper,
                                         private val parentDisposable: Disposable) : GHPRViewController {
 
-    private val avatarIconsProviderFactory = dataContext.avatarIconsProviderFactory
-
-    private val listComponent = GHPRListComponent.create(project, dataContext, avatarIconsProviderFactory, parentDisposable)
+    private val listComponent = GHPRListComponent.create(project, dataContext, parentDisposable)
 
     private var currentDisposable: Disposable? = null
 
@@ -87,7 +84,7 @@ internal class GHPRComponentFactory(private val project: Project) {
       }
       val dataProvider = dataContext.dataProviderRepository.getDataProvider(id, currentDisposable!!)
       val pullRequestComponent =
-        createPullRequestComponent(dataContext, dataProvider, id, this, avatarIconsProviderFactory, currentDisposable!!)
+        createPullRequestComponent(dataContext, dataProvider, id, this, currentDisposable!!)
       wrapper.setContent(pullRequestComponent)
       wrapper.repaint()
       GithubUIUtil.focusPanel(wrapper)
@@ -103,14 +100,15 @@ internal class GHPRComponentFactory(private val project: Project) {
                                          dataProvider: GHPRDataProvider,
                                          pullRequest: GHPRIdentifier,
                                          viewController: GHPRViewController,
-                                         avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                                          disposable: Disposable): JComponent {
 
     val detailsLoadingModel = createDetailsLoadingModel(dataProvider.detailsData, disposable)
 
     val commitsModel = GHPRCommitsModelImpl()
     val cumulativeChangesModel = GHPRChangesModelImpl(project)
-    val diffHelper = GHPRChangesDiffHelperImpl(dataProvider.reviewData, avatarIconsProviderFactory, dataContext.securityService.currentUser)
+    val diffHelper = GHPRChangesDiffHelperImpl(dataProvider.reviewData,
+                                               dataContext.avatarIconsProviderFactory,
+                                               dataContext.securityService.currentUser)
     val changesLoadingModel = createChangesLoadingModel(commitsModel, cumulativeChangesModel, diffHelper, dataProvider.changesData,
                                                         disposable)
 
@@ -184,7 +182,7 @@ internal class GHPRComponentFactory(private val project: Project) {
     },
                                                     disposable,
                                                     GithubBundle.message("cannot.load.details"),
-                                                    GHLoadingErrorHandlerImpl(project, dataContext.account) {
+                                                    GHLoadingErrorHandlerImpl(project, dataContext.securityService.account) {
                                                       dataProvider.detailsData.reloadDetails()
                                                     }).also {
       ActionManager.getInstance().getAction("Github.PullRequest.Details.Reload").registerCustomShortcutSet(it, disposable)
@@ -218,7 +216,7 @@ internal class GHPRComponentFactory(private val project: Project) {
     },
                                                     disposable,
                                                     GithubBundle.message("cannot.load.commits"),
-                                                    GHLoadingErrorHandlerImpl(project, dataContext.account) {
+                                                    GHLoadingErrorHandlerImpl(project, dataContext.securityService.account) {
                                                       dataProvider.changesData.reloadChanges()
                                                     })
 

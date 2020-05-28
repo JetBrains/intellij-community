@@ -17,7 +17,6 @@ import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
-import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRListUpdatesChecker
@@ -44,7 +43,6 @@ internal object GHPRListComponent {
 
   fun create(project: Project,
              dataContext: GHPRDataContext,
-             avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
              disposable: Disposable): JComponent {
 
     val actionManager = ActionManager.getInstance()
@@ -91,7 +89,7 @@ internal object GHPRListComponent {
     val openButtonViewModel = GHPROpenButtonViewModel()
     installOpenButtonListeners(list, openButtonViewModel)
 
-    val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, list)
+    val avatarIconsProvider = dataContext.avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, list)
     val renderer = GHPRListCellRenderer(avatarIconsProvider, openButtonViewModel)
     list.cellRenderer = renderer
     UIUtil.putClientProperty(list, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(renderer))
@@ -124,7 +122,7 @@ internal object GHPRListComponent {
     }
     OutdatedPanelController(listLoader, dataContext.listUpdatesChecker, outdatedStatePanel, disposable)
 
-    val errorHandler = GHLoadingErrorHandlerImpl(project, dataContext.account) {
+    val errorHandler = GHLoadingErrorHandlerImpl(project, dataContext.securityService.account) {
       listLoader.reset()
     }
     val errorModel = GHHandledErrorPanelModel(GithubBundle.message("pull.request.list.cannot.load"), errorHandler).apply {

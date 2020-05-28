@@ -30,7 +30,6 @@ internal class GHPRFileEditor(private val project: Project,
 
   val securityService = dataContext.securityService
   val avatarIconsProviderFactory = dataContext.avatarIconsProviderFactory
-  val account = dataContext.account
 
   private val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, this)
   val detailsData = dataProvider.detailsData
