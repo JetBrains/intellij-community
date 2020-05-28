@@ -748,6 +748,12 @@ public class ExpressionUtils {
         isEvaluatedAtCompileTime(expression)) {
       return true;
     }
+    if (expression instanceof PsiConditionalExpression) {
+      PsiConditionalExpression cond = (PsiConditionalExpression)expression;
+      return isSafelyRecomputableExpression(cond.getCondition()) &&
+             isSafelyRecomputableExpression(cond.getThenExpression()) &&
+             isSafelyRecomputableExpression(cond.getElseExpression());
+    }
     if(expression instanceof PsiReferenceExpression) {
       PsiElement target = ((PsiReferenceExpression)expression).resolve();
       if (target instanceof PsiLocalVariable || target instanceof PsiParameter) return true;
