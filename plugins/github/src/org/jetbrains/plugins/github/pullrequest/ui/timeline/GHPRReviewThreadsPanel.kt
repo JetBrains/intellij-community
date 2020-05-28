@@ -47,7 +47,6 @@ object GHPRReviewThreadsPanel {
         }
 
         override fun intervalAdded(e: ListDataEvent) {
-          panel.remove(loadingPanel)
           for (i in e.index0..e.index1) {
             panel.add(threadComponentFactory(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i)
           }
@@ -56,12 +55,13 @@ object GHPRReviewThreadsPanel {
         }
 
         override fun contentsChanged(e: ListDataEvent) {
+          if (model.loaded) panel.remove(loadingPanel)
           panel.validate()
           panel.repaint()
         }
       })
 
-      if (model.isEmpty) {
+      if (!model.loaded) {
         panel.add(loadingPanel, VerticalLayout.FILL_HORIZONTAL)
       }
       else for (i in 0 until model.size) {
