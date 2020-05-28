@@ -13,11 +13,14 @@ import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.CompletableFuture;
 
 public abstract class NodeRendererImpl implements NodeRenderer {
   public static final String DEFAULT_NAME = "unnamed";
@@ -168,5 +171,21 @@ public abstract class NodeRendererImpl implements NodeRenderer {
     public boolean equals(Object obj) {
       return obj instanceof CompoundTypeRenderer.Overhead && myRenderer.equals(((CompoundTypeRenderer.Overhead)obj).myRenderer);
     }
+  }
+
+  public static String calcLabel(CompletableFuture<NodeRenderer> renderer,
+                                 ValueDescriptor descriptor,
+                                 EvaluationContext evaluationContext,
+                                 DescriptorLabelListener listener) {
+    return renderer.thenApply(r -> {
+      try {
+        return r.calcLabel(descriptor, evaluationContext, listener);
+      }
+      catch (EvaluateException e) {
+        descriptor.setValueLabelFailed(e);
+        listener.labelChanged();
+        return "";
+      }
+    }).getNow(XDebuggerUIConstants.getCollectingDataMessage());
   }
 }

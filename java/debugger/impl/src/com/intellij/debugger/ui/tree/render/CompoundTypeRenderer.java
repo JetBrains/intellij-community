@@ -4,7 +4,6 @@ package com.intellij.debugger.ui.tree.render;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.settings.NodeRendererSettings;
@@ -18,7 +17,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Type;
 import org.jetbrains.annotations.NonNls;
@@ -185,27 +183,16 @@ public class CompoundTypeRenderer extends CompoundNodeRenderer {
     }
 
     @Override
-    public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener)
-      throws EvaluateException {
+    public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) {
       NodeRendererSettings nodeRendererSettings = NodeRendererSettings.getInstance();
       ToStringRenderer toStringRenderer = nodeRendererSettings.getToStringRenderer();
       CompletableFuture<Boolean> toStringApplicable = CompletableFuture.completedFuture(false);
       if (toStringRenderer.isEnabled()) {
         toStringApplicable = toStringRenderer.isApplicableAsync(descriptor.getType());
       }
-      CompletableFuture<String> res = toStringApplicable
-        .thenApply(applicable -> applicable ? toStringRenderer : nodeRendererSettings.getClassRenderer())
-        .thenApply(renderer -> {
-          try {
-              return renderer.calcLabel(descriptor, evaluationContext, listener);
-          }
-          catch (EvaluateException e) {
-            descriptor.setValueLabelFailed(e);
-            listener.labelChanged();
-            return "";
-          }
-        });
-      return res.getNow(XDebuggerUIConstants.getCollectingDataMessage());
+      CompletableFuture<NodeRenderer> renderer = toStringApplicable
+        .thenApply(applicable -> applicable ? toStringRenderer : nodeRendererSettings.getClassRenderer());
+      return calcLabel(renderer, descriptor, evaluationContext, listener);
     }
   }
 }

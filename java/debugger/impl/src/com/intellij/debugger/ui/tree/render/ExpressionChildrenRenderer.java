@@ -146,7 +146,7 @@ public class ExpressionChildrenRenderer extends TypeRenderer implements Children
 
   private static NodeRenderer getChildrenRenderer(Type type, ValueDescriptor parentDescriptor) {
     NodeRenderer renderer = getLastChildrenRenderer(parentDescriptor);
-    if (renderer == null || type == null || !renderer.isApplicable(type)) {
+    if (renderer == null || type == null/* || !renderer.isApplicable(type)*/) {
       renderer = DebugProcessImpl.getDefaultRenderer(type);
       setPreferableChildrenRenderer(parentDescriptor, renderer);
     }
