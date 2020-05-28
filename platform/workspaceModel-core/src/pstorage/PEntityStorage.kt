@@ -158,7 +158,7 @@ internal class PEntityStorageBuilder(
   override fun removeEntity(e: TypedEntity) {
     e as PTypedEntity
 
-    removeEntity(e.id)
+    removeEntity(e.id, null)
     updateChangeLog { it.add(ChangeEntry.RemoveEntity(e.id)) }
   }
 
@@ -435,7 +435,7 @@ internal class PEntityStorageBuilder(
   override fun isEmpty(): Boolean = changeLogImpl.isEmpty()
 
   override fun addDiff(diff: TypedEntityStorageDiffBuilder): Map<TypedEntity, TypedEntity> {
-    val replaceMap = HashMap<PId, PId>()
+    val replaceMap = HashBiMap.create<PId, PId>()
     val builder = diff as PEntityStorageBuilder
     val diffLog = builder.changeLog
     for (change in diffLog) {
@@ -458,8 +458,7 @@ internal class PEntityStorageBuilder(
           val usedPid = replaceMap.getOrDefault(outdatedId, outdatedId)
           indexes.removeFromIndices(outdatedId)
           if (this.entityDataById(usedPid) != null) {
-            removeEntity(usedPid)
-            replaceMap.remove(outdatedId, usedPid)
+            removeEntity(usedPid, replaceMap.inverse())
           }
           updateChangeLog { it.add(ChangeEntry.RemoveEntity(usedPid)) }
         }
@@ -512,7 +511,7 @@ internal class PEntityStorageBuilder(
   }
 
   // modificationCount is not incremented
-  private fun removeEntity(idx: PId) {
+  private fun removeEntity(idx: PId, mapToUpdate: MutableMap<PId, PId>?) {
     val accumulator: MutableSet<PId> = mutableSetOf(idx)
 
     accumulateEntitiesToRemove(idx, accumulator)
@@ -521,6 +520,7 @@ internal class PEntityStorageBuilder(
       val entityData = entityDataById(id)
       if (entityData is PSoftLinkable) indexes.removeFromSoftLinksIndex(entityData)
       entitiesByType.remove(id.arrayId, id.clazz)
+      mapToUpdate?.remove(id)
     }
 
     // Update index

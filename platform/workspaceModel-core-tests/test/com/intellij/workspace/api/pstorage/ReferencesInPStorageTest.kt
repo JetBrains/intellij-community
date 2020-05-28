@@ -230,6 +230,22 @@ class ReferencesInPStorageTest {
   }
 
   @Test
+  fun `remove parent entity via diff`() {
+    val builder = PEntityStorageBuilder.create()
+    val oldParent = builder.addPParentEntity("oldParent")
+    val oldChild = builder.addPChildEntity(oldParent, "oldChild")
+    val diff = PEntityStorageBuilder.create()
+    val parent = diff.addPParentEntity("newParent")
+    diff.addPChildEntity(parent, "newChild")
+    diff.removeEntity(parent)
+    diff.assertConsistency()
+    builder.addDiff(diff)
+    builder.assertConsistency()
+    assertEquals(listOf(oldChild), builder.entities(PChildEntity::class.java).toList())
+    assertEquals(listOf(oldParent), builder.entities(PParentEntity::class.java).toList())
+  }
+
+  @Test
   fun `remove parent entity with two children`() {
     val builder = PEntityStorageBuilder.create()
     val child1 = builder.addPChildEntity()
