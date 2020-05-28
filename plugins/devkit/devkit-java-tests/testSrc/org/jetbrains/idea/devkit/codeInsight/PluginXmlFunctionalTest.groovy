@@ -108,7 +108,7 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     doHighlightingTest("Listeners.xml")
   }
 
-  // absence of since-build only in DevKit setup: PluginXmlPluginModuleTest.testListenersNoSinceBuild
+  // absence of since-build tested only in DevKit setup, see PluginXmlPluginModuleTest
   void testListenersPre193() {
     doHighlightingTest("ListenersPre193.xml")
   }
@@ -120,10 +120,6 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   void testListenersDepends() {
     myFixture.copyFileToProject(getTestName(false) + ".xml", "META-INF/plugin.xml")
     doHighlightingTest("ListenersDepends-dependency.xml")
-  }
-
-  void testListenersNoPluginIdStandalone() {
-    doHighlightingTest("ListenersNoPluginIdStandalone.xml")
   }
 
   void testExtensionI18n() {

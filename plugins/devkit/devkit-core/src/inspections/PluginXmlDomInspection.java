@@ -265,6 +265,9 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
 
     if (ideaPlugin == null) {
+      // Gradle setups usually do not specify it in plugin.xml
+      if (!PluginModuleType.isPluginModuleOrDependency(module)) return;
+
       holder.createProblem(listeners, ProblemHighlightType.ERROR,
                            "Could not locate main plugin.xml file to determine required <idea-version> 'since-build'", null)
         .highlightWholeElement();
