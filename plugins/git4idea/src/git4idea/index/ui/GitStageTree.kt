@@ -125,8 +125,8 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
 
     private fun getMovedRelativePath(userObject: GitFileStatusNode): String? {
       val origPath = userObject.origPath
-      if (origPath == null || origPath!!.parentPath == userObject.filePath.parentPath) return null
-      return PlatformVcsPathPresenter.getPresentableRelativePath(userObject.filePath, origPath!!)
+      if (origPath == null || origPath.parentPath == userObject.filePath.parentPath) return null
+      return PlatformVcsPathPresenter.getPresentableRelativePath(userObject.filePath, origPath)
     }
   }
 
