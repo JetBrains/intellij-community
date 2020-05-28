@@ -1,35 +1,52 @@
 package circlet.plugins.pipelines.services.execution
 
-import circlet.pipelines.engine.*
-import circlet.pipelines.engine.api.*
-import circlet.pipelines.engine.api.utils.*
-import circlet.pipelines.provider.*
-import circlet.pipelines.provider.api.*
-import circlet.pipelines.provider.local.*
-import circlet.pipelines.provider.local.docker.*
-import libraries.coroutines.extra.*
-import kotlin.coroutines.*
+import circlet.pipelines.common.api.StepExecId
+import circlet.pipelines.engine.api.ContainerExecutionData
+import circlet.pipelines.engine.api.GraphLifecycleListener
+import circlet.pipelines.engine.api.StepExecutionScheduler
+import circlet.pipelines.engine.api.storage.AutomationStorageTransaction
+import circlet.pipelines.engine.api.utils.AutomationTracer
+import circlet.pipelines.engine.toFlowGraph
+import circlet.pipelines.messages.TextMessageSeverity
+import circlet.pipelines.provider.FailureChecker
+import circlet.pipelines.provider.StepExecutionCustomMessages
+import circlet.pipelines.provider.api.ServiceCredentials
+import circlet.pipelines.provider.api.StartContainerContext
+import circlet.pipelines.provider.local.LocalExecutionProviderStorage
+import circlet.pipelines.provider.local.LocalReporting
+import circlet.pipelines.provider.local.LocalStepExecutionProviderImpl
+import circlet.pipelines.provider.local.docker.DockerFacade
+import libraries.coroutines.extra.Lifetime
+import kotlin.coroutines.CoroutineContext
 
 class CircletIdeaStepExecutionProvider(
-    lifetime: Lifetime,
-    vp: IdeaLocalVolumeProvider,
-    db: LocalExecutionProviderStorage,
-    docker: DockerFacade,
-    reporting: LocalReporting,
-    dockerEventsProcessContext: CoroutineContext,
-    tracer: AutomationTracer,
-    failureChecker: FailureChecker,
-    statusHub: StepExecutionStatusHub
+  lifetime: Lifetime,
+  vp: IdeaLocalVolumeProvider,
+  db: LocalExecutionProviderStorage,
+  docker: DockerFacade,
+  reporting: LocalReporting,
+  dockerEventsProcessContext: CoroutineContext,
+  tracer: AutomationTracer,
+  failureChecker: FailureChecker,
+  statusHub: StepExecutionScheduler,
+  listeners: List<GraphLifecycleListener>
 ) : LocalStepExecutionProviderImpl(
     lifetime,
-    db,
     vp,
     docker,
     reporting,
     dockerEventsProcessContext,
+    db,
     tracer,
     failureChecker,
-    statusHub
+    listeners,
+    statusHub, object: StepExecutionCustomMessages {
+    override fun addCustomMessages(tx: AutomationStorageTransaction,
+                                   stepExec: StepExecId,
+                                   messages: List<Pair<String, TextMessageSeverity>>) {
+        TODO("Not yet implemented")
+    }
+}
 ) {
 
     override fun resolveContainerContext(jobExec: ContainerExecutionData, volumeName: String?, clientCredentials: ServiceCredentials?): StartContainerContext {

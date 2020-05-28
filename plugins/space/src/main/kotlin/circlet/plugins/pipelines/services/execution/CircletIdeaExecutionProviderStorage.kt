@@ -1,13 +1,18 @@
 package circlet.plugins.pipelines.services.execution
 
-import circlet.pipelines.common.api.*
-import circlet.pipelines.config.api.*
+import circlet.pipelines.common.api.ExecutionStatus
+import circlet.pipelines.common.api.GraphExecId
+import circlet.pipelines.common.api.StepExecId
+import circlet.pipelines.config.api.ScriptAction
+import circlet.pipelines.config.api.ScriptStep
+import circlet.pipelines.config.api.flatten
 import circlet.pipelines.engine.api.storage.*
-import circlet.pipelines.provider.api.*
-import circlet.pipelines.provider.local.*
-import circlet.platform.api.*
-import libraries.io.random.*
-import libraries.klogging.*
+import circlet.pipelines.messages.TextMessageSeverity
+import circlet.pipelines.provider.api.ServiceCredentials
+import circlet.pipelines.provider.local.LocalExecutionProviderStorage
+import circlet.platform.api.nowMs
+import libraries.io.random.Random
+import libraries.klogging.KLogging
 
 class CircletIdeaExecutionProviderStorage : LocalExecutionProviderStorage {
     companion object : KLogging()
@@ -113,6 +118,10 @@ class CircletIdeaExecutionProviderStorage : LocalExecutionProviderStorage {
         executions.add(graphExecutionEntity)
 
         return graphExecutionEntity
+    }
+
+    override fun createStepExecutionCustomMessage(stepExec: StepExecId, message: String, severity: TextMessageSeverity) {
+        TODO("Not yet implemented")
     }
 
     override suspend fun <T> invoke(name: String, body: AutomationStorageTransaction.() -> T): T {

@@ -1,10 +1,9 @@
 package circlet.plugins.pipelines.ui
 
-import com.intellij.execution.filters.*
-import com.intellij.execution.impl.*
-import com.intellij.openapi.project.*
-import com.intellij.openapi.ui.*
-import javax.swing.*
+import com.intellij.execution.filters.TextConsoleBuilderFactory
+import com.intellij.execution.impl.ConsoleViewImpl
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Splitter
 
 class CircletAutomationOutputViewFactory {
     fun create(project: Project): CircletAutomationOutputView {

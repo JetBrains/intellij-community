@@ -6,6 +6,7 @@ import circlet.pipelines.common.api.StepExecId
 import circlet.pipelines.common.api.TraceLevel
 import circlet.pipelines.engine.AutomationGraphEngineImpl
 import circlet.pipelines.engine.AutomationGraphManagerImpl
+import circlet.pipelines.engine.ThreadPoolStepExecutionScheduler
 import circlet.pipelines.engine.api.*
 import circlet.pipelines.engine.api.storage.AutomationStorageTransaction
 import circlet.pipelines.provider.FailureChecker
@@ -75,7 +76,9 @@ class CircletTaskRunner(val project: Project) {
 
         val vp = IdeaLocalVolumeProvider(Paths.get("/Users/sergey.shkredov/work/tmp"), paths)
 
-        val dockerFacade = DockerFacadeImpl(orgUrlWrappedForDocker, ideaLocalRunnerLabel, vp, dockerEventsListener, processes)
+
+        val tracer = CircletIdeaAutomationTracer(processHandler)
+        val dockerFacade = DockerFacadeImpl(orgUrlWrappedForDocker, ideaLocalRunnerLabel, vp, dockerEventsListener, tracer, processes)
 
         val batchSize = 1
 
@@ -95,14 +98,13 @@ class CircletTaskRunner(val project: Project) {
 
         val reporting = LocalReportingImpl(lifetime, processes, LocalReporting.Settings(batchSize), logMessageSink)
 
-        val tracer = CircletIdeaAutomationTracer(processHandler)
 
         val failureChecker = object : FailureChecker {
             override fun check(tx: AutomationStorageTransaction, updates: Set<StepExecutionStatusUpdate>) {
             }
         }
 
-        val statusHub = StepExecutionStatusHubImpl()
+        val statusHub = ThreadPoolStepExecutionScheduler(lifetime) // TODO: use correct scheduler
 
         val listener = object : GraphLifecycleListener {
             override fun onBeforeGraphStatusChanged(tx: AutomationStorageTransaction, events: Iterable<GraphStatusChangedEvent>) {
@@ -132,11 +134,11 @@ class CircletTaskRunner(val project: Project) {
             }
         }
 
-        val hub = StepExecutionStatusHubImpl()
+        val hub = ThreadPoolStepExecutionScheduler(lifetime) // TODO: use correct scheduler
 
         val dispatcher = Ui
 
-        val stepExecutionProvider = CircletIdeaStepExecutionProvider(lifetime, vp, storage, dockerFacade, reporting, dispatcher, tracer, failureChecker, hub)
+        val stepExecutionProvider = CircletIdeaStepExecutionProvider(lifetime, vp, storage, dockerFacade, reporting, dispatcher, tracer, failureChecker, hub, listOf(listener))
 
         val executionScheduler = object : StepExecutionScheduler {
 
@@ -162,14 +164,23 @@ class CircletTaskRunner(val project: Project) {
                     }
                 }
             }
+
+            override fun subscribeOnExecution(lifetime: Lifetime, handler: suspend (StepExecutionData<*>) -> Unit) {
+                TODO("Not yet implemented")
+            }
+
+            override fun subscribeOnTermination(lifetime: Lifetime, handler: suspend (StepExecutionData<*>) -> Unit) {
+                TODO("Not yet implemented")
+            }
         }
 
         val automationGraphEngineCommon = AutomationGraphEngineImpl(
             statusHub,
-            storage,
-            executionScheduler,
-            SystemTimeTicker(),
             tracer,
+            //storage,
+            //executionScheduler,
+            //SystemTimeTicker(),
+            //tracer,
             listOf(listener))
 
         val automationStarterCommon = AutomationGraphManagerImpl(
