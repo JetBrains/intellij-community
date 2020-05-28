@@ -11,6 +11,7 @@ import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Test
 import java.io.File
+import kotlin.system.measureTimeMillis
 
 class ImlSerializationTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
@@ -52,8 +53,11 @@ class ImlSerializationTest {
 
   private fun serializationRoundTrip(storageBuilder: TypedEntityStorageBuilder) {
     val storage = storageBuilder.toStorage()
-    val byteArray = SerializationRoundTripChecker.verifyPSerializationRoundTrip(storage, virtualFileManager)
-    println("Serialized size: ${byteArray.size}")
+    val timeMillis = measureTimeMillis {
+      val byteArray = SerializationRoundTripChecker.verifyPSerializationRoundTrip(storage, virtualFileManager)
+      println("Serialized size: ${byteArray.size}")
+    }
+    println("Time: $timeMillis ms")
   }
 
   companion object {
