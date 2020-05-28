@@ -43,7 +43,7 @@ object GHPRReviewThreadComponent {
     }
 
     panel.add(
-      GHPRReviewThreadCommentsPanel.create(thread, GHPRReviewCommentComponent.factory(thread, reviewDataProvider, avatarIconsProvider)))
+      GHPRReviewThreadCommentsPanel.create(thread, GHPRReviewCommentComponent.factory(reviewDataProvider, avatarIconsProvider)))
 
     if (reviewDataProvider.canComment()) {
       panel.add(getThreadActionsComponent(reviewDataProvider, thread, avatarIconsProvider, currentUser), VerticalLayout.FILL_HORIZONTAL)

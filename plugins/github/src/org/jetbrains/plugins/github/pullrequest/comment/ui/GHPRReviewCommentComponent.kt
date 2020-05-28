@@ -14,7 +14,6 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.GithubIcons
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
@@ -39,7 +38,7 @@ import javax.swing.text.Utilities
 object GHPRReviewCommentComponent {
 
   fun create(reviewDataProvider: GHPRReviewDataProvider,
-             thread: GHPRReviewThreadModel, comment: GHPRReviewCommentModel,
+             comment: GHPRReviewCommentModel,
              avatarIconsProvider: GHAvatarIconsProvider): JComponent {
 
     val avatarLabel: LinkLabel<*> = LinkLabel.create("") {
@@ -78,8 +77,6 @@ object GHPRReviewCommentComponent {
       isVisible = comment.canBeDeleted
     }
 
-    val contentPanel = BorderLayoutPanel().andTransparent().addToCenter(textPane).addToBottom(editorWrapper)
-
     return JPanel(null).apply {
       isOpaque = false
       layout = MigLayout(LC().gridGap("0", "0")
@@ -93,7 +90,8 @@ object GHPRReviewCommentComponent {
       add(resolvedLabel, CC().hideMode(3).alignX("left"))
       add(editButton, CC().hideMode(3).gapBefore("${UI.scale(12)}"))
       add(deleteButton, CC().hideMode(3).gapBefore("${UI.scale(8)}"))
-      add(contentPanel, CC().newline().skip().push().minWidth("0").minHeight("0"))
+      add(textPane, CC().newline().skip().push().minWidth("0").minHeight("0"))
+      add(editorWrapper, CC().newline().skip().push().minWidth("0").minHeight("0").growX())
     }
   }
 
@@ -133,12 +131,13 @@ object GHPRReviewCommentComponent {
           setText(text)
           setReadOnly(true)
         }
-
+        model.isLoading = true
         reviewDataProvider.getCommentMarkdownBody(EmptyProgressIndicator(), comment.id).successOnEdt {
           runWriteAction {
             setReadOnly(false)
             setText(it)
           }
+          model.isLoading = false
         }
       }
 
@@ -207,10 +206,10 @@ object GHPRReviewCommentComponent {
     }
   }
 
-  fun factory(thread: GHPRReviewThreadModel, reviewDataProvider: GHPRReviewDataProvider, avatarIconsProvider: GHAvatarIconsProvider)
+  fun factory(reviewDataProvider: GHPRReviewDataProvider, avatarIconsProvider: GHAvatarIconsProvider)
     : (GHPRReviewCommentModel) -> JComponent {
     return { comment ->
-      create(reviewDataProvider, thread, comment, avatarIconsProvider)
+      create(reviewDataProvider, comment, avatarIconsProvider)
     }
   }
 }

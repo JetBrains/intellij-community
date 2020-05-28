@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.ListFocusTraversalPolicy
 import com.intellij.ui.components.labels.LinkLabel
@@ -32,11 +33,13 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import org.jetbrains.plugins.github.ui.InlineIconButton
+import org.jetbrains.plugins.github.ui.JComponentOverlay
 import org.jetbrains.plugins.github.util.handleOnEdt
 import java.awt.Dimension
 import java.awt.event.*
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.JLayeredPane
 import javax.swing.JPanel
 import javax.swing.border.EmptyBorder
@@ -83,12 +86,13 @@ object GHPRSubmittableTextField {
                      submitButton: InlineIconButton,
                      cancelButton: InlineIconButton,
                      authorLabel: LinkLabel<out Any>? = null,
-                     onCancel: (() -> Unit)? = null): JPanel {
+                     onCancel: (() -> Unit)? = null): JComponent {
     val panel = JPanel(null)
-    Controller(model, panel, textField, submitButton, cancelButton, onCancel)
+    val loadingLabel = JLabel(AnimatedIcon.Default())
+    Controller(model, panel, textField, loadingLabel, submitButton, cancelButton, onCancel)
 
     val textFieldWithSubmitButton = createTextFieldWithInlinedButton(textField, submitButton)
-    return panel.apply {
+    return JComponentOverlay.createCentered(panel.apply {
       isOpaque = false
       layout = MigLayout(LC().gridGap("0", "0")
                            .insets("0", "0", "0", "0")
@@ -103,7 +107,7 @@ object GHPRSubmittableTextField {
 
       add(textFieldWithSubmitButton, CC().grow().pushX())
       add(cancelButton, CC().alignY("top").hideMode(3))
-    }
+    }, loadingLabel)
   }
 
   private fun createTextField(document: Document, placeHolder: String): EditorTextField {
@@ -198,6 +202,10 @@ object GHPRSubmittableTextField {
     }
       private set
 
+    var isLoading by Delegates.observable(false) { _, _, _ ->
+      stateEventDispatcher.multicaster.eventOccurred()
+    }
+
     private val stateEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
     fun submit() {
@@ -218,13 +226,14 @@ object GHPRSubmittableTextField {
   private class Controller(private val model: Model,
                            private val panel: JPanel,
                            private val textField: EditorTextField,
+                           private val busyLabel: JLabel,
                            private val submitButton: InlineIconButton,
                            cancelButton: InlineIconButton,
                            onCancel: (() -> Unit)?) {
     init {
       textField.addDocumentListener(object : DocumentListener {
         override fun documentChanged(event: DocumentEvent) {
-          updateSubmittionState()
+          update()
           panel.revalidate()
         }
       })
@@ -246,15 +255,14 @@ object GHPRSubmittableTextField {
         }.registerCustomShortcutSet(CANCEL_SHORTCUT_SET, textField)
       }
 
-      model.addStateListener {
-        updateSubmittionState()
-      }
-      updateSubmittionState()
+      model.addStateListener(::update)
+      update()
     }
 
-    private fun updateSubmittionState() {
+    private fun update() {
+      busyLabel.isVisible = model.isLoading
       textField.isEnabled = !model.isSubmitting
-      submitButton.isEnabled = !model.isSubmitting && textField.text.isNotBlank()
+      submitButton.isEnabled = !model.isSubmitting && !model.isLoading && textField.text.isNotBlank()
     }
   }
 }
