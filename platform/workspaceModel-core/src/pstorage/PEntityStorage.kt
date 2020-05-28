@@ -669,7 +669,7 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
   override fun <E : TypedEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
     val pids = indexes.persistentIdIndex.getIdsByEntry(id) ?: return null
     if (pids.isEmpty()) return null
-    if (pids.size > 1) error("Cannot resolve persistent id. The store contains more than one associated entities")
+    if (pids.size > 1) error("Cannot resolve persistent id $id. The store contains more than one associated entities")
     val pid = pids.single()
     return entityDataById(pid)?.createEntity(this) as E?
   }

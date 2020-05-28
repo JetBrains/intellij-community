@@ -209,6 +209,7 @@ internal class LegacyBridgeModifiableModuleModel(
     myNewNameToModule.inverse().remove(module)
     myNewNameToModule.remove(newName)
 
+    removeUnloadedModule(newName)
     val oldName = module.name
     val oldId = module.moduleEntityId
     if (oldName != newName) { // if renaming to itself, forget it altogether
@@ -226,9 +227,7 @@ internal class LegacyBridgeModifiableModuleModel(
       diff.modifyEntity(ModifiableModuleEntity::class.java, entity) {
         name = newName
       }
-
     }
-    removeUnloadedModule(newName)
 
     if (oldModule != null) {
       throw ModuleWithNameAlreadyExists(ProjectModelBundle.message("module.already.exists.error", newName), newName)
