@@ -68,6 +68,7 @@ internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: Persiste
       contentEntry.url
     }
 
+    contentEntries.sortBy { it.url.url }
     contentEntries.map { contentRoot ->
       ContentEntryViaTypedEntity(rootModel, contentUrlToSourceRoots[contentRoot.url] ?: emptyList(), contentRoot, updater)
     }

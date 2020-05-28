@@ -65,7 +65,7 @@ class LegacyBridgeModifiableRootModel(
 
   private val contentEntriesImplValue: CachedValue<List<LegacyBridgeModifiableContentEntryImpl>> = CachedValue { storage ->
     val moduleEntity = storage.resolve(moduleId) ?: return@CachedValue emptyList<LegacyBridgeModifiableContentEntryImpl>()
-    val contentEntries = moduleEntity.contentRoots.toList()
+    val contentEntries = moduleEntity.contentRoots.sortedBy { it.url.url }.toList()
 
     contentEntries.map {
       LegacyBridgeModifiableContentEntryImpl(
