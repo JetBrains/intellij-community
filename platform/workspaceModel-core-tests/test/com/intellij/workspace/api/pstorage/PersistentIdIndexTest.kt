@@ -8,30 +8,6 @@ import com.intellij.workspace.api.TypedEntityWithPersistentId
 import org.junit.Assert
 import org.junit.Test
 
-internal class PPersistentIdEntityData : PEntityData.WithCalculatablePersistentId<PPersistentIdEntity>() {
-  lateinit var data: String
-  override fun createEntity(snapshot: TypedEntityStorage): PPersistentIdEntity {
-    return PPersistentIdEntity(data).also { addMetaData(it, snapshot) }
-  }
-
-  override fun persistentId(): PSampleEntityId = PSampleEntityId(data)
-}
-
-internal class PPersistentIdEntity(val data: String) : TypedEntityWithPersistentId, PTypedEntity() {
-  override fun persistentId(): PSampleEntityId = PSampleEntityId(data)
-}
-
-internal class ModifiablePPersistentIdEntity : PModifiableTypedEntity<PPersistentIdEntity>() {
-  var data: String by EntityDataDelegation()
-}
-
-internal fun TypedEntityStorageBuilder.addPersistentIdEntity(data: String,
-                                                             source: EntitySource = PSampleEntitySource("test")): PPersistentIdEntity {
-  return addEntity(ModifiablePPersistentIdEntity::class.java, source) {
-    this.data = data
-  }
-}
-
 class PersistentIdIndexTest {
   @Test
   fun `base index test`() {

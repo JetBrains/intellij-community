@@ -1,47 +1,12 @@
 package com.intellij.workspace.api
 
+import com.intellij.workspace.api.pstorage.ModifiableChildEntityWithPersistentId
+import com.intellij.workspace.api.pstorage.ModifiableNamedSampleEntity
+import com.intellij.workspace.api.pstorage.SampleEntityId
+import com.intellij.workspace.api.pstorage.addNamedEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
-
-internal interface NamedSampleEntity : TypedEntityWithPersistentId {
-  val name: String
-  val next: SampleEntityId
-
-  @JvmDefault
-  override fun persistentId(): SampleEntityId = SampleEntityId(name)
-}
-
-internal data class SampleEntityId(val name: String) : PersistentEntityId<NamedSampleEntity>() {
-  override val parentId: PersistentEntityId<*>?
-    get() = null
-  override val presentableName: String
-    get() = name
-}
-
-internal interface ModifiableNamedSampleEntity : ModifiableTypedEntity<NamedSampleEntity>, NamedSampleEntity {
-  override var name: String
-  override var next: SampleEntityId
-}
-
-internal data class ChildEntityId(val childName: String, override val parentId: SampleEntityId) : PersistentEntityId<ModifiableChildEntityWithPersistentId>() {
-  override val presentableName: String
-    get() = childName
-}
-
-internal interface ModifiableChildEntityWithPersistentId : ModifiableTypedEntity<ModifiableChildEntityWithPersistentId>, TypedEntityWithPersistentId {
-  var parent: NamedSampleEntity
-  var childName: String
-
-  @JvmDefault
-  override fun persistentId(): PersistentEntityId<*> = ChildEntityId(childName, parent.persistentId())
-}
-
-private fun TypedEntityStorageBuilder.addNamedEntity(name: String, next: SampleEntityId) =
-  addEntity(ModifiableNamedSampleEntity::class.java, SampleEntitySource("test")) {
-    this.name = name
-    this.next = next
-  }
 
 class EntityWithPersistentIdInProxyBasedStorageTest {
   @Test

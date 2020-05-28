@@ -176,6 +176,22 @@ internal class PEntityStorageBuilder(
     }
   }
 
+  /**
+   *
+   * Here: identificator means [hashCode] or [PersistentEntityId] in case it exists
+   *
+   * Plan of [replaceBySource]:
+   *  - Traverse all entities of the current builder and save the matched (by [sourceFilter]) to map by identificator.
+   *  - In the current builder, remove all references *between* matched entities. If a matched entity has a reference to an unmatched one,
+   *       save the unmatched entity to map by identificator.
+   *       We'll check if the reference to unmatched reference is still valid after replacing.
+   *  - Traverse all matched entities in the [replaceWith] storage. Detect if the particular entity exists in current builder using identificator.
+   *       Perform add / replace operation if necessary (remove operation will be later).
+   *  - Remove all entities that weren't found in [replaceWith] storage.
+   *  - Restore entities between matched and unmatched entities. At this point the full action may fail (e.g. if an entity in [replaceWith]
+   *        has a reference to an entity that doesn't exist in current builder.
+   *  - Restore references between matched entities.
+   */
   override fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: TypedEntityStorage) {
     replaceWith as AbstractPEntityStorage
 

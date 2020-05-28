@@ -6,21 +6,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-internal class SecondSampleEntityData : PEntityData<SecondSampleEntity>() {
-  var intProperty: Int = -1
-  override fun createEntity(snapshot: TypedEntityStorage): SecondSampleEntity {
-    return SecondSampleEntity(intProperty).also { addMetaData(it, snapshot) }
-  }
-}
-
-internal class SecondSampleEntity(
-  val intProperty: Int
-) : PTypedEntity()
-
-internal class ModifiableSecondSampleEntity : PModifiableTypedEntity<SecondSampleEntity>() {
-  var intProperty: Int by EntityDataDelegation()
-}
-
 class CollectChangesInPBuilderTest {
   private lateinit var initialStorage: TypedEntityStorage
   private lateinit var builder: TypedEntityStorageBuilder

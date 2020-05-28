@@ -10,42 +10,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-internal class PSourceEntityData : PEntityData<PSourceEntity>() {
-  lateinit var data: String
-  override fun createEntity(snapshot: TypedEntityStorage): PSourceEntity {
-    return PSourceEntity(data).also { addMetaData(it, snapshot) }
-  }
-}
-
-internal class PSourceEntity(val data: String) : PTypedEntity()
-
-internal class ModifiablePSourceEntity : PModifiableTypedEntity<PSourceEntity>() {
-  var data: String by EntityDataDelegation()
-}
-
-internal fun TypedEntityStorageBuilder.addPSourceEntity(data: String,
-                                                        source: EntitySource): PSourceEntity {
-  return addEntity(ModifiablePSourceEntity::class.java, source) {
-    this.data = data
-  }
-}
-
-internal class PChildSourceEntityData : PEntityData<PChildSourceEntity>() {
-  lateinit var data: String
-  override fun createEntity(snapshot: TypedEntityStorage): PChildSourceEntity {
-    return PChildSourceEntity(data).also { addMetaData(it, snapshot) }
-  }
-}
-
-internal class PChildSourceEntity(val data: String) : PTypedEntity() {
-  val parent: PSourceEntity by ManyToOne.NotNull(PSourceEntity::class.java)
-}
-
-internal class ModifiablePChildSourceEntity : PModifiableTypedEntity<PChildSourceEntity>() {
-  var data: String by EntityDataDelegation()
-  var parent: PSourceEntity by MutableManyToOne.NotNull(PChildSourceEntity::class.java, PSourceEntity::class.java)
-}
-
 class EntitySourceIndexTest {
   @Test
   fun `base index test`() {
