@@ -861,14 +861,4 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     assertNotNull(newDirFile);
     assertThat(newDirFile.toNioPath()).isNotNull().isEqualTo(newDir.toPath());
   }
-
-  @Test
-  public void testFindFileByUrlPerformance() {
-    VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
-    PlatformTestUtil.startPerformanceTest("findFileByUrl", 2000, () -> {
-      for (int i=0; i<10_000_000;i++) {
-        assertNull(virtualFileManager.findFileByUrl("temp://"));
-      }
-    }).assertTiming();
-  }
 }

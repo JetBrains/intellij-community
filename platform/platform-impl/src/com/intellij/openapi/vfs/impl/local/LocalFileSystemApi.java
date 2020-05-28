@@ -26,31 +26,31 @@ public abstract class LocalFileSystemApi extends LocalFileSystem {
 
   @Nullable
   @Override
-  public VirtualFile findFileByPathIfCached(@NotNull String path) {
+  public final VirtualFile findFileByPathIfCached(@NotNull String path) {
     return getLookup().onlyIfCached().fromPath(path);
   }
 
   @Nullable
   @Override
-  public VirtualFile findFileByPath(@NotNull String path) {
+  public final VirtualFile findFileByPath(@NotNull String path) {
     return getLookup().fromPath(path);
   }
 
   @Nullable
   @Override
-  public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
+  public final VirtualFile refreshAndFindFileByPath(@NotNull String path) {
     return getLookup().withRefresh().fromPath(path);
   }
 
   @Nullable
   @Override
-  public VirtualFile findFileByIoFile(@NotNull File file) {
+  public final VirtualFile findFileByIoFile(@NotNull File file) {
     return getLookup().fromIoFile(file);
   }
 
   @Nullable
   @Override
-  public VirtualFile refreshAndFindFileByIoFile(@NotNull File file) {
+  public final VirtualFile refreshAndFindFileByIoFile(@NotNull File file) {
     return getLookup().withRefresh().fromIoFile(file);
   }
 }

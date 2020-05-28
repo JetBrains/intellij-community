@@ -79,7 +79,9 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * @see VirtualFileLookup#newLookup()
    * @see VirtualFileLookup#fromUrl(String)
    */
-  public abstract @Nullable VirtualFile findFileByUrl(@NonNls @NotNull String url);
+  public @Nullable VirtualFile findFileByUrl(@NonNls @NotNull String url) {
+    return VirtualFileLookup.newLookup().fromUrl(url);
+  }
 
   /**
    * <p>Refreshes only the part of the file system needed for searching the file by the given URL and finds file
@@ -98,7 +100,9 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * @see VirtualFileLookup#withRefresh()
    * @see VirtualFileLookup#fromUrl(String)
    */
-  public abstract @Nullable VirtualFile refreshAndFindFileByUrl(@NotNull String url);
+  public @Nullable VirtualFile refreshAndFindFileByUrl(@NotNull String url) {
+    return VirtualFileLookup.newLookup().withRefresh().fromUrl(url);
+  }
 
   /**
    * @deprecated Use {@link #VFS_CHANGES} message bus topic.
