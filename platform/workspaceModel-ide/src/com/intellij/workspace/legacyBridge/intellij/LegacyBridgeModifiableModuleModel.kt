@@ -178,9 +178,6 @@ internal class LegacyBridgeModifiableModuleModel(
 
   override fun commit() {
     val diff = collectChanges()
-    for (module in myUncommittedModulesToDispose) {
-      Disposer.dispose(module)
-    }
 
     WorkspaceModel.getInstance(project).updateProjectModel {
       it.addDiff(diff)
@@ -196,6 +193,10 @@ internal class LegacyBridgeModifiableModuleModel(
       val moduleEntity = storage.resolve(moduleToDispose.moduleEntityId)
                          ?: error("Could not find module to remove by id: ${moduleToDispose.moduleEntityId}")
       diff.removeEntity(moduleEntity)
+    }
+
+    for (module in myUncommittedModulesToDispose) {
+      Disposer.dispose(module)
     }
 
     return diff
