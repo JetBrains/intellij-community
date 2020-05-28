@@ -294,11 +294,6 @@
         <option name="FOREGROUND" value="264eff" />
       </value>
     </option>
-    <option name="LIVE_TEMPLATE_ATTRIBUTES">
-      <value>
-        <option name="EFFECT_COLOR" value="e63900" />
-      </value>
-    </option>
     <option name="List/map to object conversion">
       <value>
         <option name="FOREGROUND" value="ff" />
@@ -331,7 +326,7 @@
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
-    <option name="TEMPLATE_VARIABLE_ATTRIBUTES">
+      <option name="TEMPLATE_VARIABLE_ATTRIBUTES">
       <value>
         <option name="FOREGROUND" value="7f0000" deuteranopia="0" protanopia="0"/>
         <option name="FONT_TYPE" value="2" />

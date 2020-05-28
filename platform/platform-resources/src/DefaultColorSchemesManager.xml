@@ -599,7 +599,15 @@
         <value>
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR" value="ff0000"/>
+          <option name="EFFECT_COLOR" value="0055ff"/>
+          <option name="EFFECT_TYPE" value="0"/>
+        </value>
+      </option>
+      <option name="LIVE_TEMPLATE_INACTIVE_SEGMENT">
+        <value>
+          <option name="FOREGROUND"/>
+          <option name="BACKGROUND"/>
+          <option name="EFFECT_COLOR" value="bfbfbf"/>
           <option name="EFFECT_TYPE" value="0"/>
         </value>
       </option>
@@ -1987,7 +1995,15 @@
         <value>
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR" value="ff0000"/>
+          <option name="EFFECT_COLOR" value="80bfff"/>
+          <option name="EFFECT_TYPE" value="0"/>
+        </value>
+      </option>
+      <option name="LIVE_TEMPLATE_INACTIVE_SEGMENT">
+        <value>
+          <option name="FOREGROUND"/>
+          <option name="BACKGROUND"/>
+          <option name="EFFECT_COLOR" value="737373"/>
           <option name="EFFECT_TYPE" value="0"/>
         </value>
       </option>

@@ -927,6 +927,7 @@ public class EditorPainter implements TextDrawingCallback {
       }
 
       boolean rounded = borderDescriptor.effectType == EffectType.ROUNDED_BOX;
+      int margin = borderDescriptor.effectType == EffectType.SLIGHTLY_WIDER_BOX ? 1 : 0;
       myGraphics.setColor(borderDescriptor.effectColor);
       VisualPosition startPosition = myView.offsetToVisualPosition(startOffset, true, false);
       VisualPosition endPosition = myView.offsetToVisualPosition(endOffset, false, true);
@@ -936,7 +937,7 @@ public class EditorPainter implements TextDrawingCallback {
         for (int i = 0; i < ranges.size() - 1; i += 2) {
           float startX = myCorrector.singleLineBorderStart(ranges.get(i));
           float endX = myCorrector.singleLineBorderEnd(ranges.get(i + 1));
-          drawSimpleBorder(startX, endX, y, rounded);
+          drawSimpleBorder(Math.max(startX - margin, 0), endX + margin, y, rounded);
         }
       }
       else {

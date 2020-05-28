@@ -30,7 +30,7 @@ public class TextAttributesEffectsBuilder {
   // this probably could be a property of the EffectType
   private static final Map<EffectType, EffectSlot> EFFECT_SLOTS_MAP = ContainerUtil.<EffectType, EffectSlot>immutableMapBuilder()
     .put(STRIKEOUT, STRIKE_SLOT)
-    .put(BOXED, FRAME_SLOT).put(ROUNDED_BOX, FRAME_SLOT)
+    .put(BOXED, FRAME_SLOT).put(ROUNDED_BOX, FRAME_SLOT).put(SLIGHTLY_WIDER_BOX, FRAME_SLOT)
     .put(BOLD_LINE_UNDERSCORE, UNDERLINE_SLOT)
     .put(LINE_UNDERSCORE, UNDERLINE_SLOT)
     .put(WAVE_UNDERSCORE, UNDERLINE_SLOT)

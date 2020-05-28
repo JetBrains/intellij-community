@@ -42,6 +42,7 @@ public interface EditorColors {
 
   TextAttributesKey SEARCH_RESULT_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("SEARCH_RESULT_ATTRIBUTES");
   TextAttributesKey LIVE_TEMPLATE_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("LIVE_TEMPLATE_ATTRIBUTES");
+  TextAttributesKey LIVE_TEMPLATE_INACTIVE_SEGMENT = TextAttributesKey.createTextAttributesKey("LIVE_TEMPLATE_INACTIVE_SEGMENT");
   TextAttributesKey WRITE_SEARCH_RESULT_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("WRITE_SEARCH_RESULT_ATTRIBUTES");
   TextAttributesKey IDENTIFIER_UNDER_CARET_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("IDENTIFIER_UNDER_CARET_ATTRIBUTES");
   TextAttributesKey WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES =
