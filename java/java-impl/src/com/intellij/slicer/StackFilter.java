@@ -2,7 +2,6 @@
 package com.intellij.slicer;
 
 import com.intellij.execution.filters.ExceptionAnalysisProvider;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -25,31 +24,26 @@ class StackFilter {
   final int myExtraFrames;
   final @NotNull String myClassName;
   final @NotNull String myMethodName;
+  final @Nullable String myFileName;
   final @Nullable StackFilter myNext;
 
   private StackFilter(int frames,
                       @NotNull String className,
                       @NotNull String methodName,
-                      @Nullable StackFilter next) {
+                      @Nullable String fileName, @Nullable StackFilter next) {
     myExtraFrames = frames;
     myClassName = className;
     myMethodName = methodName;
+    myFileName = fileName;
     myNext = next;
   }
   
-  SearchScope correctScope(Project project, SearchScope base) {
-    if (base instanceof GlobalSearchScope && myExtraFrames == 0) {
-      PsiManager instance = PsiManager.getInstance(project);
-      String packageName = StringUtil.getPackageName(myClassName);
+  SearchScope correctScope(SearchScope base) {
+    if (base instanceof GlobalSearchScope && myExtraFrames == 0 && myFileName != null) {
       return new DelegatingGlobalSearchScope((GlobalSearchScope)base) {
-
         @Override
         public boolean contains(@NotNull VirtualFile file) {
-          if (!super.contains(file)) return false;
-          PsiFile psiFile = instance.findFile(file);
-          if (!(psiFile instanceof PsiClassOwner)) return false;
-          // Do not filter by exact class for now
-          return ((PsiClassOwner)psiFile).getPackageName().equals(packageName);
+          return file.getName().equals(myFileName) && super.contains(file);
         }
       };
     }
@@ -119,17 +113,17 @@ class StackFilter {
   }
 
   @NotNull StackFilter pushFrame() {
-    return new StackFilter(myExtraFrames + 1, myClassName, myMethodName, myNext);
+    return new StackFilter(myExtraFrames + 1, myClassName, myMethodName, myFileName, myNext);
   }
   
   @Nullable StackFilter popFrame() {
     return myExtraFrames == 0 ? myNext :
-           new StackFilter(myExtraFrames - 1, myClassName, myMethodName, myNext);
+           new StackFilter(myExtraFrames - 1, myClassName, myMethodName, myFileName, myNext);
   }
 
   static @Nullable StackFilter from(List<ExceptionAnalysisProvider.StackLine> list) {
-    return StreamEx.of(list).foldRight(null, (line, prev) -> 
-      new StackFilter(0, line.getClassName(), line.getMethodName(), prev));
+    return StreamEx.of(list).foldRight(null, (line, prev) ->
+      new StackFilter(0, line.getClassName(), line.getMethodName(), line.getFileName(), prev));
   }
 
   @Override

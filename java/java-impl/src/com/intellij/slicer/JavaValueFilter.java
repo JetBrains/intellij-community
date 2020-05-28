@@ -4,7 +4,6 @@ package com.intellij.slicer;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.execution.filters.ExceptionAnalysisProvider;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.Nls;
@@ -68,8 +67,8 @@ public class JavaValueFilter implements SliceValueFilter {
     return new JavaValueFilter(myDfaFilter.unwrap(), myStackFilter);
   }
 
-  @NotNull SearchScope correctScope(@NotNull Project project, @NotNull SearchScope scope) {
-    return myStackFilter == null ? scope : myStackFilter.correctScope(project, scope);
+  @NotNull SearchScope correctScope(@NotNull SearchScope scope) {
+    return myStackFilter == null ? scope : myStackFilter.correctScope(scope);
   }
 
   @Override

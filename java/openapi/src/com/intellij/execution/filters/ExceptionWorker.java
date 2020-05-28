@@ -453,7 +453,7 @@ public class ExceptionWorker {
             if (line == null) break;
             String methodName = line.methodNameRange.substring(traceLine);
             if (methodName.startsWith("access$")) continue;
-            StackLine stackLine = new StackLine(line.classFqnRange.substring(traceLine), methodName);
+            StackLine stackLine = new StackLine(line.classFqnRange.substring(traceLine), methodName, line.fileName);
             nextLines.add(stackLine);
           }
           return nextLines;

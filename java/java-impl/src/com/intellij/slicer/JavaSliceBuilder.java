@@ -108,7 +108,7 @@ final class JavaSliceBuilder {
 
   @NotNull SearchScope getSearchScope() {
     AnalysisScope scope = myParent.getScope();
-    return myFilter.correctScope(scope.getProject(), scope.toSearchScope());
+    return myFilter.correctScope(scope.toSearchScope());
   }
 
   @Contract(pure = true)

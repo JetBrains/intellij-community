@@ -58,7 +58,7 @@ public class SliceBackwardTest extends SliceTestCase {
     params.valueFilter = filter.isEmpty() ? JavaValueFilter.ALLOW_EVERYTHING : provider.parseFilter(element, filter);
     List<ExceptionAnalysisProvider.StackLine> lines = StreamEx.of(stack).map(line -> {
       String[] parts = line.split(":");
-      return new ExceptionAnalysisProvider.StackLine(parts[0], parts[1]);
+      return new ExceptionAnalysisProvider.StackLine(parts[0], parts[1], null);
     }).toList();
     assertTrue(params.valueFilter instanceof JavaValueFilter);
     params.valueFilter = ((JavaValueFilter)params.valueFilter).withStack(lines);

@@ -34,26 +34,35 @@ public interface ExceptionAnalysisProvider {
    * Stack frame descriptor
    */
   class StackLine {
-    private final String myClassName;
-    private final String myMethodName;
+    private final @NotNull String myClassName;
+    private final @NotNull String myMethodName;
+    private final @Nullable String myFileName;
 
-    public StackLine(String className, String methodName) {
+    public StackLine(@NotNull String className, @NotNull String methodName, @Nullable String fileName) {
       myClassName = className;
       myMethodName = methodName;
+      myFileName = fileName;
     }
 
     /**
      * @return fully-qualified name, as presented in the stack trace
      */
-    public String getClassName() {
+    public @NotNull String getClassName() {
       return myClassName;
     }
 
     /**
      * @return method name
      */
-    public String getMethodName() {
+    public @NotNull String getMethodName() {
       return myMethodName;
+    }
+
+    /**
+     * @return file name
+     */
+    public @Nullable String getFileName() {
+      return myFileName;
     }
   }
 }
