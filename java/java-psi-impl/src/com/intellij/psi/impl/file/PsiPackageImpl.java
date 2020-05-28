@@ -168,8 +168,9 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   private PsiClass @NotNull [] getCachedClassesByName(@NotNull String name, GlobalSearchScope scope) {
-    if (DumbService.getInstance(getProject()).isDumb()) {
-      return getCachedClassInDumbMode(name, scope);
+    DumbService dumbService = DumbService.getInstance(getProject());
+    if (dumbService.isDumb()) {
+      return dumbService.isAlternativeResolveEnabled() ? getCachedClassesInDumbMode(name, scope) : PsiClass.EMPTY_ARRAY;
     }
 
     if (ModelBranchImpl.hasBranchedFilesInScope(scope)) {
@@ -195,7 +196,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return getFacade().findClasses(classQName, scope);
   }
 
-  private PsiClass @NotNull [] getCachedClassInDumbMode(final String name, GlobalSearchScope scope) {
+  private PsiClass[] getCachedClassesInDumbMode(String name, GlobalSearchScope scope) {
     Map<GlobalSearchScope, Map<String, PsiClass[]>> scopeMap = SoftReference.dereference(myDumbModeFullCache);
     if (scopeMap == null) {
       myDumbModeFullCache = new SoftReference<>(scopeMap = new ConcurrentHashMap<>());
@@ -395,7 +396,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       }
 
       PsiCompositeModifierList result = modifiers.isEmpty() ? null : new PsiCompositeModifierList(getManager(), modifiers);
-      return new Result<>(result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+      return new Result<>(result, PsiModificationTracker.MODIFICATION_COUNT);
     }
   }
 
