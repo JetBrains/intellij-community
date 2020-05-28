@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
-public class JavaFxIdsIndex extends ScalarIndexExtension<String> implements DocumentChangeDependentIndex {
+public class JavaFxIdsIndex extends ScalarIndexExtension<String> {
 
   @NonNls public static final ID<String, Void> KEY = ID.create("javafx.id.name");
 
