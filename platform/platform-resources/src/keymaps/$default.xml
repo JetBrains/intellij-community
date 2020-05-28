@@ -342,9 +342,6 @@
   <action id="ActivateTerminalToolWindow">
     <keyboard-shortcut first-keystroke="alt F12"/>
   </action>
-  <action id="ActivateMessagesToolWindow">
-    <keyboard-shortcut first-keystroke="alt 0"/>
-  </action>
   <action id="CloseContent">
     <keyboard-shortcut first-keystroke="control F4"/>
   </action>
@@ -916,6 +913,9 @@
   </action>
   <action id="ActivateVersionControlToolWindow">
     <keyboard-shortcut first-keystroke="alt 9"/>
+  </action>
+  <action id="ActivateCommitToolWindow">
+    <keyboard-shortcut first-keystroke="alt 0"/>
   </action>
   <action id="NewElement">
     <keyboard-shortcut first-keystroke="alt INSERT"/>
