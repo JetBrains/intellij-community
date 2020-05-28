@@ -45,6 +45,7 @@ public abstract class PersistentFS extends ManagingFS {
 
   public abstract String @NotNull [] listPersisted(@NotNull VirtualFile parent);
 
+  @ApiStatus.Internal
   public abstract @NotNull List<? extends ChildInfo> listAll(@NotNull VirtualFile parent);
 
   @ApiStatus.Internal
