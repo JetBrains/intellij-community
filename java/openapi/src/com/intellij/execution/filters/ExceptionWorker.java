@@ -397,6 +397,7 @@ public class ExceptionWorker {
     private final ExceptionLineRefiner myElementMatcher;
     private final int myLineNumber;
     private final int myTextEndOffset;
+    private boolean myAnalysisWasActivated;
 
     private ExceptionColumnFinder(@NotNull ExceptionLineRefiner elementMatcher, int lineNumber, int textEndOffset) {
       myElementMatcher = elementMatcher;
@@ -434,6 +435,10 @@ public class ExceptionWorker {
                                        @NotNull PsiElement element,
                                        @NotNull Editor editor,
                                        @Nullable Editor originalEditor) {
+      if (myAnalysisWasActivated) {
+        // Do not show the balloon if analysis was already activated once on this link
+        return;
+      }
       Supplier<List<StackLine>> supplier;
       if (originalEditor != null) {
         Document origDocument = originalEditor.getDocument();
@@ -477,6 +482,7 @@ public class ExceptionWorker {
                 if (b != null) {
                   Disposer.dispose(b);
                 }
+                myAnalysisWasActivated = true;
                 action.actionPerformed(AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, DataContext.EMPTY_CONTEXT));
               }
             }
