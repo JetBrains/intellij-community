@@ -376,7 +376,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   public void showPlugin(@Nullable ListPluginComponent component, boolean multiSelection) {
-    if (myShowComponent == component) {
+    if (myShowComponent == component && (component == null || myUpdateDescriptor == component.myUpdateDescriptor)) {
       return;
     }
     myShowComponent = component;
@@ -545,12 +545,14 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private void showLicensePanel() {
-    if (myPlugin.isBundled()) {
+    String productCode = myPlugin.getProductCode();
+    if (myPlugin.isBundled() || LicensePanel.isEA2Product(productCode)) {
+      myLicensePanel.hideWithChildren();
       return;
     }
-    String productCode = myPlugin.getProductCode();
     if (productCode == null) {
-      if (myUpdateDescriptor != null && myUpdateDescriptor.getProductCode() != null) {
+      if (myUpdateDescriptor != null && myUpdateDescriptor.getProductCode() != null &&
+          !LicensePanel.isEA2Product(myUpdateDescriptor.getProductCode())) {
         myLicensePanel.setText(IdeBundle.message("label.next.plugin.version.is.paid.use.the.trial.for.up.to.30.days.or"), true, false);
         myLicensePanel.showBuyPlugin(() -> myUpdateDescriptor);
         myLicensePanel.setVisible(true);

@@ -1200,8 +1200,12 @@ public class PluginManagerConfigurable
         tags = new ArrayList<>(tags);
         tags.add(0, "Paid");
       }
+      if (tags != null && LicensePanel.isEA2Product(productCode)) {
+        tags = new ArrayList<>(tags);
+        tags.remove("Paid");
+      }
     }
-    else if (productCode != null && !plugin.isBundled()) {
+    else if (productCode != null && !plugin.isBundled() && !LicensePanel.isEA2Product(productCode)) {
       LicensingFacade instance = LicensingFacade.getInstance();
       if (instance != null) {
         String stamp = instance.getConfirmationStamp(productCode);

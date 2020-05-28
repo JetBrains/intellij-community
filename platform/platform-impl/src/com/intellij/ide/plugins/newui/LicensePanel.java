@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -149,5 +150,9 @@ public class LicensePanel extends NonOpaquePanel {
         updateLink(IdeBundle.message("plugins.configurable.buy.the.plugin.from.0", price), true);
       }
     });
+  }
+
+  public static boolean isEA2Product(@Nullable String productCode) {
+    return productCode != null && ArrayUtil.contains(productCode, "DPN", "DC", "DPA", "PDB", "PWS", "PGO", "PPS", "PPC", "PRB", "PSW");
   }
 }
