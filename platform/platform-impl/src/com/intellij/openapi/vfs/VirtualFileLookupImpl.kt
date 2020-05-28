@@ -5,26 +5,28 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil
+import com.intellij.util.io.URLUtil
 import java.io.File
 import java.nio.file.FileSystems
 import java.nio.file.Path
 
 internal data class VirtualFileLookupImpl(
-  val lazyLocalFileSystem: Lazy<LocalFileSystem>,
-  val lazyVirtualFileManager: Lazy<VirtualFileManager> = lazy { VirtualFileManager.getInstance() },
-  val withRefresh: Boolean = false,
-  val onlyIfCached: Boolean = false
+  private val lazyActualLocalFileSystem: Lazy<LocalFileSystem>,
+  private val lazyTheLocalFileSystemImpl: Lazy<LocalFileSystem>,
+  private val lazyVirtualFileManager: Lazy<VirtualFileManager>,
+  private val withRefresh: Boolean = false,
+  private val onlyIfCached: Boolean = false
 ) : VirtualFileLookup {
   override fun withRefresh() = copy(withRefresh = true)
   override fun onlyIfCached() = copy(onlyIfCached = true)
 
   override fun fromIoFile(file: File): VirtualFile? {
-    if (lazyLocalFileSystem.value != LocalFileSystem.getInstance()) return null
+    if (lazyActualLocalFileSystem.value != lazyTheLocalFileSystemImpl.value) return null
     return fromPath(FileUtil.toSystemIndependentName(file.absolutePath))
   }
 
   override fun fromPath(path: String): VirtualFile? {
-    val localFileSystem = lazyLocalFileSystem.value
+    val localFileSystem = lazyActualLocalFileSystem.value
     return when {
       onlyIfCached -> VfsImplUtil.findFileByPathIfCached(localFileSystem, path)
       withRefresh -> VfsImplUtil.refreshAndFindFileByPath(localFileSystem, path)
@@ -44,12 +46,17 @@ internal data class VirtualFileLookupImpl(
   }
 
   override fun fromUrl(url: String): VirtualFile? {
-    val protocol = VirtualFileManager.extractProtocol(url) ?: return null
+    if (onlyIfCached) return null
+
+    val index = url.indexOf(URLUtil.SCHEME_SEPARATOR)
+    if (index < 0) return null
+
+    val protocol = url.substring(0, index)
     val fs = lazyVirtualFileManager.value.getFileSystem(protocol) ?: return null
-    val path = VirtualFileManager.extractPath(url)
+    val path = url.substring(index + URLUtil.SCHEME_SEPARATOR.length)
+
     return when {
       fs is NewVirtualFileSystem && onlyIfCached -> fs.findFileByPathIfCached(path)
-      onlyIfCached -> null
       withRefresh -> fs.refreshAndFindFileByPath(path)
       else -> fs.findFileByPath(path)
     }
@@ -57,12 +64,15 @@ internal data class VirtualFileLookupImpl(
 }
 
 internal class VirtualFileLookupServiceImpl : VirtualFileLookupService {
+  private val lazyLocalFileSystem = lazy(LazyThreadSafetyMode.NONE) { LocalFileSystem.getInstance() }
+  private val lazyVirtualFileManager = lazy(LazyThreadSafetyMode.NONE) { VirtualFileManager.getInstance() }
+
   override fun newLookup(): VirtualFileLookupImpl {
-    return VirtualFileLookupImpl(lazy { LocalFileSystem.getInstance() })
+    return VirtualFileLookupImpl(lazyLocalFileSystem, lazyLocalFileSystem, lazyVirtualFileManager)
   }
 
   fun newLookup(fileSystem: LocalFileSystem): VirtualFileLookupImpl {
-    return VirtualFileLookupImpl(lazyOf(fileSystem))
+    return VirtualFileLookupImpl(lazyOf(fileSystem), lazyLocalFileSystem, lazyVirtualFileManager)
   }
 
   companion object {
