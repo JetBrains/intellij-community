@@ -176,14 +176,19 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
   }
 
   @NotNull
+  public Collection<FilePath> getUntrackedFilePaths() {
+    synchronized (LOCK) {
+      return new ArrayList<>(myDefinitelyUntrackedFiles);
+    }
+  }
+
+  @NotNull
   public Collection<FilePath> retrieveUntrackedFilePaths() throws VcsException {
     synchronized (RESCAN_LOCK) {
       rescan();
     }
 
-    synchronized (LOCK) {
-      return new ArrayList<>(myDefinitelyUntrackedFiles);
-    }
+    return getUntrackedFilePaths();
   }
 
   /**

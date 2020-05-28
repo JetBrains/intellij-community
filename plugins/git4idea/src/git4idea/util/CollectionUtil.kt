@@ -34,11 +34,3 @@ fun <K, V> Map<K, V>.toShortenedString(separator: String = ", ",
 
 private fun truncated(size: Int, limit: Int) = " ... +${size - limit} more"
 private fun Collection<*>.truncated(limit: Int) = truncated(size, limit)
-
-fun <K, V> Iterable<Pair<K, V>>.toMapOfSets(): Map<K, Set<V>> {
-  val result = mutableMapOf<K, MutableSet<V>>()
-  for (pair in this) {
-    result.getOrPut(pair.first) { mutableSetOf() }.add(pair.second)
-  }
-  return result
-}

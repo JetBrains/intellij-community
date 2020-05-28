@@ -3,6 +3,7 @@ package git4idea.index.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -15,12 +16,15 @@ import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
 import com.intellij.vcs.commit.showEmptyCommitMessageConfirmation
+import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.runInEdtAsync
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import git4idea.GitVcs
 import git4idea.i18n.GitBundle
 import git4idea.index.GitStageTracker
 import git4idea.index.GitStageTrackerListener
+import git4idea.repo.GitRepository
+import git4idea.status.GitChangeProvider
 import java.awt.BorderLayout
 import javax.swing.JPanel
 
@@ -72,7 +76,8 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
     add(commitDiffSplitter, BorderLayout.CENTER)
 
     tracker.addListener(MyGitStageTrackerListener(), this)
-    if (tracker.isRefreshInProgress) {
+    project.messageBus.connect(this).subscribe(GitChangeProvider.TOPIC, MyGitChangeProviderListener())
+    if (GitVcs.getInstance(project).changeProvider?.isRefreshInProgress == true) {
       tree.setEmptyText(GitBundle.message("stage.loading.status"))
       progressStripe.startLoadingImmediately()
     }
@@ -125,15 +130,23 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
     override fun update() {
       this@GitStagePanel.update()
     }
+  }
 
+  inner class MyGitChangeProviderListener : GitChangeProvider.ChangeProviderListener {
     override fun progressStarted() {
-      tree.setEmptyText(GitBundle.message("stage.loading.status"))
-      progressStripe.startLoading()
+      runInEdt(this@GitStagePanel) {
+        tree.setEmptyText(GitBundle.message("stage.loading.status"))
+        progressStripe.startLoading()
+      }
     }
 
     override fun progressStopped() {
-      progressStripe.stopLoading()
-      tree.setEmptyText("")
+      runInEdt(this@GitStagePanel) {
+        progressStripe.stopLoading()
+        tree.setEmptyText("")
+      }
     }
+
+    override fun repositoryUpdated(repository: GitRepository) = Unit
   }
 }
