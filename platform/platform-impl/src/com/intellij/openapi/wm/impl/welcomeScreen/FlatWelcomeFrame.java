@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -72,6 +73,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+import static com.intellij.openapi.actionSystem.IdeActions.GROUP_FILE;
+import static com.intellij.openapi.actionSystem.IdeActions.GROUP_HELP_MENU;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.*;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenFocusManager.installFocusable;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.*;
@@ -166,6 +169,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     UIUtil.decorateWindowHeader(getRootPane());
     UIUtil.setCustomTitleBar(this, getRootPane(), runnable -> Disposer.register(this, () -> runnable.run()));
+    if (Registry.is("use.tabbed.welcome.screen")) {
+      rootPane.setJMenuBar(new WelcomeFrameMenuBar());
+    }
   }
 
   @Override
@@ -870,5 +876,14 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
   private static void setParentGroupName(@NotNull final String groupName, @NotNull final AnAction childAction) {
     childAction.getTemplatePresentation().putClientProperty(ACTION_GROUP_KEY, groupName);
+  }
+
+  private static class WelcomeFrameMenuBar extends IdeMenuBar {
+
+    @Override
+    public @NotNull ActionGroup getMainMenuActionGroup() {
+      return new DefaultActionGroup(ActionManager.getInstance().getAction(GROUP_FILE),
+                                    ActionManager.getInstance().getAction(GROUP_HELP_MENU));
+    }
   }
 }
