@@ -70,7 +70,7 @@ class InplaceMethodExtractor(val project: Project, val editor: Editor) : Inplace
     val templateState = TemplateManagerImpl.getTemplateState(myEditor) ?: return
     val presentation = getInlayPresentation() ?: return
     val offset = templateState.currentVariableRange?.endOffset ?: return
-    val inlay = TemplateInlayBuilder().createNavigatableButtonWithPopup(templateState, offset, presentation, popupPanel) ?: return
+    val inlay = TemplateInlayUtil.createNavigatableButtonWithPopup(templateState, offset, presentation, popupPanel) ?: return
     inlayReference.set(inlay)
     Disposer.register(inlay, Disposable { inlayReference.set(null) })
   }
