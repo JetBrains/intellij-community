@@ -22,17 +22,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.Separator;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.patterns.XmlPatterns.xmlAttributeValue;
 import static com.intellij.patterns.XmlPatterns.xmlTag;
 
 public class I18nReferenceContributor extends PsiReferenceContributor {
 
   private static final String INTENTION_ACTION_TAG = "intentionAction";
   private static final String INTENTION_ACTION_BUNDLE_TAG = "bundleName";
+
+  private static final String SEPARATOR_TAG = "separator";
 
   private static class Holder {
     private static final String CONFIGURABLE_EP = ConfigurableEP.class.getName();
@@ -57,6 +61,12 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"resourceKey"},
                                                                   Holder.TYPE_NAME_EP),
                                         new PropertyKeyReferenceProvider(false, "resourceKey", "resourceBundle"));
+
+    final XmlAttributeValuePattern separatorKeyPattern =
+      xmlAttributeValue("key")
+        .withSuperParent(2, DomPatterns.tagWithDom(SEPARATOR_TAG, Separator.class));
+    registrar.registerReferenceProvider(separatorKeyPattern,
+                                        new PropertyKeyReferenceProvider(false, null, null));
 
     final XmlTagPattern.Capture intentionActionKeyTagPattern =
       xmlTag().withLocalName("categoryKey").
@@ -95,7 +105,7 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
   private static XmlAttributeValuePattern extensionAttributePattern(String[] attributeNames,
                                                                     String... extensionPointClassNames) {
     //noinspection deprecation
-    return XmlPatterns.xmlAttributeValue(attributeNames)
+    return xmlAttributeValue(attributeNames)
       .inFile(DomPatterns.inDomFile(IdeaPlugin.class))
       .withSuperParent(2, xmlTag()
         .and(DomPatterns.withDom(DomPatterns.domElement(Extension.class).with(new PatternCondition<Extension>("relevantEP") {

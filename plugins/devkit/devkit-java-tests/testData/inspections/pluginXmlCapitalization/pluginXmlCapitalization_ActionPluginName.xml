@@ -48,5 +48,13 @@
       <<warning descr="String 'Action Text Override Via Bundle lower case' is not properly capitalized. It should have title capitalization">override-text</warning> place="ViaBundleWrongCase"/>
       <<warning descr="Missing resource bundle key 'action.OverrideBundleAction.ViaBundleMissingKey.text'">override-text</warning> place="ViaBundleMissingKey"/>
     </action>
+
+
+    <!-- separator -->
+    <group id="separatorGroup">
+      <separator key="titleCaseKey"/>
+
+      <separator key="<warning descr="String 'My key' is not properly capitalized. It should have title capitalization">sentenceCaseKey</warning>"/>
+    </group>
   </actions>
 </idea-plugin>

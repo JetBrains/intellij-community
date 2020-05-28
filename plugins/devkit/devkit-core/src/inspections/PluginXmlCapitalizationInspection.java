@@ -43,12 +43,19 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
     else if (element instanceof OverrideText) {
       checkOverrideText((OverrideText)element, holder);
     }
+    else if (element instanceof Separator) {
+      checkSeparator((Separator)element, holder);
+    }
     else if (element instanceof Extension) {
       checkExtension((Extension)element, holder);
     }
     else if (element instanceof IdeaPlugin) {
       checkCapitalization(holder, ((IdeaPlugin)element).getName(), Nls.Capitalization.Title);
     }
+  }
+
+  private static void checkSeparator(Separator separator, DomElementAnnotationHolder holder) {
+    checkPropertyCapitalization(holder, separator.getKey(), Nls.Capitalization.Title, separator.getKey().getStringValue(), false);
   }
 
   private static void checkOverrideText(OverrideText overrideText, DomElementAnnotationHolder holder) {
