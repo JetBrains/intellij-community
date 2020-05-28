@@ -63,8 +63,10 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
           NotificationCollector.getInstance().logNotificationSettingsClicked(myNotificationId, myNotificationDisplayId, myDisplayGroupId);
           final NotificationsConfigurable configurable = new NotificationsConfigurable();
           ShowSettingsUtil.getInstance().editConfigurable(myLayoutData.project, configurable, () -> {
-            //noinspection ConstantConditions
-            configurable.enableSearch(myDisplayGroupId).run();
+            Runnable runnable = configurable.enableSearch(myDisplayGroupId);
+            if (runnable != null) {
+              runnable.run();
+            }
           });
         })) {
         @Override
