@@ -2,23 +2,22 @@
 package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.hints.InlayPresentationFactory
-import com.intellij.codeInsight.hints.presentation.*
+import com.intellij.codeInsight.hints.presentation.PresentationFactory
+import com.intellij.codeInsight.hints.presentation.PresentationRenderer
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
-import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.JBPopupListener
-import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.inplace.*
 import com.intellij.ui.JBColor
 import com.intellij.ui.layout.*
-import com.intellij.ui.popup.PopupFactoryImpl
 import java.util.concurrent.atomic.AtomicReference
 
 class InplaceMethodExtractor(val project: Project, val editor: Editor) : InplaceRefactoring(editor, null, project) {
@@ -41,7 +40,7 @@ class InplaceMethodExtractor(val project: Project, val editor: Editor) : Inplace
 
   private val inlayReference = AtomicReference<Inlay<PresentationRenderer>>()
 
-  override fun getInlayPresentation(): SelectableInlayPresentation? {
+  private fun getInlayPresentation(): SelectableInlayPresentation? {
     val editor = myEditor as? EditorImpl ?: return null
     val factory = PresentationFactory(editor)
 
@@ -66,22 +65,14 @@ class InplaceMethodExtractor(val project: Project, val editor: Editor) : Inplace
     return SelectableInlayButton(editor, inactivePadded, activePadded, activePadded, inlayReference)
   }
 
-  override fun inlayOnSelection(place: VisualPosition, presentation: SelectableInlayPresentation) {
-    editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION, place)
-    val popup = JBPopupFactory.getInstance()
-      .createComponentPopupBuilder(popupPanel, null)
-      .setRequestFocus(true)
-      .addListener(object: JBPopupListener {
-        override fun onClosed(event: LightweightWindowEvent) { presentation.isSelected = false }
-      })
-      .createPopup()
-    popup.showInBestPositionFor(editor)
-  }
-
-  override fun createInlay(): Inlay<PresentationRenderer>? {
-    val inlay = super.createInlay()
+  override fun afterTemplateStart() {
+    super.afterTemplateStart()
+    val templateState = TemplateManagerImpl.getTemplateState(myEditor) ?: return
+    val presentation = getInlayPresentation() ?: return
+    val offset = templateState.currentVariableRange?.endOffset ?: return
+    val inlay = TemplateInlayBuilder().createNavigatableButtonWithPopup(templateState, offset, presentation, popupPanel) ?: return
     inlayReference.set(inlay)
-    return inlay
+    Disposer.register(inlay, Disposable { inlayReference.set(null) })
   }
 
   override fun performRefactoring(): Boolean {
