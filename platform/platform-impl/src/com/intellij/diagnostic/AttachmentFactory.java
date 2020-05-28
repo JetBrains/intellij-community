@@ -12,6 +12,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * @author yole
@@ -21,17 +23,20 @@ public class AttachmentFactory {
 
   private static final long BIG_FILE_THRESHOLD_BYTES = 50 * 1024;
 
+  @NotNull
   public static Attachment createContext(@NotNull Object start, Object... more) {
     StringBuilder builder = new StringBuilder(String.valueOf(start));
     for (Object o : more) builder.append(",").append(o);
     return new Attachment("current-context.txt", builder.length() > 0 ? builder.toString() : "(unknown)");
   }
 
+  @NotNull
   public static Attachment createAttachment(@NotNull Document document) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     return new Attachment(file != null ? file.getPath() : "unknown.txt", document.getText());
   }
 
+  @NotNull
   public static Attachment createAttachment(@NotNull VirtualFile file) {
     try (InputStream inputStream = file.getInputStream()) {
       return createAttachment(file.getPresentableUrl(), inputStream, file.getLength(), file.getFileType().isBinary());
@@ -41,12 +46,18 @@ public class AttachmentFactory {
     }
   }
 
+  @NotNull
   public static Attachment createAttachment(@NotNull File file, boolean isBinary) {
-    try (InputStream inputStream = new FileInputStream(file)) {
-      return createAttachment(file.getPath(), inputStream, file.length(), isBinary);
+    return createAttachment(file.toPath(), isBinary);
+  }
+
+  @NotNull
+  public static Attachment createAttachment(@NotNull Path file, boolean isBinary) {
+    try (InputStream inputStream = Files.newInputStream(file)) {
+      return createAttachment(file.toString(), inputStream, Files.size(file), isBinary);
     }
     catch (IOException e) {
-      return handleException(e, file.getPath());
+      return handleException(e, file.toString());
     }
   }
 
