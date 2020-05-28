@@ -38,7 +38,7 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
 
   @Override
   public int getVersion() {
-    return 6;
+    return 7;
   }
 
   @NotNull
@@ -80,10 +80,20 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
     return set;
   }
 
+  private static String getDeviceScreenInfo(GraphicsDevice device) {
+    GraphicsConfiguration conf = device.getDefaultConfiguration();
+    Rectangle rect = conf.getBounds();
+    String info = rect.width + "x" + rect.height;
+    float scale = JBUIScale.sysScale(conf);
+    if (scale != 1f) {
+      info += " (" + (int)(scale * 100) +"%)";
+    }
+    return info;
+  }
+
   private static void addScreenResolutions(Set<MetricEvent> set) {
     Arrays.stream(GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices())
-      .map(x -> x.getDefaultConfiguration().getBounds())
-      .map(r -> r.width + "x" + r.height)
+      .map(UiInfoUsageCollector::getDeviceScreenInfo)
       .forEach(x -> addValue(set, "Screen.Resolution", x));
   }
 
