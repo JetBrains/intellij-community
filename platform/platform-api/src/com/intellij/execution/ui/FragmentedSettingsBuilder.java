@@ -53,7 +53,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     fragments.sort(Comparator.comparingInt(SettingsEditorFragment::getCommandLinePosition));
     buildBeforeRun(fragments);
     addLine(buildHeader(fragments));
-    if (myMain != null) {
+    if (myMain != null && myMain.component() != null) {
       addLine(myMain.component());
     }
     addLine(buildCommandLinePanel(fragments));
@@ -122,6 +122,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
 
   @NotNull
   private DefaultActionGroup buildGroup(List<SettingsEditorFragment<Settings, ?>> fragments) {
+    fragments.sort(Comparator.comparingInt(SettingsEditorFragment::getMenuPosition));
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     String group = null;
     for (SettingsEditorFragment<Settings, ?> fragment : fragments) {

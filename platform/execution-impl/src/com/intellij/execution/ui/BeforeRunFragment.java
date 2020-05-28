@@ -37,12 +37,12 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
                                                               ExecutionBundle.message("run.configuration.before.run.open.tool.window"),
                                                               ExecutionBundle.message("run.configuration.before.run.group"),
                                                               settings -> settings.isActivateToolWindowBeforeRun(),
-                                                              (settings, value) -> settings.setActivateToolWindowBeforeRun(value)));
+                                                              (settings, value) -> settings.setActivateToolWindowBeforeRun(value), 100));
     list.add(RunConfigurationEditorFragment.createSettingsTag("before.launch.editSettings",
                                                               ExecutionBundle.message("run.configuration.before.run.edit.settings"),
                                                               ExecutionBundle.message("run.configuration.before.run.group"),
                                                               settings -> settings.isEditBeforeRun(),
-                                                              (settings, value) -> settings.setEditBeforeRun(value)));
+                                                              (settings, value) -> settings.setEditBeforeRun(value), 100));
     return list;
   }
 
@@ -50,6 +50,11 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
     super("beforeRunTasks", ExecutionBundle.message("run.configuration.before.run.task"),
           ExecutionBundle.message("run.configuration.before.run.group"), new BeforeRunComponent(), -2);
     component().myChangeListener = () -> fireEditorStateChanged();
+  }
+
+  @Override
+  public int getMenuPosition() {
+    return 100;
   }
 
   @Override

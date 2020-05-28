@@ -144,6 +144,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     return myCommandLinePosition;
   }
 
+  public int getMenuPosition() { return 0; }
   @Override
   protected void resetEditorFrom(@NotNull Settings s) {
     myReset.accept(s, myComponent);

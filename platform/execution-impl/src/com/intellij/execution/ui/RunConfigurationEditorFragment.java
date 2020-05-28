@@ -26,7 +26,8 @@ public abstract class RunConfigurationEditorFragment<Settings, C extends JCompon
 
   public static <Settings> SettingsEditorFragment<Settings, JButton> createSettingsTag(String id, String name, String group,
                                                                                        Predicate<RunnerAndConfigurationSettingsImpl> getter,
-                                                                                       BiConsumer<RunnerAndConfigurationSettingsImpl, Boolean> setter) {
+                                                                                       BiConsumer<RunnerAndConfigurationSettingsImpl, Boolean> setter,
+                                                                                       int menuPosition) {
     Ref<SettingsEditorFragment<?, JButton>> ref = new Ref<>();
     TagButton button = new TagButton(name, () -> ref.get().setSelected(false));
     RunConfigurationEditorFragment<Settings, JButton> fragment = new RunConfigurationEditorFragment<Settings, JButton>(id, name, group, button, 0) {
@@ -44,6 +45,11 @@ public abstract class RunConfigurationEditorFragment<Settings, C extends JCompon
       @Override
       public boolean isTag() {
         return true;
+      }
+
+      @Override
+      public int getMenuPosition() {
+        return menuPosition;
       }
     };
     Disposer.register(fragment, button);
