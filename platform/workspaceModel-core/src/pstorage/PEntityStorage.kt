@@ -456,7 +456,7 @@ internal class PEntityStorageBuilder(
         is ChangeEntry.RemoveEntity -> {
           val outdatedId = change.id
           val usedPid = replaceMap.getOrDefault(outdatedId, outdatedId)
-          indexes.removeFromIndices(outdatedId)
+          indexes.removeFromIndices(usedPid)
           if (this.entityDataById(usedPid) != null) {
             removeEntity(usedPid, replaceMap.inverse())
           }
@@ -473,9 +473,10 @@ internal class PEntityStorageBuilder(
           val newData = change.newData.clone()
           newData.id = usedPid.arrayId
 
-          indexes.updateIndices(outdatedId, newData.createPid(), builder)
-          updateChangeLog { it.add(ChangeEntry.ReplaceEntity(newData, updatedChildren, updatedParents)) }
+          // We don't modify entity that isn't exist in this version of storage
           if (this.entityDataById(usedPid) != null) {
+            indexes.updateIndices(outdatedId, newData.createPid(), builder)
+            updateChangeLog { it.add(ChangeEntry.ReplaceEntity(newData, updatedChildren, updatedParents)) }
             replaceEntityWithRefs(newData, outdatedId.clazz, updatedChildren, updatedParents)
           }
         }
