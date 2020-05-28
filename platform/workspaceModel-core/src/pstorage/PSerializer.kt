@@ -116,13 +116,7 @@ class PSerializer(private val typesResolver: EntityTypesResolver,
 
     kryo.register(TypeInfo::class.java)
 
-    registerStandardTypes(kryo)
-
-    return kryo
-  }
-
-  // TODO Dedup with OCSerializers
-  private fun registerStandardTypes(kryo: Kryo) {
+    // TODO Dedup with OCSerializers
     // TODO Reuse OCSerializer.registerUtilitySerializers ?
     // TODO Scan OCSerializer for useful kryo settings and tricks
     kryo.register(java.util.ArrayList::class.java).instantiator = ObjectInstantiator { ArrayList<Any>() }
@@ -169,23 +163,22 @@ class PSerializer(private val typesResolver: EntityTypesResolver,
     registerSingletonSerializer(kryo) { emptyMap<Any, Any>() }
     registerSingletonSerializer(kryo) { emptyList<Any>() }
     registerSingletonSerializer(kryo) { emptySet<Any>() }
+
+    return kryo
   }
 
   // TODO Dedup with OCSerializer
-  inline fun <reified T : Any> registerFieldSerializer(kryo: Kryo, type: Class<T> = T::class.java, crossinline create: () -> T) =
-    registerFieldSerializer(kryo, type, ObjectInstantiator { create() })
-
-  fun <T : Any> registerFieldSerializer(kryo: Kryo, type: Class<T>, initializer: ObjectInstantiator<T>) =
-    registerSerializer(kryo, type, FieldSerializer(kryo, type), initializer)
-
-  fun <T : Any> registerSerializer(kryo: Kryo, type: Class<T>, serializer: Serializer<in T>, initializer: ObjectInstantiator<T>) {
-    kryo.register(type, serializer).apply { instantiator = initializer }
-  }
+  private inline fun <reified T : Any> registerFieldSerializer(kryo: Kryo, type: Class<T> = T::class.java, crossinline create: () -> T) =
+    registerSerializer(kryo, type, FieldSerializer(kryo, type), ObjectInstantiator { create() })
 
   @JvmSynthetic
-  inline fun registerSingletonSerializer(kryo: Kryo, crossinline getter: () -> Any) {
+  private inline fun registerSingletonSerializer(kryo: Kryo, crossinline getter: () -> Any) {
     val getter1 = ObjectInstantiator { getter() }
     registerSerializer(kryo, getter1.newInstance().javaClass, KryoEntityStorageSerializer.EmptySerializer, getter1)
+  }
+
+  private fun <T : Any> registerSerializer(kryo: Kryo, type: Class<T>, serializer: Serializer<in T>, initializer: ObjectInstantiator<T>) {
+    kryo.register(type, serializer).apply { instantiator = initializer }
   }
 
   private fun recursiveSingletons(kryo: Kryo, entity: Any, track: MutableSet<KClass<*>>, objectClasses: MutableSet<TypeInfo>) {
