@@ -10,7 +10,6 @@ import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.indexing.*;
@@ -150,7 +149,7 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> impl
       return StringUtil.contains(file.getViewProvider().getContents(), name);
     }
 
-    GlobalSearchScope scope = GlobalSearchScope.fileScope(file);
-    return !FileBasedIndex.getInstance().getContainingFiles(NAME, new IdIndexEntry(name, true), scope).isEmpty();
+    Map<IdIndexEntry, Integer> entries = FileBasedIndex.getInstance().getFileData(NAME, file.getVirtualFile(), file.getProject());
+    return entries.containsKey(new IdIndexEntry(name, true));
   }
 }
