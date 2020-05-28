@@ -97,4 +97,11 @@ public class JavaValueFilter implements SliceValueFilter {
   public boolean requiresAssertionViolation(PsiElement element) {
     return myDfaFilter != null && myDfaFilter.requiresAssertionViolation(element);
   }
+
+  JavaValueFilter copyStackFrom(SliceValueFilter filter) {
+    if (filter instanceof JavaValueFilter && ((JavaValueFilter)filter).myStackFilter != myStackFilter) {
+      return new JavaValueFilter(myDfaFilter, ((JavaValueFilter)filter).myStackFilter);
+    }
+    return this;
+  }
 }

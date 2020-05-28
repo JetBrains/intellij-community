@@ -402,10 +402,11 @@ class SliceUtil {
 
     // first, check if we are looking for a specific method call.
     // it happens when we were processing that very same method() return values somewhere up the tree
-    PsiCall specificMethodCall = findSpecificMethodCallUpTheTree(builder.getParent(), method);
+    SliceUsage specificMethodCall = findSpecificMethodCallUpTheTree(builder.getParent(), method);
     if (specificMethodCall != null) {
-      return processMethodCall(builder, processor, actualParameterType, actualParameters,
-                               paramSeqNo, specificMethodCall);
+      SliceValueFilter filter = specificMethodCall.params.valueFilter;
+      return processMethodCall(builder.withFilter(f -> f.copyStackFrom(filter)), 
+                               processor, actualParameterType, actualParameters, paramSeqNo, specificMethodCall.getElement());
     }
 
     Collection<PsiMethod> superMethods = ContainerUtil.set(method.findDeepestSuperMethods());
@@ -428,11 +429,11 @@ class SliceUtil {
     return true;
   }
 
-  private static PsiCall findSpecificMethodCallUpTheTree(SliceUsage parent, PsiMethod method) {
+  private static SliceUsage findSpecificMethodCallUpTheTree(SliceUsage parent, PsiMethod method) {
     while (parent != null) {
       PsiElement element = parent.getElement();
-      if (element instanceof PsiCall && ((PsiCall)element).resolveMethod() == method) {
-        return (PsiCall)element;
+      if (element instanceof PsiCall && method.getManager().areElementsEquivalent(((PsiCall)element).resolveMethod(), method)) {
+        return parent;
       }
       parent = parent.getParent();
     }
