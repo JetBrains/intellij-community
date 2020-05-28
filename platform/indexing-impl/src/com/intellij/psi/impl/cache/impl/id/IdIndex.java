@@ -18,6 +18,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.InlineKeyDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,24 +29,13 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * @author Eugene Zhuravlev
+ * An implementation of identifier index where key is a identifier hash and value is occurrence mask {@link UsageSearchContext}.
+ *
+ * Consider usage of {@link com.intellij.psi.search.PsiSearchHelper} instead direct index access.
  */
 public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> implements DocumentChangeDependentIndex {
+  @ApiStatus.Internal
   @NonNls public static final ID<IdIndexEntry, Integer> NAME = ID.create("IdIndex");
-
-  private final FileBasedIndex.InputFilter myInputFilter = file -> isIndexable(file.getFileType());
-
-  private final DataExternalizer<Integer> myValueExternalizer = new DataExternalizer<Integer>() {
-    @Override
-    public void save(@NotNull final DataOutput out, final Integer value) throws IOException {
-      out.write(value.intValue() & UsageSearchContext.ANY);
-    }
-
-    @Override
-    public Integer read(@NotNull final DataInput in) throws IOException {
-      return Integer.valueOf(in.readByte() & UsageSearchContext.ANY);
-    }
-  };
 
   private final KeyDescriptor<IdIndexEntry> myKeyDescriptor = new InlineKeyDescriptor<IdIndexEntry>() {
     @Override
@@ -61,7 +51,7 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> impl
 
   @Override
   public int getVersion() {
-    return 16;
+    return 17;
   }
 
   @Override
@@ -112,7 +102,17 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> impl
   @NotNull
   @Override
   public DataExternalizer<Integer> getValueExternalizer() {
-    return myValueExternalizer;
+    return new DataExternalizer<Integer>() {
+      @Override
+      public void save(@NotNull final DataOutput out, final Integer value) throws IOException {
+        out.write(value.intValue() & UsageSearchContext.ANY);
+      }
+
+      @Override
+      public Integer read(@NotNull final DataInput in) throws IOException {
+        return Integer.valueOf(in.readByte() & UsageSearchContext.ANY);
+      }
+    };
   }
 
   @NotNull
@@ -124,7 +124,7 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> impl
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return myInputFilter;
+    return file -> isIndexable(file.getFileType());
   }
 
   public static boolean isIndexable(FileType fileType) {

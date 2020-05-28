@@ -7,7 +7,6 @@ import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileContent;
-import com.intellij.util.indexing.IdDataConsumer;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 

@@ -17,6 +17,7 @@ package com.intellij.psi.impl.cache.impl;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.impl.cache.impl.id.IdDataConsumer;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.impl.cache.impl.id.LexingIdIndexer;
@@ -24,7 +25,6 @@ import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexers;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.util.indexing.FileContent;
-import com.intellij.util.indexing.IdDataConsumer;
 import gnu.trove.THashMap;
 
 import java.util.Collections;
