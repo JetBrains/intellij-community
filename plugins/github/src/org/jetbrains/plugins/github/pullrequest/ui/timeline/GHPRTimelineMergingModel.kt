@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.util.text.DateFormatUtil
@@ -23,18 +23,25 @@ class GHPRTimelineMergingModel : AbstractListModel<GHPRTimelineItem>() {
       lastListIdx--
     }
 
+    var added = false
     for (item in items) {
       val merged = mergeIfPossible(lastItem, item)
       if (merged != null) {
         lastItem = merged
       }
       else {
-        if (lastItem != null && !isCollapsedMerge(lastItem)) list.add(lastItem)
+        if (lastItem != null && !isCollapsedMerge(lastItem)) {
+          list.add(lastItem)
+          added = true
+        }
         lastItem = item
       }
     }
-    if (lastItem != null && !isCollapsedMerge(lastItem)) list.add(lastItem)
-    fireIntervalAdded(this, lastListIdx + 1, list.lastIndex)
+    if (lastItem != null && !isCollapsedMerge(lastItem)) {
+      list.add(lastItem)
+      added = true
+    }
+    if (added) fireIntervalAdded(this, lastListIdx + 1, list.lastIndex)
   }
 
   fun removeAll() {
