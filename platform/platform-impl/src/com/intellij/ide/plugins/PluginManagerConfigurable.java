@@ -1615,9 +1615,9 @@ public class PluginManagerConfigurable
     @NotNull @NonNls String showAllQuery
   ) throws IOException {
     addGroup(groups, name, showAllQuery, descriptors -> {
-      List<PluginNode> pluginNodes = MarketplaceRequests.getInstance().searchPlugins(query, ITEMS_PER_GROUP);
-      descriptors.addAll(pluginNodes);
-      return pluginNodes.size() == ITEMS_PER_GROUP;
+      List<PluginNode> pluginNodes = MarketplaceRequests.getInstance().searchPlugins(query, ITEMS_PER_GROUP * 2);
+      descriptors.addAll(ContainerUtil.getFirstItems(pluginNodes, ITEMS_PER_GROUP));
+      return pluginNodes.size() >= ITEMS_PER_GROUP;
     });
   }
 
