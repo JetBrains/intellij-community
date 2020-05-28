@@ -236,11 +236,9 @@ public final class VcsLogTabsWatcher implements Disposable {
   private abstract static class VcsLogTabsListener
     implements ToolWindowManagerListener, PropertyChangeListener, ContentManagerListener {
     private final @NotNull ToolWindow myToolWindow;
-    private boolean myIsVisible;
 
     private VcsLogTabsListener(@NotNull Project project, @NotNull ToolWindow toolWindow, @NotNull Disposable disposable) {
       myToolWindow = toolWindow;
-      myIsVisible = toolWindow.isVisible();
 
       project.getMessageBus().connect(disposable).subscribe(ToolWindowManagerListener.TOPIC, this);
       Disposer.register(disposable, () -> {
@@ -288,11 +286,8 @@ public final class VcsLogTabsWatcher implements Disposable {
     }
 
     @Override
-    public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
-      if (myIsVisible != myToolWindow.isVisible()) {
-        myIsVisible = myToolWindow.isVisible();
-        selectionChanged();
-      }
+    public void toolWindowShown(@NotNull String id, @NotNull ToolWindow toolWindow) {
+      if (myToolWindow == toolWindow) selectionChanged();
     }
 
     @Override
