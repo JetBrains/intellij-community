@@ -220,7 +220,8 @@ public class PsiPrecedenceUtil {
       else if (childType.equals(PsiType.BOOLEAN)) {
         final PsiExpression[] operands = childPolyadicExpression.getOperands();
         for (PsiExpression operand : operands) {
-          if (!PsiType.BOOLEAN.equals(operand.getType())) {
+          PsiType operandType = operand.getType();
+          if (operandType != null && !PsiType.BOOLEAN.equals(operandType)) {
             return true;
           }
         }
