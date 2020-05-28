@@ -1407,10 +1407,10 @@ public class TypeConversionUtil {
     }
     if (sign == JavaTokenType.LTLT || sign == JavaTokenType.GTGT || sign == JavaTokenType.GTGTGT) {
       if (!accessLType) return NULL_TYPE;
+      if (lType instanceof PsiClassType) lType = PsiPrimitiveType.getUnboxedType(lType);
       if (PsiType.BYTE.equals(lType) || PsiType.CHAR.equals(lType) || PsiType.SHORT.equals(lType)) {
         return PsiType.INT;
       }
-      if (lType instanceof PsiClassType) lType = PsiPrimitiveType.getUnboxedType(lType);
       return lType;
     }
     if (PsiBinaryExpression.BOOLEAN_OPERATION_TOKENS.contains(sign)) {
