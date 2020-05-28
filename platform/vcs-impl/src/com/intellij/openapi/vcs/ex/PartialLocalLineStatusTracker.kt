@@ -93,8 +93,8 @@ class LocalRange(line1: Int, line2: Int, vcsLine1: Int, vcsLine2: Int, innerRang
 class ChangelistsLocalLineStatusTracker(project: Project,
                                         document: Document,
                                         virtualFile: VirtualFile,
-                                        mode: Mode
-) : LocalLineStatusTracker<LocalRange>(project, document, virtualFile, mode),
+                                        mode: LocalLineStatusTracker.Mode
+) : LocalLineStatusTrackerImpl<LocalRange>(project, document, virtualFile, mode),
     PartialLocalLineStatusTracker,
     ChangeListWorker.PartialChangeTracker {
   private val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
@@ -540,7 +540,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
 
 
   protected class MyLineStatusMarkerRenderer(override val tracker: ChangelistsLocalLineStatusTracker) :
-    LocalLineStatusTracker.LocalLineStatusMarkerRenderer(tracker) {
+    LocalLineStatusTrackerImpl.LocalLineStatusMarkerRenderer(tracker) {
 
     override fun createMerger(editor: Editor): VisibleRangeMerger {
       return object : VisibleRangeMerger(editor) {
@@ -891,7 +891,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     fun createTracker(project: Project,
                       document: Document,
                       virtualFile: VirtualFile,
-                      mode: Mode): ChangelistsLocalLineStatusTracker {
+                      mode: LocalLineStatusTracker.Mode): ChangelistsLocalLineStatusTracker {
       return ChangelistsLocalLineStatusTracker(project, document, virtualFile, mode)
     }
   }

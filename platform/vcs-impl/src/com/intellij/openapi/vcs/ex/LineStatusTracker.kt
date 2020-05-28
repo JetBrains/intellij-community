@@ -34,18 +34,36 @@ interface LineStatusTracker<out R : Range> : LineStatusTrackerI<R> {
   fun <T> readLock(task: () -> T): T
 }
 
-abstract class LocalLineStatusTracker<R : Range> constructor(override val project: Project,
-                                                             document: Document,
-                                                             override val virtualFile: VirtualFile,
-                                                             mode: Mode
-) : LineStatusTrackerBase<R>(project, document), LineStatusTracker<R> {
+interface LocalLineStatusTracker<R : Range> : LineStatusTracker<R> {
+  fun release()
+
+  @CalledInAwt
+  fun dropBaseRevision()
+
+  @CalledInAwt
+  fun setBaseRevision(vcsContent: CharSequence)
+
+  @CalledInAny
+  fun freeze()
+
+  @CalledInAny
+  fun unfreeze()
+
+  var mode: Mode
+
   class Mode(val isVisible: Boolean,
              val showErrorStripeMarkers: Boolean,
              val detectWhitespaceChangedLines: Boolean)
+}
 
+abstract class LocalLineStatusTrackerImpl<R : Range> constructor(override val project: Project,
+                                                                 document: Document,
+                                                                 override val virtualFile: VirtualFile,
+                                                                 mode: LocalLineStatusTracker.Mode
+) : LineStatusTrackerBase<R>(project, document), LocalLineStatusTracker<R> {
   abstract override val renderer: LocalLineStatusMarkerRenderer
 
-  var mode: Mode = mode
+  override var mode: LocalLineStatusTracker.Mode = mode
     set(value) {
       if (value == mode) return
       field = value
@@ -87,7 +105,7 @@ abstract class LocalLineStatusTracker<R : Range> constructor(override val projec
     renderer.showAfterScroll(editor, range)
   }
 
-  protected open class LocalLineStatusMarkerRenderer(open val tracker: LocalLineStatusTracker<*>)
+  protected open class LocalLineStatusMarkerRenderer(open val tracker: LocalLineStatusTrackerImpl<*>)
     : LineStatusMarkerPopupRenderer(tracker) {
     override fun getEditorFilter(): MarkupEditorFilter? = MarkupEditorFilterFactory.createIsNotDiffFilter()
 
@@ -123,13 +141,13 @@ abstract class LocalLineStatusTracker<R : Range> constructor(override val projec
   }
 
   @CalledInAny
-  internal fun freeze() {
+  override fun freeze() {
     documentTracker.freeze(Side.LEFT)
     documentTracker.freeze(Side.RIGHT)
   }
 
   @CalledInAwt
-  internal fun unfreeze() {
+  override fun unfreeze() {
     documentTracker.unfreeze(Side.LEFT)
     documentTracker.unfreeze(Side.RIGHT)
   }

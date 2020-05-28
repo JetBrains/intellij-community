@@ -23,8 +23,8 @@ import com.intellij.openapi.vfs.VirtualFile
 class SimpleLocalLineStatusTracker(project: Project,
                                    document: Document,
                                    virtualFile: VirtualFile,
-                                   mode: Mode
-) : LocalLineStatusTracker<Range>(project, document, virtualFile, mode) {
+                                   mode: LocalLineStatusTracker.Mode
+) : LocalLineStatusTrackerImpl<Range>(project, document, virtualFile, mode) {
 
   override val renderer: LocalLineStatusMarkerRenderer = LocalLineStatusMarkerRenderer(this)
   override fun Block.toRange(): Range = Range(this.start, this.end, this.vcsStart, this.vcsEnd, this.innerRanges)
@@ -34,7 +34,7 @@ class SimpleLocalLineStatusTracker(project: Project,
     fun createTracker(project: Project,
                       document: Document,
                       virtualFile: VirtualFile,
-                      mode: Mode): SimpleLocalLineStatusTracker {
+                      mode: LocalLineStatusTracker.Mode): SimpleLocalLineStatusTracker {
       return SimpleLocalLineStatusTracker(project, document, virtualFile, mode)
     }
   }

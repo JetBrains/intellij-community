@@ -82,7 +82,7 @@ abstract class BaseLineStatusTrackerTestCase : BaseLineStatusTrackerManagerTest(
   }
 
 
-  protected open inner class Test(val tracker: LocalLineStatusTracker<*>) {
+  protected open inner class Test(val tracker: LocalLineStatusTrackerImpl<*>) {
     val file: VirtualFile = tracker.virtualFile
     val document: Document = tracker.document
     val vcsDocument: Document = tracker.vcsDocument
