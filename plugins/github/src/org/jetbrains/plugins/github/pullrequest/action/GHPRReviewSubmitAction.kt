@@ -226,7 +226,7 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
         return getClientProperty(PROP_DEFAULT) as? Boolean ?: super.isDefaultButton()
       }
     }.also {
-      GithubUIUtil.addUIUpdateListener(it) {
+      GithubUIUtil.overrideUIDependentProperty(it) {
         border = object : DarculaButtonPainter() {
           override fun getBorderInsets(c: Component) = JBUI.insets(0)
         }

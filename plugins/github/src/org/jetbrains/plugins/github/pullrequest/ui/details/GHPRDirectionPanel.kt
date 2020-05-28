@@ -54,7 +54,7 @@ internal class GHPRDirectionPanel : NonOpaquePanel() {
 
   companion object {
     private fun createLabel() = JBLabel(GithubIcons.Branch).also {
-      GithubUIUtil.addUIUpdateListener(it) {
+      GithubUIUtil.overrideUIDependentProperty(it) {
         foreground = CurrentBranchComponent.TEXT_COLOR
         background = CurrentBranchComponent.getBranchPresentationBackground(UIUtil.getListBackground())
       }

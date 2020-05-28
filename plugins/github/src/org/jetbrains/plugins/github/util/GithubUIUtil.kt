@@ -36,10 +36,11 @@ import javax.swing.event.DocumentEvent
 object GithubUIUtil {
   val avatarSize = JBUI.uiIntValue("Github.Avatar.Size", 20)
 
-  fun <T : JComponent> addUIUpdateListener(component: T, listener: T.() -> Unit) {
+  fun <T : JComponent> overrideUIDependentProperty(component: T, listener: T.() -> Unit) {
     component.addPropertyChangeListener("UI", PropertyChangeListener {
       listener.invoke(component)
     })
+    listener.invoke(component)
   }
 
   fun focusPanel(panel: JComponent) {

@@ -166,7 +166,6 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
 
 
     val scrollPane = ScrollPaneFactory.createScrollPane(timelinePanel, true).apply {
-      background = EditorColorsManager.getInstance().globalScheme.defaultBackground
       viewport.isOpaque = false
       verticalScrollBar.model.addChangeListener(object : ChangeListener {
         private var firstScroll = true
@@ -181,7 +180,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
         }
       })
     }.also {
-      GithubUIUtil.addUIUpdateListener(it) {
+      GithubUIUtil.overrideUIDependentProperty(it) {
         background = EditorColorsManager.getInstance().globalScheme.defaultBackground
       }
     }
