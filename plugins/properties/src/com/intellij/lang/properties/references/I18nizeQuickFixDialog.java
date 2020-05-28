@@ -7,10 +7,7 @@ import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TreeFileChooser;
 import com.intellij.ide.util.TreeFileChooserFactory;
-import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.LastSelectedPropertiesFileStore;
-import com.intellij.lang.properties.PropertiesBundle;
-import com.intellij.lang.properties.PropertiesImplUtil;
+import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -130,7 +127,8 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
         TreeFileChooserFactory chooserFactory = TreeFileChooserFactory.getInstance(myProject);
         final PropertiesFile propertiesFile = getPropertiesFile();
         TreeFileChooser fileChooser = chooserFactory.createFileChooser(
-          PropertiesBundle.message("i18nize.dialog.property.file.chooser.title"), propertiesFile != null ? propertiesFile.getContainingFile() : null, StdFileTypes.PROPERTIES, null);
+          PropertiesBundle.message("i18nize.dialog.property.file.chooser.title"), 
+          propertiesFile != null ? propertiesFile.getContainingFile() : null, PropertiesFileType.INSTANCE, null);
         fileChooser.showDialog();
         PsiFile selectedFile = fileChooser.getSelectedFile();
         if (selectedFile == null) return;
@@ -411,7 +409,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
       return false;
     }
     final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(path);
-    if (fileType != StdFileTypes.PROPERTIES && fileType != StdFileTypes.XML) {
+    if (fileType != PropertiesFileType.INSTANCE && fileType != StdFileTypes.XML) {
       String message = PropertiesBundle.message("i18nize.cant.create.properties.file.because.its.name.is.associated",
                                                  myPropertiesFile.getText(), fileType.getDescription());
       Messages.showErrorDialog(myProject, message, PropertiesBundle.message("i18nize.error.creating.properties.file"));
@@ -430,7 +428,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
           if (dir == null) {
             throw new IOException("Error creating directory structure for file '" + path + "'");
           }
-          if (fileType == StdFileTypes.PROPERTIES) {
+          if (fileType == PropertiesFileType.INSTANCE) {
             return psiManager.findFile(dir.createChildData(this, file.getName()));
           }
           else {

@@ -3,6 +3,9 @@ package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.AppTopics;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -189,9 +192,9 @@ public class EncodingUtil {
     // in lesser IDEs all special file types are plain text so check for that first
     if (fileType == FileTypes.PLAIN_TEXT) return null;
     if (fileType == StdFileTypes.GUI_DESIGNER_FORM) return "IDEA GUI Designer form";
-    if (fileType == StdFileTypes.IDEA_MODULE) return "IDEA module file";
-    if (fileType == StdFileTypes.IDEA_PROJECT) return "IDEA project file";
-    if (fileType == StdFileTypes.IDEA_WORKSPACE) return "IDEA workspace file";
+    if (fileType == ModuleFileType.INSTANCE) return "IDEA module file";
+    if (fileType == ProjectFileType.INSTANCE) return "IDEA project file";
+    if (fileType == WorkspaceFileType.INSTANCE) return "IDEA workspace file";
 
     if (fileType == StdFileTypes.PROPERTIES) return ".properties file\n(see Settings|Editor|File Encodings|Properties Files)";
 

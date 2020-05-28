@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @deprecated use file type definitions from the corresponding plugins instead.
  */
+@SuppressWarnings("StaticNonFinalField")
 @Deprecated
 public class StdFileTypes extends FileTypes {
   private StdFileTypes() { }

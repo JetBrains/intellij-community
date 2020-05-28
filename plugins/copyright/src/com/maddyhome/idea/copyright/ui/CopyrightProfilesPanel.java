@@ -17,6 +17,7 @@ package com.maddyhome.idea.copyright.ui;
 
 import com.intellij.copyright.CopyrightBundle;
 import com.intellij.copyright.CopyrightManager;
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -27,7 +28,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -229,7 +229,7 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
           .withFileFilter(file -> {
             final FileType fileType = file.getFileType();
-            return fileType != PlainTextFileType.INSTANCE && (fileType == StdFileTypes.IDEA_MODULE || fileType == XmlFileType.INSTANCE);
+            return fileType != PlainTextFileType.INSTANCE && (fileType == ModuleFileType.INSTANCE || fileType == XmlFileType.INSTANCE);
           })
           .withTitle(CopyrightBundle.message("dialog.file.chooser.title.choose.file.containing.copyright.notice"));
         FileChooser.chooseFile(descriptor, myProject, null, file -> {

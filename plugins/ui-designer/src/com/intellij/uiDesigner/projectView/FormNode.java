@@ -10,7 +10,6 @@ import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.navigation.NavigationItemFileStatus;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.FileStatus;
@@ -18,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.uiDesigner.GuiFormFileType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -62,7 +62,7 @@ public class FormNode extends ProjectViewNode<Form>{
       setValue(null);
     } else {
       presentation.setPresentableText(getValue().getName());
-      presentation.setIcon(StdFileTypes.GUI_DESIGNER_FORM.getIcon());
+      presentation.setIcon(GuiFormFileType.INSTANCE.getIcon());
     }
   }
 

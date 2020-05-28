@@ -8,7 +8,6 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.ResourceFileUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
@@ -24,6 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.EditorTextField;
 import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.GuiFormFileType;
 import com.intellij.uiDesigner.ImageFileFilter;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.Utils;
@@ -118,7 +118,7 @@ public final class ComponentItemDialog extends DialogWrapper {
     myTfNestedForm.addActionListener(new MyChooseFileActionListener(project, new TreeFileChooser.PsiFileFilter() {
       @Override
       public boolean accept(PsiFile file) {
-        return file.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM);
+        return file.getFileType().equals(GuiFormFileType.INSTANCE);
       }
     }, myTfNestedForm, UIDesignerBundle.message("add.component.choose.form")));
 
