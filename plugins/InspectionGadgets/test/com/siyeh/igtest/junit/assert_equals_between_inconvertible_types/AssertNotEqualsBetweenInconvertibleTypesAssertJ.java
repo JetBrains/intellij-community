@@ -5,8 +5,8 @@ import org.assertj.core.api.Assertions;
 class MyTest {
   @org.junit.jupiter.api.Test
   void myTest() {
-    Assertions.assertThat("java").as("test").<warning descr="Assertion never fails. Redundant assertion: incompatible types are compared 'int' and 'String'">isNotEqualTo</warning>(1);
-    Assertions.assertThat(new int[0]).describedAs("test").<warning descr="Assertion never fails. Redundant assertion: incompatible types are compared 'double' and 'int[]'">isNotEqualTo</warning>(1.0);
+    Assertions.assertThat("java").as("test").<weak_warning descr="Possible redundant assertion: incompatible types are compared 'int' and 'String'">isNotEqualTo</weak_warning>(1);
+    Assertions.assertThat(new int[0]).describedAs("test").<weak_warning descr="Possbile redundant assertion: incompatible types are compared 'double' and 'int[]'">isNotEqualTo</weak_warning>(1.0);
     Assertions.assertThat(new int[0]).isNotEqualTo(new int[1]); //ok
   }
 }

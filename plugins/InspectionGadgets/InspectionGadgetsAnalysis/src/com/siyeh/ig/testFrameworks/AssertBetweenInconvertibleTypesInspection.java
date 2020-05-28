@@ -10,13 +10,13 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.InconvertibleTypesChecker;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Objects;
-import java.util.Set;
+
+import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+import static com.intellij.codeInspection.ProblemHighlightType.WEAK_WARNING;
 
 public class AssertBetweenInconvertibleTypesInspection extends BaseInspection {
   private static final CallMatcher ASSERTJ_IS_EQUAL = CallMatcher.instanceCall(
@@ -26,8 +26,6 @@ public class AssertBetweenInconvertibleTypesInspection extends BaseInspection {
     "org.assertj.core.api.Descriptable", "describedAs", "as");
   private static final CallMatcher ASSERTJ_ASSERT_THAT = CallMatcher.staticCall(
     "org.assertj.core.api.Assertions", "assertThat").parameterCount(1);
-  private static final Set<String> ASSERT_NOT_EQUALS_METHODS = new THashSet<>(Arrays.asList(
-    "assertNotEquals", "assertNotSame", "isNotEqualTo", "isNotSameAs"));
 
   @Override
   @NotNull
@@ -35,8 +33,11 @@ public class AssertBetweenInconvertibleTypesInspection extends BaseInspection {
     final String methodName = (String)infos[0];
     final String comparedTypeText = ((PsiType)infos[1]).getPresentableText();
     final String comparisonTypeText = ((PsiType)infos[2]).getPresentableText();
-    if (ASSERT_NOT_EQUALS_METHODS.contains(methodName)) {
+    if (isAssertNotEqualsMethod(methodName)) {
       return InspectionGadgetsBundle.message("assertnotequals.between.inconvertible.types.problem.descriptor", comparedTypeText, comparisonTypeText);
+    }
+    if (isAssertNotSameMethod(methodName)) {
+      return InspectionGadgetsBundle.message("assertnotsame.between.inconvertible.types.problem.descriptor", comparedTypeText, comparisonTypeText);
     }
     return InspectionGadgetsBundle.message("assertequals.between.inconvertible.types.problem.descriptor",
                                            StringUtil.escapeXmlEntities(comparedTypeText),
@@ -85,7 +86,7 @@ public class AssertBetweenInconvertibleTypesInspection extends BaseInspection {
       checkConvertibleTypes(expression, firstArgument, secondArgument);
     }
 
-    private void checkConvertibleTypes(@NotNull PsiMethodCallExpression expression, PsiExpression firstArgument, PsiExpression secondArgument) {
+    private void checkConvertibleTypes(@NotNull PsiMethodCallExpression expression, @NotNull PsiExpression firstArgument, @NotNull PsiExpression secondArgument) {
       final PsiType type1 = firstArgument.getType();
       if (type1 == null) return;
       final PsiType type2 = secondArgument.getType();
@@ -95,8 +96,17 @@ public class AssertBetweenInconvertibleTypesInspection extends BaseInspection {
       InconvertibleTypesChecker.TypeMismatch mismatch = InconvertibleTypesChecker.checkTypes(type1, type2, lookForMutualSubclass);
       if (mismatch != null) {
         PsiElement name = Objects.requireNonNull(expression.getMethodExpression().getReferenceNameElement());
-        registerError(name, name.getText(), mismatch.getLeft(), mismatch.getRight());
+        String methodName = name.getText();
+        registerError(name, isAssertNotEqualsMethod(methodName) ? WEAK_WARNING : GENERIC_ERROR_OR_WARNING, methodName, mismatch.getLeft(), mismatch.getRight());
       }
     }
+  }
+
+  private static boolean isAssertNotEqualsMethod(@NotNull String methodName) {
+    return "assertNotEquals".equals(methodName) || "isNotEqualTo".equals(methodName);
+  }
+
+  private static boolean isAssertNotSameMethod(@NotNull String methodName) {
+    return "assertNotSame".equals(methodName) || "isNotSameAs".equals(methodName);
   }
 }
