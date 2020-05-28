@@ -311,8 +311,6 @@ public class Patch {
     }
 
     List<PatchAction> appliedActions = new ArrayList<>(actionsToApply.size());
-    List<File> createdDirectories = new ArrayList<>();
-    Set<File> createdOptionalFiles = new HashSet<>();
 
     try {
       File _backupDir = backupDir;
@@ -326,16 +324,6 @@ public class Patch {
         else {
           appliedActions.add(action);
           action.apply(patchFile, _backupDir, toDir);
-
-          if (action instanceof CreateAction) {
-            File file = action.getFile(toDir);
-            if (file.isDirectory()) {
-              createdDirectories.add(0, file);
-            }
-            else if (action.isOptional()) {
-              createdOptionalFiles.add(file);
-            }
-          }
         }
       });
     }
@@ -346,19 +334,6 @@ public class Patch {
     catch (Throwable t) {
       Runner.logger().error("apply failed", t);
       return new PatchFileCreator.ApplicationResult(false, appliedActions, t);
-    }
-
-    for (File directory : createdDirectories) {
-      File[] children = directory.listFiles();
-      if (children != null && createdOptionalFiles.containsAll(Arrays.asList(children))) {
-        Runner.logger().info("Pruning empty directory: " + directory);
-        try {
-          Utils.delete(directory);
-        }
-        catch (IOException e) {
-          Runner.logger().warn("pruning: " + directory, e);
-        }
-      }
     }
 
     try {

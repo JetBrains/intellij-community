@@ -533,41 +533,6 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   }
 
   @Test
-  public void testDoNotLeaveEmptyDirectories() throws Exception {
-    FileUtil.createDirectory(new File(myNewerDir, "new_empty_dir/sub_dir"));
-    createPatch();
-
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-    assertAppliedAndReverted(preparationResult, expected -> {
-      expected.remove("new_empty_dir/");
-      expected.remove("new_empty_dir/sub_dir/");
-    });
-  }
-
-  @Test
-  public void testUpdatingMissingOptionalDirectory() throws Exception {
-    FileUtil.copy(new File(myOlderDir, "bin/idea.bat"), new File(myOlderDir, "jre/bin/java"));
-    FileUtil.copy(new File(myOlderDir, "lib/annotations.jar"), new File(myOlderDir, "jre/lib/rt.jar"));
-    FileUtil.copy(new File(myOlderDir, "lib/boot.jar"), new File(myOlderDir, "jre/lib/tools.jar"));
-    resetNewerDir();
-    FileUtil.rename(new File(myNewerDir, "jre"), new File(myNewerDir, "jre32"));
-    FileUtil.writeToFile(new File(myNewerDir, "jre32/lib/font-config.bfc"), "# empty");
-
-    myPatchSpec.setOptionalFiles(Arrays.asList(
-      "jre/bin/java", "jre/bin/jvm.dll", "jre/lib/rt.jar", "jre/lib/tools.jar",
-      "jre32/bin/java", "jre32/bin/jvm.dll", "jre32/lib/rt.jar", "jre32/lib/tools.jar", "jre32/lib/font-config.bfc"));
-    createPatch();
-
-    FileUtil.delete(new File(myOlderDir, "jre"));
-
-    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-    assertAppliedAndReverted(preparationResult, expected -> {
-      List<String> keys = ContainerUtil.findAll(expected.keySet(), k -> k.startsWith("jre32/"));
-      keys.forEach(expected::remove);
-    });
-  }
-
-  @Test
   public void testReadOnlyFilesAreDeletable() throws Exception {
     File file = new File(myOlderDir, "bin/read_only_to_delete");
     FileUtil.writeToFile(file, "bye");
