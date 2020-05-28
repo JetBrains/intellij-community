@@ -318,6 +318,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
 
   protected int skipToTheEndOfTheEmbeddment() {
     Lexer base = getDelegate();
+    int initialStart = base.getTokenStart();
     int tokenEnd = base.getTokenEnd();
     int lastState = 0;
     int lastStart = 0;
@@ -375,8 +376,15 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
         }
       }
 
-      base.start(buf,lastStart,getBufferEnd(),lastState);
-      base.getTokenType();
+      if (lastStart < initialStart) {
+        // empty embeddment
+        base.start(buf, initialStart, getBufferEnd(), lastState);
+        TokenHandler tokenHandler = tokenHandlers.get(base.getTokenType());
+        if (tokenHandler != null) tokenHandler.handleElement(this);
+      } else {
+        base.start(buf, lastStart, getBufferEnd(), lastState);
+        base.getTokenType();
+      }
     } else if (seenAttribute) {
       while(true) {
         if (!isValidAttributeValueTokenType(base.getTokenType())) break;
