@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.IdeBorderFactory
@@ -19,12 +20,13 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.GHPRVirtualFile
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContext
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRChangesDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
@@ -35,7 +37,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.changes.*
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModelImpl
 import org.jetbrains.plugins.github.util.GithubUIUtil
-import java.util.function.Consumer
 import javax.swing.JComponent
 
 internal class GHPRComponentFactory(private val project: Project) {
@@ -49,7 +50,7 @@ internal class GHPRComponentFactory(private val project: Project) {
 
   private inner class ContentController(private val dataContext: GHPRDataContext,
                                         private val wrapper: Wrapper,
-                                        private val parentDisposable: Disposable) {
+                                        private val parentDisposable: Disposable) : GHPRViewController {
 
     private val avatarIconsProviderFactory = dataContext.avatarIconsProviderFactory
 
@@ -62,40 +63,46 @@ internal class GHPRComponentFactory(private val project: Project) {
 
       DataManager.registerDataProvider(wrapper) { dataId ->
         when {
-          GHPRActionKeys.VIEW_PULL_REQUEST_EXECUTOR.`is`(dataId) -> Consumer<GHPullRequestShort> { viewPullRequest(it) }
-          GHPRActionKeys.DATA_CONTEXT.`is`(dataId) -> dataContext
+          GHPRActionKeys.PULL_REQUESTS_CONTROLLER.`is`(dataId) -> this
           else -> null
         }
       }
     }
 
-    private fun viewList() {
+    override fun viewList() {
       currentDisposable?.let { Disposer.dispose(it) }
       wrapper.setContent(listComponent)
       wrapper.repaint()
     }
 
-    private fun viewPullRequest(details: GHPullRequestShort) {
+    override fun refreshList() {
+      dataContext.listLoader.reset()
+      dataContext.repositoryDataService.resetData()
+    }
+
+    override fun viewPullRequest(id: GHPRIdentifier) {
       currentDisposable?.let { Disposer.dispose(it) }
       currentDisposable = Disposer.newDisposable("Pull request component disposable").also {
         Disposer.register(parentDisposable, it)
       }
-      val componentDataProvider = dataContext.dataProviderRepository.getDataProvider(details, currentDisposable!!)
-      val pullRequestComponent = createPullRequestComponent(dataContext, componentDataProvider,
-                                                            details,
-                                                            ::viewList,
-                                                            avatarIconsProviderFactory,
-                                                            currentDisposable!!)
+      val dataProvider = dataContext.dataProviderRepository.getDataProvider(id, currentDisposable!!)
+      val pullRequestComponent =
+        createPullRequestComponent(dataContext, dataProvider, id, this, avatarIconsProviderFactory, currentDisposable!!)
       wrapper.setContent(pullRequestComponent)
       wrapper.repaint()
       GithubUIUtil.focusPanel(wrapper)
+    }
+
+    override fun openPullRequestTimeline(id: GHPRIdentifier, requestFocus: Boolean) {
+      val file = GHPRVirtualFile(dataContext, id)
+      FileEditorManager.getInstance(project).openFile(file, requestFocus)
     }
   }
 
   private fun createPullRequestComponent(dataContext: GHPRDataContext,
                                          dataProvider: GHPRDataProvider,
-                                         details: GHPullRequestShort,
-                                         returnToListListener: () -> Unit,
+                                         pullRequest: GHPRIdentifier,
+                                         viewController: GHPRViewController,
                                          avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                                          disposable: Disposable): JComponent {
 
@@ -108,19 +115,19 @@ internal class GHPRComponentFactory(private val project: Project) {
                                                         disposable)
 
     val infoComponent = createInfoComponent(dataContext, dataProvider, detailsLoadingModel, changesLoadingModel, disposable).also {
-      installActionData(it, dataContext, details, dataProvider)
+      installActionData(it, dataContext, pullRequest, dataProvider)
     }
     val commitsComponent = createCommitsComponent(dataContext, dataProvider, changesLoadingModel, disposable).also {
-      installActionData(it, dataContext, details, dataProvider)
+      installActionData(it, dataContext, pullRequest, dataProvider)
     }
 
     val infoTabInfo = TabInfo(infoComponent).apply {
       text = GithubBundle.message("pull.request.info")
-      sideComponent = createReturnToListSideComponent(returnToListListener)
+      sideComponent = createReturnToListSideComponent(viewController)
     }
     val commitsTabInfo = TabInfo(commitsComponent).apply {
       text = GithubBundle.message("pull.request.commits")
-      sideComponent = createReturnToListSideComponent(returnToListListener)
+      sideComponent = createReturnToListSideComponent(viewController)
     }
 
     fun updateCommitsTabText() {
@@ -141,20 +148,20 @@ internal class GHPRComponentFactory(private val project: Project) {
 
   private fun installActionData(component: JComponent,
                                 dataContext: GHPRDataContext,
-                                details: GHPullRequestShort,
+                                pullRequest: GHPRIdentifier,
                                 dataProvider: GHPRDataProvider) {
     DataManager.registerDataProvider(component) { dataId ->
       when {
-        GHPRActionKeys.ACTION_DATA_CONTEXT.`is`(dataId) -> GHPRFixedActionDataContext(dataContext, details, dataProvider)
+        GHPRActionKeys.ACTION_DATA_CONTEXT.`is`(dataId) -> GHPRFixedActionDataContext(dataContext, pullRequest, dataProvider)
         else -> null
       }
     }
   }
 
-  private fun createReturnToListSideComponent(returnToListListener: () -> Unit): JComponent {
+  private fun createReturnToListSideComponent(viewController: GHPRViewController): JComponent {
     return BorderLayoutPanel()
       .addToRight(LinkLabel<Any>(GithubBundle.message("pull.request.back.to.list"), AllIcons.Actions.Back) { _, _ ->
-        returnToListListener()
+        viewController.viewList()
       }.apply {
         border = JBUI.Borders.emptyRight(8)
       })
