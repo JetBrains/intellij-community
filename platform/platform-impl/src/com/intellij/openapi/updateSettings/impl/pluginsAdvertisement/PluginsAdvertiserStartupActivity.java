@@ -219,7 +219,7 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
       }
     }
     final String addressedFeaturesPresentation = StringUtil.join(addressedFeatures.entrySet(),
-                                                                           entry -> entry.getKey() + "[" + StringUtil.join(entry.getValue(), ", ") + "]", ", ");
+            entry -> entry.getKey() + ": " + StringUtil.join(entry.getValue(), ", "), "; ");
     final int addressedFeaturesNumber = addressedFeatures.keySet().size();
     final int pluginsNumber = ids.size();
     return StringUtil.pluralize("Plugin", pluginsNumber) + " supporting " + StringUtil.pluralize("feature", addressedFeaturesNumber) +
