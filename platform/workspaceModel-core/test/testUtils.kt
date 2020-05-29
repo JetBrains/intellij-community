@@ -5,8 +5,8 @@ import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.workspace.api.pstorage.*
 import com.intellij.workspace.api.pstorage.indices.copy
-import junit.framework.TestCase.assertTrue
 import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertTrue
 import org.junit.Assert
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -37,6 +37,8 @@ object SerializationRoundTripChecker {
     val deserialized = (serializer.deserializeCache(ByteArrayInputStream(byteArray)) as PEntityStorageBuilder).toStorage()
 
     assertStorageEquals(storage, deserialized)
+
+    storage.assertConsistency()
 
     return byteArray
   }

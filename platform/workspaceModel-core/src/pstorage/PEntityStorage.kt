@@ -765,6 +765,8 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
         assertCorrectEntityClass(connectionId.childClass, childId)
       }
     }
+
+    indexes.assertConsistency(this)
   }
 
   private fun assertResolvable(clazz: Int, id: Int) {

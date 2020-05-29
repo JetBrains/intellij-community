@@ -9,8 +9,10 @@ import com.intellij.workspace.api.TypedEntity
 import com.intellij.workspace.api.pstorage.external.ExternalEntityIndex
 import com.intellij.workspace.api.pstorage.indices.EntityStorageInternalIndex
 import com.intellij.workspace.api.pstorage.indices.VirtualFileIndex
+import com.intellij.workspace.api.pstorage.indices.copy
 
 internal open class StorageIndexes(
+  // List of IDs of entities that use this particular persistent id
   internal open val softLinks: Multimap<PersistentEntityId<*>, PId>,
   internal open val virtualFileIndex: VirtualFileIndex,
   internal open val entitySourceIndex: EntityStorageInternalIndex<EntitySource>,
@@ -36,6 +38,48 @@ internal open class StorageIndexes(
     val copiedPersistentIdIndex = EntityStorageInternalIndex.MutableEntityStorageInternalIndex.from(persistentIdIndex)
     val copiedExternalIndices = ExternalEntityIndex.MutableExternalEntityIndex.fromMap(externalIndices)
     return MutableStorageIndexes(copiedSoftLinks, copiedVirtualFileIndex, copiedEntitySourceIndex, copiedPersistentIdIndex, copiedExternalIndices)
+  }
+
+  fun assertConsistency(storage: AbstractPEntityStorage) {
+    // Assert entity source index
+    val entitySourceIndexCopy = entitySourceIndex.index.copy()
+    storage.entitiesByType.allEntities().forEach { family ->
+      family.entities.asSequence().filterNotNull().forEach { data ->
+        val removed = entitySourceIndexCopy.remove(data.createPid(), data.entitySource)
+        assert(removed) { "Entity $data isn't found in entity source index" }
+      }
+    }
+    assert(entitySourceIndexCopy.isEmpty()) { "Entity source index has garbage: $entitySourceIndexCopy" }
+
+    // Assert persistent id index
+    val persistentIdIndexCopy = persistentIdIndex.index.copy()
+    storage.entitiesByType.allEntities().forEach { family ->
+      family.entities.asSequence().filterNotNull().forEach { data ->
+        val persistentId = data.persistentId(storage)
+        if (persistentId != null) {
+          val removed = persistentIdIndexCopy.remove(data.createPid(), persistentId)
+          assert(removed) { "Entity $data isn't found in persistent id index" }
+        }
+      }
+    }
+    assert(persistentIdIndexCopy.isEmpty()) { "Persistent id index has garbage: $persistentIdIndexCopy" }
+
+    // Assert soft links
+    val softLinksCopy = HashMultimap.create(softLinks)
+    storage.entitiesByType.allEntities().forEach { family ->
+      family.entities.asSequence().filterNotNull().forEach { data ->
+        if (data is PSoftLinkable) {
+          val links = data.getLinks()
+          for (link in links) {
+            val removed = softLinksCopy.remove(link, data.createPid())
+            assert(removed) {
+              "Entity $data isn't found in soft links"
+            }
+          }
+        }
+      }
+    }
+    assert(softLinksCopy.isEmpty) { "Soft links has garbage: $softLinksCopy" }
   }
 }
 
