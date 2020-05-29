@@ -55,7 +55,7 @@ public class PyTypeHintGenerationUtil {
 
     final PyElementGenerator generator = PyElementGenerator.getInstance(target.getProject());
     final LanguageLevel langLevel = LanguageLevel.forElement(target);
-    final String assignedValue = langLevel.isAtLeast(LanguageLevel.PYTHON30) ? "..." : "None";
+    final String assignedValue = langLevel.isPython2() ? "None" : "...";
     final String declarationText = target.getName() + " = " + assignedValue + " " + TYPE_COMMENT_PREFIX + info.getAnnotationText();
     final PyAssignmentStatement declaration = generator.createFromText(langLevel, PyAssignmentStatement.class, declarationText);
     final PsiElement anchorBefore = findPrecedingAnchorForAttributeDeclaration(pyClass);
