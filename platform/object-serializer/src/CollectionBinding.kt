@@ -76,7 +76,7 @@ internal class CollectionBinding(type: ParameterizedType, context: BindingInitia
     }
 
     @Suppress("UNCHECKED_CAST")
-    var result = property.readUnsafe(hostObject) as MutableCollection<Any?>?
+    var result = property.readUnsafe(hostObject) as? MutableCollection<Any?>?
     if (result != null && ClassUtil.isMutableCollection(result)) {
       result.clear()
       if (emptyResult != null) {
