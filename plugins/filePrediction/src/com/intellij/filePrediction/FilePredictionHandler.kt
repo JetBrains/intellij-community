@@ -4,21 +4,27 @@ package com.intellij.filePrediction
 import com.intellij.filePrediction.features.history.FilePredictionHistory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.NonUrgentExecutor
 
 class FilePredictionHandler(private val project: Project) : Disposable {
   companion object {
-    private const val CALCULATE_CANDIDATE_PROBABILITY: Double = 0.1
+    private val LOG: Logger = Logger.getInstance(FilePredictionHandler::class.java)
 
     fun getInstance(project: Project): FilePredictionHandler? = ServiceManager.getService(project, FilePredictionHandler::class.java)
   }
 
-  private var manager: FilePredictionSessionManager
-    = FilePredictionSessionManager(50, 5, 10, CALCULATE_CANDIDATE_PROBABILITY)
+  private val manager: FilePredictionSessionManager
+
+  init {
+    val percent = Registry.get("filePrediction.calculate.candidates.percent").asDouble()
+    manager = FilePredictionSessionManager(50, 3, 5, percent)
+  }
 
   fun onFileSelected(newFile: VirtualFile) {
     if (ProjectManagerImpl.isLight(project)) {
@@ -27,9 +33,13 @@ class FilePredictionHandler(private val project: Project) : Disposable {
 
     NonUrgentExecutor.getInstance().execute {
       BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, Runnable {
+        val start = System.currentTimeMillis()
         FilePredictionHistory.getInstance(project).onFileSelected(newFile.url)
 
         manager.onSessionStarted(project, newFile)
+        if (LOG.isTraceEnabled) {
+          LOG.trace("Candidates calculation took ${System.currentTimeMillis() - start}ms")
+        }
       })
     }
   }
