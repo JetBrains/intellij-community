@@ -86,15 +86,7 @@
               icon="AllIcons.Actions.PreviewDetails"
               class="com.intellij.analysis.problemsView.toolWindow.ShowPreview"/>
       <separator/>
-      <action id="ProblemsView.ShowErrors"
-              icon="AllIcons.General.Error"
-              class="com.intellij.analysis.problemsView.toolWindow.ShowErrors"/>
-      <action id="ProblemsView.ShowWarnings"
-              icon="AllIcons.General.Warning"
-              class="com.intellij.analysis.problemsView.toolWindow.ShowWarnings"/>
-      <action id="ProblemsView.ShowInformation"
-              icon="AllIcons.General.Information"
-              class="com.intellij.analysis.problemsView.toolWindow.ShowInformation"/>
+      <group id="ProblemsView.SeverityFilters" class="com.intellij.analysis.problemsView.toolWindow.SeverityFiltersActionGroup"/>
       <separator/>
       <action id="ProblemsView.SortFoldersFirst"
               icon="AllIcons.ObjectBrowser.SortByType"
@@ -109,9 +101,7 @@
 
     <group id="ProblemsView.ToolWindow.Toolbar">
       <group id="ProblemsView.Filter" icon="AllIcons.Actions.Show" popup="true">
-        <reference ref="ProblemsView.ShowErrors"/>
-        <reference ref="ProblemsView.ShowWarnings"/>
-        <reference ref="ProblemsView.ShowInformation"/>
+        <reference ref="ProblemsView.SeverityFilters"/>
         <separator/>
         <reference ref="ProblemsView.SortFoldersFirst"/>
         <reference ref="ProblemsView.SortBySeverity"/>

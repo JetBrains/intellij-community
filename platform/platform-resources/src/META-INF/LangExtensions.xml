@@ -1295,7 +1295,7 @@
     <experimentalFeature id="problems.view.enabled" percentOfUsers="0" internalFeature="true">
       <description>Allows to use the Problems View toolwindow.</description>
     </experimentalFeature>
-    <projectService serviceImplementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewState"/>
+    <projectService serviceImplementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewStateManager"/>
     <notificationWhitelist groupIds="Problems View;Inspection Results;Find in Path;Dependencies;Execution;Suggest Run Dashboard;
     Parameter Name Hints;Print;Actions;Load Error;Project Template;Run Anything;Reformat changed text;Module Manager;Project Loading Error"/>
 
