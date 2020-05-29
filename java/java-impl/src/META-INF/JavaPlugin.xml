@@ -728,6 +728,12 @@
     <postStartupActivity implementation="com.intellij.execution.RunConfigurationsUnknownJdkContributorRefresher" />
     <registryKey key="jdk.auto.runConfigurations" defaultValue="false" restartRequired="true"
                  description="Check missing JDK references in shared run configurations"/>
+    <registryKey key="java.refactoring.extractMethod.newImplementation" 
+                 defaultValue="true"
+                 description="Enable experimental extract method implementation"/>
+    <registryKey key="java.refactoring.extractMethod.inplace" 
+                 defaultValue="false"
+                 description="Enable experimental extract method inplace mode"/>
     <debugger.asyncStackTraceProvider
         implementation="com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint$CaptureAsyncStackTraceProvider"/>
 
