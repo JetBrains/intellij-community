@@ -24,16 +24,6 @@ public class DumbServiceMergingTaskQueue {
   private final Map<DumbModeTask, ProgressIndicatorBase> myProgresses = new HashMap<>();
 
   /**
-   * Removes all tasks from Queue without disposing the tasks
-   */
-  void clearTasksQueue() {
-    //we use myProgresses to keep tasks for dispose
-    synchronized (myLock) {
-      myTasksQueue.clear();
-    }
-  }
-
-  /**
    * Disposes tasks, cancel underlying progress indicators, clears tasks queue
    */
   void disposePendingTasks() {

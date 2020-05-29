@@ -130,7 +130,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   public void dispose() {
     ApplicationManager.getApplication().assertIsWriteThread();
     myBalloon.dispose();
-    myTaskQueue.clearTasksQueue();
 
     synchronized (myRunWhenSmartQueue) {
       myRunWhenSmartQueue.clear();
