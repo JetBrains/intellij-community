@@ -39,12 +39,20 @@ class GHPRDiffEditorGutterIconRendererFactoryImpl(private val reviewProcessModel
     }
 
     override fun getClickAction(): DumbAwareAction? {
+      if (inlay != null) return FocusInlayAction()
       val reviewId = reviewState.reviewId
       if (!reviewState.isDataActual || reviewId == null) return null
       return AddReviewCommentAction(line, reviewId)
     }
 
+    private inner class FocusInlayAction : DumbAwareAction() {
+      override fun actionPerformed(e: AnActionEvent) {
+        if (inlay?.let { GithubUIUtil.focusPanel(it.first) } != null) return
+      }
+    }
+
     override fun getPopupMenuActions(): ActionGroup? {
+      if (inlay != null) return null
       if (!reviewState.isDataActual || reviewState.reviewId != null) return null
       return DefaultActionGroup(StartReviewAction(line), AddSingleCommentAction(line))
     }
