@@ -56,6 +56,9 @@ class FeatureSuggestersManager(val project: Project) : FileEditorManagerListener
                 IdeTooltipManager.getInstance().hideCurrentNow(false)
                 hintManager.showEditorHint(hint, editor, point, HintManager.HIDE_BY_ESCAPE, 0, false)
 
+                // send event for testing
+                project.messageBus.syncPublisher(FeatureSuggestersManagerListener.TOPIC).featureFound(suggestion)
+
                 println("Action performed (after): ${suggestion.message}")
                 return
             }
