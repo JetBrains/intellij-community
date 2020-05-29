@@ -22,7 +22,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
@@ -228,11 +227,9 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
     for (PsiJavaCodeReferenceElement expression : expressionsToDequalify) {
       if (!expression.isValid()) continue;
       found = true;
-      HighlightManager.getInstance(project)
-        .addRangeHighlight(editor, expression.getTextRange().getStartOffset(), expression.getTextRange().getEndOffset(),
-                           EditorColorsManager.getInstance().getGlobalScheme()
-                             .getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES),
-                           true, null);
+      HighlightManager.getInstance(project).addRangeHighlight(
+        editor, expression.getTextRange().getStartOffset(), expression.getTextRange().getEndOffset(),
+        EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null);
     }
     return found;
   }

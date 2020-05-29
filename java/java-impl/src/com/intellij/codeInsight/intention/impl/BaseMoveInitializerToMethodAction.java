@@ -21,8 +21,6 @@ import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -95,11 +93,10 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
   }
 
   private static void highlightRExpression(@NotNull PsiAssignmentExpression assignment, @NotNull Project project, Editor editor) {
-    final EditorColorsManager manager = EditorColorsManager.getInstance();
-    final TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     final PsiExpression expression = assignment.getRExpression();
 
-    HighlightManager.getInstance(project).addOccurrenceHighlights(editor, new PsiElement[]{expression}, attributes, false, null);
+    HighlightManager.getInstance(project).addOccurrenceHighlights(editor, new PsiElement[]{expression}, 
+                                                                  EditorColors.SEARCH_RESULT_ATTRIBUTES, false, null);
   }
 
   @NotNull
