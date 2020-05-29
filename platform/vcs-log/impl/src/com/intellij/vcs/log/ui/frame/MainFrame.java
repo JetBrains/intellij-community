@@ -239,15 +239,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     rightCornerToolbar.setReservePlaceAutoPopupIcon(false);
     rightCornerToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
 
-    DefaultActionGroup leftCornerGroup =
-      new DefaultActionGroup(ActionManager.getInstance().getAction(VcsLogActionPlaces.TOOLBAR_LEFT_CORNER_ACTION_GROUP));
-    ActionToolbar leftCornerToolbar = createActionsToolbar(leftCornerGroup);
-    leftCornerToolbar.setReservePlaceAutoPopupIcon(false);
-    leftCornerToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-
-    JPanel panel = new JPanel(new MigLayout("ins 0, fill", "[]0[left]0[left, fill]push[right]", "center"));
+    JPanel panel = new JPanel(new MigLayout("ins 0, fill", "[left]0[left, fill]push[right]", "center"));
     GuiUtils.installVisibilityReferent(panel, toolbar.getComponent());
-    panel.add(leftCornerToolbar.getComponent());
     panel.add(textFilter);
     panel.add(toolbar.getComponent());
     panel.add(rightCornerToolbar.getComponent());
