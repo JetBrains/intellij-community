@@ -24,6 +24,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -2122,7 +2124,9 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (myShowErrorDialogs) {
       HighlightManager highlightManager = HighlightManager.getInstance(myProject);
       PsiStatement[] exitStatementsArray = myExitStatements.toArray(PsiStatement.EMPTY_ARRAY);
-      highlightManager.addOccurrenceHighlights(myEditor, exitStatementsArray, EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null);
+      EditorColorsManager manager = EditorColorsManager.getInstance();
+      TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+      highlightManager.addOccurrenceHighlights(myEditor, exitStatementsArray, attributes, true, null);
       String message = RefactoringBundle
         .getCannotRefactorMessage(JavaRefactoringBundle.message("there.are.multiple.exit.points.in.the.selected.code.fragment"));
       CommonRefactoringUtil.showErrorHint(myProject, myEditor, message, myRefactoringName, myHelpId);

@@ -8,7 +8,9 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -132,8 +134,10 @@ public abstract class GroovyRefactoringUtil {
     if (editor == null) return;
     ArrayList<RangeHighlighter> highlighters = new ArrayList<>();
     HighlightManager highlightManager = HighlightManager.getInstance(project);
+    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+    TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     if (elements.length > 0) {
-      highlightManager.addOccurrenceHighlights(editor, elements, EditorColors.SEARCH_RESULT_ATTRIBUTES, false, highlighters);
+      highlightManager.addOccurrenceHighlights(editor, elements, attributes, false, highlighters);
     }
   }
 
@@ -141,9 +145,10 @@ public abstract class GroovyRefactoringUtil {
     if (editor == null) return;
     ArrayList<RangeHighlighter> highlighters = new ArrayList<>();
     HighlightManager highlightManager = HighlightManager.getInstance(project);
+    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+    TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     for (TextRange range : ranges) {
-      highlightManager.addRangeHighlight(editor, range.getStartOffset(), range.getEndOffset(), 
-                                         EditorColors.SEARCH_RESULT_ATTRIBUTES, false, highlighters);
+      highlightManager.addRangeHighlight(editor, range.getStartOffset(), range.getEndOffset(), attributes, false, highlighters);
     }
   }
 
@@ -302,18 +307,18 @@ public abstract class GroovyRefactoringUtil {
 
   public static String getMethodSignature(PsiMethod method) {
     MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
-    StringBuilder s = new StringBuilder(signature.getName() + "(");
+    String s = signature.getName() + "(";
     int i = 0;
     PsiType[] types = signature.getParameterTypes();
     for (PsiType type : types) {
-      s.append(type.getPresentableText());
+      s += type.getPresentableText();
       if (i < types.length - 1) {
-        s.append(", ");
+        s += ", ";
       }
       i++;
     }
-    s.append(")");
-    return s.toString();
+    s += ")";
+    return s;
 
   }
 

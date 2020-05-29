@@ -9,6 +9,7 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
@@ -93,7 +94,7 @@ class MethodExtractor {
       beforeData.addElements(options.elements.toTypedArray())
       options.project.messageBus.syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
         .refactoringStarted("refactoring.extract.method", beforeData)
-      val (method, _) = extractMethod(options)
+      val (method, callElements) = extractMethod(options)
       val data = RefactoringEventData()
       data.addElement(method)
       options.project.messageBus.syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
@@ -165,11 +166,12 @@ class MethodExtractor {
     val project = editor.project ?: return
     if (ranges.isEmpty()) return
     val highlightManager = HighlightManager.getInstance(project)
+    val colorsManager = EditorColorsManager.getInstance()
+    val attributes = colorsManager.globalScheme.getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES)
     ranges.forEach { textRange ->
-      highlightManager.addRangeHighlight(editor, textRange.startOffset, textRange.endOffset, 
-                                         EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null)
+      highlightManager.addRangeHighlight(editor, textRange.startOffset, textRange.endOffset, attributes, true, null)
     }
-    WindowManager.getInstance().getStatusBar(project).info = RefactoringBundle.message("press.escape.to.remove.the.highlighting")
+    WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"))
   }
 
   fun extractMethod(extractOptions: ExtractOptions): Pair<PsiMethod, List<PsiElement>> {

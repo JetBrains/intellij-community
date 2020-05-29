@@ -29,7 +29,9 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -187,8 +189,10 @@ public class DuplicatesImpl {
   }
 
   public static void highlightMatch(final Project project, Editor editor, final Match match, final ArrayList<? super RangeHighlighter> highlighters) {
+    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+    TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     HighlightManager.getInstance(project).addRangeHighlight(editor, match.getTextRange().getStartOffset(), match.getTextRange().getEndOffset(),
-                                                            EditorColors.SEARCH_RESULT_ATTRIBUTES, true, highlighters);
+                                                            attributes, true, highlighters);
   }
 
   public static void processDuplicates(@NotNull MatchProvider provider, @NotNull Project project, @NotNull Editor editor) {

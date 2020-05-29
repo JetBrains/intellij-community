@@ -29,6 +29,8 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -281,8 +283,9 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
     if (e.getFile() == file) {
       final TextRange textRange = e.getTextRange();
       final HighlightManager highlightManager = HighlightManager.getInstance(project);
-      highlightManager.addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(), 
-                                         EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null);
+      EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+      TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+      highlightManager.addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(), attributes, true, null);
       final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(textRange.getStartOffset());
       editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);
       WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));

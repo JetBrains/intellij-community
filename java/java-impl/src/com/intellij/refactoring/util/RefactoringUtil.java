@@ -12,7 +12,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.*;
@@ -37,7 +39,6 @@ import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.Stack;
 import com.intellij.util.text.UniqueNameGenerator;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
@@ -534,17 +535,18 @@ public class RefactoringUtil {
   public static List<RangeHighlighter> highlightAllOccurrences(Project project, PsiElement[] occurrences, Editor editor) {
     ArrayList<RangeHighlighter> highlighters = new ArrayList<>();
     HighlightManager highlightManager = HighlightManager.getInstance(project);
+    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+    TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     if (occurrences.length > 1) {
       for (PsiElement occurrence : occurrences) {
         final RangeMarker rangeMarker = occurrence.getUserData(ElementToWorkOn.TEXT_RANGE);
         if (rangeMarker != null && rangeMarker.isValid()) {
-          highlightManager.addRangeHighlight(editor, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), 
-                                             EditorColors.SEARCH_RESULT_ATTRIBUTES, true, highlighters);
+          highlightManager
+            .addRangeHighlight(editor, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), attributes, true, highlighters);
         }
         else {
           final TextRange textRange = occurrence.getTextRange();
-          highlightManager.addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(), 
-                                             EditorColors.SEARCH_RESULT_ATTRIBUTES, true, highlighters);
+          highlightManager.addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(), attributes, true, highlighters);
         }
       }
     }
@@ -726,7 +728,7 @@ public class RefactoringUtil {
   }
 
   public static void visitImplicitSuperConstructorUsages(PsiClass subClass,
-                                                         final ImplicitConstructorUsageVisitor implicitConstructorUsageVisitor,
+                                                         final ImplicitConstructorUsageVisitor implicitConstructorUsageVistor,
                                                          PsiClass superClass) {
     final PsiMethod baseDefaultConstructor = findDefaultConstructor(superClass);
     final PsiMethod[] constructors = subClass.getConstructors();
@@ -736,12 +738,12 @@ public class RefactoringUtil {
         if (body == null) continue;
         final PsiStatement[] statements = body.getStatements();
         if (statements.length < 1 || !JavaHighlightUtil.isSuperOrThisCall(statements[0], true, true)) {
-          implicitConstructorUsageVisitor.visitConstructor(constructor, baseDefaultConstructor);
+          implicitConstructorUsageVistor.visitConstructor(constructor, baseDefaultConstructor);
         }
       }
     }
     else {
-      implicitConstructorUsageVisitor.visitClassWithoutConstructors(subClass);
+      implicitConstructorUsageVistor.visitClassWithoutConstructors(subClass);
     }
   }
 
@@ -1022,7 +1024,7 @@ public class RefactoringUtil {
    * Returns subset of {@code graph.getVertices()} that is a transitive closure (by <code>graph.getTargets()<code>)
    * of the following property: initialRelation.value() of vertex or {@code graph.getTargets(vertex)} is true.
    * <p/>
-   * Note that {@code graph.getTargets()} is not necessarily a subset of {@code graph.getVertex()}
+   * Note that {@code graph.getTargets()} is not neccesrily a subset of {@code graph.getVertex()}
    *
    * @param graph
    * @param initialRelation
