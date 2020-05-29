@@ -96,6 +96,11 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
         withParent(DomPatterns.tagWithDom(IdeaPlugin.TAG_NAME, IdeaPlugin.class));
     registrar.registerReferenceProvider(resourceBundleTagPattern, bundleReferenceProvider);
 
+    final XmlAttributeValuePattern actionsResourceBundlePattern =
+      xmlAttributeValue("resource-bundle")
+        .withSuperParent(2, DomPatterns.tagWithDom("actions", Actions.class));
+    registrar.registerReferenceProvider(actionsResourceBundlePattern, bundleReferenceProvider);
+
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"bundle"}, "groupBundle",
                                                                   Holder.CONFIGURABLE_EP, Holder.INSPECTION_EP),
                                         bundleReferenceProvider);

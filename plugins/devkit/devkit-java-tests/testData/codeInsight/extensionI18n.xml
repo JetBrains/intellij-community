@@ -91,4 +91,6 @@
       <separator key="<error descr="Cannot resolve property key">INVALID_KEY</error>"/>
     </group>
   </actions>
+
+  <actions resource-bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
 </idea-plugin>
