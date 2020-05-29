@@ -210,6 +210,15 @@ public class AllIcons {
   }
 
   public final static class CodeWithMe {
+    /** 16x16 */ public static final @NotNull Icon CwmFollow = load("/codeWithMe/cwmFollow.svg");
+    /** 16x16 */ public static final @NotNull Icon CwmFollowMe = load("/codeWithMe/cwmFollowMe.svg");
+    /** 16x16 */ public static final @NotNull Icon CwmForceFollowMe = load("/codeWithMe/cwmForceFollowMe.svg");
+    /** 16x16 */ public static final @NotNull Icon CwmFullSync = load("/codeWithMe/cwmFullSync.svg");
+    /** 16x16 */ public static final @NotNull Icon CwmInvite = load("/codeWithMe/cwmInvite.svg");
+    /** 16x16 */ public static final @NotNull Icon CwmJoin = load("/codeWithMe/cwmJoin.svg");
+    /** 16x16 */ public static final @NotNull Icon CwmJump = load("/codeWithMe/cwmJump.svg");
+    /** 16x16 */ public static final @NotNull Icon CwmKick = load("/codeWithMe/cwmKick.svg");
+    /** 16x16 */ public static final @NotNull Icon CwmTerminate = load("/codeWithMe/cwmTerminate.svg");
     /** 16x16 */ public static final @NotNull Icon Users = load("/codeWithMe/users.svg");
 
   }
