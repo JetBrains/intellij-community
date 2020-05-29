@@ -441,14 +441,17 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     super.visitReferenceElement(reference);
 
     final PsiElement parent = reference.getParent();
+    final MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(reference);
     if (parent != null && parent.getParent() instanceof PsiClass) {
-      GlobalCompilingVisitor.setFilter(myCompilingVisitor.getContext().getPattern().getHandler(reference), TypeFilter.getInstance());
+      GlobalCompilingVisitor.setFilter(handler, TypeFilter.getInstance());
     }
     else if (parent instanceof PsiNewExpression) {
       final PsiNewExpression newExpression = (PsiNewExpression)parent;
       if (newExpression.getArrayInitializer() != null) {
-        GlobalCompilingVisitor.setFilter(myCompilingVisitor.getContext().getPattern().getHandler(reference),
-                                         e -> e instanceof PsiJavaCodeReferenceElement || e instanceof PsiKeyword);
+        GlobalCompilingVisitor.setFilter(handler, e -> e instanceof PsiJavaCodeReferenceElement || e instanceof PsiKeyword);
+      }
+      else {
+        GlobalCompilingVisitor.setFilter(handler, e -> e instanceof PsiJavaCodeReferenceElement);
       }
     }
   }

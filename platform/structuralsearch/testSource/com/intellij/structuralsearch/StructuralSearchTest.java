@@ -2274,14 +2274,19 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
   }
 
   public void testFindDeclaration() {
-    String s = "public class F {\n" +
+    String in = "public class F {\n" +
                "  static Category cat = Category.getInstance(F.class.getName());\n" +
                "  Category cat2 = Category.getInstance(F.class.getName());\n" +
                "  Category cat3 = Category.getInstance(F.class.getName());\n" +
                "}";
-    String s2 = "static '_Category '_cat = '_Category.getInstance('_Arg);";
+    String pattern = "static '_Category '_cat = '_Category.getInstance('_Arg);";
 
-    assertEquals(1, findMatchesCount(s,s2));
+    assertEquals(1, findMatchesCount(in, pattern));
+
+    String in2 = "class X {" +
+                 "  private String s = new String();" +
+                 "}";
+    assertEquals(1, findMatchesCount(in2, "'_X '_a = new '_X();"));
   }
 
   public void testFindMethodCallWithTwoOrThreeParameters() {
