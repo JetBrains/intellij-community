@@ -1490,6 +1490,10 @@
                      key="placeholder.count.matches.argument.count.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.logging.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.logging.PlaceholderCountMatchesArgumentCountInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="RedundantObjectArrayCreationInLogging" bundle="messages.InspectionGadgetsBundle"
+                     key="redundant.object.array.creation.in.logging" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.logging.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.logging.RedundantObjectArrayCreationInLoggingInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="PublicMethodWithoutLogging" bundle="messages.InspectionGadgetsBundle"
                      key="public.method.without.logging.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.logging.issues" enabledByDefault="false" level="WARNING"
