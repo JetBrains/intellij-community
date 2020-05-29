@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.feature.suggester.suggesters
 
+import com.intellij.testFramework.runInEdtAndWait
+
 class LineCommentingSuggesterTest : FeatureSuggesterTest() {
 
     fun `testComment one line and get suggestion`() {
-        testFeatureFound({
+        testSuggestionFound({
             myFixture.apply {
                 configureByFile("SimpleCodeExample.java")
                 type("//")
@@ -12,4 +14,29 @@ class LineCommentingSuggesterTest : FeatureSuggesterTest() {
             it.message == LineCommentingSuggester.POPUP_MESSAGE
         })
     }
+
+    fun `testType one slash and dont get suggestion`() {
+        testSuggestionNotFound {
+            myFixture.apply {
+                configureByFile("SimpleCodeExample.java")
+                type("/")
+            }
+        }
+    }
+
+    // todo: Do we need to suggest when commenting one line from multiline statement?
+    fun `testComment one line from multiline statement and dont get suggestion`() {
+        testSuggestionNotFound {
+            myFixture.apply {
+                configureByFile("SimpleCodeExample.java")
+                runInEdtAndWait {
+                    editor.caretModel.moveCaretRelatively(0, 2, false, false, false)
+                }
+                type("//")
+            }
+        }
+    }
+
+    // todo: add tests for removing '//' suggestion (needed method that can delete characters from caret position)
+
 }

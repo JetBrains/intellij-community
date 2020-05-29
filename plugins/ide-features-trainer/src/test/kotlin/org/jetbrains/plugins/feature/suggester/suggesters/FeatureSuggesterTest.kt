@@ -26,17 +26,19 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
         return "src/test/resources/testData"
     }
 
-    fun testFeatureFound(doTestActions: FeatureSuggesterTest.() -> Unit, assert: (PopupSuggestion) -> Boolean) {
+    fun testSuggestionFound(doTestActions: FeatureSuggesterTest.() -> Unit, assert: (PopupSuggestion) -> Boolean) {
         val lock = ReentrantLock()
         val condition = lock.newCondition()
         val testPassed = AtomicBoolean(false)
         project.messageBus.connect()
             .subscribe(FeatureSuggestersManagerListener.TOPIC, object : FeatureSuggestersManagerListener {
                 override fun featureFound(suggestion: PopupSuggestion) {
-                    lock.withLock {
-                        val result = assert(suggestion)
-                        testPassed.set(result)
-                        condition.signal()
+                    if (!testPassed.get()) {
+                        lock.withLock {
+                            val result = assert(suggestion)
+                            testPassed.set(result)
+                            condition.signal()
+                        }
                     }
                 }
             })
@@ -48,6 +50,34 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
         if (!testPassed.get()) {
             TestCase.fail()
         }
+
+        println(myFixture.file.text)
+    }
+
+    fun testSuggestionNotFound(doTestActions: FeatureSuggesterTest.() -> Unit) {
+        val lock = ReentrantLock()
+        val condition = lock.newCondition()
+        val testPassed = AtomicBoolean(false)
+        project.messageBus.connect()
+            .subscribe(FeatureSuggestersManagerListener.TOPIC, object : FeatureSuggestersManagerListener {
+                override fun featureFound(suggestion: PopupSuggestion) {
+                    if (!testPassed.get()) {
+                        // we are doing something only if current test is running
+                        // because this listeners will be alive in all tests
+                        lock.withLock {
+                            TestCase.fail()
+                        }
+                    }
+                }
+            })
+
+        doTestActions()
+        lock.withLock {
+            condition.await(10, TimeUnit.SECONDS)
+        }
+        testPassed.set(true)
+
+        println(myFixture.file.text)
     }
 
 }
