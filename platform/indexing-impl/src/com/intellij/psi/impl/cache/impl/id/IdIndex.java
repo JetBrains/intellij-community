@@ -7,11 +7,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.UsageSearchContext;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -30,10 +26,10 @@ import java.util.Map;
 /**
  * An implementation of identifier index where key is a identifier hash and value is occurrence mask {@link UsageSearchContext}.
  *
- * Consider usage of {@link com.intellij.psi.search.PsiSearchHelper} instead direct index access.
+ * Consider usage of {@link com.intellij.psi.search.PsiSearchHelper} or {@link com.intellij.psi.impl.cache.CacheManager} instead direct index access.
  */
+@ApiStatus.Internal
 public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> implements DocumentChangeDependentIndex {
-  @ApiStatus.Internal
   @NonNls public static final ID<IdIndexEntry, Integer> NAME = ID.create("IdIndex");
 
   private final KeyDescriptor<IdIndexEntry> myKeyDescriptor = new InlineKeyDescriptor<IdIndexEntry>() {
@@ -141,15 +137,5 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> impl
   @Override
   public boolean needsForwardIndexWhenSharing() {
     return false;
-  }
-
-  public static boolean hasIdentifierInFile(@NotNull PsiFile file, @NotNull String name) {
-    PsiUtilCore.ensureValid(file);
-    if (file.getVirtualFile() == null || DumbService.isDumb(file.getProject())) {
-      return StringUtil.contains(file.getViewProvider().getContents(), name);
-    }
-
-    Map<IdIndexEntry, Integer> entries = FileBasedIndex.getInstance().getFileData(NAME, file.getVirtualFile(), file.getProject());
-    return entries.containsKey(new IdIndexEntry(name, true));
   }
 }

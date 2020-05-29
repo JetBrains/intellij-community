@@ -1203,7 +1203,7 @@ public class JavaFxPsiUtil {
         if (injectControllerMethods.length == 1) {
           final GlobalSearchScope globalSearchScope = GlobalSearchScope
             .getScopeRestrictedByFileTypes(containingFile.getResolveScope(), JavaFileType.INSTANCE);
-          final VirtualFile[] virtualFiles = CacheManager.SERVICE.getInstance(project).getVirtualFilesWithWord(
+          final VirtualFile[] virtualFiles = CacheManager.getInstance(project).getVirtualFilesWithWord(
             ClassUtil.extractClassName(JavaFxCommonNames.JAVAFX_FXML_FXMLLOADER), UsageSearchContext.IN_CODE, globalSearchScope, true);
           if (virtualFiles.length == 0) {
             return new CachedValueProvider.Result<>(null, PsiModificationTracker.MODIFICATION_COUNT);

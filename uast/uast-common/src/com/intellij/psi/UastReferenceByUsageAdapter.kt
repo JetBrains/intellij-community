@@ -8,19 +8,18 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.Key
 import com.intellij.patterns.uast.UElementPattern
 import com.intellij.patterns.uast.injectionHostUExpression
-import com.intellij.psi.impl.cache.impl.id.IdIndex
-import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
+import com.intellij.psi.impl.cache.CacheManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.PsiSearchHelper.SearchCostResult
+import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.ProcessingContext
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
@@ -124,7 +123,12 @@ private fun findDirectVariableUsages(variablePsi: PsiElement): Iterable<PsiEleme
     return localUsages
   }
 
-  val containingFiles = FileBasedIndex.getInstance().getContainingFiles(IdIndex.NAME, IdIndexEntry(variableName, true), uastScope)
+  val cacheManager = CacheManager.getInstance(variablePsi.project)
+  val containingFiles = cacheManager.getVirtualFilesWithWord(
+    variableName,
+    UsageSearchContext.ANY,
+    uastScope,
+    true)
   val useScope = variablePsi.useScope
 
   val psiManager = PsiManager.getInstance(module.project)

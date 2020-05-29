@@ -150,7 +150,7 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
         return true;
       };
       final StringSearcher searcher = new StringSearcher("patternClass", true, true);
-      CacheManager.SERVICE.getInstance(beanClass.getProject()).processFilesWithWord(psiFile -> {
+      CacheManager.getInstance(beanClass.getProject()).processFilesWithWord(psiFile -> {
         LowLevelSearchUtil.processElementsContainingWordInElement(occurenceProcessor, psiFile, searcher, true,
                                                                    new EmptyProgressIndicator());
         return true;

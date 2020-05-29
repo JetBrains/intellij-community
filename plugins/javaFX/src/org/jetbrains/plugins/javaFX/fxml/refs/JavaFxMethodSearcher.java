@@ -75,11 +75,11 @@ public class JavaFxMethodSearcher implements QueryExecutor<PsiReference, Referen
 
       final GlobalSearchScope fxmlScope = new JavaFxScopeEnlarger.GlobalFxmlSearchScope((GlobalSearchScope)scope);
       final VirtualFile[] filteredFiles = ReadAction.compute(() ->
-        CacheManager.SERVICE.getInstance(project).getVirtualFilesWithWord(className, UsageSearchContext.IN_PLAIN_TEXT, fxmlScope, true));
+        CacheManager.getInstance(project).getVirtualFilesWithWord(className, UsageSearchContext.IN_PLAIN_TEXT, fxmlScope, true));
       if (ArrayUtil.isEmpty(filteredFiles)) return;
 
       final GlobalSearchScope filteredScope = GlobalSearchScope.filesScope(project, ContainerUtil.newHashSet(filteredFiles));
-      ReadAction.run(() -> CacheManager.SERVICE.getInstance(project).processFilesWithWord(
+      ReadAction.run(() -> CacheManager.getInstance(project).processFilesWithWord(
         file -> searchMethodInFile(psiMethod, file, consumer), propertyName, UsageSearchContext.IN_PLAIN_TEXT, filteredScope, true));
     }
   }

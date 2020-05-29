@@ -176,6 +176,10 @@ public interface PsiSearchHelper {
                                   boolean caseSensitive,
                                   boolean processInjectedPsi);
 
+  default boolean hasIdentifierInFile(@NotNull PsiFile file, @NotNull String name) {
+    throw new UnsupportedOperationException();
+  }
+
   @NotNull
   AsyncFuture<Boolean> processElementsWithWordAsync(
                                        @NotNull TextOccurenceProcessor processor,

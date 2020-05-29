@@ -233,7 +233,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     final String baseName = ReadAction.compute(() -> propFile.getResourceBundle().getBaseName());
     PsiFile containingFile = ReadAction.compute(() -> propFile.getContainingFile());
 
-    List<PsiFile> files = Arrays.asList(CacheManager.SERVICE.getInstance(project).getFilesWithWord(baseName, UsageSearchContext.IN_PLAIN_TEXT, scope, true));
+    List<PsiFile> files = Arrays.asList(CacheManager.getInstance(project).getFilesWithWord(baseName, UsageSearchContext.IN_PLAIN_TEXT, scope, true));
     return processReferencesInFiles(files, psiManager, baseName, containingFile, filterScope, processor);
   }
 

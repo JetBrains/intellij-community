@@ -56,7 +56,7 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
   @Override
   protected void doAddSearchWordInCode(@NotNull String word) {
     myTransactionStarted = true;
-    VirtualFile[] files = CacheManager.SERVICE.getInstance(myProject)
+    VirtualFile[] files = CacheManager.getInstance(myProject)
       .getVirtualFilesWithWord(word, (short)(IN_CODE | IN_PLAIN_TEXT), (GlobalSearchScope)myScope, myCaseSensitive);
     process(files);
   }
@@ -65,7 +65,7 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
   protected void doAddSearchWordInText(@NotNull String word) {
     myTransactionStarted = true;
     VirtualFile[] files =
-      CacheManager.SERVICE.getInstance(myProject).getVirtualFilesWithWord(word, IN_PLAIN_TEXT, (GlobalSearchScope)myScope, myCaseSensitive);
+      CacheManager.getInstance(myProject).getVirtualFilesWithWord(word, IN_PLAIN_TEXT, (GlobalSearchScope)myScope, myCaseSensitive);
     process(files);
   }
 
@@ -73,7 +73,7 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
   protected void doAddSearchWordInComments(@NotNull String word) {
     myTransactionStarted = true;
     VirtualFile[] files =
-      CacheManager.SERVICE.getInstance(myProject).getVirtualFilesWithWord(word, IN_COMMENTS, (GlobalSearchScope)myScope, myCaseSensitive);
+      CacheManager.getInstance(myProject).getVirtualFilesWithWord(word, IN_COMMENTS, (GlobalSearchScope)myScope, myCaseSensitive);
     process(files);
   }
 
@@ -81,7 +81,7 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
   protected void doAddSearchWordInLiterals(@NotNull String word) {
     myTransactionStarted = true;
     VirtualFile[] files =
-      CacheManager.SERVICE.getInstance(myProject).getVirtualFilesWithWord(word, IN_STRINGS, (GlobalSearchScope)myScope, myCaseSensitive);
+      CacheManager.getInstance(myProject).getVirtualFilesWithWord(word, IN_STRINGS, (GlobalSearchScope)myScope, myCaseSensitive);
     process(files);
   }
 

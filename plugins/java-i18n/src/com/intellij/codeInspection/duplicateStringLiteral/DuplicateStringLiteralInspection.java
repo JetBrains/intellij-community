@@ -13,8 +13,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.cache.impl.id.IdIndex;
-import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
+import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.search.LowLevelSearchUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
@@ -30,7 +29,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.StringSearcher;
 import com.siyeh.ig.style.UnnecessarilyQualifiedStaticUsageInspection;
 import gnu.trove.THashSet;
@@ -78,34 +76,33 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
     final List<String> words = ContainerUtil.filter(StringUtil.getWordsInStringLongestFirst(query.stringToFind), s -> s.length() >= query.minStringLength);
     if (words.isEmpty()) return Collections.emptyList();
+    List<PsiLiteralExpression> foundExpressions = new SmartList<>();
 
-    List<PsiLiteralExpression> foundExpressions = new ArrayList<>();
-    List<IdIndexEntry> indexKeys = ContainerUtil.map(words, word -> new IdIndexEntry(word, true));
-    FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, indexKeys, scope, (Integer mask) -> {
-      return (mask & UsageSearchContext.IN_STRINGS) != 0;
-    }, new Processor<VirtualFile>() {
-      int filesWithLiterals;
+    CacheManager.getInstance(project).processVirtualFilesWithAllWords(words,
+                                                                      UsageSearchContext.IN_STRINGS,
+                                                                      scope,
+                                                                      true, new Processor<VirtualFile>() {
+        int filesWithLiterals;
 
-      @Override
-      public boolean process(VirtualFile f) {
-        FileViewProvider viewProvider = PsiManager.getInstance(project).findViewProvider(f);
-        // important: skip non-java files with given word in literal (IDEA-126201)
-        if (viewProvider == null || viewProvider.getPsi(JavaLanguage.INSTANCE) == null) return true;
-        PsiFile psiFile = viewProvider.getPsi(viewProvider.getBaseLanguage());
-        if (psiFile != null) {
-          List<PsiLiteralExpression> duplicateLiteralsInFile =
-            findDuplicateLiteralsInFile(query.stringToFind, query.ignorePropertyKeys, psiFile);
-          if (!duplicateLiteralsInFile.isEmpty()) {
-            foundExpressions.addAll(duplicateLiteralsInFile);
-            if (query.isOnFlySearch && ++filesWithLiterals >= MAX_FILES_TO_ON_THE_FLY_SEARCH) {
-              return false;
+        @Override
+        public boolean process(VirtualFile f) {
+          FileViewProvider viewProvider = PsiManager.getInstance(project).findViewProvider(f);
+          // important: skip non-java files with given word in literal (IDEA-126201)
+          if (viewProvider == null || viewProvider.getPsi(JavaLanguage.INSTANCE) == null) return true;
+          PsiFile psiFile = viewProvider.getPsi(viewProvider.getBaseLanguage());
+          if (psiFile != null) {
+            List<PsiLiteralExpression> duplicateLiteralsInFile =
+              findDuplicateLiteralsInFile(query.stringToFind, query.ignorePropertyKeys, psiFile);
+            if (!duplicateLiteralsInFile.isEmpty()) {
+              foundExpressions.addAll(duplicateLiteralsInFile);
+              if (query.isOnFlySearch && ++filesWithLiterals >= MAX_FILES_TO_ON_THE_FLY_SEARCH) {
+                return false;
+              }
             }
           }
+          return true;
         }
-        ProgressManager.checkCanceled();
-        return true;
-      }
-    });
+      });
     return foundExpressions;
   }
 
