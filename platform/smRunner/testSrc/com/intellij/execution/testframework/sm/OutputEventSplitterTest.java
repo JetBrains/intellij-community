@@ -38,17 +38,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.hamcrest.CoreMatchers.*;
 
-public class OutputLineSplitterTest extends LightPlatformTestCase {
+public class OutputEventSplitterTest extends LightPlatformTestCase {
   private static final List<ProcessOutputType> ALL_TYPES = Arrays.asList(ProcessOutputType.STDERR, ProcessOutputType.STDOUT, ProcessOutputType.SYSTEM);
   private static final List<Key> ALL_STDOUT_KEYS = Arrays.asList(
-    new ProcessOutputType(OutputLineSplitterTest.class + ".RED", (ProcessOutputType)ProcessOutputTypes.STDOUT),
-    new ProcessOutputType(OutputLineSplitterTest.class + ".GREEN", (ProcessOutputType)ProcessOutputTypes.STDOUT),
-    new ProcessOutputType(OutputLineSplitterTest.class + ".BLUE", (ProcessOutputType)ProcessOutputTypes.STDOUT)
+    new ProcessOutputType(OutputEventSplitterTest.class + ".RED", (ProcessOutputType)ProcessOutputTypes.STDOUT),
+    new ProcessOutputType(OutputEventSplitterTest.class + ".GREEN", (ProcessOutputType)ProcessOutputTypes.STDOUT),
+    new ProcessOutputType(OutputEventSplitterTest.class + ".BLUE", (ProcessOutputType)ProcessOutputTypes.STDOUT)
   );
   private static final List<Key> ALL_STDERR_KEYS = Arrays.asList(
-    new ProcessOutputType(OutputLineSplitterTest.class + ".RED", (ProcessOutputType)ProcessOutputTypes.STDERR),
-    new ProcessOutputType(OutputLineSplitterTest.class + ".GREEN", (ProcessOutputType)ProcessOutputTypes.STDERR),
-    new ProcessOutputType(OutputLineSplitterTest.class + ".BLUE", (ProcessOutputType)ProcessOutputTypes.STDERR)
+    new ProcessOutputType(OutputEventSplitterTest.class + ".RED", (ProcessOutputType)ProcessOutputTypes.STDERR),
+    new ProcessOutputType(OutputEventSplitterTest.class + ".GREEN", (ProcessOutputType)ProcessOutputTypes.STDERR),
+    new ProcessOutputType(OutputEventSplitterTest.class + ".BLUE", (ProcessOutputType)ProcessOutputTypes.STDERR)
   );
 
   private OutputEventSplitter mySplitter;
