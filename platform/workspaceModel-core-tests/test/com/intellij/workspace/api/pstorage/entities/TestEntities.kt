@@ -118,44 +118,6 @@ internal class ModifiablePChildSourceEntity : PModifiableTypedEntity<PChildSourc
 
 // ---------------------------------------
 
-internal class PNamedSampleEntityData : PEntityData.WithCalculatablePersistentId<PNamedSampleEntity>() {
-  lateinit var name: String
-  lateinit var next: PSampleEntityId
-  override fun createEntity(snapshot: TypedEntityStorage): PNamedSampleEntity {
-    return PNamedSampleEntity(name, next).also { addMetaData(it, snapshot) }
-  }
-
-  override fun persistentId(): PSampleEntityId = PSampleEntityId(name)
-}
-
-internal class PNamedSampleEntity(
-  val name: String,
-  val next: PSampleEntityId
-) : TypedEntityWithPersistentId, PTypedEntity() {
-
-  override fun persistentId(): PSampleEntityId = PSampleEntityId(name)
-}
-
-internal data class PSampleEntityId(val name: String) : PersistentEntityId<PNamedSampleEntity>() {
-  override val parentId: PersistentEntityId<*>?
-    get() = null
-  override val presentableName: String
-    get() = name
-}
-
-internal class ModifiablePNamedSampleEntity : PModifiableTypedEntity<PNamedSampleEntity>() {
-  var name: String by EntityDataDelegation()
-  var next: PSampleEntityId by EntityDataDelegation()
-}
-
-internal fun PEntityStorageBuilder.addPNamedEntity(name: String, next: PSampleEntityId) =
-  addEntity(ModifiablePNamedSampleEntity::class.java, PSampleEntitySource("test")) {
-    this.name = name
-    this.next = next
-  }
-
-// ---------------------------------------
-
 internal class PChildSampleEntityData : PEntityData<PChildSampleEntity>() {
   lateinit var data: String
   override fun createEntity(snapshot: TypedEntityStorage): PChildSampleEntity {
@@ -189,11 +151,11 @@ internal class PPersistentIdEntityData : PEntityData.WithCalculatablePersistentI
     return PPersistentIdEntity(data).also { addMetaData(it, snapshot) }
   }
 
-  override fun persistentId(): PSampleEntityId = PSampleEntityId(data)
+  override fun persistentId(): LinkedListEntityId = LinkedListEntityId(data)
 }
 
 internal class PPersistentIdEntity(val data: String) : TypedEntityWithPersistentId, PTypedEntity() {
-  override fun persistentId(): PSampleEntityId = PSampleEntityId(data)
+  override fun persistentId(): LinkedListEntityId = LinkedListEntityId(data)
 }
 
 internal class ModifiablePPersistentIdEntity : PModifiableTypedEntity<PPersistentIdEntity>() {

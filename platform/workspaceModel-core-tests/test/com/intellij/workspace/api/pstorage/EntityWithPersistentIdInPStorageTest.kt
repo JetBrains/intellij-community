@@ -10,10 +10,10 @@ class EntityWithPersistentIdInPStorageTest {
   @Test
   fun `add remove entity`() {
     val builder = PEntityStorageBuilder.create()
-    val foo = builder.addPNamedEntity("foo", PSampleEntityId("bar"))
+    val foo = builder.addLinkedListEntity("foo", LinkedListEntityId("bar"))
     builder.assertConsistency()
     assertNull(foo.next.resolve(builder))
-    val bar = builder.addPNamedEntity("bar", PSampleEntityId("baz"))
+    val bar = builder.addLinkedListEntity("bar", LinkedListEntityId("baz"))
     builder.assertConsistency()
     assertEquals(bar, foo.next.resolve(builder))
     builder.removeEntity(bar)
@@ -24,11 +24,11 @@ class EntityWithPersistentIdInPStorageTest {
   @Test
   fun `change target entity name`() {
     val builder = PEntityStorageBuilder.create()
-    val foo = builder.addPNamedEntity("foo", PSampleEntityId("bar"))
-    val bar = builder.addPNamedEntity("bar", PSampleEntityId("baz"))
+    val foo = builder.addLinkedListEntity("foo", LinkedListEntityId("bar"))
+    val bar = builder.addLinkedListEntity("bar", LinkedListEntityId("baz"))
     builder.assertConsistency()
     assertEquals(bar, foo.next.resolve(builder))
-    builder.modifyEntity(ModifiablePNamedSampleEntity::class.java, bar) {
+    builder.modifyEntity(ModifiableLinkedListEntity::class.java, bar) {
       name = "baz"
     }
     builder.assertConsistency()
@@ -38,13 +38,13 @@ class EntityWithPersistentIdInPStorageTest {
   @Test
   fun `change name in reference`() {
     val builder = PEntityStorageBuilder.create()
-    val foo = builder.addPNamedEntity("foo", PSampleEntityId("bar"))
-    val bar = builder.addPNamedEntity("bar", PSampleEntityId("baz"))
-    val baz = builder.addPNamedEntity("baz", PSampleEntityId("foo"))
+    val foo = builder.addLinkedListEntity("foo", LinkedListEntityId("bar"))
+    val bar = builder.addLinkedListEntity("bar", LinkedListEntityId("baz"))
+    val baz = builder.addLinkedListEntity("baz", LinkedListEntityId("foo"))
     builder.assertConsistency()
     assertEquals(bar, foo.next.resolve(builder))
-    val newFoo = builder.modifyEntity(ModifiablePNamedSampleEntity::class.java, foo) {
-      next = PSampleEntityId("baz")
+    val newFoo = builder.modifyEntity(ModifiableLinkedListEntity::class.java, foo) {
+      next = LinkedListEntityId("baz")
     }
     builder.assertConsistency()
     assertEquals(baz, newFoo.next.resolve(builder))
