@@ -429,7 +429,7 @@
       <module fileurl="file://$PROJECT_DIR$/../studio/google/samples/google-samples.iml" filepath="$PROJECT_DIR$/../studio/google/samples/google-samples.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-adb/intellij.android.adb.iml" filepath="$PROJECT_DIR$/../adt/idea/android-adb/intellij.android.adb.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-adb/intellij.android.adb.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-adb/intellij.android.adb.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/adt-branding/intellij.android.adt.branding.iml" filepath="$PROJECT_DIR$/../adt/idea/adt-branding/intellij.android.adt.branding.iml" />
+      <module fileurl="file://$PROJECT_DIR$/adt-branding/intellij.android.adt.branding.iml" filepath="$PROJECT_DIR$/adt-branding/intellij.android.adt.branding.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/swingp/intellij.android.adt.swingp.iml" filepath="$PROJECT_DIR$/../adt/idea/swingp/intellij.android.adt.swingp.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/adt-testutils/intellij.android.adt.testutils.iml" filepath="$PROJECT_DIR$/../adt/idea/adt-testutils/intellij.android.adt.testutils.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/adt-ui/intellij.android.adt.ui.iml" filepath="$PROJECT_DIR$/../adt/idea/adt-ui/intellij.android.adt.ui.iml" />

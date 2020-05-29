@@ -393,8 +393,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
   WindowsDistributionCustomizer createWindowsCustomizer(String projectHome) {
     return new WindowsDistributionCustomizer() {
       {
-        icoPath = "$projectHome/../adt/idea/adt-branding/src/artwork/androidstudio.ico"
-        icoPathForEAP = "$projectHome/../adt/idea/adt-branding/src/artwork/preview/androidstudio.ico"
+        icoPath = "$projectHome/adt-branding/src/artwork/androidstudio.ico"
+        icoPathForEAP = "$projectHome/adt-branding/src/artwork/preview/androidstudio.ico"
         installerImagesPath = "$projectHome/build/conf/ideaCE/win/images"
         fileAssociations = [".java", ".groovy", ".kt"]
       }
@@ -481,8 +481,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     return new LinuxDistributionCustomizer() {
       {
         buildTarGzWithoutBundledJre = false
-        iconPngPath = "$projectHome/../adt/idea/adt-branding/src/artwork/icon_AS_128.png"
-        iconPngPathForEAP = "$projectHome/../adt/idea/adt-branding/src/artwork/preview/icon_AS_128.png"
+        iconPngPath = "$projectHome/adt-branding/src/artwork/icon_AS_128.png"
+        iconPngPathForEAP = "$projectHome/adt-branding/src/artwork/preview/icon_AS_128.png"
       }
 
       @Override
@@ -562,8 +562,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       // For now we have all 3 platform icons checked in and we change
       // the icons manually. Fix this when the other platforms have the
       // same mechanisms for our .ico and .svg files
-      icnsPath = "$projectHome/../adt/idea/adt-branding/src/artwork/AndroidStudio.icns"
-      icnsPathForEAP = "$projectHome/../adt/idea/adt-branding/src/artwork/preview/AndroidStudio.icns"
+      icnsPath = "$projectHome/adt-branding/src/artwork/AndroidStudio.icns"
+      icnsPathForEAP = "$projectHome/adt-branding/src/artwork/preview/AndroidStudio.icns"
     }
 
     @Override

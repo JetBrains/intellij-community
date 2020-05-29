@@ -3,7 +3,7 @@
  1. For every build to be released (canary, beta, rc, or final),
     on the release branch (e.g. studio-1.4-release),
     make sure the version number is correct in
-    ../adt/idea/adt-branding/src/idea/AndroidStudioApplicationInfo.xml
+    ./adt-branding/src/idea/AndroidStudioApplicationInfo.xml
 
     Example:
 

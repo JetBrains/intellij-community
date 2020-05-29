@@ -1,0 +1,26 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="/META-INF/JavaIdePlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <module value="com.intellij.modules.androidstudio"/>
+  <module value="com.intellij.modules.java-capable"/>
+  <module value="com.intellij.modules.python-core-capable"/>
+  <application-components>
+    <component>
+      <implementation-class>com.android.tools.idea.AndroidInitialConfigurator</implementation-class>
+    </component>
+  </application-components>
+  <extensionPoints>
+    <extensionPoint name="androidStudioInitializer" interface="java.lang.Runnable"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- overrides UTM-tracking implementation included from IdeaPlugin.xml: -->
+    <applicationService serviceImplementation="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"
+                        overrides="true"/>
+    
+    <applicationService serviceInterface="com.intellij.openapi.updateSettings.UpdateStrategyCustomization"
+                        serviceImplementation="com.android.tools.idea.AndroidStudioUpdateStrategyCustomization"
+                        overrides="true"/>
+    <applicationService serviceInterface="com.intellij.openapi.help.HelpManager"
+                        serviceImplementation="com.android.tools.idea.help.StudioHelpManagerImpl"
+                        overrides="true"/>
+  </extensions>
+</idea-plugin>
