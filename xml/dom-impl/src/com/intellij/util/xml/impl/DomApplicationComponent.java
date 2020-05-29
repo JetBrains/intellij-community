@@ -83,6 +83,8 @@ public final class DomApplicationComponent {
     myInvocationCaches.clear();
     assignabilityCache.clear();
 
+    myVisitorDescriptions.clear();
+
     registerDescriptions();
   }
 

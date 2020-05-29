@@ -72,6 +72,8 @@ public class ConverterManagerImpl implements ConverterManager {
     mySimpleConverters.put(String.class, Converter.EMPTY_CONVERTER);
     mySimpleConverters.put(Object.class, Converter.EMPTY_CONVERTER);
     mySimpleConverters.put(PathReference.class, PathReferenceConverter.INSTANCE);
+
+    DomImplementationClassEP.CONVERTER_EP_NAME.addChangeListener(() -> myConverterInstances.clear(), null);
   }
 
   protected void addConverter(Class clazz, Converter converter) {
