@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.vfs.VirtualFileLookup
+import com.intellij.openapi.vfs.VirtualFileManager
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Paths
 
@@ -25,7 +25,7 @@ object JBCefPsiNavigationUtils {
     val virtualFile = ProjectRootManager.getInstance(project)
                         .contentRoots.asSequence()
                         .map { Paths.get(it.path, filePath) }
-                        .mapNotNull(VirtualFileLookup.newLookup()::fromNioPath)
+                        .mapNotNull(VirtualFileManager.getInstance()::findFileByNioPath)
                         .firstOrNull() ?: return false
 
     ApplicationManager.getApplication().invokeLater {
