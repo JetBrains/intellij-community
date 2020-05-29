@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import org.jetbrains.annotations.NotNull;
@@ -161,7 +160,7 @@ public class DumbServiceMergingTaskQueue {
     }
     catch (Throwable t) {
       if (!(t instanceof ControlFlowException)) {
-        LOG.warn("Faieded to cancel DumbModeTask indicator: " + t.getMessage(), t);
+        LOG.warn("Failed to cancel DumbModeTask indicator: " + t.getMessage(), t);
       }
     }
   }
