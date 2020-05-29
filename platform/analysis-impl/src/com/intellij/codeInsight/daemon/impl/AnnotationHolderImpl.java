@@ -43,6 +43,7 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   private final AnnotationSession myAnnotationSession;
 
   private final boolean myBatchMode;
+  Annotator myCurrentAnnotator;
 
   /**
    * Do not instantiate the AnnotationHolderImpl directly, please use the one provided to {@link Annotator#annotate(PsiElement, AnnotationHolder)} instead

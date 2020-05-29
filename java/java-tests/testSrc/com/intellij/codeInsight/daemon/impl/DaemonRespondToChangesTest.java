@@ -37,10 +37,7 @@ import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.LanguageFilter;
-import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.lang.annotation.Annotator;
-import com.intellij.lang.annotation.ExternalAnnotator;
-import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.annotation.*;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.Disposable;
@@ -2614,6 +2611,34 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
                    typingElapsed > 1000 && highlightElapsed >= 2000);
       })
     );
+  }
+
+  public void testDaemonDoesReportTheFirstProducedAnnotation() {
+    useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyRecordingAnnotator[]{new MyInfoAnnotator()}, () -> checkFirstAnnotation());
+  }
+
+  private void checkFirstAnnotation() {
+    AtomicBoolean reported = new AtomicBoolean();
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC,
+            new DaemonCodeAnalyzer.DaemonListener() {
+              @Override
+              public void daemonProducedFirstAnnotation(@NotNull AnnotationSession session,
+                                                        @NotNull Annotator annotator,
+                                                        @NotNull Annotation annotation,
+                                                        @NotNull PsiFile file) {
+                assertFalse(reported.getAndSet(true));
+                assertEquals("Annotation(message='comment', severity='INFORMATION', toolTip='<html>comment</html>')",
+                             annotation.toString());
+              }
+            });
+
+    @Language("JAVA")
+    String text = "class X /* */ {\n" +
+                  " // comment\n" +
+                  "}\n";
+    configureByText(JavaFileType.INSTANCE, text);
+
+    doHighlighting();
   }
 }
 
