@@ -17,7 +17,7 @@ iml_module(
         "//tools/idea/plugins/ui-designer:intellij.java.guiForms.designer",
         "//tools/idea/java/plugin:intellij.java.plugin",
         "//tools/idea/plugins/maven/error-prone-compiler:intellij.maven.errorProne.compiler",
-        "//tools/adt/idea/adt-branding:intellij.android.adt.branding",
+        "//tools/idea/adt-branding:intellij.android.adt.branding",
     ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
