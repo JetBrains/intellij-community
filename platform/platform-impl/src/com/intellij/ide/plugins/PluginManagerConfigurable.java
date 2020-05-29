@@ -1196,13 +1196,20 @@ public class PluginManagerConfigurable
     if (plugin instanceof PluginNode) {
       tags = ((PluginNode)plugin).getTags();
 
-      if (productCode != null && tags != null && !tags.contains("Paid")) {
-        tags = new ArrayList<>(tags);
-        tags.add(0, "Paid");
-      }
-      if (tags != null && LicensePanel.isEA2Product(productCode)) {
-        tags = new ArrayList<>(tags);
-        tags.remove("Paid");
+      if (productCode != null) {
+        if (LicensePanel.isEA2Product(productCode)) {
+          if (tags != null && tags.contains("Paid")) {
+            tags = new ArrayList<>(tags);
+            tags.remove("Paid");
+          }
+        }
+        else if (tags == null) {
+          return Collections.singletonList("Paid");
+        }
+        else if (!tags.contains("Paid")) {
+          tags = new ArrayList<>(tags);
+          tags.add("Paid");
+        }
       }
     }
     else if (productCode != null && !plugin.isBundled() && !LicensePanel.isEA2Product(productCode)) {
