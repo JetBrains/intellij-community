@@ -65,10 +65,9 @@ class FeatureSuggestersManager(val project: Project) : FileEditorManagerListener
         }
     }
 
-    override fun fileOpenedSync(
+    override fun fileOpened(
         source: FileEditorManager,
-        file: VirtualFile,
-        editors: Pair<Array<FileEditor>, Array<FileEditorProvider>>
+        file: VirtualFile
     ) {
         if(project != source.project || psiListenersIsSet)
             return
