@@ -23,10 +23,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Map;
+import java.util.Objects;
 import java.util.jar.Attributes;
 
 public final class JdkUtil {
   public static final Key<Map<String, String>> COMMAND_LINE_CONTENT = Key.create("command.line.content");
+
+  public static final Key<JdkCommandLineSetup> COMMAND_LINE_SETUP_KEY = Key.create("com.intellij.openapi.projectRoots.JdkCommandLineSetup");
 
   /**
    * The VM property is needed to workaround incorrect escaped URLs handling in WebSphere,
@@ -131,8 +134,10 @@ public final class JdkUtil {
   public static @NotNull GeneralCommandLine setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters) throws CantRunException {
     LocalTargetEnvironmentFactory environmentFactory = new LocalTargetEnvironmentFactory();
     TargetEnvironmentRequest request = environmentFactory.createRequest();
-    return environmentFactory.prepareRemoteEnvironment(request, new EmptyProgressIndicator())
-      .createGeneralCommandLine(setupJVMCommandLine(javaParameters, request, null).build());
+    TargetedCommandLineBuilder builder = setupJVMCommandLine(javaParameters, request, null);
+    LocalTargetEnvironment environment = environmentFactory.prepareRemoteEnvironment(request, new EmptyProgressIndicator());
+    Objects.requireNonNull(builder.getUserData(COMMAND_LINE_SETUP_KEY)).provideEnvironment(environment, new EmptyProgressIndicator());
+    return environment.createGeneralCommandLine(builder.build());
   }
 
   public static boolean useDynamicClasspath(@Nullable Project project) {

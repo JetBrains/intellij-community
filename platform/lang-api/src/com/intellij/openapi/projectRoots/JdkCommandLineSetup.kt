@@ -8,14 +8,17 @@ import com.intellij.execution.Platform
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
+import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
+import com.intellij.execution.target.value.DeferredTargetValue
 import com.intellij.execution.target.value.TargetValue
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
@@ -26,10 +29,12 @@ import com.intellij.util.PathUtil
 import com.intellij.util.PathsList
 import com.intellij.util.SystemProperties
 import com.intellij.util.execution.ParametersListUtil
+import com.intellij.util.io.isDirectory
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.text.nullize
 import gnu.trove.THashMap
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.collectResults
 import java.io.File
@@ -39,14 +44,15 @@ import java.nio.charset.Charset
 import java.nio.charset.IllegalCharsetNameException
 import java.nio.charset.StandardCharsets
 import java.nio.charset.UnsupportedCharsetException
+import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeoutException
 import java.util.jar.Manifest
 import kotlin.math.abs
 
-internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
-                                   private val target: TargetEnvironmentConfiguration?) {
+class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
+                          private val target: TargetEnvironmentConfiguration?) {
 
   val commandLine = TargetedCommandLineBuilder(request)
   val platform = request.targetPlatform.platform
@@ -54,10 +60,39 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
   private val languageRuntime: JavaLanguageRuntimeConfiguration? = target?.runtimes?.findByType(
     JavaLanguageRuntimeConfiguration::class.java)
 
-  private fun uploadIntoTempDir(uploadPath: String): TargetValue<String> = request.createTempVolume().createUpload(uploadPath)
+  private val environmentPromise = AsyncPromise<Pair<TargetEnvironment, ProgressIndicator>>()
+  private val dependingOnEnvironmentPromise = mutableListOf<Promise<Unit>>()
+
+  private fun uploadIntoTempDir(uploadPathString: String, getParent: Boolean? = null): TargetValue<String> {
+    val uploadPath = Paths.get(FileUtil.toSystemDependentName(uploadPathString))
+    val isDir = getParent ?: uploadPath.isDirectory()
+    val localRootPath = if (isDir) uploadPath else uploadPath.parent
+    val uploadRoot = TargetEnvironment.UploadRoot(
+      localRootPath = localRootPath,
+      remoteRootPath = TargetEnvironment.RemotePath.Temporary()
+    )
+    request.uploadVolumes += uploadRoot
+    val result = DeferredTargetValue(uploadPathString)
+    dependingOnEnvironmentPromise += environmentPromise.then { (environment, progress) ->
+      val volume = environment.uploadVolumes.getValue(uploadRoot)
+      result.resolve(volume.upload(if (isDir) "." else uploadPath.fileName.toString(), progress))
+    }
+    return result
+  }
 
   private val commandLineContent by lazy {
     mutableMapOf<String, String>().also { commandLine.putUserData(JdkUtil.COMMAND_LINE_CONTENT, it) }
+  }
+
+  init {
+    commandLine.putUserData(JdkUtil.COMMAND_LINE_SETUP_KEY, this)
+  }
+
+  fun provideEnvironment(environment: TargetEnvironment, progressIndicator: ProgressIndicator) {
+    environmentPromise.setResult(environment to progressIndicator)
+    for (promise in dependingOnEnvironmentPromise) {
+      promise.blockingGet(0)  // Just rethrows errors.
+    }
   }
 
   @Throws(CantRunException::class)
@@ -378,7 +413,7 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
       listOf(TargetValue.fixed(mainClass))
     }
     else if (jarPath != null) {
-      listOf(TargetValue.fixed("-jar"), uploadIntoTempDir(jarPath))
+      listOf(TargetValue.fixed("-jar"), uploadIntoTempDir(jarPath, getParent = true))
     }
     else {
       throw CantRunException(ExecutionBundle.message("main.class.is.not.specified.error.message"))
@@ -430,7 +465,7 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
       return
     }
     val suffix = if (equalsSign > -1) value.substring(equalsSign) else ""
-    commandLine.addParameter(TargetValue.map(uploadIntoTempDir(path)) { v: String ->
+    commandLine.addParameter(TargetValue.map(uploadIntoTempDir(path, getParent = true)) { v: String ->
       prefix + v + suffix
     })
   }

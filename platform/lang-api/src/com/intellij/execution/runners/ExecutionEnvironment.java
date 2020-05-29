@@ -122,8 +122,10 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
   public @NotNull TargetEnvironment getPreparedTargetEnvironment(@NotNull RunProfileState runProfileState, @NotNull ProgressIndicator progressIndicator)
     throws ExecutionException {
     if (myPrepareRemoteEnvironment != null) {
+      // In a correct implementation that uses the new API this condition is always true.
       return myPrepareRemoteEnvironment;
     }
+    // Warning: this method executes in EDT!
     return prepareTargetEnvironment(runProfileState, progressIndicator);
   }
 
@@ -136,7 +138,12 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
       ((TargetEnvironmentAwareRunProfileState)runProfileState)
         .prepareTargetEnvironmentRequest(request, factory.getTargetConfiguration(), progressIndicator);
     }
-    return myPrepareRemoteEnvironment = factory.prepareRemoteEnvironment(request, progressIndicator);
+    myPrepareRemoteEnvironment = factory.prepareRemoteEnvironment(request, progressIndicator);
+    if (runProfileState instanceof TargetEnvironmentAwareRunProfileState) {
+      ((TargetEnvironmentAwareRunProfileState)runProfileState)
+        .handleCreatedTargetEnvironment(myPrepareRemoteEnvironment, progressIndicator);
+    }
+    return myPrepareRemoteEnvironment;
   }
 
   @ApiStatus.Internal

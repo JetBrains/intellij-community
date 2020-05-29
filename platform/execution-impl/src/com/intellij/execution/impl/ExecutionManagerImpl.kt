@@ -17,6 +17,7 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.ide.SaveAndSyncHandler
@@ -556,7 +557,12 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
             processHandler.notifyTextAvailable("$text\n", ProcessOutputType.STDOUT)
           }
         }
-        promise.setResult(environment.prepareTargetEnvironment(currentState, progressIndicator))
+        if (currentState is TargetEnvironmentAwareRunProfileState) {
+          promise.setResult(environment.prepareTargetEnvironment(currentState, progressIndicator))
+        }
+        else {
+          promise.setResult(environment.prepareTargetEnvironment(currentState, progressIndicator))
+        }
       }
       catch (t: Throwable) {
         promise.setError(t)
@@ -579,7 +585,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     if (runnerAndConfigurationSettings != null) {
       val targetManager = ExecutionTargetManager.getInstance(project)
       if (!targetManager.doCanRun(runnerAndConfigurationSettings.configuration, environment.executionTarget)) {
-        ExecutionUtil.handleExecutionError(environment, ExecutionException(ProgramRunnerUtil.getCannotRunOnErrorMessage(environment.runProfile, environment.executionTarget)))
+        ExecutionUtil.handleExecutionError(environment, ExecutionException(ProgramRunnerUtil.getCannotRunOnErrorMessage( environment.runProfile, environment.executionTarget)))
         return
       }
 
