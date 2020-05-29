@@ -151,7 +151,7 @@ public class VariableInlineHandler extends InlineActionHandler {
     }
 
     highlighter.addOccurrenceHighlights(e, new PsiElement[]{((XsltVariable)variable).getNameIdentifier()},
-                                        EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES.getDefaultAttributes(), false, highlighters);
+                                        EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES, false, highlighters);
 
     if (!hasExternalRefs) {
       if (!ApplicationManager.getApplication().isUnitTestMode() &&

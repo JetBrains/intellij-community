@@ -15,9 +15,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -107,11 +104,8 @@ public class HighlightUtils {
       }
       final PsiElement firstElement = elements[0];
       final Project project = firstElement.getProject();
-      if (project.isDisposed()) return;
-      if (editor == null || editor.isDisposed()) return;
-      final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-      final TextAttributes textattributes = globalScheme.getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-      HighlightManager.getInstance(project).addOccurrenceHighlights(editor, elements, textattributes, true, null);
+      if (project.isDisposed() || editor.isDisposed()) return;
+      HighlightManager.getInstance(project).addOccurrenceHighlights(editor, elements, EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null);
       WindowManager.getInstance().getStatusBar(project).setInfo(statusBarText);
       final FindManager findmanager = FindManager.getInstance(project);
       FindModel findmodel = findmanager.getFindNextModel();
