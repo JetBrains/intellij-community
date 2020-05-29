@@ -104,6 +104,7 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
       .createComponentPopupBuilder(container.component, container.preferredFocusableComponent)
       .setFocusable(true)
       .setRequestFocus(true)
+      .setResizable(true)
       .createPopup()
 
     cancelRunnable = { popup.cancel() }
@@ -201,7 +202,7 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
           add(commentButton)
         }
 
-        return BorderLayoutPanel().andTransparent().withPreferredWidth(300)
+        return BorderLayoutPanel().andTransparent().withPreferredSize(300, 130)
           .addToCenter(editor)
           .addToTop(titlePanel)
           .addToBottom(buttonsPanel)
@@ -212,7 +213,7 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
         putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
         setPlaceholder(GithubBundle.message("pull.request.review.comment.empty.text"))
         addSettingsProvider {
-          it.settings.additionalLinesCount = 2
+          it.settings.isUseSoftWraps = true
           it.setVerticalScrollbarVisible(true)
           it.scrollPane.border = IdeBorderFactory.createBorder(SideBorder.TOP or SideBorder.BOTTOM)
           it.scrollPane.viewportBorder = JBUI.Borders.emptyLeft(4)
