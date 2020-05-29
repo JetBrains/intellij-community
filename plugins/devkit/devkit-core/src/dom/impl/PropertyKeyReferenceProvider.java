@@ -31,13 +31,14 @@ import java.util.List;
 class PropertyKeyReferenceProvider extends PsiReferenceProvider {
 
   private final boolean myTagMode;
-  private final String myFallbackKeyName;
-  private final String myFallbackGroupName;
 
-  PropertyKeyReferenceProvider(boolean tagMode, String fallbackKeyName, String fallbackGroupName) {
+  @Nullable private final String myFallbackKeyName;
+  @Nullable private final String myFallbackBundleName;
+
+  PropertyKeyReferenceProvider(boolean tagMode, @Nullable String fallbackKeyName, @Nullable String fallbackBundleName) {
     myTagMode = tagMode;
     myFallbackKeyName = fallbackKeyName;
-    myFallbackGroupName = fallbackGroupName;
+    myFallbackBundleName = fallbackBundleName;
   }
 
   @Override
@@ -63,9 +64,9 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
       if ("key".equals(xmlAttribute.getName())) {
         value = xmlAttribute.getValue();
       }
-      else if (myFallbackKeyName.equals(xmlAttribute.getName())) {
+      else if (xmlAttribute.getName().equals(myFallbackKeyName)) {
         value = xmlAttribute.getValue();
-        final String groupBundle = tag.getAttributeValue(myFallbackGroupName);
+        final String groupBundle = tag.getAttributeValue(myFallbackBundleName);
         if (groupBundle != null) {
           bundle = groupBundle;
         }
@@ -81,8 +82,8 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
   private PsiReference[] getTagReferences(XmlTag element) {
     final XmlTag parent = PsiTreeUtil.getParentOfType(element, XmlTag.class);
     if (parent == null) return PsiReference.EMPTY_ARRAY;
-    final XmlTag groupNameTag = parent.findFirstSubTag(myFallbackGroupName);
-    String bundleName = groupNameTag != null ? groupNameTag.getValue().getTrimmedText() : null;
+    final XmlTag bundleNameTag = parent.findFirstSubTag(myFallbackBundleName);
+    String bundleName = bundleNameTag != null ? bundleNameTag.getValue().getTrimmedText() : null;
     return new PsiReference[]{new MyPropertyReference(element.getValue().getText(), element, bundleName)};
   }
 
