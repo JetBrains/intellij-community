@@ -7,7 +7,9 @@ import java.nio.file.Path
 
 /**
  * Helper service to find a mapping between a file on the disk and [VirtualFile]
+ *
  */
+@Deprecated("Use VirtualFileManager or LocalFileSystem instead")
 interface VirtualFileLookup {
   /**
    * Enables refresh operation only for the part of the file system needed
@@ -65,6 +67,7 @@ interface VirtualFileLookup {
   }
 }
 
+@Deprecated("Use VirtualFileManager or LocalFileSystem instead")
 interface VirtualFileLookupService {
   fun newLookup() : VirtualFileLookup
 }
