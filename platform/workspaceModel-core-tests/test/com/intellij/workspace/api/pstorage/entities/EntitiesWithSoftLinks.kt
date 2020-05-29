@@ -3,6 +3,7 @@
 
 package com.intellij.workspace.api.pstorage.entities
 
+import com.intellij.workspace.api.EntitySource
 import com.intellij.workspace.api.PersistentEntityId
 import com.intellij.workspace.api.TypedEntityStorage
 import com.intellij.workspace.api.TypedEntityWithPersistentId
@@ -33,13 +34,17 @@ internal class NamedEntityData : PEntityData.WithCalculatablePersistentId<NamedE
 }
 
 internal class NamedEntity(val name: String) : PTypedEntity(), TypedEntityWithPersistentId {
-
-  override fun persistentId(): PersistentEntityId<*> = NameId(name)
+  override fun persistentId() = NameId(name)
 }
 
 internal class ModifiableNamedEntity : PModifiableTypedEntity<NamedEntity>() {
   var name: String by EntityDataDelegation()
 }
+
+internal fun PEntityStorageBuilder.addNamedEntity(name: String, source: EntitySource = MySource) =
+  addEntity(ModifiableNamedEntity::class.java, source) {
+    this.name = name
+  }
 
 // ------------------------------ Entity with soft link --------------------
 
@@ -59,7 +64,6 @@ internal class WithSoftLinkEntityData : PEntityData<WithSoftLinkEntity>(), PSoft
     this.link = newLink as NameId
     return true
   }
-
 }
 
 internal class WithSoftLinkEntity(val link: NameId) : PTypedEntity()
@@ -67,3 +71,8 @@ internal class WithSoftLinkEntity(val link: NameId) : PTypedEntity()
 internal class ModifiableWithSoftLinkEntity : PModifiableTypedEntity<WithSoftLinkEntity>() {
   var link: NameId by EntityDataDelegation()
 }
+
+internal fun PEntityStorageBuilder.addWithSoftLinkEntity(link: NameId, source: EntitySource = MySource) =
+  addEntity(ModifiableWithSoftLinkEntity::class.java, source) {
+    this.link = link
+  }

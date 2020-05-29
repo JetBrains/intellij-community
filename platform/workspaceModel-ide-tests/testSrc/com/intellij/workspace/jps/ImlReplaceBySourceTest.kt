@@ -109,6 +109,7 @@ class ImlReplaceBySourceTest {
 
     val before = storageBuilder1.toStorage()
     storageBuilder1.resetChanges()
+    storageBuilder1.checkConsistency()
     storageBuilder1.replaceBySource(sourceFilter = { true }, replaceWith = storageBuilder2.toStorage())
     storageBuilder1.checkConsistency()
 

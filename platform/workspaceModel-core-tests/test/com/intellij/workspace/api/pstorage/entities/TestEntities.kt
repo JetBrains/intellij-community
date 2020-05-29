@@ -2,7 +2,10 @@
 package com.intellij.workspace.api.pstorage.entities
 
 import com.intellij.workspace.api.*
-import com.intellij.workspace.api.pstorage.*
+import com.intellij.workspace.api.pstorage.EntityDataDelegation
+import com.intellij.workspace.api.pstorage.PEntityData
+import com.intellij.workspace.api.pstorage.PModifiableTypedEntity
+import com.intellij.workspace.api.pstorage.PTypedEntity
 import com.intellij.workspace.api.pstorage.indices.VirtualFileUrlListProperty
 import com.intellij.workspace.api.pstorage.indices.VirtualFileUrlNullableProperty
 import com.intellij.workspace.api.pstorage.indices.VirtualFileUrlProperty
@@ -12,9 +15,9 @@ import com.intellij.workspace.api.pstorage.references.OneToMany
 
 internal data class PSampleEntitySource(val name: String) : EntitySource
 
-internal object AnotherSource : EntitySource
-
 internal object MySource : EntitySource
+
+internal object AnotherSource : EntitySource
 
 // ---------------------------------------
 

@@ -5,15 +5,6 @@ import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.workspace.api.EntityChange
 import com.intellij.workspace.api.pstorage.entities.*
-import com.intellij.workspace.api.pstorage.entities.AnotherSource
-import com.intellij.workspace.api.pstorage.entities.ModifiablePChildEntity
-import com.intellij.workspace.api.pstorage.entities.ModifiablePParentEntity
-import com.intellij.workspace.api.pstorage.entities.ModifiablePSampleEntity
-import com.intellij.workspace.api.pstorage.entities.PChildEntity
-import com.intellij.workspace.api.pstorage.entities.PNoDataChildEntity
-import com.intellij.workspace.api.pstorage.entities.PParentEntity
-import com.intellij.workspace.api.pstorage.entities.PSampleEntity
-import com.intellij.workspace.api.pstorage.entities.PSampleEntitySource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -37,10 +28,14 @@ import org.junit.Test
  *   + Parent + child - wrong source for parent in remote builder
  *   + Parent + child - wrong source for child in remote builder
  *
+ * Soft links
+ *   + Change property of persistent id
+ * - Change property of persistent id. Entity with link should be in wrong source
+ * - Change property of persistent id. Entity with persistent id should be in wrong source (what should happen?)
+ *
  *
  * different connection types
  * persistent id
- * soft links
  */
 class ReplaceByPSourceTest {
   @Test
@@ -276,4 +271,51 @@ class ReplaceByPSourceTest {
     assertEmpty(builder.entities(PParentEntity::class.java).single().children.toList())
     builder.assertConsistency()
   }
+
+  @Test
+  fun `entity with soft reference`() {
+    val builder = PEntityStorageBuilder.create()
+    val named = builder.addNamedEntity("MyName")
+    val linked = builder.addWithSoftLinkEntity(named.persistentId())
+    builder.resetChanges()
+    builder.assertConsistency()
+
+    val replacement = PEntityStorageBuilder.from(builder)
+    replacement.modifyEntity(ModifiableNamedEntity::class.java, named) {
+      this.name = "NewName"
+    }
+
+    replacement.assertConsistency()
+
+    builder.replaceBySource({ true }, replacement)
+    assertEquals("NewName", assertOneElement(builder.entities(NamedEntity::class.java).toList()).name)
+    assertEquals("NewName", assertOneElement(builder.entities(WithSoftLinkEntity::class.java).toList()).link.presentableName)
+
+    builder.assertConsistency()
+  }
+
+/*
+  Not sure if this should work this way. We can track persistentId changes in builder, but what if we perform replaceBySource with storage?
+  @Test
+  fun `entity with soft reference - linked has wrong source`() {
+    val builder = PEntityStorageBuilder.create()
+    val named = builder.addNamedEntity("MyName")
+    val linked = builder.addWithSoftLinkEntity(named.persistentId(), AnotherSource)
+    builder.resetChanges()
+    builder.assertConsistency()
+
+    val replacement = PEntityStorageBuilder.from(builder)
+    replacement.modifyEntity(ModifiableNamedEntity::class.java, named) {
+      this.name = "NewName"
+    }
+
+    replacement.assertConsistency()
+
+    builder.replaceBySource({ it is MySource }, replacement)
+    assertEquals("NewName", assertOneElement(builder.entities(NamedEntity::class.java).toList()).name)
+    assertEquals("NewName", assertOneElement(builder.entities(WithSoftLinkEntity::class.java).toList()).link.presentableName)
+
+    builder.assertConsistency()
+  }
+*/
 }
