@@ -47,7 +47,8 @@ internal class ConnectionId private constructor(
   }
 
   override fun toString(): String {
-    return "ConnectionId(parentClass=$parentClass, childClass=$childClass, connectionType=$connectionType, isParentNullable=$isParentNullable, isChildNullable=$isChildNullable)"
+    return "Connection(parent=${ClassToIntConverter.getClassOrDie(parentClass).simpleName} " +
+           "child=${ClassToIntConverter.getClassOrDie(childClass).simpleName} $connectionType)"
   }
 
   companion object {
