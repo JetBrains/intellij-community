@@ -12,7 +12,10 @@ import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.dom.ActionOrGroup;
+import org.jetbrains.idea.devkit.dom.Actions;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.Separator;
 
 abstract public class DevKitPluginXmlInspectionBase extends BasicDomElementsInspection<IdeaPlugin> {
   public DevKitPluginXmlInspectionBase() {
@@ -21,19 +24,30 @@ abstract public class DevKitPluginXmlInspectionBase extends BasicDomElementsInsp
 
   @Nullable
   public static PropertiesFileImpl findBundlePropertiesFile(@Nullable DomElement domElement) {
-    final IdeaPlugin ideaPlugin = DomUtil.getParentOfType(domElement, IdeaPlugin.class, true);
-    if (ideaPlugin == null) return null;
+    XmlElement bundleXmlElement = null;
 
-    final XmlElement resourceBundleTag = ideaPlugin.getResourceBundle().getXmlElement();
-    if (resourceBundleTag == null) return null;
+    if (domElement instanceof ActionOrGroup ||
+        domElement instanceof Separator) {
+      final Actions actions = DomUtil.getParentOfType(domElement, Actions.class, true);
+      if (actions == null) return null;
+
+      bundleXmlElement = actions.getResourceBundle().getXmlAttributeValue();
+    }
+
+    if (bundleXmlElement == null) {
+      final IdeaPlugin ideaPlugin = DomUtil.getParentOfType(domElement, IdeaPlugin.class, true);
+      if (ideaPlugin == null) return null;
+
+      bundleXmlElement = ideaPlugin.getResourceBundle().getXmlElement();
+    }
+
+    if (bundleXmlElement == null) return null;
 
     final ResourceBundleReference bundleReference =
-      ContainerUtil.findInstance(resourceBundleTag.getReferences(), ResourceBundleReference.class);
+      ContainerUtil.findInstance(bundleXmlElement.getReferences(), ResourceBundleReference.class);
     if (bundleReference == null) return null;
 
-    final PropertiesFileImpl bundleFile = ObjectUtils.tryCast(bundleReference.resolve(), PropertiesFileImpl.class);
-    if (bundleFile == null) return null;
-    return bundleFile;
+    return ObjectUtils.tryCast(bundleReference.resolve(), PropertiesFileImpl.class);
   }
 
   @Nullable

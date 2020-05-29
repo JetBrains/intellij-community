@@ -57,4 +57,17 @@
       <separator key="<warning descr="String 'My key' is not properly capitalized. It should have title capitalization">sentenceCaseKey</warning>"/>
     </group>
   </actions>
+
+
+  <!-- Custom Bundle -->
+  <actions resource-bundle="AnotherBundle">
+    <action id="AnotherBundleAction"/>
+
+    <<warning descr="String 'lower case description' is not properly capitalized. It should have sentence capitalization"><warning descr="String 'lower case text' is not properly capitalized. It should have title capitalization">action</warning></warning> id="AnotherBundleActionWrongCasing"/>
+
+    <group id="separatorGroupWithCustomBundle">
+      <separator key="another.titleCaseKey"/>
+      <separator key="another.sentenceCaseKey"/>
+    </group>
+  </actions>
 </idea-plugin>
