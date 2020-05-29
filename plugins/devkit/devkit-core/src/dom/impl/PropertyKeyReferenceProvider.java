@@ -17,6 +17,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
@@ -35,10 +36,20 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
   @Nullable private final String myFallbackKeyName;
   @Nullable private final String myFallbackBundleName;
 
+  @Nullable private final NullableFunction<? super XmlTag, String> myBundleNameFunction;
+
   PropertyKeyReferenceProvider(boolean tagMode, @Nullable String fallbackKeyName, @Nullable String fallbackBundleName) {
     myTagMode = tagMode;
     myFallbackKeyName = fallbackKeyName;
     myFallbackBundleName = fallbackBundleName;
+    myBundleNameFunction = null;
+  }
+
+  PropertyKeyReferenceProvider(@NotNull NullableFunction<? super XmlTag, String> bundleNameFunction) {
+    myBundleNameFunction = bundleNameFunction;
+    myTagMode = false;
+    myFallbackKeyName = null;
+    myFallbackBundleName = null;
   }
 
   @Override
@@ -60,7 +71,7 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
 
       final XmlTag tag = xmlAttribute.getParent();
       String value = null;
-      String bundle = tag.getAttributeValue("bundle");
+      String bundle = myBundleNameFunction == null ? tag.getAttributeValue("bundle") : myBundleNameFunction.fun(tag);
       if ("key".equals(xmlAttribute.getName())) {
         value = xmlAttribute.getValue();
       }

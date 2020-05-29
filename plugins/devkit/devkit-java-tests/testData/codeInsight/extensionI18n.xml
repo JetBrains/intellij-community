@@ -83,4 +83,12 @@
       <separator key="<error descr="Cannot resolve property key">INVALID_KEY</error>"/>
     </group>
   </actions>
+
+  <actions resource-bundle="extensionI18nAnotherBundle">
+    <group id="separatorGroupWithCustomResourceBundle">
+      <separator key="another.key"/>
+
+      <separator key="<error descr="Cannot resolve property key">INVALID_KEY</error>"/>
+    </group>
+  </actions>
 </idea-plugin>
