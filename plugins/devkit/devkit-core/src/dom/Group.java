@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
@@ -12,7 +12,7 @@ import java.util.List;
 
 @Presentation(typeName = DevkitDomPresentationConstants.GROUP, provider = ActionOrGroupPresentationProvider.class)
 @Stubbed
-public interface Group extends Actions, ActionOrGroup {
+public interface Group extends ActionContainer, ActionOrGroup {
 
   @NotNull
   GenericAttributeValue<Boolean> getCompact();
