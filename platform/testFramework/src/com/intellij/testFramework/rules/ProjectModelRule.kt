@@ -23,19 +23,28 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.createHeavyProject
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.workspace.api.TypedEntityStorageBuilder
+import com.intellij.workspace.ide.WorkspaceModelInitialTestContent
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
 import java.io.File
 
-class ProjectModelRule : TestRule {
+class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) : TestRule {
   val baseProjectDir = TempDirectory()
   private val disposableRule = DisposableRule()
   lateinit var project: Project
   private val projectResource = object : ExternalResource() {
     override fun before() {
-      project = createHeavyProject(baseProjectDir.root.toPath())
+      project = if (forceEnableWorkspaceModel) {
+        WorkspaceModelInitialTestContent.withInitialContent(TypedEntityStorageBuilder.create()) {
+          createHeavyProject(baseProjectDir.root.toPath())
+        }
+      }
+      else {
+        createHeavyProject(baseProjectDir.root.toPath())
+      }
       runInEdtAndWait {
         ProjectManagerEx.getInstanceEx().openTestProject(project)
       }

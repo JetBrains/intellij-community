@@ -32,7 +32,7 @@ internal class LegacyBridgeProjectRootsChangeListener(private val project: Proje
   // Library changes should not fire any events if the library is not included in any of order entries
   private fun processChanges(events: EntityStoreChanged, project: Project): Boolean {
     val libraryChanges = events.getChanges(LibraryEntity::class.java)
-    return if (libraryChanges.isNotEmpty() && libraryChanges.count() == events.getAllChanges().count()) {
+    return if (libraryChanges.count() == events.getAllChanges().count()) {
       for (event in libraryChanges) {
         val res = when (event) {
           is EntityChange.Added -> libraryHasOrderEntry(event.entity.name, project)
