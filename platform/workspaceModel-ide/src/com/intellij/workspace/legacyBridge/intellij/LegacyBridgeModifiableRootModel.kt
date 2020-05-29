@@ -28,9 +28,12 @@ import com.intellij.workspace.legacyBridge.typedModel.module.LibraryOrderEntryVi
 import com.intellij.workspace.legacyBridge.typedModel.module.OrderEntryViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.RootModelViaTypedEntityImpl
 import com.intellij.workspace.legacyBridge.typedModel.module.SdkOrderEntryViaTypedEntity
+import com.intellij.workspace.legacyBridge.typedModel.module.SourceRootPropertiesHelper
 import org.jdom.Element
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
+import java.util.concurrent.ConcurrentHashMap
 
 class LegacyBridgeModifiableRootModel(
   diff: TypedEntityStorageBuilder,
@@ -52,6 +55,8 @@ class LegacyBridgeModifiableRootModel(
       .filterNot { compilerModuleExtensionClass.isAssignableFrom(it.javaClass) }
   }
   private val extensions by extensionsDelegate
+
+  private val sourceRootPropertiesMap = ConcurrentHashMap<VirtualFileUrl, JpsModuleSourceRoot>()
 
   private val moduleEntityValue: CachedValue<ModuleEntity?> = CachedValue {
     it.resolve(moduleId)
@@ -78,6 +83,10 @@ class LegacyBridgeModifiableRootModel(
 
   override val storage: TypedEntityStorage
     get() = entityStoreOnDiff.current
+
+  override fun getOrCreateJpsRootProperties(sourceRootUrl: VirtualFileUrl, creator: () -> JpsModuleSourceRoot): JpsModuleSourceRoot {
+    return sourceRootPropertiesMap.computeIfAbsent(sourceRootUrl) { creator() }
+  }
 
   private val contentEntries
     get() = entityStoreOnDiff.cachedValue(contentEntriesImplValue)
@@ -331,8 +340,23 @@ class LegacyBridgeModifiableRootModel(
       }
     }
 
+    if (!sourceRootPropertiesMap.isEmpty()) {
+      for (sourceRoot in moduleEntity.sourceRoots) {
+        val actualSourceRootData = sourceRootPropertiesMap[sourceRoot.url] ?: continue
+        SourceRootPropertiesHelper.applyChanges(diff, sourceRoot, actualSourceRootData)
+      }
+    }
+
     disposeWithoutLibraries()
     return diff
+  }
+
+  private fun areSourceRootPropertiesChanged(): Boolean {
+    if (sourceRootPropertiesMap.isEmpty()) return false
+    return moduleEntity.sourceRoots.any { sourceRoot ->
+      val actualSourceRootData = sourceRootPropertiesMap[sourceRoot.url]
+      actualSourceRootData != null && !SourceRootPropertiesHelper.hasEqualProperties(sourceRoot, actualSourceRootData)
+    }
   }
 
   override fun commit() {
@@ -411,6 +435,8 @@ class LegacyBridgeModifiableRootModel(
     if (!diff.isEmpty()) return true
 
     if (extensionsDelegate.isInitialized() && extensions.any { it.isChanged }) return true
+
+    if (areSourceRootPropertiesChanged()) return true
 
     return false
   }

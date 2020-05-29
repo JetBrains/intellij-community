@@ -5,7 +5,6 @@ import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ExcludeFolder
 import com.intellij.openapi.roots.ModuleRootModel
 import com.intellij.openapi.roots.SourceFolder
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.util.CachedValueImpl
@@ -15,19 +14,14 @@ import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModifiableRootMo
 import com.intellij.workspace.legacyBridge.typedModel.module.ContentEntryViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.ExcludeFolderViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.SourceFolderViaTypedEntity
+import com.intellij.workspace.legacyBridge.typedModel.module.SourceRootPropertiesHelper
 import com.intellij.workspace.toVirtualFileUrl
-import org.jdom.Element
-import org.jetbrains.jps.model.JpsDummyElement
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.java.JavaResourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import org.jetbrains.jps.model.module.UnknownSourceRootType
-import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension
-import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer
-import org.jetbrains.jps.model.serialization.module.UnknownSourceRootPropertiesSerializer
 
 internal class LegacyBridgeModifiableContentEntryImpl(
   private val diff: TypedEntityStorageDiffBuilder,
@@ -55,12 +49,8 @@ internal class LegacyBridgeModifiableContentEntryImpl(
     }
 
     @Suppress("UNCHECKED_CAST")
-    val serializer: JpsModuleSourceRootPropertiesSerializer<P> = if (type is UnknownSourceRootType)
-      UnknownSourceRootPropertiesSerializer.forType(type as UnknownSourceRootType) as JpsModuleSourceRootPropertiesSerializer<P>
-      else
-      (JpsModelSerializerExtension.getExtensions()
-      .flatMap { it.moduleSourceRootPropertiesSerializers }
-      .firstOrNull { it.type == type }) as? JpsModuleSourceRootPropertiesSerializer<P> ?: error("Module source root type $type is not registered as JpsModelSerializerExtension")
+    val serializer: JpsModuleSourceRootPropertiesSerializer<P> = SourceRootPropertiesHelper.findSerializer(type)
+                                                                 ?: error("Module source root type $type is not registered as JpsModelSerializerExtension")
 
     val entitySource = currentContentEntry.value.entity.entitySource
     val sourceRootEntity = diff.addSourceRootEntity(
@@ -71,35 +61,7 @@ internal class LegacyBridgeModifiableContentEntryImpl(
       source = entitySource
     )
 
-    when (properties) {
-      is JavaSourceRootProperties -> diff.addJavaSourceRootEntity(
-        sourceRoot = sourceRootEntity,
-        generated = properties.isForGeneratedSources,
-        packagePrefix = properties.packagePrefix,
-        source = entitySource
-      )
-
-      is JavaResourceRootProperties -> diff.addJavaResourceRootEntity(
-        sourceRoot = sourceRootEntity,
-        generated = properties.isForGeneratedSources,
-        relativeOutputPath = properties.relativeOutputPath,
-        source = entitySource
-      )
-
-      is JpsDummyElement -> Unit
-
-      null -> Unit
-
-      else -> {
-        val sourceElement = Element(JpsModuleRootModelSerializer.SOURCE_FOLDER_TAG)
-        serializer.saveProperties(properties, sourceElement)
-        diff.addCustomSourceRootPropertiesEntity(
-          sourceRoot = sourceRootEntity,
-          propertiesXmlTag = JDOMUtil.writeElement(sourceElement),
-          source = entitySource
-        )
-      }
-    }
+    SourceRootPropertiesHelper.addPropertiesEntity(diff, sourceRootEntity, entitySource, properties, serializer)
 
     return currentContentEntry.value.sourceFolders.firstOrNull {
       it.url == sourceFolderUrl.url && it.rootType == type

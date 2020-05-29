@@ -12,12 +12,10 @@ import com.intellij.openapi.roots.impl.OrderRootsCache
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.workspace.api.CachedValue
-import com.intellij.workspace.api.DisposableCachedValue
-import com.intellij.workspace.api.TypedEntityStorage
-import com.intellij.workspace.api.TypedEntityStorageBuilder
+import com.intellij.workspace.api.*
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
 import com.intellij.workspace.legacyBridge.typedModel.module.RootModelViaTypedEntityImpl
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
 class LegacyBridgeModuleRootComponent(
@@ -70,6 +68,10 @@ class LegacyBridgeModuleRootComponent(
 
   override val accessor: RootConfigurationAccessor
     get() = RootConfigurationAccessor.DEFAULT_INSTANCE
+
+  override fun getOrCreateJpsRootProperties(sourceRootUrl: VirtualFileUrl, creator: () -> JpsModuleSourceRoot): JpsModuleSourceRoot {
+    return creator()
+  }
 
   override fun dispose() = Unit
 
