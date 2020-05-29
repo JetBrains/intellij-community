@@ -241,7 +241,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     return (ProcessListener)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, new InvocationHandler() {
       @Override
       public Object invoke(Object object, Method method, Object[] params) throws Throwable {
-        for (@NotNull ProcessListener listener : myListeners) {
+        for (ProcessListener listener : myListeners) {
           try {
             method.invoke(listener, params);
           }
