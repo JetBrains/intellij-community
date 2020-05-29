@@ -1,15 +1,12 @@
 package com.intellij.workspace.api.pstorage
 
-import com.intellij.workspace.api.SampleEntitySource
-import com.intellij.workspace.api.pstorage.entities.ModifiablePChildWithPersistentIdEntity
-import com.intellij.workspace.api.pstorage.entities.ModifiablePNamedSampleEntity
-import com.intellij.workspace.api.pstorage.entities.PSampleEntityId
-import com.intellij.workspace.api.pstorage.entities.addPNamedEntity
+import com.intellij.testFramework.UsefulTestCase.assertEmpty
+import com.intellij.workspace.api.pstorage.entities.*
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-class EntityWithPersistentIdInProxyBasedStorageTest {
+class EntityWithPersistentIdInPStorageTest {
   @Test
   fun `add remove entity`() {
     val builder = PEntityStorageBuilder.create()
@@ -56,14 +53,11 @@ class EntityWithPersistentIdInProxyBasedStorageTest {
   @Test
   fun `remove child entity with parent entity`() {
     val builder = PEntityStorageBuilder.create()
-    val parent = builder.addPNamedEntity("parent", PSampleEntityId("no"))
-    builder.addEntity(ModifiablePChildWithPersistentIdEntity::class.java, SampleEntitySource("foo")) {
-      this.childName = "child"
-      this.parent = parent
-    }
+    val parent = builder.addPParentEntity("parent")
+    builder.addPChildEntity(parent)
     builder.assertConsistency()
     builder.removeEntity(parent)
-    assertEquals(emptyList<ModifiablePChildWithPersistentIdEntity>(),
-                 builder.entities(ModifiablePChildWithPersistentIdEntity::class.java).toList())
+    builder.assertConsistency()
+    assertEmpty(builder.entities(PChildEntity::class.java).toList())
   }
 }

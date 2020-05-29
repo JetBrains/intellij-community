@@ -148,39 +148,13 @@ internal class ModifiablePNamedSampleEntity : PModifiableTypedEntity<PNamedSampl
   var next: PSampleEntityId by EntityDataDelegation()
 }
 
-internal data class PChildEntityId(val childName: String,
-                                   override val parentId: PSampleEntityId) : PersistentEntityId<PChildWithPersistentIdEntity>() {
-  override val presentableName: String
-    get() = childName
-}
-
-// ---------------------------------------
-
-internal class PChildWithPersistentIdEntityData : PEntityData.WithPersistentId<PChildWithPersistentIdEntity>() {
-  lateinit var parent: PNamedSampleEntity
-  lateinit var childName: String
-  override fun createEntity(snapshot: TypedEntityStorage): PChildWithPersistentIdEntity {
-    return PChildWithPersistentIdEntity(parent, childName).also { addMetaData(it, snapshot) }
-  }
-}
-
-internal class PChildWithPersistentIdEntity(
-  val parent: PNamedSampleEntity,
-  val childName: String
-) : PTypedEntity(), TypedEntityWithPersistentId {
-  override fun persistentId(): PersistentEntityId<*> = PChildEntityId(childName, parent.persistentId())
-}
-
-internal class ModifiablePChildWithPersistentIdEntity : PModifiableTypedEntity<PChildWithPersistentIdEntity>() {
-  var parent: PNamedSampleEntity by EntityDataDelegation()
-  var childName: String by EntityDataDelegation()
-}
-
 internal fun PEntityStorageBuilder.addPNamedEntity(name: String, next: PSampleEntityId) =
   addEntity(ModifiablePNamedSampleEntity::class.java, PSampleEntitySource("test")) {
     this.name = name
     this.next = next
   }
+
+// ---------------------------------------
 
 internal class PChildSampleEntityData : PEntityData<PChildSampleEntity>() {
   lateinit var data: String
