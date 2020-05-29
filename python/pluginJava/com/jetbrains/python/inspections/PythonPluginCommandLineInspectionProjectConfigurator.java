@@ -41,7 +41,7 @@ public class PythonPluginCommandLineInspectionProjectConfigurator implements Com
   @Override
   public boolean isApplicable(@NotNull ConfiguratorContext context) {
     List<Sdk> sdks = PythonSdkUtil.getAllSdks();
-    if (!sdks.isEmpty()) return false;
+    if (sdks.isEmpty()) return false;
 
     try {
       boolean hasAnyPythonFiles = Files.walk(context.getProjectPath()).anyMatch(f -> {
@@ -67,7 +67,7 @@ public class PythonPluginCommandLineInspectionProjectConfigurator implements Com
     for (Sdk sdk : sdks) {
       logger.reportMessage(3, sdk.getHomePath());
     }
-    if (sdks.isEmpty()) {
+    if (!sdks.isEmpty()) {
       final List<Sdk> detectedSdks = PySdkExtKt.findAllPythonSdks(context.getProjectPath());
 
       if (detectedSdks.size() > 0) {
