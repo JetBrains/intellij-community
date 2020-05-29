@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public abstract class LocalFileSystemBase extends LocalFileSystemApi {
+public abstract class LocalFileSystemBase extends LocalFileSystem {
   protected static final Logger LOG = Logger.getInstance(LocalFileSystemBase.class);
 
   private static final FileAttributes FAKE_ROOT_ATTRIBUTES =

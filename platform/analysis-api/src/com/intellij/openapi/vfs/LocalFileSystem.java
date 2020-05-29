@@ -22,11 +22,6 @@ import static java.util.Collections.singleton;
  * The second role - the implementation of the
  * filesystem itself which is needed to to implement the {@link VirtualFile}
  * and underlying services, this part is used via the {@link com.intellij.openapi.vfs.newvfs.VfsImplUtil}
- * <br />
- * We provide a transparent {@link VirtualFileLookupService}
- * to implement all major VirtualFile lookup needs instead
- *
- * @see VirtualFileLookupService
  */
 public abstract class LocalFileSystem extends NewVirtualFileSystem {
   public static final String PROTOCOL = StandardFileSystems.FILE_PROTOCOL;
