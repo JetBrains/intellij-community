@@ -13,6 +13,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
+
 /**
  * Manages virtual file systems.
  *
@@ -85,6 +87,14 @@ public abstract class VirtualFileManager implements ModificationTracker {
   }
 
   /**
+   * Looks for a related {@link VirtualFile} for a given {@link Path}
+   * @return
+   */
+  public @Nullable VirtualFile findFileByNioPath(@NotNull Path path) {
+    return myLookup.fromNioPath(path);
+  }
+
+  /**
    * <p>Refreshes only the part of the file system needed for searching the file by the given URL and finds file
    * by the given URL.</p>
    *
@@ -102,7 +112,20 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * @see VirtualFileLookup#fromUrl(String)
    */
   public @Nullable VirtualFile refreshAndFindFileByUrl(@NotNull String url) {
-    return VirtualFileLookup.newLookup().withRefresh().fromUrl(url);
+    return myLookup.withRefresh().fromUrl(url);
+  }
+
+  /**
+   * <p>Refreshes only the part of the file system needed for searching the file by the given URL and finds file
+   * by the given URL.</p>
+   *
+   * <p>This method is useful when the file was created externally and you need to find <code>{@link VirtualFile}</code>
+   * corresponding to it.</p>
+   *
+   * <p>If this method is invoked not from Swing event dispatch thread, then it must not happen inside a read action.</p>
+   **/
+  public @Nullable VirtualFile refreshAndFindFileByNioPath(@NotNull Path path) {
+    return myLookup.withRefresh().fromNioPath(path);
   }
 
   /**
