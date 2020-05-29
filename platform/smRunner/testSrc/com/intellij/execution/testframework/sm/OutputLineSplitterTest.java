@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.hamcrest.CoreMatchers.*;
 
 public class OutputLineSplitterTest extends LightPlatformTestCase {
-  private static final List<Key> ALL_TYPES = Arrays.asList(ProcessOutputTypes.STDERR, ProcessOutputTypes.STDOUT, ProcessOutputTypes.SYSTEM);
+  private static final List<ProcessOutputType> ALL_TYPES = Arrays.asList(ProcessOutputType.STDERR, ProcessOutputType.STDOUT, ProcessOutputType.SYSTEM);
   private static final List<Key> ALL_STDOUT_KEYS = Arrays.asList(
     new ProcessOutputType(OutputLineSplitterTest.class + ".RED", (ProcessOutputType)ProcessOutputTypes.STDOUT),
     new ProcessOutputType(OutputLineSplitterTest.class + ".GREEN", (ProcessOutputType)ProcessOutputTypes.STDOUT),
@@ -52,7 +52,7 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
   );
 
   private OutputEventSplitter mySplitter;
-  final Map<Key, Console> myOutput = new THashMap<>();
+  private final Map<ProcessOutputType, Console> myOutput = new THashMap<>();
 
   @Override
   protected void setUp() throws Exception {
@@ -157,7 +157,7 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
 
   public void testFlushOnNewLineOnlyMode() {
     mySplitter = createEventSplitter(true, false);
-    for (final Key<?> key : new Key[]{ProcessOutputTypes.STDOUT, ProcessOutputTypes.STDERR}) {
+    for (ProcessOutputType key : new ProcessOutputType[]{ProcessOutputType.STDOUT, ProcessOutputType.STDERR}) {
       mySplitter.process("a\nbc\n", key);
       mySplitter.process("a", key);
       mySplitter.process("bc", key);
@@ -249,26 +249,23 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
                         myOutput.get(ProcessOutputTypes.STDERR).toList());
   }
 
-  public void testReadingSeveralStreams() throws Exception {
-    final Map<Key, List<String>> written = new ConcurrentHashMap<>();
-    for (final Key each : ALL_TYPES) {
+  public void testReadingSeveralStreams() {
+    Map<ProcessOutputType, List<String>> written = new ConcurrentHashMap<>();
+    for (ProcessOutputType each : ALL_TYPES) {
       written.put(each, new ArrayList<>());
-      execute(() -> {
-        Random r = new Random();
-        for (int i = 0; i < 1000; i++) {
-          String s = StringUtil.repeat("A", 100 + r.nextInt(1000));
-          if (r.nextInt(1) == 1) s += "\n";
+      Random r = new Random(123);
+      for (int i = 0; i < 1000; i++) {
+        String s = StringUtil.repeat("A", 100 + r.nextInt(1000));
+        if (r.nextInt(2) == 1) s += "\n";
 
-          mySplitter.process(s, each);
-          List<String> list = written.get(each);
-          list.add(s);
-        }
-      }).get();
+        mySplitter.process(s, each);
+        written.get(each).add(s);
+      }
     }
 
     mySplitter.flush();
 
-    for (Key eachType : ALL_TYPES) {
+    for (ProcessOutputType eachType : ALL_TYPES) {
       assertOrderedEquals(myOutput.get(eachType).toList(), written.get(eachType));
     }
   }
