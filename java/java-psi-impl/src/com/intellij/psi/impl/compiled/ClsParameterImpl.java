@@ -5,6 +5,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.ElementPresentationUtil;
@@ -174,13 +175,7 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
     }
 
     if (name == null) {
-      name = "p";
-
-      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(getProject());
-      String[] nameSuggestions = codeStyleManager.suggestCompiledParameterName(getType()).names;
-      if (nameSuggestions.length > 0 && nameSuggestions[0] != null) {
-        name = nameSuggestions[0];
-      }
+      name = StringUtil.notNullize(JavaCodeStyleManager.getInstance(getProject()).suggestCompiledParameterName(getType()), "p");
 
       String base = name;
       int n = 0;
