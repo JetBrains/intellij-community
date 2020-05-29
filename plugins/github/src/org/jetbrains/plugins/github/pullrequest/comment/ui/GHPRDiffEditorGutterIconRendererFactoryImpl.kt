@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.diff.util.Side
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -12,7 +11,6 @@ import com.intellij.openapi.util.Disposer
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.GithubUIUtil
-import javax.swing.Icon
 import javax.swing.JComponent
 
 class GHPRDiffEditorGutterIconRendererFactoryImpl(private val reviewProcessModel: GHPRReviewProcessModel,
@@ -50,11 +48,6 @@ class GHPRDiffEditorGutterIconRendererFactoryImpl(private val reviewProcessModel
       if (!reviewState.isDataActual || reviewState.reviewId != null) return null
       return DefaultActionGroup(StartReviewAction(line), AddSingleCommentAction(line))
     }
-
-    override fun isNavigateAction() = true
-    override fun getIcon(): Icon = AllIcons.General.InlineAdd
-    override fun equals(other: Any?): Boolean = other is CreateCommentIconRenderer && line == other.line
-    override fun hashCode(): Int = line.hashCode()
 
     private abstract inner class InlayAction(actionName: () -> String,
                                              private val editorLine: Int)
