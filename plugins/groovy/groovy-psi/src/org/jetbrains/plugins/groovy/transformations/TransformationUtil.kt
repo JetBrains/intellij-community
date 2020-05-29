@@ -29,7 +29,7 @@ private val emptyTransformationResult = TransformationResult(
   PsiClassType.EMPTY_ARRAY
 )
 
-private val LOG: Logger = Logger.getInstance(::LOG.javaField!!.javaClass)
+private val LOG: Logger = Logger.getInstance("#org.jetbrains.plugins.groovy.transformations.TransformationUtilKt")
 private var ourAssertOnRecursion: Boolean = true
 
 fun disableAssertOnRecursion(disposable: Disposable) {
