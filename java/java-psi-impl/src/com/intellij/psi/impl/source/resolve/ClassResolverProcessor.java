@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiAnonymousClassImpl;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.scope.ElementClassHint;
@@ -189,7 +190,7 @@ public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, Elem
 
   private boolean isAmbiguousInherited(PsiClass containingClass1) {
     PsiClass psiClass = PsiTreeUtil.getContextOfType(myPlace, PsiClass.class);
-    if (psiClass instanceof PsiAnonymousClass && myPlace == ((PsiAnonymousClass)psiClass).getBaseClassReference()) {
+    if (psiClass instanceof PsiAnonymousClassImpl && ((PsiAnonymousClassImpl)psiClass).isBaseClassReference(myPlace)) {
       psiClass = PsiTreeUtil.getContextOfType(psiClass, PsiClass.class);
     }
     while (psiClass != null) {

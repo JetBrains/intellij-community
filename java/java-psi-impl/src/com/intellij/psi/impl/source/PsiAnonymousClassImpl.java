@@ -29,7 +29,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousClass {
-  private static final Key<Boolean> STUB_BASE_CLASS_REFERENCE_HOLDER = Key.create("STUB_BASE_CLASS_REFERENCE_HOLDER");
+  private static final Key<PsiAnonymousClassImpl> STUB_BASE_CLASS_REFERENCE_HOLDER = Key.create("STUB_BASE_CLASS_REFERENCE_HOLDER");
   private SoftReference<PsiClassType> myCachedBaseType;
 
   public PsiAnonymousClassImpl(final PsiClassStub stub) {
@@ -86,7 +86,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
       try {
         PsiJavaCodeReferenceElement ref = factory.createReferenceFromText(refText, this);
         ((PsiJavaCodeReferenceElementImpl)ref).setKindWhenDummy(PsiJavaCodeReferenceElementImpl.Kind.CLASS_NAME_KIND);
-        ref.getContainingFile().putUserData(STUB_BASE_CLASS_REFERENCE_HOLDER, true);
+        ref.getContainingFile().putUserData(STUB_BASE_CLASS_REFERENCE_HOLDER, this);
         type = factory.createType(ref);
       }
       catch (IncorrectOperationException e) {
@@ -197,14 +197,24 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
                                      @NotNull PsiElement place) {
     if (lastParent instanceof PsiExpressionList) return true;
 
-    if (lastParent instanceof PsiJavaCodeReferenceElement/* IMPORTANT: do not call getBaseClassReference() for lastParent == null and lastParent which is not under our node - loads tree!*/
-        && lastParent.getParent() == this && lastParent == getBaseClassReference()) {
-      return true;
-    }
-    if (lastParent instanceof PsiFile && lastParent.getUserData(STUB_BASE_CLASS_REFERENCE_HOLDER) != null) {
-      return true;
-    }
+    if (lastParent != null && isBaseClassReference(lastParent)) return true;
+
     return super.processDeclarations(processor, state, lastParent, place);
+  }
+
+  public boolean isBaseClassReference(@NotNull PsiElement element) {
+    if (element instanceof PsiJavaCodeReferenceElement) {
+      // IMPORTANT: do not call getBaseClassReference() for lastParent which is not under our node - loads tree!
+      PsiElement parent = element.getParent();
+      return parent == this && element == getBaseClassReference() ||
+             isBaseClassReferenceHolder(parent);
+    }
+
+    return isBaseClassReferenceHolder(element);
+  }
+
+  private boolean isBaseClassReferenceHolder(@NotNull PsiElement element) {
+    return element instanceof DummyHolder && element.getUserData(STUB_BASE_CLASS_REFERENCE_HOLDER) == this;
   }
 
   @Override
