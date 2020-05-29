@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
@@ -28,6 +29,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousClass {
+  private static final Key<Boolean> STUB_BASE_CLASS_REFERENCE_HOLDER = Key.create("STUB_BASE_CLASS_REFERENCE_HOLDER");
   private SoftReference<PsiClassType> myCachedBaseType;
 
   public PsiAnonymousClassImpl(final PsiClassStub stub) {
@@ -67,7 +69,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
   @Override
   @NotNull
   public PsiClassType getBaseClassType() {
-    final PsiClassStub stub = getGreenStub();
+    PsiClassStub<?> stub = getGreenStub();
     if (stub == null) {
       myCachedBaseType = null;
       return getTypeByTree();
@@ -81,10 +83,10 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
       assert refText != null : stub;
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
 
-      final PsiElement context = calcBasesResolveContext(PsiNameHelper.getShortClassName(refText), getExtendsList());
       try {
-        final PsiJavaCodeReferenceElement ref = factory.createReferenceFromText(refText, context);
+        PsiJavaCodeReferenceElement ref = factory.createReferenceFromText(refText, this);
         ((PsiJavaCodeReferenceElementImpl)ref).setKindWhenDummy(PsiJavaCodeReferenceElementImpl.Kind.CLASS_NAME_KIND);
+        ref.getContainingFile().putUserData(STUB_BASE_CLASS_REFERENCE_HOLDER, true);
         type = factory.createType(ref);
       }
       catch (IncorrectOperationException e) {
@@ -99,7 +101,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     }
   }
   
-  private boolean isDiamond(@NotNull PsiClassStub stub) {
+  private boolean isDiamond(@NotNull PsiClassStub<?> stub) {
     if (PsiUtil.isLanguageLevel9OrHigher(this)) {
       final String referenceText = stub.getBaseClassReferenceText();
       if (referenceText != null && referenceText.endsWith(">")) {
@@ -199,12 +201,15 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
         && lastParent.getParent() == this && lastParent == getBaseClassReference()) {
       return true;
     }
+    if (lastParent instanceof PsiFile && lastParent.getUserData(STUB_BASE_CLASS_REFERENCE_HOLDER) != null) {
+      return true;
+    }
     return super.processDeclarations(processor, state, lastParent, place);
   }
 
   @Override
   public boolean isInQualifiedNew() {
-    final PsiClassStub stub = getGreenStub();
+    PsiClassStub<?> stub = getGreenStub();
     if (stub != null) {
       return stub.isAnonymousInQualifiedNew();
     }

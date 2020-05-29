@@ -22,11 +22,13 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
+import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.MethodsProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -62,6 +64,9 @@ public class PsiScopesUtil {
     PsiElement prevParent = entrance;
     PsiElement scope = entrance;
 
+    NameHint hint = processor.getHint(NameHint.KEY);
+    String name = hint == null ? null : hint.getName(state);
+
     while (scope != null) {
       ProgressIndicatorProvider.checkCanceled();
       if (scope instanceof PsiClass) {
@@ -75,7 +80,7 @@ public class PsiScopesUtil {
       prevParent = scope;
       processor.handleEvent(JavaScopeProcessorEvent.EXIT_LEVEL, scope);
       processor.handleEvent(JavaScopeProcessorEvent.CHANGE_LEVEL, null);
-      scope = scope.getContext();
+      scope = scope instanceof PsiClassImpl ? ((PsiClassImpl)scope).getContext(name) : scope.getContext();
     }
 
     return true;

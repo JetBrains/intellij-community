@@ -26,6 +26,7 @@ import com.intellij.psi.impl.source.PsiClassImpl
 import com.intellij.psi.impl.source.PsiFieldImpl
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.search.searches.AnnotatedElementsSearch
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch
@@ -271,7 +272,7 @@ class Foo {
     assert !((PsiFileImpl) psiFile).contentsLoaded
   }
 
-  void "test anonymous class generics"() {
+  void "test anonymous class stubs see method type parameters"() {
     PsiFileImpl file = (PsiFileImpl) myFixture.addFileToProject("A.java", """
 class A {
     <V> Object foo() {
@@ -289,6 +290,61 @@ interface I<T> {}
     assert i == anon.baseClassType.resolve()
     assert a.methods[0].typeParameters[0] == PsiUtil.resolveClassInClassTypeOnly(anon.baseClassType.parameters[0])
 
+    assert !file.contentsLoaded
+  }
+
+  void "test anonymous class stubs see local classes"() {
+    PsiFileImpl file = (PsiFileImpl) myFixture.addFileToProject("A.java", """
+class A {
+    void foo() {
+      class Local {}
+      new I<Local>(){};
+    }
+}
+
+interface I<T> {}
+""")
+
+    PsiClass i = ((PsiJavaFile) file).classes[1]
+    PsiAnonymousClass anon = assertOneElement(DirectClassInheritorsSearch.search(i).findAll()) as PsiAnonymousClass
+
+    assert !file.contentsLoaded
+
+    assert i == anon.baseClassType.resolve()
+    assert PsiUtil.resolveClassInClassTypeOnly(anon.baseClassType.parameters[0])?.name == 'Local'
+  }
+
+  void "test local class stubs see other local classes"() {
+    PsiFileImpl file = (PsiFileImpl) myFixture.addFileToProject("A.java", """
+class A {
+    void foo() {
+      class Local1 {}
+      class Local2 extends Local1 {}
+    }
+}
+""")
+
+    def cache = PsiShortNamesCache.getInstance(project)
+    def local1 = cache.getClassesByName('Local1', GlobalSearchScope.allScope(project))[0]
+    def local2 = cache.getClassesByName('Local2', GlobalSearchScope.allScope(project))[0]
+
+    assert !file.contentsLoaded
+
+    assert local1 == local2.superClass
+  }
+
+  void "test local class stubs do not load AST for inheritance checking when possible"() {
+    PsiFileImpl file = (PsiFileImpl) myFixture.addFileToProject("A.java", """
+class A {
+    void foo() {
+      class UnrelatedLocal {}
+      class Local extends A {}
+    }
+}
+""")
+
+    def local = PsiShortNamesCache.getInstance(project).getClassesByName('Local', GlobalSearchScope.allScope(project))[0]
+    assert 'A' == local.superClass.name
     assert !file.contentsLoaded
   }
 
