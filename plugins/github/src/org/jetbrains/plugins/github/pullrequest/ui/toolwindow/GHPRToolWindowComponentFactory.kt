@@ -79,7 +79,7 @@ internal class GHPRToolWindowComponentFactory(private val project: Project,
 
         val defaultAccount = accounts.find { it == authManager.getDefaultAccount(project) }
         if (defaultAccount != null) {
-          selectedAccount = accounts.single()
+          selectedAccount = defaultAccount
         }
 
         if (accounts.isNotEmpty()) {
