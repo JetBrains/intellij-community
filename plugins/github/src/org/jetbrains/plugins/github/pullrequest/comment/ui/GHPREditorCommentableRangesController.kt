@@ -35,8 +35,8 @@ class GHPREditorCommentableRangesController(commentableRanges: SingleValueModel<
       }
     })
     val iconVisibilityController = IconVisibilityController()
-    editor.addEditorMouseListener(iconVisibilityController, listenerDisposable)
-    editor.addEditorMouseMotionListener(iconVisibilityController, listenerDisposable)
+    editor.addEditorMouseListener(iconVisibilityController)
+    editor.addEditorMouseMotionListener(iconVisibilityController)
 
     EditorUtil.disposeWithEditor(editor, listenerDisposable)
 
