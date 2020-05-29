@@ -917,7 +917,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       ComboBox<Item> comboBox = new ComboBox<>(new Model(builder1.build()));
       comboBox.setSwingPopup(false);
-      comboBox.setRenderer(new ColoredListCellRenderer<Item>() {
+      ColoredListCellRenderer<Item> renderer = new ColoredListCellRenderer<Item>() {
         @Override
         protected void customizeCellRenderer(@NotNull JList<? extends Item> list,
                                              Item value,
@@ -934,7 +934,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
             append(" ->");
           }
         }
-      });
+      };
+      comboBox.setRenderer(renderer);
       pane.add(new JLabel("The ComboBox:"), "baseline");
       pane.add(comboBox, "baseline");
 
