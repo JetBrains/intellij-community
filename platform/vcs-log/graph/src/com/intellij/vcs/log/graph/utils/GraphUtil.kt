@@ -1,18 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.graph.utils
 
 import com.intellij.openapi.util.Ref
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
-import gnu.trove.TIntHashSet
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import it.unimi.dsi.fastutil.ints.IntSet
 import kotlin.math.max
 
 /**
  * Get nodes reachable from the specified by down edges of the graph.
  * @return reachable nodes or all nodes if startNodes is null
  */
-fun LinearGraph.getReachableNodes(startNodes: Set<Int>?): UnsignedBitSet {
+internal fun LinearGraph.getReachableNodes(startNodes: Set<Int>?): UnsignedBitSet {
   if (startNodes == null) {
     val nodesVisibility = UnsignedBitSet()
     nodesVisibility.set(0, nodesCount() - 1, true)
@@ -83,12 +84,12 @@ fun LiteLinearGraph.getCorrespondingParent(startNode: Int, endNode: Int, visited
 /**
  * Return a set of nodes that are reachable from the first node, but not from the second.
  */
-fun LinearGraph.subgraphDifference(node1: Int, node2: Int): TIntHashSet {
+fun LinearGraph.subgraphDifference(node1: Int, node2: Int): IntSet {
   val liteLinearGraph = LinearGraphUtils.asLiteLinearGraph(this)
 
   val visited2 = BitSetFlags(nodesCount())
   val bfsWalk2 = BfsWalk(node2, liteLinearGraph, visited2)
-  val visited1 = object : TIntHashSetFlags(nodesCount()) {
+  val visited1 = object : IntHashSetFlags(nodesCount()) {
     override fun get(index: Int): Boolean {
       return super.get(index) || visited2[index] || bfsWalk2.currentNodes().contains(index)
     }
@@ -121,8 +122,8 @@ private fun Iterable<Int>.maxOrDefault(): Int {
 /**
  * Returns a set of nodes in the graph that are reachable only from the specified head node and not from others.
  */
-fun LiteLinearGraph.exclusiveNodes(headNode: Int, isHead: (Int) -> Boolean = { false }): TIntHashSet {
-  val result = TIntHashSet()
+fun LiteLinearGraph.exclusiveNodes(headNode: Int, isHead: (Int) -> Boolean = { false }): IntSet {
+  val result = IntOpenHashSet()
   BfsWalk(headNode, this).walk { it ->
     val upNodes = getNodes(it, LiteLinearGraph.NodeFilter.UP)
     if ((upNodes.isEmpty() || upNodes.all { result.contains(it) }) &&
@@ -140,6 +141,6 @@ fun LiteLinearGraph.exclusiveNodes(headNode: Int, isHead: (Int) -> Boolean = { f
 /**
  * Returns a set of nodes in the graph that are reachable only from the specified head node and not from others.
  */
-fun LinearGraph.exclusiveNodes(headNode: Int, isHead: (Int) -> Boolean = { false }): TIntHashSet {
+fun LinearGraph.exclusiveNodes(headNode: Int, isHead: (Int) -> Boolean = { false }): IntSet {
   return LinearGraphUtils.asLiteLinearGraph(this).exclusiveNodes(headNode, isHead)
 }

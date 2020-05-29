@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.vcs.log.graph.impl.permanent;
 
@@ -11,18 +11,19 @@ import com.intellij.vcs.log.graph.utils.IntList;
 import com.intellij.vcs.log.graph.utils.TimestampGetter;
 import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
 import com.intellij.vcs.log.graph.utils.impl.IntTimestampGetter;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectIterator;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class PermanentCommitsInfoImpl<CommitId> implements PermanentCommitsInfo<CommitId> {
+public final class PermanentCommitsInfoImpl<CommitId> implements PermanentCommitsInfo<CommitId> {
   private static final Logger LOG = Logger.getInstance(PermanentCommitsInfoImpl.class);
 
   @NotNull
   public static <CommitId> PermanentCommitsInfoImpl<CommitId> newInstance(@NotNull final List<? extends GraphCommit<CommitId>> graphCommits,
-                                                                          @NotNull TIntObjectHashMap<CommitId> notLoadedCommits) {
+                                                                          @NotNull Int2ObjectOpenHashMap<CommitId> notLoadedCommits) {
     TimestampGetter timestampGetter = createTimestampGetter(graphCommits);
 
     boolean isIntegerCase = !graphCommits.isEmpty() && graphCommits.get(0).getId().getClass() == Integer.class;
@@ -83,11 +84,11 @@ public class PermanentCommitsInfoImpl<CommitId> implements PermanentCommitsInfo<
 
   @NotNull private final List<? extends CommitId> myCommitIdIndexes;
 
-  @NotNull private final TIntObjectHashMap<CommitId> myNotLoadCommits;
+  @NotNull private final Int2ObjectOpenHashMap<CommitId> myNotLoadCommits;
 
   private PermanentCommitsInfoImpl(@NotNull TimestampGetter timestampGetter,
                                    @NotNull List<? extends CommitId> commitIdIndex,
-                                   @NotNull TIntObjectHashMap<CommitId> notLoadCommits) {
+                                   @NotNull Int2ObjectOpenHashMap<CommitId> notLoadCommits) {
     myTimestampGetter = timestampGetter;
     myCommitIdIndexes = commitIdIndex;
     myNotLoadCommits = notLoadCommits;
@@ -121,10 +122,12 @@ public class PermanentCommitsInfoImpl<CommitId> implements PermanentCommitsInfo<
   }
 
   private int getNotLoadNodeId(@NotNull CommitId commitId) {
-    TIntObjectIterator<CommitId> iterator = myNotLoadCommits.iterator();
+    ObjectIterator<Int2ObjectMap.Entry<CommitId>> iterator = myNotLoadCommits.int2ObjectEntrySet().fastIterator();
     while (iterator.hasNext()) {
-      iterator.advance();
-      if (iterator.value().equals(commitId)) return iterator.key();
+      Int2ObjectMap.Entry<CommitId> entry = iterator.next();
+      if (entry.getValue().equals(commitId)) {
+        return entry.getIntKey();
+      }
     }
     return -1;
   }
@@ -163,11 +166,13 @@ public class PermanentCommitsInfoImpl<CommitId> implements PermanentCommitsInfo<
       }
     }
 
-    TIntObjectIterator<CommitId> iterator = myNotLoadCommits.iterator();
+    ObjectIterator<Int2ObjectMap.Entry<CommitId>> iterator = myNotLoadCommits.int2ObjectEntrySet().fastIterator();
     while (iterator.hasNext()) {
-      iterator.advance();
-      CommitId value = iterator.value();
-      if (commitIds.contains(value)) result.add(iterator.key());
+      Int2ObjectMap.Entry<CommitId> entry = iterator.next();
+      CommitId value = entry.getValue();
+      if (commitIds.contains(value)) {
+        result.add(entry.getIntKey());
+      }
     }
     return result;
   }

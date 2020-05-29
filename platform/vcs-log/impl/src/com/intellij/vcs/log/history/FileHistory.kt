@@ -22,6 +22,8 @@ import gnu.trove.THashSet
 import gnu.trove.TIntHashSet
 import gnu.trove.TIntObjectHashMap
 import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import it.unimi.dsi.fastutil.ints.IntSet
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import java.util.*
@@ -326,7 +328,7 @@ abstract class FileHistoryData(internal val startPaths: Collection<FilePath>) {
 
   private fun iterateUnmatchedAdditionsDeletions(commits: Map<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>,
                                                  action: (AdditionDeletion) -> Unit) {
-    commits.forEach { path, commit, changes ->
+    forEach(commits) { path, commit, changes ->
       changes.forEachEntry { parent, change ->
         if (parent != commit && (change == ChangeKind.ADDED || change == ChangeKind.REMOVED)) {
           val ad = AdditionDeletion(path, commit, parent, change == ChangeKind.ADDED)
@@ -401,9 +403,9 @@ abstract class FileHistoryData(internal val startPaths: Collection<FilePath>) {
     return !changes.containsValue(ChangeKind.REMOVED)
   }
 
-  fun getCommits(): Set<Int> {
-    val result = mutableSetOf<Int>()
-    affectedCommits.forEach { _, commit, _ ->
+  fun getCommits(): IntSet {
+    val result = IntOpenHashSet()
+    forEach(affectedCommits) { _, commit, _ ->
       result.add(commit)
     }
     return result
@@ -415,13 +417,13 @@ abstract class FileHistoryData(internal val startPaths: Collection<FilePath>) {
 
   fun buildPathsMap(): Map<Int, MaybeDeletedFilePath> {
     val result = mutableMapOf<Int, MaybeDeletedFilePath>()
-    affectedCommits.forEach { filePath, commit, changes ->
+    forEach(affectedCommits) { filePath, commit, changes ->
       result[commit] = MaybeDeletedFilePath(filePath, changes.containsValue(ChangeKind.REMOVED))
     }
     return result
   }
 
-  fun forEach(action: (FilePath, Int, TIntObjectHashMap<ChangeKind>) -> Unit) = affectedCommits.forEach(action)
+  fun forEach(action: (FilePath, Int, TIntObjectHashMap<ChangeKind>) -> Unit) = forEach(affectedCommits, action)
 
   fun removeAll(commits: List<Int>) {
     affectedCommits.forEach { (_, commitsMap) -> commitsMap.removeAll(commits) }
@@ -529,8 +531,9 @@ class MaybeDeletedFilePath(val filePath: FilePath, val deleted: Boolean) {
   }
 }
 
-internal fun Map<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>.forEach(action: (FilePath, Int, TIntObjectHashMap<ChangeKind>) -> Unit) {
-  forEach { (filePath, affectedCommits) ->
+internal fun forEach(map: Map<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>,
+                     action: (FilePath, Int, TIntObjectHashMap<ChangeKind>) -> Unit) {
+  for ((filePath, affectedCommits) in map) {
     affectedCommits.forEachEntry { commit, changesMap ->
       action(filePath, commit, changesMap)
       true

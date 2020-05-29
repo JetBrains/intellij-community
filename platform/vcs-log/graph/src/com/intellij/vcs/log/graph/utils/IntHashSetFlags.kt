@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.graph.utils
 
-import gnu.trove.TIntHashSet
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 
-open class TIntHashSetFlags(private val size: Int) : Flags {
-  val data = TIntHashSet()
+internal open class IntHashSetFlags(private val size: Int) : Flags {
+  val data = IntOpenHashSet()
 
   override fun size(): Int = size
 
@@ -29,5 +29,4 @@ open class TIntHashSetFlags(private val size: Int) : Flags {
       data.clear()
     }
   }
-
 }

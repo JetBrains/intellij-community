@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.util.Ref;
@@ -6,6 +6,9 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.IntIntFunction;
 import com.intellij.util.ThrowableConsumer;
 import gnu.trove.*;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +20,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public class TroveUtil {
+public final class TroveUtil {
   @NotNull
   public static <T> Stream<T> streamValues(@NotNull TIntObjectHashMap<? extends T> map) {
     TIntObjectIterator<? extends T> it = map.iterator();
@@ -44,7 +47,6 @@ public class TroveUtil {
 
   @Nullable
   public static TIntHashSet intersect(TIntHashSet @NotNull ... sets) {
-
     Arrays.sort(sets, (set1, set2) -> {
       if (set1 == null) return -1;
       if (set2 == null) return 1;
@@ -52,6 +54,21 @@ public class TroveUtil {
     });
     TIntHashSet result = null;
     for (TIntHashSet set : sets) {
+      result = intersect(result, set);
+    }
+
+    return result;
+  }
+
+  @Nullable
+  public static IntSet intersect(IntSet @NotNull ... sets) {
+    Arrays.sort(sets, (set1, set2) -> {
+      if (set1 == null) return -1;
+      if (set2 == null) return 1;
+      return set1.size() - set2.size();
+    });
+    IntSet result = null;
+    for (IntSet set : sets) {
       result = intersect(result, set);
     }
 
@@ -83,6 +100,23 @@ public class TroveUtil {
     return result;
   }
 
+  @Contract("null, null -> null; !null, _ -> !null; _, !null -> !null")
+  @Nullable
+  public static IntSet intersect(@Nullable IntSet set1, @Nullable IntSet set2) {
+    if (set1 == null) return set2;
+    if (set2 == null) return set1;
+
+    IntSet result = new IntOpenHashSet();
+    if (set1.size() < set2.size()) {
+      intersectTo(set1, set2, result);
+    }
+    else {
+      intersectTo(set2, set1, result);
+    }
+
+    return result;
+  }
+
   private static void intersectTo(@NotNull TIntHashSet small, @NotNull TIntHashSet big, @NotNull TIntHashSet result) {
     small.forEach(value -> {
       if (big.contains(value)) {
@@ -90,6 +124,15 @@ public class TroveUtil {
       }
       return true;
     });
+  }
+
+  private static void intersectTo(@NotNull IntSet small, @NotNull IntSet big, @NotNull IntSet result) {
+    for (IntIterator iterator = small.iterator(); iterator.hasNext(); ) {
+      int value = iterator.nextInt();
+      if (big.contains(value)) {
+        result.add(value);
+      }
+    }
   }
 
   @NotNull
@@ -137,10 +180,10 @@ public class TroveUtil {
   }
 
   @NotNull
-  public static TIntHashSet union(@NotNull Collection<? extends TIntHashSet> sets) {
-    TIntHashSet result = new TIntHashSet();
-    for (TIntHashSet set : sets) {
-      addAll(result, set);
+  public static IntSet union(@NotNull Collection<? extends IntSet> sets) {
+    IntSet result = new IntOpenHashSet();
+    for (IntSet set : sets) {
+      result.addAll(set);
     }
     return result;
   }

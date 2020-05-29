@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.graph.collapsing;
 
 import com.intellij.util.SmartList;
@@ -9,16 +9,15 @@ import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.utils.UnsignedBitSet;
 import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
 import com.intellij.vcs.log.graph.utils.impl.ListIntToIntMap;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntIterator;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class CollapsedGraph {
-
+public final class CollapsedGraph {
   public static CollapsedGraph newInstance(@NotNull LinearGraph delegateGraph, @NotNull UnsignedBitSet matchedNodeId) {
     return new CollapsedGraph(delegateGraph, matchedNodeId, matchedNodeId.clone(), new EdgeStorage());
   }
@@ -96,8 +95,8 @@ public class CollapsedGraph {
 
     @NotNull private final EdgeStorageWrapper myEdgesToAdd = EdgeStorageWrapper.createSimpleEdgeStorage();
     @NotNull private final EdgeStorageWrapper myEdgesToRemove = EdgeStorageWrapper.createSimpleEdgeStorage();
-    @NotNull private final TIntHashSet myNodesToHide = new TIntHashSet();
-    @NotNull private final TIntHashSet myNodesToShow = new TIntHashSet();
+    @NotNull private final IntOpenHashSet myNodesToHide = new IntOpenHashSet();
+    @NotNull private final IntOpenHashSet myNodesToShow = new IntOpenHashSet();
     private boolean myClearEdges = false;
     private boolean myClearVisibility = false;
 
@@ -193,13 +192,13 @@ public class CollapsedGraph {
         myEdgeStorage.removeAll();
       }
 
-      TIntIterator toShow = myNodesToShow.iterator();
+      IntIterator toShow = myNodesToShow.iterator();
       while (toShow.hasNext()) {
-        myDelegateNodesVisibility.show(toShow.next());
+        myDelegateNodesVisibility.show(toShow.nextInt());
       }
-      TIntIterator toHide = myNodesToHide.iterator();
+      IntIterator toHide = myNodesToHide.iterator();
       while (toHide.hasNext()) {
-        myDelegateNodesVisibility.hide(toHide.next());
+        myDelegateNodesVisibility.hide(toHide.nextInt());
       }
 
       EdgeStorageWrapper edgeStorageWrapper = new EdgeStorageWrapper(myEdgeStorage, getDelegatedGraph());
@@ -226,7 +225,7 @@ public class CollapsedGraph {
     }
   }
 
-  private class CompiledGraph implements LinearGraph {
+  private final class CompiledGraph implements LinearGraph {
     @NotNull private final EdgeStorageWrapper myEdgeStorageWrapper;
 
     private CompiledGraph() {

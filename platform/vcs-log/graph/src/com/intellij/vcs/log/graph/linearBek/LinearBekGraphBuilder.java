@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.graph.linearBek;
 
 import com.intellij.util.Function;
@@ -10,14 +10,14 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.impl.print.PrintElementGeneratorImpl;
 import com.intellij.vcs.log.graph.utils.IntIntMultiMap;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntIterator;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class LinearBekGraphBuilder {
+final class LinearBekGraphBuilder {
   private static final int MAX_BLOCK_SIZE = 200;
   private static final int MAGIC_SET_SIZE = PrintElementGeneratorImpl.LONG_EDGE_SIZE;
   private static final GraphEdgeToDownNode GRAPH_EDGE_TO_DOWN_NODE = new GraphEdgeToDownNode();
@@ -174,15 +174,15 @@ class LinearBekGraphBuilder {
     return magicSet;
   }
 
-  public static class MergeFragment {
+  public final static class MergeFragment {
     private final int myParent;
     private final int myLeftChild;
     private final int myRightChild;
 
     private boolean myMergeWithOldCommit = false;
     @NotNull private final IntIntMultiMap myTailEdges = new IntIntMultiMap();
-    @NotNull private final TIntHashSet myBlockBody = new TIntHashSet();
-    @NotNull private final TIntHashSet myTails = new TIntHashSet();
+    @NotNull private final IntOpenHashSet myBlockBody = new IntOpenHashSet();
+    @NotNull private final IntOpenHashSet myTails = new IntOpenHashSet();
 
     private MergeFragment(int parent, int leftChild, int rightChild) {
       myParent = parent;
@@ -216,19 +216,19 @@ class LinearBekGraphBuilder {
     }
 
     @NotNull
-    public TIntHashSet getTails() {
+    public IntOpenHashSet getTails() {
       return myTails;
     }
 
     public Set<Integer> getTailsAndBody() {
       Set<Integer> nodes = new HashSet<>();
-      TIntIterator it = myBlockBody.iterator();
+      IntIterator it = myBlockBody.iterator();
       while (it.hasNext()) {
-        nodes.add(it.next());
+        nodes.add(it.nextInt());
       }
       it = myTails.iterator();
       while (it.hasNext()) {
-        nodes.add(it.next());
+        nodes.add(it.nextInt());
       }
       return nodes;
     }
@@ -249,9 +249,9 @@ class LinearBekGraphBuilder {
         }
       }
 
-      TIntIterator it = myTails.iterator();
+      IntIterator it = myTails.iterator();
       while (it.hasNext()) {
-        int tail = it.next();
+        int tail = it.nextInt();
         if (!LinearGraphUtils.getDownNodes(graph, tail).contains(myLeftChild)) {
           addEdge(graph, tail, myLeftChild);
         }
@@ -295,7 +295,7 @@ class LinearBekGraphBuilder {
       return !myTailEdges.get(index).isEmpty();
     }
 
-    public boolean isBody(Integer index) {
+    public boolean isBody(int index) {
       return myBlockBody.contains(index);
     }
   }

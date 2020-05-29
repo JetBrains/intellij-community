@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
@@ -20,8 +6,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Consumer;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.MapIndexStorage;
 import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
@@ -32,18 +18,20 @@ import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.util.StorageId;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Set;
+import java.util.function.IntConsumer;
 import java.util.function.ObjIntConsumer;
 
 public class VcsLogFullDetailsIndex<T, D> implements Disposable {
   protected static final String INDEX = "index"; // NON-NLS
-  @NotNull protected final MyMapReduceIndex myMapReduceIndex;
+  @NotNull private final MyMapReduceIndex myMapReduceIndex;
   @NotNull protected final StorageId myStorageId;
   @NotNull protected final String myName;
   @NotNull protected final DataIndexer<Integer, T, D> myIndexer;
@@ -83,11 +71,11 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
   }
 
   @NotNull
-  public TIntHashSet getCommitsWithAnyKey(@NotNull Set<Integer> keys) throws StorageException {
+  public IntSet getCommitsWithAnyKey(@NotNull IntSet keys) throws StorageException {
     checkDisposed();
-    TIntHashSet result = new TIntHashSet();
-
-    for (Integer key : keys) {
+    IntSet result = new IntOpenHashSet();
+    for (IntIterator iterator = keys.iterator(); iterator.hasNext(); ) {
+      int key = iterator.nextInt();
       iterateCommitIds(key, result::add);
     }
 
@@ -95,7 +83,7 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
   }
 
   @NotNull
-  public TIntHashSet getCommitsWithAllKeys(@NotNull Collection<Integer> keys) throws StorageException {
+  public IntSet getCommitsWithAllKeys(@NotNull Collection<Integer> keys) throws StorageException {
     checkDisposed();
     return InvertedIndexUtil.collectInputIdsContainingAllKeys(myMapReduceIndex, keys, (k) -> {
       ProgressManager.checkCanceled();
@@ -103,10 +91,10 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
     }, null, null);
   }
 
-  private void iterateCommitIds(int key, @NotNull Consumer<Integer> consumer) throws StorageException {
+  private void iterateCommitIds(int key, @NotNull IntConsumer consumer) throws StorageException {
     ValueContainer<T> data = myMapReduceIndex.getData(key);
     data.forEach((id, value) -> {
-      consumer.consume(id);
+      consumer.accept(id);
       return true;
     });
   }
@@ -147,9 +135,9 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
     if (myDisposed) throw new ProcessCanceledException();
   }
 
-  private class MyMapReduceIndex extends MapReduceIndex<Integer, T, D> {
+  private final class MyMapReduceIndex extends MapReduceIndex<Integer, T, D> {
     private MyMapReduceIndex(@NotNull MyIndexExtension<T, D> extension,
-                             @NotNull MyMapIndexStorage<T> storage,
+                             @NotNull IndexStorage<Integer,T> storage,
                              @Nullable ForwardIndex forwardIndex,
                              @Nullable ForwardIndexAccessor<Integer, T> forwardIndexAccessor) {
       super(extension, storage, forwardIndex, forwardIndexAccessor);

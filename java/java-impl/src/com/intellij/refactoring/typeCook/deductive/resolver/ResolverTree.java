@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeCook.deductive.resolver;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,17 +16,15 @@ import com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem;
 import com.intellij.refactoring.typeCook.deductive.builder.Subtype;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntProcedure;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntListIterator;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author db
- */
-public class ResolverTree {
+public final class ResolverTree {
   private static final Logger LOG = Logger.getInstance(ResolverTree.class);
 
   private ResolverTree[] mySons = new ResolverTree[0];
@@ -48,7 +32,7 @@ public class ResolverTree {
   private Binding myCurrentBinding;
   private final SolutionHolder mySolutions;
   private final Project myProject;
-  private final TObjectIntHashMap<PsiTypeVariable> myBindingDegree; //How many times this type variable is bound in the system
+  private final Object2IntMap<PsiTypeVariable> myBindingDegree; //How many times this type variable is bound in the system
   private final Settings mySettings;
   private boolean mySolutionFound;
 
@@ -93,7 +77,7 @@ public class ResolverTree {
   }
 
   private boolean isBoundElseWhere(final PsiTypeVariable var) {
-    return myBindingDegree.get(var) != 1;
+    return myBindingDegree.getInt(var) != 1;
   }
 
   private boolean canBePruned(final Binding b) {
@@ -109,21 +93,18 @@ public class ResolverTree {
     return true;
   }
 
-  private TObjectIntHashMap<PsiTypeVariable> calculateDegree() {
-    final TObjectIntHashMap<PsiTypeVariable> result = new TObjectIntHashMap<>();
-
-    for (final Constraint constr : myConstraints) {
-      final PsiTypeVarCollector collector = new PsiTypeVarCollector();
-
+  private Object2IntMap<PsiTypeVariable> calculateDegree() {
+    Object2IntOpenHashMap<PsiTypeVariable> result = new Object2IntOpenHashMap<>();
+    for (Constraint constr : myConstraints) {
+      PsiTypeVarCollector collector = new PsiTypeVarCollector();
       setDegree(collector.getSet(constr.getRight()), result);
     }
-
     return result;
   }
 
-  private void setDegree(final Set<PsiTypeVariable> set, TObjectIntHashMap<PsiTypeVariable> result) {
-    for (final PsiTypeVariable var : set) {
-      result.increment(var);
+  private static void setDegree(final Set<PsiTypeVariable> set, Object2IntOpenHashMap<PsiTypeVariable> result) {
+    for (PsiTypeVariable var : set) {
+      result.addTo(var, 1);
     }
   }
 
@@ -242,33 +223,27 @@ public class ResolverTree {
       }
     });
 
-    final TIntArrayList sccs = dfstBuilder.getSCCs();
-    final Map<PsiTypeVariable, Integer> index = new HashMap<>();
-
-    sccs.forEach(new TIntProcedure() {
-      int myTNumber;
-
-      @Override
-      public boolean execute(int size) {
-        for (int j = 0; j < size; j++) {
-          index.put(dfstBuilder.getNodeByTNumber(myTNumber + j), myTNumber);
-        }
-        myTNumber += size;
-        return true;
+    IntList sccs = dfstBuilder.getSCCs();
+    Object2IntMap<PsiTypeVariable> index = new Object2IntOpenHashMap<>();
+    int tNumber = 0;
+    for (IntListIterator iterator = sccs.iterator(); iterator.hasNext(); ) {
+      int size = iterator.nextInt();
+      for (int j = 0; j < size; j++) {
+        index.put(dfstBuilder.getNodeByTNumber(tNumber + j), tNumber);
       }
-    });
+      tNumber += size;
+    }
 
-    for (final Constraint constraint : candidates) {
-      if (index.get(constraint.getLeft()).equals(index.get(constraint.getRight()))) {
+    for (Constraint constraint : candidates) {
+      if (index.getInt(constraint.getLeft()) == index.getInt(constraint.getRight())) {
         myConstraints.remove(constraint);
       }
     }
 
     Binding binding = myBindingFactory.create();
 
-    for (final PsiTypeVariable fromVar : index.keySet()) {
-      final PsiTypeVariable toVar = dfstBuilder.getNodeByNNumber(index.get(fromVar).intValue());
-
+    for (PsiTypeVariable fromVar : index.keySet()) {
+      PsiTypeVariable toVar = dfstBuilder.getNodeByNNumber(index.getInt(fromVar));
       if (!fromVar.equals(toVar)) {
         binding = binding.compose(myBindingFactory.create(fromVar, toVar));
 
