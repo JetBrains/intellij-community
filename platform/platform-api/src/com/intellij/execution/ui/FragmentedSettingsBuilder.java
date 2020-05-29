@@ -58,7 +58,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     if (myMain != null && myMain.component() != null) {
       addLine(myMain.component());
     }
-    addLine(buildCommandLinePanel(fragments));
+    buildCommandLinePanel(fragments);
 
     JPanel tagsPanel = new JPanel(new WrapLayout(FlowLayout.LEADING));
     for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
@@ -149,20 +149,18 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     return actionGroup;
   }
 
-  private JComponent buildCommandLinePanel(Collection<SettingsEditorFragment<Settings, ?>> fragments) {
+  private void buildCommandLinePanel(Collection<SettingsEditorFragment<Settings, ?>> fragments) {
+    List<SettingsEditorFragment<Settings, ?>> list = ContainerUtil.filter(fragments, fragment -> fragment.getCommandLinePosition() > 0);
+    if (list.isEmpty()) return;
+    fragments.removeAll(list);
     JPanel panel = new JPanel(new GridBagLayout());
     panel.setBorder(JBUI.Borders.emptyBottom(5));
-    GridBagConstraints c =
-      new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0);
-    for (Iterator<SettingsEditorFragment<Settings, ?>> iterator = fragments.iterator(); iterator.hasNext(); ) {
-      SettingsEditorFragment<Settings, ?> fragment = iterator.next();
-      if (fragment.getCommandLinePosition() <= 0) continue;
-      JComponent editor = fragment.createEditor();
-      panel.add(editor, c.clone());
+    GridBagConstraints c = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0);
+    for (SettingsEditorFragment<Settings, ?> fragment : list) {
+      panel.add(fragment.createEditor(), c.clone());
       c.gridx++;
-      iterator.remove();
     }
-    return panel;
+    addLine(panel);
   }
 
   private static class ToggleFragmentAction extends ToggleAction {

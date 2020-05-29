@@ -54,9 +54,9 @@ public class CoverageFragment<T extends RunConfigurationBase<?>> extends NestedG
                                                                                   @NotNull String message,
                                                                                   boolean included, @NotNull String optionName) {
     JavaCoverageEnabledConfiguration configuration = getConfiguration();
-    CoverageClassFilterEditor includedEditor = new CoverageClassFilterEditor(myConfiguration.getProject());
-    includedEditor.setBorder(IdeBorderFactory.createTitledBorder(message, false, JBUI.emptyInsets()));
-    return new SettingsEditorFragment<>(id, optionName, null, includedEditor,
+    CoverageClassFilterEditor filterEditor = new CoverageClassFilterEditor(myConfiguration.getProject());
+    filterEditor.setBorder(IdeBorderFactory.createTitledBorder(message, false, JBUI.emptyInsets()));
+    return new SettingsEditorFragment<>(id, optionName, null, filterEditor,
                                         (p, editor) -> editor.setFilters(CoverageConfigurable.getCoveragePatterns(configuration, included)),
                                         (p, editor) -> setCoveragePatterns(configuration, editor.getFilters(), included),
                                         p -> false);
