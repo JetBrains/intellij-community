@@ -154,7 +154,7 @@ object DynamicPlugins {
     }
 
     if (!Registry.`is`("ide.plugins.allow.unload.from.sources")) {
-      if (loadedPluginDescriptor != null && isPluginOrModuleLoaded(loadedPluginDescriptor.pluginId) && !descriptor.useIdeaClassLoader) {
+      if (loadedPluginDescriptor != null && isPluginOrModuleLoaded(loadedPluginDescriptor.pluginId) && !descriptor.isUseIdeaClassLoader) {
         val pluginClassLoader = loadedPluginDescriptor.pluginClassLoader
         if (pluginClassLoader !is PluginClassLoader && !app.isUnitTestMode) {
           val loader = baseDescriptor ?: descriptor
@@ -398,7 +398,7 @@ object DynamicPlugins {
             true
           }
 
-          if (!pluginDescriptor.useIdeaClassLoader) {
+          if (!pluginDescriptor.isUseIdeaClassLoader) {
             if (loadedPluginDescriptor.pluginClassLoader is PluginClassLoader) {
               IconLoader.detachClassLoader(loadedPluginDescriptor.pluginClassLoader)
               Language.unregisterLanguages(loadedPluginDescriptor.pluginClassLoader)

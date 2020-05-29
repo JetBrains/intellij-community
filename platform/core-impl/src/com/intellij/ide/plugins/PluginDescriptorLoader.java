@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
@@ -36,8 +35,6 @@ import java.util.concurrent.Future;
 
 @ApiStatus.Internal
 public final class PluginDescriptorLoader {
-  private static final Logger LOG = Logger.getInstance(PluginDescriptorLoader.class);
-
   @ApiStatus.Internal
   public static @Nullable IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file,
                                                                   boolean isBundled,
@@ -157,6 +154,7 @@ public final class PluginDescriptorLoader {
       IdeaPluginDescriptorImpl otherDescriptor = loadDescriptorFromDir(dir, descriptorRelativePath, file, context);
       if (otherDescriptor != null) {
         if (descriptor != null) {
+          //noinspection SpellCheckingInspection
           DescriptorListLoadingContext.LOG.info("Cannot load " + file + " because two or more plugin.xml's detected");
           return null;
         }
@@ -255,7 +253,7 @@ public final class PluginDescriptorLoader {
     for (Future<IdeaPluginDescriptorImpl> task : tasks) {
       IdeaPluginDescriptorImpl descriptor = task.get();
       if (descriptor != null) {
-        context.result.add(descriptor,  /* overrideUseIfCompatible = */ false);
+        context.result.add(descriptor, /* overrideUseIfCompatible = */ false);
       }
     }
   }
@@ -503,7 +501,7 @@ public final class PluginDescriptorLoader {
     // PluginDescriptor fields are cleaned after the plugin is loaded, so we need to reload the descriptor to check if it's dynamic
     IdeaPluginDescriptorImpl fullDescriptor = tryLoadFullDescriptor(descriptor);
     if (fullDescriptor == null) {
-      LOG.error("Could not load full descriptor for plugin " + descriptor.getPluginPath());
+      PluginManagerCore.getLogger().error("Could not load full descriptor for plugin " + descriptor.getPluginPath());
       fullDescriptor = descriptor;
     }
     return fullDescriptor;

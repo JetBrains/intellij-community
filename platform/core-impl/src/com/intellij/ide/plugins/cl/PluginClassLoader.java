@@ -41,7 +41,6 @@ public final class PluginClassLoader extends UrlClassLoader {
 
   private ClassLoader[] myParents;
   private final IdeaPluginDescriptor myPluginDescriptor;
-  private final String myPluginVersion;
   private final List<String> myLibDirectories;
 
   private final AtomicLong edtTime = new AtomicLong();
@@ -53,21 +52,18 @@ public final class PluginClassLoader extends UrlClassLoader {
   public PluginClassLoader(@NotNull List<URL> urls,
                            @NotNull ClassLoader @NotNull [] parents,
                            @NotNull IdeaPluginDescriptor pluginDescriptor,
-                           String version,
                            @Nullable Path pluginRoot) {
-    this(build().urls(urls).allowLock().useCache(), parents, pluginDescriptor, version, pluginRoot);
+    this(build().urls(urls).allowLock().useCache(), parents, pluginDescriptor, pluginRoot);
   }
 
   public PluginClassLoader(@NotNull Builder builder,
                            @NotNull ClassLoader @NotNull [] parents,
                            @Nullable IdeaPluginDescriptor pluginDescriptor,
-                           String version,
                            @Nullable Path pluginRoot) {
     super(builder);
 
     myParents = parents;
     myPluginDescriptor = pluginDescriptor;
-    myPluginVersion = version;
     myLibDirectories = new SmartList<>();
 
     if (pluginRoot != null) {
@@ -391,7 +387,7 @@ public final class PluginClassLoader extends UrlClassLoader {
 
   @Override
   public String toString() {
-    return "PluginClassLoader[" + myPluginDescriptor + ", " + myPluginVersion + "] " + super.toString();
+    return "PluginClassLoader[" + myPluginDescriptor + "] " + super.toString();
   }
 
   private static final class DeepEnumeration implements Enumeration<URL> {

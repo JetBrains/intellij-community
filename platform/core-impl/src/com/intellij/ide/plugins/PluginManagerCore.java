@@ -344,7 +344,7 @@ public final class PluginManagerCore {
     }
 
     for (IdeaPluginDescriptorImpl o : loadedPlugins) {
-      if (!o.getUseIdeaClassLoader()) {
+      if (!o.isUseIdeaClassLoader()) {
         continue;
       }
 
@@ -433,7 +433,7 @@ public final class PluginManagerCore {
       descriptor.jarFiles = null;
     }
 
-    if (descriptor.getUseIdeaClassLoader()) {
+    if (descriptor.isUseIdeaClassLoader()) {
       getLogger().warn(descriptor.getPluginId() + " uses deprecated `use-idea-classloader` attribute");
       ClassLoader loader = PluginManagerCore.class.getClassLoader();
       try {
@@ -453,8 +453,7 @@ public final class PluginManagerCore {
       for (Path pathElement : classPath) {
         urls.add(localFileToUrl(pathElement, descriptor));
       }
-      PluginClassLoader loader =
-        new PluginClassLoader(urlLoaderBuilder.urls(urls), parentLoaders, descriptor, descriptor.getVersion(), descriptor.getPluginPath());
+      PluginClassLoader loader = new PluginClassLoader(urlLoaderBuilder.urls(urls), parentLoaders, descriptor, descriptor.getPluginPath());
       if (usePluginClassLoader) {
         loader.setCoreLoader(coreLoader);
       }
@@ -464,7 +463,8 @@ public final class PluginManagerCore {
 
   private static @NotNull URL localFileToUrl(@NotNull Path file, @NotNull IdeaPluginDescriptor descriptor) {
     try {
-      return file.normalize().toUri().toURL();  // it is important not to have traversal elements in classpath
+      // it is important not to have traversal elements in classpath
+      return file.normalize().toUri().toURL();
     }
     catch (MalformedURLException e) {
       throw new PluginException("Corrupted path element: `" + file + '`', e, descriptor.getPluginId());
