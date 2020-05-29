@@ -6,6 +6,7 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import com.intellij.psi.impl.PsiManagerImpl
@@ -19,8 +20,10 @@ import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NotNull
+import org.junit.Assert
 
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * @author peter
@@ -39,6 +42,44 @@ class DumbServiceImplTest extends BasePlatformTestCase {
         System.clearProperty(key)
       }
     }
+  }
+
+  void "test no task leak on dispose"() {
+    DumbService dumbService = new DumbServiceImpl(project)
+
+    AtomicInteger disposes = new AtomicInteger(0)
+    def task1 = new DumbModeTask("a") {
+      @Override
+      void performInDumbMode(@NotNull ProgressIndicator indicator) {
+        while (!indicator.isCanceled()) {
+          Thread.sleep(50)
+        }
+      }
+
+      @Override
+      void dispose() {
+        disposes.incrementAndGet()
+      }
+    }
+
+    def task2 = new DumbModeTask("b") {
+      @Override
+      void performInDumbMode(@NotNull ProgressIndicator indicator) {
+      }
+
+      @Override
+      void dispose() {
+        disposes.incrementAndGet()
+      }
+    }
+
+    dumbService.queueTask(task1)
+    dumbService.queueTask(task2)
+    Disposer.dispose(dumbService)
+
+    Assert.assertEquals(2, disposes.get())
+    Assert.assertTrue(Disposer.isDisposed(task1))
+    Assert.assertTrue(Disposer.isDisposed(task2))
   }
 
   void "test queueTask is async"() {
