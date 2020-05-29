@@ -95,7 +95,7 @@ internal class MutableStorageIndexes(
 
   @OptIn(ExperimentalStdlibApi::class)
   fun <T : TypedEntity> updateSoftReferences(beforePersistentId: PersistentEntityId<*>?,
-                                             beforeSoftLinks: List<PersistentEntityId<*>>?,
+                                             beforeSoftLinks: Set<PersistentEntityId<*>>?,
                                              copiedData: PEntityData<T>,
                                              builder: PEntityStorageBuilder) {
     val pid = copiedData.createPid()

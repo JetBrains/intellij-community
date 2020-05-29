@@ -24,8 +24,8 @@ class ModuleEntityData : PEntityData.WithCalculatablePersistentId<ModuleEntity>(
   lateinit var dependencies: List<ModuleDependencyItem>
 
   @ExperimentalStdlibApi
-  override fun getLinks(): List<PersistentEntityId<*>> {
-    return buildList {
+  override fun getLinks(): Set<PersistentEntityId<*>> {
+    return buildSet {
       dependencies.forEach { dependency ->
         when (dependency) {
           is ModuleDependencyItem.Exportable.ModuleDependency -> this.add(dependency.module)
@@ -390,9 +390,9 @@ class LibraryEntityData : PEntityData.WithCalculatablePersistentId<LibraryEntity
   lateinit var roots: List<LibraryRoot>
   lateinit var excludedRoots: List<VirtualFileUrl>
 
-  override fun getLinks(): List<PersistentEntityId<*>> {
+  override fun getLinks(): Set<PersistentEntityId<*>> {
     val id = tableId
-    return if (id is LibraryTableId.ModuleLibraryTableId) listOf(id.moduleId) else emptyList()
+    return if (id is LibraryTableId.ModuleLibraryTableId) setOf(id.moduleId) else emptySet()
   }
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
@@ -667,7 +667,7 @@ class ArtifactRootElementEntity : CompositePackagingElementEntity()
 class ArtifactOutputPackagingElementEntityData : PEntityData<ArtifactOutputPackagingElementEntity>(), PSoftLinkable {
   lateinit var artifact: ArtifactId
 
-  override fun getLinks(): List<PersistentEntityId<*>> = listOf(artifact)
+  override fun getLinks(): Set<PersistentEntityId<*>> = setOf(artifact)
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
                           newLink: PersistentEntityId<*>,
@@ -690,7 +690,7 @@ class ArtifactOutputPackagingElementEntity(
 class ModuleOutputPackagingElementEntityData : PEntityData<ModuleOutputPackagingElementEntity>(), PSoftLinkable {
   lateinit var module: ModuleId
 
-  override fun getLinks(): List<PersistentEntityId<*>> = listOf(module)
+  override fun getLinks(): Set<PersistentEntityId<*>> = setOf(module)
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
                           newLink: PersistentEntityId<*>,
@@ -713,10 +713,10 @@ class ModuleOutputPackagingElementEntity(
 class LibraryFilesPackagingElementEntityData : PEntityData<LibraryFilesPackagingElementEntity>(), PSoftLinkable {
   lateinit var library: LibraryId
 
-  override fun getLinks(): List<PersistentEntityId<*>> {
+  override fun getLinks(): Set<PersistentEntityId<*>> {
     val tableId = library.tableId
-    if (tableId is LibraryTableId.ModuleLibraryTableId) return listOf(library, tableId.moduleId)
-    return listOf(library)
+    if (tableId is LibraryTableId.ModuleLibraryTableId) return setOf(library, tableId.moduleId)
+    return setOf(library)
   }
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
@@ -750,8 +750,8 @@ class LibraryFilesPackagingElementEntity(
 class ModuleSourcePackagingElementEntityData : PEntityData<ModuleSourcePackagingElementEntity>(), PSoftLinkable {
   lateinit var module: ModuleId
 
-  override fun getLinks(): List<PersistentEntityId<*>> {
-    return listOf(module)
+  override fun getLinks(): Set<PersistentEntityId<*>> {
+    return setOf(module)
   }
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
@@ -775,7 +775,7 @@ class ModuleSourcePackagingElementEntity(
 class ModuleTestOutputPackagingElementEntityData : PEntityData<ModuleTestOutputPackagingElementEntity>(), PSoftLinkable {
   lateinit var module: ModuleId
 
-  override fun getLinks(): List<PersistentEntityId<*>> = listOf(module)
+  override fun getLinks(): Set<PersistentEntityId<*>> = setOf(module)
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
                           newLink: PersistentEntityId<*>,

@@ -102,7 +102,7 @@ internal data class PId(val arrayId: Int, val clazz: Int) {
 }
 
 interface PSoftLinkable {
-  fun getLinks(): List<PersistentEntityId<*>>
+  fun getLinks(): Set<PersistentEntityId<*>>
   fun updateLink(oldLink: PersistentEntityId<*>,
                  newLink: PersistentEntityId<*>,
                  affectedIds: MutableList<Pair<PersistentEntityId<*>, PersistentEntityId<*>>>): Boolean

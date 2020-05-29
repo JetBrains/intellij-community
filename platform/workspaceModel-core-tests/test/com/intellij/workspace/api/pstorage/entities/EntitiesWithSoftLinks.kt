@@ -56,7 +56,7 @@ internal class WithSoftLinkEntityData : PEntityData<WithSoftLinkEntity>(), PSoft
     return WithSoftLinkEntity(link).also { addMetaData(it, snapshot) }
   }
 
-  override fun getLinks(): List<PersistentEntityId<*>> = listOf(link)
+  override fun getLinks(): Set<PersistentEntityId<*>> = setOf(link)
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
                           newLink: PersistentEntityId<*>,
