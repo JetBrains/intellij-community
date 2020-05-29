@@ -73,12 +73,9 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
 
     ShortenCommandLineModeCombo combo =
       new ShortenCommandLineModeCombo(myProject, jrePathEditor, moduleClasspath.component().getComponent());
-    LabeledComponent<ShortenCommandLineModeCombo> component =
-      LabeledComponent.create(combo, ExecutionBundle.message("application.configuration.shorten.command.line.label"));
-    component.setLabelLocation(BorderLayout.WEST);
     fragments.add(new SettingsEditorFragment<>("shorten.command.line",
                                                ExecutionBundle.message("application.configuration.shorten.command.line"),
-                                               group, component,
+                                               group, LabeledComponent.create(combo, ExecutionBundle.message("application.configuration.shorten.command.line.label"), BorderLayout.WEST),
                                                (configuration, c) -> c.getComponent().setItem(configuration.getShortenCommandLine()),
                                                (configuration, c) -> configuration.setShortenCommandLine(c.getComponent().getSelectedItem()),
                                                configuration -> configuration.getShortenCommandLine() != null));

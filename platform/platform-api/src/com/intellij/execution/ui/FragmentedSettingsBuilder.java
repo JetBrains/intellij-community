@@ -50,6 +50,8 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
       addLine(new JSeparator());
     }
     List<SettingsEditorFragment<Settings, ?>> fragments = new ArrayList<>(myFragments);
+    List<SettingsEditorFragment<Settings, ?>> subGroups = ContainerUtil.filter(fragments, fragment -> !fragment.getChildren().isEmpty());
+    fragments.removeAll(subGroups);
     fragments.sort(Comparator.comparingInt(SettingsEditorFragment::getCommandLinePosition));
     buildBeforeRun(fragments);
     addLine(buildHeader(fragments));
@@ -59,7 +61,6 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     addLine(buildCommandLinePanel(fragments));
 
     JPanel tagsPanel = new JPanel(new WrapLayout(FlowLayout.LEADING));
-    tagsPanel.setBorder(JBUI.Borders.empty(5, -5, 5, 0));
     for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
       if (fragment.isTag()) {
         tagsPanel.add(fragment.getComponent());
@@ -69,8 +70,14 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
       }
     }
     addLine(tagsPanel);
-    myConstraints.weighty = 1;
-    myPanel.add(new JPanel(), myConstraints);
+
+    for (SettingsEditorFragment<Settings, ?> group : subGroups) {
+      addLine(group.getComponent());
+    }
+    if (myMain == null) {
+      myConstraints.weighty = 1;
+      myPanel.add(new JPanel(), myConstraints);
+    }
 
     List<PanelWithAnchor> panels =
       fragments.stream().map(SettingsEditorFragment::component).filter(component -> component instanceof PanelWithAnchor)
