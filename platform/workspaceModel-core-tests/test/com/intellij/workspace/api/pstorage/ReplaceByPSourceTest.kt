@@ -4,6 +4,16 @@ package com.intellij.workspace.api.pstorage
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.workspace.api.EntityChange
+import com.intellij.workspace.api.pstorage.entities.*
+import com.intellij.workspace.api.pstorage.entities.AnotherSource
+import com.intellij.workspace.api.pstorage.entities.ModifiablePChildEntity
+import com.intellij.workspace.api.pstorage.entities.ModifiablePParentEntity
+import com.intellij.workspace.api.pstorage.entities.ModifiablePSampleEntity
+import com.intellij.workspace.api.pstorage.entities.PChildEntity
+import com.intellij.workspace.api.pstorage.entities.PNoDataChildEntity
+import com.intellij.workspace.api.pstorage.entities.PParentEntity
+import com.intellij.workspace.api.pstorage.entities.PSampleEntity
+import com.intellij.workspace.api.pstorage.entities.PSampleEntitySource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

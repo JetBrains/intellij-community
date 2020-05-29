@@ -2,6 +2,11 @@ package com.intellij.workspace.api.pstorage
 
 import com.intellij.workspace.api.TypedEntityStorage
 import com.intellij.workspace.api.TypedEntityStorageBuilder
+import com.intellij.workspace.api.pstorage.entities.*
+import com.intellij.workspace.api.pstorage.entities.ModifiablePChildSampleEntity
+import com.intellij.workspace.api.pstorage.entities.ModifiablePSampleEntity
+import com.intellij.workspace.api.pstorage.entities.PChildSampleEntity
+import com.intellij.workspace.api.pstorage.entities.PSampleEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test

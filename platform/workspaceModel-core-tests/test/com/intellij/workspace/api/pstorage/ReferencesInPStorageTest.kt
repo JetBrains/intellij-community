@@ -2,9 +2,14 @@
 package com.intellij.workspace.api.pstorage
 
 import com.intellij.workspace.api.*
-import com.intellij.workspace.api.pstorage.references.ManyToOne
-import com.intellij.workspace.api.pstorage.references.MutableManyToOne
-import com.intellij.workspace.api.pstorage.references.OneToMany
+import com.intellij.workspace.api.pstorage.entities.*
+import com.intellij.workspace.api.pstorage.entities.ModifiablePChildEntity
+import com.intellij.workspace.api.pstorage.entities.ModifiablePChildWithOptionalParentEntity
+import com.intellij.workspace.api.pstorage.entities.ModifiablePParentEntity
+import com.intellij.workspace.api.pstorage.entities.PChildEntity
+import com.intellij.workspace.api.pstorage.entities.PChildWithOptionalParentEntity
+import com.intellij.workspace.api.pstorage.entities.PDataClass
+import com.intellij.workspace.api.pstorage.entities.PParentEntity
 import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Before

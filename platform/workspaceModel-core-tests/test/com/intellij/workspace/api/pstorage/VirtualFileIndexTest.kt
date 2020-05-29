@@ -3,9 +3,11 @@ package com.intellij.workspace.api.pstorage
 
 import com.intellij.idea.Bombed
 import com.intellij.workspace.api.*
-import com.intellij.workspace.api.pstorage.indices.VirtualFileUrlListProperty
-import com.intellij.workspace.api.pstorage.indices.VirtualFileUrlNullableProperty
-import com.intellij.workspace.api.pstorage.indices.VirtualFileUrlProperty
+import com.intellij.workspace.api.pstorage.entities.*
+import com.intellij.workspace.api.pstorage.entities.ModifiablePVFUEntity
+import com.intellij.workspace.api.pstorage.entities.addPNullableVFUEntity
+import com.intellij.workspace.api.pstorage.entities.addPVFU2Entity
+import com.intellij.workspace.api.pstorage.entities.addPVFUEntity
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test

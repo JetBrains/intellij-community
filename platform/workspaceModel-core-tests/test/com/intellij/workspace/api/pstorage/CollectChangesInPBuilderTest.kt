@@ -1,6 +1,11 @@
 package com.intellij.workspace.api.pstorage
 
 import com.intellij.workspace.api.*
+import com.intellij.workspace.api.pstorage.entities.*
+import com.intellij.workspace.api.pstorage.entities.ModifiablePSampleEntity
+import com.intellij.workspace.api.pstorage.entities.ModifiableSecondSampleEntity
+import com.intellij.workspace.api.pstorage.entities.PSampleEntity
+import com.intellij.workspace.api.pstorage.entities.SecondSampleEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before

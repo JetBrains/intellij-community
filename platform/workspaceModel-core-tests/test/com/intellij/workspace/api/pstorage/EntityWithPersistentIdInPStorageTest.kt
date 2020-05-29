@@ -1,9 +1,10 @@
 package com.intellij.workspace.api.pstorage
 
-import com.intellij.workspace.api.PersistentEntityId
 import com.intellij.workspace.api.SampleEntitySource
-import com.intellij.workspace.api.TypedEntityStorage
-import com.intellij.workspace.api.TypedEntityWithPersistentId
+import com.intellij.workspace.api.pstorage.entities.ModifiablePChildWithPersistentIdEntity
+import com.intellij.workspace.api.pstorage.entities.ModifiablePNamedSampleEntity
+import com.intellij.workspace.api.pstorage.entities.PSampleEntityId
+import com.intellij.workspace.api.pstorage.entities.addPNamedEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

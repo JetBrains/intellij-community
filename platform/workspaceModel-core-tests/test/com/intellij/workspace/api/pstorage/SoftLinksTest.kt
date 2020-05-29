@@ -2,10 +2,10 @@
 package com.intellij.workspace.api.pstorage
 
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import com.intellij.workspace.api.EntitySource
-import com.intellij.workspace.api.PersistentEntityId
-import com.intellij.workspace.api.TypedEntityStorage
-import com.intellij.workspace.api.TypedEntityWithPersistentId
+import com.intellij.workspace.api.pstorage.entities.ModifiableNamedEntity
+import com.intellij.workspace.api.pstorage.entities.ModifiableWithSoftLinkEntity
+import com.intellij.workspace.api.pstorage.entities.MySource
+import com.intellij.workspace.api.pstorage.entities.NameId
 import junit.framework.Assert.assertNotNull
 import org.junit.Test
 

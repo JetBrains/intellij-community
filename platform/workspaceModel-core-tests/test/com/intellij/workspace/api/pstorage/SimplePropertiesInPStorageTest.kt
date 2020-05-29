@@ -3,6 +3,11 @@ package com.intellij.workspace.api.pstorage
 
 import com.intellij.openapi.util.Ref
 import com.intellij.workspace.api.*
+import com.intellij.workspace.api.pstorage.entities.*
+import com.intellij.workspace.api.pstorage.entities.ModifiablePSampleEntity
+import com.intellij.workspace.api.pstorage.entities.ModifiableSecondSampleEntity
+import com.intellij.workspace.api.pstorage.entities.PSampleEntity
+import com.intellij.workspace.api.pstorage.entities.PSampleEntitySource
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test

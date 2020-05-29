@@ -1,9 +1,9 @@
 package com.intellij.workspace.api
 
-import com.intellij.workspace.api.pstorage.ModifiableChildEntityWithPersistentId
-import com.intellij.workspace.api.pstorage.ModifiableNamedSampleEntity
-import com.intellij.workspace.api.pstorage.SampleEntityId
-import com.intellij.workspace.api.pstorage.addNamedEntity
+import com.intellij.workspace.api.pstorage.entities.ModifiableChildEntityWithPersistentId
+import com.intellij.workspace.api.pstorage.entities.ModifiableNamedSampleEntity
+import com.intellij.workspace.api.pstorage.entities.SampleEntityId
+import com.intellij.workspace.api.pstorage.entities.addNamedEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

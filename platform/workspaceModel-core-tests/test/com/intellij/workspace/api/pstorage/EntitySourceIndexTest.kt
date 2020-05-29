@@ -1,11 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.api.pstorage
 
-import com.intellij.workspace.api.EntitySource
-import com.intellij.workspace.api.TypedEntityStorage
-import com.intellij.workspace.api.TypedEntityStorageBuilder
-import com.intellij.workspace.api.pstorage.references.ManyToOne
-import com.intellij.workspace.api.pstorage.references.MutableManyToOne
+import com.intellij.workspace.api.pstorage.entities.ModifiablePChildSourceEntity
+import com.intellij.workspace.api.pstorage.entities.PSampleEntitySource
+import com.intellij.workspace.api.pstorage.entities.addPSourceEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
