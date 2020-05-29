@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.core;
 
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
@@ -26,9 +26,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.util.ClassExtension;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileManagerListener;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.openapi.vfs.impl.CoreVirtualFileLookupServiceImpl;
 import com.intellij.openapi.vfs.impl.CoreVirtualFilePointerManager;
 import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem;
@@ -97,7 +98,6 @@ public class CoreApplicationEnvironment {
     List<VirtualFileSystem> fs = myJrtFileSystem != null
                              ? Arrays.asList(myLocalFileSystem, myJarFileSystem, myJrtFileSystem)
                              : Arrays.asList(myLocalFileSystem, myJarFileSystem);
-    registerApplicationService(VirtualFileLookupService.class, new CoreVirtualFileLookupServiceImpl());
     registerApplicationService(VirtualFileManager.class, new VirtualFileManagerImpl(fs));
 
     //fake EP for cleaning resources after area disposing (otherwise KeyedExtensionCollector listener will be copied to the next area)

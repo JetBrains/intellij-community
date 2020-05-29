@@ -3,8 +3,9 @@ package com.intellij.openapi.vfs
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.impl.VirtualFileUrlLookupHelper
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil
+import com.intellij.util.io.URLUtil
 import java.io.File
 import java.nio.file.FileSystems
 import java.nio.file.Path
@@ -44,7 +45,22 @@ internal data class VirtualFileLookupImpl(
     return null
   }
 
-  override fun fromUrl(url: String): VirtualFile? = VirtualFileUrlLookupHelper.fromUrl(lazyVirtualFileManager, withRefresh, onlyIfCached, url)
+  override fun fromUrl(url: String): VirtualFile? {
+    if (onlyIfCached) return null
+
+    val index = url.indexOf(URLUtil.SCHEME_SEPARATOR)
+    if (index < 0) return null
+
+    val protocol = url.substring(0, index)
+    val fs = lazyVirtualFileManager.value.getFileSystem(protocol) ?: return null
+    val path = url.substring(index + URLUtil.SCHEME_SEPARATOR.length)
+
+    return when {
+      fs is NewVirtualFileSystem && onlyIfCached -> fs.findFileByPathIfCached(path)
+      withRefresh -> fs.refreshAndFindFileByPath(path)
+      else -> fs.findFileByPath(path)
+    }
+  }
 }
 
 internal class VirtualFileLookupServiceImpl : VirtualFileLookupService {
