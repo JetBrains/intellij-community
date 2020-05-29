@@ -178,7 +178,7 @@ internal class PEntityStorageBuilder(
 
   /**
    *
-   * Here: identificator means [hashCode] or [PersistentEntityId] in case it exists
+   * Here: identificator means [hashCode] or ([PersistentEntityId] in case it exists)
    *
    * Plan of [replaceBySource]:
    *  - Traverse all entities of the current builder and save the matched (by [sourceFilter]) to map by identificator.
@@ -375,7 +375,18 @@ internal class PEntityStorageBuilder(
     for (rightMatchedNode in replaceWithMatchedEntities.values()) {
       val nodeId = rightMatchedNode.createPid()
       for ((connectionId, parentId) in replaceWith.refs.getParentRefsOfChild(nodeId)) {
-        if (!sourceFilter(replaceWith.entityDataByIdOrDie(parentId).entitySource)) continue
+        if (!sourceFilter(replaceWith.entityDataByIdOrDie(parentId).entitySource)) {
+          // replaceWith storage has a link to unmatched entity. We should check if we can "transfer" this link to the current storage
+          if (!connectionId.isParentNullable) {
+            val localParent = this.entityDataById(parentId)
+            if (localParent == null) error("Cannot link entities. Child entity doesn't have a parent after operation")
+
+            val localChildId = replaceMap.inverse().getValue(nodeId)
+
+            this.refs.updateParentOfChild(connectionId, localChildId, parentId)
+          }
+          continue
+        }
 
         val localChildId = replaceMap.inverse().getValue(nodeId)
         val localParentId = replaceMap.inverse().getValue(parentId)
@@ -397,7 +408,7 @@ internal class PEntityStorageBuilder(
 
     // TODO: 27.03.2020 Since we have an instance of original storage, we actually can provide a method without an argument
 
-    val originalImpl = original as PEntityStorage
+    val originalImpl = original as AbstractPEntityStorage
     //this can be optimized to avoid creation of entity instances which are thrown away and copying the results from map to list
     // LinkedHashMap<Long, EntityChange<T>>
     val changes = LinkedHashMap<PId, Pair<Class<*>, EntityChange<*>>>()

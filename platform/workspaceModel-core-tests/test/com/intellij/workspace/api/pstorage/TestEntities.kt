@@ -11,6 +11,8 @@ import com.intellij.workspace.api.pstorage.references.OneToMany
 
 internal data class PSampleEntitySource(val name: String) : EntitySource
 
+internal object AnotherSource : EntitySource
+
 internal object MySource : EntitySource
 
 // ---------------------------------------
@@ -174,7 +176,7 @@ internal class ModifiablePChildWithPersistentIdEntity : PModifiableTypedEntity<P
 }
 
 internal fun PEntityStorageBuilder.addPNamedEntity(name: String, next: PSampleEntityId) =
-  addEntity(ModifiablePNamedSampleEntity::class.java, SampleEntitySource("test")) {
+  addEntity(ModifiablePNamedSampleEntity::class.java, PSampleEntitySource("test")) {
     this.name = name
     this.next = next
   }
@@ -328,14 +330,14 @@ internal class ModifiablePParentEntity : PModifiableTypedEntity<PParentEntity>()
 }
 
 internal fun TypedEntityStorageBuilder.addPParentEntity(parentProperty: String = "parent",
-                                                        source: SampleEntitySource = SampleEntitySource("test")) =
+                                                        source: EntitySource = PSampleEntitySource("test")) =
   addEntity(ModifiablePParentEntity::class.java, source) {
     this.parentProperty = parentProperty
   }
 
 internal fun TypedEntityStorageBuilder.addPChildWithOptionalParentEntity(parentEntity: PParentEntity?,
                                                                          childProperty: String = "child",
-                                                                         source: SampleEntitySource = SampleEntitySource("test")) =
+                                                                         source: PSampleEntitySource = PSampleEntitySource("test")) =
   addEntity(ModifiablePChildWithOptionalParentEntity::class.java, source) {
     this.optionalParent = parentEntity
     this.childProperty = childProperty
@@ -344,7 +346,7 @@ internal fun TypedEntityStorageBuilder.addPChildWithOptionalParentEntity(parentE
 internal fun TypedEntityStorageBuilder.addPChildEntity(parentEntity: PParentEntity = addPParentEntity(),
                                                        childProperty: String = "child",
                                                        dataClass: PDataClass? = null,
-                                                       source: SampleEntitySource = SampleEntitySource("test")) =
+                                                       source: EntitySource = PSampleEntitySource("test")) =
   addEntity(ModifiablePChildEntity::class.java, source) {
     this.parent = parentEntity
     this.childProperty = childProperty
@@ -353,14 +355,14 @@ internal fun TypedEntityStorageBuilder.addPChildEntity(parentEntity: PParentEnti
 
 internal fun TypedEntityStorageBuilder.addPNoDataChildEntity(parentEntity: PParentEntity = addPParentEntity(),
                                                              childProperty: String = "child",
-                                                             source: SampleEntitySource = SampleEntitySource("test")) =
+                                                             source: PSampleEntitySource = PSampleEntitySource("test")) =
   addEntity(ModifiablePNoDataChildEntity::class.java, source) {
     this.parent = parentEntity
     this.childProperty = childProperty
   }
 
 internal fun TypedEntityStorageBuilder.addPChildChildEntity(parent1: PParentEntity, parent2: PChildEntity) =
-  addEntity(ModifiablePChildChildEntity::class.java, SampleEntitySource("test")) {
+  addEntity(ModifiablePChildChildEntity::class.java, PSampleEntitySource("test")) {
     this.parent1 = parent1
     this.parent2 = parent2
   }
@@ -413,9 +415,7 @@ internal class WithSoftLinkEntityData : PEntityData<WithSoftLinkEntity>(), PSoft
   }
 }
 
-internal class WithSoftLinkEntity(
-  val link: NameId
-) : PTypedEntity()
+internal class WithSoftLinkEntity(val link: NameId) : PTypedEntity()
 
 internal class ModifiableWithSoftLinkEntity : PModifiableTypedEntity<WithSoftLinkEntity>() {
   var link: NameId by EntityDataDelegation()
@@ -560,7 +560,7 @@ internal interface ModifiableChildEntityWithPersistentId : ModifiableTypedEntity
 }
 
 internal fun TypedEntityStorageBuilder.addNamedEntity(name: String, next: SampleEntityId) =
-  addEntity(ModifiableNamedSampleEntity::class.java, SampleEntitySource("test")) {
+  addEntity(ModifiableNamedSampleEntity::class.java, PSampleEntitySource("test")) {
     this.name = name
     this.next = next
   }
