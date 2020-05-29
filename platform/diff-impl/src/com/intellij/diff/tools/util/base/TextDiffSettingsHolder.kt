@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util.base
 
 import com.intellij.diff.tools.util.breadcrumbs.BreadcrumbsPlacement
@@ -180,6 +180,9 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
       settings.EXPAND_BY_DEFAULT = false
     }
     if (place == DiffPlaces.VCS_LOG_VIEW) {
+      settings.EXPAND_BY_DEFAULT = false
+    }
+    if (place == DiffPlaces.VCS_FILE_HISTORY_VIEW) {
       settings.EXPAND_BY_DEFAULT = false
     }
     return settings
