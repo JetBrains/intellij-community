@@ -2349,26 +2349,32 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "  }" +
                     "}";
 
-    String pattern1 = "'_value='_value";
-    assertEquals(1, findMatchesCount(source, pattern1));
+    String pattern1a = "'_value='_value";
+    assertEquals(1, findMatchesCount(source, pattern1a));
 
-    String pattern2 = "System.out.println('_v);" +
+    String pattern1b = "System.out.println('_v);" +
                       "System.out.println('_v);";
-    assertEquals(1, findMatchesCount(source, pattern2));
+    assertEquals(1, findMatchesCount(source, pattern1b));
 
     String source2 = "class B {{" +
                      "  System.out.println((3 * 8) + 2 + (((2))));" +
                      "}}";
-    String pattern3 = "3 * 8 + 2 + 2";
-    assertEquals(1, findMatchesCount(source2, pattern3));
+    String pattern2 = "3 * 8 + 2 + 2";
+    assertEquals(1, findMatchesCount(source2, pattern2));
 
     String source3 = "class C {" +
                      "  static int foo() {\n" +
                      "    return (Integer.parseInt(\"3\"));\n" +
                      "  }" +
                      "}";
-    String pattern4 = "Integer.parseInt('_x)";
-    assertEquals(1, findMatchesCount(source3, pattern4));
+    String pattern3 = "Integer.parseInt('_x)";
+    assertEquals(1, findMatchesCount(source3, pattern3));
+
+    String source4 = "class X {{" +
+                     "  (System.out).println(1);" +
+                     "}}";
+    String pattern4 = "System.out.println('_x);";
+    assertEquals(1, findMatchesCount(source4, pattern4));
   }
 
   public void testFindSelfAssignment() {

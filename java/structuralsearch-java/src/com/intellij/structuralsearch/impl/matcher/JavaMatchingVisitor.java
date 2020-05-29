@@ -587,31 +587,32 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
 
     final PsiElement other = myMatchingVisitor.getElement();
+    final PsiElement unwrapped = unwrap(other, context);
     final PsiExpression qualifier = reference.getQualifierExpression();
     if (_handler instanceof SubstitutionHandler && (qualifier == null || special)) {
       final SubstitutionHandler handler = (SubstitutionHandler)_handler;
       if (handler.isSubtype() || handler.isStrictSubtype()) {
-        if (myMatchingVisitor.setResult(matchWithinHierarchy(reference, other, handler))) {
+        if (myMatchingVisitor.setResult(matchWithinHierarchy(reference, unwrapped, handler))) {
           handler.addResult(other, myMatchingVisitor.getMatchContext());
         }
       }
-      else {
-        final PsiElement deparenthesized = other instanceof PsiExpression && context.getOptions().isLooseMatching() ?
-                                           PsiUtil.skipParenthesizedExprDown((PsiExpression)other) : other;
-        if (myMatchingVisitor.setResult(handler.validate(deparenthesized, context))) {
-          handler.addResult(other, context);
-        }
+      else if (myMatchingVisitor.setResult(handler.validate(unwrapped, context))) {
+        handler.addResult(other, context);
       }
       return;
     }
 
-    final boolean multiMatch = other != null && reference.getContainingFile() == other.getContainingFile();
-    if (!(other instanceof PsiReferenceExpression)) {
-      myMatchingVisitor.setResult(multiMatch && myMatchingVisitor.matchText(reference, other));
+    final boolean multiMatch = unwrapped != null && reference.getContainingFile() == unwrapped.getContainingFile();
+    if (!(unwrapped instanceof PsiReferenceExpression)) {
+      // when the same variable is used multiple times in a pattern, we need to check if they are the same,
+      // but sometimes they are not normally comparable. In this case we fall back to a text comparison.
+      // For example in the pattern `boolean equals(Object $x$) { return super.equals($x$); }`
+      // the PsiReferenceExpression argument will be compared to the PsiIdentifier of the parameter.
+      myMatchingVisitor.setResult(multiMatch && myMatchingVisitor.matchText(reference, unwrapped));
       return;
     }
 
-    final PsiReferenceExpression reference2 = (PsiReferenceExpression)other;
+    final PsiReferenceExpression reference2 = (PsiReferenceExpression)unwrapped;
 
     final PsiExpression qualifier2 = reference2.getQualifierExpression();
     if (multiMatch &&
@@ -641,8 +642,15 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
       if (!myMatchingVisitor.setResult(qualifier instanceof PsiThisExpression && qualifier2 == null ||
                                        myMatchingVisitor.matchOptionally(qualifier, qualifier2))) return;
-      if (qualifier2 == null) myMatchingVisitor.setResult(matchImplicitQualifier(qualifier, other, context));
+      if (qualifier2 == null) myMatchingVisitor.setResult(matchImplicitQualifier(qualifier, unwrapped, context));
     }
+  }
+
+  /** Removes parentheses from the element if it is a parenthesized expression. */
+  private static PsiElement unwrap(PsiElement element, MatchContext context) {
+    return context.getOptions().isLooseMatching() && element instanceof PsiExpression
+           ? PsiUtil.skipParenthesizedExprDown((PsiExpression)element)
+           : element;
   }
 
   private static int getArrayDimensions(PsiElement element) {
