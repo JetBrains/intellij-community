@@ -42,6 +42,9 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   override val mainEntityClass: Class<ModuleEntity>
     get() = ModuleEntity::class.java
 
+  protected open val skipLoadingIfFileDoesNotExist
+    get() = false
+
   override fun equals(other: Any?) = (other as? ModuleImlFileEntitiesSerializer)?.modulePath == modulePath
 
   override fun hashCode() = modulePath.hashCode()
@@ -53,17 +56,17 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                        ?: loadModuleEntity(reader, builder, virtualFileManager)
     if (moduleEntity != null) {
       createFacetSerializer().loadFacetEntities(builder, moduleEntity, reader)
-      if (externalSerializer != null) {
-        externalSerializer.createFacetSerializer().loadFacetEntities(builder, moduleEntity, reader)
-      }
+      externalSerializer?.createFacetSerializer()?.loadFacetEntities(builder, moduleEntity, reader)
     }
   }
 
   private fun loadModuleEntity(reader: JpsFileContentReader,
                                builder: TypedEntityStorageBuilder,
                                virtualFileManager: VirtualFileUrlManager): ModuleEntity? {
-    val fileExists = fileUrl.file?.exists() ?: false
-    if (!fileExists) return null
+    if (skipLoadingIfFileDoesNotExist) {
+      val fileExists = fileUrl.file?.exists() ?: false
+      if (!fileExists) return null
+    }
 
     val moduleOptions = readModuleOptions(reader)
     val (externalSystemOptions, externalSystemId) = readExternalSystemOptions(reader, moduleOptions)

@@ -14,6 +14,9 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
                                                        fileUrl: VirtualFileUrl,
                                                        internalEntitySource: JpsFileEntitySource)
   : ModuleImlFileEntitiesSerializer(modulePath, fileUrl, internalEntitySource, null) {
+  override val skipLoadingIfFileDoesNotExist: Boolean
+    get() = true
+
   override fun loadEntities(builder: TypedEntityStorageBuilder, reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager) {
   }
 
