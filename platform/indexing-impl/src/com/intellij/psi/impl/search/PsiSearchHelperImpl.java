@@ -508,7 +508,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   private void processVirtualFile(@NotNull VirtualFile vfile,
-                                  @NotNull AtomicBoolean stopped, @NotNull Processor<? super PsiFile> localProcessor) throws ApplicationUtil.CannotRunReadActionException {
+                                  @NotNull AtomicBoolean stopped,
+                                  @NotNull Processor<? super PsiFile> localProcessor) throws ApplicationUtil.CannotRunReadActionException {
     PsiFile file = ApplicationUtil.tryRunReadAction(() -> vfile.isValid() ? myManager.findFile(vfile) : null);
     if (file != null && !(file instanceof PsiBinaryFile)) {
       ApplicationUtil.tryRunReadAction(() -> {
@@ -820,8 +821,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   <T extends WordRequestInfo> boolean processGlobalRequests(@NotNull Map<Set<IdIndexEntry>, Collection<T>> singles,
-                                @NotNull ProgressIndicator progress,
-                                @NotNull Map<T, Processor<? super PsiElement>> localProcessors) {
+                                                            @NotNull ProgressIndicator progress,
+                                                            @NotNull Map<T, Processor<? super PsiElement>> localProcessors) {
     progress.pushState();
     progress.setText(IndexingBundle.message("psi.scanning.files.progress"));
     boolean result;
@@ -912,7 +913,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   @NotNull
   private static BulkOccurrenceProcessor adaptProcessor(@NotNull PsiSearchRequest singleRequest,
-                                                       @NotNull Processor<? super PsiReference> consumer) {
+                                                        @NotNull Processor<? super PsiReference> consumer) {
     SearchScope searchScope = singleRequest.searchScope;
     boolean ignoreInjectedPsi = searchScope instanceof LocalSearchScope && ((LocalSearchScope)searchScope).isIgnoreInjectedPsi();
     RequestResultProcessor wrapped = singleRequest.processor;
@@ -951,10 +952,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   // returns total size
   private <T extends WordRequestInfo> int collectFiles(@NotNull Map<Set<IdIndexEntry>, Collection<T>> singles,
-                            @NotNull Map<VirtualFile, Collection<T>> targetFiles,
-                            @NotNull Map<VirtualFile, Collection<T>> nearDirectoryFiles,
-                            @NotNull Map<VirtualFile, Collection<T>> containerNameFiles,
-                            @NotNull Map<VirtualFile, Collection<T>> restFiles) {
+                                                       @NotNull Map<VirtualFile, Collection<T>> targetFiles,
+                                                       @NotNull Map<VirtualFile, Collection<T>> nearDirectoryFiles,
+                                                       @NotNull Map<VirtualFile, Collection<T>> containerNameFiles,
+                                                       @NotNull Map<VirtualFile, Collection<T>> restFiles) {
     int totalSize = 0;
     for (Map.Entry<Set<IdIndexEntry>, Collection<T>> entry : singles.entrySet()) {
       ProgressManager.checkCanceled();
