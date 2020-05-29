@@ -130,6 +130,7 @@ object GHPRSubmittableTextField {
       addSettingsProvider {
         it.putUserData(IncrementalFindAction.SEARCH_DISABLED, true)
         it.colorsScheme.lineSpacing = 1f
+        it.settings.isUseSoftWraps = true
       }
       selectAll()
     }
