@@ -130,7 +130,7 @@ public class BrowserStarter {
     String title = IdeBundle.message("browser.notification.timeout.title");
     String url = Objects.requireNonNull(mySettings.getUrl());
     String openUrlDescription = "open_url";
-    String content = IdeBundle.message("browser.notification.timeout.text", url, openUrlDescription);
+    String content = IdeBundle.message("browser.notification.timeout.text", openUrlDescription, url);
 
     Notification openBrowserNotification = group.createNotification(title, content, type, (notification, event) -> {
       if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
