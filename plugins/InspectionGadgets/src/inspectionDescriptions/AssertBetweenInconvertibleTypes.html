@@ -1,10 +1,12 @@
 <html>
 <body>
-Reports any calls to <b>assertEquals()</b>
-method where the expected result and actual result arguments are of incompatible
-types. While such a call might theoretically be useful, most likely it represents a bug.
-<!-- tooltip end -->
-<p>
-
+Reports calls to assertion methods with “expected” and “actual” arguments of incompatible types. Such calls often indicate that there is a bug.
+The inspection applies to the following methods:<br>
+<ul>
+  <li><b>assertEquals(), assertNotEquals()</b></li>
+  <li><b>assertSame(), assertNotSame()</b></li>
+</ul>
+The <b>assertNotEquals()</b> and <b>isNotEqualTo()</b> methods are also reported, however they use a weak warning
+to take into account the case when the equals() contract is tested.
 </body>
 </html>
