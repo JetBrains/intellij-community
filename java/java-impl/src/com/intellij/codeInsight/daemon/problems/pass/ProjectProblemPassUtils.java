@@ -13,10 +13,7 @@ import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.codeInspection.SmartHashMap;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.editor.BlockInlayPriority;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -165,10 +162,23 @@ public class ProjectProblemPassUtils {
     Map<SmartPsiElementPointer<PsiMember>, EditorInfo> oldInfos = editor.getUserData(EDITOR_INFOS_KEY);
     Map<PsiMember, EditorInfo> editorInfos = new SmartHashMap<>();
     if (oldInfos == null) return editorInfos;
+    InlayModel inlayModel = editor.getInlayModel();
     oldInfos.forEach((pointer, info) -> {
       PsiMember member = pointer.getElement();
-      if (member == null) Disposer.dispose(info.myInlay);
-      else editorInfos.put(member, info);
+      Inlay<?> inlay = info.myInlay;
+      if (member == null) {
+        Disposer.dispose(inlay);
+      }
+      else {
+        int curOffset = inlay.getOffset();
+        int memberOffset = getMemberOffset(member);
+        if (curOffset != memberOffset) {
+          EditorCustomElementRenderer renderer = inlay.getRenderer();
+          info.myInlay = inlayModel.addBlockElement(memberOffset, true, true, BlockInlayPriority.PROBLEMS, renderer);
+          Disposer.dispose(inlay);
+        }
+        editorInfos.put(member, info);
+      }
     });
     return editorInfos;
   }
@@ -201,7 +211,7 @@ public class ProjectProblemPassUtils {
 
   static class EditorInfo {
 
-    final Inlay<?> myInlay;
+    Inlay<?> myInlay;
     final HighlightInfo myHighlightInfo;
 
     EditorInfo(@NotNull Inlay<?> inlay, @NotNull HighlightInfo info) {
