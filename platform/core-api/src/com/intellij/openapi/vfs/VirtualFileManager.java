@@ -78,19 +78,20 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * @see VirtualFile#getUrl
    * @see VirtualFileSystem#findFileByPath
    * @see #refreshAndFindFileByUrl
-   * @see VirtualFileLookup#newLookup()
-   * @see VirtualFileLookup#fromUrl(String)
    */
   public @Nullable VirtualFile findFileByUrl(@NonNls @NotNull String url) {
-    return VirtualFileLookup.newLookup().fromUrl(url);
+    return null;
   }
 
   /**
    * Looks for a related {@link VirtualFile} for a given {@link Path}
-   * @return
+   * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
+   * @see VirtualFile#getUrl
+   * @see VirtualFileSystem#findFileByPath
+   * @see #refreshAndFindFileByUrl
    */
   public @Nullable VirtualFile findFileByNioPath(@NotNull Path path) {
-    return myLookup.fromNioPath(path);
+    return null;
   }
 
   /**
@@ -106,12 +107,9 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
    * @see VirtualFileSystem#findFileByPath
    * @see VirtualFileSystem#refreshAndFindFileByPath
-   * @see VirtualFileLookup#newLookup()
-   * @see VirtualFileLookup#withRefresh()
-   * @see VirtualFileLookup#fromUrl(String)
    */
   public @Nullable VirtualFile refreshAndFindFileByUrl(@NotNull String url) {
-    return myLookup.withRefresh().fromUrl(url);
+    return null;
   }
 
   /**
@@ -122,9 +120,13 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * corresponding to it.</p>
    *
    * <p>If this method is invoked not from Swing event dispatch thread, then it must not happen inside a read action.</p>
+   *
+   * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
+   * @see VirtualFileSystem#findFileByPath
+   * @see VirtualFileSystem#refreshAndFindFileByPath
    **/
   public @Nullable VirtualFile refreshAndFindFileByNioPath(@NotNull Path path) {
-    return myLookup.withRefresh().fromNioPath(path);
+    return null;
   }
 
   /**

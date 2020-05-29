@@ -21,12 +21,15 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -321,5 +324,39 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   @Override
   public @NotNull CharSequence getVFileName(int nameId) {
     throw new AbstractMethodError();
+  }
+
+  @Override
+  public VirtualFile findFileByUrl(@NotNull String url) {
+    int protocolSepIndex = url.indexOf(URLUtil.SCHEME_SEPARATOR);
+    VirtualFileSystem fileSystem = protocolSepIndex < 0 ? null : getFileSystem(url.substring(0, protocolSepIndex));
+    if (fileSystem == null) return null;
+    String path = url.substring(protocolSepIndex + URLUtil.SCHEME_SEPARATOR.length());
+    return fileSystem.findFileByPath(path);
+  }
+
+  @Override
+  public VirtualFile refreshAndFindFileByUrl(@NotNull String url) {
+    int protocolSepIndex = url.indexOf(URLUtil.SCHEME_SEPARATOR);
+    VirtualFileSystem fileSystem = protocolSepIndex < 0 ? null : getFileSystem(url.substring(0, protocolSepIndex));
+    if (fileSystem == null) return null;
+    String path = url.substring(protocolSepIndex + URLUtil.SCHEME_SEPARATOR.length());
+    return fileSystem.refreshAndFindFileByPath(path);
+  }
+
+  @Override
+  public @Nullable VirtualFile findFileByNioPath(@NotNull Path path) {
+    if (!FileSystems.getDefault().equals(path.getFileSystem())) return null;
+    VirtualFileSystem fileSystem = getFileSystem(StandardFileSystems.FILE_PROTOCOL);
+    if (fileSystem == null) return null;
+    return fileSystem.findFileByPath(path.toString());
+  }
+
+  @Override
+  public @Nullable VirtualFile refreshAndFindFileByNioPath(@NotNull Path path) {
+    if (!FileSystems.getDefault().equals(path.getFileSystem())) return null;
+    VirtualFileSystem fileSystem = getFileSystem(StandardFileSystems.FILE_PROTOCOL);
+    if (fileSystem == null) return null;
+    return fileSystem.refreshAndFindFileByPath(path.toString());
   }
 }
