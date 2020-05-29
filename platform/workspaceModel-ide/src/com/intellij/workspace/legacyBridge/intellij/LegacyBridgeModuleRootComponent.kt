@@ -97,6 +97,28 @@ class LegacyBridgeModuleRootComponent(
     legacyBridgeModule, legacyBridgeModule.moduleEntityId,
     legacyBridgeModule.entityStore.current, accessor)
 
+  /**
+   * If the model creates from IdeModifiableModelsProviderImpl it should use the same storage which uses in the module.
+   * Modules and ModifiableRootModels(AbstractModuleDataService#createModules) created far earlier than
+   * `AbstractModuleDataService#setModuleOptions` applies its changes for module's entitySource and these changes don't
+   * reflect in created earlier ModifiableRootModel. Other entities become created with different entitySource.
+   * During the commit(AbstractIdeModifiableModelsProvider#commit) we get absolutely unusable store because the latest
+   * applied diff will become the true state of the store.
+   *
+   * Why we can use the same diff for all entries created from IdeModifiableModelsProviderImpl?
+   * Because it applies and discards all changes at once. We will not get the state when ModifiableModuleModel will be rolled back but
+   * ModifiableRootModel will be applied.
+   *
+   * How entries with different entitySource affect us?
+   * Different serializers will be used ExternalModuleImlFileEntitiesSerializer and ModuleImlFileEntitiesSerializer
+   * which leads to store settings in different folders. For example, the content root will not be recognized as belonging
+   * to the module because entitySource is different (ModuleImlFileEntitiesSerializer#saveModuleEntities).
+   */
+  override fun getModifiableModelForExternalSystem(accessor: RootConfigurationAccessor): ModifiableRootModel = LegacyBridgeModifiableRootModel(
+    (legacyBridgeModule.diff as? TypedEntityStorageBuilder) ?: TypedEntityStorageBuilder.from(legacyBridgeModule.entityStore.current),
+    legacyBridgeModule, legacyBridgeModule.moduleEntityId,
+    legacyBridgeModule.entityStore.current, accessor)
+
   fun getModifiableModel(diff: TypedEntityStorageBuilder,
                          accessor: RootConfigurationAccessor): ModifiableRootModel = LegacyBridgeModifiableRootModel(diff,
                                                                                                                      legacyBridgeModule,
