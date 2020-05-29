@@ -33,7 +33,6 @@ public class ModelBranchImpl implements ModelBranch {
   private final SimpleModificationTracker myFileSetChanges = new SimpleModificationTracker();
   private final Project myProject;
   private boolean myMerged;
-  private static final Map<Thread, ModelBranchImpl> ourCurrentBranches = Collections.synchronizedMap(new HashMap<>());
 
   private ModelBranchImpl(@NotNull Project project) {
     myProject = project;
@@ -41,34 +40,25 @@ public class ModelBranchImpl implements ModelBranch {
 
   @NotNull
   static ModelPatch performInBranch(@NotNull Project project, @NotNull Consumer<ModelBranch> action) {
-    Thread thread = Thread.currentThread();
-    assert ourCurrentBranches.get(thread) == null;
-
     ModelBranchImpl branch = new ModelBranchImpl(project);
-    ourCurrentBranches.put(thread, branch);
-    try {
-      action.accept(branch);
-      return new ModelPatch() {
-        @Override
-        public void applyBranchChanges() {
-          branch.mergeBack();
-        }
+    action.accept(branch);
+    return new ModelPatch() {
+      @Override
+      public void applyBranchChanges() {
+        branch.mergeBack();
+      }
 
-        @Override
-        public @NotNull Map<VirtualFile, CharSequence> getBranchChanges() {
-          Map<VirtualFile, CharSequence> result = new HashMap<>();
-          for (Document document : branch.myDocumentChanges.keySet()) {
-            VirtualFile file = Objects.requireNonNull(FileDocumentManager.getInstance().getFile(document));
-            VirtualFile original = branch.findOriginalFile(file);
-            result.put(original, document.getImmutableCharSequence());
-          }
-          return result;
+      @Override
+      public @NotNull Map<VirtualFile, CharSequence> getBranchChanges() {
+        Map<VirtualFile, CharSequence> result = new HashMap<>();
+        for (Document document : branch.myDocumentChanges.keySet()) {
+          VirtualFile file = Objects.requireNonNull(FileDocumentManager.getInstance().getFile(document));
+          VirtualFile original = branch.findOriginalFile(file);
+          result.put(original, document.getImmutableCharSequence());
         }
-      };
-    }
-    finally {
-      ourCurrentBranches.remove(thread);
-    }
+        return result;
+      }
+    };
   }
 
   @Override
@@ -208,6 +198,11 @@ public class ModelBranchImpl implements ModelBranch {
         }
         return false;
       }
+
+      @Override
+      public @NotNull Collection<ModelBranch> getModelBranchesAffectingScope() {
+        return Collections.singleton(ModelBranchImpl.this);
+      }
     };
   }
 
@@ -216,8 +211,20 @@ public class ModelBranchImpl implements ModelBranch {
   }
 
   public static boolean processBranchedFilesInScope(@NotNull GlobalSearchScope scope, @NotNull Processor<? super VirtualFile> processor) {
-    ModelBranchImpl branch = ourCurrentBranches.get(Thread.currentThread());
-    return branch == null || ContainerUtil.process(branch.myVFileCopies.values(), f -> !scope.contains(f) || processor.process(f));
+    Collection<ModelBranch> branches = scope.getModelBranchesAffectingScope();
+    return branches.isEmpty() || processBranchedFilesInScope(scope, processor, branches);
   }
 
+  private static boolean processBranchedFilesInScope(GlobalSearchScope scope,
+                                                     Processor<? super VirtualFile> processor,
+                                                     Collection<ModelBranch> branches) {
+    for (ModelBranch branch : branches) {
+      for (VirtualFile file : ((ModelBranchImpl)branch).myVFileCopies.values()) {
+        if (scope.contains(file) && !processor.process(file)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
 }
