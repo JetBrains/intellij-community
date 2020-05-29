@@ -80,6 +80,10 @@ class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
     assertExecutionTreeNode(buildViewManager, nodeText, { assertEquals(consoleText, it) }, assertSelected)
   }
 
+  fun assertBuildViewSelectedNode(nodeText: String, assertSelected: Boolean, consoleTextChecker: (String?) -> Unit) {
+    assertExecutionTreeNode(buildViewManager, nodeText, consoleTextChecker, assertSelected)
+  }
+
   private fun assertExecutionTree(viewManager: TestViewManager, expected: String, ignoreTasksOrder: Boolean) {
     viewManager.waitForPendingBuilds()
     val recentBuild = viewManager.getRecentBuild()
@@ -96,9 +100,7 @@ class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
     viewManager.waitForPendingBuilds()
     val recentBuild = viewManager.getRecentBuild()
     val buildView = viewManager.getBuildsMap()[recentBuild]
-    assertExecutionTreeNode(buildView!!, nodeText,
-                                                                                                                  consoleTextChecker,
-                                                                                                                  assertSelected)
+    assertExecutionTreeNode(buildView!!, nodeText, consoleTextChecker, assertSelected)
   }
 
   companion object {
