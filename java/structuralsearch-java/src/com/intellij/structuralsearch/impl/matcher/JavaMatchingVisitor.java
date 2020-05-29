@@ -1590,9 +1590,10 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
     final PsiNewExpression new2 = (PsiNewExpression)other;
 
+    final PsiJavaCodeReferenceElement otherClassReference = new2.getClassReference();
     if (classReference != null) {
-      if (new2.getClassReference() != null) {
-        if (myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(classReference, new2.getClassReference()))) {
+      if (otherClassReference != null) {
+        if (myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(classReference, otherClassReference))) {
           matchArrayOrArguments(expression, new2);
         }
         return;
@@ -1612,7 +1613,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       }
     }
 
-    if (classReference == new2.getClassReference()) {
+    if (classReference == otherClassReference) {
       // probably anonymous class or array of primitive type
       myMatchingVisitor.setResult(myMatchingVisitor.matchSons(expression, new2));
     }
@@ -1653,25 +1654,14 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   @Override
   public void visitReferenceElement(PsiJavaCodeReferenceElement ref) {
     final PsiElement other = myMatchingVisitor.getElement();
-    final PsiAnnotation[] annotations = PsiTreeUtil.getChildrenOfType(ref, PsiAnnotation.class);
-    if (annotations != null) {
-      final PsiAnnotation[] otherAnnotations = PsiTreeUtil.getChildrenOfType(other, PsiAnnotation.class);
-      if (!myMatchingVisitor.setResult(otherAnnotations != null && myMatchingVisitor.matchInAnyOrder(annotations, otherAnnotations))) {
-        return;
-      }
-    }
-    myMatchingVisitor.setResult(matchType(ref, other));
+    myMatchingVisitor.setResult(matchAnnotations(ref, other) && matchType(ref, other));
   }
 
   @Override
   public void visitTypeElement(PsiTypeElement typeElement) {
     final PsiElement other = myMatchingVisitor.getElement(); // might not be a PsiTypeElement
-
-    final PsiAnnotation[] annotations = PsiTreeUtil.getChildrenOfType(typeElement, PsiAnnotation.class);
-    // can't use AnnotationOwner api because it is not implemented completely yet (see e.g. ClsTypeParameterImpl)
-    if (annotations != null) {
-      final PsiAnnotation[] annotations2 = PsiTreeUtil.getChildrenOfType(other, PsiAnnotation.class);
-      if (!myMatchingVisitor.setResult(annotations2 != null && myMatchingVisitor.matchInAnyOrder(annotations, annotations2))) return;
+    if (!myMatchingVisitor.setResult(matchAnnotations(typeElement, other))) {
+      return;
     }
     final PsiTypeElement[] typeElementChildren = PsiTreeUtil.getChildrenOfType(typeElement, PsiTypeElement.class);
     if (typeElementChildren != null && typeElementChildren.length > 1) {
@@ -1683,6 +1673,16 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     else {
       myMatchingVisitor.setResult(matchType(typeElement, other));
     }
+  }
+
+  private boolean matchAnnotations(PsiElement pattern, PsiElement matched) {
+    // can't use PsiAnnotationOwner api because it is not implemented completely yet (see e.g. ClsTypeParameterImpl)
+    final PsiAnnotation[] annotations = PsiTreeUtil.getChildrenOfType(pattern, PsiAnnotation.class);
+    if (annotations == null) {
+      return true;
+    }
+    final PsiAnnotation[] otherAnnotations = PsiTreeUtil.getChildrenOfType(matched, PsiAnnotation.class);
+    return otherAnnotations != null && myMatchingVisitor.matchInAnyOrder(annotations, otherAnnotations);
   }
 
   @Override
