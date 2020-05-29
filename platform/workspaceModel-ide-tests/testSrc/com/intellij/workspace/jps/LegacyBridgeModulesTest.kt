@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.jps
 
 import com.intellij.ProjectTopics.PROJECT_ROOTS
@@ -651,11 +652,10 @@ class LegacyBridgeModulesTest {
   }
 }
 
-internal fun createEmptyTestProject(temporaryDirectory: TemporaryDirectory,
-                                    disposableRule: DisposableRule): Project {
-  val projectDir = temporaryDirectory.newPath("project").toFile()
+internal fun createEmptyTestProject(temporaryDirectory: TemporaryDirectory, disposableRule: DisposableRule): Project {
+  val projectDir = temporaryDirectory.newPath("project")
   val project = WorkspaceModelInitialTestContent.withInitialContent(TypedEntityStorageBuilder.create()) {
-    ProjectManager.getInstance().createProject("testProject", File(projectDir, "testProject.ipr").path)!!
+    ProjectManager.getInstance().createProject("testProject", projectDir.resolve("testProject.ipr").toString())!!
   }
   invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().openTestProject(project) }
   disposableRule.disposable.attach { invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().forceCloseProject(project) } }
