@@ -215,6 +215,7 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
           it.settings.additionalLinesCount = 2
           it.setVerticalScrollbarVisible(true)
           it.scrollPane.border = IdeBorderFactory.createBorder(SideBorder.TOP or SideBorder.BOTTOM)
+          it.scrollPane.viewportBorder = JBUI.Borders.emptyLeft(4)
           it.putUserData(IncrementalFindAction.SEARCH_DISABLED, true)
         }
       }
