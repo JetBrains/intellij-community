@@ -54,8 +54,7 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
   private val languageRuntime: JavaLanguageRuntimeConfiguration? = target?.runtimes?.findByType(
     JavaLanguageRuntimeConfiguration::class.java)
 
-  private val classPathVolume by lazy { request.createTempVolume() }
-  private val agentVolume by lazy { request.createTempVolume() }
+  private fun uploadIntoTempDir(uploadPath: String): TargetValue<String> = request.createTempVolume().createUpload(uploadPath)
 
   private val commandLineContent by lazy {
     mutableMapOf<String, String>().also { commandLine.putUserData(JdkUtil.COMMAND_LINE_CONTENT, it) }
@@ -200,7 +199,7 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
 
       appendEncoding(javaParameters, vmParameters)
 
-      val argFileParameter = classPathVolume.createUpload(argFile.file.absolutePath)
+      val argFileParameter = uploadIntoTempDir(argFile.file.absolutePath)
       commandLine.addParameter(TargetValue.map(argFileParameter) { s -> "@$s" })
 
       rememberFileContentAfterUpload(argFile.file, argFileParameter)
@@ -244,12 +243,12 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
       }
 
 
-      val targetJarFile = classPathVolume.createUpload(jarFile.file.absolutePath)
+      val targetJarFile = uploadIntoTempDir(jarFile.file.absolutePath)
       if (dynamicVMOptions || dynamicParameters) {
         // -classpath path1:path2 CommandLineWrapper path2
         commandLine.addParameter("-classpath")
         commandLine.addParameter(composePathsList(listOf(
-          classPathVolume.createUpload(PathUtil.getJarPathForClass(commandLineWrapper)),
+          uploadIntoTempDir(PathUtil.getJarPathForClass(commandLineWrapper)),
           targetJarFile
         )))
         commandLine.addParameter(TargetValue.fixed(commandLineWrapper.name))
@@ -318,7 +317,7 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
       }
 
       val classpath: MutableSet<TargetValue<String>> = LinkedHashSet()
-      classpath.add(classPathVolume.createUpload(PathUtil.getJarPathForClass(commandLineWrapper)))
+      classpath.add(uploadIntoTempDir(PathUtil.getJarPathForClass(commandLineWrapper)))
 
       if (vmParameters.isUrlClassloader()) {
         if (request !is LocalTargetEnvironmentRequest) {
@@ -344,19 +343,19 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
       commandLine.addParameter(composePathsList(classpath))
 
       commandLine.addParameter(commandLineWrapper.name)
-      val classPathParameter = classPathVolume.createUpload(classpathFile.absolutePath)
+      val classPathParameter = uploadIntoTempDir(classpathFile.absolutePath)
       commandLine.addParameter(classPathParameter)
       rememberFileContentAfterUpload(classpathFile, classPathParameter)
 
       if (vmParamsFile != null) {
         commandLine.addParameter("@vm_params")
-        val vmParamsParameter = classPathVolume.createUpload(vmParamsFile.absolutePath)
+        val vmParamsParameter = uploadIntoTempDir(vmParamsFile.absolutePath)
         commandLine.addParameter(vmParamsParameter)
         rememberFileContentAfterUpload(vmParamsFile, vmParamsParameter)
       }
       if (appParamsFile != null) {
         commandLine.addParameter("@app_params")
-        val appParamsParameter = classPathVolume.createUpload(appParamsFile.absolutePath)
+        val appParamsParameter = uploadIntoTempDir(appParamsFile.absolutePath)
         commandLine.addParameter(appParamsParameter)
         rememberFileContentAfterUpload(appParamsFile, appParamsParameter)
       }
@@ -379,7 +378,7 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
       listOf(TargetValue.fixed(mainClass))
     }
     else if (jarPath != null) {
-      listOf(TargetValue.fixed("-jar"), classPathVolume.createUpload(jarPath))
+      listOf(TargetValue.fixed("-jar"), uploadIntoTempDir(jarPath))
     }
     else {
       throw CantRunException(ExecutionBundle.message("main.class.is.not.specified.error.message"))
@@ -431,7 +430,7 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
       return
     }
     val suffix = if (equalsSign > -1) value.substring(equalsSign) else ""
-    commandLine.addParameter(TargetValue.map(agentVolume.createUpload(path)) { v: String ->
+    commandLine.addParameter(TargetValue.map(uploadIntoTempDir(path)) { v: String ->
       prefix + v + suffix
     })
   }
@@ -489,7 +488,7 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
 
     for (path in classPath.pathList) {
       if (localJdkPath == null || remoteJdkPath == null || !path.startsWith(localJdkPath)) {
-        result.add(classPathVolume.createUpload(path))
+        result.add(uploadIntoTempDir(path))
       }
       else {
         //todo[remoteServers]: revisit with "provided" volume (?)
