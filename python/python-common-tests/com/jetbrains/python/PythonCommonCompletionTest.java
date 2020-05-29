@@ -1829,6 +1829,18 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
     assertSdkRootsNotParsed(file);
   }
 
+  // PY-42520
+  public void testNoRepeatingNamedArgs() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        List<String> suggested = doTestByText("print(end='.', <caret>");
+        assertContainsElements(suggested, "sep=", "file=");
+        assertDoesntContain(suggested, "end=");
+      }
+    );
+  }
+
   private void doTestHasattrContributor(String[] inList, String[] notInList) {
     doTestHasattrContributor("hasattrCompletion/" + getTestName(true) + ".py", inList, notInList);
   }
