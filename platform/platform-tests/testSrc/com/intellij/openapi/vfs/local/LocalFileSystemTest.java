@@ -28,10 +28,7 @@ import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -870,5 +867,32 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
         assertNull(virtualFileManager.findFileByUrl("temp://"));
       }
     }).assertTiming();
+  }
+
+  @Test
+  public void testFindFileByNioPath() {
+    File file = tempDir.newFile("some-new-file");
+
+    VirtualFile nioFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file.toPath());
+    VirtualFile nioFile2 = VirtualFileManager.getInstance().findFileByNioPath(file.toPath());
+
+    assertNotNull(nioFile);
+    assertNotNull(nioFile2);
+    assertEquals(nioFile, nioFile2);
+  }
+
+  @Test
+  public void testFindNioPathConsistency() {
+    File file = tempDir.newFile("some-new-file");
+
+    VirtualFile ioFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    VirtualFile nioFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file.toPath());
+
+    assertNotNull(ioFile);
+    assertNotNull(nioFile);
+    assertEquals(nioFile, ioFile);
+
+    assertEquals(file.toPath(), nioFile.toNioPath());
+    assertEquals(file.toPath(), ioFile.toNioPath());
   }
 }
