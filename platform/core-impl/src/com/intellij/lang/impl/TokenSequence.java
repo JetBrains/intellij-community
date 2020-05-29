@@ -16,23 +16,31 @@
 package com.intellij.lang.impl;
 
 import com.intellij.lexer.Lexer;
+import com.intellij.lexer.LexerBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-class TokenSequence {
+@ApiStatus.Experimental
+public class TokenSequence {
   private static final Logger LOG = Logger.getInstance(TokenSequence.class);
-  
+
+  private final CharSequence myText;
   final int[] lexStarts;
   final IElementType[] lexTypes;
   final int lexemeCount;
 
-  TokenSequence(int[] lexStarts, IElementType[] lexTypes, int lexemeCount) {
+  TokenSequence(int[] lexStarts, IElementType[] lexTypes, int lexemeCount, CharSequence text) {
     this.lexStarts = lexStarts;
     this.lexTypes = lexTypes;
     this.lexemeCount = lexemeCount;
+    myText = text;
     assert lexemeCount < lexStarts.length;
     assert lexemeCount < lexTypes.length;
   }
@@ -46,8 +54,141 @@ class TokenSequence {
       }
     }
   }
-  
-  static class Builder {
+
+  @NotNull
+  public static TokenSequence performLexing(@NotNull CharSequence text, @NotNull Lexer lexer) {
+    if (lexer instanceof WrappingLexer) {
+      TokenSequence existing = ((WrappingLexer)lexer).mySequence;
+      if (Comparing.equal(text, existing.myText)) {
+        // prevent clients like PsiBuilder from modifying shared token types
+        return new TokenSequence(existing.lexStarts, existing.lexTypes.clone(), existing.lexemeCount, text);
+      }
+    }
+    return new Builder(text, lexer).performLexing();
+  }
+
+  public int getTokenCount() {
+    return lexemeCount;
+  }
+
+  public @Nullable IElementType getTokenType(int index) {
+    if (index < 0 || index >= getTokenCount()) return null;
+    return lexTypes[index];
+  }
+
+  public boolean hasType(int index, @NotNull IElementType type) {
+    return getTokenType(index) == type;
+  }
+
+  public boolean hasType(int index, @Nullable IElementType @NotNull ... types) {
+    return ArrayUtil.contains(getTokenType(index), types);
+  }
+
+  public boolean hasType(int index, @NotNull TokenSet types) {
+    return types.contains(getTokenType(index));
+  }
+
+  public int backWithBraceMatching(int index, @NotNull IElementType opening, @NotNull IElementType closing) {
+    if (getTokenType(index) == closing) {
+      int nesting = 1;
+      while (nesting > 0 && index > 0) {
+        index--;
+        IElementType type = getTokenType(index);
+        if (type == closing) {
+          nesting++;
+        }
+        else if (type == opening) {
+          nesting--;
+        }
+      }
+    }
+    return index - 1;
+  }
+
+  public int backWhile(int index, @NotNull TokenSet toSkip) {
+    while (hasType(index, toSkip)) {
+      index--;
+    }
+    return index;
+  }
+
+  public int forwardWhile(int index, @NotNull TokenSet toSkip) {
+    while (hasType(index, toSkip)) {
+      index++;
+    }
+    return index;
+  }
+
+  public int getTokenStart(int index) {
+    return lexStarts[index];
+  }
+
+  public int getTokenEnd(int index) {
+    return lexStarts[index + 1];
+  }
+
+  public CharSequence getTokenText(int index) {
+    return myText.subSequence(getTokenStart(index), getTokenEnd(index));
+  }
+
+  public @NotNull Lexer asLexer() {
+    return new WrappingLexer(this);
+  }
+
+  private static class WrappingLexer extends LexerBase {
+    final TokenSequence mySequence;
+    private int myIndex;
+
+    WrappingLexer(TokenSequence sequence) {
+      this.mySequence = sequence;
+    }
+
+    @Override
+    public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
+      assert buffer.equals(mySequence.myText);
+      assert startOffset == 0;
+      assert endOffset == buffer.length();
+      assert initialState == 0;
+      myIndex = 0;
+    }
+
+    @Override
+    public int getState() {
+      return myIndex;
+    }
+
+    @Override
+    public @Nullable IElementType getTokenType() {
+      return mySequence.lexTypes[myIndex];
+    }
+
+    @Override
+    public int getTokenStart() {
+      return mySequence.lexStarts[myIndex];
+    }
+
+    @Override
+    public int getTokenEnd() {
+      return mySequence.lexStarts[myIndex + 1];
+    }
+
+    @Override
+    public void advance() {
+      myIndex++;
+    }
+
+    @Override
+    public @NotNull CharSequence getBufferSequence() {
+      return mySequence.myText;
+    }
+
+    @Override
+    public int getBufferEnd() {
+      return mySequence.myText.length();
+    }
+  }
+
+  private static class Builder {
     private final CharSequence myText;
     private final Lexer myLexer;
     private int[] myLexStarts;
@@ -88,7 +229,7 @@ class TokenSequence {
 
       myLexStarts[i] = myText.length();
       
-      return new TokenSequence(myLexStarts, myLexTypes, i);
+      return new TokenSequence(myLexStarts, myLexTypes, i, myText);
     }
 
     private void reportDescendingOffsets(int tokenIndex, int offset, int tokenStart) {

@@ -32,10 +32,6 @@ public class ExpressionParser {
   private static final TokenSet POSTFIX_OPS = TokenSet.create(JavaTokenType.PLUSPLUS, JavaTokenType.MINUSMINUS);
   private static final TokenSet PREF_ARITHMETIC_OPS = TokenSet.orSet(POSTFIX_OPS, TokenSet.create(JavaTokenType.PLUS, JavaTokenType.MINUS));
   private static final TokenSet PREFIX_OPS = TokenSet.orSet(PREF_ARITHMETIC_OPS, TokenSet.create(JavaTokenType.TILDE, JavaTokenType.EXCL));
-  private static final TokenSet LITERALS = TokenSet.create(
-    JavaTokenType.TRUE_KEYWORD, JavaTokenType.FALSE_KEYWORD, JavaTokenType.NULL_KEYWORD, JavaTokenType.INTEGER_LITERAL,
-    JavaTokenType.LONG_LITERAL, JavaTokenType.FLOAT_LITERAL, JavaTokenType.DOUBLE_LITERAL, JavaTokenType.CHARACTER_LITERAL,
-    JavaTokenType.STRING_LITERAL, JavaTokenType.TEXT_BLOCK_LITERAL);
   private static final TokenSet CONDITIONAL_OR_OPS = TokenSet.create(JavaTokenType.OROR);
   private static final TokenSet CONDITIONAL_AND_OPS = TokenSet.create(JavaTokenType.ANDAND);
   private static final TokenSet OR_OPS = TokenSet.create(JavaTokenType.OR);
@@ -511,7 +507,7 @@ public class ExpressionParser {
   private PsiBuilder.Marker parsePrimaryExpressionStart(final PsiBuilder builder) {
     IElementType tokenType = builder.getTokenType();
 
-    if (LITERALS.contains(tokenType)) {
+    if (ElementType.ALL_LITERALS.contains(tokenType)) {
       final PsiBuilder.Marker literal = builder.mark();
       builder.advanceLexer();
       literal.done(JavaElementType.LITERAL_EXPRESSION);
