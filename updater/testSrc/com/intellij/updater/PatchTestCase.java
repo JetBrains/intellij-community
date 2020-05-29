@@ -65,7 +65,7 @@ public abstract class PatchTestCase extends UpdaterTestCase {
   }
 
   protected static Map<String, Long> digest(Patch patch, File dir) throws IOException {
-    return new TreeMap<>(patch.digestFiles(dir, Collections.emptyList(), false));
+    return new TreeMap<>(patch.digestFiles(dir, Collections.emptySet(), false));
   }
 
   protected static List<PatchAction> sortActions(List<PatchAction> actions) {
