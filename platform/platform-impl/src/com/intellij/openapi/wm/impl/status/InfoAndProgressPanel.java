@@ -717,6 +717,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
       super(false, task, original);
 
       ProgressPanelBuilder builder = new ProgressPanelBuilder(myProgress).withTopSeparator();
+      builder.withText2();
 
       builder.withCancel(this::cancelRequest);
 
@@ -764,11 +765,12 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
 
     @Override
     protected void setText2Value(@NotNull String text) {
-      // XXX
+      myProgressPanel.setText2(text);
     }
 
     @Override
     protected void setText2Enabled(boolean value) {
+      myProgressPanel.setText2Enabled(value);
     }
 
     @Override

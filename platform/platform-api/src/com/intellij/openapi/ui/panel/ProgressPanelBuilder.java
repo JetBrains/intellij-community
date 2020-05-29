@@ -33,6 +33,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
   private boolean smallVariant;
 
   private boolean commentEnabled = true;
+  private boolean text2Enabled;
   private boolean topSeparatorEnabled;
 
   public ProgressPanelBuilder(JProgressBar progressBar) {
@@ -137,6 +138,12 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
     return this;
   }
 
+  @NotNull
+  public ProgressPanelBuilder withText2() {
+    text2Enabled = true;
+    return this;
+  }
+
   /**
      * Enable separator on top of the panel.
      *
@@ -180,6 +187,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
   private class LabeledPanelImpl extends ProgressPanel {
     private final JLabel label;
     private final JLabel comment;
+    private final JLabel text2;
 
     private String myCommentText = emptyComment();
     private boolean myServiceComment = false;
@@ -201,17 +209,32 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
 
       comment = new JLabel(myCommentText);
       comment.setForeground(UIUtil.getContextHelpForeground());
+
+      if (text2Enabled) {
+        text2 = new JLabel();
+        text2.setForeground(UIUtil.getContextHelpForeground());
+      }
+      else {
+        text2 = null;
+      }
+
       if (SystemInfo.isMac) {
         Font font = comment.getFont();
         float size = font.getSize2D();
         Font smallFont = font.deriveFont(size - 2.0f);
         comment.setFont(smallFont);
+        if (text2 != null) {
+          text2.setFont(smallFont);
+        }
       }
 
       if (StringUtil.isNotEmpty(initialLabelText)) {
         Dimension size = comment.getPreferredSize();
         size.width = label.getMinimumSize().width;
         comment.setMinimumSize(size);
+        if (text2 != null) {
+          text2.setMinimumSize(size);
+        }
       }
 
       cancelIcon = new IconButton(null,
@@ -242,6 +265,9 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
         Dimension size = comment.getPreferredSize();
         size.width = label.getMinimumSize().width;
         comment.setMinimumSize(size);
+        if (text2 != null) {
+          text2.setMinimumSize(size);
+        }
       }
     }
 
@@ -265,6 +291,21 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
     @Override
     public void setCommentEnabled(boolean enabled) {
       comment.setEnabled(enabled);
+    }
+
+    @Override
+    public void setText2(@Nullable String text) {
+      if (text2 != null) {
+        text2.setText(text);
+        text2.setVisible(true);
+      }
+    }
+
+    @Override
+    public void setText2Enabled(boolean enabled) {
+      if (text2 != null) {
+        text2.setEnabled(enabled);
+      }
     }
 
     @Override
@@ -387,16 +428,25 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
       }
 
       if (commentEnabled) {
-        gc.gridy++;
-        gc.gridx = labelAbove ? 0 : 1;
-        gc.insets = labelAbove ? JBUI.insets(-1, 13, 0, 13) : JBUI.insets(-1, 12, 0, 13);
-        gc.weightx = 1.0;
-        gc.anchor = GridBagConstraints.LINE_START;
-        gc.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(comment, gc);
+        addLabel(panel, gc, comment);
+      }
+
+      if (text2 != null) {
+        addLabel(panel, gc, text2);
+        text2.setVisible(false);
       }
 
       gc.gridy++;
+    }
+
+    private void addLabel(@NotNull JPanel panel, @NotNull GridBagConstraints gc, @NotNull JComponent label) {
+      gc.gridy++;
+      gc.gridx = labelAbove ? 0 : 1;
+      gc.insets = labelAbove ? JBUI.insets(-1, 13, 0, 13) : JBUI.insets(-1, 12, 0, 13);
+      gc.weightx = 1.0;
+      gc.anchor = GridBagConstraints.LINE_START;
+      gc.fill = GridBagConstraints.HORIZONTAL;
+      panel.add(label, gc);
     }
 
     private void addButton(@NotNull JPanel panel, @NotNull GridBagConstraints gc, @NotNull InplaceButton button, boolean cancel) {
