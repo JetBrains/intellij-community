@@ -13,11 +13,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -75,7 +77,9 @@ public class RearrangeAttributesIntention implements IntentionAction {
     return true;
   }
 
-  private static XmlTag getTag(Editor editor, PsiFile file) {
+  private static XmlTag getTag(@Nullable Editor editor, PsiFile file) {
+    if (!(file instanceof XmlFile)) return null;
+    
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     XmlTag parent = PsiTreeUtil.getParentOfType(element, XmlTag.class);
