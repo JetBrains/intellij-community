@@ -704,4 +704,11 @@ public class EditorImplTest extends AbstractEditorTest {
     runWriteCommand(() -> getEditor().getDocument().insertString(0, " "));
     verifySoftWrapPositions();
   }
+
+  public void testClickOnBlockInlayDoesNotRemoveSelection() {
+    initText("<selection>text<caret></selection>");
+    addBlockInlay(0, true, 100);
+    mouse().clickAtXY(50, getEditor().getLineHeight() / 2);
+    checkResultByText("<selection>text<caret></selection>");
+  }
 }
