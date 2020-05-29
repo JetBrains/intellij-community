@@ -278,6 +278,9 @@ internal class PEntityStorageBuilder(
             val pid = clonedEntity.createPid()
             val parents = this.refs.getParentRefsOfChild(pid)
             val children = this.refs.getChildrenRefsOfParentBy(pid)
+
+            // At this point you might ask me: What about updating softLinks index?
+            //   Well, this is not necessary because we won't recognize entity if it'll change it's PersistentId
             indexes.updateIndices(oldPid, pid, replaceWith)
             updateChangeLog { it.add(ChangeEntry.ReplaceEntity(clonedEntity, children, parents)) }
           }
@@ -291,6 +294,7 @@ internal class PEntityStorageBuilder(
           val newPid = newEntity.createPid()
           replaceMap[newPid] = oldPid
           indexes.updateIndices(oldPid, newPid, replaceWith)
+          if (newEntity is PSoftLinkable) indexes.updateSoftLinksIndex(newEntity)
           createAddEvent(newEntity)
         }
       }
@@ -304,6 +308,7 @@ internal class PEntityStorageBuilder(
       this.entitiesByType.remove(localEntity.id, entityClass)
       val entityId = localEntity.createPid()
       indexes.removeFromIndices(entityId)
+      if (localEntity is PSoftLinkable) indexes.removeFromSoftLinksIndex(localEntity)
       updateChangeLog { it.add(ChangeEntry.RemoveEntity(entityId)) }
     }
 
