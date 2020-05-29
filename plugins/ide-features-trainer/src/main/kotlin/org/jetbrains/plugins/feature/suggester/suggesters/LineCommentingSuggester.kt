@@ -3,10 +3,7 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiErrorElement
-import org.jetbrains.plugins.feature.suggester.FeatureSuggester
-import org.jetbrains.plugins.feature.suggester.NoSuggestion
-import org.jetbrains.plugins.feature.suggester.PopupSuggestion
-import org.jetbrains.plugins.feature.suggester.Suggestion
+import org.jetbrains.plugins.feature.suggester.*
 import org.jetbrains.plugins.feature.suggester.cache.UserActionsCache
 import org.jetbrains.plugins.feature.suggester.cache.UserAnActionsCache
 import org.jetbrains.plugins.feature.suggester.changes.ChildAddedAction
@@ -16,9 +13,11 @@ import org.jetbrains.plugins.feature.suggester.changes.UserAction
 
 class LineCommentingSuggester : FeatureSuggester {
 
-    val POPUP_MESSAGE = "Try the Comment Line feature to do it faster (Ctrl + /)"
-    val UNCOMMENTING_POPUP_MESSAGE = "Why not use the Uncomment Line feature? (Ctrl + /)"
-    val DESCRIPTOR_ID = "codeassists.comment.line"
+    companion object {
+        val POPUP_MESSAGE = "Try the Comment Line feature to do it faster (Ctrl + /)"
+        val UNCOMMENTING_POPUP_MESSAGE = "Why not use the Uncomment Line feature? (Ctrl + /)"
+        val DESCRIPTOR_ID = "codeassists.comment.line"
+    }
 
     private var uncommentingActionStart: UserAction? = null
 
