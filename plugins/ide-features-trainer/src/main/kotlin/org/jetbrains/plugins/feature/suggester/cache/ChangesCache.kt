@@ -2,7 +2,7 @@ package org.jetbrains.plugins.feature.suggester.cache
 
 import java.util.*
 
-open class ChangedCache<EventType>(val maxCacheSize: Int) {
+open class ChangesCache<EventType>(val maxCacheSize: Int) {
 
     private val cache: MutableList<EventType> = LinkedList<EventType>()
 
