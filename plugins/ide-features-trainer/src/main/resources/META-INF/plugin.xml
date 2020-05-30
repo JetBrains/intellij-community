@@ -18,6 +18,7 @@
 
     <extensions defaultExtensionNs="org.intellij">
         <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.LineCommentingSuggester"/>
+        <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.SafeDeleteSuggester"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">

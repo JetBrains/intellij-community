@@ -2,6 +2,7 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.runInEdtAndWait
 import junit.framework.TestCase
 import org.jetbrains.plugins.feature.suggester.FeatureSuggestersManagerListener
 import org.jetbrains.plugins.feature.suggester.PopupSuggestion
@@ -47,11 +48,10 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
         lock.withLock {
             condition.await(10, TimeUnit.SECONDS)
         }
+        println(myFixture.file.text)
         if (!testPassed.get()) {
             TestCase.fail()
         }
-
-        println(myFixture.file.text)
     }
 
     fun testSuggestionNotFound(doTestActions: FeatureSuggesterTest.() -> Unit) {
@@ -65,6 +65,7 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
                         // we are doing something only if current test is running
                         // because this listeners will be alive in all tests
                         lock.withLock {
+                            println(myFixture.file.text)
                             TestCase.fail()
                         }
                     }
@@ -78,6 +79,21 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
         testPassed.set(true)
 
         println(myFixture.file.text)
+    }
+
+    fun moveCaretRelatively(columnShift: Int, lineShift: Int, withSelection: Boolean) {
+        runInEdtAndWait {
+            editor.caretModel.moveCaretRelatively(columnShift, lineShift, withSelection, false, true)
+        }
+    }
+
+    /**
+     * Removes text from current caret position according to column and line shift
+     * Implemented by selecting text and typing space symbol
+     */
+    fun removeSymbols(columnShift: Int, lineShift: Int) {
+        moveCaretRelatively(columnShift, lineShift, true)
+        myFixture.type(' ')
     }
 
 }
