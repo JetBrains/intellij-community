@@ -12,12 +12,9 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.packaging.*
-import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.associatedModule
-import com.jetbrains.python.sdk.baseDir
+import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.pipenv.pipFileLockRequirements
 import com.jetbrains.python.sdk.pipenv.runPipEnv
-import com.jetbrains.python.sdk.pythonSdk
 
 /**
  * @author vlan
@@ -49,7 +46,7 @@ class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
       runPipEnv(sdk, *args.toTypedArray())
     }
     finally {
-      sdk.associatedModule?.baseDir?.refresh(true, false)
+      sdk.associatedModuleDir?.refresh(true, false)
       refreshAndGetPackages(true)
     }
   }
@@ -61,7 +58,7 @@ class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
       runPipEnv(sdk, *args.toTypedArray())
     }
     finally {
-      sdk.associatedModule?.baseDir?.refresh(true, false)
+      sdk.associatedModuleDir?.refresh(true, false)
       refreshAndGetPackages(true)
     }
   }
