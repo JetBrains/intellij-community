@@ -1182,7 +1182,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void setUp() throws Exception {
     super.setUp();
 
-    TestApplicationManager.getInstance();
     EdtTestUtil.runInEdtAndWait(() -> {
       myProjectFixture.setUp();
       myTempDirFixture.setUp();

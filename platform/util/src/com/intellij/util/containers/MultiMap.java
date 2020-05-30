@@ -78,6 +78,16 @@ public class MultiMap<K, V> implements Serializable {
     }
   }
 
+  public final @NotNull Map<K, Collection<V>> toHashMap() {
+    if (myMap instanceof HashMap) {
+      //noinspection unchecked
+      return (Map<K, Collection<V>>)((HashMap<K, Collection<V>>)myMap).clone();
+    }
+    else {
+      return new HashMap<>(myMap);
+    }
+  }
+
   public final void putAllValues(@NotNull Map<? extends K, ? extends V> from) {
     for (Map.Entry<? extends K, ? extends V> entry : from.entrySet()) {
       putValue(entry.getKey(), entry.getValue());

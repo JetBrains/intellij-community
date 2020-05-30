@@ -165,13 +165,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   protected void setUpProject() throws Exception {
     super.setUpProject();
     ProjectManagerEx.getInstanceEx().openProject(getProject());
-    super.runStartupActivities();
     UIUtil.dispatchAllInvocationEvents(); // startup activities
     EditorMouseHoverPopupManager.getInstance(); // treat listeners added there as not leaks
-  }
-
-  @Override
-  protected void runStartupActivities() {
   }
 
   private static void typeInAlienEditor(@NotNull Editor alienEditor, char c) {

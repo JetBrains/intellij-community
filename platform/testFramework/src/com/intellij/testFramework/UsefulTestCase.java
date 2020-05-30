@@ -10,7 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
@@ -301,7 +301,7 @@ public abstract class UsefulTestCase extends TestCase {
         }
       })
       .append(() -> {
-        currentCodeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
+        currentCodeStyleSettings.getIndentOptions(FileTypeManager.getInstance().getStdFileType("JAVA"));
         try {
           checkCodeStyleSettingsEqual(oldCodeStyleSettings, currentCodeStyleSettings);
         }
@@ -437,10 +437,11 @@ public abstract class UsefulTestCase extends TestCase {
 
   @Override
   public void runBare() throws Throwable {
-    if (!shouldRunTest()) return;
-
+    if (!shouldRunTest()) {
+      return;
+    }
     if (runInDispatchThread()) {
-      TestRunnerUtil.replaceIdeEventQueueSafely();
+      TestApplicationManagerKt.replaceIdeEventQueueSafely();
       EdtTestUtil.runInEdtAndWait(this::defaultRunBare);
     }
     else {
@@ -617,7 +618,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static <T> void assertContainsElements(@NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> expected) {
-    ArrayList<T> copy = new ArrayList<>(collection);
+    List<T> copy = new ArrayList<>(collection);
     copy.retainAll(expected);
     assertSameElements(toString(collection), copy, expected);
   }
@@ -633,7 +634,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static <T> void assertDoesntContain(@NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> notExpected) {
-    ArrayList<T> expected = new ArrayList<>(collection);
+    List<T> expected = new ArrayList<>(collection);
     expected.removeAll(notExpected);
     assertSameElements(collection, expected);
   }

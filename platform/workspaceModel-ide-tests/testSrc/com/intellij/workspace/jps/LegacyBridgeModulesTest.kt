@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
@@ -406,7 +407,7 @@ class LegacyBridgeModulesTest {
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
       val project = ProjectManager.getInstance().createProject("testProject", iprFile.path)!!
-      invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().openTestProject(project) }
+      invokeAndWaitIfNeeded { PlatformTestUtil.openTestProject(project) }
       disposableRule.disposable.attach { invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().forceCloseProject(project) } }
 
       val module = ModuleManager.getInstance(project).findModuleByName("test")
@@ -441,7 +442,7 @@ class LegacyBridgeModulesTest {
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
       val project = ProjectManager.getInstance().createProject("testProject", iprFile.path)!!
-      invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().openTestProject(project) }
+      invokeAndWaitIfNeeded { PlatformTestUtil.openTestProject(project) }
       disposableRule.disposable.attach { invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().forceCloseProject(project) } }
 
       val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
@@ -657,7 +658,7 @@ internal fun createEmptyTestProject(temporaryDirectory: TemporaryDirectory, disp
   val project = WorkspaceModelInitialTestContent.withInitialContent(TypedEntityStorageBuilder.create()) {
     ProjectManager.getInstance().createProject("testProject", projectDir.resolve("testProject.ipr").toString())!!
   }
-  invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().openTestProject(project) }
+  invokeAndWaitIfNeeded { PlatformTestUtil.openTestProject(project) }
   disposableRule.disposable.attach { invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().forceCloseProject(project) } }
   return project
 }

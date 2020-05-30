@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.ProjectTopics;
@@ -279,10 +279,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
     descriptor.registerSdk(parentDisposable);
 
-    ProjectManagerEx projectManagerEx = ProjectManagerEx.getInstanceEx();
     Project project = ourProject;
     try {
-      projectManagerEx.openTestProject(project);
+      PlatformTestUtil.openTestProject(project);
     }
     catch (Throwable e) {
       setProject(null);

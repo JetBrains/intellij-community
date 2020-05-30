@@ -5,7 +5,6 @@ import com.intellij.ide.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.PathUtil
@@ -17,6 +16,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExternalResource
 import java.io.IOException
+import java.nio.file.Path
+import java.nio.file.Paths
 
 @RunsInEdt
 class RecentProjectsTest {
@@ -64,9 +65,9 @@ class RecentProjectsTest {
     manager.addGroup(g1)
     manager.addGroup(g2)
 
-    g1.addProject(p1)
-    g1.addProject(p2)
-    g2.addProject(p3)
+    g1.addProject(p1.toString())
+    g1.addProject(p2.toString())
+    g2.addProject(p3.toString())
 
     checkGroups(listOf("g2", "g1"))
 
@@ -82,7 +83,7 @@ class RecentProjectsTest {
       val path = tempDir.newPath("z1")
       project = HeavyPlatformTestCase.createProject(path)
       ProjectOpeningTest.closeProject(project)
-      project = ProjectManagerEx.getInstanceEx().loadAndOpenProject(path)
+      project = PlatformTestUtil.loadAndOpenProject(path)
       val timestamp = getProjectOpenTimestamp("z1")
       RecentProjectsManagerBase.instanceEx.updateLastProjectPath()
       // "Timestamp for opened project has not been updated"
@@ -103,16 +104,15 @@ class RecentProjectsTest {
     return -1
   }
 
-  @Throws(IOException::class, JDOMException::class)
-  private fun doReopenCloseAndCheck(projectPath: String, vararg results: String) {
-    val project = ProjectManager.getInstance().loadAndOpenProject(projectPath)
+  private fun doReopenCloseAndCheck(projectPath: Path, vararg results: String) {
+    val project = PlatformTestUtil.loadAndOpenProject(projectPath)
     ProjectOpeningTest.closeProject(project)
     checkRecents(*results)
   }
 
   @Throws(IOException::class, JDOMException::class)
-  private fun doReopenCloseAndCheckGroups(projectPath: String, results: List<String>) {
-    val project = ProjectManager.getInstance().loadAndOpenProject(projectPath)
+  private fun doReopenCloseAndCheckGroups(projectPath: Path, results: List<String>) {
+    val project = PlatformTestUtil.loadAndOpenProject(projectPath)
     ProjectOpeningTest.closeProject(project)
     checkGroups(results)
   }
@@ -135,15 +135,15 @@ class RecentProjectsTest {
     assertThat(recentGroups).isEqualTo(groups)
   }
 
-  private fun createAndOpenProject(name: String): String {
+  private fun createAndOpenProject(name: String): Path {
     var project: Project? = null
     try {
       val path = tempDir.newPath(name)
       project = HeavyPlatformTestCase.createProject(path)
       PlatformTestUtil.saveProject(project)
       ProjectOpeningTest.closeProject(project)
-      project = ProjectManagerEx.getInstanceEx().loadAndOpenProject(path)
-      return project!!.basePath!!
+      project = PlatformTestUtil.loadAndOpenProject(path)
+      return Paths.get(project.basePath!!)
     }
     finally {
       ProjectOpeningTest.closeProject(project)

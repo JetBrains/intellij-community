@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.search;
 
 import com.intellij.JavaTestUtil;
@@ -7,7 +7,6 @@ import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.impl.ProjectRootUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -33,22 +32,25 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 @HeavyPlatformTestCase.WrapInCommand
 public class UpdateCacheTest extends JavaPsiTestCase {
   @Override
   protected void setUpProject() throws Exception {
-    loadAndSetupProject(getProjectDirOrFile().toString());
+    loadAndSetupProject(getProjectDirOrFile());
   }
 
-  private void loadAndSetupProject(String path) throws Exception {
+  private void loadAndSetupProject(@NotNull Path path) throws Exception {
     LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
-    myProject = ProjectManager.getInstance().loadAndOpenProject(path);
+    myProject = PlatformTestUtil.loadAndOpenProject(path);
 
     setUpModule();
 
@@ -56,9 +58,6 @@ public class UpdateCacheTest extends JavaPsiTestCase {
     createTestProjectStructure( root);
 
     setUpJdk();
-
-    ProjectManagerEx.getInstanceEx().openTestProject(myProject);
-    runStartupActivities();
   }
 
   public void testFileCreation() {
@@ -121,10 +120,10 @@ public class UpdateCacheTest extends JavaPsiTestCase {
     checkUsages(objectClass, ArrayUtil.EMPTY_STRING_ARRAY);
     FileBasedIndex.getInstance().getContainingFiles(TodoIndex.NAME, new TodoIndexEntry("todo", true), GlobalSearchScope.allScope(getProject()));
 
-    final String projectLocation = myProject.getPresentableUrl();
+    String projectLocation = myProject.getPresentableUrl();
     assert projectLocation != null : myProject;
     PlatformTestUtil.saveProject(myProject);
-    final VirtualFile content = ModuleRootManager.getInstance(getModule()).getContentRoots()[0];
+    VirtualFile content = ModuleRootManager.getInstance(getModule()).getContentRoots()[0];
     Project project = myProject;
     ProjectManagerEx.getInstanceEx().forceCloseProject(project);
     myProject = null;
@@ -141,15 +140,13 @@ public class UpdateCacheTest extends JavaPsiTestCase {
 
     LocalFileSystem.getInstance().refresh(false);
 
-    myProject = ProjectManager.getInstance().loadAndOpenProject(projectLocation);
+    myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(projectLocation));
     InjectedLanguageManagerImpl.pushInjectors(getProject());
 
     setUpModule();
     setUpJdk();
-    ProjectManagerEx.getInstanceEx().openTestProject(myProject);
     UIUtil.dispatchAllInvocationEvents(); // startup activities
 
-    runStartupActivities();
     PsiTestUtil.addSourceContentToRoots(getModule(), content);
 
     assertNotNull(myProject);

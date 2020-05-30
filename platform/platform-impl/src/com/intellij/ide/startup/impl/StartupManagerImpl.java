@@ -1,15 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.startup.impl;
 
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ActivityCategory;
-import com.intellij.diagnostic.PerformanceWatcher;
-import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.codeWithMe.ClientId;
+import com.intellij.diagnostic.*;
 import com.intellij.diagnostic.StartUpMeasurer.Activities;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
-import com.intellij.ide.startup.ProjectLoadListener;
 import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.Application;
@@ -35,13 +32,13 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.codeWithMe.ClientId;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -123,36 +120,28 @@ public class StartupManagerImpl extends StartupManagerEx {
     return postStartupActivitiesPassed;
   }
 
-  public final void projectOpened(@Nullable ProgressIndicator indicator) {
+  public final @NotNull Future<?> projectOpened(@Nullable ProgressIndicator indicator) {
     if (indicator != null && ApplicationManager.getApplication().isInternal()) {
       indicator.setText(IdeBundle.message("startup.indicator.text.running.startup.activities"));
     }
 
     doRunStartUpActivities(indicator);
 
-    // If called in EDT - client expect that work will be done after call, executing in a pooled thread maybe not expected.
-    // In test mode project opened not under progress, so, execute directly in current thread.
-    Application app = ApplicationManager.getApplication();
-    if (app.isUnitTestMode() || app.isDispatchThread()) {
-      runPostStartupActivities();
+    if (indicator != null) {
+      indicator.checkCanceled();
     }
-    else {
-      if (indicator != null) {
-        indicator.checkCanceled();
+
+    Future<?> future = AppExecutorUtil.getAppExecutorService().submit(() -> {
+      if (myProject.isDisposed()) {
+        return;
       }
 
-      app.executeOnPooledThread(() -> {
-        if (myProject.isDisposed()) {
-          return;
-        }
+      BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, this::runPostStartupActivities);
+    });
 
-        BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
-          runPostStartupActivities();
-
-          ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLoadListener.TOPIC).postStartUpActivitiesPassed();
-        });
-      });
-    }
+    LoadingState phase = DumbService.isDumb(myProject) ? LoadingState.PROJECT_OPENED : LoadingState.INDEXING_FINISHED;
+    StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, phase);
+    return future;
   }
 
   private void doRunStartUpActivities(@Nullable ProgressIndicator indicator) {
@@ -203,7 +192,7 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   // Must be executed in a pooled thread outside of project loading modal task. The only exclusion - test mode.
-  public final void runPostStartupActivities() {
+  private void runPostStartupActivities() {
     LOG.assertTrue(myStartupActivitiesPassed);
 
     PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
@@ -214,7 +203,6 @@ public class StartupManagerImpl extends StartupManagerEx {
 
     AtomicReference<Activity> edtActivity = new AtomicReference<>();
     AtomicBoolean uiFreezeWarned = new AtomicBoolean();
-    AtomicBoolean eventAboutDumbUnawareActivities = new AtomicBoolean();
 
     AtomicInteger counter = new AtomicInteger();
     DumbService dumbService = DumbService.getInstance(myProject);
@@ -235,11 +223,11 @@ public class StartupManagerImpl extends StartupManagerEx {
       counter.incrementAndGet();
       runDumbUnawareActivity(dumbService, () -> {
         runActivity(uiFreezeWarned, extension, pluginDescriptor, ProgressIndicatorProvider.getGlobalProgressIndicator());
-        dumbUnawarePostActivitiesPassed(edtActivity, eventAboutDumbUnawareActivities, counter.decrementAndGet());
+        dumbUnawarePostActivitiesPassed(edtActivity, counter.decrementAndGet());
       });
     });
 
-    dumbUnawarePostActivitiesPassed(edtActivity, eventAboutDumbUnawareActivities, counter.get());
+    dumbUnawarePostActivitiesPassed(edtActivity, counter.get());
 
     if (myProject.isDisposed()) {
       return;
@@ -266,9 +254,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     runDumbUnawarePostStartupActivitiesRegisteredDynamically();
   }
 
-  private static void dumbUnawarePostActivitiesPassed(@NotNull AtomicReference<Activity> edtActivity,
-                                                      @NotNull AtomicBoolean eventAboutDumbUnawareActivities,
-                                                      int count) {
+  private static void dumbUnawarePostActivitiesPassed(@NotNull AtomicReference<Activity> edtActivity, int count) {
     if (count != 0) {
       return;
     }
@@ -276,11 +262,6 @@ public class StartupManagerImpl extends StartupManagerEx {
     Activity activity = edtActivity.getAndSet(null);
     if (activity != null) {
       activity.end();
-    }
-
-    if (eventAboutDumbUnawareActivities.compareAndSet(false, true)) {
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLoadListener.TOPIC)
-        .dumbUnawarePostStartUpActivitiesPassed();
     }
   }
 
@@ -338,8 +319,8 @@ public class StartupManagerImpl extends StartupManagerEx {
     runDumbUnawareActivity(dumbService, new Runnable() {
       @Override
       public void run() {
-        // todo should it be moved out of EDT? Not clear, do we really have a lot of such activities
         // myDumbAwarePostStartupActivities might be non-empty if new activities were registered during dumb mode
+        // todo should it be moved out of EDT? Not clear, do we really have a lot of such activities
         runActivities(myDumbAwarePostStartupActivities, null, Activities.PROJECT_DUMB_POST_STARTUP);
 
         while (true) {

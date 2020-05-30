@@ -1,22 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl
 
 import com.intellij.configurationStore.StoreUtil
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.io.createDirectories
-import junit.framework.TestCase
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -72,8 +74,7 @@ class ProjectOpeningTest {
   @Test
   fun cancelOnLoadingModules() {
     val foo = tempDir.newPath()
-    val manager: ProjectManagerEx? = ProjectManagerEx.getInstanceEx()
-    var project = manager!!.createProject(null, foo.toString())!!
+    var project = createHeavyProject(foo)
     try {
       StoreUtil.saveSettings(project, false)
       runInEdtAndWait {
@@ -82,14 +83,14 @@ class ProjectOpeningTest {
       ApplicationManager.getApplication().messageBus.connect(disposableRule.disposable).subscribe(ProjectLifecycleListener.TOPIC,
         object : ProjectLifecycleListener {
           override fun projectComponentsInitialized(project: Project) {
-            val indicator: ProgressIndicator? = ProgressManager.getInstance().progressIndicator
-            TestCase.assertNotNull(indicator)
+            val indicator = ProgressManager.getInstance().progressIndicator
+            assertThat(indicator).isNotNull()
             indicator!!.cancel()
             indicator.checkCanceled()
           }
         })
-      runInEdtAndWait {
-        project = manager.loadAndOpenProject(foo)!!
+      runModalTask("") {
+        project = PlatformProjectOpenProcessor.openExistingProject(foo, foo, OpenProjectTask())!!
       }
       assertThat(project.isOpen).isFalse()
       assertThat(project.isDisposed).isTrue()
@@ -106,7 +107,7 @@ class ProjectOpeningTest {
     val projectDir = tempDir.newPath()
     projectDir.createDirectories()
 
-    val dirBasedProject = ProjectManager.getInstance().createProject("project", projectDir.toAbsolutePath().toString())!!
+    val dirBasedProject = createHeavyProject(projectDir)
     Disposer.register(disposableRule.disposable, Disposable {
       runInEdtAndWait { closeProject(dirBasedProject) }
     })

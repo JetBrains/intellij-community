@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.project;
 
 import com.intellij.codeHighlighting.Pass;
@@ -11,7 +11,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -21,8 +20,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LeakHunter;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+
+import java.nio.file.Paths;
 
 import static com.intellij.testFramework.RunAll.runAll;
 
@@ -30,7 +32,7 @@ public class LoadProjectTest extends HeavyPlatformTestCase {
   @Override
   protected void setUpProject() throws Exception {
     String projectPath = PathManagerEx.getTestDataPath() + "/model/model.ipr";
-    myProject = ProjectManager.getInstance().loadAndOpenProject(projectPath);
+    myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(projectPath));
     ServiceContainerUtil.registerComponentImplementation(myProject, FileEditorManager.class, FileEditorManagerImpl.class);
   }
 

@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.systemIndependentPath
+import com.intellij.testFramework.*
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.createHeavyProject
@@ -46,7 +47,7 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
         createHeavyProject(baseProjectDir.root.toPath())
       }
       runInEdtAndWait {
-        ProjectManagerEx.getInstanceEx().openTestProject(project)
+        PlatformTestUtil.openTestProject(project)
       }
     }
 

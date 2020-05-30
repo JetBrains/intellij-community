@@ -3,11 +3,8 @@ package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.conversion.CannotConvertException;
-import com.intellij.conversion.ConversionResult;
-import com.intellij.conversion.ConversionService;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.ActivityCategory;
-import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.AppLifecycleListener;
@@ -32,7 +29,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -46,6 +42,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
+import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.serviceContainer.ContainerUtilKt;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.GuiUtils;
@@ -55,7 +52,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.UnsafeWeakList;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ref.GCUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
 import java.awt.*;
@@ -67,6 +63,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -338,14 +335,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @Override
-  public @NotNull Project loadProject(@NotNull Path file, @Nullable String projectName) {
+  public @NotNull Project loadProject(@NotNull Path file) {
     //noinspection TestOnlyProblems
-    return loadProject(file, projectName, null);
+    return loadProject(file, null);
   }
 
   @TestOnly
-  public static Project loadProject(@NotNull Path file, @Nullable String projectName, @Nullable Consumer<Project> beforeInit) {
-    ProjectImpl project = doCreateProject(projectName, file);
+  public static Project loadProject(@NotNull Path file, @Nullable Consumer<Project> beforeInit) {
+    ProjectImpl project = doCreateProject(null, file);
     if (beforeInit != null) {
       beforeInit.accept(project);
     }
@@ -417,15 +414,17 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return false;
     }
 
-    if (!ApplicationManager.getApplication().isUnitTestMode() && ApplicationManager.getApplication().isDispatchThread()) {
+    Application app = ApplicationManager.getApplication();
+    if (!app.isUnitTestMode() && app.isDispatchThread()) {
       LOG.warn("Consider to load project under progress");
     }
 
     try {
-      doLoadProject(project, ProgressManager.getInstance().getProgressIndicator());
+      Future<?> future = doLoadProject(project, ProgressManager.getInstance().getProgressIndicator());
+      ProjectLoaderKt.waitInTestMode(future);
     }
     catch (ProcessCanceledException e) {
-      ApplicationManager.getApplication().invokeAndWait(() -> {
+      app.invokeAndWait(() -> {
         closeProject(project, /* saveProject = */ false, /* dispose = */ true, /* checkCanClose = */ false);
       });
       notifyProjectOpenFailed();
@@ -434,7 +433,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return true;
   }
 
-  private static void doLoadProject(@NotNull Project project, @Nullable ProgressIndicator indicator) {
+  private static @NotNull Future<?> doLoadProject(@NotNull Project project, @Nullable ProgressIndicator indicator) {
     Activity waitEdtActivity = StartUpMeasurer.startMainActivity("placing calling projectOpened on event queue");
     if (indicator != null) {
       //noinspection HardCodedStringLiteral
@@ -451,12 +450,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       fireProjectOpened(project);
     });
 
-    ((StartupManagerImpl)StartupManager.getInstance(project)).projectOpened(indicator);
-
-    GuiUtils.invokeLaterIfNeeded(() -> {
-      LoadingState phase = DumbService.isDumb(project) ? LoadingState.PROJECT_OPENED : LoadingState.INDEXING_FINISHED;
-      StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, phase);
-    }, ModalityState.NON_MODAL, project.getDisposed());
+    return ((StartupManagerImpl)StartupManager.getInstance(project)).projectOpened(indicator);
   }
 
   private boolean addToOpened(@NotNull Project project) {
@@ -493,65 +487,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @Override
-  public Project loadAndOpenProject(@NotNull String originalFilePath) {
-    return loadAndOpenProject(Paths.get(FileUtilRt.toSystemIndependentName(toCanonicalName(originalFilePath))));
-  }
-
-  @Override
-  public @Nullable Project loadAndOpenProject(@NotNull Path file) {
-    ConversionResult conversionResult;
-    try {
-      conversionResult = ConversionService.getInstance().convert(file);
-    }
-    catch (CannotConvertException e) {
-      conversionResult = null;
-      LOG.info(e);
-      showCannotConvertMessage(e, null);
-    }
-
-    ProjectImpl project;
-    if (conversionResult == null || conversionResult.openingIsCanceled()) {
-      project = null;
-    }
-    else {
-      project = doCreateProject(null, file);
-      ConversionResult finalConversionResult = conversionResult;
-      ProgressManager.getInstance().run(new Task.Modal(project, IdeUICustomization.getInstance().projectMessage("progress.title.loading.project"), true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          try {
-            initProject(file, project, /* isRefreshVfsNeeded = */ true, null, indicator);
-          }
-          catch (ProcessCanceledException e) {
-            return;
-          }
-          catch (Throwable e) {
-            LOG.error(e);
-            return;
-          }
-
-          if (!finalConversionResult.conversionNotNeeded()) {
-            StartupManager.getInstance(project).registerPostStartupActivity(() -> finalConversionResult.postStartupActivity(project));
-          }
-          openProject(project);
-        }
-      });
-    }
-
-    if (project == null) {
-      WelcomeFrame.showIfNoProjectOpened();
-      return null;
-    }
-
-    if (!project.isOpen()) {
-      WelcomeFrame.showIfNoProjectOpened();
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        if (!project.isDisposed()) {
-          Disposer.dispose(project);
-        }
-      });
-    }
-    return project;
+  public final Project loadAndOpenProject(@NotNull String originalFilePath) {
+    Path file = Paths.get(FileUtilRt.toSystemIndependentName(toCanonicalName(originalFilePath)));
+    return PlatformProjectOpenProcessor.openExistingProject(file, file, new OpenProjectTask());
   }
 
   public static void showCannotConvertMessage(@NotNull CannotConvertException e, @Nullable Component component) {
@@ -567,14 +505,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     if (!app.isUnitTestMode()) {
       WelcomeFrame.showIfNoProjectOpened();
     }
-  }
-
-  @Override
-  @TestOnly
-  public void openTestProject(final @NotNull Project project) {
-    assert ApplicationManager.getApplication().isUnitTestMode();
-    openProject(project);
-    UIUtil.dispatchAllInvocationEvents(); // post init activities are invokeLatered
   }
 
   @Override
@@ -934,7 +864,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @Override
-  public String @NotNull [] getAllExcludedUrls() {
+  public @NotNull List<String> getAllExcludedUrls() {
     return myExcludeRootsCache.getExcludedUrls();
   }
 }

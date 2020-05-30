@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.CommonBundle;
@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -55,7 +56,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenPomPathModuleService;
@@ -64,7 +64,6 @@ import org.jetbrains.idea.maven.importing.worktree.LegacyBrigdeIdeModifiableMode
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenArtifactDownloader.DownloadResult;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.*;
@@ -80,7 +79,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @State(name = "MavenProjectsManager")
-public class MavenProjectsManager extends MavenSimpleProjectComponent
+public final class MavenProjectsManager extends MavenSimpleProjectComponent
   implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponentJavaAdapter, Disposable {
   private static final int IMPORT_DELAY = 1000;
   private static final String NON_MANAGED_POM_NOTIFICATION_GROUP_ID = "Maven: non-managed pom.xml";
@@ -189,10 +188,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Override
   public void initializeComponent() {
-    if (!isNormalProject()) return;
+    if (!isNormalProject()) {
+      return;
+    }
 
-    StartupManagerEx startupManager = StartupManagerEx.getInstanceEx(myProject);
-
+    StartupManager startupManager = StartupManager.getInstance(myProject);
     startupManager.registerStartupActivity(() -> {
       boolean wasMavenized = !myState.originalFiles.isEmpty();
       if (!wasMavenized) return;

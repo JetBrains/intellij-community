@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.startup;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +17,7 @@ public abstract class StartupManager {
    * @return the startup manager instance.
    */
   public static StartupManager getInstance(Project project) {
-    return ServiceManager.getService(project, StartupManager.class);
+    return project.getService(StartupManager.class);
   }
 
   /**

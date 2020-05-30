@@ -5,7 +5,6 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.OpenProjectTask;
-import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
@@ -39,7 +38,6 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
@@ -53,8 +51,6 @@ import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -70,8 +66,8 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -111,12 +107,11 @@ import static com.intellij.testFramework.RunAll.runAll;
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public abstract class HeavyPlatformTestCase extends UsefulTestCase implements DataProvider {
-  private static TestApplicationManager ourTestAppManager;
   private static boolean ourReportedLeakedProjects;
   protected Project myProject;
   protected Module myModule;
 
-  protected final Collection<File> myFilesToDelete = new THashSet<>();
+  protected final Collection<File> myFilesToDelete = new HashSet<>();
   private final TempFiles myTempFiles = new TempFiles(myFilesToDelete);
 
   protected boolean myAssertionsInTestDetected;
@@ -165,13 +160,8 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   protected void initApplication() throws Exception {
-    boolean firstTime = ourTestAppManager == null;
-    ourTestAppManager = TestApplicationManager.getInstance();
-    ourTestAppManager.setDataProvider(this);
-
-    if (firstTime) {
-      cleanPersistedVFSContent();
-    }
+    TestApplicationManager testAppManager = TestApplicationManager.getInstance();
+    testAppManager.setDataProvider(this);
     // try to remember old sdks as soon as possible after the app instantiation
     myOldSdks = new SdkLeakTracker();
   }
@@ -208,15 +198,10 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
-  private static void cleanPersistedVFSContent() {
-    ((PersistentFSImpl)PersistentFS.getInstance()).cleanPersistedContents();
-  }
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    File tempDir = new File(FileUtilRt.getTempDirectory());
-    myFilesToDelete.add(tempDir);
+    myFilesToDelete.add(new File(FileUtilRt.getTempDirectory()));
 
     if (ourTestCase != null) {
       String message = "Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.";
@@ -243,7 +228,6 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     myCodeStyleSettingsTracker = isTrackCodeStyleChanges ? new CodeStyleSettingsTracker(() -> CodeStyle.getDefaultSettings()) : null;
     ourTestCase = this;
     if (myProject != null) {
-      ProjectManagerEx.getInstanceEx().openTestProject(myProject);
       CodeStyle.setTemporarySettings(myProject, CodeStyle.createTestSettings());
       InjectedLanguageManagerImpl.pushInjectors(myProject);
       ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).clearUncommittedDocuments();
@@ -268,7 +252,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
   protected void setUpProject() throws Exception {
     myProject = doCreateProject(getProjectDirOrFile());
-    ProjectManagerEx.getInstanceEx().openTestProject(myProject);
+    PlatformTestUtil.openTestProject(myProject);
     LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
     WriteAction.run(() ->
@@ -280,7 +264,6 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
     LightPlatformTestCase.clearUncommittedDocuments(getProject());
 
-    runStartupActivities();
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
   }
 
@@ -329,7 +312,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
   @Contract("_ -> fail")
   public static void reportLeakedProjects(@NotNull TooManyProjectLeakedException e) {
-    TIntHashSet hashCodes = new TIntHashSet();
+    IntSet hashCodes = new IntOpenHashSet();
     for (Project project : e.getLeakedProjects()) {
       hashCodes.add(System.identityHashCode(project));
     }
@@ -347,17 +330,10 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
         leakers.append(";-----\n");
 
         hashCodes.remove(hashCode);
-
         return !hashCodes.isEmpty();
       });
 
     fail(leakers + "\nPlease see '" + dumpPath + "' for a memory dump");
-  }
-
-  protected void runStartupActivities() {
-    StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(myProject);
-    startupManager.runStartupActivities();
-    startupManager.runPostStartupActivitiesRegisteredDynamically();
   }
 
   @NotNull
@@ -538,7 +514,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       () -> disposeRootDisposable(),
       () -> {
         if (myProject != null) {
-          LightPlatformTestCase.doTearDown(myProject, ourTestAppManager);
+          LightPlatformTestCase.doTearDown(myProject, TestApplicationManager.getInstanceIfCreated());
           myProject = null;
         }
       },

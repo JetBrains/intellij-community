@@ -16,6 +16,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -24,7 +25,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
@@ -55,6 +55,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker, DumbServiceBalloon.Service {
+  private static final ExtensionPointName<StartupActivity.RequiredForSmartMode> REQUIRED_FOR_SMART_MODE_STARTUP_ACTIVITY
+    = new ExtensionPointName<>("com.intellij.requiredForSmartModeStartupActivity");
+
   private static final Logger LOG = Logger.getInstance(DumbServiceImpl.class);
   private static final FrequentErrorLogger ourErrorLogger = FrequentErrorLogger.newInstance(LOG);
   private final AtomicReference<State> myState;
@@ -98,13 +101,11 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
                                          State.RUNNING_PROJECT_SMART_MODE_STARTUP_TASKS),
                    "actual state: " + myState.get() + ", project " + getProject());
 
-    List<StartupActivity.RequiredForSmartMode> activities = StartupActivity
-      .REQUIRED_FOR_SMART_MODE_STARTUP_ACTIVITY
-      .getExtensionList();
-
+    List<StartupActivity.RequiredForSmartMode> activities = REQUIRED_FOR_SMART_MODE_STARTUP_ACTIVITY.getExtensionList();
     if (activities.isEmpty()) {
       myState.set(State.SMART);
-    } else {
+    }
+    else {
       for (StartupActivity.RequiredForSmartMode activity : activities) {
         activity.runActivity(getProject());
       }

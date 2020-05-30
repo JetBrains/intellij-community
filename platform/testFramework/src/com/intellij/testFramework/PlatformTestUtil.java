@@ -46,6 +46,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -1095,5 +1096,28 @@ public final class PlatformTestUtil {
         Files.move(configCopy, configDir, StandardCopyOption.ATOMIC_MOVE);
       }
     }
+  }
+
+  public static @NotNull Project loadAndOpenProject(@NotNull Path path) {
+    Project project = ProjectManagerImpl.loadProject(path, null);
+    openTestProject(project);
+    return project;
+  }
+
+  public static void openTestProject(@NotNull Project project) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    if (!ProjectManagerEx.getInstanceEx().openProject(project)) {
+      throw new IllegalStateException("openProject returned false");
+    }
+
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      dispatchAllInvocationEventsInIdeEventQueue();
+    }
+  }
+
+  public static @NotNull Project createProject(@NotNull Path file, @NotNull Disposable parentDisposable) {
+    Project project = FixtureRuleKt.createHeavyProject(file, /* useDefaultProjectAsTemplate = */ false);
+    Disposer.register(parentDisposable, () -> forceCloseProjectWithoutSaving(project));
+    return project;
   }
 }

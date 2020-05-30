@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -405,13 +404,7 @@ private fun convertAndLoadProject(path: Path, options: OpenProjectTask): Project
   }
 
   val project = ProjectManagerImpl.doCreateProject(options.projectName, path)
-  try {
-    ProjectManagerImpl.initProject(path, project, /* isRefreshVfsNeeded = */ true, null, ProgressManager.getInstance().progressIndicator)
-  }
-  catch (e: ProcessCanceledException) {
-    return null
-  }
-
+  ProjectManagerImpl.initProject(path, project, /* isRefreshVfsNeeded = */ true, null, ProgressManager.getInstance().progressIndicator)
   if (conversionResult != null && !conversionResult.conversionNotNeeded()) {
     StartupManager.getInstance(project).registerPostStartupActivity {
       conversionResult.postStartupActivity(project)

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.roots
 
 import com.intellij.openapi.Disposable
@@ -24,6 +24,7 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
+import java.nio.file.Paths
 
 @RunsInEdt
 class AutomaticModuleUnloaderTest {
@@ -190,7 +191,7 @@ class AutomaticModuleUnloaderTest {
     }
     JDOMUtil.write(rootElement, modulesXmlFile)
     beforeReload()
-    val reloaded = ProjectManager.getInstance().loadAndOpenProject(project.basePath!!)!!
+    val reloaded = PlatformTestUtil.loadAndOpenProject(Paths.get(project.basePath!!))
     Disposer.register(disposableRule.disposable, Disposable { ProjectManagerEx.getInstanceEx().forceCloseProject(reloaded) })
     return reloaded
   }

@@ -801,7 +801,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
       File temp = createTempDirectory();
       VirtualFile tempDir = requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp));
 
-      Project newProject = ProjectManagerEx.getInstanceEx().newProjectForTest(Paths.get(tempDir.getPath()), getTestRootDisposable());
+      Project newProject = PlatformTestUtil.createProject(Paths.get(tempDir.getPath()), getTestRootDisposable());
       PlatformTestUtil.saveProject(newProject);
 
       Charset newProjectEncoding = EncodingProjectManager.getInstance(newProject).getDefaultCharset();

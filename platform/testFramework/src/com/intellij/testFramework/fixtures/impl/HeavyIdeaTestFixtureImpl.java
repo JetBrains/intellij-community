@@ -21,7 +21,6 @@ import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -183,7 +182,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
     });
 
     EdtTestUtil.runInEdtAndWait(() -> {
-      ProjectManagerEx.getInstanceEx().openTestProject(myProject);
+      PlatformTestUtil.openTestProject(myProject);
 
       for (ModuleFixtureBuilder<?> moduleFixtureBuilder : myModuleFixtureBuilders) {
         moduleFixtureBuilder.getFixture().setUp();

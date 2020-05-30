@@ -8,11 +8,8 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 
 /**
  * Provides project management.
@@ -100,15 +97,6 @@ public abstract class ProjectManager {
    * @throws JDOMException        if the project file contained invalid XML
    */
   public abstract @Nullable Project loadAndOpenProject(@NotNull String filePath) throws IOException, JDOMException;
-
-  @ApiStatus.Experimental
-  @TestOnly
-  public @Nullable Project loadAndOpenProject(@NotNull File file) throws IOException, JDOMException {
-    return loadAndOpenProject(file.toPath());
-  }
-
-  @ApiStatus.Experimental
-  public abstract @Nullable Project loadAndOpenProject(@NotNull Path file) throws IOException, JDOMException;
 
   /**
    * Closes the specified project, but does not dispose it.

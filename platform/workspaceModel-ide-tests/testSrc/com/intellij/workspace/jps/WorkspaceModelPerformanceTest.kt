@@ -9,7 +9,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.ModuleManagerComponent
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.rd.attach
 import com.intellij.openapi.roots.ModuleRootManager
@@ -21,6 +20,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.workspace.api.ModuleDependencyItem
 import com.intellij.workspace.api.ModuleEntity
@@ -36,11 +36,11 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.io.File
+import java.nio.file.Path
 
-const val JAVA_CLASS_PREFIX = "JavaClass"
-const val MODULE_PREFIX = "module"
-const val TEST_MODULE_PREFIX = "test"
-
+private const val JAVA_CLASS_PREFIX = "JavaClass"
+private const val MODULE_PREFIX = "module"
+private const val TEST_MODULE_PREFIX = "test"
 
 @RunWith(Parameterized::class)
 class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
@@ -73,9 +73,9 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
     disposerDebugMode = Disposer.isDebugMode()
     Disposer.setDebugMode(false)
 
-    val projectDir = temporaryDirectoryRule.newPath("project").toFile()
+    val projectDir = temporaryDirectoryRule.newPath("project")
     logExecutionTimeInMillis("Project generation") {
-      generateProject(projectDir)
+      generateProject(projectDir.toFile())
     }
     project = loadTestProject(projectDir, disposableRule)
   }
@@ -141,8 +141,7 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
     }
   }
 
-  private fun findAndRemoveLibFromHundredModules(modules: MutableList<Module>,
-                                                 antLibName: String) {
+  private fun findAndRemoveLibFromHundredModules(modules: MutableList<Module>, antLibName: String) {
     modules.forEach { module ->
       ModuleRootManager.getInstance(module).modifiableModel.let {
         val moduleLibrary = it.moduleLibraryTable.getLibraryByName(antLibName)!!
@@ -170,8 +169,7 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
     moduleManager.modules.forEach { ModuleRootManager.getInstance(it).contentRoots.forEach { entry -> entry.canonicalFile } }
   }
 
-  private fun addModuleLibraryToHunredModules(modules: MutableList<Module>,
-                                              antLibName: String) {
+  private fun addModuleLibraryToHunredModules(modules: MutableList<Module>, antLibName: String) {
     modules.forEach { module -> ModuleRootModificationUtil.addModuleLibrary(module, antLibName, listOf(), emptyList()) }
   }
 
@@ -224,12 +222,15 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
     assertEquals(modulesCount, entities.toList().size)
   }
 
-  private fun loadTestProject(projectDir: File, disposableRule: DisposableRule): Project {
+  private fun loadTestProject(projectDir: Path, disposableRule: DisposableRule): Project {
     val project = logExecutionTimeInMillis<Project>("Project load") {
-      return@logExecutionTimeInMillis ProjectManager.getInstance().loadAndOpenProject(projectDir)!!
+      PlatformTestUtil.loadAndOpenProject(projectDir)
     }
-    invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().openTestProject(project) }
-    disposableRule.disposable.attach { invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().forceCloseProject(project) } }
+    disposableRule.disposable.attach {
+      invokeAndWaitIfNeeded {
+        ProjectManagerEx.getInstanceEx().forceCloseProject(project)
+      }
+    }
     return project
   }
 

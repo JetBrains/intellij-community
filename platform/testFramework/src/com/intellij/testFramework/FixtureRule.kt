@@ -26,8 +26,6 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.project.stateStore
 import com.intellij.util.SmartList
 import com.intellij.util.ThrowableRunnable
@@ -56,7 +54,6 @@ open class ApplicationRule : ExternalResource() {
 
   public final override fun before() {
     TestApplicationManager.getInstance()
-    (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
   }
 }
 
@@ -100,8 +97,6 @@ class ProjectRule(val projectDescriptor: LightProjectDescriptor = LightProjectDe
     }
 
     private fun createLightProject(): ProjectEx {
-      (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
-
       val projectFile = TemporaryDirectory.generateTemporaryPath("light_temp_shared_project${ProjectFileType.DOT_DEFAULT_EXTENSION}")
       val buffer = ByteArrayOutputStream()
       Throwable(projectFile.systemIndependentPath, null).printStackTrace(PrintStream(buffer))
@@ -163,7 +158,7 @@ class ProjectRule(val projectDescriptor: LightProjectDescriptor = LightProjectDe
       }
 
       if (projectOpened.compareAndSet(false, true)) {
-        runInEdtAndWait { ProjectManagerEx.getInstanceEx().openTestProject(project) }
+        runInEdtAndWait { PlatformTestUtil.openTestProject(project) }
       }
       return result!!
     }
@@ -280,7 +275,7 @@ suspend fun Project.use(task: suspend (Project) -> Unit) {
   try {
     if (!projectManager.isProjectOpened(this)) {
       withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
-        projectManager.openTestProject(this@use)
+        PlatformTestUtil.openTestProject(this@use)
       }
     }
     task(this)
@@ -378,7 +373,7 @@ suspend fun createOrLoadProject(tempDirManager: TemporaryDirectory,
 
   val project = when (projectCreator) {
     null -> createHeavyProject(file, useDefaultProjectAsTemplate = useDefaultProjectSettings)
-    else -> ProjectManagerImpl.loadProject(file, null) { project ->
+    else -> ProjectManagerImpl.loadProject(file) { project ->
      if (loadComponentState) {
        project.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true)
      }

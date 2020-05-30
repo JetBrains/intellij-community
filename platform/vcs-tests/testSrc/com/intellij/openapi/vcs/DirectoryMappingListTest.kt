@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
 import com.intellij.ide.startup.impl.StartupManagerImpl
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
@@ -52,8 +51,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     projectRoot = PsiTestUtil.createTestProjectStructure(getTestName(true), null, root, myFilesToDelete, false)
     rootPath = projectRoot.path
 
-    myProject = ProjectManagerEx.getInstanceEx().loadProject(Paths.get("$rootPath/directoryMappings.ipr"))
-    ProjectManagerEx.getInstanceEx().openTestProject(myProject)
+    myProject = PlatformTestUtil.loadAndOpenProject(Paths.get("$rootPath/directoryMappings.ipr"))
 
     vcsMock = MockAbstractVcs(myProject, MOCK)
     vcsMock2 = MockAbstractVcs(myProject, MOCK2)

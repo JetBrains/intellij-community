@@ -12,9 +12,12 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.Future
 
 // Code maybe located in a ProjectImpl, but it is not possible due to non-technical reasons to convert ProjectImpl into modern language.
 // Wrap into class as it is not possible to use internal modifier for top-level functions from Java (but we have to reduce scope).
@@ -106,4 +109,30 @@ interface ProjectServiceContainerInitializedListener {
    * but before components are instantiated.
    */
   fun serviceCreated(project: Project)
+}
+
+internal fun waitInTestMode(future: Future<*>) {
+  val app = ApplicationManager.getApplication()
+  if (!app.isUnitTestMode) {
+    return
+  }
+
+  fun wait() {
+    try {
+      future.get()
+    }
+    catch (e: ExecutionException) {
+      throw e.cause ?: e
+    }
+  }
+
+  if (app.isDispatchThread) {
+    // process event queue during waiting
+    runModalTask("") {
+      wait()
+    }
+  }
+  else {
+    wait()
+  }
 }

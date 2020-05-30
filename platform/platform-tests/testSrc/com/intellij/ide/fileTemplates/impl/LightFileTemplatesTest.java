@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -121,7 +121,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
       PlatformTestUtil.saveProject(project, true);
       closeProject(project);
 
-      reloaded = ProjectManager.getInstance().loadAndOpenProject(foo);
+      reloaded = PlatformTestUtil.loadAndOpenProject(foo.toPath());
       assertNotNull(reloaded);
       manager = FileTemplateManager.getInstance(reloaded);
       assertThat(manager.getCurrentScheme()).isEqualTo(manager.getProjectScheme());

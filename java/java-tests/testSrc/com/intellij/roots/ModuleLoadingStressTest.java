@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.roots;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -15,12 +14,10 @@ import com.intellij.testFramework.PlatformTestUtil;
 import kotlin.Unit;
 
 import java.io.File;
+import java.nio.file.Paths;
 
-/**
- * @author Dmitry Avdeev
- */
 public class ModuleLoadingStressTest extends HeavyPlatformTestCase {
-  public void testContentEntryExchange() throws Exception {
+  public void testContentEntryExchange() {
     String path = myProject.getBasePath();
     int count = 100;
     for (int i = 0; i < count; i++) {
@@ -40,7 +37,7 @@ public class ModuleLoadingStressTest extends HeavyPlatformTestCase {
     String moduleName = myModule.getName();
     PlatformTestUtil.forceCloseProjectWithoutSaving(myProject);
 
-    myProject = ProjectManager.getInstance().loadAndOpenProject(projectFilePath);
+    myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(projectFilePath));
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     assertEquals(count * 2 + 1, modules.length);
 
