@@ -66,7 +66,7 @@ public class UpdateHighlightersUtil {
     return Comparing.compare(o1.getDescription(), o2.getDescription());
   };
 
-  private static boolean isCoveredByOffsets(HighlightInfo info, HighlightInfo coveredBy) {
+  private static boolean isCoveredByOffsets(@NotNull HighlightInfo info, @NotNull HighlightInfo coveredBy) {
     return coveredBy.startOffset <= info.startOffset && info.endOffset <= coveredBy.endOffset && info.getGutterIconRenderer() == null;
   }
 
@@ -109,7 +109,7 @@ public class UpdateHighlightersUtil {
     }
   }
 
-  private static boolean accept(@NotNull Project project, HighlightInfo info) {
+  private static boolean accept(@NotNull Project project, @NotNull HighlightInfo info) {
     for (HighlightInfoPostFilter filter : EP_NAME.getExtensions(project)) {
       if (!filter.accept(info))
         return false;
@@ -118,7 +118,7 @@ public class UpdateHighlightersUtil {
     return true;
   }
 
-  public static boolean isFileLevelOrGutterAnnotation(HighlightInfo info) {
+  public static boolean isFileLevelOrGutterAnnotation(@NotNull HighlightInfo info) {
     return info.isFileLevelAnnotation() || info.getGutterIconRenderer() != null;
   }
 
@@ -151,7 +151,7 @@ public class UpdateHighlightersUtil {
                                               int startOffset,
                                               int endOffset,
                                               @NotNull Collection<? extends HighlightInfo> highlights,
-                                              @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
+                                              @Nullable final EditorColorsScheme colorsScheme, // if null, the global scheme will be used
                                               int group,
                                               @NotNull MarkupModelEx markup) {
     TextRange range = new TextRange(startOffset, endOffset);
@@ -168,8 +168,7 @@ public class UpdateHighlightersUtil {
 
 
   @NotNull
-  private static List<HighlightInfo> applyPostFilter(@NotNull Project project,
-                                                     @NotNull List<? extends HighlightInfo> highlightInfos) {
+  private static List<HighlightInfo> applyPostFilter(@NotNull Project project, @NotNull List<? extends HighlightInfo> highlightInfos) {
     List<HighlightInfo> result = new ArrayList<>(highlightInfos.size());
     for (HighlightInfo info : highlightInfos) {
       if (accept(project, info)) {
