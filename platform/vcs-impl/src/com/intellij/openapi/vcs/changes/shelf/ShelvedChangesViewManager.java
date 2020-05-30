@@ -51,7 +51,7 @@ import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IconUtil.IconSizeWrapper;
-import com.intellij.util.ListSelection;
+import com.intellij.openapi.ListSelection;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.UtilKt;
 import com.intellij.util.text.DateFormatUtil;

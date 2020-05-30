@@ -43,7 +43,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.ListSelection;
+import com.intellij.openapi.ListSelection;
 import com.intellij.util.containers.CacheOneStepIterator;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;

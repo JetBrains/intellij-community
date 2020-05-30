@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi;
 
 import com.intellij.util.NullableFunction;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -25,15 +10,20 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * @deprecated use @see com.intellij.util.ListSelection instead
+ * Utility class used to preserve index during 'map' operations
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
 public class ListSelection<T> {
-  @NotNull private final com.intellij.util.ListSelection<T> myInstance;
+  @NotNull private final List<T> myList;
+  private final int mySelectedIndex;
 
   private ListSelection(@NotNull List<T> list, int selectedIndex) {
-    myInstance = com.intellij.util.ListSelection.createAt(list, selectedIndex);
+    myList = list;
+    if (selectedIndex >= 0 && selectedIndex < list.size()) {
+      mySelectedIndex = selectedIndex;
+    }
+    else {
+      mySelectedIndex = 0;
+    }
   }
 
   @NotNull
@@ -59,24 +49,24 @@ public class ListSelection<T> {
 
   @NotNull
   public List<T> getList() {
-    return myInstance.getList();
+    return myList;
   }
 
   public int getSelectedIndex() {
-    return myInstance.getSelectedIndex();
+    return mySelectedIndex;
   }
 
   public boolean isEmpty() {
-    return myInstance.getList().isEmpty();
+    return myList.isEmpty();
   }
 
   @NotNull
   public <V> ListSelection<V> map(@NotNull NullableFunction<? super T, ? extends V> convertor) {
     int newSelectionIndex = -1;
     List<V> result = new ArrayList<>();
-    for (int i = 0; i < getList().size(); i++) {
-      if (i == getSelectedIndex()) newSelectionIndex = result.size();
-      V out = convertor.fun(getList().get(i));
+    for (int i = 0; i < myList.size(); i++) {
+      if (i == mySelectedIndex) newSelectionIndex = result.size();
+      V out = convertor.fun(myList.get(i));
       if (out != null) result.add(out);
     }
     return new ListSelection<>(result, newSelectionIndex);

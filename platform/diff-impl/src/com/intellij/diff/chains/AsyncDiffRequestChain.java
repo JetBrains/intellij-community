@@ -8,7 +8,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ListSelection;
+import com.intellij.openapi.ListSelection;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
