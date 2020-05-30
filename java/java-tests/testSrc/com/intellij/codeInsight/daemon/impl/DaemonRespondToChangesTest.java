@@ -2639,6 +2639,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     configureByText(JavaFileType.INSTANCE, text);
 
     doHighlighting();
+    assertTrue(reported.get());
   }
 }
 
