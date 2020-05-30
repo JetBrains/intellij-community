@@ -50,6 +50,9 @@ public abstract class PsiAugmentProvider {
   protected <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element,
                                                            @NotNull Class<Psi> type,
                                                            @Nullable String nameHint) {
+    if (nameHint == null) return getAugments(element, type);
+
+    // cache to emulate previous behavior where augmenters were called just once, not for each name hint separately
     Map<Class, List> cache = CachedValuesManager.getCachedValue(element, myCacheKey, () -> {
       Map<Class, List> map = ConcurrentFactoryMap.createMap(c -> getAugments(element, c));
       return CachedValueProvider.Result.create(map, PsiModificationTracker.MODIFICATION_COUNT);
