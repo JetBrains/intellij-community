@@ -91,7 +91,7 @@ public final class GitChangeProvider implements ChangeProvider {
         GitConflictsHolder conflictsHolder = repo.getConflictsHolder();
         conflictsHolder.refresh(dirtyScope, collector.getConflicts());
       }
-      holder.feedBuilder(builder);
+      holder.feedBuilder(dirtyScope, builder);
 
       VcsDirtyScopeManager.getInstance(project).filePathsDirty(newDirtyPaths, null);
     }
@@ -166,7 +166,7 @@ public final class GitChangeProvider implements ChangeProvider {
       myProcessedPaths.add(path);
     }
 
-    public void feedBuilder(final ChangelistBuilder builder) throws VcsException {
+    public void feedBuilder(@NotNull VcsDirtyScope dirtyScope, @NotNull ChangelistBuilder builder) throws VcsException {
       final VcsKey gitKey = GitVcs.getKey();
 
       Map<VirtualFile, GitRevisionNumber> baseRevisions = new HashMap<>();
@@ -175,10 +175,12 @@ public final class GitChangeProvider implements ChangeProvider {
       for (Document document : fileDocumentManager.getUnsavedDocuments()) {
         VirtualFile vf = fileDocumentManager.getFile(document);
         if (vf == null || !vf.isValid()) continue;
-        if (myAddGate.getStatus(vf) != null || !fileDocumentManager.isFileModified(vf)) continue;
+        if (!fileDocumentManager.isFileModified(vf)) continue;
+        if (myAddGate.getStatus(vf) != null) continue;
 
         FilePath filePath = VcsUtil.getFilePath(vf);
         if (myProcessedPaths.contains(filePath)) continue;
+        if (!dirtyScope.belongsTo(filePath)) continue;
 
         GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(vf);
         if (repository == null) continue;
