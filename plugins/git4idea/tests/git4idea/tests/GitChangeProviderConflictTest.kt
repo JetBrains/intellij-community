@@ -129,7 +129,7 @@ class GitChangeProviderConflictTest : GitChangeProviderTest() {
   private fun assertManagerConflicts(vararg expectedConflicts: Conflict) {
     updateChangeListManager()
 
-    val actualConflicts = repo.conflictsHolder.conflicts.map {
+    val actualConflicts = repo.stagingAreaHolder.allConflicts.map {
       Conflict(it.filePath.name,
                it.getStatus(ConflictSide.OURS),
                it.getStatus(ConflictSide.THEIRS))

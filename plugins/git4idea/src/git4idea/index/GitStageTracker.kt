@@ -282,7 +282,7 @@ class GitStageTracker(val project: Project) : Disposable {
 
       val newRootState = mutableMapOf<VirtualFile, RootState>()
       for ((root, scope) in scopes) {
-        val status = getStatus(project, root, scope.dirtyPaths()).map { GitFileStatus(root, it) }.associateBy { it.path }
+        val status = getStatus(project, root, scope.dirtyPaths()).associateBy { it.path }
         val (index, workTree) = getUnsaved(unsaved.getOrDefault(root, mutableSetOf()), status)
         newRootState[root] = RootState(root, status, index, workTree)
       }

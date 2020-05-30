@@ -13,9 +13,9 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.merge.GitDefaultMergeDialogCustomizer;
-import git4idea.repo.GitConflictsHolder;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.status.GitStagingAreaHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +43,7 @@ public final class GitConflictsToolWindowManager implements Disposable {
   private void updateToolWindow() {
     myRefreshScheduled.set(false);
     boolean hasConflicts = ContainerUtil.exists(GitRepositoryManager.getInstance(myProject).getRepositories(),
-                                                repo -> !repo.getConflictsHolder().getConflicts().isEmpty());
+                                                repo -> !repo.getStagingAreaHolder().getAllConflicts().isEmpty());
     if (hasConflicts && myContent == null) {
       GitDefaultMergeDialogCustomizer mergeDialogCustomizer = new GitDefaultMergeDialogCustomizer(myProject);
       GitConflictsView panel = new GitConflictsView(myProject, mergeDialogCustomizer);
@@ -69,9 +69,9 @@ public final class GitConflictsToolWindowManager implements Disposable {
     }
   }
 
-  public static class MyConflictsListener implements GitConflictsHolder.ConflictsListener {
+  public static class MyStagingAreaListener implements GitStagingAreaHolder.StagingAreaListener {
     @Override
-    public void conflictsChanged(@NotNull GitRepository repository) {
+    public void stagingAreaChanged(@NotNull GitRepository repository) {
       if (!Registry.is("git.merge.conflicts.toolwindow")) return;
 
       Project project = repository.getProject();

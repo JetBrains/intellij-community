@@ -33,9 +33,9 @@ import git4idea.merge.GitMergeUtil
 import git4idea.repo.GitConflict
 import git4idea.repo.GitConflict.ConflictSide
 import git4idea.repo.GitConflict.Status
-import git4idea.repo.GitConflictsHolder
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
+import git4idea.status.GitStagingAreaHolder
 import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
 import java.util.*
@@ -85,7 +85,8 @@ class GitConflictsPanel(
     }
 
     val connection = project.messageBus.connect(this)
-    connection.subscribe(GitConflictsHolder.CONFLICTS_CHANGE, GitConflictsHolder.ConflictsListener { updateConflicts() })
+    connection.subscribe(GitStagingAreaHolder.TOPIC,
+                         GitStagingAreaHolder.StagingAreaListener { updateConflicts() })
     connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener { updateConflicts() })
 
     updateConflicts()
@@ -116,7 +117,7 @@ class GitConflictsPanel(
       val repos = GitUtil.getRepositories(project)
       for (repo in repos) {
         if (GitMergeUtil.isReverseRoot(repo)) newReversedRoots.add(repo.root)
-        newConflicts.addAll(repo.conflictsHolder.conflicts)
+        newConflicts.addAll(repo.stagingAreaHolder.allConflicts)
       }
 
       runInEdt {

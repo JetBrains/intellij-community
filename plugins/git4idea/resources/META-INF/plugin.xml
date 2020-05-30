@@ -360,8 +360,8 @@
   </extensionPoints>
 
   <projectListeners>
-    <listener class="git4idea.conflicts.GitConflictsToolWindowManager$MyConflictsListener"
-              topic="git4idea.repo.GitConflictsHolder$ConflictsListener"
+    <listener class="git4idea.conflicts.GitConflictsToolWindowManager$MyStagingAreaListener"
+              topic="git4idea.status.GitStagingAreaHolder$StagingAreaListener"
               activeInHeadlessMode="false"/>
     <listener class="git4idea.conflicts.GitConflictsToolWindowManager$MyRepositoryListener"
               topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"

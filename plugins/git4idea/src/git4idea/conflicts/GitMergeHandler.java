@@ -19,9 +19,9 @@ import git4idea.merge.GitMergeUtil;
 import git4idea.repo.GitConflict;
 import git4idea.repo.GitConflict.ConflictSide;
 import git4idea.repo.GitConflict.Status;
-import git4idea.repo.GitConflictsHolder;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.status.GitStagingAreaHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -192,13 +192,13 @@ public class GitMergeHandler {
       if (myIsValid) {
         GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRootQuick(myConflict.getRoot());
         if (repository == null) return true;
-        myIsValid = repository.getConflictsHolder().findConflict(myConflict.getFilePath()) != null;
+        myIsValid = repository.getStagingAreaHolder().findConflict(myConflict.getFilePath()) != null;
       }
       return myIsValid;
     }
 
     public void addListener(@NotNull MergeCallback.Listener listener, @NotNull Disposable disposable) {
-      myProject.getMessageBus().connect(disposable).subscribe(GitConflictsHolder.CONFLICTS_CHANGE, (repo) -> {
+      myProject.getMessageBus().connect(disposable).subscribe(GitStagingAreaHolder.TOPIC, (repo) -> {
         if (myIsValid && myConflict.getRoot().equals(repo.getRoot())) {
           if (!checkIsValid()) {
             listener.fireConflictInvalid();

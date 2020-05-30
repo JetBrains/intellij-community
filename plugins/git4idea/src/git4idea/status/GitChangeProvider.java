@@ -17,7 +17,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.repo.GitConflictsHolder;
+import git4idea.index.GitFileStatus;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -53,14 +53,17 @@ public final class GitChangeProvider implements ChangeProvider {
       List<FilePath> newDirtyPaths = new ArrayList<>();
       NonChangedHolder holder = new NonChangedHolder(project, addGate);
 
-      Map<VirtualFile, List<FilePath>> dirtyPaths = GitChangesCollector.collectDirtyPaths(dirtyScope);
+      Map<VirtualFile, List<FilePath>> dirtyPaths = GitStagingAreaHolder.collectDirtyPaths(dirtyScope);
 
       for (GitRepository repo : repos) {
         LOG.debug("checking root: ", repo.getRoot());
         List<FilePath> rootDirtyPaths = ContainerUtil.notNullize(dirtyPaths.get(repo.getRoot()));
         if (rootDirtyPaths.isEmpty()) continue;
 
-        GitChangesCollector collector = GitChangesCollector.collect(project, repo, rootDirtyPaths);
+        GitStagingAreaHolder stageAreaHolder = repo.getStagingAreaHolder();
+        List<GitFileStatus> newChanges = stageAreaHolder.refresh(rootDirtyPaths);
+
+        GitChangesCollector collector = GitChangesCollector.collect(project, repo, newChanges);
         holder.markHeadRevision(repo.getRoot(), collector.getHead());
 
         Collection<Change> changes = collector.getChanges();
@@ -88,9 +91,6 @@ public final class GitChangeProvider implements ChangeProvider {
           builder.processUnversionedFile(path);
           holder.markPathProcessed(path);
         }
-
-        GitConflictsHolder conflictsHolder = repo.getConflictsHolder();
-        conflictsHolder.refresh(dirtyScope, collector.getConflicts());
       }
       holder.feedBuilder(dirtyScope, builder);
 

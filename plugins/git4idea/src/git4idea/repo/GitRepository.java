@@ -8,6 +8,7 @@ import com.intellij.util.messages.Topic;
 import git4idea.GitLocalBranch;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchesCollection;
+import git4idea.status.GitStagingAreaHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,10 +62,10 @@ public interface GitRepository extends Repository {
   GitRepositoryFiles getRepositoryFiles();
 
   @NotNull
-  GitUntrackedFilesHolder getUntrackedFilesHolder();
+  GitStagingAreaHolder getStagingAreaHolder();
 
   @NotNull
-  GitConflictsHolder getConflictsHolder();
+  GitUntrackedFilesHolder getUntrackedFilesHolder();
 
 
   @NotNull
