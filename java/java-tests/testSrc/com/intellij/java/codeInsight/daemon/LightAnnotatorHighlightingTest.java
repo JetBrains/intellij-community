@@ -109,8 +109,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
     @Override
     public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
       if (psiElement instanceof PsiFile && !psiElement.getText().contains("xxx")) {
-        Annotation annotation = holder.createWarningAnnotation(psiElement, "top level");
-        annotation.setFileLevelAnnotation(true);
+        holder.newAnnotation(HighlightSeverity.WARNING, "top level").fileLevel().create();
         iDidIt();
       }
     }
