@@ -170,8 +170,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
                               forceFilterByVcs: Boolean): FilterByDetailsResult {
     val detailsFilters = filters.detailsFilters
     if (!forceFilterByVcs && detailsFilters.isEmpty()) {
-      val matchingCommits = if (commitCandidates != null) commitCandidates else null
-      return FilterByDetailsResult(matchingCommits, false, commitCount)
+      return FilterByDetailsResult(commitCandidates, false, commitCount)
     }
 
     val dataGetter = index.dataGetter
