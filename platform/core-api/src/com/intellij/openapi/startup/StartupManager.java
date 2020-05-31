@@ -2,6 +2,7 @@
 package com.intellij.openapi.startup;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,9 +32,8 @@ public abstract class StartupManager {
   /**
    * Registers an activity that is performed during project load while the "Loading Project"
    * progress bar is displayed. You may NOT access the PSI structures from the activity.
-   *
-   * @param runnable the activity to execute.
    */
+  @ApiStatus.Internal
   public abstract void registerStartupActivity(@NotNull Runnable runnable);
 
   /**

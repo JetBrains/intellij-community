@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
-import com.intellij.ide.startup.impl.StartupManagerImpl
-import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -19,7 +17,6 @@ import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestLoggerFactory
-import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
 import org.junit.Assume
 import java.io.File
@@ -66,11 +63,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     mappings = NewMappings(myProject, vcsManager)
     mappings.activateActiveVcses()
     Disposer.register(testRootDisposable, mappings)
-
-    UIUtil.dispatchAllInvocationEvents()
-    val startupManager = StartupManager.getInstance(myProject) as StartupManagerImpl
-    startupManager.runStartupActivities()
-    startupManager.runPostStartupActivitiesRegisteredDynamically()
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
     vcsManager.waitForInitialized()
   }
 

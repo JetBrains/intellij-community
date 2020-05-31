@@ -281,7 +281,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
     Project project = ourProject;
     try {
-      PlatformTestUtil.openTestProject(project);
+      PlatformTestUtil.openProject(project);
     }
     catch (Throwable e) {
       setProject(null);

@@ -1100,11 +1100,11 @@ public final class PlatformTestUtil {
 
   public static @NotNull Project loadAndOpenProject(@NotNull Path path) {
     Project project = ProjectManagerImpl.loadProject(path, null);
-    openTestProject(project);
+    openProject(project);
     return project;
   }
 
-  public static void openTestProject(@NotNull Project project) {
+  public static void openProject(@NotNull Project project) {
     assert ApplicationManager.getApplication().isUnitTestMode();
     if (!ProjectManagerEx.getInstanceEx().openProject(project)) {
       throw new IllegalStateException("openProject returned false");

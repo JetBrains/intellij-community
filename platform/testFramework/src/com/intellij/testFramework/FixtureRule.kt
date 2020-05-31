@@ -158,7 +158,7 @@ class ProjectRule(val projectDescriptor: LightProjectDescriptor = LightProjectDe
       }
 
       if (projectOpened.compareAndSet(false, true)) {
-        runInEdtAndWait { PlatformTestUtil.openTestProject(project) }
+        runInEdtAndWait { PlatformTestUtil.openProject(project) }
       }
       return result!!
     }
@@ -275,7 +275,7 @@ suspend fun Project.use(task: suspend (Project) -> Unit) {
   try {
     if (!projectManager.isProjectOpened(this)) {
       withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
-        PlatformTestUtil.openTestProject(this@use)
+        PlatformTestUtil.openProject(this@use)
       }
     }
     task(this)

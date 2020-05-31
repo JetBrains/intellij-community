@@ -20,10 +20,6 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.testFramework.*
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.RuleChain
-import com.intellij.testFramework.createHeavyProject
-import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.workspace.api.TypedEntityStorageBuilder
 import com.intellij.workspace.ide.WorkspaceModelInitialTestContent
 import org.junit.rules.ExternalResource
@@ -47,7 +43,7 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
         createHeavyProject(baseProjectDir.root.toPath())
       }
       runInEdtAndWait {
-        PlatformTestUtil.openTestProject(project)
+        PlatformTestUtil.openProject(project)
       }
     }
 

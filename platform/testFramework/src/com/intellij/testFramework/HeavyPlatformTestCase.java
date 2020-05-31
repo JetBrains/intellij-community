@@ -252,7 +252,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
   protected void setUpProject() throws Exception {
     myProject = doCreateProject(getProjectDirOrFile());
-    PlatformTestUtil.openTestProject(myProject);
+    PlatformTestUtil.openProject(myProject);
     LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
     WriteAction.run(() ->

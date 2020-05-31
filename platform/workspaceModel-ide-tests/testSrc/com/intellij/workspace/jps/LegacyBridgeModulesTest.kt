@@ -407,7 +407,7 @@ class LegacyBridgeModulesTest {
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
       val project = ProjectManager.getInstance().createProject("testProject", iprFile.path)!!
-      invokeAndWaitIfNeeded { PlatformTestUtil.openTestProject(project) }
+      invokeAndWaitIfNeeded { PlatformTestUtil.openProject(project) }
       disposableRule.disposable.attach { invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().forceCloseProject(project) } }
 
       val module = ModuleManager.getInstance(project).findModuleByName("test")
@@ -442,7 +442,7 @@ class LegacyBridgeModulesTest {
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
       val project = ProjectManager.getInstance().createProject("testProject", iprFile.path)!!
-      invokeAndWaitIfNeeded { PlatformTestUtil.openTestProject(project) }
+      invokeAndWaitIfNeeded { PlatformTestUtil.openProject(project) }
       disposableRule.disposable.attach { invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().forceCloseProject(project) } }
 
       val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
@@ -658,7 +658,7 @@ internal fun createEmptyTestProject(temporaryDirectory: TemporaryDirectory, disp
   val project = WorkspaceModelInitialTestContent.withInitialContent(TypedEntityStorageBuilder.create()) {
     ProjectManager.getInstance().createProject("testProject", projectDir.resolve("testProject.ipr").toString())!!
   }
-  invokeAndWaitIfNeeded { PlatformTestUtil.openTestProject(project) }
+  invokeAndWaitIfNeeded { PlatformTestUtil.openProject(project) }
   disposableRule.disposable.attach { invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().forceCloseProject(project) } }
   return project
 }

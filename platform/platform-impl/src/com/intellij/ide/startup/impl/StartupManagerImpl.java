@@ -37,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
@@ -184,7 +185,11 @@ public class StartupManagerImpl extends StartupManagerEx {
     });
   }
 
+  /**
+   * @deprecated Use {@link com.intellij.testFramework.PlatformTestUtil#loadAndOpenProject(Path)} in tests.
+   */
   @TestOnly
+  @Deprecated
   public void runStartupActivities() {
     if (!myStartupActivitiesPassed) {
       doRunStartUpActivities(null);

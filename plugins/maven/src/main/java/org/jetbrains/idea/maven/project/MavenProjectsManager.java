@@ -195,7 +195,9 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     StartupManager startupManager = StartupManager.getInstance(myProject);
     startupManager.registerStartupActivity(() -> {
       boolean wasMavenized = !myState.originalFiles.isEmpty();
-      if (!wasMavenized) return;
+      if (!wasMavenized) {
+        return;
+      }
       initMavenized();
     });
 
@@ -267,8 +269,9 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private void initNew(List<VirtualFile> files, MavenExplicitProfiles explicitProfiles) {
     myState.originalFiles = MavenUtil.collectPaths(files);
-    getWorkspaceSettings().setEnabledProfiles(explicitProfiles.getEnabledProfiles());
-    getWorkspaceSettings().setDisabledProfiles(explicitProfiles.getDisabledProfiles());
+    MavenWorkspaceSettings workspaceSettings = getWorkspaceSettings();
+    workspaceSettings.setEnabledProfiles(explicitProfiles.getEnabledProfiles());
+    workspaceSettings.setDisabledProfiles(explicitProfiles.getDisabledProfiles());
     doInit(true);
   }
 
@@ -280,7 +283,9 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   private void doInit(final boolean isNew) {
     initLock.lock();
     try {
-      if (isInitialized.getAndSet(true)) return;
+      if (isInitialized.getAndSet(true)) {
+        return;
+      }
 
       initProjectsTree(!isNew);
 

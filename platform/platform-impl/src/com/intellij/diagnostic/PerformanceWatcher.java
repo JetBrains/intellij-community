@@ -393,7 +393,7 @@ public final class PerformanceWatcher implements Disposable {
            Objects.equals(el1.getFileName(), el2.getFileName());
   }
 
-  public class Snapshot {
+  public final class Snapshot {
     private final ApdexData myStartGeneralSnapshot = myGeneralApdex;
     private final ApdexData myStartSwingSnapshot = mySwingApdex;
     private final long myStartMillis = System.currentTimeMillis();

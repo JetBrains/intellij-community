@@ -53,9 +53,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   protected boolean myStartupActivityPerformed;
   private boolean myStateLoaded = false;
 
-  private final RootProviderChangeListener myRootProviderChangeListener = new RootProviderChangeListener();
+  private final RootProvider.RootSetChangedListener myRootProviderChangeListener = new RootProviderChangeListener();
 
-  protected class BatchSession {
+  protected final class BatchSession {
     private final boolean myFileTypes;
     private int myBatchLevel;
     private boolean myChanged;
@@ -64,14 +64,14 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
       myFileTypes = fileTypes;
     }
 
-    protected void levelUp() {
+    void levelUp() {
       if (myBatchLevel == 0) {
         myChanged = false;
       }
       myBatchLevel += 1;
     }
 
-    protected void levelDown() {
+    void levelDown() {
       myBatchLevel -= 1;
       if (myChanged && myBatchLevel == 0) {
         try {
@@ -180,10 +180,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   @Override
   public VirtualFile @NotNull [] getContentRootsFromAllModules() {
     List<VirtualFile> result = new ArrayList<>();
-    final Module[] modules = getModuleManager().getSortedModules();
-    for (Module module : modules) {
-      final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
-      ContainerUtil.addAll(result, files);
+    for (Module module : getModuleManager().getSortedModules()) {
+      Collections.addAll(result, ModuleRootManager.getInstance(module).getContentRoots());
     }
     ContainerUtil.addIfNotNull(result, myProject.getBaseDir());
     return VfsUtilCore.toVirtualFileArray(result);
@@ -533,7 +531,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
   }
 
-  private class LibraryTableMultiListener extends ListenerContainer<LibraryTable.Listener> implements LibraryTable.Listener {
+  private final class LibraryTableMultiListener extends ListenerContainer<LibraryTable.Listener> implements LibraryTable.Listener {
     private LibraryTableMultiListener() {
       super(new LibraryTable.Listener[0]);
     }

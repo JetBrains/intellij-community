@@ -182,7 +182,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
     });
 
     EdtTestUtil.runInEdtAndWait(() -> {
-      PlatformTestUtil.openTestProject(myProject);
+      PlatformTestUtil.openProject(myProject);
 
       for (ModuleFixtureBuilder<?> moduleFixtureBuilder : myModuleFixtureBuilders) {
         moduleFixtureBuilder.getFixture().setUp();
