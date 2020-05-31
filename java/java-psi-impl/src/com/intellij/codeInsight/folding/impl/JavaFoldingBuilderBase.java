@@ -199,7 +199,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
                                        @NotNull Document document,
                                        @NotNull Set<? super PsiElement> processedComments) {
     final FoldingDescriptor commentDescriptor = CommentFoldingUtil.getCommentDescriptor(comment, document, processedComments,
-                                                                                        CustomFoldingBuilder::isCustomRegionElement,
+                                                                                        element -> isCustomRegionElement(element),
                                                                                         isCollapseCommentByDefault(comment));
     if (commentDescriptor != null) list.add(commentDescriptor);
   }
