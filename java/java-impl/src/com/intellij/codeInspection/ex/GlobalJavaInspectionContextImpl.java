@@ -263,7 +263,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
       for (SmartPsiElementPointer sortedID : sortedIDs) {
         final UMethod uMethod = ReadAction.compute(() -> UastContextKt.toUElement(dereferenceInReadAction(sortedID), UMethod.class));
         if (uMethod == null) continue;
-        final RefMethod refMethod = (RefMethod)refManager.getReference(uMethod.getSourcePsi());
+        final RefMethod refMethod = ReadAction.compute(() -> (RefMethod)refManager.getReference(uMethod.getSourcePsi()));
 
         context.incrementJobDoneAmount(context.getStdJobDescriptors().FIND_EXTERNAL_USAGES, refManager.getQualifiedName(refMethod));
 
