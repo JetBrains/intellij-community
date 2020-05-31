@@ -373,7 +373,7 @@ private fun checkExistingProjectOnOpen(projectToClose: Project, callback: Projec
 }
 
 private fun openFileFromCommandLine(project: Project, file: Path, line: Int, column: Int) {
-  StartupManager.getInstance(project).registerPostStartupDumbAwareActivity {
+  StartupManager.getInstance(project).runAfterOpened {
     ApplicationManager.getApplication().invokeLater(Runnable {
       if (project.isDisposed || !Files.exists(file)) {
         return@Runnable

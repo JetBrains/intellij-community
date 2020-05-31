@@ -1403,7 +1403,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     // extends/cuts number of opened tabs. Also updates location of tabs
     connection.subscribe(UISettingsListener.TOPIC, new MyUISettingsListener());
 
-    StartupManager.getInstance(myProject).registerPostStartupDumbAwareActivity(() -> {
+    StartupManager.getInstance(myProject).runAfterOpened(() -> {
       if (myProject.isDisposed()) {
         return;
       }

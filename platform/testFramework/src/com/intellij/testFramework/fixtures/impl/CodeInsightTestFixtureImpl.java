@@ -34,8 +34,6 @@ import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
-import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
@@ -1198,7 +1196,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
       DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
       ensureIndexesUpToDate(getProject());
-      ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runPostStartupActivitiesRegisteredDynamically();
       CodeStyle.setTemporarySettings(getProject(), CodeStyle.createTestSettings());
 
       IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
