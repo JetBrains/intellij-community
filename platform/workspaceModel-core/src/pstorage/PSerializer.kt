@@ -115,6 +115,30 @@ class PSerializer(private val typesResolver: EntityTypesResolver,
       }
     })
 
+    kryo.register(ImmutableEntitiesBarrel::class.java, object : Serializer<ImmutableEntitiesBarrel>(false, true) {
+      override fun write(kryo: Kryo, output: Output, `object`: ImmutableEntitiesBarrel) {
+        val res = HashMap<TypeInfo, EntityFamily<*>>()
+        `object`.entities.forEachIndexed { i, v ->
+          if (v == null) return@forEachIndexed
+          val clazz = i.findEntityClass<TypedEntity>()
+          val typeInfo = TypeInfo(clazz.name, typesResolver.getPluginId(clazz))
+          res[typeInfo] = v
+        }
+        kryo.writeClassAndObject(output, res)
+      }
+
+      override fun read(kryo: Kryo, input: Input, type: Class<ImmutableEntitiesBarrel>): ImmutableEntitiesBarrel {
+        val mutableBarrel = MutableEntitiesBarrel.create()
+        val families = kryo.readClassAndObject(input) as HashMap<TypeInfo, EntityFamily<*>>
+        for ((typeInfo, family) in families) {
+          val classId = typesResolver.resolveClass(typeInfo.name, typeInfo.pluginId).toClassId()
+          mutableBarrel.fillEmptyFamilies(classId)
+          mutableBarrel.entities[classId] = family
+        }
+        return mutableBarrel.toImmutable()
+      }
+    })
+
     kryo.register(TypeInfo::class.java)
 
     // TODO Dedup with OCSerializers
@@ -128,14 +152,12 @@ class PSerializer(private val typesResolver: EntityTypesResolver,
     kryo.register(BidirectionalMultiMap::class.java).instantiator = ObjectInstantiator { BidirectionalMultiMap<Any, Any>() }
     kryo.register(HashBiMap::class.java).instantiator = ObjectInstantiator { HashBiMap.create<Any, Any>() }
     kryo.register(LinkedBidirectionalMap::class.java).instantiator = ObjectInstantiator { LinkedBidirectionalMap<Any, Any>() }
-    //kryo.register(HashMultimap::class.java).instantiator = ObjectInstantiator { HashMultimap.create<Any, Any>() }
     kryo.register(Int2IntOpenHashMap::class.java).instantiator = ObjectInstantiator { Int2IntOpenHashMap() }
 
     @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
     kryo.register(Arrays.asList("a").javaClass).instantiator = ObjectInstantiator { java.util.ArrayList<Any>() }
 
     kryo.register(ByteArray::class.java)
-    kryo.register(ImmutableEntitiesBarrel::class.java)
     kryo.register(ImmutableEntityFamily::class.java)
     kryo.register(RefsTable::class.java)
     kryo.register(ImmutablePositiveIntIntBiMap::class.java)
@@ -250,6 +272,15 @@ class PSerializer(private val typesResolver: EntityTypesResolver,
         kryo.writeClassAndObject(output, it)
       }
 
+      // Serialize and register persistent ids
+      val persistentIds = storage.indexes.persistentIdIndex.entries().toSet()
+      output.writeVarInt(persistentIds.size, true)
+      persistentIds.forEach {
+        val typeInfo = TypeInfo(it::class.jvmName, typesResolver.getPluginId(it::class.java))
+        kryo.register(it::class.java)
+        kryo.writeClassAndObject(output, typeInfo)
+      }
+
       // Write entity data and references
       kryo.writeClassAndObject(output, storage.entitiesByType)
       kryo.writeClassAndObject(output, storage.refs)
@@ -279,6 +310,13 @@ class PSerializer(private val typesResolver: EntityTypesResolver,
       // Read and register all types in entity data
       val nonObjectCount = input.readVarInt(true)
       repeat(nonObjectCount) {
+        val objectClass = kryo.readClassAndObject(input) as TypeInfo
+        kryo.register(typesResolver.resolveClass(objectClass.name, objectClass.pluginId))
+      }
+
+      // Read and register persistent ids
+      val persistentIdCount = input.readVarInt(true)
+      repeat(persistentIdCount) {
         val objectClass = kryo.readClassAndObject(input) as TypeInfo
         kryo.register(typesResolver.resolveClass(objectClass.name, objectClass.pluginId))
       }

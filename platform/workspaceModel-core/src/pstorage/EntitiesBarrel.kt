@@ -2,7 +2,6 @@
 package com.intellij.workspace.api.pstorage
 
 import com.intellij.workspace.api.TypedEntity
-import org.jetbrains.annotations.TestOnly
 
 internal open class ImmutableEntitiesBarrel internal constructor(
   override val entities: List<ImmutableEntityFamily<out TypedEntity>?>
@@ -68,9 +67,8 @@ internal class MutableEntitiesBarrel private constructor(
   }
 
   private fun getMutableEntityFamily(unmodifiableEntityId: Int): MutableEntityFamily<*> {
-    while (entities.size <= unmodifiableEntityId) {
-      entities.add(MutableEntityFamily.createEmptyMutable())
-    }
+    fillEmptyFamilies(unmodifiableEntityId)
+
     val entityFamily = entities[unmodifiableEntityId] ?: run {
       val emptyEntityFamily = MutableEntityFamily.createEmptyMutable()
       entities[unmodifiableEntityId] = emptyEntityFamily
@@ -86,8 +84,13 @@ internal class MutableEntitiesBarrel private constructor(
     }
   }
 
+  internal fun fillEmptyFamilies(unmodifiableEntityId: Int) {
+    while (entities.size <= unmodifiableEntityId) entities.add(null)
+  }
+
   companion object {
     fun from(original: ImmutableEntitiesBarrel): MutableEntitiesBarrel = MutableEntitiesBarrel(ArrayList(original.entities))
+    fun create() = MutableEntitiesBarrel(ArrayList())
   }
 }
 
