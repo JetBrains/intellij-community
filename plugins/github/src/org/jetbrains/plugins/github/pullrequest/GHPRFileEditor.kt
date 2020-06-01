@@ -53,7 +53,7 @@ internal class GHPRFileEditor(private val project: Project,
       }
 
       val actionDataContext = GHPRFixedActionDataContext(dataContext, pullRequest, dataProvider)
-      DataManager.registerDataProvider(component) { dataId ->
+      DataManager.registerDataProvider(it) { dataId ->
         when {
           GHPRActionKeys.ACTION_DATA_CONTEXT.`is`(dataId) -> actionDataContext
           else -> null
