@@ -89,7 +89,7 @@ final class TrackedEdtActivityService {
     }
 
     void invokeLaterAfterProjectInitialized() {
-      StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
+      StartupManager.getInstance(myProject).runAfterOpened(() -> {
         ApplicationManager.getApplication().invokeLater(this, myDumbStartModality, getProjectActivityExpirationCondition());
       });
     }

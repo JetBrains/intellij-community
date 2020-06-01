@@ -405,25 +405,27 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
     if (module2NatureNames.size() == 0) {
       return;
     }
-    StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> DumbService.getInstance(project).smartInvokeLater(() -> {
-      for (EclipseNatureImporter importer : EclipseNatureImporter.EP_NAME.getExtensions()) {
-        final String importerNatureName = importer.getNatureName();
-        final List<Module> modulesToImport = new ArrayList<>();
+    StartupManager.getInstance(project).runAfterOpened(() -> {
+      DumbService.getInstance(project).smartInvokeLater(() -> {
+        for (EclipseNatureImporter importer : EclipseNatureImporter.EP_NAME.getExtensions()) {
+          final String importerNatureName = importer.getNatureName();
+          final List<Module> modulesToImport = new ArrayList<>();
 
-        for (Map.Entry<Module, Set<String>> entry : module2NatureNames.entrySet()) {
-          final Module module = entry.getKey();
-          final Set<String> natureNames = entry.getValue();
+          for (Map.Entry<Module, Set<String>> entry : module2NatureNames.entrySet()) {
+            final Module module = entry.getKey();
+            final Set<String> natureNames = entry.getValue();
 
-          if (natureNames.contains(importerNatureName)) {
-            modulesToImport.add(module);
+            if (natureNames.contains(importerNatureName)) {
+              modulesToImport.add(module);
+            }
+          }
+
+          if (modulesToImport.size() > 0) {
+            importer.doImport(project, modulesToImport);
           }
         }
-
-        if (modulesToImport.size() > 0) {
-          importer.doImport(project, modulesToImport);
-        }
-      }
-    }));
+      });
+    });
   }
 
   private static void createEclipseLibrary(final Project project, final Collection<String> libraries, final String libraryName) {

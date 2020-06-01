@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.gradle;
 
 import com.intellij.execution.RunManager;
@@ -184,8 +184,9 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
       }
 
       VfsUtil.saveText(pluginXml, template.getText(attributes));
-      StartupManager.getInstance(project)
-        .runWhenProjectIsInitialized(() -> FileEditorManager.getInstance(project).openFile(pluginXml, true));
+      StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
+        FileEditorManager.getInstance(project).openFile(pluginXml, true);
+      });
       return true;
     }
     catch (IOException e) {

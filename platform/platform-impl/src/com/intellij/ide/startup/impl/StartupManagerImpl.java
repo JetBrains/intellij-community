@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +56,12 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   private final Deque<Runnable> startupActivities = new ArrayDeque<>();
   private final Deque<Runnable> postStartupActivities = new ArrayDeque<>();
-  private volatile boolean postStartupActivitiesPassed;
+
+  @MagicConstant(intValues = {0, DUMB_AWARE_PASSED, ALL_PASSED})
+  private volatile int postStartupActivitiesPassed;
+
+  private static final int DUMB_AWARE_PASSED = 1;
+  private static final int ALL_PASSED = 2;
 
   private volatile boolean myStartupActivitiesPassed;
 
@@ -80,25 +86,25 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   @Override
   public void registerPostStartupActivity(@NotNull Runnable runnable) {
+    if (DumbService.isDumbAware(runnable)) {
+      runAfterOpened(runnable);
+      return;
+    }
+
     checkNonDefaultProject();
     checkThatPostActivitiesNotPassed();
 
-    Runnable effectiveRunnable;
-    if (DumbService.isDumbAware(runnable)) {
-      effectiveRunnable = runnable;
-    }
-    else {
-      //LOG.warn("Activities registered via registerPostStartupActivity must be dumb-aware");
-      effectiveRunnable = (DumbAwareRunnable)() -> DumbService.getInstance(myProject).unsafeRunWhenSmart(runnable);
-    }
+    LOG.warn("Activities registered via registerPostStartupActivity must be dumb-aware: " + runnable);
     synchronized (myLock) {
       checkThatPostActivitiesNotPassed();
-      postStartupActivities.add(effectiveRunnable);
+      postStartupActivities.add((DumbAwareRunnable)() -> {
+        DumbService.getInstance(myProject).unsafeRunWhenSmart(runnable);
+      });
     }
   }
 
   private void checkThatPostActivitiesNotPassed() {
-    if (postStartupActivitiesPassed) {
+    if (postStartupActivityPassed()) {
       LOG.error("Registering post-startup activity that will never be run:" +
                 " disposed=" + myProject.isDisposed() + "; open=" + myProject.isOpen() +
                 "; passed=" + myStartupActivitiesPassed);
@@ -112,7 +118,7 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   @Override
   public boolean postStartupActivityPassed() {
-    return postStartupActivitiesPassed;
+    return postStartupActivitiesPassed == ALL_PASSED;
   }
 
   public final @NotNull Future<?> projectOpened(@Nullable ProgressIndicator indicator) {
@@ -296,18 +302,15 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   private void runPostStartupActivitiesRegisteredDynamically() {
-    if (postStartupActivitiesPassed) {
-      return;
-    }
-
     runActivities(postStartupActivities, null, "project post-startup");
+    postStartupActivitiesPassed = DUMB_AWARE_PASSED;
 
     DumbService.getInstance(myProject).unsafeRunWhenSmart(new Runnable() {
       @Override
       public void run() {
         synchronized (myLock) {
           if (postStartupActivities.isEmpty()) {
-            postStartupActivitiesPassed = true;
+            postStartupActivitiesPassed = ALL_PASSED;
             return;
           }
         }
@@ -319,7 +322,7 @@ public class StartupManagerImpl extends StartupManagerEx {
           dumbService.unsafeRunWhenSmart(this);
         }
         else {
-          postStartupActivitiesPassed = true;
+          postStartupActivitiesPassed = ALL_PASSED;
         }
       }
     });
@@ -419,7 +422,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     GuiUtils.invokeLaterIfNeeded(() -> {
       // in tests that simulate project opening, post-startup activities could have been run already
       // then we should act as if the project was initialized
-      if (myStartupActivitiesPassed && (myProject.isOpen() || myProject.isDefault() || (postStartupActivitiesPassed && ApplicationManager.getApplication().isUnitTestMode()))) {
+      if (myStartupActivitiesPassed && (myProject.isOpen() || myProject.isDefault() || (postStartupActivityPassed() && ApplicationManager.getApplication().isUnitTestMode()))) {
         action.run();
         return;
       }
@@ -439,9 +442,9 @@ public class StartupManagerImpl extends StartupManagerEx {
   public void runAfterOpened(@NotNull Runnable runnable) {
     checkNonDefaultProject();
 
-    if (!postStartupActivitiesPassed) {
+    if (postStartupActivitiesPassed < DUMB_AWARE_PASSED) {
       synchronized (myLock) {
-        if (!postStartupActivitiesPassed) {
+        if (postStartupActivitiesPassed < DUMB_AWARE_PASSED) {
           postStartupActivities.add(runnable);
           return;
         }

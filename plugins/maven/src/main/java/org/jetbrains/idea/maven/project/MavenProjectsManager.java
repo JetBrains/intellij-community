@@ -201,7 +201,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       initMavenized();
     });
 
-    startupManager.registerPostStartupActivity(() -> {
+    startupManager.runAfterOpened(() -> {
       if (!isMavenizedProject()) {
         showNotificationOrphanMavenProject(myProject);
       }
