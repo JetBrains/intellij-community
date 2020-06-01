@@ -22,8 +22,6 @@ class PySuggestedRefactoringSupport : SuggestedRefactoringSupport {
       return element is PyFunction &&
              element.name.let { it != null && PyNames.isIdentifier(it) } &&
              element.property == null &&
-             element.annotation == null &&
-             element.parameterList.parameters.none { it.asNamed?.annotation != null } &&
              !PyiUtil.isOverload(element, TypeEvalContext.codeAnalysis(element.project, element.containingFile))
     }
 
