@@ -91,6 +91,14 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   }
 
   /**
+   * Allows to customize method used to format code in the preview panel.
+   * @return {@code true} if {@code CodeStyleManager#reformatText} should be used instead of {@code CodeStyleManager#reformat}
+   */
+  public boolean useTextReformat() {
+    return false;
+  }
+
+  /**
    * Creates an instance of {@code CommonCodeStyleSettings} and sets initial default values for those
    * settings which differ from the original.
    *
