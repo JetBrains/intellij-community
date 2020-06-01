@@ -97,6 +97,7 @@ public class MutationSignature {
   @Override
   public boolean equals(Object obj) {
     if (obj == this) return true;
+    if ((this == UNKNOWN) != (obj == UNKNOWN)) return false;
     return obj instanceof MutationSignature && ((MutationSignature)obj).myThis == myThis &&
            Arrays.equals(((MutationSignature)obj).myParameters, myParameters);
   }
