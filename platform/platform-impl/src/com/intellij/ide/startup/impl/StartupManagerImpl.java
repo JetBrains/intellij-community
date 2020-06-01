@@ -36,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
@@ -180,17 +179,6 @@ public class StartupManagerImpl extends StartupManagerEx {
     });
   }
 
-  /**
-   * @deprecated Use {@link com.intellij.testFramework.PlatformTestUtil#loadAndOpenProject(Path)} in tests.
-   */
-  @TestOnly
-  @Deprecated
-  public void runStartupActivities() {
-    if (!myStartupActivitiesPassed) {
-      runStartUpActivities(null);
-    }
-  }
-
   // Must be executed in a pooled thread outside of project loading modal task. The only exclusion - test mode.
   private void runPostStartupActivities() {
     LOG.assertTrue(myStartupActivitiesPassed);
@@ -233,7 +221,6 @@ public class StartupManagerImpl extends StartupManagerEx {
       return;
     }
 
-    //noinspection TestOnlyProblems
     runPostStartupActivitiesRegisteredDynamically();
     dumbAwareActivity.end();
 
@@ -308,8 +295,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     }
   }
 
-  @TestOnly
-  public final void runPostStartupActivitiesRegisteredDynamically() {
+  private void runPostStartupActivitiesRegisteredDynamically() {
     if (postStartupActivitiesPassed) {
       return;
     }
