@@ -39,7 +39,7 @@ class PSerializer(private val typesResolver: EntityTypesResolver,
   private fun createKryo(): Kryo {
     val kryo = Kryo()
 
-    kryo.isRegistrationRequired = Registry.`is`(ENABLED_REQUIRED_REGISTRATION_KEY)
+    kryo.isRegistrationRequired = StrictMode.enabled
     kryo.instantiatorStrategy = StdInstantiatorStrategy()
 
     kryo.register(VirtualFileUrl::class.java, object : Serializer<VirtualFileUrl>(false, true) {
@@ -246,6 +246,7 @@ class PSerializer(private val typesResolver: EntityTypesResolver,
 
   override fun serializeCache(stream: OutputStream, storage: TypedEntityStorage) {
     storage as PEntityStorage
+    storage.assertConsistencyInStrictMode()
 
     val output = Output(stream, KRYO_BUFFER_SIZE)
     try {
@@ -332,13 +333,12 @@ class PSerializer(private val typesResolver: EntityTypesResolver,
       val persistentIdIndex = kryo.readClassAndObject(input) as EntityStorageInternalIndex<PersistentEntityId<*>>
       val storageIndexes = StorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex)
 
-      return PEntityStorageBuilder.from(PEntityStorage(entitiesBarrel, refsTable, storageIndexes))
+
+      val storage = PEntityStorage(entitiesBarrel, refsTable, storageIndexes)
+      storage.assertConsistencyInStrictMode()
+      return PEntityStorageBuilder.from(storage)
     }
   }
 
   private data class TypeInfo(val name: String, val pluginId: String?)
-
-  companion object {
-    const val ENABLED_REQUIRED_REGISTRATION_KEY = "ide.new.project.model.cache.kryo.required.registration"
-  }
 }

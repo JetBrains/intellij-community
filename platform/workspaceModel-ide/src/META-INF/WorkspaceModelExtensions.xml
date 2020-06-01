@@ -4,7 +4,7 @@
                  description="Enable new entities-based project model (workspace model)"/>
     <registryKey key="ide.new.project.model.cache" defaultValue="false" restartRequired="false"
                  description="Enable cache for the workspace model"/>
-    <registryKey key="ide.new.project.model.cache.kryo.required.registration" defaultValue="false" restartRequired="true"
+    <registryKey key="ide.new.project.model.strict.mode" defaultValue="false" restartRequired="true"
                  description="Enable required registration for kryo serialization"/>
 
     <registryKey key="ide.workspace.model.jps.enabled" defaultValue="true" restartRequired="false"

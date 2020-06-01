@@ -294,28 +294,48 @@ class ReplaceByPSourceTest {
     builder.assertConsistency()
   }
 
-/*
-  Not sure if this should work this way. We can track persistentId changes in builder, but what if we perform replaceBySource with storage?
   @Test
-  fun `entity with soft reference - linked has wrong source`() {
+  fun `entity with soft reference remove reference`() {
     val builder = PEntityStorageBuilder.create()
     val named = builder.addNamedEntity("MyName")
-    val linked = builder.addWithSoftLinkEntity(named.persistentId(), AnotherSource)
+    val linked = builder.addWithListSoftLinksEntity("name", listOf(named.persistentId()))
     builder.resetChanges()
     builder.assertConsistency()
 
     val replacement = PEntityStorageBuilder.from(builder)
-    replacement.modifyEntity(ModifiableNamedEntity::class.java, named) {
-      this.name = "NewName"
+    replacement.modifyEntity(ModifiableWithListSoftLinksEntity::class.java, linked) {
+      this.links = emptyList()
     }
 
     replacement.assertConsistency()
 
-    builder.replaceBySource({ it is MySource }, replacement)
-    assertEquals("NewName", assertOneElement(builder.entities(NamedEntity::class.java).toList()).name)
-    assertEquals("NewName", assertOneElement(builder.entities(WithSoftLinkEntity::class.java).toList()).link.presentableName)
+    builder.replaceBySource({ true }, replacement)
 
     builder.assertConsistency()
   }
-*/
+
+  /*
+    Not sure if this should work this way. We can track persistentId changes in builder, but what if we perform replaceBySource with storage?
+    @Test
+    fun `entity with soft reference - linked has wrong source`() {
+      val builder = PEntityStorageBuilder.create()
+      val named = builder.addNamedEntity("MyName")
+      val linked = builder.addWithSoftLinkEntity(named.persistentId(), AnotherSource)
+      builder.resetChanges()
+      builder.assertConsistency()
+
+      val replacement = PEntityStorageBuilder.from(builder)
+      replacement.modifyEntity(ModifiableNamedEntity::class.java, named) {
+        this.name = "NewName"
+      }
+
+      replacement.assertConsistency()
+
+      builder.replaceBySource({ it is MySource }, replacement)
+      assertEquals("NewName", assertOneElement(builder.entities(NamedEntity::class.java).toList()).name)
+      assertEquals("NewName", assertOneElement(builder.entities(WithSoftLinkEntity::class.java).toList()).link.presentableName)
+
+      builder.assertConsistency()
+    }
+  */
 }

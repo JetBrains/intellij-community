@@ -20,6 +20,15 @@ internal data class NameId(private val name: String) : PersistentEntityId<NamedE
   override fun toString(): String = name
 }
 
+internal data class AnotherNameId(private val name: String) : PersistentEntityId<NamedEntity>() {
+  override val parentId: PersistentEntityId<*>?
+    get() = null
+  override val presentableName: String
+    get() = name
+
+  override fun toString(): String = name
+}
+
 // ------------------------------ Entity With Persistent Id ------------------
 
 internal class NamedEntityData : PEntityData.WithCalculatablePersistentId<NamedEntity>() {
@@ -75,4 +84,43 @@ internal class ModifiableWithSoftLinkEntity : PModifiableTypedEntity<WithSoftLin
 internal fun PEntityStorageBuilder.addWithSoftLinkEntity(link: NameId, source: EntitySource = MySource) =
   addEntity(ModifiableWithSoftLinkEntity::class.java, source) {
     this.link = link
+  }
+
+// ------------------------- Entity with persistentId and the list of soft links ------------------
+
+internal class WithListSoftLinksEntityData : PSoftLinkable, PEntityData.WithCalculatablePersistentId<WithListSoftLinksEntity>() {
+
+  lateinit var name: String
+  lateinit var links: MutableList<NameId>
+
+  override fun getLinks(): Set<PersistentEntityId<*>> = links.toSet()
+
+  override fun updateLink(oldLink: PersistentEntityId<*>,
+                          newLink: PersistentEntityId<*>,
+                          affectedIds: MutableList<Pair<PersistentEntityId<*>, PersistentEntityId<*>>>): Boolean {
+    links.remove(oldLink)
+    links.add(newLink as NameId)
+    return true
+  }
+
+  override fun createEntity(snapshot: TypedEntityStorage): WithListSoftLinksEntity {
+    return WithListSoftLinksEntity(name, links).also { addMetaData(it, snapshot) }
+  }
+
+  override fun persistentId() = AnotherNameId(name)
+}
+
+internal class WithListSoftLinksEntity(val name: String, val links: List<NameId>) : PTypedEntity(), TypedEntityWithPersistentId {
+  override fun persistentId(): AnotherNameId = AnotherNameId(name)
+}
+
+internal class ModifiableWithListSoftLinksEntity : PModifiableTypedEntity<WithListSoftLinksEntity>() {
+  var name: String by EntityDataDelegation()
+  var links: List<NameId> by EntityDataDelegation()
+}
+
+internal fun PEntityStorageBuilder.addWithListSoftLinksEntity(name: String, links: List<NameId>, source: EntitySource = MySource) =
+  addEntity(ModifiableWithListSoftLinksEntity::class.java, source) {
+    this.name = name
+    this.links = links
   }

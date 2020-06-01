@@ -78,7 +78,7 @@ internal open class StorageIndexes(
         }
       }
     }
-    assert(softLinksCopy.isEmpty) { "Soft links has garbage: $softLinksCopy" }
+    assert(softLinksCopy.isEmpty) { "Soft links have garbage: $softLinksCopy" }
   }
 }
 
@@ -138,7 +138,6 @@ internal class MutableStorageIndexes(
 
   @OptIn(ExperimentalStdlibApi::class)
   fun <T : TypedEntity> updateSoftReferences(beforePersistentId: PersistentEntityId<*>?,
-                                             beforeSoftLinks: Set<PersistentEntityId<*>>?,
                                              copiedData: PEntityData<T>,
                                              builder: PEntityStorageBuilder) {
     val pid = copiedData.createPid()
@@ -168,8 +167,9 @@ internal class MutableStorageIndexes(
       }
     }
 
-    if (beforeSoftLinks != null) {
-      val afterSoftLinks = (copiedData as PSoftLinkable).getLinks()
+    if (copiedData is PSoftLinkable) {
+      val beforeSoftLinks = HashSet(this.softLinks.getKeys(pid))
+      val afterSoftLinks = copiedData.getLinks()
       if (beforeSoftLinks != afterSoftLinks) {
         beforeSoftLinks.forEach { this.softLinks.remove(it, pid) }
         afterSoftLinks.forEach { this.softLinks.put(it, pid) }

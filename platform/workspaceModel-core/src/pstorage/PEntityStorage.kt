@@ -112,6 +112,9 @@ internal class PEntityStorageBuilder(
     // Update indexes
     indexes.entityAdded(pEntityData, this)
 
+    // Assert consistency
+    this.assertConsistencyInStrictMode()
+
     return pEntityData.createEntity(this)
   }
 
@@ -121,7 +124,6 @@ internal class PEntityStorageBuilder(
     val modifiableEntity = copiedData.wrapAsModifiable(this) as M
 
     val beforePersistentId = if (e is TypedEntityWithPersistentId) e.persistentId() else null
-    val beforeSoftLinks = if (copiedData is PSoftLinkable) copiedData.getLinks() else null
 
     // Execute modification code
     (modifiableEntity as PModifiableTypedEntity<*>).allowModifications {
@@ -137,7 +139,10 @@ internal class PEntityStorageBuilder(
     val updatedEntity = copiedData.createEntity(this)
 
     if (updatedEntity is TypedEntityWithPersistentId) indexes.persistentIdIndex.index(pid, updatedEntity.persistentId())
-    indexes.updateSoftReferences(beforePersistentId, beforeSoftLinks, copiedData, this)
+    indexes.updateSoftReferences(beforePersistentId, copiedData, this)
+
+    // Assert consistency
+    this.assertConsistencyInStrictMode()
 
     return updatedEntity
   }
@@ -152,6 +157,10 @@ internal class PEntityStorageBuilder(
     updateChangeLog { it.add(ChangeEntry.ReplaceEntity(copiedData, children, parents)) }
 
     indexes.entitySourceIndex.index(copiedData.createPid(), newSource)
+
+    // Assert consistency
+    this.assertConsistencyInStrictMode()
+
     return copiedData.createEntity(this)
   }
 
@@ -160,6 +169,9 @@ internal class PEntityStorageBuilder(
 
     removeEntity(e.id, null)
     updateChangeLog { it.add(ChangeEntry.RemoveEntity(e.id)) }
+
+    // Assert consistency
+    this.assertConsistencyInStrictMode()
   }
 
   override fun <E : TypedEntity> createReference(e: E): EntityReference<E> = PEntityReference((e as PTypedEntity).id)
@@ -169,7 +181,7 @@ internal class PEntityStorageBuilder(
     val possibleValues = this[entity.identificator(storage)]
     val persistentId = entity.persistentId(storage)
     return if (persistentId != null) {
-      possibleValues.find { it.persistentId(this@PEntityStorageBuilder) == persistentId }
+      possibleValues.singleOrNull()
     }
     else {
       possibleValues.find { it == entity }
@@ -194,6 +206,9 @@ internal class PEntityStorageBuilder(
    */
   override fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: TypedEntityStorage) {
     replaceWith as AbstractPEntityStorage
+
+    this.assertConsistencyInStrictMode()
+    replaceWith.assertConsistencyInStrictMode()
 
     LOG.debug { "Performing replace by source" }
 
@@ -251,6 +266,8 @@ internal class PEntityStorageBuilder(
       }
     }
 
+    val softReferencesToUpdate = ArrayList<Pair<PersistentEntityId<*>, PEntityData<*>>>()
+
     LOG.debug { "2) Traverse entities of replaceWith store" }
     // 2) Traverse entities of the enemy
     //    and trying to detect whenever the entity already present in the local builder or not.
@@ -273,14 +290,14 @@ internal class PEntityStorageBuilder(
           if (localNode.hasPersistentId() && localNode != matchedEntityData) {
             // Entity exists in local store, but has changes. Generate replace operation
             val clonedEntity = matchedEntityData.clone()
+            val persistentIdBefore = matchedEntityData.persistentId(replaceWith) ?: error("PersistentId expected")
             clonedEntity.id = localNode.id
             this.entitiesByType.replaceById(clonedEntity as PEntityData<TypedEntity>, clonedEntity.createPid().clazz)
             val pid = clonedEntity.createPid()
             val parents = this.refs.getParentRefsOfChild(pid)
             val children = this.refs.getChildrenRefsOfParentBy(pid)
 
-            // At this point you might ask me: What about updating softLinks index?
-            //   Well, this is not necessary because we won't recognize entity if it'll change it's PersistentId
+            softReferencesToUpdate.add(Pair(persistentIdBefore, clonedEntity))
             indexes.updateIndices(oldPid, pid, replaceWith)
             updateChangeLog { it.add(ChangeEntry.ReplaceEntity(clonedEntity, children, parents)) }
           }
@@ -400,6 +417,15 @@ internal class PEntityStorageBuilder(
       }
     }
 
+    LOG.debug { "6) Update soft links index" }
+    // This index should be updated after all operations because some persistentIds use referred entities during calculating
+    softReferencesToUpdate.forEach {
+      indexes.updateSoftReferences(it.first, it.second, this)
+    }
+
+    // Assert consistency
+    this.assertConsistencyInStrictMode()
+
     LOG.debug { "Replace by source finished" }
   }
 
@@ -461,7 +487,11 @@ internal class PEntityStorageBuilder(
     val newEntities = entitiesByType.toImmutable()
     val newRefs = refs.toImmutable()
     val newIndexes = indexes.toImmutable()
-    return PEntityStorage(newEntities, newRefs, newIndexes)
+    val storage = PEntityStorage(newEntities, newRefs, newIndexes)
+
+    storage.assertConsistencyInStrictMode()
+
+    return storage
   }
 
   override fun isEmpty(): Boolean = changeLogImpl.isEmpty()
@@ -515,13 +545,15 @@ internal class PEntityStorageBuilder(
       }
     }
     indexes.applyExternalIndexChanges(diff)
-    // TODO: 27.03.2020 Here should be consistency check
     val res = HashMap<TypedEntity, TypedEntity>()
     replaceMap.forEach { (oldId, newId) ->
       if (oldId != newId) {
         res[diff.entityDataByIdOrDie(oldId).createEntity(diff)] = this.entityDataByIdOrDie(newId).createEntity(this)
       }
     }
+
+    // Assert consistency
+    this.assertConsistencyInStrictMode()
     return res
   }
 
@@ -615,13 +647,12 @@ internal class PEntityStorageBuilder(
     val id = newEntity.createPid()
     val existingEntityData = entityDataById(id)
     val beforePersistentId = existingEntityData?.persistentId(this)
-    val beforeSoftLinks = if (existingEntityData is PSoftLinkable) existingEntityData.getLinks() else null
 
     /// Replace entity data. id should not be changed
     entitiesByType.replaceById(newEntity, clazz)
 
     // Restore soft references
-    indexes.updateSoftReferences(beforePersistentId, beforeSoftLinks, entityDataByIdOrDie(id), this)
+    indexes.updateSoftReferences(beforePersistentId, entityDataByIdOrDie(id), this)
     updateEntityRefs(id, updatedChildren, updatedParents)
   }
 
@@ -678,6 +709,10 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
   internal abstract val indexes: StorageIndexes
 
   abstract fun assertConsistency()
+
+  fun assertConsistencyInStrictMode() {
+    if (StrictMode.enabled) assertConsistency()
+  }
 
   override fun <E : TypedEntity> entities(entityClass: Class<E>): Sequence<E> {
     return entitiesByType[entityClass.toClassId()]?.all()?.map { it.createEntity(this) } as? Sequence<E> ?: emptySequence()
@@ -776,13 +811,13 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
 
   private fun assertResolvable(clazz: Int, id: Int) {
     assert(entitiesByType[clazz]?.get(id) != null) {
-      "Reference to $clazz-:-$id cannot be resolved"
+      "Reference to ${clazz.findEntityClass<TypedEntity>()}-:-$id cannot be resolved"
     }
   }
 
   private fun assertCorrectEntityClass(connectionClass: Int, entityId: PId) {
     assert(connectionClass.findEntityClass<TypedEntity>().isAssignableFrom(entityId.clazz.findEntityClass<TypedEntity>())) {
-      "Entity storage with connection class $connectionClass contains entity data of wrong type $entityId"
+      "Entity storage with connection class ${connectionClass.findEntityClass<TypedEntity>()} contains entity data of wrong type $entityId"
     }
   }
 }
