@@ -326,7 +326,7 @@ class PSerializer(private val typesResolver: EntityTypesResolver,
       val refsTable = kryo.readClassAndObject(input) as RefsTable
 
       // Read indexes
-      val softLinks = kryo.readClassAndObject(input) as Multimap<PersistentEntityId<*>, PId>
+      val softLinks = kryo.readClassAndObject(input) as BidirectionalMultiMap<PersistentEntityId<*>, PId>
       val virtualFileIndex = kryo.readClassAndObject(input) as VirtualFileIndex
       val entitySourceIndex = kryo.readClassAndObject(input) as EntityStorageInternalIndex<EntitySource>
       val persistentIdIndex = kryo.readClassAndObject(input) as EntityStorageInternalIndex<PersistentEntityId<*>>

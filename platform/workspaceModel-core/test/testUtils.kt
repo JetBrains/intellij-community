@@ -69,7 +69,7 @@ object SerializationRoundTripChecker {
     assertEquals(4, RefsTable::class.memberProperties.size)
 
     // Assert indexes
-    assertMapsEqual(expected.indexes.softLinks.asMap(), actual.indexes.softLinks.asMap())
+    assertBiMultiMap(expected.indexes.softLinks, actual.indexes.softLinks)
     assertBiMultiMap(expected.indexes.virtualFileIndex.index, actual.indexes.virtualFileIndex.index)
     assertBiMap(expected.indexes.entitySourceIndex.index, actual.indexes.entitySourceIndex.index)
     assertBiMap(expected.indexes.persistentIdIndex.index, actual.indexes.persistentIdIndex.index)

@@ -36,7 +36,7 @@ class SoftLinksTest {
 
     // Check
     assertNotNull(builder.resolve(NameId(newId)))
-    assertOneElement(builder.indexes.softLinks.get(NameId(newId)))
+    assertOneElement(builder.indexes.softLinks.getValues(NameId(newId)))
   }
 
   @Test
@@ -65,7 +65,7 @@ class SoftLinksTest {
 
     // Check
     assertNotNull(builder.resolve(NameId(newId)))
-    assertOneElement(builder.indexes.softLinks.get(NameId(newId)))
+    assertOneElement(builder.indexes.softLinks.getValues(NameId(newId)))
 
     // Change persistent id to the initial value
     val anotherNewBuilder = PEntityStorageBuilder.from(builder.toStorage())
@@ -79,6 +79,6 @@ class SoftLinksTest {
 
     // Check
     assertNotNull(builder.resolve(NameId(id)))
-    assertOneElement(builder.indexes.softLinks.get(NameId(id)))
+    assertOneElement(builder.indexes.softLinks.getValues(NameId(id)))
   }
 }
