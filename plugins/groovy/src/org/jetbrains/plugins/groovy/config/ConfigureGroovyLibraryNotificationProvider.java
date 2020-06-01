@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -19,26 +18,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.annotator.GroovyFrameworkConfigNotification;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
 /**
  * @author Maxim.Medvedev
  */
 public final class ConfigureGroovyLibraryNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> {
   private static final Key<EditorNotificationPanel> KEY = Key.create("configure.groovy.library");
-
-  private final Set<FileType> supportedFileTypes;
-
-  public ConfigureGroovyLibraryNotificationProvider() {
-    supportedFileTypes = new HashSet<>();
-    supportedFileTypes.add(GroovyFileType.GROOVY_FILE_TYPE);
-
-    for (GroovyFrameworkConfigNotification configNotification : GroovyFrameworkConfigNotification.EP_NAME.getExtensionList()) {
-      Collections.addAll(supportedFileTypes, configNotification.getFrameworkFileTypes());
-    }
-  }
 
   @NotNull
   @Override
@@ -47,9 +31,11 @@ public final class ConfigureGroovyLibraryNotificationProvider extends EditorNoti
   }
 
   @Override
-  public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
+  public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file,
+                                                         @NotNull FileEditor fileEditor,
+                                                         @NotNull Project project) {
     try {
-      if (!supportedFileTypes.contains(file.getFileType())) return null;
+      if (!file.getFileType().equals(GroovyFileType.GROOVY_FILE_TYPE)) return null;
       // do not show the panel for Gradle build scripts
       // expecting groovy library to always be available at the gradle distribution
       if (StringUtil.endsWith(file.getName(), ".gradle")) return null;
