@@ -188,6 +188,11 @@ class ImmediatePainter {
                                                    g, PaintUtil.RoundingMode.FLOOR);
     float clipEndX = (float)PaintUtil.alignToInt(p2x + width2 - caretShift + caretWidth,
                                                  g, PaintUtil.RoundingMode.CEIL);
+    if (clipEndX > editor.getContentComponent().getWidth()) {
+      // we cannot paint beyond component bounds (this will go beyond dev clip in graphics anyway)
+      return;
+    }
+
     g.setClip(new Rectangle2D.Float(clipStartX, p2y, clipEndX - clipStartX, lineHeight));
     // at the moment, lines in editor are not aligned to dev pixel grid along Y axis, when fractional scale is used,
     // so double buffering is disabled (as it might not produce the same result as direct painting, and will case text jitter)
