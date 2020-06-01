@@ -232,7 +232,7 @@ class PSerializer(private val typesResolver: EntityTypesResolver,
       // Collect all classes existing in entity data
       val simpleClasses = HashSet<TypeInfo>()
       val objectClasses = HashSet<TypeInfo>()
-      storage.entitiesByType.allEntities().forEach { family ->
+      storage.entitiesByType.entities.filterNotNull().forEach { family ->
         family.entities.filterNotNull().forEach { recursiveClassFinder(kryo, it, simpleClasses, objectClasses) }
       }
 

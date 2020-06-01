@@ -5,8 +5,7 @@ import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.workspace.api.pstorage.*
 import com.intellij.workspace.api.pstorage.indices.copy
-import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.assertTrue
+import junit.framework.TestCase.*
 import org.junit.Assert
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -46,8 +45,14 @@ object SerializationRoundTripChecker {
   private fun assertStorageEquals(expected: PEntityStorage, actual: PEntityStorage) {
     // Assert entity data
     assertEquals(expected.entitiesByType.size(), actual.entitiesByType.size())
-    for ((clazz, expectedEntityFamily) in expected.entitiesByType.allEntities().withIndex()) {
-      val actualEntityFamily = actual.entitiesByType.allEntities()[clazz]
+    for ((clazz, expectedEntityFamily) in expected.entitiesByType.entities.withIndex()) {
+      val actualEntityFamily = actual.entitiesByType.entities[clazz]
+
+      if (expectedEntityFamily == null || actualEntityFamily == null) {
+        assertNull(expectedEntityFamily)
+        assertNull(actualEntityFamily)
+        continue
+      }
 
       val expectedEntities = expectedEntityFamily.entities
       val actualEntities = actualEntityFamily.entities

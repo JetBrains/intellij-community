@@ -87,16 +87,14 @@ internal class MutableEntitiesBarrel private constructor(
   }
 
   companion object {
-    fun from(original: ImmutableEntitiesBarrel): MutableEntitiesBarrel = MutableEntitiesBarrel(ArrayList(original.allEntities()))
+    fun from(original: ImmutableEntitiesBarrel): MutableEntitiesBarrel = MutableEntitiesBarrel(ArrayList(original.entities))
   }
 }
 
 internal sealed class EntitiesBarrel {
-  protected abstract val entities: List<EntityFamily<out TypedEntity>?>
+  internal abstract val entities: List<EntityFamily<out TypedEntity>?>
 
   open operator fun get(clazz: Int): EntityFamily<out TypedEntity>? = entities.getOrNull(clazz)
 
   fun size() = entities.size
-
-  internal fun allEntities() = entities.filterNotNull()
 }

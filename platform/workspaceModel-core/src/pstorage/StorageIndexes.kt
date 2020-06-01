@@ -43,7 +43,7 @@ internal open class StorageIndexes(
   fun assertConsistency(storage: AbstractPEntityStorage) {
     // Assert entity source index
     val entitySourceIndexCopy = entitySourceIndex.index.copy()
-    storage.entitiesByType.allEntities().forEach { family ->
+    storage.entitiesByType.entities.filterNotNull().forEach { family ->
       family.entities.asSequence().filterNotNull().forEach { data ->
         val removed = entitySourceIndexCopy.remove(data.createPid(), data.entitySource)
         assert(removed) { "Entity $data isn't found in entity source index" }
@@ -53,7 +53,7 @@ internal open class StorageIndexes(
 
     // Assert persistent id index
     val persistentIdIndexCopy = persistentIdIndex.index.copy()
-    storage.entitiesByType.allEntities().forEach { family ->
+    storage.entitiesByType.entities.filterNotNull().forEach { family ->
       family.entities.asSequence().filterNotNull().forEach { data ->
         val persistentId = data.persistentId(storage)
         if (persistentId != null) {
@@ -66,7 +66,7 @@ internal open class StorageIndexes(
 
     // Assert soft links
     val softLinksCopy = HashMultimap.create(softLinks)
-    storage.entitiesByType.allEntities().forEach { family ->
+    storage.entitiesByType.entities.filterNotNull().forEach { family ->
       family.entities.asSequence().filterNotNull().forEach { data ->
         if (data is PSoftLinkable) {
           val links = data.getLinks()
