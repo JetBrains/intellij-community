@@ -97,7 +97,18 @@ public class ProjectsTabFactory implements WelcomeTabFactory {
           }
         }
         toolbarActionGroup.addAction(moreActionGroup);
-        ActionToolbarImpl toolbar = new ActionToolbarImpl(ActionPlaces.WELCOME_SCREEN, toolbarActionGroup, true);
+        ActionToolbarImpl toolbar = new ActionToolbarImpl(ActionPlaces.WELCOME_SCREEN, toolbarActionGroup, true) {
+          @Override
+          protected @NotNull ActionButton createToolbarButton(@NotNull AnAction action,
+                                                              ActionButtonLook look,
+                                                              @NotNull String place,
+                                                              @NotNull Presentation presentation,
+                                                              @NotNull Dimension minimumSize) {
+            ActionButton toolbarButton = super.createToolbarButton(action, look, place, presentation, minimumSize);
+            toolbarButton.setFocusable(true);
+            return toolbarButton;
+          }
+        };
         toolbar.setOpaque(false);
         return toolbar;
       }
