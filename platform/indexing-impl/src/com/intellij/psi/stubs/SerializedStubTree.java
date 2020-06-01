@@ -6,8 +6,10 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.DigestUtil;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,8 +18,11 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.security.MessageDigest;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class SerializedStubTree {
   private static final MessageDigest HASHER = DigestUtil.sha256();
 
@@ -103,6 +108,12 @@ public final class SerializedStubTree {
     );
   }
 
+  @ApiStatus.Internal
+  @NotNull
+  public StubForwardIndexExternalizer<?> getStubIndexesExternalizer() {
+    return myStubIndexesExternalizer;
+  }
+
   void restoreIndexedStubs() throws IOException {
     if (myIndexedStubs == null) {
       myIndexedStubs = myStubIndexesExternalizer.read(new DataInputStream(new ByteArrayInputStream(myIndexedStubBytes, 0, myIndexedStubByteLength)));
@@ -127,7 +138,20 @@ public final class SerializedStubTree {
   }
 
   public @NotNull Stub getStub() throws SerializerNotFoundException {
+    if (myTreeByteLength == 0) {
+      return NO_STUB;
+    }
     return mySerializationManager.deserialize(new UnsyncByteArrayInputStream(myTreeBytes, 0, myTreeByteLength));
+  }
+
+  public @NotNull SerializedStubTree withoutStub() {
+    return new SerializedStubTree(ArrayUtil.EMPTY_BYTE_ARRAY,
+                                  0,
+                                  myIndexedStubBytes,
+                                  myIndexedStubByteLength,
+                                  myIndexedStubs,
+                                  myStubIndexesExternalizer,
+                                  mySerializationManager);
   }
 
   @Override
@@ -193,4 +217,22 @@ public final class SerializedStubTree {
     }
     return myTreeHash;
   }
+
+  // TODO replace it with separate StubTreeLoader implementation
+  public static final Stub NO_STUB = new Stub() {
+    @Override
+    public Stub getParentStub() {
+      return null;
+    }
+
+    @Override
+    public @NotNull List<? extends Stub> getChildrenStubs() {
+      return Collections.emptyList();
+    }
+
+    @Override
+    public ObjectStubSerializer getStubType() {
+      return null;
+    }
+  };
 }
