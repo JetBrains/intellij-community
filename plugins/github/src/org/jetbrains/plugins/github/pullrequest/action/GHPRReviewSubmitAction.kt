@@ -195,7 +195,7 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
         }
 
         val buttonsPanel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)).apply {
-          border = JBUI.Borders.empty(8, 4, 4, 4)
+          border = JBUI.Borders.empty(4)
 
           if (!viewerIsAuthor) add(approveButton)
           if (!viewerIsAuthor) add(rejectButton)
