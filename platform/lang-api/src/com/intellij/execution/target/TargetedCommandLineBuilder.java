@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target;
 
 import com.intellij.execution.target.value.TargetValue;
@@ -66,6 +66,12 @@ public class TargetedCommandLineBuilder extends UserDataHolderBase {
   }
 
   public void addParameters(@NotNull List<String> parametersList) {
+    for (String parameter : parametersList) {
+      addParameter(parameter);
+    }
+  }
+
+  public void addParameters(String @NotNull ... parametersList) {
     for (String parameter : parametersList) {
       addParameter(parameter);
     }
