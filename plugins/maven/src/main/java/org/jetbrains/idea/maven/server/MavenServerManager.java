@@ -84,18 +84,25 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
   }
 
   public void unregisterConnector(MavenServerConnector serverConnector) {
-    myServerConnectors.values().remove(serverConnector);
+    synchronized (myServerConnectors) {
+      myServerConnectors.values().remove(serverConnector);
+    }
   }
 
   public void shutdownServer(Project project) {
-    MavenServerConnector connector = myServerConnectors.get(project);
+    MavenServerConnector connector = null;
+    synchronized (myServerConnectors) {
+      connector = myServerConnectors.get(project);
+    }
     if (connector != null) {
       connector.shutdown(true);
     }
   }
 
   public Collection<MavenServerConnector> getAllConnectors() {
-    return Collections.unmodifiableCollection(myServerConnectors.values());
+    synchronized (myServerConnectors) {
+      return new ArrayList<>(myServerConnectors.values());
+    }
   }
 
   static class State {
@@ -214,9 +221,12 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
 
 
   public synchronized void shutdown(boolean wait) {
+
+    Collection<MavenServerConnector> values;
     synchronized (myServerConnectors) {
-      myServerConnectors.values().forEach(c -> c.shutdown(wait));
+      values = new ArrayList<>(myServerConnectors.values());
     }
+    values.forEach(c -> c.shutdown(wait));
   }
 
   public static boolean verifyMavenSdkRequirements(@NotNull Sdk jdk, String mavenVersion) {
