@@ -246,10 +246,6 @@
     <registryKey key="maven.print.import.stacktraces" defaultValue="false"
                  description="Print maven server stacktraces in log"/>
 
-
-    <registryKey key="maven.build.tool.window.enabled" defaultValue="true"
-                 description="Enable Maven tasks to use Build Tool Window"/>
-
     <registryKey key="maven.always.remove.bad.entries" defaultValue="false" description="Delete invalid maven Entries"/>
 
     <registryKey key="maven.new.project.model" defaultValue="false" description="Maven new project model"
@@ -257,6 +253,13 @@
 
     <registryKey key="maven.spy.events.debug" defaultValue="false"
                  description="Enable Maven spy events to be printed in Build Tool Window console"/>
+
+    <registryKey key="maven.server.debug" defaultValue="false"
+                 description="Debug maven server"/>
+
+    <registryKey key="maven.server.debug.default" defaultValue="false"
+                 description="Debug maven server for default project"/>
+
 
     <intentionAction>
       <className>org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesConverter$MyUpdateIndicesIntention</className>

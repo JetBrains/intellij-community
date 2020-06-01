@@ -53,13 +53,19 @@ public class MavenServerCMDState extends CommandLineState {
   private final String myVmOptions;
   private final MavenDistribution myDistribution;
   private final Project myProject;
+  private final Integer myDebugPort;
 
-  public MavenServerCMDState(@NotNull Sdk jdk, @Nullable String vmOptions, @Nullable MavenDistribution mavenDistribution, Project project) {
+  public MavenServerCMDState(@NotNull Sdk jdk,
+                             @Nullable String vmOptions,
+                             @Nullable MavenDistribution mavenDistribution,
+                             Project project,
+                             @Nullable Integer debugPort) {
     super(null);
     myJdk = jdk;
     myVmOptions = vmOptions;
     myDistribution = mavenDistribution;
     myProject = project;
+    myDebugPort = debugPort;
   }
 
   SimpleJavaParameters createJavaParameters() {
@@ -85,6 +91,13 @@ public class MavenServerCMDState extends CommandLineState {
     defs.put("java.awt.headless", "true");
     for (Map.Entry<String, String> each : defs.entrySet()) {
       params.getVMParametersList().defineProperty(each.getKey(), each.getValue());
+    }
+
+    params.getVMParametersList().addProperty("maven.defaultProjectBuilder.disableGlobalModelCache", "true");
+
+    if (myDebugPort != null) {
+      params.getVMParametersList()
+        .addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=" + myDebugPort);
     }
 
     params.getVMParametersList().addProperty("maven.defaultProjectBuilder.disableGlobalModelCache", "true");
@@ -157,11 +170,6 @@ public class MavenServerCMDState extends CommandLineState {
       }
     }
 
-    String mavenEmbedderDebugPort = System.getProperty("idea.maven.embedder.debug.port");
-    if (mavenEmbedderDebugPort != null) {
-      params.getVMParametersList()
-        .addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=" + mavenEmbedderDebugPort);
-    }
 
     String mavenEmbedderParameters = System.getProperty("idea.maven.embedder.parameters");
     if (mavenEmbedderParameters != null) {

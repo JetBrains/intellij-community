@@ -25,14 +25,16 @@ class MavenServerRemoteProcessSupport extends RemoteProcessSupport<Object, Maven
   private final String myOptions;
   private final MavenDistribution myDistribution;
   private final Project myProject;
+  private final Integer myDebugPort;
 
   MavenServerRemoteProcessSupport(@NotNull Sdk jdk, @Nullable String vmOptions, @Nullable MavenDistribution mavenDistribution,
-                                         @NotNull Project project) {
+                                  @NotNull Project project, @Nullable Integer debugPort) {
     super(MavenServer.class);
     myJdk = jdk;
     myOptions = vmOptions;
     myDistribution = mavenDistribution;
     myProject = project;
+    myDebugPort = debugPort;
   }
 
 
@@ -47,7 +49,7 @@ class MavenServerRemoteProcessSupport extends RemoteProcessSupport<Object, Maven
 
   @Override
   protected RunProfileState getRunProfileState(@NotNull Object target, @NotNull Object configuration, @NotNull Executor executor) {
-    return new MavenServerCMDState(myJdk, myOptions,myDistribution,myProject);
+    return new MavenServerCMDState(myJdk, myOptions, myDistribution, myProject, myDebugPort);
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
