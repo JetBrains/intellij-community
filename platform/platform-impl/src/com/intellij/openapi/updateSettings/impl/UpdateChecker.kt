@@ -551,10 +551,12 @@ object UpdateChecker {
           ideFrame.showPluginUpdates(runnable)
         }
         else {
-          val title = IdeBundle.message("updates.plugins.ready.short.title.available")
-          val message = updatedPlugins.joinToString { downloader -> downloader.pluginName }
+          val names = updatedPlugins.joinToString { downloader -> StringUtil.wrapWithDoubleQuote(downloader.pluginName) }
+          val title = if (updatedPlugins.size == 1) IdeBundle.message("updates.plugin.ready.short.title.available", names)
+          else IdeBundle.message("updates.plugins.ready.short.title.available")
+          val message = if (updatedPlugins.size == 1) "" else names
           showNotification(project, title, message, runnable, { notification ->
-            notification.actions[0].templatePresentation.text = IdeBundle.message("plugin.settings.title")
+            notification.actions[0].templatePresentation.text = IdeBundle.message("plugin.settings.link.title")
             notification.actions.add(0, object : NotificationAction(
               IdeBundle.message(if (updatedPlugins.size == 1) "plugins.configurable.update.button" else "plugin.manager.update.all")) {
               override fun actionPerformed(e: AnActionEvent, notification: Notification) {
@@ -563,7 +565,7 @@ object UpdateChecker {
               }
             })
             notification.addAction(object : NotificationAction(
-              IdeBundle.message(if (updatedPlugins.size == 1) "updates.ignore.update.button" else "updates.ignore.updates.button")) {
+              IdeBundle.message(if (updatedPlugins.size == 1) "updates.ignore.update.link" else "updates.ignore.updates.link")) {
               override fun actionPerformed(e: AnActionEvent, notification: Notification) {
                 notification.expire()
                 PluginUpdateDialog.ignorePlugins(updatedPlugins.map { downloader -> downloader.descriptor })
@@ -621,8 +623,8 @@ object UpdateChecker {
                                action: () -> Unit,
                                extraBuilder: ((Notification) -> Unit)?,
                                notificationType: NotificationUniqueType) {
-    val notification = getNotificationGroup().createNotification(title, XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION,
-                                                                 null)
+    val notification = getNotificationGroup().createNotification(title, if (message.isEmpty()) "" else XmlStringUtil.wrapInHtml(message),
+                                                                 NotificationType.INFORMATION, null)
     notification.collapseActionsDirection = Notification.CollapseActionsDirection.KEEP_LEFTMOST
     notification.addAction(object : NotificationAction(IdeBundle.message("updates.notification.update.action")) {
       override fun actionPerformed(e: AnActionEvent, notification: Notification) {
