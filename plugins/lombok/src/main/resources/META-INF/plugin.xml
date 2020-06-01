@@ -203,10 +203,6 @@
   </extensions>
 
   <actions>
-    <!--Override existing action from jetbrains by customized, to support constructor generation for classes with lombok defined constructors-->
-    <action id="GenerateConstructor" text="Constructor" overrides="true"
-            class="de.plushnikov.intellij.plugin.action.generate.LombokGenerateConstructorAction"/>
-
     <group id="LombokActionGroup" text="Lombok" description="Refactor code with lombok annotations"
            icon="/icons/lombok.png" popup="true">
 

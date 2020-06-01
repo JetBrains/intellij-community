@@ -6,7 +6,7 @@ git:
 
 # Cache settings
 cache:
-  timeout: 600
+  timeout: 900
   directories:
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
