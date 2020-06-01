@@ -233,7 +233,7 @@ private class StorageJpsConfigurationReader(private val project: Project,
   override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
     if (FileUtil.extensionEquals(filePath, "iml") || isExternalModuleFile(filePath)) {
-      //todo fetch data from ModuleStore
+      //todo fetch data from ModuleStore (https://jetbrains.team/p/wm/issues/51)
       return CachingJpsFileContentReader(baseDirUrl).loadComponent(fileUrl, componentName, customModuleFilePath)
     }
     else {
