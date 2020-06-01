@@ -179,14 +179,12 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx, Proj
   }
 
   // do not call for default project
-  @NotNull
-  public final IProjectStore getStateStore() {
+  public final @NotNull IProjectStore getStateStore() {
     return (IProjectStore)getComponentStore();
   }
 
   @Override
-  @NotNull
-  public IComponentStore getComponentStore() {
+  public @NotNull IComponentStore getComponentStore() {
     return myComponentStore.getValue();
   }
 
@@ -201,15 +199,13 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx, Proj
     return getComponentCreated() && !isDisposed() && isOpen() && StartupManagerEx.getInstanceEx(this).startupActivityPassed();
   }
 
-  @NotNull
   @Override
-  protected ContainerDescriptor getContainerDescriptor(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
+  protected @NotNull ContainerDescriptor getContainerDescriptor(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
     return pluginDescriptor.getProject();
   }
 
-  @Nullable
   @Override
-  public @SystemIndependent String getProjectFilePath() {
+  public @Nullable @SystemIndependent String getProjectFilePath() {
     return getStateStore().getProjectFilePath();
   }
 
@@ -220,18 +216,16 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx, Proj
 
   @Override
   public VirtualFile getBaseDir() {
-    return LocalFileSystem.getInstance().findFileByPath(getStateStore().getProjectBasePath());
+    return LocalFileSystem.getInstance().findFileByPath(getBasePath());
   }
 
   @Override
-  @Nullable
-  public @SystemIndependent String getBasePath() {
+  public @NotNull @SystemIndependent String getBasePath() {
     return getStateStore().getProjectBasePath();
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     if (myName == null) {
       return getStateStore().getProjectName();
     }
@@ -244,10 +238,9 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx, Proj
     return PathUtil.toSystemDependentName(store.getStorageScheme() == StorageScheme.DIRECTORY_BASED ? store.getProjectBasePath() : store.getProjectFilePath());
   }
 
-  @NotNull
   @NonNls
   @Override
-  public String getLocationHash() {
+  public @NotNull String getLocationHash() {
     String str = getPresentableUrl();
     if (str == null) {
       str = getName();
@@ -258,8 +251,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx, Proj
   }
 
   @Override
-  @Nullable
-  public VirtualFile getWorkspaceFile() {
+  public @Nullable VirtualFile getWorkspaceFile() {
     String workspaceFilePath = getStateStore().getWorkspaceFilePath();
     return workspaceFilePath == null ? null : LocalFileSystem.getInstance().findFileByPath(workspaceFilePath);
   }
@@ -373,18 +365,16 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx, Proj
     return creationTrace;
   }
 
-  @Nullable
   @ApiStatus.Internal
   @Override
-  public String activityNamePrefix() {
+  public @Nullable String activityNamePrefix() {
     return "project ";
   }
 
   @Override
-  @NotNull
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  public final Disposable getEarlyDisposable() {
+  public final @NotNull Disposable getEarlyDisposable() {
     if (isDisposed()) {
       throw new IllegalStateException(this + " is disposed already");
     }

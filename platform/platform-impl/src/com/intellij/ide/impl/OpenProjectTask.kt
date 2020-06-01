@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.FrameInfo
 import com.intellij.projectImport.ProjectOpenedCallback
@@ -17,20 +18,38 @@ data class OpenProjectTask(@JvmField val forceOpenInNewFrame: Boolean = false,
                            val isDummyProject: Boolean = false,
                            val sendFrameBack: Boolean = false,
                            val showWelcomeScreen: Boolean = true,
+                           @set:Deprecated(message = "Pass to constructor", level = DeprecationLevel.ERROR)
                            var callback: ProjectOpenedCallback? = null,
                            val frame: FrameInfo? = null,
                            val projectWorkspaceId: String? = null,
                            val line: Int = -1,
                            val column: Int = -1,
+                           /**
+                            * Ignored if isNewProject is set to true.
+                            */
+                           val runConfiguratorsIfNoModules: Boolean = !(ApplicationManager.getApplication()?.isUnitTestMode ?: false),
                            val runConversionsBeforeOpen: Boolean = true) {
-  constructor(project: Project) : this(false, project = project)
-
   constructor(forceOpenInNewFrame: Boolean = false, projectToClose: Project?) : this(forceOpenInNewFrame = forceOpenInNewFrame, projectToClose = projectToClose, useDefaultProjectAsTemplate = true)
 
   companion object {
     @JvmStatic
     fun newProject(useDefaultProjectAsTemplate: Boolean): OpenProjectTask {
       return OpenProjectTask(useDefaultProjectAsTemplate = useDefaultProjectAsTemplate, isNewProject = true)
+    }
+
+    @JvmStatic
+    fun newProjectWithCallback(projectToClose: Project?, callback: ProjectOpenedCallback?): OpenProjectTask {
+      return OpenProjectTask(projectToClose = projectToClose, isNewProject = true, callback = callback)
+    }
+
+    @JvmStatic
+    fun withProjectToClose(projectToClose: Project?): OpenProjectTask {
+      return OpenProjectTask(projectToClose = projectToClose, project = null)
+    }
+
+    @JvmStatic
+    fun withCreatedProject(project: Project?): OpenProjectTask {
+      return OpenProjectTask(project = project)
     }
   }
 

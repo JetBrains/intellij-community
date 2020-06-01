@@ -6,6 +6,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -50,25 +51,22 @@ class ProjectOpeningTest {
   @Test
   fun openProjectCancelling() {
     val activity = MyStartupActivity()
-    ExtensionTestUtil.maskExtensions(StartupActivity.POST_STARTUP_ACTIVITY, listOf(activity), disposableRule.disposable, fireEvents = false)
-    val manager = ProjectManagerEx.getInstanceEx()
+    val ep = ExtensionPointName<StartupActivity.DumbAware>("com.intellij.startupActivity")
+    ExtensionTestUtil.maskExtensions(ep, listOf(activity), disposableRule.disposable, fireEvents = false)
     val foo = tempDir.newPath()
-    val project = manager.createProject(null, foo.toString())!!
-    try {
-      ProgressManager.getInstance().run(object : Task.Modal(null, "", true) {
-        override fun run(indicator: ProgressIndicator) {
-          assertThat(manager.openProject(project)).isFalse()
+    ProgressManager.getInstance().run(object : Task.Modal(null, "", true) {
+      override fun run(indicator: ProgressIndicator) {
+        val project = PlatformProjectOpenProcessor.openExistingProject(foo)
+        if (project != null) {
+          runInEdtAndWait {
+            PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+          }
         }
-      })
-      assertThat(project.isOpen).isFalse()
-      // 1 on maskExtensions call, second call our call
-      assertThat(activity.passed.get()).isTrue()
-    }
-    finally {
-      runInEdtAndWait {
-        closeProject(project)
+        assertThat(project).isNull()
       }
-    }
+    })
+    // 1 on maskExtensions call, second call our call
+    assertThat(activity.passed.get()).isTrue()
   }
 
   @Test
@@ -90,7 +88,7 @@ class ProjectOpeningTest {
           }
         })
       runModalTask("") {
-        project = PlatformProjectOpenProcessor.openExistingProject(foo, foo, OpenProjectTask())!!
+        project = PlatformProjectOpenProcessor.openExistingProject(foo, OpenProjectTask())!!
       }
       assertThat(project.isOpen).isFalse()
       assertThat(project.isDisposed).isTrue()

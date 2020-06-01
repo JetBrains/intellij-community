@@ -203,7 +203,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       }
     }
 
-    ProjectImpl project = doCreateProject(projectName, projectFile);
+    ProjectImpl project = createProject(projectFile, projectName);
     try {
       Project template = options.useDefaultProjectAsTemplate ? getDefaultProject() : null;
       initProject(projectFile, project, options.isRefreshVfsNeeded, template, ProgressManager.getInstance().getProgressIndicator());
@@ -327,7 +327,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @ApiStatus.Internal
-  public static @NotNull ProjectImpl doCreateProject(@Nullable String projectName, @NotNull Path filePath) {
+  public static @NotNull ProjectImpl createProject(@NotNull Path filePath, @Nullable String projectName) {
     Activity activity = StartUpMeasurer.startMainActivity("project instantiation");
     ProjectImpl project = new ProjectImpl(filePath, projectName);
     activity.end();
@@ -342,7 +342,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @TestOnly
   public static Project loadProject(@NotNull Path file, @Nullable Consumer<Project> beforeInit) {
-    ProjectImpl project = doCreateProject(null, file);
+    ProjectImpl project = createProject(file, null);
     if (beforeInit != null) {
       beforeInit.accept(project);
     }
@@ -356,9 +356,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
     catch (IOException e) {
       // OK. File does not yet exist, so its canonical path will be equal to its original path.
+      return filePath;
     }
-
-    return filePath;
   }
 
   @Override
@@ -421,7 +420,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
     try {
       Future<?> future = doLoadProject(project, ProgressManager.getInstance().getProgressIndicator());
-      ProjectLoaderKt.waitInTestMode(future);
+      ProjectLoadHelper.waitInTestMode(future);
     }
     catch (ProcessCanceledException e) {
       app.invokeAndWait(() -> {
@@ -489,7 +488,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Override
   public final Project loadAndOpenProject(@NotNull String originalFilePath) {
     Path file = Paths.get(FileUtilRt.toSystemIndependentName(toCanonicalName(originalFilePath)));
-    return PlatformProjectOpenProcessor.openExistingProject(file, file, new OpenProjectTask());
+    return PlatformProjectOpenProcessor.openExistingProject(file, new OpenProjectTask());
   }
 
   public static void showCannotConvertMessage(@NotNull CannotConvertException e, @Nullable Component component) {

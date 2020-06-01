@@ -4,7 +4,6 @@ package com.intellij.ide
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbServiceImpl
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -51,7 +50,7 @@ class StartupManagerTest {
 
       assertThat(startupManager.postStartupActivityPassed()).isFalse()
 
-      ProjectManagerEx.getInstanceEx().openProject(project)
+      PlatformTestUtil.openProject(project)
       done.await(1, TimeUnit.SECONDS)
     }
     finally {

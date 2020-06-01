@@ -164,9 +164,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   @Override
   protected void setUpProject() throws Exception {
     super.setUpProject();
-    ProjectManagerEx.getInstanceEx().openProject(getProject());
-    UIUtil.dispatchAllInvocationEvents(); // startup activities
-    EditorMouseHoverPopupManager.getInstance(); // treat listeners added there as not leaks
+    // treat listeners added there as not leaks
+    EditorMouseHoverPopupManager.getInstance();
   }
 
   private static void typeInAlienEditor(@NotNull Editor alienEditor, char c) {
@@ -1456,9 +1455,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     String body = StringUtil.repeat("\"String field = null;\"\n", 1000);
     configureByText(JavaFileType.INSTANCE, "class X{ void f() {" + body + "<caret>\n} }");
 
-    final Project alienProject = createProject(createTempDirectory().toPath().resolve("alien.ipr"));
-    boolean succ2 = ProjectManagerEx.getInstanceEx().openProject(alienProject);
-    assertTrue(succ2);
+    Project alienProject = PlatformTestUtil.loadAndOpenProject(createTempDirectory().toPath().resolve("alien.ipr"));
     DaemonProgressIndicator.setDebug(true);
 
     try {

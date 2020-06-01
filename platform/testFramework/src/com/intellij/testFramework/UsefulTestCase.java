@@ -460,7 +460,7 @@ public abstract class UsefulTestCase extends TestCase {
   /**
    * If you want a more shorter name than runInEdtAndWait.
    */
-  protected void edt(@NotNull ThrowableRunnable<Throwable> runnable) {
+  protected final void edt(@NotNull ThrowableRunnable<Throwable> runnable) {
     EdtTestUtil.runInEdtAndWait(runnable);
   }
 

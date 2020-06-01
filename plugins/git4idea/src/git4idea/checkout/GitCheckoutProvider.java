@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkout;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -34,26 +34,20 @@ import java.util.stream.Collectors;
 /**
  * Checkout provider for the Git
  */
-public class GitCheckoutProvider extends CheckoutProviderEx {
-  public GitCheckoutProvider() {
-  }
-
-  @Deprecated
-  public GitCheckoutProvider(@SuppressWarnings("unused") @NotNull Git git) {
-  }
-
+public final class GitCheckoutProvider extends CheckoutProviderEx {
   @Override
   public String getVcsName() {
     return "_Git";
   }
 
   @Override
-  public void doCheckout(@NotNull final Project project, @Nullable final Listener listener, @Nullable String predefinedRepositoryUrl) {
+  public void doCheckout(@NotNull Project project, @Nullable Listener listener, @Nullable String predefinedRepositoryUrl) {
     FileDocumentManager.getInstance().saveAllDocuments();
     GitCloneDialog dialog = new GitCloneDialog(project, predefinedRepositoryUrl);
     if (!dialog.showAndGet()) {
       return;
     }
+
     dialog.rememberSettings();
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     final File parent = new File(dialog.getParentDirectory());
@@ -71,7 +65,7 @@ public class GitCheckoutProvider extends CheckoutProviderEx {
   }
 
   public static void clone(final Project project, @NotNull final Git git, final Listener listener, final VirtualFile destinationParent,
-                    final String sourceRepositoryURL, final String directoryName, final String parentDirectory) {
+                           final String sourceRepositoryURL, final String directoryName, final String parentDirectory) {
 
     final AtomicBoolean cloneResult = new AtomicBoolean();
     new Task.Backgroundable(project, DvcsBundle.message("cloning.repository", sourceRepositoryURL)) {
@@ -100,7 +94,6 @@ public class GitCheckoutProvider extends CheckoutProviderEx {
 
   public static boolean doClone(@NotNull Project project, @NotNull Git git,
                                 @NotNull String directoryName, @NotNull String parentDirectory, @NotNull String sourceRepositoryURL) {
-
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     indicator.setIndeterminate(false);
     GitLineHandlerListener progressListener = GitStandardProgressAnalyzer.createListener(indicator);
@@ -108,12 +101,12 @@ public class GitCheckoutProvider extends CheckoutProviderEx {
     if (result.success()) {
       return true;
     }
-    String description = result.getErrorOutput().stream().
-      filter(msg -> !StringUtil.startsWithIgnoreCase(msg, "Cloning into")
-                    && !StringUtil.startsWithIgnoreCase(msg, "remote:")
-                    && !StringUtil.startsWithIgnoreCase(msg, "submodule")).
-      map (msg -> GitUtil.cleanupErrorPrefixes(msg)).
-      collect(Collectors.joining("<br/>"));
+    String description = result.getErrorOutput().stream()
+      .filter(msg -> !StringUtil.startsWithIgnoreCase(msg, "Cloning into")
+                     && !StringUtil.startsWithIgnoreCase(msg, "remote:")
+                     && !StringUtil.startsWithIgnoreCase(msg, "submodule"))
+      .map(msg -> GitUtil.cleanupErrorPrefixes(msg))
+      .collect(Collectors.joining("<br/>"));
     VcsNotifier.getInstance(project).notifyError("Clone failed", StringUtil.capitalize(description), true);
     return false;
   }

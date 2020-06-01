@@ -1,17 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -23,7 +20,7 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
@@ -299,31 +296,32 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   @Test(timeout = 20_000)
   public void testScanNewChildrenMustNotBeRunOutsideOfProjectRoots() throws Exception {
-    checkNewDirAndRefresh(__-> {}, getAllExcludedCalled->assertFalse(getAllExcludedCalled.get()));
+    checkNewDirAndRefresh(__-> {}, getAllExcludedCalled -> assertFalse(getAllExcludedCalled.get()));
   }
 
   @Test(timeout = 20_000)
   public void testRefreshAndEspeciallyScanChildrenMustBeRunOutsideOfReadActionToAvoidUILags() throws Exception {
     AtomicReference<Project> project = new AtomicReference<>();
-    checkNewDirAndRefresh(temp ->
-        WriteCommandAction.runWriteCommandAction(null, ()->{
-          project.set(HeavyPlatformTestCase.createProject(temp));
-          assertTrue(ProjectManagerEx.getInstanceEx().openProject(project.get()));
+    checkNewDirAndRefresh(
+      temp -> {
+        Project p = PlatformTestUtil.loadAndOpenProject(temp);
+        project.set(p);
+        assertTrue(p.isOpen());
+      },
+      getAllExcludedCalled -> {
+        try {
+          assertTrue(getAllExcludedCalled.get());
+        }
+        finally {
+          // this concoction is to ensure close() is called on the mock ProjectManagerImpl
           assertTrue(project.get().isOpen());
-        }),
-    getAllExcludedCalled -> {
-      try {
-        assertTrue(getAllExcludedCalled.get());
+          ApplicationManager.getApplication().invokeAndWait(() -> PlatformTestUtil.forceCloseProjectWithoutSaving(project.get()));
+        }
       }
-      finally {
-        // this concoction is to ensure close() is called on the mock ProjectManagerImpl
-        assertTrue(project.get().isOpen());
-        ApplicationManager.getApplication().invokeAndWait(() -> ProjectUtil.closeAndDispose(project.get()));
-      }
-    });
+    );
   }
 
-  private void checkNewDirAndRefresh(Consumer<? super Path> dirCreatedCallback, Consumer<? super AtomicBoolean> getAllExcludedCalledChecker) throws IOException {
+  private void checkNewDirAndRefresh(@NotNull Consumer<? super Path> dirCreatedCallback, @NotNull Consumer<? super AtomicBoolean> getAllExcludedCalledChecker) throws IOException {
     AtomicBoolean getAllExcludedCalled = new AtomicBoolean();
     ProjectManagerImpl test = new ProjectManagerImpl() {
       @Override

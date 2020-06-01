@@ -1266,20 +1266,22 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     ApplicationManager.getApplication().assertIsDispatchThread();
     EditorWithProviderComposite composite = getCurrentEditorWithProviderComposite(file);
     if (composite != null) {
-      return Pair.create(composite.getEditors(), composite.getProviders());
+      return new Pair<>(composite.getEditors(), composite.getProviders());
     }
 
     List<EditorWithProviderComposite> composites = getEditorComposites(file);
     if (!composites.isEmpty()) {
-      return Pair.create(composites.get(0).getEditors(), composites.get(0).getProviders());
+      return new Pair<>(composites.get(0).getEditors(), composites.get(0).getProviders());
     }
-    return Pair.create(FileEditor.EMPTY_ARRAY, EMPTY_PROVIDER_ARRAY);
+    return new Pair<>(FileEditor.EMPTY_ARRAY, EMPTY_PROVIDER_ARRAY);
   }
 
   @Override
   public FileEditor @NotNull [] getEditors(@NotNull VirtualFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
+    if (file instanceof VirtualFileWindow) {
+      file = ((VirtualFileWindow)file).getDelegate();
+    }
     file = BackedVirtualFile.getOriginFileIfBacked(file);
 
     EditorWithProviderComposite composite = getCurrentEditorWithProviderComposite(file);

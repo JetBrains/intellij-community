@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -170,7 +170,7 @@ public final class NewProjectUtil {
 
       if (newProject != projectToClose) {
         ProjectUtil.updateLastProjectLocation(projectFilePath);
-        PlatformProjectOpenProcessor.openExistingProject(projectFile, projectDir, new OpenProjectTask(newProject));
+        PlatformProjectOpenProcessor.openExistingProject(projectFile, projectDir, OpenProjectTask.withCreatedProject(newProject));
       }
 
       if (!ApplicationManager.getApplication().isUnitTestMode()) {

@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.encoding;
 
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -825,9 +824,8 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     assertThat(document.getText()).isNotNull();
     UIUtil.dispatchAllInvocationEvents();
 
-    Project newEncodingProject = requireNonNull(ProjectUtil.openProject(dir.getPath(), null, false));
+    Project newEncodingProject = requireNonNull(PlatformTestUtil.loadAndOpenProject(dir.toNioPath()));
     try {
-      UIUtil.dispatchAllInvocationEvents();
       assertThat(file.getCharset()).isEqualTo(US_ASCII);
     }
     finally {

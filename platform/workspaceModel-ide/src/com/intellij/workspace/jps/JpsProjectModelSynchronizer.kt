@@ -49,7 +49,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
 
   init {
     if (!project.isDefault && enabled) {
-      project.messageBus.connect(this).subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
+      ApplicationManager.getApplication().messageBus.connect(this).subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
         override fun projectComponentsInitialized(project: Project) {
           if (project === this@JpsProjectModelSynchronizer.project) {
             loadInitialProject(project.configLocation!!)

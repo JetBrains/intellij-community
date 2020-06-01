@@ -6,12 +6,11 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Reports some project lifecycle events. Note that these events are published on application-level {@link com.intellij.util.messages.MessageBus}.
- * They're also delivered for subscribers on project levels, but they will need to check that the events are relevant, i.e. the
- * {@code project} parameter is the project those subscribers are associated with.
+ * Reports some project lifecycle events.
  */
 public interface ProjectLifecycleListener {
-  Topic<ProjectLifecycleListener> TOPIC = new Topic<>(ProjectLifecycleListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
+  @Topic.AppLevel
+  Topic<ProjectLifecycleListener> TOPIC = new Topic<>(ProjectLifecycleListener.class, Topic.BroadcastDirection.NONE);
 
   /**
    * @deprecated Do not use.

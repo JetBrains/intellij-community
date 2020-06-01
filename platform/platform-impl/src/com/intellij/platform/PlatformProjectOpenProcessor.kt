@@ -23,13 +23,14 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -101,7 +102,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @JvmStatic
     fun createTempProjectAndOpenFile(file: Path, options: OpenProjectTask): Project? {
       val dummyProjectName = file.fileName.toString()
-      val baseDir = FileUtil.createTempDirectory(dummyProjectName, null, true).toPath()
+      val baseDir = FileUtilRt.createTempDirectory(dummyProjectName, null, true).toPath()
       val copy = options.copy(isNewProject = true, projectName = dummyProjectName, isDummyProject = true)
       val project = openExistingProject(file, baseDir, copy) ?: return null
       openFileFromCommandLine(project, file, copy.line, copy.column)
@@ -150,7 +151,14 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
     @ApiStatus.Internal
     @JvmStatic
-    fun openExistingProject(file: Path, projectDir: Path?, options: OpenProjectTask): Project? {
+    @JvmOverloads
+    fun openExistingProject(projectDir: Path, options: OpenProjectTask = OpenProjectTask()): Project? {
+      return openExistingProject(projectDir, projectDir, options)
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun openExistingProject(file: Path, ideaProjectDir: Path?, options: OpenProjectTask): Project? {
       if (options.project != null) {
         val projectManager = ProjectManagerEx.getInstanceExIfCreated()
         if (projectManager != null && projectManager.isProjectOpened(options.project)) {
@@ -160,8 +168,8 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
       val activity = StartUpMeasurer.startMainActivity("project opening preparation")
       if (!options.forceOpenInNewFrame) {
-        val openProjects = ProjectUtil.getOpenProjects()
-        if (openProjects.isNotEmpty()) {
+        val openProjects: Array<Project>? = ProjectManager.getInstanceIfCreated()?.openProjects
+        if (!openProjects.isNullOrEmpty()) {
           var projectToClose = options.projectToClose
           if (projectToClose == null) {
             // if several projects are opened, ask to reuse not last opened project frame, but last focused (to avoid focus switching)
@@ -171,7 +179,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
               projectToClose = openProjects[openProjects.size - 1]
             }
           }
-          if (checkExistingProjectOnOpen(projectToClose, options.callback, projectDir)) {
+          if (checkExistingProjectOnOpen(projectToClose, options.callback, ideaProjectDir)) {
             return null
           }
         }
@@ -183,7 +191,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         val isCompleted = frameAllocator.run {
           activity.end()
           if (options.project == null) {
-            result = prepareProject(file, options, projectDir!!)
+            result = prepareProject(file, options, ideaProjectDir!!)
             if (result?.project == null) {
               frameAllocator.projectNotLoaded(error = null)
               return@run
@@ -217,29 +225,17 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         return null
       }
       if (options.callback != null) {
-        var module = result?.module
-        if (module == null) {
-          module = ModuleManager.getInstance(project).modules[0]
-        }
-        options.callback!!.projectOpened(project, module)
+        options.callback!!.projectOpened(project, result?.module ?: ModuleManager.getInstance(project).modules[0])
       }
       return project
-    }
-
-    @Suppress("DeprecatedCallableAddReplaceWith")
-    @JvmStatic
-    @Deprecated("Use {@link #runDirectoryProjectConfigurators(Path, Project, boolean)}")
-    fun runDirectoryProjectConfigurators(baseDir: VirtualFile, project: Project): Module {
-      return runDirectoryProjectConfigurators(Paths.get(baseDir.path), project, false)
     }
 
     @JvmStatic
     fun runDirectoryProjectConfigurators(baseDir: Path, project: Project, newProject: Boolean): Module {
       val moduleRef = Ref<Module>()
-      val virtualFile = ProjectUtil.getFileAndRefresh(baseDir)
-      LOG.assertTrue(virtualFile != null)
+      val virtualFile = ProjectUtil.getFileAndRefresh(baseDir)!!
       DirectoryProjectConfigurator.EP_NAME.forEachExtensionSafe { configurator: DirectoryProjectConfigurator ->
-        configurator.configureProject(project, virtualFile!!, moduleRef, newProject)
+        configurator.configureProject(project, virtualFile, moduleRef, newProject)
       }
       return moduleRef.get()
     }
@@ -288,10 +284,8 @@ internal data class PrepareProjectResult(val project: Project, val module: Modul
 
 private fun prepareProject(file: Path, options: OpenProjectTask, baseDir: Path): PrepareProjectResult? {
   val project: Project?
-  val isNewProject = options.isNewProject
-  if (isNewProject) {
-    val projectName = options.projectName ?: baseDir.fileName.toString()
-    project = ProjectManagerEx.getInstanceEx().newProject(baseDir, projectName, options)
+  if (options.isNewProject) {
+    project = ProjectManagerEx.getInstanceEx().newProject(baseDir, options.projectName ?: file.fileName.toString(), options)
   }
   else {
     val indicator = ProgressManager.getInstance().progressIndicator
@@ -304,23 +298,22 @@ private fun prepareProject(file: Path, options: OpenProjectTask, baseDir: Path):
     return null
   }
 
-  val module = configureNewProject(project, baseDir, file, options.isDummyProject, isNewProject)
-  if (isNewProject) {
-    project.save()
+  if (options.isNewProject || (options.runConfiguratorsIfNoModules && ModuleManager.getInstance(project).modules.isEmpty())) {
+    val module = configureNewProject(project, baseDir, file, options)
+    return PrepareProjectResult(project, module)
   }
-  return PrepareProjectResult(project, module)
+  else {
+    return PrepareProjectResult(project, module = null)
+  }
 }
 
-private fun configureNewProject(project: Project, baseDir: Path, dummyFileContentRoot: Path, dummyProject: Boolean, newProject: Boolean): Module? {
-  val runConfigurators = newProject || ModuleManager.getInstance(project).modules.isEmpty()
+private fun configureNewProject(project: Project, baseDir: Path, contentRoot: Path, options: OpenProjectTask): Module? {
   var module: Module? = null
-  if (runConfigurators) {
-    ApplicationManager.getApplication().invokeAndWait {
-      module = PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(baseDir, project, newProject)
-    }
+  ApplicationManager.getApplication().invokeAndWait {
+    module = PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(baseDir, project, options.isNewProject)
   }
 
-  if (runConfigurators && dummyProject) {
+  if (options.isDummyProject) {
     // add content root for chosen (single) file
     ModuleRootModificationUtil.updateModel(module!!) { model ->
       val entries = model.contentEntries
@@ -328,7 +321,7 @@ private fun configureNewProject(project: Project, baseDir: Path, dummyFileConten
       if (entries.size == 1) {
         model.removeContentEntry(entries[0])
       }
-      model.addContentEntry(VfsUtilCore.pathToUrl(dummyFileContentRoot.toString()))
+      model.addContentEntry(VfsUtilCore.pathToUrl(contentRoot.toString()))
     }
   }
   return module
@@ -392,7 +385,7 @@ private fun openFileFromCommandLine(project: Project, file: Path, line: Int, col
 }
 
 private fun convertAndLoadProject(path: Path, options: OpenProjectTask): Project? {
-  var conversionResult:ConversionResult? = null
+  var conversionResult: ConversionResult? = null
 
   if (options.runConversionsBeforeOpen) {
     conversionResult = runActivity("project conversion", category = ActivityCategory.MAIN) {
@@ -403,8 +396,8 @@ private fun convertAndLoadProject(path: Path, options: OpenProjectTask): Project
     }
   }
 
-  val project = ProjectManagerImpl.doCreateProject(options.projectName, path)
-  ProjectManagerImpl.initProject(path, project, /* isRefreshVfsNeeded = */ true, null, ProgressManager.getInstance().progressIndicator)
+  val project = ProjectManagerImpl.createProject(path, options.projectName)
+  ProjectManagerImpl.initProject(path, project, options.isRefreshVfsNeeded, null, ProgressManager.getInstance().progressIndicator)
   if (conversionResult != null && !conversionResult.conversionNotNeeded()) {
     StartupManager.getInstance(project).registerPostStartupActivity {
       conversionResult.postStartupActivity(project)

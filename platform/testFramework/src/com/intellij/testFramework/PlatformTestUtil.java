@@ -23,6 +23,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
@@ -46,7 +47,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -54,6 +54,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
+import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
@@ -528,7 +529,7 @@ public final class PlatformTestUtil {
 
     if (comparator != null) {
       List<?> list = new ArrayList<>(Arrays.asList(children));
-      @SuppressWarnings({"unchecked"})
+      @SuppressWarnings("unchecked")
       Comparator<Object> c = (Comparator<Object>)comparator;
       list.sort(c);
       children = ArrayUtil.toObjectArray(list);
@@ -908,7 +909,7 @@ public final class PlatformTestUtil {
 
   public static void captureMemorySnapshot() {
     try {
-      @SuppressWarnings("SpellCheckingInspection") String className = "com.jetbrains.performancePlugin.profilers.YourKitProfilerHandler";
+      String className = "com.jetbrains.performancePlugin.profilers.YourKitProfilerHandler";
       Method snapshot = ReflectionUtil.getMethod(Class.forName(className), "captureMemorySnapshot");
       if (snapshot != null) {
         Object path = snapshot.invoke(null);
@@ -1001,7 +1002,7 @@ public final class PlatformTestUtil {
     }
   }
 
-  public static @Nullable RunConfiguration getRunConfiguration(@NotNull PsiElement element, @NotNull RunConfigurationProducer producer) {
+  public static @Nullable RunConfiguration getRunConfiguration(@NotNull PsiElement element, @NotNull RunConfigurationProducer<?> producer) {
     MapDataContext dataContext = new MapDataContext();
     dataContext.put(CommonDataKeys.PROJECT, element.getProject());
     dataContext.put(LangDataKeys.MODULE, ModuleUtilCore.findModuleForPsiElement(element));
@@ -1026,7 +1027,7 @@ public final class PlatformTestUtil {
     }
     RunnerAndConfigurationSettings runnerAndConfigurationSettings =
       RunManager.getInstance(project).createConfiguration(runConfiguration, factory);
-    ProgramRunner runner = ProgramRunner.getRunner(executorId, runConfiguration);
+    ProgramRunner<?> runner = ProgramRunner.getRunner(executorId, runConfiguration);
     if (runner == null) {
       fail("No runner found for: " + executorId + " and " + runConfiguration);
     }
@@ -1099,13 +1100,17 @@ public final class PlatformTestUtil {
   }
 
   public static @NotNull Project loadAndOpenProject(@NotNull Path path) {
-    Project project = ProjectManagerImpl.loadProject(path, null);
-    openProject(project);
-    return project;
+    OpenProjectTask options = new OpenProjectTask();
+    // in tests it is caller responsibility to refresh VFS (because often not only the project file must be refreshed, but the whole dir - so, no need to refresh several times)
+    options.isRefreshVfsNeeded = false;
+    Project project = PlatformProjectOpenProcessor.openExistingProject(path, options);
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      dispatchAllInvocationEventsInIdeEventQueue();
+    }
+    return Objects.requireNonNull(project);
   }
 
   public static void openProject(@NotNull Project project) {
-    assert ApplicationManager.getApplication().isUnitTestMode();
     if (!ProjectManagerEx.getInstanceEx().openProject(project)) {
       throw new IllegalStateException("openProject returned false");
     }

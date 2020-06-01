@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.lookup;
 
@@ -64,14 +64,14 @@ public final class LookupElementBuilder extends LookupElement {
   public static LookupElementBuilder create(@NotNull String lookupString) {
     return new LookupElementBuilder(lookupString, lookupString);
   }
-  
+
   public static LookupElementBuilder create(@NotNull Object object) {
     return new LookupElementBuilder(object.toString(), object);
   }
 
   public static LookupElementBuilder createWithSmartPointer(@NotNull String lookupString, @NotNull PsiElement element) {
     PsiUtilCore.ensureValid(element);
-    return new LookupElementBuilder(lookupString, 
+    return new LookupElementBuilder(lookupString,
                                     SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element));
   }
 
@@ -441,7 +441,7 @@ public final class LookupElementBuilder extends LookupElement {
   public InsertHandler<LookupElement> getInsertHandler() {
     return myInsertHandler;
   }
-  
+
   @Nullable
   public LookupElementRenderer<LookupElement> getRenderer() {
     return myRenderer;
