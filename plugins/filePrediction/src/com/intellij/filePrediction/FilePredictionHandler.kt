@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.concurrency.NonUrgentExecutor
+import com.intellij.util.concurrency.SequentialTaskExecutor
 
 class FilePredictionHandler(private val project: Project) : Disposable {
   companion object {
@@ -19,6 +19,7 @@ class FilePredictionHandler(private val project: Project) : Disposable {
     fun getInstance(project: Project): FilePredictionHandler? = ServiceManager.getService(project, FilePredictionHandler::class.java)
   }
 
+  private val executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("NextFilePrediction")
   private val manager: FilePredictionSessionManager
 
   init {
@@ -31,7 +32,7 @@ class FilePredictionHandler(private val project: Project) : Disposable {
       return
     }
 
-    NonUrgentExecutor.getInstance().execute {
+    executor.submit {
       BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, Runnable {
         val start = System.currentTimeMillis()
         FilePredictionHistory.getInstance(project).onFileSelected(newFile.url)
@@ -45,5 +46,6 @@ class FilePredictionHandler(private val project: Project) : Disposable {
   }
 
   override fun dispose() {
+    executor.shutdown()
   }
 }
