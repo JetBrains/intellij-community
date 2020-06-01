@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.diff.util.FileEditorBase
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
@@ -53,12 +52,13 @@ internal class GHPRFileEditor(private val project: Project,
         background = EditorColorsManager.getInstance().globalScheme.defaultBackground
       }
 
-      DataManager.registerDataProvider(it, DataProvider { dataId ->
-        if (GHPRActionKeys.ACTION_DATA_CONTEXT.`is`(dataId)) {
-          GHPRFixedActionDataContext(dataContext, pullRequest, dataProvider)
+      val actionDataContext = GHPRFixedActionDataContext(dataContext, pullRequest, dataProvider)
+      DataManager.registerDataProvider(component) { dataId ->
+        when {
+          GHPRActionKeys.ACTION_DATA_CONTEXT.`is`(dataId) -> actionDataContext
+          else -> null
         }
-        else null
-      })
+      }
     }
   }
 

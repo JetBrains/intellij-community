@@ -145,9 +145,10 @@ internal class GHPRComponentFactory(private val project: Project) {
                                 dataContext: GHPRDataContext,
                                 pullRequest: GHPRIdentifier,
                                 dataProvider: GHPRDataProvider) {
+    val actionDataContext = GHPRFixedActionDataContext(dataContext, pullRequest, dataProvider)
     DataManager.registerDataProvider(component) { dataId ->
       when {
-        GHPRActionKeys.ACTION_DATA_CONTEXT.`is`(dataId) -> GHPRFixedActionDataContext(dataContext, pullRequest, dataProvider)
+        GHPRActionKeys.ACTION_DATA_CONTEXT.`is`(dataId) -> actionDataContext
         else -> null
       }
     }
