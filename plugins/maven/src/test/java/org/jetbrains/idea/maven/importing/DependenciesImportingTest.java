@@ -371,76 +371,6 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleModuleDeps("m1", "m2");
   }
 
-  public void testInterModuleDependenciesWithLatestVersion() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
-
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "  <module>m2</module>" +
-                     "</modules>");
-
-    createModulePom("m1", "<groupId>test</groupId>" +
-                          "<artifactId>m1</artifactId>" +
-                          "<version>1</version>" +
-
-                          "<dependencies>" +
-                          "  <dependency>" +
-                          "    <groupId>test</groupId>" +
-                          "    <artifactId>m2</artifactId>" +
-                          "    <version>LATEST</version>" +
-                          "  </dependency>" +
-                          "</dependencies>");
-
-    createModulePom("m2", "<groupId>test</groupId>" +
-                          "<artifactId>m2</artifactId>" +
-                          "<version>1</version>");
-
-    MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().generalSettings.setMavenHome(MavenServerManager.BUNDLED_MAVEN_2);
-    importProject();
-    assertModules("project", "m1", "m2");
-
-    assertModuleModuleDeps("m1", "m2");
-    assertModuleLibDeps("m1");
-
-    MavenProject p = myProjectsTree.findProject(new MavenId("test", "m1", "1"));
-    assertEquals(new MavenId("test", "m2", "1"), p.getDependencies().get(0).getMavenId());
-  }
-
-  public void testInterSnapshotModuleDependenciesWithSnapshotVersionRanges() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
-
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "  <module>m2</module>" +
-                     "</modules>");
-
-    createModulePom("m1", "<groupId>test</groupId>" +
-                          "<artifactId>m1</artifactId>" +
-                          "<version>1</version>" +
-
-                          "<dependencies>" +
-                          "  <dependency>" +
-                          "    <groupId>test</groupId>" +
-                          "    <artifactId>m2</artifactId>" +
-                          "    <version>[, 1-SNAPSHOT]</version>" +
-                          "  </dependency>" +
-                          "</dependencies>");
-
-    createModulePom("m2", "<groupId>test</groupId>" +
-                          "<artifactId>m2</artifactId>" +
-                          "<version>1-SNAPSHOT</version>");
-
-    importProject();
-    assertModules("project", "m1", "m2");
-
-    assertModuleModuleDeps("m1", "m2");
-  }
 
   public void testInterSnapshotModuleDependenciesWithVersionRanges() {
     createProjectPom("<groupId>test</groupId>" +
@@ -469,7 +399,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "<artifactId>m2</artifactId>" +
                           "<version>1-SNAPSHOT</version>");
 
-    importProject();
+    importProjectWithErrors();
     assertModules("project", "m1", "m2");
 
     assertModuleModuleDeps("m1", "m2");
@@ -917,7 +847,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
   public void testDependencyWithEnvironmentProperty() {
     String javaHome = FileUtil.toSystemIndependentName(System.getProperty("java.home"));
 
-    importProject("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
 
@@ -930,6 +860,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "    <systemPath>${java.home}/lib/tools.jar</systemPath>" +
                   "  </dependency>" +
                   "</dependencies>");
+    importProjectWithErrors();
 
     assertModules("project");
     assertModuleLibDep("project",
@@ -1295,7 +1226,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
   }
 
   public void testCanResolveDependenciesWhenExtensionPluginNotFound() {
-    importProject("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
 
@@ -1317,6 +1248,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "    </plugin>" +
                   "  </plugins>" +
                   "</build>");
+    importProjectWithErrors();
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0");
   }
@@ -1551,7 +1483,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "  </dependency>" +
                           "</dependencies>");
 
-    importProject("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
                   "<packaging>pom</packaging>" +
@@ -1560,6 +1492,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "  <module>m1</module>" +
                   "  <module>m2</module>" +
                   "</modules>");
+    importProjectWithErrors();
 
     //    assertProjectLibraries("Maven: xxx:yyy:1");
     assertModuleLibDep("m1", "Maven: xxx:yyy:1", "jar://" + getRoot() + "/m1/foo.jar!/");
@@ -1662,19 +1595,20 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
   }
 
   public void testDoNotPopulateSameRootEntriesOnEveryImportForSystemLibraries() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
+    createProjectPom("<groupId>test</groupId>" +
+                              "<artifactId>project</artifactId>" +
+                              "<version>1</version>" +
 
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>xxx</groupId>" +
-                  "    <artifactId>yyy</artifactId>" +
-                  "    <version>1</version>" +
-                  "    <scope>system</scope>" +
-                  "    <systemPath>" + getRoot() + "/foo/bar.jar</systemPath>" +
-                  "  </dependency>" +
-                  "</dependencies>");
+                              "<dependencies>" +
+                              "  <dependency>" +
+                              "    <groupId>xxx</groupId>" +
+                              "    <artifactId>yyy</artifactId>" +
+                              "    <version>1</version>" +
+                              "    <scope>system</scope>" +
+                              "    <systemPath>" + getRoot() + "/foo/bar.jar</systemPath>" +
+                              "  </dependency>" +
+                              "</dependencies>");
+    importProjectWithErrors();
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
                        Arrays.asList("jar://" + getRoot() + "/foo/bar.jar!/"),
@@ -1693,7 +1627,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
   }
 
   public void testRemovingPreviousSystemPathForForSystemLibraries() {
-    importProject("<groupId>test</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
 
@@ -1706,6 +1640,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "    <systemPath>" + getRoot() + "/foo/bar.jar</systemPath>" +
                   "  </dependency>" +
                   "</dependencies>");
+    importProjectWithErrors();
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
                        Arrays.asList("jar://" + getRoot() + "/foo/bar.jar!/"),
