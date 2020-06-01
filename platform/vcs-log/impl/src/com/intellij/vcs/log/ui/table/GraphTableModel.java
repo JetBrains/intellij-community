@@ -183,7 +183,7 @@ public class GraphTableModel extends AbstractTableModel {
     return !myMoreRequested && myDataPack.canRequestMore();
   }
 
-  public void setVisiblePack(@NotNull VisiblePack visiblePack) {
+  void setVisiblePack(@NotNull VisiblePack visiblePack) {
     myDataPack = visiblePack;
     myMoreRequested = false;
     fireTableDataChanged();
