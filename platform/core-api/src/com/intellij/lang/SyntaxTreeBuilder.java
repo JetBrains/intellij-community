@@ -142,6 +142,10 @@ public interface SyntaxTreeBuilder {
   @Nullable
   LighterASTNode getLatestDoneMarker();
 
+  default boolean isWhitespaceOrComment(@NotNull IElementType elementType) {
+    return false;
+  }
+
   /**
    * A marker defines a range in the document text which becomes a node in the AST
    * tree. The ranges defined by markers within the text range of the current marker
