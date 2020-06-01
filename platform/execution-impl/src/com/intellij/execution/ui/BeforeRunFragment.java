@@ -89,12 +89,32 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
       myAddButton = new InplaceButton(ExecutionBundle.message("run.configuration.before.run.add.task"), AllIcons.General.Add, e -> showPopup());
       myAddLabel =
         new LinkLabel<>(ExecutionBundle.message("run.configuration.before.run.add.task"), null, (aSource, aLinkData) -> showPopup());
-      add(myAddButton);
+    }
+
+    private List<BeforeRunTaskProvider<BeforeRunTask<?>>> getProviders() {
+      return ContainerUtil.filter(BeforeRunTaskProvider.EP_NAME.getExtensions(myConfiguration.getProject()),
+                                  provider -> provider.createTask(myConfiguration) != null);
+    }
+
+    private void createTags() {
+      myTags = new ArrayList<>();
+      for (BeforeRunTaskProvider<BeforeRunTask<?>> provider : getProviders()) {
+        TaskButton button = new TaskButton(provider, () -> {
+          myChangeListener.run();
+          updateAddLabel();
+        });
+        myTags.add(button);
+      }
+    }
+
+    private void updateAddLabel() {
+      myAddLabel.setVisible(getEnabledTasks().isEmpty());
     }
 
     public void showPopup() {
       DefaultActionGroup group = new DefaultActionGroup();
-      for (TaskButton tag : myTags) {
+      for (BeforeRunTaskProvider<BeforeRunTask<?>> provider : getProviders()) {
+        TaskButton tag = ContainerUtil.find(myTags, t -> t.myProvider.getId() == provider.getId());
         if (tag.isVisible()) {
           continue;
         }
@@ -109,6 +129,9 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
               }
               task.setEnabled(true);
               tag.setTask(task);
+              myTags.remove(tag);
+              myTags.add(tag);
+              buildPanel();
               myChangeListener.run();
             });
           }
@@ -125,37 +148,34 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
     public void reset(RunnerAndConfigurationSettingsImpl s) {
       myConfiguration = s.getConfiguration();
       if (myTags == null) {
-        addButtons();
+        createTags();
       }
       List<BeforeRunTask<?>> tasks = s.getManager().getBeforeRunTasks(s.getConfiguration());
       for (BeforeRunTask<?> task : tasks) {
         TaskButton button = ContainerUtil.find(myTags, tag -> tag.myProvider.getId() == task.getProviderId());
         if (button != null) {
           button.setTask(task);
+          myTags.remove(button);
+          myTags.add(button);
         }
       }
-      updateAddLabel();
+      buildPanel();
     }
 
-    private void updateAddLabel() {
-      myAddLabel.setVisible(getEnabledTasks().isEmpty());
-    }
-
-    private void addButtons() {
-      myTags = new ArrayList<>();
-      for (BeforeRunTaskProvider<BeforeRunTask<?>> provider : BeforeRunTaskProvider.EP_NAME.getExtensions(myConfiguration.getProject())) {
-        if (provider.createTask(myConfiguration) == null) {
-          continue;
+    private void buildPanel() {
+      remove(myAddButton);
+      remove(myAddLabel);
+      for (TaskButton tag : myTags) {
+        remove(tag);
+      }
+      for (TaskButton tag : myTags) {
+        if (tag.isVisible()) {
+          add(tag);
         }
-        TaskButton button = new TaskButton(provider, () -> {
-          myChangeListener.run();
-          updateAddLabel();
-        });
-        add(button);
-        myTags.add(button);
       }
       add(myAddButton);
       add(myAddLabel);
+      updateAddLabel();
     }
 
     public void apply(RunnerAndConfigurationSettingsImpl s) {
