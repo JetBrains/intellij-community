@@ -199,7 +199,12 @@ class PSerializer(private val typesResolver: EntityTypesResolver,
   @JvmSynthetic
   private inline fun registerSingletonSerializer(kryo: Kryo, crossinline getter: () -> Any) {
     val getter1 = ObjectInstantiator { getter() }
-    registerSerializer(kryo, getter1.newInstance().javaClass, KryoEntityStorageSerializer.EmptySerializer, getter1)
+    registerSerializer(kryo, getter1.newInstance().javaClass, EmptySerializer, getter1)
+  }
+
+  object EmptySerializer : Serializer<Any>(false, true) {
+    override fun write(kryo: Kryo?, output: Output?, `object`: Any?) {}
+    override fun read(kryo: Kryo, input: Input?, type: Class<Any>): Any? = kryo.newInstance(type)
   }
 
   private fun <T : Any> registerSerializer(kryo: Kryo, type: Class<T>, serializer: Serializer<in T>, initializer: ObjectInstantiator<T>) {

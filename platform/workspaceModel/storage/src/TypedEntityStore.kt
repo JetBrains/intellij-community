@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.api
 
 import com.intellij.workspace.api.pstorage.PEntityStorageBuilder
@@ -140,18 +141,9 @@ interface TypedEntityStorageBuilder : TypedEntityStorage, TypedEntityStorageDiff
   fun toStorage(): TypedEntityStorage
 
   companion object {
-
     fun create(): TypedEntityStorageBuilder = PEntityStorageBuilder.create()
 
-    fun createProxy(): TypedEntityStorageBuilder {
-      return TypedEntityStorageBuilderImpl(HashMap(), HashMap(), HashMap(), HashMap(), HashMap(), HashMap(), EntityMetaDataRegistry())
-    }
-
     fun from(storage: TypedEntityStorage): TypedEntityStorageBuilder = PEntityStorageBuilder.from(storage)
-
-    fun fromProxy(storage: TypedEntityStorage): TypedEntityStorageBuilder {
-      return TypedEntityStorageBuilderImpl(storage as ProxyBasedEntityStorage)
-    }
   }
 }
 
