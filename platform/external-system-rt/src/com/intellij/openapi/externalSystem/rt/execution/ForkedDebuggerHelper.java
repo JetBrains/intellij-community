@@ -18,8 +18,13 @@ public class ForkedDebuggerHelper {
   public static final String PARAMETERS_SEPARATOR = ";";
 
   public static final String FINISH_PARAMS = "FINISH_PARAMS";
+  public static final String DISPATCH_PORT_SYS_PROP = "idea.debugger.dispatch.port";
 
   // returns port at which debugger is supposed to communicate with debuggee process
+  public static int setupDebugger(String debuggerId, String processName, String processParameters) {
+    return setupDebugger(debuggerId, processName, processParameters, getPortFromProperty());
+  }
+
   public static int setupDebugger(String debuggerId, String processName, String processParameters, int dispatchPort) {
     int port = 0;
     try {
@@ -33,6 +38,10 @@ public class ForkedDebuggerHelper {
       e.printStackTrace();
     }
     return port;
+  }
+
+  public static void signalizeFinish(String debuggerId, String processName) {
+    signalizeFinish(debuggerId, processName, getPortFromProperty());
   }
 
   public static void signalizeFinish(String debuggerId, String processName, int dispatchPort) {
@@ -91,6 +100,18 @@ public class ForkedDebuggerHelper {
     }
     finally {
       serverSocket.close();
+    }
+  }
+
+  private static int getPortFromProperty() {
+    String property = System.getProperty(DISPATCH_PORT_SYS_PROP);
+    try {
+      if (property == null || property.trim().isEmpty()) {
+        throw new IllegalStateException("System property '" + DISPATCH_PORT_SYS_PROP + "' is not set");
+      }
+      return Integer.parseInt(property);
+    } catch (NumberFormatException e) {
+      throw new IllegalStateException("System property '" + DISPATCH_PORT_SYS_PROP + "' has invalid value: " + property, e);
     }
   }
 }
