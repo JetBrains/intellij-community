@@ -5,6 +5,7 @@
  */
 package com.intellij.util.io;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -14,31 +15,65 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
 
-public class OpenChannelsCache { // TODO: Will it make sense to have a background thread, that flushes the cache by timeout?
+@ApiStatus.Internal
+class OpenChannelsCache { // TODO: Will it make sense to have a background thread, that flushes the cache by timeout?
   private final int myCacheSizeLimit;
   @NotNull
   private final Set<StandardOpenOption> myOpenOptions;
   @NotNull
   private final Map<Path, ChannelDescriptor> myCache;
 
-  public OpenChannelsCache(final int cacheSizeLimit, @NotNull Set<StandardOpenOption> openOptions) {
+  private final Object myLock = new Object();
+
+  @FunctionalInterface
+  interface ChannelProcessor<T> {
+    T process(@NotNull FileChannel channel) throws IOException;
+  }
+
+  OpenChannelsCache(final int cacheSizeLimit, @NotNull Set<StandardOpenOption> openOptions) {
     myCacheSizeLimit = cacheSizeLimit;
     myOpenOptions = openOptions;
     myCache = new LinkedHashMap<>(cacheSizeLimit, 0.5f, true);
   }
 
-  public synchronized FileChannel getChannel(Path path) throws IOException {
-    ChannelDescriptor descriptor = myCache.get(path);
-    if (descriptor == null) {
-      dropOvercache();
-      descriptor = new ChannelDescriptor(path, myOpenOptions);
-      myCache.put(path, descriptor);
+  <T> T useChannel(@NotNull Path path, @NotNull ChannelProcessor<T> processor) throws IOException {
+    ChannelDescriptor descriptor;
+    synchronized (myLock) {
+      descriptor = myCache.get(path);
+      if (descriptor == null) {
+        releaseOverCachedChannels();
+        descriptor = new ChannelDescriptor(path, myOpenOptions);
+        myCache.put(path, descriptor);
+      }
+      descriptor.lock();
     }
-    descriptor.lock();
-    return descriptor.getChannel();
+
+    try {
+      return processor.process(descriptor.getChannel());
+    } finally {
+      synchronized (myLock) {
+        descriptor.unlock();
+      }
+    }
   }
 
-  private void dropOvercache() {
+  void closeChannel(Path path) {
+    synchronized (myLock) {
+      final ChannelDescriptor descriptor = myCache.remove(path);
+
+      if (descriptor != null) {
+        assert !descriptor.isLocked();
+        try {
+          descriptor.getChannel().close();
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }
+  }
+
+  private void releaseOverCachedChannels() {
     int dropCount = myCache.size() - myCacheSizeLimit;
 
     if (dropCount >= 0) {
@@ -57,27 +92,6 @@ public class OpenChannelsCache { // TODO: Will it make sense to have a backgroun
     }
   }
 
-  public synchronized void releaseChannel(Path path) {
-    ChannelDescriptor descriptor = myCache.get(path);
-    assert descriptor != null;
-
-    descriptor.unlock();
-  }
-
-  public synchronized void closeChannel(Path path) {
-    final ChannelDescriptor descriptor = myCache.remove(path);
-
-    if (descriptor != null) {
-      assert !descriptor.isLocked();
-      try {
-        descriptor.getChannel().close();
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-  }
-
   private static class ChannelDescriptor {
     private int lockCount = 0;
     private final FileChannel myChannel;
@@ -86,19 +100,19 @@ public class OpenChannelsCache { // TODO: Will it make sense to have a backgroun
       myChannel = FileChannelUtil.unInterruptible(FileChannel.open(file, accessMode));
     }
 
-    public void lock() {
+    void lock() {
       lockCount++;
     }
 
-    public void unlock() {
+    void unlock() {
       lockCount--;
     }
 
-    public boolean isLocked() {
+    boolean isLocked() {
       return lockCount != 0;
     }
 
-    public FileChannel getChannel() {
+    FileChannel getChannel() {
       return myChannel;
     }
   }

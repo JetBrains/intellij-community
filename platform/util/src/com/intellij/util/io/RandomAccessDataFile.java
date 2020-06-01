@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.EnumSet;
@@ -83,12 +82,8 @@ public class RandomAccessDataFile implements Forceable, Closeable {
     }
   }
 
-  private void releaseFile() {
-    ourCache.releaseChannel(myFile);
-  }
-
-  private FileChannel getFileChannel() throws IOException {
-    return ourCache.getChannel(myFile);
+  private <T> T useFileChannel(@NotNull OpenChannelsCache.ChannelProcessor<T> channelConsumer) throws IOException {
+    return ourCache.useChannel(myFile, channelConsumer);
   }
 
   public void putInt(long addr, int value) {
@@ -119,21 +114,14 @@ public class RandomAccessDataFile implements Forceable, Closeable {
   public long physicalLength() {
     assertNotDisposed();
 
-    long res;
-
     try {
-      FileChannel file = getFileChannel();
-      try {
-        res = file.size();
-      }
-      finally {
-        releaseFile();
-      }
+      return useFileChannel(file -> {
+        return file.size();
+      });
     }
     catch (IOException e) {
       return 0;
     }
-    return res;
   }
 
   public void dispose() {
@@ -167,14 +155,12 @@ public class RandomAccessDataFile implements Forceable, Closeable {
   public void sync() {
     force();
     try {
-      getFileChannel().force(true);
+      useFileChannel(ch -> {
+        ch.force(true);
+        return null;
+      });
     }
-    catch (IOException ignored) {
-
-    }
-    finally {
-      releaseFile();
-    }
+    catch (IOException ignored) { }
   }
 
   public void flushSomePages(int maxPagesToFlush) {
@@ -209,8 +195,7 @@ public class RandomAccessDataFile implements Forceable, Closeable {
   void loadPage(final Page page) {
     assertNotDisposed();
     try {
-      final FileChannel file = getFileChannel();
-      try {
+      useFileChannel(file -> {
         final ByteBuffer buf = page.getBuf();
 
         totalReads++;
@@ -219,11 +204,8 @@ public class RandomAccessDataFile implements Forceable, Closeable {
         if (DEBUG) {
           log.write("Read at: \t" + page.getOffset() + "\t len: " + Page.PAGE_SIZE + ", size: " + mySize + "\n");
         }
-        file.read(ByteBuffer.wrap(buf.array(), 0, Page.PAGE_SIZE), page.getOffset());
-      }
-      finally {
-        releaseFile();
-      }
+        return file.read(ByteBuffer.wrap(buf.array(), 0, Page.PAGE_SIZE), page.getOffset());
+      });
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -245,19 +227,16 @@ public class RandomAccessDataFile implements Forceable, Closeable {
       length = (int)(mySize - fileOffset);
     }
 
-    final FileChannel file = getFileChannel();
-    try {
+    int finalLength = length;
+    useFileChannel(file -> {
       totalWrites++;
-      totalWriteBytes += length;
+      totalWriteBytes += finalLength;
 
       if (DEBUG) {
-        log.write("Write at: \t" + fileOffset + "\t len: " + length + ", size: " + mySize + ", filesize: " + file.size() + "\n");
+        log.write("Write at: \t" + fileOffset + "\t len: " + finalLength + ", size: " + mySize + ", filesize: " + file.size() + "\n");
       }
-      file.write(ByteBuffer.wrap(buf.array(), bufOffset, length), fileOffset);
-    }
-    finally {
-      releaseFile();
-    }
+      return file.write(ByteBuffer.wrap(buf.array(), bufOffset, finalLength), fileOffset);
+    });
   }
 
   @Override
