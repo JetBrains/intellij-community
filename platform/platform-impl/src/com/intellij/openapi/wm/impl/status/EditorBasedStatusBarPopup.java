@@ -32,6 +32,7 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.util.PopupState;
 import com.intellij.util.Alarm;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.ui.UIUtil;
@@ -50,7 +51,7 @@ import static com.intellij.openapi.util.NlsContexts.StatusBarText;
 
 public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget {
   private final PopupState myPopupState = new PopupState();
-  private final TextPanel.WithIconAndArrows myComponent;
+  private final JPanel myComponent;
   private final boolean myWriteableFileRequired;
   private boolean actionEnabled;
   private final Alarm update;
@@ -61,7 +62,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     super(project);
     myWriteableFileRequired = writeableFileRequired;
     update = new Alarm(this);
-    myComponent = new TextPanel.WithIconAndArrows();
+    myComponent = createComponent();
     myComponent.setVisible(false);
 
     new ClickListener() {
@@ -73,6 +74,10 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
       }
     }.installOn(myComponent, true);
     myComponent.setBorder(WidgetBorder.WIDE);
+  }
+
+  protected JPanel createComponent() {
+    return new TextPanel.WithIconAndArrows();
   }
 
   @Override
@@ -209,11 +214,25 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   }
 
   protected boolean isEmpty() {
-    return StringUtil.isEmpty(myComponent.getText()) && !myComponent.hasIcon();
+    Boolean result = ObjectUtils.doIfCast(myComponent, TextPanel.WithIconAndArrows.class,
+                                          textPanel -> StringUtil.isEmpty(textPanel.getText()) && !textPanel.hasIcon());
+    return result != null && result;
   }
 
   public boolean isActionEnabled() {
     return actionEnabled;
+  }
+
+  protected void updateComponent(@NotNull WidgetState state) {
+    myComponent.setToolTipText(state.toolTip);
+    ObjectUtils.consumeIfCast(
+      myComponent, TextPanel.WithIconAndArrows.class,
+      textPanel -> {
+        textPanel.setTextAlignment(Component.CENTER_ALIGNMENT);
+        textPanel.setIcon(state.icon);
+        textPanel.setText(state.text);
+      }
+    );
   }
 
   @TestOnly
@@ -265,13 +284,8 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
 
       actionEnabled = state.actionEnabled && isEnabledForFile(file);
 
-      String widgetText = state.text;
-      String toolTipText = state.toolTip;
       myComponent.setEnabled(actionEnabled);
-      myComponent.setTextAlignment(Component.CENTER_ALIGNMENT);
-      myComponent.setIcon(state.icon);
-      myComponent.setToolTipText(toolTipText);
-      myComponent.setText(widgetText);
+      updateComponent(state);
 
       if (myStatusBar != null && !myComponent.isValid()) {
         myStatusBar.updateWidget(ID());
@@ -334,6 +348,18 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
 
     public void setIcon(Icon icon) {
       this.icon = icon;
+    }
+
+    public String getText() {
+      return text;
+    }
+
+    public String getToolTip() {
+      return toolTip;
+    }
+
+    public Icon getIcon() {
+      return icon;
     }
   }
 

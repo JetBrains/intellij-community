@@ -536,6 +536,7 @@ public class AllIcons {
   }
 
   public final static class Ide {
+    /** 16x16 */ public static final @NotNull Icon ConfigFile = load("/ide/configFile.svg");
     /** 6x6 */ public static final @NotNull Icon ErrorPoint = load("/ide/errorPoint.svg");
     /** 14x14 */ public static final @NotNull Icon External_link_arrow = load("/ide/external_link_arrow.svg");
     /** 16x16 */ public static final @NotNull Icon FatalError_read = load("/ide/fatalError-read.svg");
