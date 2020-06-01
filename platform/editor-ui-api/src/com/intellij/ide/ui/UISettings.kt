@@ -655,6 +655,9 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       editorAAType = state.editorAAType
       state.editorAAType = AntialiasingType.SUBPIXEL
     }
+    if (state.ideAAType == AntialiasingType.SUBPIXEL && !AntialiasingType.canUseSubpixelAAForIDE()) {
+      state.ideAAType = AntialiasingType.GREYSCALE;
+    }
   }
 
   @Suppress("DEPRECATION")

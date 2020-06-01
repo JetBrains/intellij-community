@@ -23,6 +23,10 @@ public enum AntialiasingType {
     return GREYSCALE.getTextInfo();
   }
 
+  public static boolean canUseSubpixelAAForIDE() {
+    return !SystemInfo.isMac || Boolean.getBoolean("enable.macos.ide.subpixelAA");
+  }
+
   public static Object getKeyForCurrentScope(boolean inEditor) {
     UISettings uiSettings = UISettings.getInstanceOrNull();
     if (uiSettings != null) {
