@@ -11,17 +11,20 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 @ApiStatus.Internal
 public final class ReferenceProviders {
   private static final ExtensionPointName<PsiSymbolReferenceProviderBean> EP_NAME =
     new ExtensionPointName<>("com.intellij.psi.symbolReferenceProvider");
 
+  private static final @NotNull Function<Language, LanguageReferenceProviders> VALUE_MAPPER = ReferenceProviders::byLanguageInner;
+
   /**
    * Given language of a host element returns list of providers that could provide references from this language.
    */
   static @NotNull LanguageReferenceProviders byLanguage(@NotNull Language language) {
-    return EP_NAME.computeIfAbsent(language, ReferenceProviders::byLanguageInner);
+    return EP_NAME.computeIfAbsent(language, VALUE_MAPPER);
   }
 
   private static @NotNull LanguageReferenceProviders byLanguageInner(@NotNull Language language) {
@@ -41,6 +44,6 @@ public final class ReferenceProviders {
    * Given class of target returns list of providers that could provide references to this target.
    */
   public static @NotNull List<PsiSymbolReferenceProviderBean> byTargetClass(@NotNull Class<? extends Symbol> targetClass) {
-    return EP_NAME.getByGroupingKey(targetClass, bean -> bean.getResolveTargetClass().isAssignableFrom(targetClass) ? targetClass : null);
+    return EP_NAME.getByGroupingKey(targetClass, ReferenceProviders.class, bean -> bean.getResolveTargetClass().isAssignableFrom(targetClass) ? targetClass : null);
   }
 }

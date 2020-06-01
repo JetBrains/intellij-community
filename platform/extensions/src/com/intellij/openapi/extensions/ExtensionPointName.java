@@ -178,10 +178,13 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
    * Build cache by arbitrary key using provided key to value mapper. Values with the same key merge into list. Return values by key.
    * <p>
    * To exclude extension from cache, return null key.
+   *
+   * {@code cacheId} is required because it's dangerous to rely on identity of functional expressions.
+   * JLS doesn't specify whether a new instance is produced or some common instance is reused for lambda expressions (see 15.27.4).
    */
   @ApiStatus.Experimental
-  public final <@NotNull K> @NotNull List<T> getByGroupingKey(@NotNull K key, @NotNull Function<@NotNull T, @Nullable K> keyMapper) {
-    return ExtensionProcessingHelper.getByGroupingKey(getPointImpl(null), key, keyMapper);
+  public final <@NotNull K> @NotNull List<T> getByGroupingKey(@NotNull K key, @NotNull Class<?> cacheId, @NotNull Function<@NotNull T, @Nullable K> keyMapper) {
+    return ExtensionProcessingHelper.getByGroupingKey(getPointImpl(null), cacheId, key, keyMapper);
   }
 
   /**
@@ -190,8 +193,8 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
    * To exclude extension from cache, return null key.
    */
   @ApiStatus.Experimental
-  public final <@NotNull K> @Nullable T getByKey(@NotNull K key, @NotNull Function<@NotNull T, @Nullable K> keyMapper) {
-    return ExtensionProcessingHelper.getByKey(getPointImpl(null), key, keyMapper);
+  public final <@NotNull K> @Nullable T getByKey(@NotNull K key, @NotNull Class<?> cacheId, @NotNull Function<@NotNull T, @Nullable K> keyMapper) {
+    return ExtensionProcessingHelper.getByKey(getPointImpl(null), key, cacheId, keyMapper);
   }
 
   /**
@@ -201,11 +204,15 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
    */
   @ApiStatus.Experimental
   public final <@NotNull K, @NotNull V> @Nullable V getByKey(@NotNull K key,
+                                                             @NotNull Class<?> cacheId,
                                                              @NotNull Function<@NotNull T, @Nullable K> keyMapper,
                                                              @NotNull Function<@NotNull T, @Nullable V> valueMapper) {
-    return ExtensionProcessingHelper.getByKey(getPointImpl(null), key, keyMapper, valueMapper);
+    return ExtensionProcessingHelper.getByKey(getPointImpl(null), key, cacheId, keyMapper, valueMapper);
   }
 
+  /**
+   * {@code valueMapper} used as cache id and therefore must be extracted to a static final field.
+   */
   @ApiStatus.Experimental
   public final <@NotNull K, @NotNull V> @NotNull V computeIfAbsent(@NotNull K key,
                                                                    @NotNull Function<@NotNull K, @NotNull V> valueMapper) {

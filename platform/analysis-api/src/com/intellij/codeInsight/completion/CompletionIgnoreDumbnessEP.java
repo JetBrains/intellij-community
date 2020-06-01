@@ -16,7 +16,7 @@ public class CompletionIgnoreDumbnessEP extends LazyExtensionInstance<Object> {
     ExtensionPointName.create("com.intellij.completion.ignoringDumbnessAllowed");
 
   public static boolean isIgnoringDumbnessAllowed(@NotNull Language language) {
-    return EP_NAME.getByKey(language.getID(), ep -> ep.language) != null;
+    return EP_NAME.getByKey(language.getID(), CompletionIgnoreDumbnessEP.class, ep -> ep.language) != null;
   }
 
   /**

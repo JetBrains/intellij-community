@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
@@ -71,13 +72,14 @@ public final class ExtensionProcessingHelper {
    * See {@link com.intellij.openapi.extensions.ExtensionPointName#getByGroupingKey}.
    */
   public static <@NotNull K, @NotNull T> @NotNull List<T> getByGroupingKey(@NotNull ExtensionPointImpl<T> point,
+                                                                           @NotNull Class<?> cacheId,
                                                                            @NotNull K key,
                                                                            @NotNull Function<@NotNull T, @Nullable K> keyMapper) {
-    ConcurrentMap<Function<T, K>, Map<K, List<T>>> keyMapperToCache = point.getCacheMap();
-    Map<K, List<T>> cache = keyMapperToCache.get(keyMapper);
+    ConcurrentMap<Class<?>, Map<K, List<T>>> keyMapperToCache = point.getCacheMap();
+    Map<K, List<T>> cache = keyMapperToCache.get(cacheId);
     if (cache == null) {
       cache = buildCacheForGroupingKeyMapper(keyMapper, point);
-      Map<K, List<T>> prev = keyMapperToCache.putIfAbsent(keyMapper, cache);
+      Map<K, List<T>> prev = keyMapperToCache.putIfAbsent(cacheId, cache);
       if (prev != null) {
         cache = prev;
       }
@@ -93,10 +95,10 @@ public final class ExtensionProcessingHelper {
   @ApiStatus.Internal
   public static <@NotNull K, @NotNull T, @NotNull V> @Nullable V getByKey(@NotNull ExtensionPointImpl<T> point,
                                                                           @NotNull K key,
+                                                                          @NotNull Class<?> cacheId,
                                                                           @NotNull Function<@NotNull T, @Nullable K> keyMapper,
                                                                           @NotNull Function<@NotNull T, @Nullable V> valueMapper) {
-    SimpleImmutableEntry<Function<T, K>, Function<T, V>> cacheKey = new SimpleImmutableEntry<>(keyMapper, valueMapper);
-    return doGetByKey(point, cacheKey, key, keyMapper, valueMapper, point.getCacheMap());
+    return doGetByKey(point, cacheId, key, keyMapper, valueMapper, point.getCacheMap());
   }
 
   /**
@@ -105,8 +107,9 @@ public final class ExtensionProcessingHelper {
   @ApiStatus.Internal
   public static <@NotNull K, @NotNull T> @Nullable T getByKey(@NotNull ExtensionPointImpl<T> point,
                                                               @NotNull K key,
+                                                              @NotNull Class<?> cacheId,
                                                               @NotNull Function<@NotNull T, @Nullable K> keyMapper) {
-    return doGetByKey(point, keyMapper, key, keyMapper, Function.identity(), point.getCacheMap());
+    return doGetByKey(point, cacheId, key, keyMapper, Function.identity(), point.getCacheMap());
   }
 
   /**
@@ -121,16 +124,16 @@ public final class ExtensionProcessingHelper {
     return cache.computeIfAbsent(new SimpleImmutableEntry<>(key, valueProducer), entry -> valueProducer.apply(entry.getKey()));
   }
 
-  private static <CACHE_KEY, K, T, V> @Nullable V doGetByKey(@NotNull ExtensionPointImpl<T> point,
-                                                             @NotNull CACHE_KEY cacheKey,
+  private static <CACHE_KEY, K, T, V> @Nullable V doGetByKey(@NotNull ExtensionPoint<T> point,
+                                                             @NotNull CACHE_KEY cacheId,
                                                              @NotNull K key,
                                                              @NotNull Function<T, K> keyMapper,
                                                              @NotNull Function<@NotNull T, @Nullable V> valueMapper,
                                                              @NotNull ConcurrentMap<CACHE_KEY, Map<K, V>> keyMapperToCache) {
-    Map<K, V> cache = keyMapperToCache.get(cacheKey);
+    Map<K, V> cache = keyMapperToCache.get(cacheId);
     if (cache == null) {
       cache = buildCacheForKeyMapper(keyMapper, valueMapper, point);
-      Map<K, V> prev = keyMapperToCache.putIfAbsent(cacheKey, cache);
+      Map<K, V> prev = keyMapperToCache.putIfAbsent(cacheId, cache);
       if (prev != null) {
         cache = prev;
       }
@@ -139,7 +142,7 @@ public final class ExtensionProcessingHelper {
   }
 
   private static <K, T> @NotNull Map<K, List<T>> buildCacheForGroupingKeyMapper(@NotNull Function<T, K> keyMapper,
-                                                                                @NotNull ExtensionPointImpl<T> point) {
+                                                                                @NotNull ExtensionPoint<T> point) {
     // use HashMap instead of THashMap - a lot of keys not expected, nowadays HashMap is a more optimized (e.g. computeIfAbsent implemented in an efficient manner)
     Map<K, List<T>> cache = new HashMap<>();
     for (T extension : point.getExtensionList()) {
@@ -154,7 +157,7 @@ public final class ExtensionProcessingHelper {
 
   private static @NotNull <K, T, V> Map<K, V> buildCacheForKeyMapper(@NotNull Function<T, K> keyMapper,
                                                                      @NotNull Function<@NotNull T, @Nullable V> valueMapper,
-                                                                     @NotNull ExtensionPointImpl<T> point) {
+                                                                     @NotNull ExtensionPoint<T> point) {
     List<T> extensions = point.getExtensionList();
     Map<K, V> cache = new Object2ObjectOpenHashMap<>(extensions.size());
     for (T extension : extensions) {
