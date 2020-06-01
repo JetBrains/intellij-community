@@ -103,16 +103,43 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
     }
     return ClassData(hasSuper, pureInitializer, fieldModifiers)
   }
+  
+  private fun getInferenceMode(method: LighterASTNode): JavaSourceInference.InferenceMode {
+    // PsiUtil#canBeOverridden logic on LighterAST
+    val ctor = LightTreeUtil.firstChildOfType(tree, method, TYPE) == null
+    if (ctor) return JavaSourceInference.InferenceMode.ENABLED
+    val modifiers = LightTreeUtil.firstChildOfType(tree, method, MODIFIER_LIST)
+    val isStatic = LightTreeUtil.firstChildOfType(tree, modifiers, JavaTokenType.STATIC_KEYWORD) != null
+    val isFinal = LightTreeUtil.firstChildOfType(tree, modifiers, JavaTokenType.FINAL_KEYWORD) != null
+    val isPrivate = LightTreeUtil.firstChildOfType(tree, modifiers, JavaTokenType.PRIVATE_KEYWORD) != null
+    if (isStatic || isFinal || isPrivate) return JavaSourceInference.InferenceMode.ENABLED
+    val aClass = tree.getParent(method)
+    if (aClass?.tokenType == ANONYMOUS_CLASS) return JavaSourceInference.InferenceMode.ENABLED
+    val classModifiers = LightTreeUtil.firstChildOfType(tree, aClass, MODIFIER_LIST)
+    if (LightTreeUtil.firstChildOfType(tree, classModifiers, JavaTokenType.FINAL_KEYWORD) != null) {
+      return JavaSourceInference.InferenceMode.ENABLED
+    }
+    return JavaSourceInference.InferenceMode.PARAMETERS
+  }
 
   private fun calcData(method: LighterASTNode): MethodData? {
     val body = LightTreeUtil.firstChildOfType(tree, method, CODE_BLOCK) ?: return null
+    val parameterNames = getParameterNames(tree, method)
+    val inferenceMode = getInferenceMode(method)
+    if (inferenceMode == JavaSourceInference.InferenceMode.PARAMETERS && parameterNames.isEmpty()) {
+      return null
+    }
+    val statements = ContractInferenceInterpreter.getStatements(body, tree)
+    val notNullParams = inferNotNullParameters(tree, parameterNames, statements)
+    if (inferenceMode == JavaSourceInference.InferenceMode.PARAMETERS) {
+      return createData(body, emptyList(), null, null, notNullParams)
+    }
     val clsData = classData[tree.getParent(method)]
     val fieldMap = clsData?.fieldModifiers ?: emptyMap()
     // Constructor which has super classes may implicitly call impure super constructor, so don't infer purity for subclasses
     val ctor = LightTreeUtil.firstChildOfType(tree, method, TYPE) == null
     val maybeImpureCtor = ctor && (clsData == null || clsData.hasSuper || !clsData.hasPureInitializer)
-    val statements = ContractInferenceInterpreter.getStatements(body, tree)
-
+    
     val contractInference = ContractInferenceInterpreter(tree, method, body)
     val contracts = contractInference.inferContracts(statements)
 
@@ -128,7 +155,6 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
         true
       }
     }
-    val notNullParams = inferNotNullParameters(tree, method, statements)
 
     return createData(body, contracts, nullityVisitor.result, if (maybeImpureCtor) null else purityVisitor.result, notNullParams)
   }

@@ -12,12 +12,7 @@ import com.intellij.psi.impl.source.tree.LightTreeUtil
 import com.intellij.psi.tree.TokenSet
 import java.util.*
 
-fun inferNotNullParameters(tree: LighterAST, method: LighterASTNode, statements: List<LighterASTNode>): BitSet {
-  val parameterNames = getParameterNames(tree, method)
-  return inferNotNullParameters(tree, parameterNames, statements)
-}
-
-private fun inferNotNullParameters(tree: LighterAST, parameterNames: List<String?>, statements: List<LighterASTNode>): BitSet {
+internal fun inferNotNullParameters(tree: LighterAST, parameterNames: List<String?>, statements: List<LighterASTNode>): BitSet {
   val canBeNulls = parameterNames.filterNotNullTo(HashSet())
   if (canBeNulls.isEmpty()) return BitSet()
   val notNulls = HashSet<String>()
@@ -177,7 +172,7 @@ private fun dereference(tree: LighterAST,
  * Returns list of parameter names. A null in returned list means that either parameter name
  * is absent in the source or it's a primitive type (thus nullity inference does not apply).
  */
-private fun getParameterNames(tree: LighterAST, method: LighterASTNode): List<String?> {
+internal fun getParameterNames(tree: LighterAST, method: LighterASTNode): List<String?> {
   val parameterList = LightTreeUtil.firstChildOfType(tree, method, PARAMETER_LIST) ?: return emptyList()
   val parameters = LightTreeUtil.getChildrenOfType(tree, parameterList, PARAMETER)
   return parameters.map {
