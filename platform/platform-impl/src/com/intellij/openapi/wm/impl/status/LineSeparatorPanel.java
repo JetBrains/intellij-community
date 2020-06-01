@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -29,11 +29,8 @@ public class LineSeparatorPanel extends EditorBasedStatusBarPopup {
     if (file == null) {
       return WidgetState.HIDDEN;
     }
-    String lineSeparator = LoadTextUtil.detectLineSeparator(file, true);
-    if (lineSeparator == null) {
-      return WidgetState.HIDDEN;
-    }
-    String toolTipText = String.format("Line Separator: %s", StringUtil.escapeLineBreak(lineSeparator));
+    String lineSeparator = FileDocumentManager.getInstance().getLineSeparator(file, getProject());
+    String toolTipText = "Line Separator: " + StringUtil.escapeLineBreak(lineSeparator);
     String panelText = LineSeparator.fromString(lineSeparator).toString();
     return new WidgetState(toolTipText, panelText, true);
   }
