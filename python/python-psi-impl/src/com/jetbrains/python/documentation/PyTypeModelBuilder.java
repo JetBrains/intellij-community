@@ -8,10 +8,12 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;  
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.ChainIterable;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -75,10 +77,12 @@ public class PyTypeModelBuilder {
   private static class CollectionOf extends TypeModel {
     private final TypeModel collectionType;
     private final List<TypeModel> elementTypes;
+    private final boolean useTypingAlias;
 
-    private CollectionOf(TypeModel collectionType, List<TypeModel> elementTypes) {
+    private CollectionOf(TypeModel collectionType, List<TypeModel> elementTypes, boolean useTypingAlias) {
       this.collectionType = collectionType;
       this.elementTypes = elementTypes;
+      this.useTypingAlias = useTypingAlias;
     }
 
     @Override
@@ -139,10 +143,12 @@ public class PyTypeModelBuilder {
   static class TupleType extends TypeModel {
     private final List<TypeModel> members;
     private final boolean homogeneous;
+    private final boolean useTypingAlias;
 
-    TupleType(List<TypeModel> members, boolean homogeneous) {
+    TupleType(List<TypeModel> members, boolean homogeneous, boolean useTypingAlias) {
       this.members = members;
       this.homogeneous = homogeneous;
+      this.useTypingAlias = useTypingAlias;
     }
 
     @Override
@@ -271,8 +277,9 @@ public class PyTypeModelBuilder {
                                         ? Collections.singletonList(tupleType.getIteratedItemType())
                                         : tupleType.getElementTypes();
 
+      boolean useTypingAlias = PyiUtil.getOriginalLanguageLevel(tupleType.getPyClass()).isOlderThan(LanguageLevel.PYTHON39);
       final List<TypeModel> elementModels = ContainerUtil.map(elementTypes, elementType -> build(elementType, true));
-      result = new TupleType(elementModels, tupleType.isHomogeneous());
+      result = new TupleType(elementModels, tupleType.isHomogeneous(), useTypingAlias);
     }
     else if (type instanceof PyCollectionType) {
       final PyCollectionType asCollection = (PyCollectionType)type;
@@ -282,7 +289,8 @@ public class PyTypeModelBuilder {
       }
       if (!elementModels.isEmpty()) {
         final TypeModel collectionType = build(new PyClassTypeImpl(asCollection.getPyClass(), asCollection.isDefinition()), false);
-        result = new CollectionOf(collectionType, elementModels);
+        boolean useTypingAlias = PyiUtil.getOriginalLanguageLevel(asCollection.getPyClass()).isOlderThan(LanguageLevel.PYTHON39);
+        result = new CollectionOf(collectionType, elementModels, useTypingAlias);
       }
     }
     else if (type instanceof PyUnionType && allowUnions) {
@@ -564,7 +572,7 @@ public class PyTypeModelBuilder {
 
     protected void typingGenericFormat(CollectionOf collectionOf) {
       final boolean prevSwitchBuiltinToTyping = switchBuiltinToTyping;
-      switchBuiltinToTyping = true;
+      switchBuiltinToTyping = collectionOf.useTypingAlias;
       collectionOf.collectionType.accept(this);
       switchBuiltinToTyping = prevSwitchBuiltinToTyping;
 
@@ -639,7 +647,7 @@ public class PyTypeModelBuilder {
 
     @Override
     public void tuple(TupleType type) {
-      add("Tuple");
+      add(type.useTypingAlias ? "Tuple" : "tuple");
       if (!type.members.isEmpty()) {
         add("[");
         processList(type.members);

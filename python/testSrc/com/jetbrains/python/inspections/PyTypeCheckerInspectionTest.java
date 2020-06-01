@@ -951,7 +951,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "    year: int\n" +
                          "def record_movie(movie: Movie) -> None: ...\n" +
                          "record_movie({'name': 'Blade Runner', 'year': 1982})\n" +
-                         "record_movie(<warning descr=\"Expected type 'Movie', got 'Dict[str, int]' instead\">{'name': 1984}</warning>)")
+                         "record_movie(<warning descr=\"Expected type 'Movie', got 'dict[str, int]' instead\">{'name': 1984}</warning>)")
     );
   }
 
@@ -982,9 +982,9 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "    name: str\n" +
                          "    year: int\n" +
                          "m1: Movie = dict(name='Alien', year=1979)\n" +
-                         "m2: Movie = <warning descr=\"Expected type 'Movie', got 'Dict[str, str]' instead\">dict(name='Alien', year='1979')</warning>\n" +
+                         "m2: Movie = <warning descr=\"Expected type 'Movie', got 'dict[str, str]' instead\">dict(name='Alien', year='1979')</warning>\n" +
                          "m3: Movie = typing.cast(Movie, dict(zip(['name', 'year'], ['Alien', 1979])))\n" +
-                         "m4: Movie = <warning descr=\"Expected type 'Movie', got 'Dict[str, str]' instead\">{'name': 'Alien', 'year': '1979'}</warning>\n" +
+                         "m4: Movie = <warning descr=\"Expected type 'Movie', got 'dict[str, str]' instead\">{'name': 'Alien', 'year': '1979'}</warning>\n" +
                          "m5 = Movie(name='Garden State', year=2004)"));
   }
 
@@ -995,9 +995,9 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       () -> doTestByText("from typing import TypedDict\n" +
                          "Movie = TypedDict('Movie', {'name': str, 'year': int})\n" +
                          "m1: Movie = dict(name='Alien', year=1979)\n" +
-                         "m2: Movie = <warning descr=\"Expected type 'Movie', got 'Dict[str, str]' instead\">dict(name='Alien', year='1979')</warning>\n" +
+                         "m2: Movie = <warning descr=\"Expected type 'Movie', got 'dict[str, str]' instead\">dict(name='Alien', year='1979')</warning>\n" +
                          "m3: Movie = typing.cast(Movie, dict(zip(['name', 'year'], ['Alien', 1979])))\n" +
-                         "m4: Movie = <warning descr=\"Expected type 'Movie', got 'Dict[str, str]' instead\">{'name': 'Alien', 'year': '1979'}</warning>\n" +
+                         "m4: Movie = <warning descr=\"Expected type 'Movie', got 'dict[str, str]' instead\">{'name': 'Alien', 'year': '1979'}</warning>\n" +
                          "m5 = Movie(name='Garden State', year=2004)"));
   }
 

@@ -3663,7 +3663,7 @@ public class PyTypeTest extends PyTestCase {
   public void testSlicingHomogeneousTuple() {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
-      () -> doTest("Tuple[int, ...]",
+      () -> doTest("tuple[int, ...]",
                    "from typing import Tuple\n" +
                    "x: Tuple[int, ...]\n" +
                    "expr = x[0:]")
