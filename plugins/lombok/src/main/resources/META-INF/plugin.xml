@@ -187,7 +187,7 @@
       groupPath="Lombok"
       groupName="Redundant modifiers"
       shortName="RedundantModifiersUtilityClassLombok"
-      enabledByDefault="true"
+      enabledByDefault="false"
       implementationClass="de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersOnUtilityClassLombokAnnotationInspection"/>
 
     <localInspection
