@@ -34,12 +34,6 @@ internal class PEntityStorage constructor(
   override val refs: RefsTable,
   override val indexes: StorageIndexes
 ) : AbstractPEntityStorage() {
-  override fun assertConsistency() {
-    entitiesByType.assertConsistency()
-
-    assertConsistencyBase()
-  }
-
   companion object {
     val EMPTY = PEntityStorage(ImmutableEntitiesBarrel.EMPTY, RefsTable(), StorageIndexes.EMPTY)
   }
@@ -80,10 +74,6 @@ internal class PEntityStorageBuilder(
 
   override var modificationCount: Long = 0
     private set
-
-  override fun assertConsistency() {
-    assertConsistencyBase()
-  }
 
   override fun <M : ModifiableTypedEntity<T>, T : TypedEntity> addEntity(clazz: Class<M>,
                                                                          source: EntitySource,
@@ -708,12 +698,6 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
   internal abstract val refs: AbstractRefsTable
   internal abstract val indexes: StorageIndexes
 
-  abstract fun assertConsistency()
-
-  fun assertConsistencyInStrictMode() {
-    if (StrictMode.enabled) assertConsistency()
-  }
-
   override fun <E : TypedEntity> entities(entityClass: Class<E>): Sequence<E> {
     return entitiesByType[entityClass.toClassId()]?.all()?.map { it.createEntity(this) } as? Sequence<E> ?: emptySequence()
   }
@@ -759,7 +743,8 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
     return index
   }
 
-  protected fun assertConsistencyBase() {
+  internal fun assertConsistency() {
+    entitiesByType.assertConsistency()
     // Rules:
     //  1) Refs should not have links without a corresponding entity
     //    1.1) For abstract containers: PId has the class of ConnectionId
@@ -807,6 +792,10 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
     }
 
     indexes.assertConsistency(this)
+  }
+
+  internal fun assertConsistencyInStrictMode() {
+    if (StrictMode.enabled) this.assertConsistency()
   }
 
   private fun assertResolvable(clazz: Int, id: Int) {

@@ -6,21 +6,6 @@ import com.intellij.workspace.api.TypedEntity
 internal open class ImmutableEntitiesBarrel internal constructor(
   override val entities: List<ImmutableEntityFamily<out TypedEntity>?>
 ) : EntitiesBarrel() {
-  fun assertConsistency() {
-    entities.forEachIndexed { i, family ->
-      val clazz = i.findEntityClass<TypedEntity>()
-      family?.assertConsistency { entityData ->
-        val immutableClass = ClassConversion.entityDataToEntity(entityData.javaClass)
-        assert(clazz == immutableClass) {
-          """EntityFamily contains entity data of wrong type:
-            | - EntityFamily class:   $clazz
-            | - entityData class:     $immutableClass
-          """.trimMargin()
-        }
-      }
-    }
-  }
-
   companion object {
     val EMPTY = ImmutableEntitiesBarrel(emptyList())
   }
@@ -100,4 +85,19 @@ internal sealed class EntitiesBarrel {
   open operator fun get(clazz: Int): EntityFamily<out TypedEntity>? = entities.getOrNull(clazz)
 
   fun size() = entities.size
+
+  fun assertConsistency() {
+    entities.forEachIndexed { i, family ->
+      val clazz = i.findEntityClass<TypedEntity>()
+      family?.assertConsistency { entityData ->
+        val immutableClass = ClassConversion.entityDataToEntity(entityData.javaClass)
+        assert(clazz == immutableClass) {
+          """EntityFamily contains entity data of wrong type:
+            | - EntityFamily class:   $clazz
+            | - entityData class:     $immutableClass
+          """.trimMargin()
+        }
+      }
+    }
+  }
 }

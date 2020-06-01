@@ -14,18 +14,8 @@ internal class ImmutableEntityFamily<E : TypedEntity>(
 
   override fun size(): Int = entities.size - emptySlotsSize
 
-  inline fun assertConsistency(entityAssertion: (PEntityData<E>) -> Unit = {}) {
-    var emptySlotsCounter = 0
-
-    entities.forEachIndexed { idx, entity ->
-      if (entity == null) {
-        emptySlotsCounter++
-      }
-      else {
-        assert(idx == entity.id) { "Entity with id ${entity.id} is placed at index $idx" }
-        entityAssertion(entity)
-      }
-    }
+  override fun familyCheck() {
+    val emptySlotsCounter = entities.count { it == null }
     assert(emptySlotsCounter == emptySlotsSize) { "EntityFamily has unregistered gaps" }
   }
 }
@@ -108,6 +98,8 @@ internal class MutableEntityFamily<E : TypedEntity>(
 
   override fun size(): Int = entities.size - amountOfGapsInEntities
 
+  override fun familyCheck() {}
+
   /** This method should always be called before any modification */
   private fun startWrite() {
     if (!freezed) return
@@ -153,5 +145,17 @@ internal sealed class EntityFamily<E : TypedEntity> {
 
   override fun toString(): String {
     return "EntityFamily(entities=$entities)"
+  }
+
+  protected abstract fun familyCheck()
+
+  inline fun assertConsistency(entityAssertion: (PEntityData<E>) -> Unit = {}) {
+    entities.forEachIndexed { idx, entity ->
+      if (entity != null) {
+        assert(idx == entity.id) { "Entity with id ${entity.id} is placed at index $idx" }
+        entityAssertion(entity)
+      }
+    }
+    familyCheck()
   }
 }
