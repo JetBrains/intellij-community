@@ -709,7 +709,8 @@ class PySuggestedRefactoringTest : PyTestCase() {
           
         A().print_r()
       """.trimIndent(),
-      { repeat("_r".length, this::performBackspace) }
+      { repeat("_r".length, this::performBackspace) },
+      intention = RefactoringBundle.message("suggested.refactoring.rename.intention.text", "print_r", "print")
     )
   }
 
