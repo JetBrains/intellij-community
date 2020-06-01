@@ -748,26 +748,46 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
     // Rules:
     //  1) Refs should not have links without a corresponding entity
     //    1.1) For abstract containers: PId has the class of ConnectionId
-    //  2) child entity should have only one parent --------------------------- Not Yet Implemented TODO
-    //  3) There is no child without a parent under the hard reference -------- Not Yet Implemented TODO
+    //  2) There is no child without a parent under the hard reference
 
     refs.oneToManyContainer.forEach { (connectionId, map) ->
+
+      // Assert correctness of connection id
+      assert(connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_MANY)
+
+      //  1) Refs should not have links without a corresponding entity
       map.forEachKey { childId, parentId ->
-        //  1) Refs should not have links without a corresponding entity
         assertResolvable(connectionId.parentClass, parentId)
         assertResolvable(connectionId.childClass, childId)
+      }
+
+      //  2) All children should have a parent if the connection has a restriction for that
+      if (!connectionId.isParentNullable) {
+        checkStrongConnection(map.keys, connectionId.childClass)
       }
     }
 
     refs.oneToOneContainer.forEach { (connectionId, map) ->
+
+      // Assert correctness of connection id
+      assert(connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ONE)
+
+      //  1) Refs should not have links without a corresponding entity
       map.forEachKey { childId, parentId ->
-        //  1) Refs should not have links without a corresponding entity
         assertResolvable(connectionId.parentClass, parentId)
         assertResolvable(connectionId.childClass, childId)
       }
+
+      //  2) Connections satisfy connectionId requirements
+      if (!connectionId.isParentNullable) checkStrongConnection(map.keys, connectionId.childClass)
+      if (!connectionId.isChildNullable) checkStrongConnection(map.values, connectionId.parentClass)
     }
 
     refs.oneToAbstractManyContainer.forEach { (connectionId, map) ->
+
+      // Assert correctness of connection id
+      assert(connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY)
+
       map.forEach { (childId, parentId) ->
         //  1) Refs should not have links without a corresponding entity
         assertResolvable(parentId.clazz, parentId.arrayId)
@@ -776,10 +796,19 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
         //  1.1) For abstract containers: PId has the class of ConnectionId
         assertCorrectEntityClass(connectionId.parentClass, parentId)
         assertCorrectEntityClass(connectionId.childClass, childId)
+      }
+
+      //  2) Connections satisfy connectionId requirements
+      if (!connectionId.isParentNullable) {
+        checkStrongAbstractConnection(map.keys.toMutableSet(), map.keys.toMutableSet().map { it.clazz }.toSet(), connectionId.debugStr())
       }
     }
 
     refs.abstractOneToOneContainer.forEach { (connectionId, map) ->
+
+      // Assert correctness of connection id
+      assert(connectionId.connectionType == ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE)
+
       map.forEach { (childId, parentId) ->
         //  1) Refs should not have links without a corresponding entity
         assertResolvable(parentId.clazz, parentId.arrayId)
@@ -789,9 +818,45 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
         assertCorrectEntityClass(connectionId.parentClass, parentId)
         assertCorrectEntityClass(connectionId.childClass, childId)
       }
+
+      //  2) Connections satisfy connectionId requirements
+      if (!connectionId.isParentNullable) {
+        checkStrongAbstractConnection(map.keys.toMutableSet(), map.keys.toMutableSet().map { it.clazz }.toSet(), connectionId.debugStr())
+      }
+      if (!connectionId.isChildNullable) {
+        checkStrongAbstractConnection(map.values.toMutableSet(), map.values.toMutableSet().map { it.clazz }.toSet(), connectionId.debugStr())
+      }
     }
 
     indexes.assertConsistency(this)
+  }
+
+  private fun checkStrongConnection(connectionKeys: Set<Int>, entityFamilyClass: Int) {
+    val keys = connectionKeys.toMutableSet()
+    val entityFamily = entitiesByType.entities[entityFamilyClass] ?: error("Entity family doesn't exist")
+    entityFamily.entities.forEachIndexed { i, entity ->
+      if (entity == null) return@forEachIndexed
+      val removed = keys.remove(i)
+      assert(removed) { "Entity $entity doesn't have a correct connection" }
+    }
+    assert(keys.isEmpty()) { "Store is inconsistent" }
+  }
+
+  private fun checkStrongAbstractConnection(connectionKeys: Set<PId>, entityFamilyClasses: Set<Int>, debugInfo: String) {
+    val keys = connectionKeys.toMutableSet()
+    entityFamilyClasses.forEach { entityFamilyClass ->
+      checkAllStrongConnections(entityFamilyClass, keys, debugInfo)
+    }
+    assert(keys.isEmpty()) { "Store is inconsistent. $debugInfo" }
+  }
+
+  private fun checkAllStrongConnections(entityFamilyClass: Int, keys: MutableSet<PId>, debugInfo: String) {
+    val entityFamily = entitiesByType.entities[entityFamilyClass] ?: error("Entity family doesn't exist. $debugInfo")
+    entityFamily.entities.forEachIndexed { i, entity ->
+      if (entity == null) return@forEachIndexed
+      val removed = keys.remove(entity.createPid())
+      assert(removed) { "Entity $entity doesn't have a correct connection. $debugInfo" }
+    }
   }
 
   internal fun assertConsistencyInStrictMode() {

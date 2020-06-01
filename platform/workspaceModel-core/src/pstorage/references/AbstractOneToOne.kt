@@ -15,7 +15,7 @@ class OneToAbstractOneChild<T : PTypedEntity, SUBT : PTypedEntity>(private val p
   override fun getValue(thisRef: SUBT, property: KProperty<*>): T {
     if (connectionId == null) {
       connectionId = ConnectionId.create(parentClass, thisRef.javaClass, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false,
-                                         false)
+                                         true)
     }
     return thisRef.snapshot.extractOneToAbstractOneParent(connectionId!!, thisRef.id)!!
   }
@@ -30,7 +30,7 @@ class MutableOneToAbstractOneChild<T : PTypedEntity, SUBT : PTypedEntity, MODSUB
 
   override fun getValue(thisRef: MODSUBT, property: KProperty<*>): T {
     if (connectionId == null) {
-      connectionId = ConnectionId.create(parentClass, childClass, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false, false)
+      connectionId = ConnectionId.create(parentClass, childClass, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false, true)
     }
     return thisRef.diff.extractOneToAbstractOneParent(connectionId!!, thisRef.id)!!
   }
@@ -40,7 +40,7 @@ class MutableOneToAbstractOneChild<T : PTypedEntity, SUBT : PTypedEntity, MODSUB
       throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
     }
     if (connectionId == null) {
-      connectionId = ConnectionId.create(parentClass, childClass, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false, false)
+      connectionId = ConnectionId.create(parentClass, childClass, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false, true)
     }
     thisRef.diff.updateOneToAbstractOneParentOfChild(connectionId!!, thisRef.id, value)
   }

@@ -51,6 +51,15 @@ internal class ConnectionId private constructor(
            "child=${ClassToIntConverter.getClassOrDie(childClass).simpleName} $connectionType)"
   }
 
+  fun debugStr(): String = """
+    ConnectionId info:
+      - Parent class: ${this.parentClass.findEntityClass<TypedEntity>()}
+      - Child class: ${this.childClass.findEntityClass<TypedEntity>()}
+      - Connection type: $connectionType
+      - Parent of child is nullable: $isParentNullable
+      - Child of parent is nullable: $isChildNullable
+  """.trimIndent()
+
   companion object {
     /** This function should be [@Synchronized] because interner is not thread-save */
     @Synchronized
