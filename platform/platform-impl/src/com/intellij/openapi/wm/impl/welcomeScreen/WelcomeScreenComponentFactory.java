@@ -321,6 +321,7 @@ public class WelcomeScreenComponentFactory {
       myIconButton = new JButton();
       myIconButton.setBorder(JBUI.Borders.empty());
       myIconButton.setHorizontalAlignment(SwingConstants.CENTER);
+      myIconButton.setOpaque(false);
       myIconButton.setPreferredSize(new JBDimension(60, 60));
       myIconButton.putClientProperty("JButton.focusedBackgroundColor", getActionsButtonBackground(true));
       myIconButton.putClientProperty("JButton.backgroundColor", getActionsButtonBackground(false));

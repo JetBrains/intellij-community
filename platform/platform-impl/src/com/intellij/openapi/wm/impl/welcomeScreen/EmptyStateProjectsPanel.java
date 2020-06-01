@@ -29,9 +29,9 @@ import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentF
 public class EmptyStateProjectsPanel extends JPanel {
 
   public EmptyStateProjectsPanel() {
+    setBackground(WelcomeScreenUIManager.getMainAssociatedComponentBackground());
     JPanel mainPanel = new NonOpaquePanel(new VerticalFlowLayout());
     mainPanel.setBorder(JBUI.Borders.emptyTop(130));
-    mainPanel.setBackground(WelcomeScreenUIManager.getProjectsBackground());
 
     mainPanel.add(createTitle());
     mainPanel.add(createCommentLabel(IdeBundle.message("welcome.screen.empty.projects.create.comment")));
@@ -66,6 +66,7 @@ public class EmptyStateProjectsPanel extends JPanel {
     ActionToolbarImpl actionToolbar = new ActionToolbarImpl(ActionPlaces.WELCOME_SCREEN, mainActionGroup, true);
     actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     actionToolbar.setBorder(JBUI.Borders.emptyTop(50));
+    actionToolbar.setOpaque(false);
     return actionToolbar;
   }
 

@@ -157,7 +157,7 @@ class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScreenTab("
                   { ShowSettingsUtil.getInstance().showSettingsDialog(null, getSettingsMenuName()) })
       }
     }.withBorder(JBUI.Borders.empty(23, 30, 20, 20))
-      .withBackground(WelcomeScreenUIManager.getCustomizeBackground())
+      .withBackground(WelcomeScreenUIManager.getMainAssociatedComponentBackground())
   }
 
   private fun Row.createColorBlindnessSettingBlock() {

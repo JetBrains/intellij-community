@@ -75,8 +75,8 @@ public class WelcomeScreenUIManager {
     return UIUtil.getListForeground(isSelected && hasFocus, true);// do not change foreground for selection when focused
   }
 
-  public static Color getCustomizeBackground() {
-    return JBColor.namedColor("WelcomeScreen.Customize.background", JBColor.WHITE);
+  public static Color getMainAssociatedComponentBackground() {
+    return JBColor.namedColor("WelcomeScreen.AssociatedComponent.background", JBColor.WHITE);
   }
 
   public static Color getLinkNormalColor() {
