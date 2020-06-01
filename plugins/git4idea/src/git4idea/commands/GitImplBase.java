@@ -401,10 +401,12 @@ public abstract class GitImplBase implements Git {
 
   public static final String[] PROGRESS_INDICATORS = {
     "Counting objects:",
+    "Enumerating objects:",
     "Compressing objects:",
     "Writing objects:",
     "Receiving objects:",
-    "Resolving deltas:"
+    "Resolving deltas:",
+    "Finding sources:"
   };
 
   private static boolean looksLikeError(@NotNull final String text) {
