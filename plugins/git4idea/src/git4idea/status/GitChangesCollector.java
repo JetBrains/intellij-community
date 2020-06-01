@@ -435,12 +435,9 @@ class GitChangesCollector {
   private void reportConflict(FilePath filepath, Status oursStatus, Status theirsStatus) {
     myConflicts.add(new GitConflict(myVcsRoot, filepath, oursStatus, theirsStatus));
 
-    // TODO: currently not displaying "both deleted" conflicts, because they can't be handled by GitMergeProvider (see IDEA-63156)
-    if (oursStatus != Status.DELETED || theirsStatus != Status.DELETED) {
-      ContentRevision before = GitContentRevision.createRevision(filepath, myHead, myProject);
-      ContentRevision after = GitContentRevision.createRevision(filepath, null, myProject);
-      reportChange(FileStatus.MERGED_WITH_CONFLICTS, before, after);
-    }
+    ContentRevision before = GitContentRevision.createRevision(filepath, myHead, myProject);
+    ContentRevision after = GitContentRevision.createRevision(filepath, null, myProject);
+    reportChange(FileStatus.MERGED_WITH_CONFLICTS, before, after);
   }
 
   private void reportChange(FileStatus status, ContentRevision before, ContentRevision after) {
