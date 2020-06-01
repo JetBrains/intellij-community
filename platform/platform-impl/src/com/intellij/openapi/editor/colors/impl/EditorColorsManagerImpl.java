@@ -184,7 +184,15 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+        String activeScheme = mySchemeManager.getCurrentSchemeName();
         mySchemeManager.reload();
+
+        if (StringUtil.isNotEmpty(activeScheme)) {
+          EditorColorsScheme scheme = getScheme(activeScheme);
+          if (scheme != null) {
+            setGlobalScheme(scheme);
+          }
+        }
       }
 
       @Override
