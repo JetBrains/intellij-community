@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import git4idea.commands.Git
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.plugins.github.api.GHGQLRequests
@@ -110,7 +109,7 @@ internal class GHPRDataContextRepository(private val project: Project) {
     val stateService = GHPRStateServiceImpl(ProgressManager.getInstance(), securityService,
                                             requestExecutor, account.server, repositoryPath)
     val commentService = GHPRCommentServiceImpl(ProgressManager.getInstance(), requestExecutor, repositoryCoordinates)
-    val changesService = GHPRChangesServiceImpl(ProgressManager.getInstance(), Git.getInstance(), project, requestExecutor,
+    val changesService = GHPRChangesServiceImpl(ProgressManager.getInstance(), project, requestExecutor,
                                                 gitRemoteCoordinates, repositoryCoordinates)
     val reviewService = GHPRReviewServiceImpl(ProgressManager.getInstance(), securityService, requestExecutor, repositoryCoordinates)
 

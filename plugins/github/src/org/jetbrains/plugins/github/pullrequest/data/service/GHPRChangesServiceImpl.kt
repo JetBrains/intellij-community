@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import git4idea.commands.Git
 import git4idea.fetch.GitFetchSupport
 import git4idea.history.GitHistoryUtils
 import org.jetbrains.plugins.github.api.GHGQLRequests
@@ -30,7 +29,6 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
 
 class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
-                             private val git: Git,
                              private val project: Project,
                              private val requestExecutor: GithubApiRequestExecutor,
                              private val gitRemote: GitRemoteUrlCoordinates,
@@ -43,10 +41,7 @@ class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
     }.logError(LOG, "Error occurred while fetching \"$refspec\"")
 
   override fun fetchBranch(progressIndicator: ProgressIndicator, branch: String) =
-    fetch(progressIndicator, branch).thenApply {
-      if (!git.getObjectType(gitRemote.repository, branch).outputAsJoinedString.equals("commit", true))
-        error("Branch \"${branch}\" was not fetched from \"${gitRemote.remote.name}\"")
-    }.logError(LOG, "Error occurred while fetching \"$branch\"")
+    fetch(progressIndicator, branch).logError(LOG, "Error occurred while fetching \"$branch\"")
 
   override fun loadCommitsFromApi(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier) =
     progressManager.submitIOTask(progressIndicator) { indicator ->
