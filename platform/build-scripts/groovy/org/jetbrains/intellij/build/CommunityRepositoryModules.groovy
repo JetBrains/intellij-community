@@ -60,7 +60,7 @@ class CommunityRepositoryModules {
     "intellij.platform.execution.impl",
     "intellij.platform.inspect",
     "intellij.platform.lang.impl",
-    "intellij.platform.workspaceModel.core",
+    "intellij.platform.workspaceModel.storage",
     "intellij.platform.workspaceModel.ide",
     "intellij.platform.lvcs.impl",
     "intellij.platform.ide.impl",

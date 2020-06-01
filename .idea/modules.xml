@@ -726,10 +726,10 @@
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-log/impl/intellij.platform.vcs.log.impl.iml" filepath="$PROJECT_DIR$/platform/vcs-log/impl/intellij.platform.vcs.log.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-tests/intellij.platform.vcs.testFramework.iml" filepath="$PROJECT_DIR$/platform/vcs-tests/intellij.platform.vcs.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-tests/intellij.platform.vcs.tests.iml" filepath="$PROJECT_DIR$/platform/vcs-tests/intellij.platform.vcs.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/workspaceModel-core/intellij.platform.workspaceModel.core.iml" filepath="$PROJECT_DIR$/platform/workspaceModel-core/intellij.platform.workspaceModel.core.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/workspaceModel-core-tests/intellij.platform.workspaceModel.core.tests.iml" filepath="$PROJECT_DIR$/platform/workspaceModel-core-tests/intellij.platform.workspaceModel.core.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/workspaceModel-ide/intellij.platform.workspaceModel.ide.iml" filepath="$PROJECT_DIR$/platform/workspaceModel-ide/intellij.platform.workspaceModel.ide.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/workspaceModel-ide-tests/intellij.platform.workspaceModel.ide.tests.iml" filepath="$PROJECT_DIR$/platform/workspaceModel-ide-tests/intellij.platform.workspaceModel.ide.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/workspaceModel/ide/intellij.platform.workspaceModel.ide.iml" filepath="$PROJECT_DIR$/platform/workspaceModel/ide/intellij.platform.workspaceModel.ide.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/workspaceModel/ide/tests/intellij.platform.workspaceModel.ide.tests.iml" filepath="$PROJECT_DIR$/platform/workspaceModel/ide/tests/intellij.platform.workspaceModel.ide.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/workspaceModel/storage/intellij.platform.workspaceModel.storage.iml" filepath="$PROJECT_DIR$/platform/workspaceModel/storage/intellij.platform.workspaceModel.storage.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/workspaceModel/storage/tests/intellij.platform.workspaceModel.storage.tests.iml" filepath="$PROJECT_DIR$/platform/workspaceModel/storage/tests/intellij.platform.workspaceModel.storage.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/properties/intellij.properties.iml" filepath="$PROJECT_DIR$/plugins/properties/intellij.properties.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/properties/properties-psi-api/intellij.properties.psi.iml" filepath="$PROJECT_DIR$/plugins/properties/properties-psi-api/intellij.properties.psi.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/properties/properties-psi-impl/intellij.properties.psi.impl.iml" filepath="$PROJECT_DIR$/plugins/properties/properties-psi-impl/intellij.properties.psi.impl.iml" />

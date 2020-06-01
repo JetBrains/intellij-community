@@ -32,7 +32,7 @@ class JpsProjectSaveAllEntitiesTest {
 
   @Test
   fun `test save facets`() {
-    val projectFile = File(PathManagerEx.getCommunityHomePath(), "platform/workspaceModel-ide-tests/testData/serialization/facets/facets.ipr")
+    val projectFile = File(PathManagerEx.getCommunityHomePath(), "platform/workspaceModel/ide/tests/testData/serialization/facets/facets.ipr")
     checkLoadSave(projectFile)
   }
 
@@ -48,7 +48,7 @@ class JpsProjectSaveAllEntitiesTest {
     val storage = builder.toStorage()
     serializers.saveAllEntities(storage, projectDir)
     val expectedDir = File(PathManagerEx.getCommunityHomePath(),
-                           "platform/workspaceModel-ide-tests/testData/serialization/fromScratch/addLibrary")
+                           "platform/workspaceModel/ide/tests/testData/serialization/fromScratch/addLibrary")
     assertDirectoryMatches(projectDir, expectedDir, emptySet(), emptyList())
   }
 
@@ -64,7 +64,7 @@ class JpsProjectSaveAllEntitiesTest {
     val storage = builder.toStorage()
     serializers.saveAllEntities(storage, projectDir)
     val expectedDir = File(PathManagerEx.getCommunityHomePath(),
-                           "platform/workspaceModel-ide-tests/testData/serialization/specialSymbolsInLibraryName")
+                           "platform/workspaceModel/ide/tests/testData/serialization/specialSymbolsInLibraryName")
     assertDirectoryMatches(projectDir, expectedDir, emptySet(), emptyList())
   }
 

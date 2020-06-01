@@ -112,7 +112,7 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
 
   private fun reload(originalProjectDir: File, directoryName: String): ReloadedProjectData {
     return reload(originalProjectDir) { projectData ->
-      val changedDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel-ide-tests/testData/serialization/reload/$directoryName")
+      val changedDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel/ide/tests/testData/serialization/reload/$directoryName")
       val newUrls = collectFileUrls(changedDir, projectData.projectDirUrl) { it != "<delete/>"}
       val urlsToDelete = collectFileUrls(changedDir, projectData.projectDirUrl) { it == "<delete/>"}
       val oldUrls = collectFileUrls(projectData.projectDir, projectData.projectDirUrl) { true }
