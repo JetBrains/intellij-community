@@ -14,7 +14,12 @@ import java.util.concurrent.ConcurrentMap;
 
 
 /**
- * Merges multiple inspections settings {@link #getSourceToolNames()} into another one {@link #getMergedToolName()}
+ * Merges multiple inspections settings {@link #getSourceToolNames()} into another one {@link #getMergedToolName()}.
+ *
+ * Used to preserve backward compatibility when merging several inspections into one, or replacing an inspection with a different
+ * inspection. An inspection merger keeps existing @SuppressWarnings annotations working. It can also avoid the need to modify user
+ * inspection profiles, because a new inspection can take one or more old inspection’s settings, without the user needing to configure
+ * it again.
  *
  * {@see com.intellij.codeInspection.ex.InspectionElementsMergerBase} to provide more fine control over xml
  */
