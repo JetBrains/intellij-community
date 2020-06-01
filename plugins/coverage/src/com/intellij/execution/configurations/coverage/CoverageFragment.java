@@ -31,6 +31,11 @@ public class CoverageFragment<T extends RunConfigurationBase<?>> extends NestedG
   }
 
   @Override
+  public String getChildrenGroupName() {
+    return JavaCoverageBundle.message("coverage.settings.menu");
+  }
+
+  @Override
   protected List<SettingsEditorFragment<T, ?>> createChildren() {
     List<SettingsEditorFragment<T, ?>> fragments = new ArrayList<>();
     fragments.add(createFilterEditor("coverage.include", JavaCoverageBundle.message("record.coverage.filters.title"), true,
