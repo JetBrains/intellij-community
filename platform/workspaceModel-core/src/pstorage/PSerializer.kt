@@ -10,6 +10,7 @@ import com.esotericsoftware.kryo.serializers.FieldSerializer
 import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.containers.*
 import com.intellij.workspace.api.*
 import com.intellij.workspace.api.pstorage.containers.ImmutableIntIntUniqueBiMap
@@ -38,7 +39,7 @@ class PSerializer(private val typesResolver: EntityTypesResolver,
   private fun createKryo(): Kryo {
     val kryo = Kryo()
 
-    kryo.isRegistrationRequired = true
+    kryo.isRegistrationRequired = Registry.`is`(ENABLED_REQUIRED_REGISTRATION_KEY)
     kryo.instantiatorStrategy = StdInstantiatorStrategy()
 
     kryo.register(VirtualFileUrl::class.java, object : Serializer<VirtualFileUrl>(false, true) {
@@ -298,4 +299,8 @@ class PSerializer(private val typesResolver: EntityTypesResolver,
   }
 
   private data class TypeInfo(val name: String, val pluginId: String?)
+
+  companion object {
+    const val ENABLED_REQUIRED_REGISTRATION_KEY = "ide.new.project.model.cache.kryo.required.registration"
+  }
 }
