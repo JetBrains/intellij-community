@@ -25,11 +25,18 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Use {@link DownloadableFileService} to create instances of this interface
  */
 public interface FileDownloader {
+  /**
+   * Same as {@link #downloadWithProgress}, but async and with background progress.
+   */
+  @NotNull
+  CompletableFuture<@Nullable List<Pair<VirtualFile, DownloadableFileDescription>>> downloadWithBackgroundProgress(@Nullable String targetDirectoryPath, @Nullable Project project);
+
   /**
    * Download files with modal progress dialog.
    *
