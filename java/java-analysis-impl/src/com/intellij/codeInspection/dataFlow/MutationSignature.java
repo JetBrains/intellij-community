@@ -23,6 +23,7 @@ public class MutationSignature {
   public static final String ATTR_MUTATES = "mutates";
   static final MutationSignature UNKNOWN = new MutationSignature(false, new boolean[0]);
   static final MutationSignature PURE = new MutationSignature(false, new boolean[0]);
+  private static final MutationSignature MUTATES_THIS_ONLY = new MutationSignature(true, new boolean[0]);
   public static final String INVALID_TOKEN_MESSAGE = "Invalid token: %s; supported are 'this', 'param1', 'param2', etc.";
   private final boolean myThis;
   private final boolean[] myParameters;
@@ -66,7 +67,8 @@ public class MutationSignature {
    * @return a signature that is equivalent to this signature but may also mutate this object
    */
   public MutationSignature alsoMutatesThis() {
-    return myThis ? this : new MutationSignature(true, myParameters);
+    return this == UNKNOWN || myThis ? this : 
+           isPure() ? MUTATES_THIS_ONLY : new MutationSignature(true, myParameters);
   }
 
   /**
@@ -229,7 +231,7 @@ public class MutationSignature {
       PsiNewExpression newExpression = (PsiNewExpression)call;
       if (newExpression.isArrayCreation()) return PURE;
       if (newExpression.getArgumentList() == null || !newExpression.getArgumentList().isEmpty()) return UNKNOWN;
-      PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
+      PsiJavaCodeReferenceElement classReference = newExpression.getClassOrAnonymousClassReference();
       if (classReference == null) return UNKNOWN;
       PsiClass clazz = ObjectUtils.tryCast(classReference.resolve(), PsiClass.class);
       if (clazz == null) return UNKNOWN;

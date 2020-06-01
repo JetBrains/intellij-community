@@ -466,9 +466,14 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
     DfType dfType = memState.getDfType(value);
     if (instruction.getMutationSignature().mutatesThis() && Mutability.fromDfType(dfType).isUnmodifiable()) {
-      reportMutabilityViolation(true, instruction.getContext());
-      if (dfType instanceof DfReferenceType) {
-        memState.setDfType(value, ((DfReferenceType)dfType).dropMutability().meet(Mutability.MUTABLE.asDfType()));
+      PsiMethod method = instruction.getTargetMethod();
+      // Inferred mutation annotation may infer mutates="this" if invisible state is mutated (e.g. cached hashCode is stored).
+      // So let's conservatively skip the warning here. Such contract is still useful because it assures that nothing else is mutated.
+      if (method != null && JavaMethodContractUtil.getContractInfo(method).isExplicit()) {
+        reportMutabilityViolation(true, instruction.getContext());
+        if (dfType instanceof DfReferenceType) {
+          memState.setDfType(value, ((DfReferenceType)dfType).dropMutability().meet(Mutability.MUTABLE.asDfType()));
+        }
       }
     }
     if (!(value.getType() instanceof PsiArrayType) &&

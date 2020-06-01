@@ -22,7 +22,7 @@ import kotlin.collections.HashMap
  * @author peter
  */
 
-private val gist = GistManager.getInstance().newPsiFileGist("contractInference", 12, MethodDataExternalizer) { file ->
+private val gist = GistManager.getInstance().newPsiFileGist("contractInference", 13, MethodDataExternalizer) { file ->
   indexFile(file.node.lighterAST)
 }
 
@@ -118,12 +118,14 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
 
     val nullityVisitor = MethodReturnInferenceVisitor(tree, contractInference.parameters, body)
     val purityVisitor = PurityInferenceVisitor(tree, body, fieldMap, ctor)
+    var stopPurityAnalysis = maybeImpureCtor
     for (statement in statements) {
       walkMethodBody(statement) {
         nullityVisitor.visitNode(it)
-        if (!maybeImpureCtor) {
-          purityVisitor.visitNode(it)
+        if (!stopPurityAnalysis) {
+          stopPurityAnalysis = !purityVisitor.visitNode(it)
         }
+        true
       }
     }
     val notNullParams = inferNotNullParameters(tree, method, statements)
@@ -131,13 +133,15 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
     return createData(body, contracts, nullityVisitor.result, if (maybeImpureCtor) null else purityVisitor.result, notNullParams)
   }
 
-  private fun walkMethodBody(root: LighterASTNode, processor: (LighterASTNode) -> Unit) {
+  private fun walkMethodBody(root: LighterASTNode, processor: (LighterASTNode) -> Boolean) {
     object : RecursiveLighterASTNodeWalkingVisitor(tree) {
       override fun visitNode(element: LighterASTNode) {
         val type = element.tokenType
         if (type === CLASS || type === FIELD || type === METHOD || type === ANNOTATION_METHOD || type === LAMBDA_EXPRESSION) return
 
-        processor(element)
+        if (!processor(element)) {
+          stopWalking()
+        }
         super.visitNode(element)
       }
     }.visitNode(root)
