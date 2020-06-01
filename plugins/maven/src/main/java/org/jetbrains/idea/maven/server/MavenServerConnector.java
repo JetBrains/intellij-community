@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -58,11 +59,11 @@ public class MavenServerConnector implements @NotNull Disposable {
   }
 
   public boolean isSettingsStillValid(MavenWorkspaceSettings settings) {
-    VirtualFile baseDir = myProject.getBaseDir();
+    String baseDir = myProject.getBasePath();
     if (baseDir == null) { //for default projects and unit tests backward-compatibility
       return true;
     }
-    String distributionUrl = MavenWrapperSupport.getWrapperDistributionUrl(baseDir);
+    String distributionUrl = MavenWrapperSupport.getWrapperDistributionUrl(LocalFileSystem.getInstance().findFileByPath(baseDir));
     if (distributionUrl != null && !distributionUrl.equals(myDistribution.getName())) { //new maven url in maven-wrapper.properties
       return false;
     }

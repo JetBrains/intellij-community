@@ -179,10 +179,10 @@ class MavenWrapperSupport {
     }
 
     @JvmStatic
-    fun getWrapperDistributionUrl(baseDir: VirtualFile): String? {
-      val wrapperProperties = baseDir.findChild(".mvn")?.findChild("wrapper")?.findChild("maven-wrapper.properties") ?: return null
+    fun getWrapperDistributionUrl(baseDir: VirtualFile?): String? {
+      val wrapperProperties = baseDir?.findChild(".mvn")?.findChild("wrapper")?.findChild("maven-wrapper.properties") ?: return null
 
-      val properties = Properties();
+      val properties = Properties()
 
       val stream = ByteArrayInputStream(wrapperProperties.contentsToByteArray(true))
       properties.load(stream)
