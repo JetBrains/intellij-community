@@ -62,4 +62,13 @@ class Main {
         try (<error descr="Cannot infer type: variable initializer is 'null'">var</error> v = null) { }
         try (var v = c; var v1 = c) { }
     }
+
+    class Hello {}
+    private void checkUnresolvedTypeInForEach(String[] iterableStrings,
+                                              Hello iterableExistingHello,
+                                              <error descr="Cannot resolve symbol 'World'">World</error> iterableUnresolvedWorld) {
+        for (String arg: iterableStrings) { }
+        for (String arg: <error descr="foreach not applicable to type 'Main.Hello'">iterableExistingHello</error>) { }
+        for (String arg: iterableUnresolvedWorld) {}
+    }
 }
