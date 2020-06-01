@@ -16,6 +16,8 @@ public final class FontInfo {
   private static final String[] WRONG_SUFFIX = {".plain", ".bold", ".italic", ".bolditalic"};
   private static final String[] DEFAULT = {Font.DIALOG, Font.DIALOG_INPUT, Font.MONOSPACED, Font.SANS_SERIF, Font.SERIF};
   private static final int DEFAULT_SIZE = 12;
+  private static final float SIZE_FOR_MONOSPACED_CHECK = 100; // should be large enough to cover all possible font sizes user can choose
+                                                              // (we're making it even larger to account with >1 monitor scales)
 
   private final String myName;
   private final int myDefaultSize;
@@ -187,6 +189,7 @@ public final class FontInfo {
       //noinspection MagicConstant
       font = font.deriveFont(mask ^ font.getStyle());
     }
+    font = font.deriveFont(SIZE_FOR_MONOSPACED_CHECK);
     int width = getCharWidth(font, ' ');
     return width == getCharWidth(font, 'l') && width == getCharWidth(font, 'W') ? width : 0;
   }
