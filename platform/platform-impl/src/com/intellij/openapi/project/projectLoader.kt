@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
@@ -122,7 +123,9 @@ internal fun waitInTestMode(future: Future<*>) {
 
   if (app.isDispatchThread) {
     // process event queue during waiting
-    runModalTask("") {
+    // tasks is run as backgroundable to allow `invokeAndWait` inside startup activities
+    // note that this is still a blocking call in tests
+    runBackgroundableTask("wait in tests") {
       wait()
     }
   }
