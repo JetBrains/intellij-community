@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -169,7 +171,7 @@ public class BeforeRunComponent extends JPanel implements DnDTarget {
     return true;
   }
 
-  private static final class TaskButton extends TagButton implements DnDSource {
+  private class TaskButton extends TagButton implements DnDSource {
     @NotNull private final BeforeRunTaskProvider<BeforeRunTask<?>> myProvider;
     private BeforeRunTask<?> myTask;
 
@@ -177,6 +179,15 @@ public class BeforeRunComponent extends JPanel implements DnDTarget {
       super(provider.getName(), action);
       myProvider = provider;
       setVisible(false);
+      addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+          if (e.getClickCount() == 2) {
+            myProvider.configureTask(DataManager.getInstance().getDataContext(TaskButton.this), myConfiguration, myTask)
+              .onSuccess(aBoolean -> setTask(myTask));
+          }
+        }
+      });
       DnDManager.getInstance().registerSource(this, this);
     }
 
