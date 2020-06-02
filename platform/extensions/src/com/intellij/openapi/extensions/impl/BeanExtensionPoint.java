@@ -49,6 +49,7 @@ public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
   void unregisterExtensions(@NotNull ComponentManager componentManager,
                             @NotNull PluginDescriptor pluginDescriptor,
                             @NotNull List<Element> elements,
+                            @NotNull List<Runnable> priorityListenerCallbacks,
                             @NotNull List<Runnable> listenerCallbacks) {
     Map<String, String> defaultAttributes = new HashMap<>();
     try {
@@ -68,6 +69,6 @@ public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
       XmlExtensionAdapter xmlExtensionAdapter = (XmlExtensionAdapter)adapter;
       return xmlExtensionAdapter.getPluginDescriptor() != pluginDescriptor ||
              !xmlExtensionAdapter.isLoadedFromAnyElement(elements, defaultAttributes);
-    }, false, listenerCallbacks);
+    }, false, priorityListenerCallbacks, listenerCallbacks);
   }
 }

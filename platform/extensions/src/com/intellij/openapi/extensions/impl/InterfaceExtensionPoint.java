@@ -54,6 +54,7 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
   void unregisterExtensions(@NotNull ComponentManager componentManager,
                             @NotNull PluginDescriptor pluginDescriptor,
                             @NotNull List<Element> elements,
+                            @NotNull List<Runnable> priorityListenerCallbacks,
                             @NotNull List<Runnable> listenerCallbacks) {
     Set<String> implementationClassNames = new HashSet<>();
     for (Element element : elements) {
@@ -61,7 +62,7 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
     }
     unregisterExtensions((x, adapter) -> {
       return !implementationClassNames.contains(adapter.getAssignableToClassName());
-    }, false, listenerCallbacks);
+    }, false, priorityListenerCallbacks, listenerCallbacks);
   }
 
   private static boolean shouldDeserializeInstance(@NotNull Element extensionElement) {
