@@ -19,7 +19,8 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -42,15 +43,16 @@ import org.jetbrains.idea.svn.integrate.QuickMergeInteractionImpl;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import java.awt.*;
 import java.io.File;
-import java.util.List;
 import java.util.*;
 
 import static com.intellij.notification.NotificationDisplayType.STICKY_BALLOON;
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.ui.Messages.showWarningDialog;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
+import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
+import static com.intellij.util.ui.JBUI.Borders.empty;
+import static com.intellij.util.ui.JBUI.scale;
 import static java.util.Collections.singletonList;
 import static java.util.Comparator.comparing;
 
@@ -64,7 +66,7 @@ public class CopiesPanel extends SimpleToolWindowPanel {
   private static final String TOOLBAR_PLACE = "Svn.WorkingCopiesView";
 
   private final Project myProject;
-  private final JPanel myPanel;
+  private final JPanel myPanel = new JBPanel<>(new VerticalLayout(scale(8)));
   private boolean isRefreshing;
 
   private final static String CHANGE_FORMAT = "CHANGE_FORMAT";
@@ -78,12 +80,8 @@ public class CopiesPanel extends SimpleToolWindowPanel {
     myProject = project;
     myProject.getMessageBus().connect().subscribe(SvnVcs.ROOTS_RELOADED, (Consumer<Boolean>)this::rootsReloaded);
 
-    final JPanel holderPanel = new JPanel(new BorderLayout());
-    myPanel = new JPanel(new GridBagLayout());
-    final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(myPanel, BorderLayout.NORTH);
-    holderPanel.add(panel, BorderLayout.WEST);
-    setContent(ScrollPaneFactory.createScrollPane(holderPanel));
+    myPanel.setBorder(empty(2, 4));
+    setContent(createScrollPane(myPanel));
 
     ActionGroup toolbarGroup = (ActionGroup)ActionManager.getInstance().getAction(TOOLBAR_GROUP);
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(TOOLBAR_PLACE, toolbarGroup, false);
@@ -151,12 +149,7 @@ public class CopiesPanel extends SimpleToolWindowPanel {
 
   private void updateList(@NotNull final List<WCInfo> infoList, @NotNull final List<WorkingCopyFormat> supportedFormats) {
     myPanel.removeAll();
-    final Insets nullIndent = new Insets(1, 3, 1, 0);
-    final GridBagConstraints gb =
-      new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(2, 2, 0, 0), 0, 0);
-    gb.insets.left = 1;
 
-    final Insets topIndent = new Insets(10, 3, 0, 0);
     for (final WCInfo wcInfo : infoList) {
       final Collection<WorkingCopyFormat> upgradeFormats = getUpgradeFormats(wcInfo, supportedFormats);
 
@@ -175,23 +168,7 @@ public class CopiesPanel extends SimpleToolWindowPanel {
         }
       });
 
-      final JPanel copyPanel = new JPanel(new GridBagLayout());
-
-      final GridBagConstraints gb1 =
-        new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, nullIndent, 0, 0);
-      gb1.insets.top = 1;
-      gb1.gridwidth = 3;
-
-      gb.insets = topIndent;
-      gb.fill = GridBagConstraints.HORIZONTAL;
-      ++ gb.gridy;
-
-      final JPanel contForCopy = new JPanel(new BorderLayout());
-      contForCopy.add(copyPanel, BorderLayout.WEST);
-      myPanel.add(contForCopy, gb);
-
-      copyPanel.add(infoPanel, gb1);
-      gb1.insets = nullIndent;
+      myPanel.add(infoPanel);
     }
 
     myPanel.revalidate();
