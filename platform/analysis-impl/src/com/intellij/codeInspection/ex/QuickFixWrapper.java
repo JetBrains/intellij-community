@@ -25,8 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Objects;
-
 public class QuickFixWrapper implements IntentionAction, PriorityAction {
   private static final Logger LOG = Logger.getInstance(QuickFixWrapper.class);
 
@@ -65,7 +63,8 @@ public class QuickFixWrapper implements IntentionAction, PriorityAction {
     PsiElement psiElement = myDescriptor.getPsiElement();
     if (psiElement == null || !psiElement.isValid()) return false;
     PsiFile containingFile = psiElement.getContainingFile();
-    return containingFile == file || containingFile == null || Objects.equals(containingFile.getVirtualFile(), file.getVirtualFile());
+    return containingFile == file || containingFile == null ||
+           containingFile.getViewProvider().getVirtualFile().equals(file.getViewProvider().getVirtualFile());
   }
 
   @Override
