@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.AnnotatorStatisticsCollector;
 import com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
@@ -23,11 +23,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author yole
@@ -44,7 +46,7 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   private HighlightInfoHolder myHolder;
   private final boolean myBatchMode;
   private boolean myDumb;
-  private final Set<Annotator> myProlificAnnotators = ContainerUtil.newConcurrentSet(); // annotators which produced at least one Annotation during this session
+  private final AnnotatorStatisticsCollector myAnnotatorStatisticsCollector = new AnnotatorStatisticsCollector();
 
   @SuppressWarnings("UnusedDeclaration")
   DefaultHighlightVisitor(@NotNull Project project) {
@@ -79,11 +81,7 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
       @Override
       void queueToUpdateIncrementally() {
         if (!isEmpty()) {
-          if (myProlificAnnotators.add(myCurrentAnnotator)) {
-            // report first creation of Annotation by this annotator
-            myProject.getMessageBus().syncPublisher(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC).daemonProducedFirstAnnotation(holder.getAnnotationSession(),
-                                                                                                                         myCurrentAnnotator, get(0), file);
-          }
+          myAnnotatorStatisticsCollector.reportAnnotationProduced(myCurrentAnnotator, get(0));
           //noinspection ForLoopReplaceableByForEach
           for (int i = 0; i < size(); i++) {
             Annotation annotation = get(i);
@@ -102,7 +100,7 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
       myAnnotators.clear();
       myHolder = null;
       myAnnotationHolder = null;
-      myProlificAnnotators.clear();
+      myAnnotatorStatisticsCollector.reportAnalysisFinished(myProject, holder.getAnnotationSession(), file);
     }
     return true;
   }
@@ -197,7 +195,7 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   }
 
   @NotNull
-  private static List<Annotator> cloneTemplates(@NotNull Collection<? extends Annotator> templates) {
+  private List<Annotator> cloneTemplates(@NotNull Collection<? extends Annotator> templates) {
     List<Annotator> result = new ArrayList<>(templates.size());
     for (Annotator template : templates) {
       Annotator annotator;
@@ -209,12 +207,13 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
         continue;
       }
       result.add(annotator);
+      myAnnotatorStatisticsCollector.reportNewAnnotatorCreated(annotator);
     }
     return result;
   }
 
   @NotNull
-  private static List<Annotator> createAnnotators(@NotNull Language language) {
+  private List<Annotator> createAnnotators(@NotNull Language language) {
     return cloneTemplates(LanguageAnnotators.INSTANCE.allForLanguageOrAny(language));
   }
 }

@@ -2614,13 +2614,17 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC,
             new DaemonCodeAnalyzer.DaemonListener() {
               @Override
-              public void daemonProducedFirstAnnotation(@NotNull AnnotationSession session,
-                                                        @NotNull Annotator annotator,
-                                                        @NotNull Annotation annotation,
-                                                        @NotNull PsiFile file) {
+              public void daemonAnnotatorStatisticsGenerated(@NotNull AnnotationSession session,
+                                                             @NotNull Collection<? extends AnnotatorStatistics> statistics,
+                                                             @NotNull PsiFile file) {
+                AnnotatorStatistics stat = assertOneElement(ContainerUtil.filter(statistics, stat1 -> stat1.annotator instanceof MyInfoAnnotator));
                 assertFalse(reported.getAndSet(true));
-                assertEquals("Annotation(message='comment', severity='INFORMATION', toolTip='<html>comment</html>')",
-                             annotation.toString());
+                assertEquals("Annotation(message='comment', severity='INFORMATION', toolTip='<html>comment</html>')", stat.firstAnnotation.toString());
+                assertSame(stat.firstAnnotation, stat.lastAnnotation);
+                assertTrue(stat.annotatorStartStamp > 0);
+                assertTrue(stat.firstAnnotationStamp >= stat.annotatorStartStamp);
+                assertTrue(stat.lastAnnotationStamp >= stat.firstAnnotationStamp);
+                assertTrue(stat.annotatorFinishStamp >= stat.lastAnnotationStamp);
               }
             });
 
