@@ -620,7 +620,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
     // Ignore if the type of the value which is being iterated over is not resolved yet
     final PsiType iteratedValueType = iteratedValue.getType();
-    return iteratedValueType == PsiType.NULL || PsiUtil.resolveClassInClassTypeOnly(iteratedValueType) != null;
+    return iteratedValueType instanceof PsiPrimitiveType || PsiUtil.resolveClassInClassTypeOnly(iteratedValueType) != null;
   }
 
   @Override
