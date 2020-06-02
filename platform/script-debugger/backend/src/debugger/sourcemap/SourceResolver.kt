@@ -171,5 +171,5 @@ fun doCanonicalize(url: String, baseUrl: Url, baseUrlIsFile: Boolean, asLocalFil
 private object CaseInsensitiveUrlHashingStrategy: Hash.Strategy<Url> {
   override fun hashCode(url: Url?) = url?.hashCodeCaseInsensitive() ?: 0
 
-  override fun equals(url1: Url, url2: Url) = Urls.equals(url1, url2, caseSensitive = false, ignoreParameters = false)
+  override fun equals(url1: Url?, url2: Url?) = Urls.equals(url1, url2, caseSensitive = false, ignoreParameters = false)
 }
