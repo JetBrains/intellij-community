@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.containers.ContainerUtil;
@@ -154,13 +155,15 @@ public class BeforeRunComponent extends JPanel implements DnDTarget, Disposable 
     if (!(object instanceof TaskButton)) {
       return;
     }
+    TaskButton button = (TaskButton)object;
     Rectangle area = new Rectangle(event.getPoint().x - 5, event.getPoint().y - 5, 10, 10);
-    int i = ContainerUtil.indexOf(myTags, button -> button.isVisible() && button.getBounds().intersects(area));
+    int i = ContainerUtil.indexOf(myTags, tag -> tag.isVisible() && tag.getBounds().intersects(area));
     if (i < 0 || myTags.get(i) == object) return;
     myTags.remove(object);
-    myTags.add(i, (TaskButton)object);
+    myTags.add(i, button);
     buildPanel();
     myChangeListener.run();
+    IdeFocusManager.getInstance(myConfiguration.getProject()).requestFocus(button, false);
   }
 
   @Override
