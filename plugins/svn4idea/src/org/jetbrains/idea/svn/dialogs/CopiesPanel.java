@@ -15,7 +15,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColorUtil;
@@ -57,6 +56,7 @@ import java.util.List;
 import java.util.*;
 
 import static com.intellij.notification.NotificationDisplayType.STICKY_BALLOON;
+import static com.intellij.openapi.ui.Messages.showWarningDialog;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.Collections.singletonList;
@@ -159,13 +159,9 @@ public class CopiesPanel {
     myPanel.add(myRefreshLabel, gb);
     gb.insets.left = 1;
 
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
     final Insets topIndent = new Insets(10, 3, 0, 0);
     for (final WCInfo wcInfo : infoList) {
       final Collection<WorkingCopyFormat> upgradeFormats = getUpgradeFormats(wcInfo, supportedFormats);
-
-      final VirtualFile vf = lfs.refreshAndFindFileByIoFile(new File(wcInfo.getPath()));
-      final VirtualFile root = (vf == null) ? wcInfo.getVcsRoot() : vf;
 
       WorkingCopyInfoPanel infoPanel = new WorkingCopyInfoPanel();
       infoPanel.setInfo(wcInfo);
@@ -178,7 +174,9 @@ public class CopiesPanel {
         public void hyperlinkUpdate(HyperlinkEvent e) {
           if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
             if (CONFIGURE_BRANCHES.equals(e.getDescription())) {
-              if (! checkRoot(root, wcInfo.getPath(), " invoke Configure Branches")) return;
+              VirtualFile root = wcInfo.getRootInfo().getVirtualFile();
+
+              if (!checkRoot(root, " invoke Configure Branches")) return;
               BranchConfigurationDialog.configureBranches(myProject, root);
             } else if (FIX_DEPTH.equals(e.getDescription())) {
               final int result =
@@ -194,22 +192,27 @@ public class CopiesPanel {
               }
             } else if (CHANGE_FORMAT.equals(e.getDescription())) {
               changeFormat(wcInfo, upgradeFormats);
-            } else if (MERGE_FROM.equals(e.getDescription())) {
-              if (! checkRoot(root, wcInfo.getPath(), " invoke Merge From")) return;
+            }
+            else if (MERGE_FROM.equals(e.getDescription())) {
+              VirtualFile root = wcInfo.getRootInfo().getVirtualFile();
+
+              if (!checkRoot(root, " invoke Merge From")) return;
               mergeFrom(wcInfo, root, infoPanel);
-            } else if (CLEANUP.equals(e.getDescription())) {
-              if (! checkRoot(root, wcInfo.getPath(), " invoke Cleanup")) return;
+            }
+            else if (CLEANUP.equals(e.getDescription())) {
+              VirtualFile root = wcInfo.getRootInfo().getVirtualFile();
+
+              if (!checkRoot(root, " invoke Cleanup")) return;
               new CleanupWorker(getVcs(), singletonList(root)).execute();
             }
           }
         }
 
-        private boolean checkRoot(VirtualFile root, final String path, final String actionName) {
-          if (root == null) {
-            Messages.showWarningDialog(myProject, "Invalid working copy root: " + path, "Can not " + actionName);
-            return false;
-          }
-          return true;
+        private boolean checkRoot(@NotNull VirtualFile root, @NotNull String actionName) {
+          if (root.isValid()) return true;
+
+          showWarningDialog(myProject, "Invalid working copy root: " + root.getPath(), "Can not " + actionName);
+          return false;
         }
       });
 
