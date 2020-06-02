@@ -138,7 +138,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     mySaveQueue = new MavenMergingUpdateQueue("Maven save queue", SAVE_DELAY, !isUnitTestMode(), this);
     myProgressListener = ServiceManager.getService(myProject, SyncViewManager.class);
     MavenRehighlighter.install(project, this);
-    Disposer.register(project, this::projectClosed);
+    Disposer.register(this, this::projectClosed);
   }
 
   @Override
