@@ -188,14 +188,14 @@ public class BeforeRunComponent extends JPanel implements DnDTarget, Disposable 
   }
 
   private class TaskButton extends TagButton implements DnDSource {
-    @NotNull private final BeforeRunTaskProvider<BeforeRunTask<?>> myProvider;
+    private final BeforeRunTaskProvider<BeforeRunTask<?>> myProvider;
     private BeforeRunTask<?> myTask;
 
     private TaskButton(BeforeRunTaskProvider<BeforeRunTask<?>> provider, Runnable action) {
       super(provider.getName(), action);
       myProvider = provider;
       setVisible(false);
-      addMouseListener(new MouseAdapter() {
+      myButton.addMouseListener(new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent e) {
           if (e.getClickCount() == 2) {
@@ -205,6 +205,7 @@ public class BeforeRunComponent extends JPanel implements DnDTarget, Disposable 
         }
       });
       DnDManager.getInstance().registerSource(this, myButton);
+      myButton.setToolTipText(ExecutionBundle.message("run.configuration.before.run.tooltip"));
     }
 
     private void setTask(@Nullable BeforeRunTask<?> task) {
