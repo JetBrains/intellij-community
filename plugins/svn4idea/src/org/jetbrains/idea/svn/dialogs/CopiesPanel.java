@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,7 +23,6 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.hash.EqualityPolicy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
@@ -58,7 +56,6 @@ import java.util.*;
 import static com.intellij.notification.NotificationDisplayType.STICKY_BALLOON;
 import static com.intellij.openapi.ui.Messages.showWarningDialog;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
-import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.Collections.singletonList;
 import static java.util.Comparator.comparing;
 
@@ -72,8 +69,6 @@ public class CopiesPanel {
   private final JPanel myPanel;
   private final JComponent myHolder;
   private LinkLabel myRefreshLabel;
-  // updated only on AWT
-  private List<OverrideEqualsWrapper<WCInfo>> myCurrentInfoList;
 
   private final static String CHANGE_FORMAT = "CHANGE_FORMAT";
   private final static String CLEANUP = "CLEANUP";
@@ -83,7 +78,6 @@ public class CopiesPanel {
 
   public CopiesPanel(@NotNull Project project) {
     myProject = project;
-    myCurrentInfoList = null;
 
     final Runnable focus = () -> IdeFocusManager.getInstance(myProject).requestFocus(myRefreshLabel, true);
     final Runnable refreshView = () -> {
@@ -91,16 +85,6 @@ public class CopiesPanel {
       final boolean hasErrors = !getVcs().getSvnFileUrlMapping().getErrorRoots().isEmpty();
       final List<WorkingCopyFormat> supportedFormats = getSupportedFormats();
       Runnable runnable = () -> {
-        if (myCurrentInfoList != null) {
-          List<OverrideEqualsWrapper<WCInfo>> newList =
-            map(infoList, info -> new OverrideEqualsWrapper<>(InfoEqualityPolicy.getInstance(), info));
-
-          if (Comparing.haveEqualElements(newList, myCurrentInfoList)) {
-            myRefreshLabel.setEnabled(true);
-            return;
-          }
-          myCurrentInfoList = newList;
-        }
         infoList.sort(comparing(WCInfo::getPath));
         updateList(infoList, supportedFormats);
         myRefreshLabel.setEnabled(true);
@@ -414,84 +398,6 @@ public class CopiesPanel {
 
   public JComponent getComponent() {
     return myHolder;
-  }
-
-  public static class OverrideEqualsWrapper<T> {
-    private final EqualityPolicy<? super T> myPolicy;
-    private final T myT;
-
-    public OverrideEqualsWrapper(EqualityPolicy<? super T> policy, T t) {
-      myPolicy = policy;
-      myT = t;
-    }
-
-    public T getT() {
-      return myT;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      final OverrideEqualsWrapper<T> that = (OverrideEqualsWrapper<T>) o;
-
-      return myPolicy.isEqual(myT, that.getT());
-    }
-
-    @Override
-    public int hashCode() {
-      return myPolicy.getHashCode(myT);
-    }
-  }
-
-  private static class InfoEqualityPolicy implements EqualityPolicy<WCInfo> {
-    private final static InfoEqualityPolicy ourInstance = new InfoEqualityPolicy();
-
-    public static InfoEqualityPolicy getInstance() {
-      return ourInstance;
-    }
-
-    private static class HashCodeBuilder {
-      private int myCode;
-
-      private HashCodeBuilder() {
-        myCode = 0;
-      }
-
-      public void append(final Object o) {
-        myCode = 31 * myCode + (o != null ? o.hashCode() : 0);
-      }
-
-      public int getCode() {
-        return myCode;
-      }
-    }
-
-    @Override
-    public int getHashCode(WCInfo value) {
-      final HashCodeBuilder builder = new HashCodeBuilder();
-      builder.append(value.getPath());
-      builder.append(value.getUrl());
-      builder.append(value.getFormat());
-      builder.append(value.getType());
-      builder.append(value.getStickyDepth());
-
-      return builder.getCode();
-    }
-
-    @Override
-    public boolean isEqual(WCInfo val1, WCInfo val2) {
-      if (val1 == val2) return true;
-      if (val1 == null || val2 == null || val1.getClass() != val2.getClass()) return false;
-
-      if (! Comparing.equal(val1.getFormat(), val2.getFormat())) return false;
-      if (!Objects.equals(val1.getPath(), val2.getPath())) return false;
-      if (! Comparing.equal(val1.getStickyDepth(), val2.getStickyDepth())) return false;
-      if (! Comparing.equal(val1.getType(), val2.getType())) return false;
-      if (! Comparing.equal(val1.getUrl(), val2.getUrl())) return false;
-
-      return true;
-    }
   }
 
   private static class MyLinkLabel extends LinkLabel {
