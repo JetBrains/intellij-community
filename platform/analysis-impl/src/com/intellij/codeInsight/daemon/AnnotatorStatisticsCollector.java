@@ -29,15 +29,16 @@ public class AnnotatorStatisticsCollector {
     stat.lastAnnotationStamp = System.nanoTime();
   }
 
-  public void reportAnalysisFinished(@NotNull Project myProject,
+  public void reportAnalysisFinished(@NotNull Project project,
                                      @NotNull AnnotationSession session,
                                      @NotNull PsiFile file) {
     for (DaemonCodeAnalyzer.DaemonListener.AnnotatorStatistics stat : myAnnotatorStats.values()) {
       stat.annotatorFinishStamp = System.nanoTime();
     }
 
-    myProject.getMessageBus().syncPublisher(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC).daemonAnnotatorStatisticsGenerated(
+    project.getMessageBus().syncPublisher(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC).daemonAnnotatorStatisticsGenerated(
       session, myAnnotatorStats.values(), file);
+    myAnnotatorStats.clear();
   }
 
   public void reportNewAnnotatorCreated(@NotNull Annotator annotator) {
