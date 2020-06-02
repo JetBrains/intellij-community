@@ -71,12 +71,10 @@ public final class ClasspathCache {
     }
   }
 
-  static class LoaderDataBuilder {
+  static final class LoaderDataBuilder {
     private final TLongHashSet myUsedNameFingerprints = new TLongHashSet();
     private final TIntHashSet myResourcePackageHashes = new TIntHashSet();
     private final TIntHashSet myClassPackageHashes = new TIntHashSet();
-
-    LoaderDataBuilder() {}
 
     void addPossiblyDuplicateNameEntry(@NotNull String name) {
       name = transformName(name);
