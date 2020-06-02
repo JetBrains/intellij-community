@@ -4,6 +4,7 @@ package com.intellij.codeInsight.template;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,7 @@ public final class TemplateActionContext {
   /**
    * @return editor if file is currently opened in one. Sometimes context may be used with fake files, without any editors
    */
+  @ApiStatus.Internal
   public @Nullable Editor getEditor() {
     return myEditor;
   }
