@@ -34,6 +34,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.changes.*
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModelImpl
 import org.jetbrains.plugins.github.util.GithubUIUtil
+import org.jetbrains.plugins.github.util.handleOnEdt
 import javax.swing.JComponent
 
 internal class GHPRComponentFactory(private val project: Project) {
@@ -103,11 +104,8 @@ internal class GHPRComponentFactory(private val project: Project) {
 
     val commitsModel = GHPRCommitsModelImpl()
     val cumulativeChangesModel = GHPRChangesModelImpl(project)
-    val diffHelper = GHPRChangesDiffHelperImpl(dataProvider.reviewData,
-                                               dataContext.avatarIconsProviderFactory,
-                                               dataContext.securityService.currentUser)
-    val changesLoadingModel = createChangesLoadingModel(commitsModel, cumulativeChangesModel, diffHelper, dataProvider.changesData,
-                                                        disposable)
+
+    val changesLoadingModel = createChangesLoadingModel(commitsModel, cumulativeChangesModel, dataProvider.changesData, disposable)
 
     val infoComponent = createInfoComponent(dataContext, dataProvider, detailsLoadingModel, changesLoadingModel, disposable)
     val commitsComponent = createCommitsComponent(dataContext, dataProvider, changesLoadingModel, disposable)
@@ -133,6 +131,7 @@ internal class GHPRComponentFactory(private val project: Project) {
       override fun adjust(each: TabInfo?) {}
     }.apply {
       val actionDataContext = GHPRFixedActionDataContext(dataContext, pullRequest, dataProvider)
+      val diffHelper = createDiffHelper(dataContext, dataProvider, disposable)
       setDataProvider { dataId ->
         when {
           GHPRActionKeys.ACTION_DATA_CONTEXT.`is`(dataId) -> actionDataContext
@@ -222,12 +221,24 @@ internal class GHPRComponentFactory(private val project: Project) {
     }
   }
 
+  private fun createDiffHelper(dataContext: GHPRDataContext, dataProvider: GHPRDataProvider, disposable: Disposable)
+    : GHPRChangesDiffHelper {
+    val diffHelper = GHPRChangesDiffHelperImpl(dataProvider.reviewData,
+                                               dataContext.avatarIconsProviderFactory,
+                                               dataContext.securityService.currentUser)
+    dataProvider.changesData.loadChanges(disposable) { future ->
+      future.handleOnEdt(disposable) { changes, _ ->
+        if (changes != null) diffHelper.setUp(changes) else diffHelper.reset()
+      }
+    }
+    return diffHelper
+  }
+
   private fun createChangesLoadingModel(commitsModel: GHPRCommitsModel,
                                         cumulativeChangesModel: GHPRChangesModel,
-                                        diffHelper: GHPRChangesDiffHelper,
                                         changesProvider: GHPRChangesDataProvider,
                                         disposable: Disposable): GHPRChangesLoadingModel {
-    val model = GHPRChangesLoadingModel(commitsModel, cumulativeChangesModel, diffHelper, disposable)
+    val model = GHPRChangesLoadingModel(commitsModel, cumulativeChangesModel, disposable)
     changesProvider.loadChanges(disposable) {
       model.future = it
     }

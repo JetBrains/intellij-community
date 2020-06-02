@@ -8,7 +8,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 
 class GHPRChangesLoadingModel(val commitsModel: GHPRCommitsModel,
                               val cumulativeChangesModel: GHPRChangesModel,
-                              val diffHelper: GHPRChangesDiffHelper,
                               disposable: Disposable)
   : GHCompletableFutureLoadingModel<GHPRChangesProvider>(disposable) {
 
@@ -18,12 +17,10 @@ class GHPRChangesLoadingModel(val commitsModel: GHPRCommitsModel,
         if (resultAvailable) {
           commitsModel.commitsWithChanges = result!!.changesByCommits
           cumulativeChangesModel.changes = result!!.changes
-          diffHelper.setUp(result!!)
         }
         else {
           commitsModel.commitsWithChanges = null
           cumulativeChangesModel.changes = null
-          diffHelper.reset()
         }
       }
     })
