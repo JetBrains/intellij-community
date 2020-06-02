@@ -62,8 +62,6 @@ internal val USAGE_PSI_ELEMENT: Key<PsiElement> = Key.create("USAGE_PSI_ELEMENT"
 internal fun getOrCreateCachedElement(element: PsiElement,
                                       context: ProcessingContext,
                                       supportedUElementTypes: List<Class<out UElement>>): UElement? {
-  if (element is UElement) return element
-
   if (supportedUElementTypes.size == 1) {
     val requiredType = supportedUElementTypes[0]
     if (requiredType == UInjectionHost::class.java) {
