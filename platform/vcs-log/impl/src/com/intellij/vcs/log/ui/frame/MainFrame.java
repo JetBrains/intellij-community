@@ -241,7 +241,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     rightCornerToolbar.setReservePlaceAutoPopupIcon(false);
     rightCornerToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
 
-    JPanel panel = new JPanel(new MigLayout("ins 0, fill", "[left]0[left, fill]push[right]", "center"));
+    JPanel panel = new JPanel(new MigLayout("ins 0, fill", "[left]0[left, fill]push[pref:pref, right]", "center"));
     GuiUtils.installVisibilityReferent(panel, toolbar.getComponent());
     panel.add(textFilter);
     panel.add(toolbar.getComponent());
