@@ -421,6 +421,24 @@ public class GitImpl extends GitImplBase {
     return runCommand(h);
   }
 
+  @Override
+  public @NotNull GitCommandResult setUpstream(@NotNull GitRepository repository,
+                                               @NotNull String upstreamBranchName,
+                                               @Nullable String branchName) {
+    GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
+    h.setStdoutSuppressed(false);
+    if (GitVersionSpecialty.KNOWS_SET_UPSTREAM_TO.existsIn(repository)) {
+      h.addParameters("--set-upstream-to", upstreamBranchName);
+    }
+    else {
+      h.addParameters("--set-upstream", branchName);
+    }
+    if (branchName != null) {
+      h.addParameters(branchName);
+    }
+    return runCommand(h);
+  }
+
   @NotNull
   @Override
   public GitCommandResult renameBranch(@NotNull GitRepository repository,
