@@ -16,19 +16,17 @@
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFunctionalExpression;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.EmptyQuery;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class FunctionalExpressionSearch extends ExtensibleQueryFactory<PsiFunctionalExpression, FunctionalExpressionSearch.SearchParameters> {
-  public static final FunctionalExpressionSearch INSTANCE = new FunctionalExpressionSearch();
+  private static final FunctionalExpressionSearch INSTANCE = new FunctionalExpressionSearch();
 
   public static class SearchParameters {
     private final PsiClass myElementToSearch;
@@ -50,7 +48,7 @@ public class FunctionalExpressionSearch extends ExtensibleQueryFactory<PsiFuncti
   }
 
   public static Query<PsiFunctionalExpression> search(@NotNull final PsiClass aClass, @NotNull SearchScope scope) {
-    return INSTANCE.createUniqueResultsQuery(new SearchParameters(aClass, scope));
+    return INSTANCE.createUniqueResultsQuery(new SearchParameters(aClass, scope), ContainerUtil.canonicalStrategy(), SmartPointerManager::createPointer);
   }
 
   public static Query<PsiFunctionalExpression> search(@NotNull final PsiMethod psiMethod) {
