@@ -8,6 +8,7 @@ import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -119,6 +120,11 @@ public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
     else {
       jdkVersion = sdk.get().getVersionString();
     }
+
+    if (jdkVersion == null) {
+      jdkVersion = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getVersionString();
+    }
+
     if (jdkVersion != null) {
       final int quoteIndex = jdkVersion.indexOf('"');
       if (quoteIndex != -1) {
