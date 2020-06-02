@@ -241,7 +241,7 @@ internal class GHPRComponentFactory(private val project: Project) {
                                         changesProvider: GHPRChangesDataProvider,
                                         disposable: Disposable): GHPRChangesLoadingModel {
     val model = GHPRChangesLoadingModel(commitsModel, cumulativeChangesModel, diffHelper, disposable)
-    changesProvider.loadChanged(disposable) {
+    changesProvider.loadChanges(disposable) {
       model.future = it
     }
     return model

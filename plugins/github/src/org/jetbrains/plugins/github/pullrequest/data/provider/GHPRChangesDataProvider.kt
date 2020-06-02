@@ -19,7 +19,7 @@ interface GHPRChangesDataProvider {
   fun addChangesListener(disposable: Disposable, listener: () -> Unit)
 
   @CalledInAwt
-  fun loadChanged(disposable: Disposable, consumer: (CompletableFuture<GHPRChangesProvider>) -> Unit) {
+  fun loadChanges(disposable: Disposable, consumer: (CompletableFuture<GHPRChangesProvider>) -> Unit) {
     addChangesListener(disposable) {
       consumer(loadChanges())
     }
