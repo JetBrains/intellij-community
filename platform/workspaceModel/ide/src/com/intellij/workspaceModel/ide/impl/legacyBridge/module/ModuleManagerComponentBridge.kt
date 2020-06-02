@@ -68,7 +68,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   internal class MyProjectServiceContainerInitializedListener : ProjectServiceContainerInitializedListener {
     override fun serviceCreated(project: Project) {
       val activity = StartUpMeasurer.startMainActivity("(wm) module loading")
-      val manager = ModuleManagerComponent.getInstance(project) as? ModuleManagerComponentBridge ?: return
+      val manager = ModuleManager.getInstance(project) as? ModuleManagerComponentBridge ?: return
 
       val unloadedNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames.toSet()
       val entities = manager.entityStore.current.entities(ModuleEntity::class.java)
@@ -595,7 +595,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   companion object {
     @JvmStatic
     fun getInstance(project: Project): ModuleManagerComponentBridge {
-      return ModuleManagerComponent.getInstance(project) as ModuleManagerComponentBridge
+      return ModuleManager.getInstance(project) as ModuleManagerComponentBridge
     }
 
     private fun EntityChange<LibraryEntity>.isModuleLibrary(): Boolean = when (this) {
