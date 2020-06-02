@@ -8,6 +8,7 @@ interface PinToTopParentValue : PinToTopValue {
 
     @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
     @Deprecated("Implement property 'tag' instead", ReplaceWith("tag"))
+    @JvmDefault
     fun getTypeName() : String? = null
 
     /**

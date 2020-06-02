@@ -14,7 +14,7 @@ import com.intellij.xdebugger.frame.XValueContainer;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.WatchInplaceEditor;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
-import com.intellij.xdebugger.impl.pinned.items.PinToTopValue;
+import com.intellij.xdebugger.impl.pinned.items.PinToTopParentValue;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,9 +29,9 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
   private final XWatchesView myWatchesView;
   private final List<WatchNodeImpl> myChildren;
 
-  static class RootContainerNode extends XValueContainer implements PinToTopValue {
-    private XStackFrame stackFrame;
-    private boolean watchesInVariables;
+  static class RootContainerNode extends XValueContainer implements PinToTopParentValue {
+    private final XStackFrame stackFrame;
+    private final boolean watchesInVariables;
 
     public RootContainerNode(@Nullable XStackFrame stackFrame,
                              boolean watchesInVariables) {
@@ -47,6 +47,14 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
       else {
         node.addChildren(XValueChildrenList.EMPTY, true);
       }
+    }
+
+    @Nullable
+    @Override
+    public String getTag() {
+      if (stackFrame instanceof PinToTopParentValue)
+        return ((PinToTopParentValue) stackFrame).getTag();
+      return null;
     }
   }
 
