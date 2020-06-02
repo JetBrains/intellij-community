@@ -133,4 +133,10 @@ public class ThrowableInterner {
   public static Throwable intern(@NotNull Throwable throwable) {
     return getBacktrace(throwable) == null ? throwable : myTraceInterner.intern(throwable);
   }
+
+  public static void clearInternedBacktraces() {
+    for (Throwable t : myTraceInterner.getValues()) {
+      clearBacktrace(t);
+    }
+  }
 }

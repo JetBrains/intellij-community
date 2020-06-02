@@ -43,6 +43,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.objectTree.ThrowableInterner
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
@@ -452,6 +453,7 @@ object DynamicPlugins {
 
       // do it after IdeEventQueue.flushQueue() to ensure that Disposer.isDisposed(...) works as expected in flushed tasks.
       Disposer.clearDisposalTraces()   // ensure we don't have references to plugin classes in disposal backtraces
+      ThrowableInterner.clearInternedBacktraces()
       IdeaLogger.ourErrorsOccurred = null   // ensure we don't have references to plugin classes in exception stacktraces
       clearTemporaryLostComponent()
 

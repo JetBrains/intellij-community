@@ -24,9 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -294,7 +292,15 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
   @NotNull
   @Override
   public Collection<V> values() {
-    throw new UnsupportedOperationException();
+    List<V> values = new ArrayList<>();
+    processQueues();
+    for (ValueReference<K, V> valueReference : myMap.values()) {
+      V v = com.intellij.reference.SoftReference.deref(valueReference);
+      if (v != null) {
+        values.add(v);
+      }
+    }
+    return values;
   }
 
   @NotNull
