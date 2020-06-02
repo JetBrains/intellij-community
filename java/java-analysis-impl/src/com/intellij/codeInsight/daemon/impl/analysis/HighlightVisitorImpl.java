@@ -48,8 +48,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 
-import static com.intellij.psi.PsiType.NULL;
-
 public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor {
   private HighlightInfoHolder myHolder;
   private RefCountHolder myRefCountHolder; // can be null during partial file update
@@ -622,7 +620,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
     // Ignore if the type of the value which is being iterated over is not resolved yet
     final PsiType iteratedValueType = iteratedValue.getType();
-    return iteratedValueType == NULL || PsiUtil.resolveClassInClassTypeOnly(iteratedValueType) != null;
+    return iteratedValueType == PsiType.NULL || PsiUtil.resolveClassInClassTypeOnly(iteratedValueType) != null;
   }
 
   @Override
