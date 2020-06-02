@@ -27,7 +27,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
-import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -48,6 +47,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
+
+import static com.intellij.psi.PsiType.NULL;
 
 public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor {
   private HighlightInfoHolder myHolder;
@@ -619,9 +620,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     final PsiExpression iteratedValue = parentForEach.getIteratedValue();
     if (iteratedValue != expression) return false;
 
-    // Ignore if the type the value of which that is being iterated over is not resolved yet
+    // Ignore if the type of the value which is being iterated over is not resolved yet
     final PsiType iteratedValueType = iteratedValue.getType();
-    return !(iteratedValueType instanceof PsiClassReferenceType) || ((PsiClassReferenceType)iteratedValueType).resolve() != null;
+    return iteratedValueType == NULL || PsiUtil.resolveClassInClassTypeOnly(iteratedValueType) != null;
   }
 
   @Override
