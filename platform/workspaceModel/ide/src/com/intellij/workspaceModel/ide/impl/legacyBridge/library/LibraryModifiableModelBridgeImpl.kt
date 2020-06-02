@@ -7,7 +7,6 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.LibraryTable
@@ -21,6 +20,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableB
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jdom.Element
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal class LibraryModifiableModelBridgeImpl(
   private val originalLibrary: LibraryBridgeImpl,
@@ -235,7 +235,7 @@ internal class LibraryModifiableModelBridgeImpl(
 
     updateProperties {
       libraryType = kind.kindId
-      propertiesXmlTag = serializeComponentAsString(LibraryImpl.PROPERTIES_ELEMENT, properties)
+      propertiesXmlTag = serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG, properties)
     }
 
     if (assertChangesApplied && currentLibrary.properties != properties) {

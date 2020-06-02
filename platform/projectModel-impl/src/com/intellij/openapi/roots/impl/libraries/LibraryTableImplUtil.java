@@ -31,6 +31,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 
 import java.util.List;
 
@@ -46,7 +47,7 @@ public class LibraryTableImplUtil {
 
   @NotNull
   public static Library loadLibrary(@NotNull Element rootElement, @NotNull RootModelImpl rootModel) throws InvalidDataException {
-    final List children = rootElement.getChildren(LibraryImpl.ELEMENT);
+    final List children = rootElement.getChildren(JpsLibraryTableSerializer.LIBRARY_TAG);
     if (children.size() != 1) throw new InvalidDataException();
     Element element = (Element)children.get(0);
     return new LibraryImpl(null, element, rootModel);

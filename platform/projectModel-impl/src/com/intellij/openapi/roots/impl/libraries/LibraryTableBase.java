@@ -22,9 +22,14 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 
 import java.util.*;
 
+/**
+ * This class isn't used in the new implementation of project model, which is based on {@link com.intellij.workspaceModel.ide Workspace Model}.
+ * It shouldn't be used directly, its interface {@link LibraryTable} should be used instead.
+ */
 @ApiStatus.Internal
 public abstract class LibraryTableBase implements PersistentStateComponent<Element>, LibraryTable, Disposable {
   private static final Logger LOG = Logger.getInstance(LibraryTableBase.class);
@@ -334,7 +339,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
       }
       myLibraries.clear();
 
-      final List<Element> libraryElements = element.getChildren(LibraryImpl.ELEMENT);
+      final List<Element> libraryElements = element.getChildren(JpsLibraryTableSerializer.LIBRARY_TAG);
       for (Element libraryElement : libraryElements) {
         final LibraryImpl library = new LibraryImpl(LibraryTableBase.this, libraryElement, null);
         if (library.getName() != null) {
