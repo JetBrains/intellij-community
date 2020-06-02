@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.presentation;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,5 +37,26 @@ public interface SymbolPresentation {
    */
   default @Nls(capitalization = Sentence) @NotNull String getLongDescription() {
     return getShortDescription();
+  }
+
+  @Contract("_, _ -> new")
+  static @NotNull SymbolPresentation create(@Nls @NotNull String shortNameString,
+                                            @Nls(capitalization = Sentence) @NotNull String shortDescription) {
+    return create(null, shortNameString, shortDescription, shortDescription);
+  }
+
+  @Contract("_, _, _ -> new")
+  static @NotNull SymbolPresentation create(@Nullable Icon icon,
+                                            @Nls @NotNull String shortNameString,
+                                            @Nls(capitalization = Sentence) @NotNull String shortDescription) {
+    return create(icon, shortNameString, shortDescription, shortDescription);
+  }
+
+  @Contract("_, _, _, _ -> new")
+  static @NotNull SymbolPresentation create(@Nullable Icon icon,
+                                            @Nls @NotNull String shortNameString,
+                                            @Nls(capitalization = Sentence) @NotNull String shortDescription,
+                                            @Nls(capitalization = Sentence) @NotNull String longDescription) {
+    return new SymbolPresentationImpl(icon, shortNameString, shortDescription, longDescription);
   }
 }
