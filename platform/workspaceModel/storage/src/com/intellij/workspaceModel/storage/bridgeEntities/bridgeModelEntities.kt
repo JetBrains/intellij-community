@@ -1,12 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.bridgeEntities
 
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileUrlListProperty
-import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.references.*
 import java.io.Serializable
 
@@ -527,19 +527,35 @@ val ModuleEntity.externalSystemOptions: ExternalSystemModuleOptionsEntity?
   get() = referrers(ExternalSystemModuleOptionsEntity::module).firstOrNull()
 
 @Suppress("unused")
-class FacetEntityData : WorkspaceEntityData.WithPersistentId<FacetEntity>() {
+class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEntity>(), SoftLinkable {
   lateinit var name: String
   lateinit var facetType: String
   var configurationXmlTag: String? = null
+  lateinit var moduleId: ModuleId
 
-  override fun createEntity(snapshot: WorkspaceEntityStorage): FacetEntity = FacetEntity(name, facetType,
-                                                                                         configurationXmlTag).also { addMetaData(it, snapshot) }
+  override fun createEntity(snapshot: WorkspaceEntityStorage): FacetEntity {
+    return FacetEntity(name, facetType, configurationXmlTag, moduleId).also { addMetaData(it, snapshot) }
+  }
+
+  override fun getLinks(): Set<PersistentEntityId<*>> = setOf(moduleId)
+
+  override fun updateLink(oldLink: PersistentEntityId<*>,
+                          newLink: PersistentEntityId<*>,
+                          affectedIds: MutableList<Pair<PersistentEntityId<*>, PersistentEntityId<*>>>): Boolean {
+    if (moduleId != oldLink) return false
+
+    moduleId = newLink as ModuleId
+    return true
+  }
+
+  override fun persistentId(): PersistentEntityId<*> = FacetId(name, facetType, moduleId)
 }
 
 class FacetEntity(
   val name: String,
   val facetType: String,
-  val configurationXmlTag: String?
+  val configurationXmlTag: String?,
+  val moduleId: ModuleId
 ) : WorkspaceEntityWithPersistentId, WorkspaceEntityBase() {
   val module: ModuleEntity by moduleDelegate
 
@@ -550,7 +566,7 @@ class FacetEntity(
     val facetDelegate = OneToOneChild.Nullable<FacetEntity, FacetEntity>(FacetEntity::class.java, true)
   }
 
-  override fun persistentId(): FacetId = FacetId(name, facetType, module.persistentId())
+  override fun persistentId(): FacetId = FacetId(name, facetType, moduleId)
 }
 
 data class FacetId(val name: String, val type: String, override val parentId: ModuleId) : PersistentEntityId<FacetEntity>() {
