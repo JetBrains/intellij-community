@@ -3,12 +3,8 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.entities.*
-import com.intellij.workspaceModel.storage.entities.ModifiableNamedEntity
-import com.intellij.workspaceModel.storage.entities.ModifiableWithListSoftLinksEntity
-import com.intellij.workspaceModel.storage.entities.NamedEntity
-import com.intellij.workspaceModel.storage.entities.WithSoftLinkEntity
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -318,6 +314,23 @@ class ReplaceBySourceTest {
     builder.replaceBySource({ true }, replacement)
 
     builder.assertConsistency()
+  }
+
+  @Test
+  fun `replace by source with composite id`() {
+    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val replacement = WorkspaceEntityStorageBuilderImpl.create()
+    val namedEntity = replacement.addNamedEntity("MyName")
+    val composedEntity = replacement.addComposedIdSoftRefEntity("AnotherName", namedEntity.persistentId())
+    replacement.addWithSoftLinkEntity(composedEntity.persistentId())
+
+    replacement.assertConsistency()
+    builder.replaceBySource({ true }, replacement)
+    builder.assertConsistency()
+
+    assertOneElement(builder.entities(NamedEntity::class.java).toList())
+    assertOneElement(builder.entities(ComposedIdSoftRefEntity::class.java).toList())
+    assertOneElement(builder.entities(WithSoftLinkEntity::class.java).toList())
   }
 
   /*
