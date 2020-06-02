@@ -24,7 +24,7 @@ public class WorkingCopiesContent implements ChangesViewContentProvider {
 
   @Override
   public JComponent initContent() {
-    return new CopiesPanel(myProject).getComponent();
+    return new CopiesPanel(myProject);
   }
 
   @Override

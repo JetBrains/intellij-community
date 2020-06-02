@@ -2,7 +2,6 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.configurationStore.StoreUtil;
-import com.intellij.ide.DataManager;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ModalityState;
@@ -11,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -60,7 +60,7 @@ import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static java.util.Collections.singletonList;
 import static java.util.Comparator.comparing;
 
-public class CopiesPanel {
+public class CopiesPanel extends SimpleToolWindowPanel {
 
   private static final Logger LOG = Logger.getInstance(CopiesPanel.class);
 
@@ -68,7 +68,6 @@ public class CopiesPanel {
 
   private final Project myProject;
   private final JPanel myPanel;
-  private final JComponent myHolder;
   private LinkLabel myRefreshLabel;
 
   private final static String CHANGE_FORMAT = "CHANGE_FORMAT";
@@ -78,6 +77,7 @@ public class CopiesPanel {
   private final static String MERGE_FROM = "MERGE_FROM";
 
   public CopiesPanel(@NotNull Project project) {
+    super(false, true);
     myProject = project;
     myProject.getMessageBus().connect().subscribe(SvnVcs.ROOTS_RELOADED, (Consumer<Boolean>)this::rootsReloaded);
 
@@ -93,10 +93,7 @@ public class CopiesPanel {
         myRefreshLabel.setEnabled(false);
       }
     });
-    final JScrollPane pane = ScrollPaneFactory.createScrollPane(holderPanel);
-    registerHelp(pane);
-    myHolder = pane;
-    myHolder.setBorder(null);
+    setContent(ScrollPaneFactory.createScrollPane(holderPanel));
     setFocusableForLinks(myRefreshLabel);
     rootsReloaded(true);
     initView();
@@ -105,6 +102,14 @@ public class CopiesPanel {
   @NotNull
   private SvnVcs getVcs() {
     return SvnVcs.getInstance(myProject);
+  }
+
+  @Override
+  public @Nullable Object getData(@NotNull String dataId) {
+    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      return "reference.vcs.svn.working.copies.information";
+    }
+    return super.getData(dataId);
   }
 
   private void rootsReloaded(boolean rootsChanged) {
@@ -410,19 +415,6 @@ public class CopiesPanel {
         notification.expire();
       }
     }
-  }
-
-  private static void registerHelp(@NotNull JComponent component) {
-    DataManager.registerDataProvider(component, dataId -> {
-      if (PlatformDataKeys.HELP_ID.is(dataId)) {
-        return "reference.vcs.svn.working.copies.information";
-      }
-      return null;
-    });
-  }
-
-  public JComponent getComponent() {
-    return myHolder;
   }
 
   private static class MyLinkLabel extends LinkLabel {
