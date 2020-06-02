@@ -103,9 +103,7 @@ internal data class EntityId(val arrayId: Int, val clazz: Int) {
 
 interface SoftLinkable {
   fun getLinks(): Set<PersistentEntityId<*>>
-  fun updateLink(oldLink: PersistentEntityId<*>,
-                 newLink: PersistentEntityId<*>,
-                 affectedIds: MutableList<Pair<PersistentEntityId<*>, PersistentEntityId<*>>>): Boolean
+  fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean
 }
 
 abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {

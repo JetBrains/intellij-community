@@ -39,8 +39,7 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
   }
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
-                          newLink: PersistentEntityId<*>,
-                          affectedIds: MutableList<Pair<PersistentEntityId<*>, PersistentEntityId<*>>>): Boolean {
+                          newLink: PersistentEntityId<*>): Boolean {
     var changed = false
     val res = dependencies.map { dependency ->
       when (dependency) {
@@ -398,8 +397,7 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
   }
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
-                          newLink: PersistentEntityId<*>,
-                          affectedIds: MutableList<Pair<PersistentEntityId<*>, PersistentEntityId<*>>>): Boolean {
+                          newLink: PersistentEntityId<*>): Boolean {
     val id = tableId
     return if (id is LibraryTableId.ModuleLibraryTableId && id.moduleId == oldLink) {
       this.tableId = id.copy(moduleId = newLink as ModuleId)
@@ -540,8 +538,7 @@ class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEnti
   override fun getLinks(): Set<PersistentEntityId<*>> = setOf(moduleId)
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
-                          newLink: PersistentEntityId<*>,
-                          affectedIds: MutableList<Pair<PersistentEntityId<*>, PersistentEntityId<*>>>): Boolean {
+                          newLink: PersistentEntityId<*>): Boolean {
     if (moduleId != oldLink) return false
 
     moduleId = newLink as ModuleId
@@ -688,8 +685,7 @@ class ArtifactOutputPackagingElementEntityData : WorkspaceEntityData<ArtifactOut
   override fun getLinks(): Set<PersistentEntityId<*>> = setOf(artifact)
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
-                          newLink: PersistentEntityId<*>,
-                          affectedIds: MutableList<Pair<PersistentEntityId<*>, PersistentEntityId<*>>>): Boolean {
+                          newLink: PersistentEntityId<*>): Boolean {
     if (oldLink != artifact) return false
     this.artifact = newLink as ArtifactId
     return true
@@ -711,8 +707,7 @@ class ModuleOutputPackagingElementEntityData : WorkspaceEntityData<ModuleOutputP
   override fun getLinks(): Set<PersistentEntityId<*>> = setOf(module)
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
-                          newLink: PersistentEntityId<*>,
-                          affectedIds: MutableList<Pair<PersistentEntityId<*>, PersistentEntityId<*>>>): Boolean {
+                          newLink: PersistentEntityId<*>): Boolean {
     if (module != oldLink) return false
     this.module = newLink as ModuleId
     return true
@@ -734,8 +729,7 @@ class LibraryFilesPackagingElementEntityData : WorkspaceEntityData<LibraryFilesP
   override fun getLinks(): Set<PersistentEntityId<*>> = setOf(library)
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
-                          newLink: PersistentEntityId<*>,
-                          affectedIds: MutableList<Pair<PersistentEntityId<*>, PersistentEntityId<*>>>): Boolean {
+                          newLink: PersistentEntityId<*>): Boolean {
     if (oldLink == library) {
       this.library = newLink as LibraryId
       return true
@@ -762,8 +756,7 @@ class ModuleSourcePackagingElementEntityData : WorkspaceEntityData<ModuleSourceP
   }
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
-                          newLink: PersistentEntityId<*>,
-                          affectedIds: MutableList<Pair<PersistentEntityId<*>, PersistentEntityId<*>>>): Boolean {
+                          newLink: PersistentEntityId<*>): Boolean {
     if (module != oldLink) return false
     this.module = newLink as ModuleId
     return true
@@ -785,8 +778,7 @@ class ModuleTestOutputPackagingElementEntityData : WorkspaceEntityData<ModuleTes
   override fun getLinks(): Set<PersistentEntityId<*>> = setOf(module)
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
-                          newLink: PersistentEntityId<*>,
-                          affectedIds: MutableList<Pair<PersistentEntityId<*>, PersistentEntityId<*>>>): Boolean {
+                          newLink: PersistentEntityId<*>): Boolean {
     if (module != oldLink) return false
     this.module = newLink as ModuleId
     return true

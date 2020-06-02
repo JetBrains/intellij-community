@@ -75,8 +75,7 @@ internal class WithSoftLinkEntityData : WorkspaceEntityData<WithSoftLinkEntity>(
   override fun getLinks(): Set<PersistentEntityId<*>> = setOf(link)
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
-                          newLink: PersistentEntityId<*>,
-                          affectedIds: MutableList<Pair<PersistentEntityId<*>, PersistentEntityId<*>>>): Boolean {
+                          newLink: PersistentEntityId<*>): Boolean {
     this.link = newLink
     return true
   }
@@ -103,8 +102,7 @@ internal class WithListSoftLinksEntityData : SoftLinkable, WorkspaceEntityData.W
   override fun getLinks(): Set<PersistentEntityId<*>> = links.toSet()
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
-                          newLink: PersistentEntityId<*>,
-                          affectedIds: MutableList<Pair<PersistentEntityId<*>, PersistentEntityId<*>>>): Boolean {
+                          newLink: PersistentEntityId<*>): Boolean {
     links.remove(oldLink)
     links.add(newLink as NameId)
     return true
@@ -145,8 +143,7 @@ internal class ComposedIdSoftRefEntityData: WorkspaceEntityData.WithCalculablePe
   override fun getLinks(): Set<PersistentEntityId<*>> = setOf(link)
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
-                          newLink: PersistentEntityId<*>,
-                          affectedIds: MutableList<Pair<PersistentEntityId<*>, PersistentEntityId<*>>>): Boolean {
+                          newLink: PersistentEntityId<*>): Boolean {
     if (oldLink != link) return false
     this.link = newLink as NameId
     return true

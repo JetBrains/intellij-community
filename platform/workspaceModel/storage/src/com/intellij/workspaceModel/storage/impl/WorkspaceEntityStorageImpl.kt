@@ -152,7 +152,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     for (entityId in idsWithSoftRef) {
       val entity = this.entitiesByType.getEntityDataForModification(entityId)
       val editingBeforePersistentId = entity.persistentId(this)
-      (entity as SoftLinkable).updateLink(beforePersistentId, newPersistentId, ArrayList())
+      (entity as SoftLinkable).updateLink(beforePersistentId, newPersistentId)
 
       // Add an entry to changelog
       addReplaceChange(entity)
