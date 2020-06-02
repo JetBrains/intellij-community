@@ -46,7 +46,7 @@ class GitEditorPromo : EditorNotifications.Provider<EditorNotificationPanel>() {
         }
         add(InplaceButton(IconButton(GitBundle.message("editor.promo.close.link"), AllIcons.Actions.Close, AllIcons.Actions.CloseHovered)) {
           PropertiesComponent.getInstance().setValue(PROMO_DISMISSED_KEY, true)
-          EditorNotifications.updateAll()
+          EditorNotifications.getInstance(project).updateNotifications(this@GitEditorPromo)
         }, BorderLayout.EAST)
       }
     }
