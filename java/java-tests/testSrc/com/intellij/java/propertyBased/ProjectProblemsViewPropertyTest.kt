@@ -78,6 +78,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
         env.logMessage("Selected file: ${fileToChange.name}")
 
         val actual = changeSelectedFile(env, members, fileToChange)
+        if (actual == null) break
 
         changedFiles.add(fileToChange.virtualFile)
 
@@ -110,7 +111,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
 
   private fun changeSelectedFile(env: ImperativeCommand.Environment,
                                  members: List<ScopedMember>,
-                                 fileToChange: PsiJavaFile): Set<VirtualFile> {
+                                 fileToChange: PsiJavaFile): Set<VirtualFile>? {
     val reportedFiles = mutableSetOf<VirtualFile>()
     val nChanges = env.generateValue(Generator.integers(1, 5), "Changes to make: %s")
     for (j in 0 until nChanges) {
@@ -143,6 +144,10 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
       WriteCommandAction.runWriteCommandAction(myProject) { modification.apply(myProject) }
       env.logMessage("Modification applied")
       rehighlight(fileToChange, editor)
+      if (!isCheapToSearch(psiMember)) {
+        env.logMessage("Too costly to analyze element after change, skipping all iteration")
+        return null
+      }
       reportedFiles.addAll(getFilesReportedByProblemSearch(editor, fileToChange))
       val curScope = psiMember.useScope
       member.scope = prevScope.union(curScope)
