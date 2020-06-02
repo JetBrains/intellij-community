@@ -42,7 +42,9 @@ import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingCon
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.server.MavenDistribution;
 import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.ArrayList;
@@ -108,7 +110,14 @@ public class MavenResumeAction extends AnAction {
   private static String getMavenVersion(MavenRunConfiguration runConfiguration) {
     MavenGeneralSettings generalSettings = runConfiguration.getGeneralSettings();
     if (generalSettings == null) {
-      return MavenServerManager.getInstance().getCurrentMavenVersion();
+      MavenDistribution maven = MavenDistribution.fromSettings(runConfiguration.getProject());
+      if (maven == null) {
+        String version = MavenServerManager.resolveEmbeddedMavenHome().getVersion();
+        MavenLog.LOG
+          .warn("Cannot determine maven version from run configuration and project settings, use embedded as version: " + version);
+        return version;
+      }
+      return maven.getVersion();
     }
     else {
       return MavenUtil.getMavenVersion(generalSettings.getEffectiveMavenHome());
