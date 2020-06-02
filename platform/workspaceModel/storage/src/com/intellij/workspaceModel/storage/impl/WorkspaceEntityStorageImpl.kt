@@ -5,9 +5,9 @@ import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.HashBiMap
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityIndex
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityIndex.MutableExternalEntityIndex
-import com.intellij.workspaceModel.storage.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -287,8 +287,6 @@ internal class WorkspaceEntityStorageBuilderImpl(
       }
     }
 
-    val softReferencesToUpdate = ArrayList<Pair<PersistentEntityId<*>, WorkspaceEntityData<*>>>()
-
     LOG.debug { "2) Traverse entities of replaceWith store" }
     // 2) Traverse entities of the enemy
     //    and trying to detect whenever the entity already present in the local builder or not.
@@ -318,8 +316,10 @@ internal class WorkspaceEntityStorageBuilderImpl(
             val parents = this.refs.getParentRefsOfChild(pid)
             val children = this.refs.getChildrenRefsOfParentBy(pid)
 
-            softReferencesToUpdate.add(Pair(persistentIdBefore, clonedEntity))
-            indexes.updateIndices(oldPid, pid, replaceWith)
+            updatePersistentIdIndexes(clonedEntity.createEntity(this), persistentIdBefore, clonedEntity)
+            replaceWith.indexes.virtualFileIndex.getVirtualFiles(oldPid)?.forEach { this.indexes.virtualFileIndex.index(pid, listOf(it)) }
+            replaceWith.indexes.entitySourceIndex.getEntryById(oldPid)?.also { this.indexes.entitySourceIndex.index(pid, it) }
+
             updateChangeLog { it.add(ChangeEntry.ReplaceEntity(clonedEntity, children, parents)) }
           }
           // Remove added entity
@@ -331,8 +331,12 @@ internal class WorkspaceEntityStorageBuilderImpl(
           val newEntity = this.entitiesByType.cloneAndAdd(matchedEntityData as WorkspaceEntityData<WorkspaceEntity>, entityClass)
           val newPid = newEntity.createPid()
           replaceMap[newPid] = oldPid
-          indexes.updateIndices(oldPid, newPid, replaceWith)
+
+          replaceWith.indexes.virtualFileIndex.getVirtualFiles(oldPid)?.forEach { this.indexes.virtualFileIndex.index(newPid, listOf(it)) }
+          replaceWith.indexes.entitySourceIndex.getEntryById(oldPid)?.also { this.indexes.entitySourceIndex.index(newPid, it) }
+          replaceWith.indexes.persistentIdIndex.getEntryById(oldPid)?.also { this.indexes.persistentIdIndex.index(newPid, it) }
           if (newEntity is SoftLinkable) indexes.updateSoftLinksIndex(newEntity)
+
           createAddEvent(newEntity)
         }
       }
@@ -436,12 +440,6 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
         this.refs.updateParentOfChild(connectionId, localChildId, localParentId)
       }
-    }
-
-    LOG.debug { "6) Update soft links index" }
-    // This index should be updated after all operations because some persistentIds use referred entities during calculating
-    softReferencesToUpdate.forEach {
-      indexes.updateSoftReferences(it.first, it.second, this)
     }
 
     // Assert consistency
