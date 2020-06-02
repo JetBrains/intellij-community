@@ -31,6 +31,7 @@ class FeatureSuggestersManager(val project: Project) : FileEditorManagerListener
     private var psiListenersIsSet: Boolean = false
 
     fun actionPerformed(action: UserAction) {
+        println(action)
         actionsCache.add(action)
         for (suggester in FeatureSuggester.suggesters) {
             if (!isEnabled(suggester)) continue

@@ -31,7 +31,6 @@ class IntroduceVariableSuggester : FeatureSuggester {
     override fun getSuggestion(actions: UserActionsCache, anActions: UserAnActionsCache): Suggestion {
         val lastAction = actions.last()
         val parent = lastAction.parent
-        println(lastAction.toString())
         when (lastAction) {
             is ChildAddedAction -> {
                 val child = lastAction.newChild
