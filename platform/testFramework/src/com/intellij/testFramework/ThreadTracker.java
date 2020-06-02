@@ -85,6 +85,7 @@ public final class ThreadTracker {
     "Monitor Ctrl-Break",
     "Netty ",
     "ObjectCleanerThread",
+    "Okio Watchdog", // Dockers "okio.AsyncTimeout.Watchdog"
     "Reference Handler",
     "RMI GC Daemon",
     "RMI TCP ",
