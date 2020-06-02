@@ -34,7 +34,7 @@ abstract class Timed<T> implements Disposable {
   public synchronized void dispose() {
     final Object t = myT;
     myT = null;
-    if (t instanceof Disposable) {
+    if (t instanceof Disposable && !Disposer.isDisposed((Disposable) t)) {
       Disposer.dispose((Disposable)t);
     }
 
