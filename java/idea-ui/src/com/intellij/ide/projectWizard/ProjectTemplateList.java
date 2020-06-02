@@ -130,7 +130,7 @@ public class ProjectTemplateList extends JPanel {
     });
   }
 
-  public JBList getList() {
+  public JBList<ProjectTemplate> getList() {
     return myList;
   }
 
@@ -144,9 +144,9 @@ public class ProjectTemplateList extends JPanel {
 
   @TestOnly
   boolean setSelectedTemplate(@NotNull String name) {
-    ListModel model1 = myList.getModel();
+    ListModel<ProjectTemplate> model1 = myList.getModel();
     for (int j = 0; j < model1.getSize(); j++) {
-      if (name.equals(((ProjectTemplate)model1.getElementAt(j)).getName())) {
+      if (name.equals(model1.getElementAt(j).getName())) {
         myList.setSelectedIndex(j);
         return true;
       }
