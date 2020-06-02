@@ -23,7 +23,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
-import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanel
+import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.BorderLayout
@@ -197,14 +197,14 @@ internal class GHPRToolWindowComponentFactory(private val project: Project,
         future = dataContextRepository.acquireContext(remoteUrl, account, requestExecutor)
       }
 
-      return GHLoadingPanel.create(loadingModel,
-                                   { GHPRComponentFactory(project).createComponent(loadingModel.result!!, uiDisposable) }, uiDisposable,
-                                   errorPrefix = GithubBundle.message("cannot.load.data.from.github"),
-                                   errorHandler = GHLoadingErrorHandlerImpl(project, account) {
+      return GHLoadingPanelFactory(loadingModel, null, GithubBundle.message("cannot.load.data.from.github"),
+                                   GHLoadingErrorHandlerImpl(project, account) {
                                      val contextRepository = dataContextRepository
                                      contextRepository.clearContext(remoteUrl)
                                      loadingModel.future = contextRepository.acquireContext(remoteUrl, account, requestExecutor)
-                                   })
+                                   }).create {
+        GHPRComponentFactory(project).createComponent(loadingModel.result!!, uiDisposable)
+      }
     }
   }
 }

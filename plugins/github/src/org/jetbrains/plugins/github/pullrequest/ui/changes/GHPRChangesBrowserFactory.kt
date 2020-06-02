@@ -17,7 +17,7 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRReviewSubmitAction
 import org.jetbrains.plugins.github.pullrequest.action.GHPRShowDiffAction
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
-import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanel
+import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -66,15 +66,17 @@ class GHPRChangesBrowserFactory(private val actionManager: ActionManager, privat
              @Nls(capitalization = Nls.Capitalization.Sentence) panelEmptyText: String = "",
              disposable: Disposable): JComponent {
 
-    val loadingPanel = GHLoadingPanel.create(loadingModel, {
-      createTree(project, changesModel, it).apply {
-        emptyText.text = panelEmptyText
-      }.let { tree ->
-        ScrollPaneFactory.createScrollPane(tree, true)
+    val loadingPanel = GHLoadingPanelFactory(loadingModel,
+                                             errorPrefix = GithubBundle.message("cannot.load.changes"))
+      .createWithUpdatesStripe(disposable) {
+        createTree(project, changesModel, it).apply {
+          emptyText.text = panelEmptyText
+        }.let { tree ->
+          ScrollPaneFactory.createScrollPane(tree, true)
+        }
+      }.apply {
+        border = IdeBorderFactory.createBorder(SideBorder.TOP)
       }
-    }, disposable, GithubBundle.message("cannot.load.changes")).apply {
-      border = IdeBorderFactory.createBorder(SideBorder.TOP)
-    }
 
     val toolbar = createToolbar(actionManager, loadingPanel)
 

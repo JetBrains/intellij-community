@@ -9,13 +9,13 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.NotNullFunction
-import com.intellij.util.ui.*
+import com.intellij.util.ui.AsyncProcessIcon
+import com.intellij.util.ui.ComponentWithEmptyText
+import com.intellij.util.ui.StatusText
+import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.ui.frame.ProgressStripe
-import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.ui.GHHtmlErrorPanel
 import org.jetbrains.plugins.github.util.getName
 import java.awt.BorderLayout
 import java.awt.GridBagLayout
@@ -25,8 +25,8 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.KeyStroke
 
-class GHLoadingPanel<T> @Deprecated("Replaced with factory method becuse JBLoadingPanel is not really needed for initial loading",
-                                    ReplaceWith("GHLoadingPanel.create"))
+class GHLoadingPanel<T> @Deprecated("Replaced with factory because JBLoadingPanel is not really needed for initial loading",
+                                    ReplaceWith("GHLoadingPanelFactory().create()"))
 constructor(model: GHLoadingModel,
             content: T,
             parentDisposable: Disposable,
@@ -35,76 +35,6 @@ constructor(model: GHLoadingModel,
   where T : JComponent, T : ComponentWithEmptyText {
 
   companion object {
-
-    fun create(model: GHLoadingModel,
-               contentFactory: (JPanel) -> JComponent,
-               parentDisposable: Disposable,
-               @Nls(capitalization = Nls.Capitalization.Sentence) errorPrefix: String = GithubBundle.message("cannot.load.data"),
-               errorHandler: GHLoadingErrorHandler? = null): JComponent {
-
-      val panel = NonOpaquePanel()
-      ContentController(model, panel,
-                        contentFactory, parentDisposable,
-                        errorPrefix, errorHandler)
-      return panel
-    }
-
-    private class ContentController(private val model: GHLoadingModel, private val panel: Wrapper,
-                                    contentFactory: (JPanel) -> JComponent, parentDisposable: Disposable,
-                                    private val errorPrefix: String,
-                                    private val errorHandler: GHLoadingErrorHandler?) {
-
-      private var lastResultAvailable = false
-      private val contentProgressStripe by lazy(LazyThreadSafetyMode.NONE) {
-        ProgressStripe(contentFactory(panel), parentDisposable, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
-          isOpaque = false
-        }
-      }
-
-      init {
-        model.addStateChangeListener(object : GHLoadingModel.StateChangeListener {
-          override fun onLoadingStarted() = update()
-          override fun onLoadingCompleted() = update()
-        })
-        update()
-      }
-
-      private fun update() {
-        if (model.resultAvailable) {
-          if (model.loading) contentProgressStripe.startLoadingImmediately() else contentProgressStripe.stopLoading()
-        }
-
-        if (lastResultAvailable == model.resultAvailable && model.resultAvailable) return
-
-        val content = when {
-          model.resultAvailable -> contentProgressStripe
-          model.loading -> createLoadingLabelPanel()
-          model.error != null -> createErrorPanel(model.error!!)
-          else -> null
-        }
-        panel.setContent(content)
-        panel.repaint()
-        lastResultAvailable = model.resultAvailable
-      }
-
-      private fun createErrorPanel(error: Throwable): JComponent {
-        return JPanel(SingleComponentCenteringLayout()).apply {
-          isOpaque = false
-          border = JBUI.Borders.empty(8)
-
-          add(GHHtmlErrorPanel.create(errorPrefix, error, errorHandler?.getActionForError(error)))
-        }
-      }
-
-      private fun createLoadingLabelPanel() = JPanel(SingleComponentCenteringLayout()).apply {
-        isOpaque = false
-        add(JLabel().apply {
-          foreground = UIUtil.getContextHelpForeground()
-          text = ApplicationBundle.message("label.loading.page.please.wait")
-          icon = AnimatedIcon.Default()
-        })
-      }
-    }
 
     private fun createDecorator(parentDisposable: Disposable): NotNullFunction<JPanel, LoadingDecorator> {
       return NotNullFunction<JPanel, LoadingDecorator> {

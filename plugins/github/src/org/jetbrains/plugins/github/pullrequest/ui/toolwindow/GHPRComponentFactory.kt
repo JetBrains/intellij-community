@@ -29,7 +29,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
-import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanel
+import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.changes.*
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModelImpl
 import org.jetbrains.plugins.github.util.GithubUIUtil
@@ -149,18 +149,17 @@ internal class GHPRComponentFactory(private val project: Project) {
 
   private fun createInfoComponent(dataContext: GHPRDataContext, dataProvider: GHPRDataProvider, disposable: Disposable): JComponent {
     val detailsLoadingModel = createDetailsLoadingModel(dataProvider.detailsData, disposable)
-    val detailsLoadingPanel = GHLoadingPanel.create(detailsLoadingModel, {
+    val detailsLoadingPanel = GHLoadingPanelFactory(detailsLoadingModel,
+                                                    null, GithubBundle.message("cannot.load.details"),
+                                                    GHLoadingErrorHandlerImpl(project, dataContext.securityService.account) {
+                                                      dataProvider.detailsData.reloadDetails()
+                                                    }).createWithUpdatesStripe(disposable) {
       val detailsModel = GHPRDetailsModelImpl(detailsLoadingModel,
                                               dataContext.securityService,
                                               dataContext.repositoryDataService,
                                               dataProvider.detailsData)
       GHPRDetailsComponent.create(detailsModel, dataContext.avatarIconsProviderFactory)
-    },
-                                                    disposable,
-                                                    GithubBundle.message("cannot.load.details"),
-                                                    GHLoadingErrorHandlerImpl(project, dataContext.securityService.account) {
-                                                      dataProvider.detailsData.reloadDetails()
-                                                    }).also {
+    }.also {
       ActionManager.getInstance().getAction("Github.PullRequest.Details.Reload").registerCustomShortcutSet(it, disposable)
     }
 
@@ -185,14 +184,14 @@ internal class GHPRComponentFactory(private val project: Project) {
     val changesModel = GHPRChangesModelImpl(project)
 
     val changesLoadingModel = createChangesLoadingModel(dataProvider.changesData, disposable)
-    val commitsLoadingPanel = GHLoadingPanel.create(changesLoadingModel, {
-      GHPRCommitsBrowserComponent.create(changesLoadingModel.commitsModel, changesModel)
-    },
-                                                    disposable,
-                                                    GithubBundle.message("cannot.load.commits"),
+    val commitsLoadingPanel = GHLoadingPanelFactory(changesLoadingModel,
+                                                    null, GithubBundle.message("cannot.load.commits"),
                                                     GHLoadingErrorHandlerImpl(project, dataContext.securityService.account) {
                                                       dataProvider.changesData.reloadChanges()
                                                     })
+      .createWithUpdatesStripe(disposable) {
+        GHPRCommitsBrowserComponent.create(changesLoadingModel.commitsModel, changesModel)
+      }
 
     val changesBrowser = GHPRChangesBrowserFactory(ActionManager.getInstance(), project)
       .create(changesModel, GithubBundle.message("pull.request.select.commit.to.view.changes"))
