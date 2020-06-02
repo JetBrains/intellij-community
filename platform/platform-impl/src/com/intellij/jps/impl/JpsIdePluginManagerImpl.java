@@ -39,10 +39,14 @@ import java.util.function.Predicate;
 public final class JpsIdePluginManagerImpl extends JpsPluginManager {
   private final List<PluginDescriptor> myExternalBuildPlugins = new CopyOnWriteArrayList<>();
   private final AtomicInteger myModificationStamp = new AtomicInteger(0);
+  private final boolean myFullyLoaded;
 
   public JpsIdePluginManagerImpl() {
     ExtensionsArea rootArea = Extensions.getRootArea();
-    if (rootArea == null) {
+    myFullyLoaded = rootArea != null;
+    if (!myFullyLoaded) {
+      //this may happen e.g. in tests if some test is executed before Application is initialized; in that case the created instance won't be cached
+      //and will be reinitialized next time
       return;
     }
 
@@ -89,6 +93,11 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
       }, true, null);
       initial.set(Boolean.FALSE);
     }
+  }
+
+  @Override
+  public boolean isFullyLoaded() {
+    return myFullyLoaded;
   }
 
   private void handlePluginRemoved(@NotNull PluginDescriptor pluginDescriptor) {
