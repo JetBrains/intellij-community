@@ -5,6 +5,7 @@ import com.google.common.base.CharMatcher;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.io.URLUtil;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.callback.CefCallback;
@@ -25,6 +26,7 @@ import java.nio.file.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * A custom scheme handler for the "file" scheme.
@@ -41,7 +43,7 @@ class JBCefFileSchemeHandler extends CefResourceHandlerAdapter implements Dispos
   private static final Logger LOG = Logger.getInstance(JBCefFileSchemeHandler.class.getName());
 
   public static final String FILE_SCHEME_NAME = "file";
-  private static final String LOADHTML_URL_PREFIX = FILE_SCHEME_NAME + ":///intellij/jbcefbrowser/loadhtml";
+  private static final String LOADHTML_RANDOM_URL_PREFIX = FILE_SCHEME_NAME + ":///jbcefbrowser/";
 
   private static final Map<CefBrowser, Map<String/* url */, String /* html */>> LOADHTML_REQUEST_MAP = new HashMap<>();
 
@@ -61,10 +63,10 @@ class JBCefFileSchemeHandler extends CefResourceHandlerAdapter implements Dispos
   }
 
   @NotNull
-  public static String registerLoadHTMLRequest(@NotNull CefBrowser browser, @NotNull String html, @NotNull String initUrl) {
-    String url = LOADHTML_URL_PREFIX + "#req=" + initUrl;
-    getInitMap(browser).put(url, html);
-    return url;
+  public static String registerLoadHTMLRequest(@NotNull CefBrowser browser, @NotNull String html, @NotNull String origUrl) {
+    String fileUrl = makeFileUrl(origUrl);
+    getInitMap(browser).put(fileUrl, html);
+    return fileUrl;
   }
 
   @NotNull
@@ -91,51 +93,44 @@ class JBCefFileSchemeHandler extends CefResourceHandlerAdapter implements Dispos
     String url = request.getURL();
     if (url == null) return false;
 
-    if (url.startsWith(LOADHTML_URL_PREFIX)) {
-      //
-      // 1) JBCefBrowser.loadHTML() request
-      //
-      Map<String, String> map = LOADHTML_REQUEST_MAP.get(myBrowser);
-      if (map != null) {
-        String html = map.get(request.getURL());
-        if (html != null) {
-          myInputStream = new ByteArrayInputStream(html.getBytes(Charset.defaultCharset()));
-          myMimeType = "text/html";
-          callback.Continue();
-          return true;
-        }
-      }
-      myErrorCode = CefLoadHandler.ErrorCode.ERR_FILE_NOT_FOUND;
-      myStatusText = "JBCefBrowser.loadHTML: html not found";
-      LOG.error(myStatusText);
-    }
-    else {
-      //
-      // 2) Standard "file://" request
-      //
-      try {
-        Path path = Paths.get(new URI(MyUriUtil.trimParameters(url)));
-        if (!checkAccessAllowed(path)) {
-          LOG.info("Access denied: " + path);
-          return false;
-        }
-        myInputStream = new BufferedInputStream(new FileInputStream(path.toFile()));
-        myMimeType = Files.probeContentType(path);
-      }
-      catch (IllegalArgumentException |
-        FileSystemNotFoundException |
-        URISyntaxException |
-        IOException |
-        UnsupportedOperationException e)
-      {
-        myErrorCode = CefLoadHandler.ErrorCode.ERR_FILE_NOT_FOUND;
-        myStatusText = e.getLocalizedMessage();
-        LOG.error(e);
-      }
-      if (myInputStream != null) {
+    //
+    // 1) Check for JBCefBrowser.loadHTML() request
+    //
+    Map<String, String> map = LOADHTML_REQUEST_MAP.get(myBrowser);
+    if (map != null) {
+      String html = map.remove(request.getURL());
+      if (html != null) {
+        myInputStream = new ByteArrayInputStream(html.getBytes(Charset.defaultCharset()));
+        myMimeType = "text/html";
         callback.Continue();
         return true;
       }
+    }
+    //
+    // 2) Treat as standard "file://" request
+    //
+    try {
+      Path path = Paths.get(new URI(MyUriUtil.trimParameters(url)));
+      if (!checkAccessAllowed(path)) {
+        LOG.info("Access denied: " + path);
+        return false;
+      }
+      myInputStream = new BufferedInputStream(new FileInputStream(path.toFile()));
+      myMimeType = Files.probeContentType(path);
+    }
+    catch (IllegalArgumentException |
+      FileSystemNotFoundException |
+      URISyntaxException |
+      IOException |
+      UnsupportedOperationException e)
+    {
+      myErrorCode = CefLoadHandler.ErrorCode.ERR_FILE_NOT_FOUND;
+      myStatusText = e.getLocalizedMessage();
+      LOG.error(e);
+    }
+    if (myInputStream != null) {
+      callback.Continue();
+      return true;
     }
     return false;
   }
@@ -182,6 +177,15 @@ class JBCefFileSchemeHandler extends CefResourceHandlerAdapter implements Dispos
   private static boolean checkAccessAllowed(@SuppressWarnings("unused") Path path) {
     // tav: todo Ask the user or query the settings for JCEF FS access.
     return true;
+  }
+
+  @NotNull
+  public static String makeFileUrl(@NotNull String url) {
+    if (url.startsWith(FILE_SCHEME_NAME + URLUtil.SCHEME_SEPARATOR)) {
+      return url;
+    }
+    // otherwise make a random file:// url
+    return LOADHTML_RANDOM_URL_PREFIX + new Random().nextInt(Integer.MAX_VALUE) + "#url=" + url;
   }
 
   // from com.intellij.util.UriUtil
