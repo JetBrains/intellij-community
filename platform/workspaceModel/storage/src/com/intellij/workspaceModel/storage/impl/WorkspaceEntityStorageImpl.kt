@@ -671,7 +671,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     entitiesByType.replaceById(newEntity, clazz)
 
     // Restore soft references
-    indexes.updateSoftReferences(beforePersistentId, entityDataByIdOrDie(id), this)
+    updatePersistentIdIndexes(newEntity.createEntity(this), beforePersistentId, newEntity)
     updateEntityRefs(id, updatedChildren, updatedParents)
   }
 

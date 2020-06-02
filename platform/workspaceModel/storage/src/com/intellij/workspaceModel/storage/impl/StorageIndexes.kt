@@ -148,47 +148,6 @@ internal class MutableStorageIndexes(
     }
   }
 
-  @OptIn(ExperimentalStdlibApi::class)
-  fun <T : WorkspaceEntity> updateSoftReferences(beforePersistentId: PersistentEntityId<*>?,
-                                                 copiedData: WorkspaceEntityData<T>,
-                                                 builder: WorkspaceEntityStorageBuilderImpl) {
-    val pid = copiedData.createPid()
-    if (beforePersistentId != null) {
-      val afterPersistentId = copiedData.persistentId(builder) ?: error("Persistent id expected")
-      if (beforePersistentId != afterPersistentId) {
-        val updatedIds = mutableListOf(beforePersistentId to afterPersistentId)
-        while (updatedIds.isNotEmpty()) {
-          val (beforeId, afterId) = updatedIds.removeFirst()
-          val nonNullSoftLinks = softLinks.getValues(beforeId)
-          for (id: EntityId in nonNullSoftLinks) {
-            val pEntityData = builder.entitiesByType.getEntityDataForModification(id) as WorkspaceEntityData<WorkspaceEntity>
-            val updated = (pEntityData as SoftLinkable).updateLink(beforeId, afterId, updatedIds)
-
-            if (updated) {
-              val softLinkedPid = pEntityData.createPid()
-              val softLinkedParents = builder.refs.getParentRefsOfChild(softLinkedPid)
-              val softLinkedChildren = builder.refs.getChildrenRefsOfParentBy(softLinkedPid)
-              builder.updateChangeLog {
-                it.add(WorkspaceEntityStorageBuilderImpl.ChangeEntry.ReplaceEntity(pEntityData, softLinkedChildren, softLinkedParents))
-              }
-            }
-          }
-          softLinks.getValues(beforeId).forEach { value -> softLinks.put(afterId, value) }
-          softLinks.removeKey(beforeId)
-        }
-      }
-    }
-
-    if (copiedData is SoftLinkable) {
-      val beforeSoftLinks = HashSet(this.softLinks.getKeys(pid))
-      val afterSoftLinks = copiedData.getLinks()
-      if (beforeSoftLinks != afterSoftLinks) {
-        beforeSoftLinks.forEach { this.softLinks.remove(it, pid) }
-        afterSoftLinks.forEach { this.softLinks.put(it, pid) }
-      }
-    }
-  }
-
   fun applyExternalIndexChanges(diff: WorkspaceEntityStorageBuilderImpl) {
     val removed = externalIndices.keys.toMutableSet()
     removed.removeAll(diff.indexes.externalIndices.keys)
