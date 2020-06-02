@@ -17,7 +17,6 @@ package com.jetbrains.python.parsing;
 
 import com.intellij.lang.ITokenTypeRemapper;
 import com.intellij.lang.SyntaxTreeBuilder;
-import com.intellij.lang.SyntaxTreeBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;

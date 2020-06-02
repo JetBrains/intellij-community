@@ -16,7 +16,6 @@
 package com.jetbrains.python.parsing;
 
 import com.intellij.lang.SyntaxTreeBuilder;
-import com.intellij.lang.SyntaxTreeBuilder;
 import com.intellij.lang.WhitespacesBinders;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
