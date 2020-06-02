@@ -70,7 +70,6 @@ public final class ThreadTracker {
     "Cleaner-0", // Thread[Cleaner-0,8,InnocuousThreadGroup], java.lang.ref.Cleaner in android layoutlib, Java9+
     "CompilerThread0",
     "dockerjava-netty",
-    "tc-okhttp-stream", // Dockers "com.github.dockerjava.okhttp.UnixDomainSocket.recv"
     "External compiler",
     "Finalizer",
     FlushingDaemon.NAME,
