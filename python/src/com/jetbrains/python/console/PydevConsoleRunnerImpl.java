@@ -116,6 +116,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   public static final @NonNls String CONSOLE_START_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))\n" +
                                                              "sys.path.extend([" + WORKING_DIR_AND_PYTHON_PATHS + "])\n";
   public static final @NonNls String STARTED_BY_RUNNER = "startedByRunner";
+  private static final Long WAIT_BEFORE_FORCED_CLOSE_MILLIS = 2000L;
   private static final Logger LOG = Logger.getInstance(PydevConsoleRunnerImpl.class);
   @SuppressWarnings("SpellCheckingInspection")
   public static final @NonNls String PYDEV_PYDEVCONSOLE_PY = "pydev/pydevconsole.py";
@@ -674,7 +675,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        stopConsole();
+        stopAndRerunConsole(false, PyBundle.message("console.stopping.console"), null);
       }
     };
   }
@@ -703,19 +704,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       isSelected = state;
       updateEditors();
       myConsoleSettings.setUseSoftWraps(isSelected);
-    }
-  }
-
-  private void stopConsole() {
-    if (myPydevConsoleCommunication != null) {
-      try {
-        closeCommunication();
-        // waiting for REPL communication before destroying process handler
-        Thread.sleep(300);
-      }
-      catch (Exception ignored) {
-        // Ignore
-      }
     }
   }
 
@@ -824,7 +812,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           displayName = name;
         }
       }
-      myConsoleRunner.rerun(displayName);
+      myConsoleRunner.stopAndRerunConsole(true, PyBundle.message("console.restarting.console"), displayName);
     }
   }
 
@@ -838,21 +826,23 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     return content.getDisplayName();
   }
 
-  private void rerun(String displayName) {
-    new Task.Backgroundable(myProject, PyBundle.message("console.restarting.console"), true) {
+  private void stopAndRerunConsole(Boolean rerun, @NotNull String message, @Nullable String displayName) {
+    new Task.Backgroundable(myProject, message, true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         if (myProcessHandler != null) {
           UIUtil.invokeAndWaitIfNeeded((Runnable)() -> closeCommunication());
 
-          boolean processStopped = myProcessHandler.waitFor(5000L);
+          boolean processStopped = myProcessHandler.waitFor(WAIT_BEFORE_FORCED_CLOSE_MILLIS);
           if (!processStopped && myProcessHandler.canKillProcess()) {
             myProcessHandler.killProcess();
           }
           myProcessHandler.waitFor();
         }
 
-        GuiUtils.invokeLaterIfNeeded(() -> myRerunAction.consume(displayName), ModalityState.defaultModalityState());
+        if (rerun) {
+          GuiUtils.invokeLaterIfNeeded(() -> myRerunAction.consume(displayName), ModalityState.defaultModalityState());
+        }
       }
     }.queue();
   }

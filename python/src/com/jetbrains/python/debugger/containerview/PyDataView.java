@@ -149,7 +149,7 @@ public final class PyDataView implements DumbAware {
   }
 
   private static boolean isConnected(PydevConsoleCommunication accessor){
-    return accessor.handshake();
+    return !accessor.isCommunicationClosed();
   }
 
   public static PyDataView getInstance(@NotNull final Project project) {

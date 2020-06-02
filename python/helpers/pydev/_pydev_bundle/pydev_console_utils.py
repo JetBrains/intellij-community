@@ -123,20 +123,28 @@ class BaseInterpreterInterface(BaseCodeExecutor):
             return False
 
     def execLine(self, line):
-        if not self.banner_shown:
-            line = self.build_banner() + line
-            self.banner_shown = True
-        return self.do_exec_code(line, True)
+        try:
+            if not self.banner_shown:
+                line = self.build_banner() + line
+                self.banner_shown = True
+            return self.do_exec_code(line, True)
+        except:
+            traceback.print_exc()
+            raise PythonUnhandledException(traceback.format_exc())
 
     def execMultipleLines(self, lines):
-        if not self.banner_shown:
-            lines = self.build_banner() + lines
-            self.banner_shown = True
-        if IS_JYTHON:
-            for line in lines.split('\n'):
-                self.do_exec_code(line, True)
-        else:
-            return self.do_exec_code(lines, False)
+        try:
+            if not self.banner_shown:
+                lines = self.build_banner() + lines
+                self.banner_shown = True
+            if IS_JYTHON:
+                for line in lines.split('\n'):
+                    self.do_exec_code(line, True)
+            else:
+                return self.do_exec_code(lines, False)
+        except:
+            traceback.print_exc()
+            raise PythonUnhandledException(traceback.format_exc())
 
     def interrupt(self):
         self.buffer = None  # Also clear the buffer when it's interrupted.
@@ -212,33 +220,48 @@ class BaseInterpreterInterface(BaseCodeExecutor):
             return True
 
     def getFrame(self):
-        hidden_ns = self.get_ipython_hidden_vars_dict()
-        return pydevd_thrift.frame_vars_to_struct(self.get_namespace(), hidden_ns)
+        try:
+            hidden_ns = self.get_ipython_hidden_vars_dict()
+            return pydevd_thrift.frame_vars_to_struct(self.get_namespace(), hidden_ns)
+        except:
+            traceback.print_exc()
+            raise PythonUnhandledException(traceback.format_exc())
 
     def getVariable(self, attributes):
-        debug_values = []
-        val_dict = pydevd_vars.resolve_compound_var_object_fields(self.get_namespace(), attributes)
-        if val_dict is None:
-            val_dict = {}
+        try:
+            debug_values = []
+            val_dict = pydevd_vars.resolve_compound_var_object_fields(self.get_namespace(), attributes)
+            if val_dict is None:
+                val_dict = {}
 
-        keys = val_dict.keys()
-        for k in keys:
-            val = val_dict[k]
-            evaluate_full_value = pydevd_thrift.should_evaluate_full_value(val)
-            debug_values.append(pydevd_thrift.var_to_struct(val, k, evaluate_full_value=evaluate_full_value))
+            keys = val_dict.keys()
+            for k in keys:
+                val = val_dict[k]
+                evaluate_full_value = pydevd_thrift.should_evaluate_full_value(val)
+                debug_values.append(pydevd_thrift.var_to_struct(val, k, evaluate_full_value=evaluate_full_value))
 
-        return debug_values
+            return debug_values
+        except:
+            traceback.print_exc()
+            raise PythonUnhandledException(traceback.format_exc())
 
     def getArray(self, attr, roffset, coffset, rows, cols, format):
-        name = attr.split("\t")[-1]
-        array = pydevd_vars.eval_in_context(name, self.get_namespace(), self.get_namespace())
-        return pydevd_thrift.table_like_struct_to_thrift_struct(array, name, roffset, coffset, rows, cols, format)
+        try:
+            name = attr.split("\t")[-1]
+            array = pydevd_vars.eval_in_context(name, self.get_namespace(), self.get_namespace())
+            return pydevd_thrift.table_like_struct_to_thrift_struct(array, name, roffset, coffset, rows, cols, format)
+        except:
+            traceback.print_exc()
+            raise PythonUnhandledException(traceback.format_exc())
 
     def evaluate(self, expression, do_trunc):
         # returns `DebugValue` of evaluated expression
-
-        result = pydevd_vars.eval_in_context(expression, self.get_namespace(), self.get_namespace())
-        return [pydevd_thrift.var_to_struct(result, expression, do_trim=do_trunc)]
+        try:
+            result = pydevd_vars.eval_in_context(expression, self.get_namespace(), self.get_namespace())
+            return [pydevd_thrift.var_to_struct(result, expression, do_trim=do_trunc)]
+        except:
+            traceback.print_exc()
+            raise PythonUnhandledException(traceback.format_exc())
 
     def do_get_completions(self, text, act_tok):
         """Retrieves completion options.
@@ -283,35 +306,43 @@ class BaseInterpreterInterface(BaseCodeExecutor):
         (i.e.: obj\tattr1\tattr2NEXT_VALUE_SEPARATORobj2\attr1\tattr2)
         :return:
         """
-        frame_variables = self.get_namespace()
-        var_objects = []
-        # vars = scope_attrs.split(NEXT_VALUE_SEPARATOR)
-        vars = scope_attrs
-        for var_attrs in vars:
-            if '\t' in var_attrs:
-                name, attrs = var_attrs.split('\t', 1)
+        try:
+            frame_variables = self.get_namespace()
+            var_objects = []
+            # vars = scope_attrs.split(NEXT_VALUE_SEPARATOR)
+            vars = scope_attrs
+            for var_attrs in vars:
+                if '\t' in var_attrs:
+                    name, attrs = var_attrs.split('\t', 1)
 
-            else:
-                name = var_attrs
-                attrs = None
-            if name in frame_variables.keys():
-                var_object = pydevd_vars.resolve_var_object(frame_variables[name], attrs)
-                var_objects.append((var_object, name))
-            else:
-                var_object = pydevd_vars.eval_in_context(name, frame_variables, frame_variables)
-                var_objects.append((var_object, name))
+                else:
+                    name = var_attrs
+                    attrs = None
+                if name in frame_variables.keys():
+                    var_object = pydevd_vars.resolve_var_object(frame_variables[name], attrs)
+                    var_objects.append((var_object, name))
+                else:
+                    var_object = pydevd_vars.eval_in_context(name, frame_variables, frame_variables)
+                    var_objects.append((var_object, name))
 
-        from _pydev_bundle.pydev_console_commands import ThriftGetValueAsyncThreadConsole
-        t = ThriftGetValueAsyncThreadConsole(self.get_server(), seq, var_objects)
-        t.start()
+            from _pydev_bundle.pydev_console_commands import ThriftGetValueAsyncThreadConsole
+            t = ThriftGetValueAsyncThreadConsole(self.get_server(), seq, var_objects)
+            t.start()
+        except:
+            traceback.print_exc()
+            raise PythonUnhandledException(traceback.format_exc())
 
     def changeVariable(self, attr, value):
-        def do_change_variable():
-            Exec('%s=%s' % (attr, value), self.get_namespace(), self.get_namespace())
+        try:
+            def do_change_variable():
+                Exec('%s=%s' % (attr, value), self.get_namespace(), self.get_namespace())
 
-        # Important: it has to be really enabled in the main thread, so, schedule
-        # it to run in the main thread.
-        self.exec_queue.put(do_change_variable)
+            # Important: it has to be really enabled in the main thread, so, schedule
+            # it to run in the main thread.
+            self.exec_queue.put(do_change_variable)
+        except:
+            traceback.print_exc()
+            raise PythonUnhandledException(traceback.format_exc())
 
     def _findFrame(self, thread_id, frame_id):
         '''
@@ -333,65 +364,67 @@ class BaseInterpreterInterface(BaseCodeExecutor):
         Used to show console with variables connection.
         Mainly, monkey-patches things in the debugger structure so that the debugger protocol works.
         '''
+        try:
+            if debugger_options is None:
+                debugger_options = {}
 
-        if debugger_options is None:
-            debugger_options = {}
-
-        for (env_name, value) in dict_iter_items(extra_envs):
-            existing_value = os.environ.get(env_name, None)
-            if existing_value:
-                os.environ[env_name] = "%s%c%s" % (existing_value, os.path.pathsep, value)
-            else:
-                os.environ[env_name] = value
-            if env_name == "PYTHONPATH":
-                sys.path.append(value)
-
-        def do_connect_to_debugger():
-            try:
-                # Try to import the packages needed to attach the debugger
-                import pydevd
-                from _pydev_imps._pydev_saved_modules import threading
-
-            except:
-                # This happens on Jython embedded in host eclipse
-                traceback.print_exc()
-                sys.stderr.write('pydevd is not available, cannot connect\n', )
-
-            from _pydevd_bundle.pydevd_constants import set_thread_id
-            from _pydev_bundle import pydev_localhost
-            set_thread_id(threading.currentThread(), "console_main")
-
-            self.orig_find_frame = pydevd_vars.find_frame
-            pydevd_vars.find_frame = self._findFrame
-
-            self.debugger = pydevd.PyDB()
-            try:
-                pydevd.apply_debugger_options(debugger_options)
-                if debugger_host is None or pydev_localhost.is_localhost(debugger_host):
-                    host = pydev_localhost.get_localhost()
+            for (env_name, value) in dict_iter_items(extra_envs):
+                existing_value = os.environ.get(env_name, None)
+                if existing_value:
+                    os.environ[env_name] = "%s%c%s" % (existing_value, os.path.pathsep, value)
                 else:
-                    host = debugger_host
-                self.debugger.connect(host, debuggerPort)
-                self.debugger.prepare_to_run()
-                self.debugger.disable_tracing()
-            except:
-                traceback.print_exc()
-                sys.stderr.write('Failed to connect to target debugger.\n')
+                    os.environ[env_name] = value
+                if env_name == "PYTHONPATH":
+                    sys.path.append(value)
 
-            # Register to process commands when idle
-            self.debugrunning = False
-            try:
-                import pydevconsole
-                pydevconsole.set_debug_hook(self.debugger.process_internal_commands)
-            except:
-                traceback.print_exc()
-                sys.stderr.write('Version of Python does not support debuggable Interactive Console.\n')
+            def do_connect_to_debugger():
+                try:
+                    # Try to import the packages needed to attach the debugger
+                    import pydevd
+                    from _pydev_imps._pydev_saved_modules import threading
 
-        # Important: it has to be really enabled in the main thread, so, schedule
-        # it to run in the main thread.
-        self.exec_queue.put(do_connect_to_debugger)
+                except:
+                    # This happens on Jython embedded in host eclipse
+                    traceback.print_exc()
+                    sys.stderr.write('pydevd is not available, cannot connect\n', )
 
-        return ('connect complete',)
+                from _pydevd_bundle.pydevd_constants import set_thread_id
+                from _pydev_bundle import pydev_localhost
+                set_thread_id(threading.currentThread(), "console_main")
+
+                self.orig_find_frame = pydevd_vars.find_frame
+                pydevd_vars.find_frame = self._findFrame
+
+                self.debugger = pydevd.PyDB()
+                try:
+                    pydevd.apply_debugger_options(debugger_options)
+                    if debugger_host is None or pydev_localhost.is_localhost(debugger_host):
+                        host = pydev_localhost.get_localhost()
+                    else:
+                        host = debugger_host
+                    self.debugger.connect(host, debuggerPort)
+                    self.debugger.prepare_to_run()
+                    self.debugger.disable_tracing()
+                except:
+                    traceback.print_exc()
+                    sys.stderr.write('Failed to connect to target debugger.\n')
+
+                # Register to process commands when idle
+                self.debugrunning = False
+                try:
+                    import pydevconsole
+                    pydevconsole.set_debug_hook(self.debugger.process_internal_commands)
+                except:
+                    traceback.print_exc()
+                    sys.stderr.write('Version of Python does not support debuggable Interactive Console.\n')
+
+            # Important: it has to be really enabled in the main thread, so, schedule
+            # it to run in the main thread.
+            self.exec_queue.put(do_connect_to_debugger)
+            return ('connect complete',)
+        except:
+            traceback.print_exc()
+            raise PythonUnhandledException(traceback.format_exc())
 
     def handshake(self):
         if self.connect_status_queue is not None:
