@@ -40,7 +40,7 @@ public class DfaExpressionFactory {
 
   @Nullable
   @Contract("null -> null")
-  public DfaValue getExpressionDfaValue(@Nullable PsiExpression expression) {
+  DfaValue getExpressionDfaValue(@Nullable PsiExpression expression) {
     if (expression == null) return null;
 
     if (expression instanceof PsiParenthesizedExpression) {
