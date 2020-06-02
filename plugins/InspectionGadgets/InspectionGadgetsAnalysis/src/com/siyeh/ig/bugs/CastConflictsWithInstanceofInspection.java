@@ -16,6 +16,8 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -61,22 +63,8 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
       if (castType == null) {
         return;
       }
-      final PsiType type = castType.getType();
       final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(expression.getOperand());
-      if (!(operand instanceof PsiReferenceExpression)) {
-        return;
-      }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)operand;
-      final PsiInstanceOfExpression conflictingInstanceof =
-        InstanceOfUtils.getConflictingInstanceof(type, referenceExpression, expression);
-      if (conflictingInstanceof == null) {
-        return;
-      }
-      final PsiTypeElement instanceofTypeElement = conflictingInstanceof.getCheckType();
-      if (instanceofTypeElement == null) {
-        return;
-      }
-      registerError(expression, referenceExpression, castType, instanceofTypeElement);
+      checkConflictingInstanceof(operand, castType, expression);
     }
 
     @Override
@@ -115,17 +103,20 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
         return;
       }
       final PsiExpression argument = PsiUtil.skipParenthesizedExprDown(arguments[0]);
-      if (!(argument instanceof PsiReferenceExpression)) {
-        return;
-      }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)argument;
-      final PsiInstanceOfExpression conflictingInstanceof =
-        InstanceOfUtils.getConflictingInstanceof(castType, referenceExpression, expression);
-      if (conflictingInstanceof == null) {
-        return;
-      }
-      final PsiTypeElement instanceofTypeElement = conflictingInstanceof.getCheckType();
-      registerError(expression, referenceExpression, operand, instanceofTypeElement);
+      checkConflictingInstanceof(argument, operand, expression);
+    }
+
+    private void checkConflictingInstanceof(PsiExpression expression, PsiTypeElement castTypeElement, PsiExpression anchor) {
+      if (!(expression instanceof PsiReferenceExpression)) return;
+      PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
+      PsiType castType = castTypeElement.getType();
+      PsiInstanceOfExpression conflictingInstanceof = InstanceOfUtils.getConflictingInstanceof(castType, referenceExpression, anchor);
+      if (conflictingInstanceof == null) return;
+      PsiTypeElement instanceofTypeElement = conflictingInstanceof.getCheckType();
+      if (instanceofTypeElement == null) return;
+      PsiType psiType = TypeConstraint.fromDfType(CommonDataflow.getDfType(expression)).getPsiType(expression.getProject());
+      if (psiType != null && castType.isAssignableFrom(psiType)) return;
+      registerError(anchor, referenceExpression, castTypeElement, instanceofTypeElement);
     }
   }
 
