@@ -121,20 +121,51 @@ internal class WorkspaceEntityStorageBuilderImpl(
     }
 
     // Add an entry to changelog
-    val pid = e.id
-    val parents = this.refs.getParentRefsOfChild(pid)
-    val children = this.refs.getChildrenRefsOfParentBy(pid)
-    updateChangeLog { it.add(ChangeEntry.ReplaceEntity(copiedData, children, parents)) }
+    addReplaceChange(copiedData)
 
     val updatedEntity = copiedData.createEntity(this)
 
-    if (updatedEntity is WorkspaceEntityWithPersistentId) indexes.persistentIdIndex.index(pid, updatedEntity.persistentId())
-    indexes.updateSoftReferences(beforePersistentId, copiedData, this)
+    updatePersistentIdIndexes(updatedEntity, beforePersistentId, copiedData)
 
     // Assert consistency
     this.assertConsistencyInStrictMode()
 
     return updatedEntity
+  }
+
+  private fun <T : WorkspaceEntity> updatePersistentIdIndexes(updatedEntity: WorkspaceEntity,
+                                                              beforePersistentId: PersistentEntityId<*>?,
+                                                              copiedData: WorkspaceEntityData<T>) {
+    val pid = (updatedEntity as WorkspaceEntityBase).id
+    if (updatedEntity is WorkspaceEntityWithPersistentId) {
+      val newPersistentId = updatedEntity.persistentId()
+      if (beforePersistentId != null && beforePersistentId != newPersistentId) {
+        indexes.persistentIdIndex.index(pid, newPersistentId)
+        updateComposedIds(beforePersistentId, newPersistentId)
+      }
+    }
+    indexes.simpleUpdateSoftReferences(copiedData)
+  }
+
+  private fun updateComposedIds(beforePersistentId: PersistentEntityId<*>, newPersistentId: PersistentEntityId<*> ) {
+    val idsWithSoftRef = HashSet(indexes.softLinks.getValues(beforePersistentId))
+    for (entityId in idsWithSoftRef) {
+      val entity = this.entitiesByType.getEntityDataForModification(entityId)
+      val editingBeforePersistentId = entity.persistentId(this)
+      (entity as SoftLinkable).updateLink(beforePersistentId, newPersistentId, ArrayList())
+
+      // Add an entry to changelog
+      addReplaceChange(entity)
+
+      updatePersistentIdIndexes(entity.createEntity(this), editingBeforePersistentId, entity)
+    }
+  }
+
+  private fun addReplaceChange(entity: WorkspaceEntityData<*>) {
+    val pid = entity.createPid()
+    val parents = this.refs.getParentRefsOfChild(pid)
+    val children = this.refs.getChildrenRefsOfParentBy(pid)
+    updateChangeLog { it.add(ChangeEntry.ReplaceEntity(entity, children, parents)) }
   }
 
   override fun <T : WorkspaceEntity> changeSource(e: T, newSource: EntitySource): T {

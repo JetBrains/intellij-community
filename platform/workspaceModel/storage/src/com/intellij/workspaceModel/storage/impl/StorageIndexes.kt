@@ -136,6 +136,18 @@ internal class MutableStorageIndexes(
     persistentIdIndex.index(entityId)
   }
 
+  fun <T : WorkspaceEntity> simpleUpdateSoftReferences(copiedData: WorkspaceEntityData<T>) {
+    val pid = copiedData.createPid()
+    if (copiedData is SoftLinkable) {
+      val beforeSoftLinks = HashSet(this.softLinks.getKeys(pid))
+      val afterSoftLinks = copiedData.getLinks()
+      if (beforeSoftLinks != afterSoftLinks) {
+        beforeSoftLinks.forEach { this.softLinks.remove(it, pid) }
+        afterSoftLinks.forEach { this.softLinks.put(it, pid) }
+      }
+    }
+  }
+
   @OptIn(ExperimentalStdlibApi::class)
   fun <T : WorkspaceEntity> updateSoftReferences(beforePersistentId: PersistentEntityId<*>?,
                                                  copiedData: WorkspaceEntityData<T>,
