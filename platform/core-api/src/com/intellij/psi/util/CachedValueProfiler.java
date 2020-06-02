@@ -15,7 +15,7 @@ public final class CachedValueProfiler {
   private volatile MultiMap<StackTraceElement, ProfilingInfo> myStorage = null;
 
   private final Object myLock = new Object();
-  private final ConcurrentMap<CachedValueProvider.Result, ProfilingInfo> myTemporaryResults = new ConcurrentHashMap<>();
+  private volatile ConcurrentMap<CachedValueProvider.Result<?>, ProfilingInfo> myTemporaryResults;
 
   public static boolean canProfile() {
     return ApplicationManager.getApplication().isInternal();
@@ -32,9 +32,11 @@ public final class CachedValueProfiler {
         if (storage == null) {
           myStorage = MultiMap.createConcurrent();
         }
+        myTemporaryResults = new ConcurrentHashMap<>();
       }
       else {
         myStorage = null;
+        myTemporaryResults = null;
       }
     }
   }
@@ -47,17 +49,20 @@ public final class CachedValueProfiler {
     MultiMap<StackTraceElement, ProfilingInfo> storage = myStorage;
     if (storage == null) return;
 
+    ConcurrentMap<CachedValueProvider.Result<?>, ProfilingInfo> temporaryResults = myTemporaryResults;
+    if (temporaryResults == null) return;
+
     StackTraceElement origin = findOrigin();
     if (origin == null) return;
 
     ProfilingInfo info = new ProfilingInfo(origin);
     storage.putValue(origin, info);
-
-    myTemporaryResults.put(result, info);
+    temporaryResults.put(result, info);
   }
 
   public @Nullable <T> ProfilingInfo getTemporaryInfo(@NotNull CachedValueProvider.Result<T> result) {
-    return myTemporaryResults.remove(result);
+    ConcurrentMap<CachedValueProvider.Result<?>, ProfilingInfo> map = myTemporaryResults;
+    return map != null ? map.remove(result) : null;
   }
 
   public MultiMap<StackTraceElement, ProfilingInfo> getStorageSnapshot() {
