@@ -2,7 +2,7 @@
 
 from typing import (
     Callable, IO, Iterable, Iterator, List, Mapping, Optional, Type,
-    Union,
+    Union, Tuple, Dict, Set
 )
 import os
 import sys
@@ -15,23 +15,53 @@ elif sys.version_info >= (3,):
 else:
     _Path = Union[str, unicode]
 
-ENCODING: str
+# tar constants
+NUL: bytes
+BLOCKSIZE: int
+RECORDSIZE: int
+GNU_MAGIC: bytes
+POSIX_MAGIC: bytes
+
+LENGTH_NAME: int
+LENGTH_LINK: int
+LENGTH_PREFIX: int
+
+REGTYPE: bytes
+AREGTYPE: bytes
+LNKTYPE: bytes
+SYMTYPE: bytes
+CONTTYPE: bytes
+BLKTYPE: bytes
+DIRTYPE: bytes
+FIFOTYPE: bytes
+CHRTYPE: bytes
+
+GNUTYPE_LONGNAME: bytes
+GNUTYPE_LONGLINK: bytes
+GNUTYPE_SPARSE: bytes
+
+XHDTYPE: bytes
+XGLTYPE: bytes
+SOLARIS_XHDTYPE: bytes
 
 USTAR_FORMAT: int
 GNU_FORMAT: int
 PAX_FORMAT: int
 DEFAULT_FORMAT: int
 
-REGTYPE: bytes
-AREGTYPE: bytes
-LNKTYPE: bytes
-SYMTYPE: bytes
-DIRTYPE: bytes
-FIFOTYPE: bytes
-CONTTYPE: bytes
-CHRTYPE: bytes
-BLKTYPE: bytes
-GNUTYPE_SPARSE: bytes
+# tarfile constants
+
+SUPPORTED_TYPES: Tuple[bytes, ...]
+REGULAR_TYPES: Tuple[bytes, ...]
+GNU_TYPES: Tuple[bytes, ...]
+PAX_FIELDS: Tuple[str, ...]
+PAX_NUMBER_FIELDS: Dict[str, type]
+
+if sys.version_info >= (3,):
+    PAX_NAME_FIELDS: Set[str]
+
+
+ENCODING: str
 
 if sys.version_info < (3,):
     TAR_PLAIN: int
@@ -114,6 +144,18 @@ class TarFile(Iterable[TarInfo]):
                     path: _Path = ...) -> None: ...
     def extractfile(self,
                     member: Union[str, TarInfo]) -> Optional[IO[bytes]]: ...
+    def makedir(self, tarinfo: TarInfo, targetpath: _Path) -> None: ...  # undocumented
+    def makefile(self, tarinfo: TarInfo, targetpath: _Path) -> None: ...  # undocumented
+    def makeunknown(self, tarinfo: TarInfo, targetpath: _Path) -> None: ...  # undocumented
+    def makefifo(self, tarinfo: TarInfo, targetpath: _Path) -> None: ...  # undocumented
+    def makedev(self, tarinfo: TarInfo, targetpath: _Path) -> None: ...  # undocumented
+    def makelink(self, tarinfo: TarInfo, targetpath: _Path) -> None: ...  # undocumented
+    if sys.version_info >= (3, 5):
+        def chown(self, tarinfo: TarInfo, targetpath: _Path, numeric_owner: bool) -> None: ...  # undocumented
+    else:
+        def chown(self, tarinfo: TarInfo, targetpath: _Path) -> None: ...  # undocumented
+    def chmod(self, tarinfo: TarInfo, targetpath: _Path) -> None: ...  # undocumented
+    def utime(self, tarinfo: TarInfo, targetpath: _Path) -> None: ...  # undocumented
     if sys.version_info >= (3, 7):
         def add(self, name: str, arcname: Optional[str] = ...,
                 recursive: bool = ..., *,
@@ -135,7 +177,10 @@ class TarFile(Iterable[TarInfo]):
                    fileobj: Optional[IO[bytes]] = ...) -> TarInfo: ...
     def close(self) -> None: ...
 
-def is_tarfile(name: str) -> bool: ...
+if sys.version_info >= (3, 9):
+    def is_tarfile(name: Union[_Path, IO[bytes]]) -> bool: ...
+else:
+    def is_tarfile(name: _Path) -> bool: ...
 
 if sys.version_info < (3, 8):
     def filemode(mode: int) -> str: ...  # undocumented

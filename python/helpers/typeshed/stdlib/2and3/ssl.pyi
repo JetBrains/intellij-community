@@ -134,24 +134,38 @@ PROTOCOL_SSLv3: int
 PROTOCOL_TLSv1: int
 PROTOCOL_TLSv1_1: int
 PROTOCOL_TLSv1_2: int
-if sys.version_info >= (3, 5):
-    PROTOCOL_TLS: int
+PROTOCOL_TLS: int
 if sys.version_info >= (3, 6):
     PROTOCOL_TLS_CLIENT: int
     PROTOCOL_TLS_SERVER: int
 
-OP_ALL: int
-OP_NO_SSLv2: int
-OP_NO_SSLv3: int
-OP_NO_TLSv1: int
-OP_NO_TLSv1_1: int
-OP_NO_TLSv1_2: int
-OP_CIPHER_SERVER_PREFERENCE: int
-OP_SINGLE_DH_USE: int
-OP_SINGLE_ECDH_USE: int
-OP_NO_COMPRESSION: int
 if sys.version_info >= (3, 6):
-    OP_NO_TICKET: int
+    class Options(enum.IntFlag):
+        OP_ALL: int
+        OP_NO_SSLv2: int
+        OP_NO_SSLv3: int
+        OP_NO_TLSv1: int
+        OP_NO_TLSv1_1: int
+        OP_NO_TLSv1_2: int
+        OP_CIPHER_SERVER_PREFERENCE: int
+        OP_SINGLE_DH_USE: int
+        OP_SINGLE_ECDH_USE: int
+        OP_NO_COMPRESSION: int
+        OP_NO_TICKET: int
+        OP_ENABLE_MIDDLEBOX_COMPAT: int
+        if sys.version_info >= (3, 7):
+            OP_NO_RENEGOTIATION: int
+else:
+    OP_ALL: int
+    OP_NO_SSLv2: int
+    OP_NO_SSLv3: int
+    OP_NO_TLSv1: int
+    OP_NO_TLSv1_1: int
+    OP_NO_TLSv1_2: int
+    OP_CIPHER_SERVER_PREFERENCE: int
+    OP_SINGLE_DH_USE: int
+    OP_SINGLE_ECDH_USE: int
+    OP_NO_COMPRESSION: int
 
 HAS_ALPN: int
 HAS_ECDH: bool
@@ -249,7 +263,10 @@ if sys.version_info >= (3, 7):
 
 class SSLContext:
     check_hostname: bool
-    options: int
+    if sys.version_info >= (3, 6):
+        options: Options
+    else:
+        options: int
     if sys.version_info >= (3, 8):
         post_handshake_auth: bool
     @property

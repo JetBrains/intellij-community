@@ -5,6 +5,7 @@
 import os
 import sys
 from typing import overload, List, Any, AnyStr, Sequence, Tuple, TypeVar, Union, Text, Callable, Optional
+from genericpath import exists as exists
 
 _T = TypeVar('_T')
 
@@ -100,10 +101,6 @@ elif sys.version_info >= (3, 5):
 # So, fall back to Any
 def commonprefix(m: Sequence[_PathType]) -> Any: ...
 
-if sys.version_info >= (3, 3):
-    def exists(path: Union[_PathType, int]) -> bool: ...
-else:
-    def exists(path: _PathType) -> bool: ...
 def lexists(path: _PathType) -> bool: ...
 
 # These return float if os.stat_float_times() == True,
@@ -170,8 +167,8 @@ else:
     def splitdrive(p: AnyStr) -> Tuple[AnyStr, AnyStr]: ...
     def splitext(p: AnyStr) -> Tuple[AnyStr, AnyStr]: ...
 
-if sys.platform == 'win32':
-    def splitunc(path: AnyStr) -> Tuple[AnyStr, AnyStr]: ...  # deprecated
+if sys.version_info < (3, 7) and sys.platform == 'win32':
+    def splitunc(p: AnyStr) -> Tuple[AnyStr, AnyStr]: ...  # deprecated
 
 if sys.version_info < (3,):
     def walk(path: AnyStr, visit: Callable[[_T, AnyStr, List[AnyStr]], Any], arg: _T) -> None: ...

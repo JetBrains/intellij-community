@@ -2,11 +2,19 @@ import sys
 from typing import Any, Optional
 
 if sys.version_info < (3,):
-    from SocketServer import ThreadingMixIn, ForkingMixIn
+    from SocketServer import ThreadingMixIn
     from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 else:
-    from socketserver import ThreadingMixIn, ForkingMixIn
+    from socketserver import ThreadingMixIn
     from http.server import HTTPServer, BaseHTTPRequestHandler
+
+if sys.platform == "win32":
+    class ForkingMixIn(object): ...
+else:
+    if sys.version_info < (3,):
+        from SocketServer import ForkingMixIn as ForkingMixIn
+    else:
+        from socketserver import ForkingMixIn as ForkingMixIn
 
 class _SslDummy:
     def __getattr__(self, name): ...

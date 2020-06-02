@@ -1,7 +1,6 @@
 # Stubs for uuid
 
 import sys
-from enum import Enum
 from typing import Tuple, Optional, Any, Text
 
 # Because UUID has properties called int and bytes we need to rename these temporarily.
@@ -10,6 +9,7 @@ _Bytes = bytes
 _FieldsType = Tuple[int, int, int, int, int, int]
 
 if sys.version_info >= (3, 7):
+    from enum import Enum
     class SafeUUID(Enum):
         safe: int
         unsafe: int
@@ -94,7 +94,7 @@ class UUID:
         def get_version(self) -> Optional[_Int]: ...
         def __cmp__(self, other: Any) -> _Int: ...
 
-def getnode(*, getters: None = ...) -> int: ...  # getters is undocumented (and unused)
+def getnode() -> int: ...
 def uuid1(node: Optional[_Int] = ..., clock_seq: Optional[_Int] = ...) -> UUID: ...
 def uuid3(namespace: UUID, name: str) -> UUID: ...
 def uuid4() -> UUID: ...

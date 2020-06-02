@@ -8,8 +8,12 @@ _ResultClassType = Callable[[TextIO, bool, int], unittest.result.TestResult]
 
 
 class TextTestResult(unittest.result.TestResult):
+    descriptions: bool  # undocumented
+    dots: bool  # undocumented
     separator1: str
     separator2: str
+    showall: bool  # undocumented
+    stream: TextIO  # undocumented
     def __init__(self, stream: TextIO, descriptions: bool,
                  verbosity: int) -> None: ...
     def getDescription(self, test: unittest.case.TestCase) -> str: ...

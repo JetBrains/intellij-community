@@ -39,7 +39,7 @@ class PyLineBreakpointTypeTest : PyTestCase() {
   // PY-16932
   fun testPutAtPythonStub() {
     val pythonFile = PyTypeShed.directory!!.findFileByRelativePath("stdlib/2/__builtin__.pyi")
-    val line = 19
+    val line = 23
 
     val document = FileDocumentManager.getInstance().getDocument(pythonFile!!)
     val range = TextRange.create(document!!.getLineStartOffset(line), document.getLineEndOffset(line))

@@ -1,0 +1,39 @@
+ctypes.GetLastError  # Is actually a pointer
+locale.[A-Z0-9_]+  # Constants that should be moved to _locale and re-exported conditionally
+locale.nl_langinfo  # Function that should be moved to _locale and re-exported conditionally
+os.path.join  # Parameter name mismatch
+posixpath.altsep  # Type mismatch
+posixpath.realpath  # Parameter name mismatch
+urllib.request.pathname2url  # Parameter name mismatch
+urllib.request.url2pathname  # Same
+
+# ==========
+# Whitelist entries that cannot or should not be fixed
+# ==========
+
+# Modules that do not exist on Windows systems
+_curses
+_posixsubprocess
+asyncio.unix_events
+crypt
+dbm.gnu
+fcntl
+grp
+nis
+posix
+pwd
+readline
+resource
+spwd
+syslog
+termios
+
+# Modules that rely on _curses
+curses
+curses.ascii
+curses.panel
+curses.textpad
+
+# Modules that rely on termios
+pty
+tty

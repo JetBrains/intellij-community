@@ -1,0 +1,1 @@
+posixpath.splitunc  # This doesn't exist, but our hands are tied by check_consistent
