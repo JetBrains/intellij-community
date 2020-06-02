@@ -3,6 +3,9 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.notification.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,13 +17,9 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.DottedBorder;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.labels.LinkLabel;
-import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -41,14 +40,9 @@ import org.jetbrains.idea.svn.integrate.QuickMerge;
 import org.jetbrains.idea.svn.integrate.QuickMergeInteractionImpl;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.List;
 import java.util.*;
@@ -66,9 +60,12 @@ public class CopiesPanel extends SimpleToolWindowPanel {
 
   private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Svn Roots Detection Errors", STICKY_BALLOON, true);
 
+  private static final String TOOLBAR_GROUP = "Svn.WorkingCopiesView.Toolbar";
+  private static final String TOOLBAR_PLACE = "Svn.WorkingCopiesView";
+
   private final Project myProject;
   private final JPanel myPanel;
-  private LinkLabel myRefreshLabel;
+  private boolean isRefreshing;
 
   private final static String CHANGE_FORMAT = "CHANGE_FORMAT";
   private final static String CLEANUP = "CLEANUP";
@@ -82,21 +79,31 @@ public class CopiesPanel extends SimpleToolWindowPanel {
     myProject.getMessageBus().connect().subscribe(SvnVcs.ROOTS_RELOADED, (Consumer<Boolean>)this::rootsReloaded);
 
     final JPanel holderPanel = new JPanel(new BorderLayout());
-    FontMetrics fm = holderPanel.getFontMetrics(holderPanel.getFont());
     myPanel = new JPanel(new GridBagLayout());
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(myPanel, BorderLayout.NORTH);
     holderPanel.add(panel, BorderLayout.WEST);
-    myRefreshLabel = new MyLinkLabel((int)(fm.getHeight() * 1.3), "Refresh", (aSource, aLinkData) -> {
-      if (myRefreshLabel.isEnabled()) {
-        getVcs().invokeRefreshSvnRoots();
-        myRefreshLabel.setEnabled(false);
-      }
-    });
     setContent(ScrollPaneFactory.createScrollPane(holderPanel));
-    setFocusableForLinks(myRefreshLabel);
+
+    ActionGroup toolbarGroup = (ActionGroup)ActionManager.getInstance().getAction(TOOLBAR_GROUP);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(TOOLBAR_PLACE, toolbarGroup, false);
+    setToolbar(toolbar.getComponent());
+
     rootsReloaded(true);
-    initView();
+    refresh();
+  }
+
+  @CalledInAwt
+  public boolean isRefreshing() {
+    return isRefreshing;
+  }
+
+  @CalledInAwt
+  public void refresh() {
+    if (isRefreshing) return;
+
+    isRefreshing = true;
+    getVcs().invokeRefreshSvnRoots();
   }
 
   @NotNull
@@ -122,7 +129,7 @@ public class CopiesPanel extends SimpleToolWindowPanel {
       }
     }
     else {
-      getApplication().invokeLater(() -> myRefreshLabel.setEnabled(true), ModalityState.NON_MODAL);
+      getApplication().invokeLater(() -> isRefreshing = false, ModalityState.NON_MODAL);
     }
   }
 
@@ -138,9 +145,8 @@ public class CopiesPanel extends SimpleToolWindowPanel {
   private void setWorkingCopies(@NotNull List<WCInfo> infoList, boolean hasErrors, List<WorkingCopyFormat> supportedFormats) {
     infoList.sort(comparing(WCInfo::getPath));
     updateList(infoList, supportedFormats);
-    myRefreshLabel.setEnabled(true);
+    isRefreshing = false;
     showErrorNotification(hasErrors);
-    SwingUtilities.invokeLater(() -> IdeFocusManager.getInstance(myProject).requestFocus(myRefreshLabel, true));
   }
 
   private void updateList(@NotNull final List<WCInfo> infoList, @NotNull final List<WorkingCopyFormat> supportedFormats) {
@@ -148,8 +154,6 @@ public class CopiesPanel extends SimpleToolWindowPanel {
     final Insets nullIndent = new Insets(1, 3, 1, 0);
     final GridBagConstraints gb =
       new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(2, 2, 0, 0), 0, 0);
-    gb.insets.left = 4;
-    myPanel.add(myRefreshLabel, gb);
     gb.insets.left = 1;
 
     final Insets topIndent = new Insets(10, 3, 0, 0);
@@ -347,33 +351,6 @@ public class CopiesPanel extends SimpleToolWindowPanel {
     return otherBranchUrl.appendPath(notNullize(configuration.getRelativeUrl(url)), false);
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
-  private void setFocusableForLinks(final LinkLabel label) {
-    final Border border = new DottedBorder(new Insets(1,2,1,1), JBColor.BLACK);
-    label.setFocusable(true);
-    label.addFocusListener(new FocusAdapter() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        super.focusGained(e);
-        label.setBorder(border);
-      }
-
-      @Override
-      public void focusLost(FocusEvent e) {
-        super.focusLost(e);
-        label.setBorder(null);
-      }
-    });
-    label.addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent e) {
-        if (KeyEvent.VK_ENTER == e.getKeyCode()) {
-          label.doClick();
-        }
-      }
-    });
-  }
-
   private void changeFormat(@NotNull final WCInfo wcInfo, @NotNull final Collection<WorkingCopyFormat> supportedFormats) {
     ChangeFormatDialog dialog = new ChangeFormatDialog(myProject, new File(wcInfo.getPath()), false, !wcInfo.isIsWcRoot());
 
@@ -389,15 +366,11 @@ public class CopiesPanel extends SimpleToolWindowPanel {
         @Override
         public void onSuccess() {
           super.onSuccess();
-          myRefreshLabel.doClick();
+          refresh();
         }
       };
       ProgressManager.getInstance().run(task);
     }
-  }
-
-  private void initView() {
-    myRefreshLabel.doClick();
   }
 
   private void showErrorNotification(boolean hasErrors) {
@@ -414,21 +387,6 @@ public class CopiesPanel extends SimpleToolWindowPanel {
       for (ErrorsFoundNotification notification : notifications) {
         notification.expire();
       }
-    }
-  }
-
-  private static class MyLinkLabel extends LinkLabel {
-    private final int myHeight;
-
-    MyLinkLabel(final int height, final String text, final LinkListener linkListener) {
-      super(text, null, linkListener);
-      myHeight = height;
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      final Dimension preferredSize = super.getPreferredSize();
-      return new Dimension(preferredSize.width, myHeight);
     }
   }
 
