@@ -15,6 +15,7 @@
  */
 package com.intellij.util.download;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -22,6 +23,7 @@ import java.util.List;
 /**
  * Use {@link DownloadableFileService} to create instances of this interface
  */
+@ApiStatus.NonExtendable
 public interface DownloadableFileSetVersions<F extends DownloadableFileSetDescription> {
   /**
    * Fetches available versions of file sets and calls {@code callback.onSuccess} when finished

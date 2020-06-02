@@ -17,6 +17,7 @@ package com.intellij.util.download;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,7 @@ import javax.swing.*;
 import java.net.URL;
 import java.util.List;
 
+@ApiStatus.NonExtendable
 public abstract class DownloadableFileService {
   public static DownloadableFileService getInstance() {
     return ServiceManager.getService(DownloadableFileService.class);
