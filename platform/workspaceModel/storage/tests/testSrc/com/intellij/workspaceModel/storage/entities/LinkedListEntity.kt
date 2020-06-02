@@ -29,9 +29,7 @@ internal class LinkedListEntity(
   val name: String,
   val next: LinkedListEntityId
 ) : WorkspaceEntityWithPersistentId, WorkspaceEntityBase() {
-  override fun persistentId(): LinkedListEntityId = LinkedListEntityId(
-    name)
-
+  override fun persistentId(): LinkedListEntityId = LinkedListEntityId(name)
 }
 
 internal class ModifiableLinkedListEntity : ModifiableWorkspaceEntityBase<LinkedListEntity>() {
