@@ -199,8 +199,6 @@
 
     <applicationService serviceInterface="com.intellij.model.psi.PsiSymbolReferenceService"
                         serviceImplementation="com.intellij.model.psi.impl.PsiSymbolReferenceServiceImpl"/>
-    <applicationService serviceInterface="com.intellij.psi.PsiReferenceService"
-                        serviceImplementation="com.intellij.psi.PsiReferenceServiceImpl"/>
 
     <applicationService serviceInterface="com.intellij.patterns.compiler.PatternCompilerFactory"
                         serviceImplementation="com.intellij.patterns.compiler.PatternCompilerFactoryImpl"/>

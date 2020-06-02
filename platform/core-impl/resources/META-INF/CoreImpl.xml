@@ -65,6 +65,8 @@
                     serviceImplementation="com.intellij.psi.impl.PsiFileFactoryImpl"/>
     <projectService serviceInterface="com.intellij.psi.text.BlockSupport"
                     serviceImplementation="com.intellij.psi.impl.BlockSupportImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.PsiReferenceService"
+                        serviceImplementation="com.intellij.psi.PsiReferenceServiceImpl"/>
     <!-- must be a service because KotlinCodeBlockModificationListener requests it via constructor injection -->
     <projectService serviceImplementation="com.intellij.pom.tree.TreeAspect"/>
   </extensions>
