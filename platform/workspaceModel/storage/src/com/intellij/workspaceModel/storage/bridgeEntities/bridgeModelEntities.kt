@@ -731,11 +731,7 @@ class ModuleOutputPackagingElementEntity(
 class LibraryFilesPackagingElementEntityData : WorkspaceEntityData<LibraryFilesPackagingElementEntity>(), SoftLinkable {
   lateinit var library: LibraryId
 
-  override fun getLinks(): Set<PersistentEntityId<*>> {
-    val tableId = library.tableId
-    if (tableId is LibraryTableId.ModuleLibraryTableId) return setOf(library, tableId.moduleId)
-    return setOf(library)
-  }
+  override fun getLinks(): Set<PersistentEntityId<*>> = setOf(library)
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
                           newLink: PersistentEntityId<*>,
@@ -743,13 +739,6 @@ class LibraryFilesPackagingElementEntityData : WorkspaceEntityData<LibraryFilesP
     if (oldLink == library) {
       this.library = newLink as LibraryId
       return true
-    }
-
-    val tableId = library.tableId
-    if (tableId is LibraryTableId.ModuleLibraryTableId && tableId.moduleId == oldLink) {
-      val oldLibrary = library
-      this.library = library.copy(tableId = tableId.copy(moduleId = newLink as ModuleId))
-      affectedIds += oldLibrary to this.library
     }
 
     return false
