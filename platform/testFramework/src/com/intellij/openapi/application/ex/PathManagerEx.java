@@ -17,6 +17,7 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
+import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 
 import java.io.File;
 import java.io.IOException;
@@ -348,7 +349,7 @@ public class PathManagerEx {
     }
 
     try {
-      Element element = JDomSerializationUtil.findComponent(JDOMUtil.load(modulesXml), ModuleManagerImpl.COMPONENT_NAME);
+      Element element = JDomSerializationUtil.findComponent(JDOMUtil.load(modulesXml), JpsProjectLoader.MODULE_MANAGER_COMPONENT);
       assert element != null;
       for (ModulePath file : ModuleManagerImpl.getPathsToModuleFiles(element)) {
         ourCommunityModules.add(file.getModuleName());

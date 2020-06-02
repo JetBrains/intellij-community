@@ -623,7 +623,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
 
     internal fun getModulePath(module: Module, entityStorage: VersionedEntityStorage): ModulePath = ModulePath(
       path = module.moduleFilePath,
-      group = getModuleGroupPath(module, entityStorage)?.joinToString(separator = ModuleManagerImpl.MODULE_GROUP_SEPARATOR)
+      group = getModuleGroupPath(module, entityStorage)?.joinToString(separator = MODULE_GROUP_SEPARATOR)
     )
 
     internal fun hasModuleGroups(entityStorage: VersionedEntityStorage) =

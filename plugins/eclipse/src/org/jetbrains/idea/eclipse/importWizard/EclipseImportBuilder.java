@@ -15,7 +15,7 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.module.impl.ModuleManagerImpl;
+import com.intellij.openapi.module.impl.ModuleManagerEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -237,7 +237,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         }
         final String moduleName = EclipseProjectFinder.findProjectName(path);
         moduleNames.add(moduleName);
-        final File imlFile = new File(modulesDirectory + File.separator + moduleName + ModuleManagerImpl.IML_EXTENSION);
+        final File imlFile = new File(modulesDirectory + File.separator + moduleName + ModuleManagerEx.IML_EXTENSION);
         if (imlFile.isFile()) {
           files.add(imlFile);
         }
@@ -280,7 +280,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         if (modulesDirectory == null) {
           modulesDirectory = path;
         }
-        final Module module = moduleModel.newModule(modulesDirectory + "/" + EclipseProjectFinder.findProjectName(path) + ModuleManagerImpl.IML_EXTENSION,
+        final Module module = moduleModel.newModule(modulesDirectory + "/" + EclipseProjectFinder.findProjectName(path) + ModuleManagerEx.IML_EXTENSION,
                                                     StdModuleTypes.JAVA.getId());
         result.add(module);
         final Set<String> natures = collectNatures(path);

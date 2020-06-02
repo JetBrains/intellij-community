@@ -46,6 +46,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 public class JpsProjectLoader extends JpsLoaderBase {
+  public static final String MODULE_MANAGER_COMPONENT = "ProjectModuleManager";
+  public static final String MODULES_TAG = "modules";
+  public static final String MODULE_TAG = "module";
+  public static final String FILE_PATH_ATTRIBUTE = "filepath";
+  public static final String FILE_URL_ATTRIBUTE = "fileurl";
+  public static final String GROUP_ATTRIBUTE = "group";
   public static final String CLASSPATH_ATTRIBUTE = "classpath";
   public static final String CLASSPATH_DIR_ATTRIBUTE = "classpath-dir";
 
@@ -146,7 +152,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
       LOG.info("External project config dir is used: " + externalConfigDir);
     }
 
-    Element moduleData = JDomSerializationUtil.findComponent(loadRootElement(dir.resolve("modules.xml")), "ProjectModuleManager");
+    Element moduleData = JDomSerializationUtil.findComponent(loadRootElement(dir.resolve("modules.xml")), MODULE_MANAGER_COMPONENT);
     Element externalModuleData;
     if (externalConfigDir == null) {
       externalModuleData = null;
@@ -302,8 +308,8 @@ public class JpsProjectLoader extends JpsLoaderBase {
 
     final Set<Path> foundFiles = new THashSet<>();
     final List<Path> moduleFiles = new ArrayList<>();
-    for (Element moduleElement : JDOMUtil.getChildren(componentElement.getChild("modules"), "module")) {
-      final String path = moduleElement.getAttributeValue("filepath");
+    for (Element moduleElement : JDOMUtil.getChildren(componentElement.getChild(MODULES_TAG), MODULE_TAG)) {
+      final String path = moduleElement.getAttributeValue(FILE_PATH_ATTRIBUTE);
       if (path != null) {
         final Path file = Paths.get(path);
         if (foundFiles.add(file) && !unloadedModules.contains(getModuleName(file))) {

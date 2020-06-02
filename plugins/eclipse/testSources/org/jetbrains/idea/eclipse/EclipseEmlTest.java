@@ -7,7 +7,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.module.impl.ModuleManagerImpl;
+import com.intellij.openapi.module.impl.ModuleManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -58,7 +58,7 @@ public class EclipseEmlTest extends JavaProjectTestCase {
 
   private static Module doLoadModule(@NotNull String path, @NotNull Project project) throws IOException, JDOMException, InvalidDataException {
     Module module = WriteAction.compute(
-      () -> ModuleManager.getInstance(project).newModule(path + '/' + EclipseProjectFinder.findProjectName(path) + ModuleManagerImpl.IML_EXTENSION, StdModuleTypes.JAVA.getId()));
+      () -> ModuleManager.getInstance(project).newModule(path + '/' + EclipseProjectFinder.findProjectName(path) + ModuleManagerEx.IML_EXTENSION, StdModuleTypes.JAVA.getId()));
 
     replaceRoot(path, EclipseXml.DOT_CLASSPATH_EXT, project);
 

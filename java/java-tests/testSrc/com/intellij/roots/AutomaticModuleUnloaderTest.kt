@@ -6,7 +6,6 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.StdModuleTypes
-import com.intellij.openapi.module.impl.ModuleManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -20,6 +19,7 @@ import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
+import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -182,7 +182,7 @@ class AutomaticModuleUnloaderTest {
     saveAndCloseProject(project)
     val modulesXmlFile = File(project.basePath, ".idea/modules.xml")
     val rootElement = JDOMUtil.load(modulesXmlFile)
-    val moduleRootComponent = JDomSerializationUtil.findComponent(rootElement, ModuleManagerImpl.COMPONENT_NAME)
+    val moduleRootComponent = JDomSerializationUtil.findComponent(rootElement, JpsProjectLoader.MODULE_MANAGER_COMPONENT)
     val modulesTag = moduleRootComponent!!.getChild("modules")!!
     moduleFiles.forEach {
       val filePath = it.systemIndependentPath

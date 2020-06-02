@@ -48,6 +48,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
+import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -59,19 +60,14 @@ import java.util.stream.Collectors;
 
 import static com.intellij.openapi.module.impl.ExternalModuleListStorageKt.getFilteredModuleList;
 
+/**
+ * This class isn't used in the new implementation of project model, which is based on {@link com.intellij.workspaceModel.ide Workspace Model}.
+ * It shouldn't be used directly, its base class {@link ModuleManagerEx} should be used instead.
+ */
+@ApiStatus.Internal
 public abstract class ModuleManagerImpl extends ModuleManagerEx implements Disposable, PersistentStateComponent<Element>, ProjectComponent {
-  public static final String COMPONENT_NAME = "ProjectModuleManager";
-
-  public static final String ELEMENT_MODULES = "modules";
-  public static final String ELEMENT_MODULE = "module";
-  public static final String ATTRIBUTE_FILEURL = "fileurl";
-  public static final String ATTRIBUTE_FILEPATH = "filepath";
-  public static final String ATTRIBUTE_GROUP = "group";
-  public static final String IML_EXTENSION = ".iml";
-
   private static final Logger LOG = Logger.getInstance(ModuleManagerImpl.class);
   private static final Key<String> DISPOSED_MODULE_NAME = Key.create("DisposedNeverAddedModuleName");
-  public static final String MODULE_GROUP_SEPARATOR = "/";
 
   protected final Project myProject;
   protected final MessageBus myMessageBus;
@@ -241,19 +237,19 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
   // returns mutable linked hash set
   public static Set<ModulePath> getPathsToModuleFiles(@NotNull Element element) {
     Set<ModulePath> paths = new LinkedHashSet<>();
-    final Element modules = element.getChild(ELEMENT_MODULES);
+    final Element modules = element.getChild(JpsProjectLoader.MODULES_TAG);
     if (modules != null) {
-      for (final Element moduleElement : modules.getChildren(ELEMENT_MODULE)) {
-        final String fileUrlValue = moduleElement.getAttributeValue(ATTRIBUTE_FILEURL);
+      for (final Element moduleElement : modules.getChildren(JpsProjectLoader.MODULE_TAG)) {
+        final String fileUrlValue = moduleElement.getAttributeValue(JpsProjectLoader.FILE_URL_ATTRIBUTE);
         final String filepath;
         if (fileUrlValue == null) {
           // support for older formats
-          filepath = moduleElement.getAttributeValue(ATTRIBUTE_FILEPATH);
+          filepath = moduleElement.getAttributeValue(JpsProjectLoader.FILE_PATH_ATTRIBUTE);
         }
         else {
           filepath = VirtualFileManager.extractPath(fileUrlValue);
         }
-        paths.add(new ModulePath(FileUtilRt.toSystemIndependentName(Objects.requireNonNull(filepath)), moduleElement.getAttributeValue(ATTRIBUTE_GROUP)));
+        paths.add(new ModulePath(FileUtilRt.toSystemIndependentName(Objects.requireNonNull(filepath)), moduleElement.getAttributeValue(JpsProjectLoader.GROUP_ATTRIBUTE)));
       }
     }
     return paths;
@@ -535,7 +531,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     if (!sorted.isEmpty()) {
       sorted.sort(Comparator.comparing(SaveItem::getModuleName));
 
-      Element modules = new Element(ELEMENT_MODULES);
+      Element modules = new Element(JpsProjectLoader.MODULES_TAG);
       for (SaveItem saveItem : sorted) {
         saveItem.writeExternal(modules);
       }
