@@ -58,6 +58,7 @@ import com.intellij.util.messages.Topic
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.xmlb.BeanBinding
 import java.awt.Window
+import java.nio.file.FileVisitResult
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
@@ -126,7 +127,8 @@ object DynamicPlugins {
   fun checkCanUnloadWithoutRestart(
     descriptor: IdeaPluginDescriptorImpl,
     baseDescriptor: IdeaPluginDescriptorImpl? = null,
-    context: List<IdeaPluginDescriptorImpl> = emptyList()
+    context: List<IdeaPluginDescriptorImpl> = emptyList(),
+    checkImplementationDetailDependencies: Boolean = true
   ): String? {
     if (InstalledPluginsState.getInstance().isRestartRequired) {
       return "Not allowing load/unload without restart because of pending restart operation"
@@ -234,18 +236,25 @@ object DynamicPlugins {
       }
     }
 
-    var optionalDependencyMessage: String? = null
+    var dependencyMessage: String? = null
     // if not a sub plugin descriptor, then check that any dependent plugin also reloadable
     if (descriptor.pluginId != null) {
       processOptionalDependenciesOnPlugin(descriptor.pluginId) { _, subDescriptor ->
         if (subDescriptor != null) {
-          optionalDependencyMessage = checkCanUnloadWithoutRestart(subDescriptor, descriptor, context)
+          dependencyMessage = checkCanUnloadWithoutRestart(subDescriptor, descriptor, context)
         }
-        optionalDependencyMessage == null
+        dependencyMessage == null
+      }
+
+      if (dependencyMessage == null && checkImplementationDetailDependencies) {
+        processImplementationDetailDependenciesOnPlugin(descriptor) { _, fullDescriptor ->
+          dependencyMessage = checkCanUnloadWithoutRestart(fullDescriptor, context = context, checkImplementationDetailDependencies = false)
+          dependencyMessage == null
+        }
       }
     }
 
-    return optionalDependencyMessage
+    return dependencyMessage
   }
 
   private fun processOptionalDependenciesOnPlugin(dependencyPluginId: PluginId,
@@ -260,6 +269,19 @@ object DynamicPlugins {
         if (!processor(descriptor, subDescriptor)) {
           break
         }
+      }
+    }
+  }
+
+  private fun processImplementationDetailDependenciesOnPlugin(pluginDescriptor: IdeaPluginDescriptorImpl,
+                                                              processor: (loadedDescriptor: IdeaPluginDescriptorImpl, fullDescriptor: IdeaPluginDescriptorImpl) -> Boolean) {
+    PluginManagerCore.processAllBackwardDependencies(pluginDescriptor, false) { loadedDescriptor ->
+      if (loadedDescriptor.isImplementationDetail) {
+        val fullDescriptor = PluginDescriptorLoader.loadFullDescriptor(loadedDescriptor as IdeaPluginDescriptorImpl)
+        if (processor(loadedDescriptor, fullDescriptor)) FileVisitResult.CONTINUE else FileVisitResult.TERMINATE
+      }
+      else {
+        FileVisitResult.CONTINUE
       }
     }
   }
@@ -366,9 +388,19 @@ object DynamicPlugins {
     disable: Boolean = false,
     isUpdate: Boolean = false,
     save: Boolean = true,
-    requireMemorySnapshot: Boolean = false
+    requireMemorySnapshot: Boolean = false,
+    waitForClassloaderUnload: Boolean = true,
+    checkImplementationDetailDependencies: Boolean = true
   ): Boolean {
     val application = ApplicationManager.getApplication() as ApplicationImpl
+
+    if (checkImplementationDetailDependencies) {
+      processImplementationDetailDependenciesOnPlugin(pluginDescriptor) { loadedDescriptor, fullDescriptor ->
+        loadedDescriptor.isEnabled = false
+        unloadPlugin(fullDescriptor, disable = true, save = false, waitForClassloaderUnload = false, checkImplementationDetailDependencies = false)
+        true
+      }
+    }
 
     // The descriptor passed to `unloadPlugin` is the full descriptor loaded from disk, it does not have a classloader.
     // We need to find the real plugin loaded into the current instance and unload its classloader.
@@ -461,7 +493,11 @@ object DynamicPlugins {
         return true
       }
 
-      val classLoaderUnloaded = loadedPluginDescriptor.unloadClassLoader(Registry.intValue("ide.plugins.unload.timeout", 5000))
+      val classLoaderUnloaded = if (waitForClassloaderUnload)
+        loadedPluginDescriptor.unloadClassLoader(Registry.intValue("ide.plugins.unload.timeout", 5000))
+      else
+        true
+
       if (!classLoaderUnloaded) {
         InstalledPluginsState.getInstance().isRestartRequired = true
 
@@ -476,6 +512,9 @@ object DynamicPlugins {
         else {
           LOG.info("Plugin ${pluginDescriptor.pluginId} is not unload-safe because class loader cannot be unloaded")
         }
+      }
+      else {
+        LOG.info("Successfully unloaded plugin ${pluginDescriptor.pluginId} (classloader unload checked=$waitForClassloaderUnload)")
       }
 
       val eventId = if (classLoaderUnloaded) "unload.success" else "unload.fail"
@@ -575,7 +614,8 @@ object DynamicPlugins {
   }
 
   @JvmStatic
-  fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl) {
+  @JvmOverloads
+  fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, checkImplementationDetailDependencies: Boolean = true) {
     val loadStartTime = System.currentTimeMillis()
     val app = ApplicationManager.getApplication() as ApplicationImpl
     if (!app.isUnitTestMode) {
@@ -623,6 +663,16 @@ object DynamicPlugins {
       }
       finally {
         app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginLoaded(pluginDescriptor)
+      }
+    }
+
+    if (checkImplementationDetailDependencies) {
+      processImplementationDetailDependenciesOnPlugin(pluginDescriptor) { _, fullDescriptor ->
+        val dependencies = fullDescriptor.pluginDependencies
+        if (dependencies == null || dependencies.all { it.isOptional || PluginManagerCore.getPlugin(it.id) != null }) {
+          loadPlugin(fullDescriptor, false)
+        }
+        true
       }
     }
   }
