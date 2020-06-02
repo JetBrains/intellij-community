@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -8,14 +9,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class StatisticsStringUtil {
+  @Contract(value = "null -> true", pure = true)
   public static boolean isEmpty(@Nullable String s) {
     return s == null || s.isEmpty();
   }
 
+  @Contract(value = "null -> false",pure = true)
   public static boolean isNotEmpty(@Nullable String s) {
     return !isEmpty(s);
   }
 
+  @Contract(value = "null -> true", pure = true)
   public static boolean isEmptyOrSpaces(@Nullable String s) {
     if (isEmpty(s)) {
       return true;

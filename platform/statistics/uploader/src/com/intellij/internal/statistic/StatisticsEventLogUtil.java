@@ -1,24 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic;
 
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 public final class StatisticsEventLogUtil {
-  @NonNls public static final String UTF8 = "UTF-8";
-
-  @NotNull
-  public static CloseableHttpClient create(@NotNull String userAgent) {
-    return HttpClientBuilder.create().setUserAgent(userAgent).build();
-  }
 
   public static String[] mergeArrays(@NotNull String[] a1, @NotNull String[] a2) {
     String[] result = new String[a1.length + a2.length];

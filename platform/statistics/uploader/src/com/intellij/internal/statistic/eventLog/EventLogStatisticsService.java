@@ -1,20 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog;
 
-import com.intellij.internal.statistic.StatisticsEventLogUtil;
 import com.intellij.internal.statistic.connect.StatServiceException;
 import com.intellij.internal.statistic.connect.StatisticsResult;
 import com.intellij.internal.statistic.connect.StatisticsResult.ResultCode;
 import com.intellij.internal.statistic.connect.StatisticsService;
+import com.intellij.internal.statistic.service.request.StatsHttpRequests;
+import com.intellij.internal.statistic.service.request.StatsHttpResponse;
 import org.apache.http.Consts;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.entity.GzipCompressingEntity;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -120,23 +114,18 @@ public class EventLogStatisticsService implements StatisticsService {
         }
 
         try {
-          HttpResponse response = execute(info.getUserAgent(), serviceUrl, recordRequest);
-          int code = response.getStatusLine().getStatusCode();
-          String content = getResponseMessage(response);
-          if (code == HttpStatus.SC_OK) {
-            decorator.onSucceed(recordRequest, content, file.getAbsolutePath());
-            toRemove.add(file);
-          }
-          else {
-            decorator.onFailed(recordRequest, content);
-            if (code == HttpURLConnection.HTTP_BAD_REQUEST) {
+          StatsHttpRequests.post(serviceUrl, info.getUserAgent()).
+            withBody(LogEventSerializer.INSTANCE.toString(recordRequest), APPLICATION_JSON).
+            succeed((r, code) -> {
               toRemove.add(file);
-            }
-          }
-
-          if (logger.isTraceEnabled()) {
-            logger.trace(file.getName() + " -> " + content);
-          }
+              decorator.onSucceed(recordRequest, loadAndLogResponse(logger, r, file), file.getAbsolutePath());
+            }).
+            fail((r, code) -> {
+              if (code == HttpURLConnection.HTTP_BAD_REQUEST) {
+                toRemove.add(file);
+              }
+              decorator.onFailed(recordRequest, loadAndLogResponse(logger, r, file));
+            }).send();
         }
         catch (Exception e) {
           if (logger.isTraceEnabled()) {
@@ -157,19 +146,16 @@ public class EventLogStatisticsService implements StatisticsService {
   }
 
   @NotNull
-  private static HttpResponse execute(@NotNull String userAgent, String serviceUrl, LogEventRecordRequest recordRequest) throws IOException {
-    HttpPost post = new HttpPost(serviceUrl);
-    post.setEntity(new GzipCompressingEntity(new StringEntity(LogEventSerializer.INSTANCE.toString(recordRequest), APPLICATION_JSON)));
-    return StatisticsEventLogUtil.create(userAgent).execute(post);
-  }
+  private static String loadAndLogResponse(@NotNull DataCollectorDebugLogger logger,
+                                           @NotNull StatsHttpResponse response,
+                                           @NotNull File file) throws IOException {
+    String message = response.readAsString();
+    String content = message != null ? message : Integer.toString(response.getStatusCode());
 
-  @NotNull
-  private static String getResponseMessage(HttpResponse response) throws IOException {
-    HttpEntity entity = response.getEntity();
-    if (entity != null) {
-      return EntityUtils.toString(entity, StatisticsEventLogUtil.UTF8);
+    if (logger.isTraceEnabled()) {
+      logger.trace(file.getName() + " -> " + content);
     }
-    return Integer.toString(response.getStatusLine().getStatusCode());
+    return content;
   }
 
   private static boolean isSendLogsEnabled(@NotNull DeviceConfiguration userData, int percent) {

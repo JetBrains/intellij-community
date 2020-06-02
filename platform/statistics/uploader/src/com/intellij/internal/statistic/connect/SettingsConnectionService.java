@@ -4,15 +4,14 @@ package com.intellij.internal.statistic.connect;
 import com.intellij.internal.statistic.StatisticsEventLogUtil;
 import com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger;
 import com.intellij.internal.statistic.eventLog.DataCollectorSystemEventLogger;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
+import com.intellij.internal.statistic.service.request.StatsHttpRequests;
+import com.intellij.internal.statistic.service.request.StatsResponseException;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -72,27 +71,28 @@ public abstract class SettingsConnectionService {
     if (mySettingsUrl == null) return Collections.emptyMap();
 
     try {
-      CloseableHttpResponse response = StatisticsEventLogUtil.create(myUserAgent).execute(new HttpGet(mySettingsUrl));
-      HttpEntity entity = response.getEntity();
-      InputStream content = entity != null ? entity.getContent() : null;
-      if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK && content != null) {
-        Map<String, String> settings = new LinkedHashMap<>();
+      Element result = StatsHttpRequests.request(mySettingsUrl, myUserAgent).send(r -> {
         try {
-          Element root = StatisticsEventLogUtil.parseXml(content);
-          for (String s : attributes) {
-            String attributeValue = root.getAttributeValue(s);
-            if (isNotEmpty(attributeValue)) {
-              settings.put(s, attributeValue);
-            }
-          }
+          InputStream content = r.read();
+          return content != null ? StatisticsEventLogUtil.parseXml(content) : null;
         }
         catch (JDOMException e) {
-          logError(e);
+          throw new StatsResponseException(e);
         }
-        return settings;
+      }).getResult();
+
+      Map<String, String> settings = new LinkedHashMap<>();
+      if (result != null) {
+        for (String s : attributes) {
+          String attributeValue = result.getAttributeValue(s);
+          if (isNotEmpty(attributeValue)) {
+            settings.put(s, attributeValue);
+          }
+        }
       }
+      return settings;
     }
-    catch (Exception e) {
+    catch (StatsResponseException | IOException e) {
       logError(e);
     }
     return Collections.emptyMap();
