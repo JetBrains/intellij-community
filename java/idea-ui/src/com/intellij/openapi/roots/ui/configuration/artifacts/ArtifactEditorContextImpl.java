@@ -24,7 +24,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
@@ -126,7 +126,7 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
       ProjectStructureConfigurable.getInstance(getProject()).selectProjectOrGlobalLibrary(library, true);
     }
     else {
-      final Module module = ((LibraryImpl)library).getModule();
+      final Module module = ((LibraryEx)library).getModule();
       if (module != null) {
         final ModuleRootModel rootModel = myParent.getModulesProvider().getRootModel(module);
         final String libraryName = library.getName();
