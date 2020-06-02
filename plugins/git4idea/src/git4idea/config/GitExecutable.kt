@@ -5,7 +5,9 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
 import git4idea.commands.GitHandler
 import org.jetbrains.annotations.NonNls
 import java.io.File
@@ -63,12 +65,28 @@ sealed class GitExecutable {
 
     override fun convertFilePath(file: File): String {
       val path = file.absolutePath
-      return distribution.getWslPath(path) ?: path
+
+      // 'C:\Users\file.txt' -> '/mnt/c/Users/file.txt'
+      val wslPath = distribution.getWslPath(path)
+      if (wslPath != null) return wslPath
+
+      // '\\wsl$\Ubuntu\home\user\file.txt' -> '/home/user/file.txt'
+      val uncRoot = distribution.uncRoot
+      if (FileUtil.isAncestor(uncRoot, file, false)) {
+        return StringUtil.trimStart(FileUtil.toSystemIndependentName(path),
+                                    FileUtil.toSystemIndependentName(uncRoot.path))
+      }
+
+      // relative paths: '.git/REBASE_MSG'
+      return path
     }
 
     override fun convertFilePathBack(path: String, workingDir: File): File {
+      // '/mnt/c/Users/file.txt' -> 'C:\Users\file.txt'
       val localPath = distribution.getWindowsPath(path)
       if (localPath != null) return File(localPath)
+
+      // '/home/user/file.txt' -> '\\wsl$\Ubuntu\home\user\file.txt'
       return File(distribution.uncRoot, path)
     }
 
