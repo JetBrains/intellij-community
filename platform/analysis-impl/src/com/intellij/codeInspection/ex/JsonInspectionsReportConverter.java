@@ -44,6 +44,7 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
   @NonNls private static final String HINT = "hint";
   @NonNls private static final String HINTS = "hints";
   @NonNls private static final String DISPLAY_NAME = "displayName";
+  @NonNls private static final String DEFAULT_SEVERITY = "defaultSeverity";
   @NonNls private static final String SHORT_NAME = "shortName";
   @NonNls private static final String ENABLED = "enabled";
   @NonNls private static final String NAME = "name";
@@ -304,6 +305,7 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
     writer.beginObject()
       .name(SHORT_NAME).value(inspection.getAttributeValue(SHORT_NAME))
       .name(DISPLAY_NAME).value(inspection.getAttributeValue(DISPLAY_NAME))
+      .name(DEFAULT_SEVERITY).value(inspection.getAttributeValue(DEFAULT_SEVERITY))
       .name(ENABLED).value(Boolean.parseBoolean(inspection.getAttributeValue(ENABLED)))
       .name(DESCRIPTION).value(inspection.getValue())
       .endObject();
