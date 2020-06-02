@@ -26,9 +26,10 @@ import org.jetbrains.annotations.NotNull;
 public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTestCase {
 
   public void testCorrectClose() {
+    //noinspection EmptyTryBlock
     doTest("import java.io.*;" +
            "class X {" +
-           "    public void m() throws IOException {" +
+           "    public static void m() throws IOException {" +
            "        FileInputStream str;" +
            "        str = new /*'FileInputStream' used without 'try'-with-resources statement*/FileInputStream/**/(\"bar\");" +
            "        try {" +
@@ -42,10 +43,10 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
   public void testEscape() {
     doTest("import java.io.*;" +
            "class X {" +
-           "  void m() throws IOException {" +
+           "  static void m() throws IOException {" +
            "    n(new FileInputStream(\"file.name\"));" +
            "  }" +
-           "  void n(Closeable c) {" +
+           "  static void n(Closeable c) {" +
            "    System.out.println(c);" +
            "  }" +
            "}");
@@ -57,10 +58,10 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
     myFixture.enableInspections(inspection);
     doTest("import java.io.*;" +
            "class X {" +
-           "  void m() throws IOException {" +
+           "  static void m() throws IOException {" +
            "    n(new /*'FileInputStream' used without 'try'-with-resources statement*/FileInputStream/**/(\"file.name\"));" +
            "  }" +
-           "  void n(Closeable c) {" +
+           "  static void n(Closeable c) {" +
            "    System.out.println(c);" +
            "  }" +
            "}");
@@ -69,7 +70,7 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
   public void testEscape3() {
     doTest("import java.io.*;" +
            "class X {" +
-           "  void m() throws IOException {" +
+           "  static void m() throws IOException {" +
            "    System.out.println(new FileInputStream(\"file.name\"));" +
            "  }" +
            "}");
@@ -79,7 +80,7 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
     mockSql();
     doTest("import java.sql.*;\n" +
            "class X {\n" +
-           "  void m(Driver driver) throws SQLException {\n" +
+           "  static void m(Driver driver) throws SQLException {\n" +
            "    try (Connection connection = driver.connect(\"jdbc\", null);\n" +
            "      PreparedStatement statement = connection.prepareStatement(\"SELECT *\");\n" +
            "      ResultSet resultSet = statement.executeQuery()) {\n" +
@@ -109,7 +110,7 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
     mockSql();
     doTest("import java.sql.*;" +
            "class X {" +
-           "  void m(Driver driver) throws SQLException {" +
+           "  static void m(Driver driver) throws SQLException {" +
            "    driver./*'Connection' used without 'try'-with-resources statement*/connect/**/(\"jdbc\", null);" +
            "  }" +
            "}");
@@ -117,7 +118,7 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
 
   public void testSystemOut() {
     doTest("class X {" +
-           "  void m(String s) {" +
+           "  static void m(String s) {" +
            "    System.out.printf(\"asdf %s\", s);" +
            "    System.err.format(\"asdf %s\", s);" +
            "  }" +
@@ -132,7 +133,7 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
            "  }" +
            "  class Y implements java.io.Closeable {" +
            "    Y(String s) {}" +
-           "    public void close() throws java.io.IOException {}" +
+           "    @Override public void close() throws java.io.IOException {}" +
            "  }" +
            "  interface Z<T, R> {\n" +
            "    R apply(T t);" +
@@ -143,7 +144,7 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
   public void testFormatter() {
     doTest("import java.util.*;" +
            "class TryWithResourcesFalsePositiveForFormatterFormat {" +
-           "    public void useFormatter( Formatter output ) {" +
+           "    public static void useFormatter( Formatter output ) {" +
            "        output.format( \"Hello, world!%n\" );" +
            "    }" +
            "}");
@@ -161,7 +162,7 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
   public void testScanner() {
     doTest("import java.util.Scanner;" +
            "class A {" +
-           "    void a() throws java.io.IOException {" +
+           "    static void a() throws java.io.IOException {" +
            "        try (Scanner scanner = new Scanner(\"\").useDelimiter(\"\\\\A\")) {" +
            "            String sconf = scanner.next();" +
            "            System.out.println(sconf);" +
@@ -172,6 +173,7 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
   }
 
   public void testTernary() {
+    //noinspection EmptyTryBlock
     doTest("import java.io.*;\n" +
            "\n" +
            "class X {\n" +
