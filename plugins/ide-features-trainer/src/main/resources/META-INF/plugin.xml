@@ -21,6 +21,7 @@
         <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.SafeDeleteSuggester"/>
         <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.IntroduceVariableSuggester"/>
         <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.SecondToArrayCompletionSuggester"/>
+        <featureSuggester.featureSuggester implementation="org.jetbrains.plugins.feature.suggester.suggesters.SuppressWarningSuggester"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
