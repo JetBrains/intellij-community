@@ -555,11 +555,13 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     UnloadedModulesListStorage.getInstance(project).unloadedModuleNames = this.unloadedModules.keys.toList()
   }
 
-  internal fun getModuleFilePath(moduleEntity: ModuleEntity): String {
-    val jpsFileEntitySource = moduleEntity.entitySource as? JpsFileEntitySource.FileInDirectory
-
-    // TODO Is this fallback fake path ok?
-    val directoryPath = jpsFileEntitySource?.directory?.filePath ?: outOfTreeModulesPath
+  private fun getModuleFilePath(moduleEntity: ModuleEntity): String {
+    val entitySource = (moduleEntity.entitySource as? JpsImportedEntitySource)?.internalFile ?: moduleEntity.entitySource
+    val directoryPath = when (entitySource) {
+      is JpsFileEntitySource.FileInDirectory -> entitySource.directory.filePath
+      // TODO Is this fallback fake path ok?
+      else -> outOfTreeModulesPath
+    }
     return "$directoryPath/${moduleEntity.name}.iml"
   }
 
