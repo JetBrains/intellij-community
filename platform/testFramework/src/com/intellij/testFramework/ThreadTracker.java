@@ -89,6 +89,7 @@ public final class ThreadTracker {
     "RMI GC Daemon",
     "RMI TCP ",
     "Signal Dispatcher",
+    "tc-okhttp-stream", // Dockers "com.github.dockerjava.okhttp.UnixDomainSocket.recv"
     "timer-int", //serverIm,
     "timer-sys", //clientim,
     "TimerQueue",
