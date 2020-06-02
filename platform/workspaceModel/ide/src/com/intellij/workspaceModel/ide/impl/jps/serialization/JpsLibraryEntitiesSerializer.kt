@@ -4,7 +4,7 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyBridgeLibraryImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jdom.Element
@@ -147,7 +147,7 @@ internal fun loadLibrary(name: String, libraryElement: Element, libraryTableId: 
 
 internal fun saveLibrary(library: LibraryEntity, externalSystemId: String?): Element {
   val libraryTag = Element(LIBRARY_TAG)
-  val legacyName = LegacyBridgeLibraryImpl.getLegacyLibraryName(library.persistentId())
+  val legacyName = LibraryBridgeImpl.getLegacyLibraryName(library.persistentId())
   if (legacyName != null) {
     libraryTag.setAttribute(NAME_ATTRIBUTE, legacyName)
   }

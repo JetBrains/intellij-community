@@ -9,7 +9,7 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.toLibraryTableId
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.levelToLibraryTableId
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jdom.Element
@@ -128,7 +128,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
         val name = getOptionalAttribute("name")
         val parentId = when {
           moduleName != null -> LibraryTableId.ModuleLibraryTableId(ModuleId(moduleName))
-          else -> toLibraryTableId(level)
+          else -> levelToLibraryTableId(level)
         }
         builder.addLibraryFilesPackagingElementEntity(LibraryId(name!!, parentId), source)
       }

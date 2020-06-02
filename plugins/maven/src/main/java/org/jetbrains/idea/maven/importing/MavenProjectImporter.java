@@ -39,7 +39,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.configurers.MavenModuleConfigurer;
-import org.jetbrains.idea.maven.importing.worktree.LegacyBrigdeIdeModifiableModelsProvider;
+import org.jetbrains.idea.maven.importing.worktree.IdeModifiableModelsProviderBridge;
 import org.jetbrains.idea.maven.importing.worktree.MavenExternalSource;
 import org.jetbrains.idea.maven.importing.worktree.WorkspaceModuleImporter;
 import org.jetbrains.idea.maven.model.MavenArtifact;
@@ -128,7 +128,7 @@ public class MavenProjectImporter {
     myAllProjects.addAll(projectsToImportWithChanges.keySet()); // some projects may already have been removed from the tree
 
 
-    LegacyBrigdeIdeModifiableModelsProvider legacyBridgeModelsProvider = (LegacyBrigdeIdeModifiableModelsProvider)myModelsProvider;
+    IdeModifiableModelsProviderBridge legacyBridgeModelsProvider = (IdeModifiableModelsProviderBridge)myModelsProvider;
     WorkspaceEntityStorageBuilder diff = legacyBridgeModelsProvider.getDiff();
 
     for (MavenProject each : myAllProjects) {
@@ -153,7 +153,7 @@ public class MavenProjectImporter {
 
     WorkspaceEntityStorageBuilder facetDiff =
       WorkspaceEntityStorageBuilder.Companion.from(WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent());
-    LegacyBrigdeIdeModifiableModelsProvider providerForFacets = new LegacyBrigdeIdeModifiableModelsProvider(myProject, facetDiff);
+    IdeModifiableModelsProviderBridge providerForFacets = new IdeModifiableModelsProviderBridge(myProject, facetDiff);
 
     List<Module> modulesToMavenize = new ArrayList<>();
     List<MavenModuleImporter> importers = new ArrayList<>();
@@ -192,14 +192,14 @@ public class MavenProjectImporter {
     return postTasks;
   }
 
-  private void saveFacets(LegacyBrigdeIdeModifiableModelsProvider providerForFacets, ModuleManager moduleManager) {
+  private void saveFacets(IdeModifiableModelsProviderBridge providerForFacets, ModuleManager moduleManager) {
     WriteAction.runAndWait(() -> {
       myAllProjects.stream().map(mavenProject -> moduleManager.findModuleByName(mavenProject.getDisplayName()))
         .filter(Objects::nonNull).forEach(module -> providerForFacets.getModifiableFacetModel(module).commit());
     });
   }
 
-  private void saveArtifacts(LegacyBrigdeIdeModifiableModelsProvider provider) {
+  private void saveArtifacts(IdeModifiableModelsProviderBridge provider) {
     ModifiableArtifactModel artifactModel = provider.getModifiableModel(PackagingModifiableModel.class).getModifiableArtifactModel();
     ArtifactManagerImpl manager = (ArtifactManagerImpl)ArtifactManager.getInstance(myProject);
     WriteAction.runAndWait(() -> {

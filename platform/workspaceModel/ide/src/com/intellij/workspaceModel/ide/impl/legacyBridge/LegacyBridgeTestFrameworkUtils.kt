@@ -7,10 +7,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.LegacyBridgeFilePointerProvider
-import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.LegacyBridgeFilePointerProviderImpl
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.LegacyBridgeModuleRootComponent
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyBridgeLibraryImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProvider
+import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProviderImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import org.jetbrains.annotations.ApiStatus
 
 object LegacyBridgeTestFrameworkUtils {
@@ -22,19 +22,19 @@ object LegacyBridgeTestFrameworkUtils {
 
     WriteAction.runAndWait<RuntimeException> {
       for (module in ModuleManager.getInstance(project).modules) {
-        (LegacyBridgeFilePointerProvider.getInstance(module) as LegacyBridgeFilePointerProviderImpl).clearCaches()
+        (FilePointerProvider.getInstance(module) as FilePointerProviderImpl).clearCaches()
         for (orderEntry in ModuleRootManager.getInstance(module).orderEntries) {
           if (orderEntry is LibraryOrderEntry) {
             if (orderEntry.isModuleLevel) {
-              (orderEntry.library as LegacyBridgeLibraryImpl).filePointerProvider.clearCaches()
+              (orderEntry.library as LibraryBridgeImpl).filePointerProvider.clearCaches()
             }
           }
         }
-        (ModuleRootManager.getInstance(module) as LegacyBridgeModuleRootComponent).dropCaches()
+        (ModuleRootManager.getInstance(module) as ModuleRootComponentBridge).dropCaches()
       }
-      (LegacyBridgeFilePointerProvider.getInstance(project) as LegacyBridgeFilePointerProviderImpl).clearCaches()
+      (FilePointerProvider.getInstance(project) as FilePointerProviderImpl).clearCaches()
       for (library in LibraryTablesRegistrar.getInstance().getLibraryTable(project).libraries) {
-        (library as LegacyBridgeLibraryImpl).filePointerProvider.clearCaches()
+        (library as LibraryBridgeImpl).filePointerProvider.clearCaches()
       }
     }
   }

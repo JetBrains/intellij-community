@@ -19,6 +19,7 @@ import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.*
 import org.jetbrains.annotations.ApiStatus
 import java.io.File

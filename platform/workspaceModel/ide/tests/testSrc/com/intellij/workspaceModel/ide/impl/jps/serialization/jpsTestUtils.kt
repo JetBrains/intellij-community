@@ -66,9 +66,9 @@ internal fun JpsFileContentWriterImpl.writeFiles(baseProjectDir: File) {
     val isModuleFile = FileUtil.extensionEquals(file.absolutePath, "iml")
                        || file.parentFile.name == "modules" && file.parentFile.parentFile.name != ".idea"
     val replaceMacroMap = if (isModuleFile)
-      CachingJpsFileContentReader.LegacyBridgeModulePathMacroManager(PathMacros.getInstance(), JpsPathUtil.urlToOsPath(url)).replacePathMap
+      CachingJpsFileContentReader.ModulePathMacroManagerBridge(PathMacros.getInstance(), JpsPathUtil.urlToOsPath(url)).replacePathMap
     else
-      CachingJpsFileContentReader.LegacyBridgeProjectPathMacroManager(baseProjectDir.systemIndependentPath).replacePathMap
+      CachingJpsFileContentReader.ProjectPathMacroManagerBridge(baseProjectDir.systemIndependentPath).replacePathMap
 
 
     val newRootElement = when {

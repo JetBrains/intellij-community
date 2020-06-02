@@ -11,8 +11,8 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.isEmpty
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.toLibraryTableId
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyBridgeLibraryImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.levelToLibraryTableId
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jdom.Attribute
@@ -207,7 +207,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
         INHERITED_JDK_TYPE -> ModuleDependencyItem.InheritedSdkDependency
         LIBRARY_TYPE -> {
           val level = dependencyElement.getAttributeValueStrict(LEVEL_ATTRIBUTE)
-          val parentId = toLibraryTableId(level)
+          val parentId = levelToLibraryTableId(level)
           val libraryId = LibraryId(dependencyElement.getAttributeValueStrict(NAME_ATTRIBUTE), parentId)
           ModuleDependencyItem.Exportable.LibraryDependency(libraryId, dependencyElement.isExported(), dependencyElement.readScope())
         }
@@ -215,7 +215,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           val libraryElement = dependencyElement.getChild(LIBRARY_TAG)!!
           // TODO. Probably we want a fixed name based on hashed library roots
           val nameAttributeValue = libraryElement.getAttributeValue(NAME_ATTRIBUTE)
-          val name = LegacyBridgeLibraryImpl.generateLibraryEntityName(nameAttributeValue) { nameToCheck ->
+          val name = LibraryBridgeImpl.generateLibraryEntityName(nameAttributeValue) { nameToCheck ->
             moduleLibraryNames.contains(nameToCheck)
           }
           moduleLibraryNames.add(name)

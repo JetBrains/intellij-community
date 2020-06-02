@@ -60,7 +60,7 @@ import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenPomPathModuleService;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
-import org.jetbrains.idea.maven.importing.worktree.LegacyBrigdeIdeModifiableModelsProvider;
+import org.jetbrains.idea.maven.importing.worktree.IdeModifiableModelsProviderBridge;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenArtifactDownloader.DownloadResult;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
@@ -1266,7 +1266,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   public List<Module> importProjects() {
     if (MavenUtil.newModelEnabled(myProject)) {
       WorkspaceEntityStorageBuilder builder = WorkspaceEntityStorageBuilder.Companion.create();
-      return importProjects(new LegacyBrigdeIdeModifiableModelsProvider(myProject, builder));
+      return importProjects(new IdeModifiableModelsProviderBridge(myProject, builder));
     }
     else {
       return importProjects(new IdeModifiableModelsProviderImpl(myProject));

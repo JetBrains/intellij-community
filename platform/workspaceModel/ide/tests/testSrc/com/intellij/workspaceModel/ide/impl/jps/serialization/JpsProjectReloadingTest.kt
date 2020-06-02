@@ -7,7 +7,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.bridgeEntities.projectLibraries
-import com.intellij.workspaceModel.ide.impl.getInstance
+import com.intellij.workspaceModel.ide.getInstance
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Before
 import org.junit.Test

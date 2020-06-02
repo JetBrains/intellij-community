@@ -162,7 +162,7 @@ internal object SourceRootPropertiesHelper {
 
     val serializer = findSerializer(rootType)
     if (serializer == null) {
-      SourceFolderViaTypedEntity.LOG.warn("Module source root type $rootType (${entity.rootType}) is not registered as JpsModelSerializerExtension")
+      SourceFolderBridge.LOG.warn("Module source root type $rootType (${entity.rootType}) is not registered as JpsModelSerializerExtension")
       return elementFactory.createDummyElement()
     }
 
@@ -172,7 +172,7 @@ internal object SourceRootPropertiesHelper {
       serializer.loadProperties(element)
     }
     catch (t: Throwable) {
-      SourceFolderViaTypedEntity.LOG.error("Unable to deserialize source root '${entity.rootType}' from xml '${customSourceRoot.propertiesXmlTag}': ${t.message}", t)
+      SourceFolderBridge.LOG.error("Unable to deserialize source root '${entity.rootType}' from xml '${customSourceRoot.propertiesXmlTag}': ${t.message}", t)
       elementFactory.createDummyElement()
     }
   }

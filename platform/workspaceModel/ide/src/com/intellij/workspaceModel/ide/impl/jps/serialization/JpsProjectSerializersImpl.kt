@@ -394,7 +394,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 }
 
 internal class CachingJpsFileContentReader(projectBaseDirUrl: String) : JpsFileContentReader {
-  private val projectPathMacroManager = LegacyBridgeProjectPathMacroManager(JpsPathUtil.urlToPath(projectBaseDirUrl))
+  private val projectPathMacroManager = ProjectPathMacroManagerBridge(JpsPathUtil.urlToPath(projectBaseDirUrl))
   private val fileContentCache = ConcurrentHashMap<String, Map<String, Element>>()
 
   override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? {
@@ -407,7 +407,7 @@ internal class CachingJpsFileContentReader(projectBaseDirUrl: String) : JpsFileC
   private fun loadComponents(fileUrl: String, customModuleFilePath: String?): Map<String, Element> {
     val path = JpsPathUtil.urlToPath(fileUrl)
     val macroManager = if (FileUtil.extensionEquals(fileUrl, "iml") || isExternalModuleFile(path)) {
-      LegacyBridgeModulePathMacroManager(PathMacros.getInstance(), customModuleFilePath ?: path)
+      ModulePathMacroManagerBridge(PathMacros.getInstance(), customModuleFilePath ?: path)
     }
     else {
       projectPathMacroManager
@@ -417,7 +417,7 @@ internal class CachingJpsFileContentReader(projectBaseDirUrl: String) : JpsFileC
     return loadStorageFile(file, macroManager)
   }
 
-  internal class LegacyBridgeModulePathMacroManager(pathMacros: PathMacros, private val moduleFilePath: String) : PathMacroManager(
+  internal class ModulePathMacroManagerBridge(pathMacros: PathMacros, private val moduleFilePath: String) : PathMacroManager(
     pathMacros) {
     override fun getExpandMacroMap(): ExpandMacroToPathMap {
       val result = super.getExpandMacroMap()
@@ -437,7 +437,7 @@ internal class CachingJpsFileContentReader(projectBaseDirUrl: String) : JpsFileC
     }
   }
 
-  internal class LegacyBridgeProjectPathMacroManager(private val projectDirPath: String) : PathMacroManager(PathMacros.getInstance()) {
+  internal class ProjectPathMacroManagerBridge(private val projectDirPath: String) : PathMacroManager(PathMacros.getInstance()) {
     override fun getExpandMacroMap(): ExpandMacroToPathMap {
       val result = super.getExpandMacroMap()
       addFileHierarchyReplacements(result, PathMacroUtil.PROJECT_DIR_MACRO_NAME, projectDirPath)

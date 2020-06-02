@@ -64,9 +64,9 @@ internal class FacetEntityChangeListener(private val project: Project) {
     }
   }
 
-  private fun getFacetManager(entity: ModuleEntity): FacetManagerViaWorkspaceModel? {
+  private fun getFacetManager(entity: ModuleEntity): FacetManagerBridge? {
     val module = ModuleManager.getInstance(project).findModuleByName(entity.name) ?: return null
-    return FacetManager.getInstance(module) as? FacetManagerViaWorkspaceModel
+    return FacetManager.getInstance(module) as? FacetManagerBridge
   }
 
   companion object {

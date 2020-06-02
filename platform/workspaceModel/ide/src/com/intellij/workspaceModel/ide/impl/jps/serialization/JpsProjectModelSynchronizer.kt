@@ -31,8 +31,8 @@ import com.intellij.project.stateStore
 import com.intellij.util.PathUtil
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
-import com.intellij.workspaceModel.ide.impl.getInstance
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.LegacyBridgeModuleManagerComponent
+import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.isExternalModuleFile
 import com.intellij.workspaceModel.storage.*
 import org.jdom.Element
@@ -165,7 +165,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
       unloaded.addAll(changeUnloaded.toUnloadDescriptions)
     }
 
-    val unloadedModules = LegacyBridgeModuleManagerComponent.getInstance(project).unloadedModules
+    val unloadedModules = ModuleManagerComponentBridge.getInstance(project).unloadedModules
     unloadedModules.clear()
     unloaded.associateByTo(unloadedModules) { it.name }
   }
@@ -312,7 +312,7 @@ private class FakeDirectoryBasedStateSplitter : StateSplitterEx() {
   }
 }
 
-internal class LegacyBridgeStoreReloadManager : StoreReloadManagerImpl() {
+internal class StoreReloadManagerBridge : StoreReloadManagerImpl() {
   override fun mayHaveAdditionalConfigurations(project: Project): Boolean {
     return JpsProjectModelSynchronizer.getInstance(project)?.needToReloadProjectEntities() ?: false
   }

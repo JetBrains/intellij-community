@@ -26,7 +26,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.LegacyBridgeModuleManagerComponent
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
@@ -92,7 +92,7 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
     val moduleManager = ModuleManager.getInstance(project)
 
     when (moduleManager) {
-      is LegacyBridgeModuleManagerComponent -> "Legacy bridge model enabled: $moduleManager"
+      is ModuleManagerComponentBridge -> "Legacy bridge model enabled: $moduleManager"
       is ModuleManagerComponent -> "Old model enabled: $moduleManager"
       else -> "Unknown model enabled: $moduleManager"
     }.also { println(it) }
