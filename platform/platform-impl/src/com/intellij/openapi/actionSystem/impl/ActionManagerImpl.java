@@ -1113,7 +1113,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @ApiStatus.Internal
-  public static @Nullable String checkUnloadActions(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
+  public static @Nullable String checkUnloadActions(PluginId pluginId, @NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
     List<Element> elements = pluginDescriptor.getActionDescriptionElements();
     if (elements == null) {
       return null;
@@ -1122,7 +1122,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       if (!element.getName().equals(ACTION_ELEMENT_NAME) &&
           !(element.getName().equals(GROUP_ELEMENT_NAME) && canUnloadGroup(element)) &&
           !element.getName().equals(REFERENCE_ELEMENT_NAME)) {
-        return "Plugin " + pluginDescriptor.getPluginId() + " is not unload-safe because of action element " + element.getName();
+        return "Plugin " + pluginId + " is not unload-safe because of action element " + element.getName();
       }
     }
     return null;

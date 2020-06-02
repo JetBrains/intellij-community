@@ -223,7 +223,7 @@ object DynamicPlugins {
 
     val pluginId = loadedPluginDescriptor?.pluginId ?: baseDescriptor?.pluginId
     checkNoComponentsOrServiceOverrides(pluginId, descriptor)?.let { return it }
-    ActionManagerImpl.checkUnloadActions(descriptor)?.let { return it }
+    ActionManagerImpl.checkUnloadActions(pluginId, descriptor)?.let { return it }
 
     descriptor.pluginDependencies?.forEach { dependency ->
       if (isPluginOrModuleLoaded(dependency.id)) {
