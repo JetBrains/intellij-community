@@ -9,6 +9,7 @@ import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -31,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class BeforeRunComponent extends JPanel implements DnDTarget {
+public class BeforeRunComponent extends JPanel implements DnDTarget, Disposable {
   private List<TaskButton> myTags;
   private final InplaceButton myAddButton;
   Runnable myChangeListener;
@@ -169,6 +170,11 @@ public class BeforeRunComponent extends JPanel implements DnDTarget {
       return false;
     }
     return true;
+  }
+
+  @Override
+  public void dispose() {
+    DnDManager.getInstance().unregisterTarget(this, this);
   }
 
   private class TaskButton extends TagButton implements DnDSource {

@@ -4,6 +4,7 @@ package com.intellij.execution.ui;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
     super("beforeRunTasks", ExecutionBundle.message("run.configuration.before.run.task"),
           ExecutionBundle.message("run.configuration.before.run.group"), new BeforeRunComponent(), -2);
     component().myChangeListener = () -> fireEditorStateChanged();
+    Disposer.register(this, component());
   }
 
   @Override
