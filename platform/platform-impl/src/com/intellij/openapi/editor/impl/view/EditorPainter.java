@@ -647,7 +647,11 @@ public class EditorPainter implements TextDrawingCallback {
         if (bgColor == null && attrs.getBackgroundColor() != null) bgColor = attrs.getBackgroundColor();
         if (effectColor == null && attrs.getEffectColor() != null) {
           EffectType type = attrs.getEffectType();
-          if (type != null && type != EffectType.BOXED && type != EffectType.ROUNDED_BOX && type != EffectType.STRIKEOUT) {
+          if (type != null &&
+              type != EffectType.BOXED &&
+              type != EffectType.ROUNDED_BOX &&
+              type != EffectType.SLIGHTLY_WIDER_BOX &&
+              type != EffectType.STRIKEOUT) {
             effectColor = attrs.getEffectColor();
             effectType = type;
           }
@@ -936,8 +940,11 @@ public class EditorPainter implements TextDrawingCallback {
         TFloatArrayList ranges = adjustedLogicalRangeToVisualRanges(startOffset, endOffset);
         for (int i = 0; i < ranges.size() - 1; i += 2) {
           float startX = myCorrector.singleLineBorderStart(ranges.get(i));
-          float endX = myCorrector.singleLineBorderEnd(ranges.get(i + 1));
-          drawSimpleBorder(Math.max(startX - margin, 0), endX + margin, y, rounded);
+          if (startX - margin >= myCorrector.startX(startPosition.line)) {
+            startX -= margin;
+          }
+          float endX = myCorrector.singleLineBorderEnd(ranges.get(i + 1)) + margin;
+          drawSimpleBorder(startX, endX, y, rounded);
         }
       }
       else {
