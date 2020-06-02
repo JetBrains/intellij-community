@@ -77,7 +77,6 @@ sealed class GitExecutable {
                                     FileUtil.toSystemIndependentName(uncRoot.path))
       }
 
-      // relative paths: '.git/REBASE_MSG'
       return path
     }
 
