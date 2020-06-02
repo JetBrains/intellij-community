@@ -145,7 +145,7 @@ internal class GitVcsPanel(private val project: Project) :
 
     override fun resetGitExecutable() {
       super.resetGitExecutable()
-      GitExecutableManager.getInstance().detectedExecutable // populate cache
+      GitExecutableManager.getInstance().getDetectedExecutable(project) // populate cache
       invokeAndWaitIfNeeded(modalityState) {
         resetPathSelector()
       }
@@ -187,7 +187,7 @@ internal class GitVcsPanel(private val project: Project) :
   private fun resetPathSelector() {
     val projectSettingsPathToGit = projectSettings.pathToGit
     val detectedExecutable = try {
-      GitExecutableManager.getInstance().detectedExecutable
+      GitExecutableManager.getInstance().getDetectedExecutable(project)
     }
     catch (e: ProcessCanceledException) {
       GitExecutableDetector.getDefaultExecutable()

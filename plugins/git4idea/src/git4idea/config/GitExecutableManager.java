@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,10 +41,7 @@ public class GitExecutableManager {
 
   private static final Logger LOG = Logger.getInstance(GitExecutableManager.class);
 
-  @Nullable private volatile String myDetectedExecutable;
-  private boolean myDetectionComplete;
-
-  @NotNull private final Object DETECTED_EXECUTABLE_LOCK = new Object();
+  @NotNull private final GitExecutableDetector myExecutableDetector = new GitExecutableDetector();
   @NotNull private final CachingFileTester<GitVersion> myVersionCache;
 
   public GitExecutableManager() {
@@ -97,7 +95,7 @@ public class GitExecutableManager {
   private String getPathToGit(@Nullable Project project, boolean detectIfNeeded) {
     String path = project != null ? GitVcsSettings.getInstance(project).getPathToGit() : null;
     if (path == null) path = GitVcsApplicationSettings.getInstance().getSavedPathToGit();
-    if (path == null) path = getDetectedExecutable(detectIfNeeded);
+    if (path == null) path = getDetectedExecutable(project, detectIfNeeded);
     return path;
   }
 
@@ -121,47 +119,56 @@ public class GitExecutableManager {
 
   @Nullable
   private static GitExecutable.Wsl getWslExecutable(@NotNull String pathToGit) {
-    if (!supportWslExecutable()) return null;
-    if (!pathToGit.startsWith(WSLDistribution.UNC_PREFIX)) return null;
+    Pair<String, WSLDistribution> pair = parseWslPath(pathToGit);
+    return pair != null ? new GitExecutable.Wsl(pair.first, pair.second) : null;
+  }
 
-    pathToGit = StringUtil.trimStart(pathToGit, WSLDistribution.UNC_PREFIX);
-    int index = pathToGit.indexOf('\\');
+  @Nullable
+  private static WSLDistribution getProjectWslDistribution(@Nullable Project project) {
+    if (project == null) return null;
+    String basePath = project.getBasePath();
+    if (basePath == null) return null;
+
+    Pair<String, WSLDistribution> pair = parseWslPath(FileUtil.toSystemDependentName(basePath));
+    return pair != null ? pair.second : null;
+  }
+
+  @Nullable
+  private static Pair<String, WSLDistribution> parseWslPath(@NotNull String path) {
+    if (!supportWslExecutable()) return null;
+    if (!path.startsWith(WSLDistribution.UNC_PREFIX)) return null;
+
+    path = StringUtil.trimStart(path, WSLDistribution.UNC_PREFIX);
+    int index = path.indexOf('\\');
     if (index == -1) return null;
 
-    String distName = pathToGit.substring(0, index);
-    String wslPath = FileUtil.toSystemIndependentName(pathToGit.substring(index));
+    String distName = path.substring(0, index);
+    String wslPath = FileUtil.toSystemIndependentName(path.substring(index));
 
     WSLDistribution distribution = WSLUtil.getDistributionByMsId(distName);
     if (distribution == null) return null;
-    return new GitExecutable.Wsl(wslPath, distribution);
+    return Pair.create(wslPath, distribution);
   }
 
   @NotNull
-  public String getDetectedExecutable() {
-    String executable = getDetectedExecutable(true);
+  public String getDetectedExecutable(@Nullable Project project) {
+    String executable = getDetectedExecutable(project, true);
     return executable != null ? executable : GitExecutableDetector.getDefaultExecutable();
   }
 
   @Nullable
-  private String getDetectedExecutable(boolean detectIfNeeded) {
-    if (!detectIfNeeded) return myDetectedExecutable;
-
-    return runUnderProgressIfNeeded(null, GitBundle.message("git.executable.detect.progress.title"), () -> {
-      synchronized (DETECTED_EXECUTABLE_LOCK) {
-        if (!myDetectionComplete) {
-          myDetectedExecutable = new GitExecutableDetector().detect();
-          myDetectionComplete = true;
-        }
-        return myDetectedExecutable;
-      }
-    });
+  private String getDetectedExecutable(@Nullable Project project, boolean detectIfNeeded) {
+    WSLDistribution distribution = getProjectWslDistribution(project);
+    if (detectIfNeeded) {
+      return myExecutableDetector.detect(distribution);
+    }
+    else {
+      return myExecutableDetector.getExecutable(distribution);
+    }
   }
 
   public void dropExecutableCache() {
-    synchronized (DETECTED_EXECUTABLE_LOCK) {
-      myDetectedExecutable = null;
-      myDetectionComplete = false;
-    }
+    myExecutableDetector.clear();
   }
 
   /**
@@ -234,9 +241,9 @@ public class GitExecutableManager {
     });
   }
 
-  private static <T> T runUnderProgressIfNeeded(@Nullable Project project,
-                                                @NotNull String title,
-                                                @NotNull ThrowableComputable<T, RuntimeException> task) {
+  static <T> T runUnderProgressIfNeeded(@Nullable Project project,
+                                        @NotNull String title,
+                                        @NotNull ThrowableComputable<T, RuntimeException> task) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       return ProgressManager.getInstance().runProcessWithProgressSynchronously(task, title, true, project);
     }
