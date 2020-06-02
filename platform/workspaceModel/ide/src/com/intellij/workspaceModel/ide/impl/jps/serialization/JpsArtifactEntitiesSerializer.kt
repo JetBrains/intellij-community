@@ -85,7 +85,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
       val artifactEntity = builder.addArtifactEntity(state.name, state.artifactType, state.isBuildOnMake, outputUrl,
                                                      rootElement as CompositePackagingElementEntity, source)
       for (propertiesState in state.propertiesList) {
-        builder.addArtifactPropertisEntity(artifactEntity, propertiesState.id, JDOMUtil.write(propertiesState.options), source)
+        builder.addArtifactPropertiesEntity(artifactEntity, propertiesState.id, JDOMUtil.write(propertiesState.options), source)
       }
       orderOfItems += state.name
     }

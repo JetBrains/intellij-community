@@ -172,9 +172,9 @@ internal class RootModelBridgeImpl(internal val moduleEntityId: PersistentEntity
       return result
     }
 
-    internal fun loadExtension(extension: ModuleExtension,
-                               parentDisposable: Disposable,
-                               rootManagerElement: @NotNull Element?): @NotNull ModuleExtension {
+    private fun loadExtension(extension: ModuleExtension,
+                              parentDisposable: Disposable,
+                              rootManagerElement: @NotNull Element?): @NotNull ModuleExtension {
       val readOnlyExtension = extension.getModifiableModel(false).also {
         Disposer.register(parentDisposable, it)
       }

@@ -167,8 +167,7 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
     abstract fun persistentId(): PersistentEntityId<*>
   }
 
-  abstract class WithPersistentId<E : WorkspaceEntity> : WorkspaceEntityData<E>() {
-  }
+  abstract class WithPersistentId<E : WorkspaceEntity> : WorkspaceEntityData<E>()
 }
 
 fun WorkspaceEntityData<*>.persistentId(snapshot: WorkspaceEntityStorage): PersistentEntityId<*>? = when (this) {

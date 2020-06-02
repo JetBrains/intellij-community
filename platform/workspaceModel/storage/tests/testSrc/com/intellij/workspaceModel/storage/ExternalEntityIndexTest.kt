@@ -31,7 +31,7 @@ class ExternalEntityIndexTest {
     val newIndex = storage.getExternalIndex<Int>(INDEX_ID)
     assertNotNull(newIndex)
     assertEquals(3, newIndex!!.getDataByEntity(entity))
-    assertEquals(entity, newIndex.getEntities(3)?.get(0))
+    assertEquals(entity, newIndex.getEntities(3).get(0))
   }
 
   @Test
@@ -120,8 +120,8 @@ class ExternalEntityIndexTest {
     assertNotEquals(index, newIndex)
     assertEquals(1, newIndex!!.getDataByEntity(entity))
     assertEquals(2, newIndex.getDataByEntity(newEntity))
-    assertEquals(entity, newIndex.getEntities(1)?.get(0))
-    assertEquals(newEntity, newIndex.getEntities(2)?.get(0))
+    assertEquals(entity, newIndex.getEntities(1).get(0))
+    assertEquals(newEntity, newIndex.getEntities(2).get(0))
   }
 
   @Test

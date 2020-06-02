@@ -83,7 +83,7 @@ object SerializationRoundTripChecker {
 
   // Use UsefulTestCase.assertOrderedEquals in case it'd be used in this module
   private fun <T> assertOrderedEquals(actual: Iterable<T?>, expected: Iterable<T?>) {
-    if (!equals<T>(actual, expected, BiPredicate { a: T?, b: T? -> a == b })) {
+    if (!equals(actual, expected, BiPredicate { a: T?, b: T? -> a == b })) {
       val expectedString: String = expected.toString()
       val actualString: String = actual.toString()
       Assert.assertEquals("", expectedString, actualString)

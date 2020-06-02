@@ -267,9 +267,9 @@ class ModifiableArtifactPropertiesEntity : ModifiableWorkspaceEntityBase<Artifac
   var propertiesXmlTag: String? by EntityDataDelegation()
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addArtifactPropertisEntity(artifact: ArtifactEntity,
-                                                                 providerType: String,
-                                                                 propertiesXmlTag: String?, source: EntitySource) = addEntity(
+fun WorkspaceEntityStorageDiffBuilder.addArtifactPropertiesEntity(artifact: ArtifactEntity,
+                                                                  providerType: String,
+                                                                  propertiesXmlTag: String?, source: EntitySource) = addEntity(
   ModifiableArtifactPropertiesEntity::class.java, source) {
   this.artifact = artifact
   this.providerType = providerType

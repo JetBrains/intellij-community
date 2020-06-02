@@ -107,7 +107,7 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
     logExecutionTimeInMillis("Add project library at hundred modules") { addProjectLibraryToHundredModules(modules, library) }
 
     logExecutionTimeInMillis("Add module library at hundred modules") {
-      addModuleLibraryToHunredModules(modules, antLibName)
+      addModuleLibraryToHundredModules(modules, antLibName)
     }
 
     logExecutionTimeInMillis("Loop through the contentRoots of all modules") {
@@ -169,7 +169,7 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
     moduleManager.modules.forEach { ModuleRootManager.getInstance(it).contentRoots.forEach { entry -> entry.canonicalFile } }
   }
 
-  private fun addModuleLibraryToHunredModules(modules: MutableList<Module>, antLibName: String) {
+  private fun addModuleLibraryToHundredModules(modules: MutableList<Module>, antLibName: String) {
     modules.forEach { module -> ModuleRootModificationUtil.addModuleLibrary(module, antLibName, listOf(), emptyList()) }
   }
 

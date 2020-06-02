@@ -53,7 +53,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     for (moduleFile in moduleFiles) {
       val internalSource = createFileInDirectorySource(moduleFile.parent!!, moduleFile.file!!.name)
       for (moduleListSerializer in enabledModuleListSerializers) {
-        val moduleSerializer = moduleListSerializer.createSerializer(internalSource, moduleFile) ?: continue
+        val moduleSerializer = moduleListSerializer.createSerializer(internalSource, moduleFile)
         moduleSerializers[moduleSerializer] = moduleListSerializer
       }
     }
@@ -153,10 +153,10 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   override fun loadAll(reader: JpsFileContentReader, builder: WorkspaceEntityStorageBuilder) {
     val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", 1)
     try {
-      val tasks = fileSerializersByUrl.values().map { serilizer ->
+      val tasks = fileSerializersByUrl.values().map { serializer ->
         Callable {
           val myBuilder = WorkspaceEntityStorageBuilder.create()
-          serilizer.loadEntities(myBuilder, reader, virtualFileManager)
+          serializer.loadEntities(myBuilder, reader, virtualFileManager)
           synchronized(lock) {
             builder.addDiff(myBuilder)
           }

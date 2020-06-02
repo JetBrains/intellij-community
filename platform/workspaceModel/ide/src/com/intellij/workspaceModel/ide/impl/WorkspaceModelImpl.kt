@@ -25,15 +25,16 @@ class WorkspaceModelImpl(project: Project): WorkspaceModel, Disposable {
     //  Like in ProjectLifecycleListener or something
 
     val initialContent = WorkspaceModelInitialTestContent.pop()
-    if (initialContent != null) {
-      projectEntities = WorkspaceEntityStorageBuilder.from(initialContent)
-    } else if (cache != null) {
-      val activity = StartUpMeasurer.startActivity("(wm) Loading cache")
-      val previousStorage = cache.loadCache()
-      projectEntities = if (previousStorage != null) WorkspaceEntityStorageBuilder.from(previousStorage) else WorkspaceEntityStorageBuilder.create()
-      activity.end()
-    } else {
-      projectEntities = WorkspaceEntityStorageBuilder.create()
+    when {
+      initialContent != null -> projectEntities = WorkspaceEntityStorageBuilder.from(initialContent)
+      cache != null -> {
+        val activity = StartUpMeasurer.startActivity("(wm) Loading cache")
+        val previousStorage = cache.loadCache()
+        projectEntities = if (previousStorage != null) WorkspaceEntityStorageBuilder.from(previousStorage)
+        else WorkspaceEntityStorageBuilder.create()
+        activity.end()
+      }
+      else -> projectEntities = WorkspaceEntityStorageBuilder.create()
     }
 
     entityStorage = ProjectModelEntityStorage(project, projectEntities.toStorage())

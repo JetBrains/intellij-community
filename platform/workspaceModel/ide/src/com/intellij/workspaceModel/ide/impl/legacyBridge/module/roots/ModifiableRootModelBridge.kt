@@ -19,11 +19,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.isEmpty
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
-import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.CompilerModuleExtensionBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jdom.Element
@@ -171,9 +171,7 @@ class ModifiableRootModelBridge(
     updateDependencies { it + libraryDependency }
 
 
-    val libraryOrderEntry = (orderEntriesImpl.lastOrNull() as? LibraryOrderEntry
-                             ?: error("Unable to find library orderEntry after adding"))
-    return libraryOrderEntry
+    return (orderEntriesImpl.lastOrNull() as? LibraryOrderEntry ?: error("Unable to find library orderEntry after adding"))
   }
 
   override fun addInvalidLibrary(name: String, level: String): LibraryOrderEntry {
@@ -185,8 +183,7 @@ class ModifiableRootModelBridge(
 
     updateDependencies { it + libraryDependency }
 
-    return (orderEntriesImpl.lastOrNull() as? LibraryOrderEntry
-                             ?: error("Unable to find library orderEntry after adding"))
+    return (orderEntriesImpl.lastOrNull() as? LibraryOrderEntry ?: error("Unable to find library orderEntry after adding"))
   }
 
   override fun addModuleOrderEntry(module: Module): ModuleOrderEntry {
@@ -199,8 +196,7 @@ class ModifiableRootModelBridge(
 
     updateDependencies { it + moduleDependency }
 
-    return orderEntriesImpl.lastOrNull() as? ModuleOrderEntry
-           ?: error("Unable to find module orderEntry after adding")
+    return orderEntriesImpl.lastOrNull() as? ModuleOrderEntry ?: error("Unable to find module orderEntry after adding")
   }
 
   override fun addInvalidModuleEntry(name: String): ModuleOrderEntry {
@@ -213,19 +209,16 @@ class ModifiableRootModelBridge(
 
     updateDependencies { it + moduleDependency }
 
-    return orderEntriesImpl.lastOrNull() as? ModuleOrderEntry
-           ?: error("Unable to find module orderEntry after adding")
+    return orderEntriesImpl.lastOrNull() as? ModuleOrderEntry ?: error("Unable to find module orderEntry after adding")
   }
 
   override fun findModuleOrderEntry(module: Module): ModuleOrderEntry? {
-    return orderEntries
-      .filterIsInstance<ModuleOrderEntry>()
-      .firstOrNull { module == it.module }
+    return orderEntries.filterIsInstance<ModuleOrderEntry>().firstOrNull { module == it.module }
   }
 
   override fun findLibraryOrderEntry(library: Library): LibraryOrderEntry? {
     if (library is LibraryBridge) {
-      val libraryIdToFind = (library as LibraryBridge).libraryId
+      val libraryIdToFind = library.libraryId
       return orderEntries
         .filterIsInstance<LibraryOrderEntry>()
         .firstOrNull { libraryIdToFind == (it.library as? LibraryBridge)?.libraryId }

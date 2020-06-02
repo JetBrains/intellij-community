@@ -81,8 +81,8 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
           WorkspaceModel.getInstance(myProject).updateProjectModel { builder ->
             for (module in affectedModules) {
               val updated = module.dependencies.map {
-                when {
-                  it is ModuleDependencyItem.SdkDependency -> ModuleDependencyItem.SdkDependency(jdk.name, jdk.sdkType.name)
+                when (it) {
+                  is ModuleDependencyItem.SdkDependency -> ModuleDependencyItem.SdkDependency(jdk.name, jdk.sdkType.name)
                   else -> it
                 }
               }
