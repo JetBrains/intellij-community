@@ -36,7 +36,7 @@ final class PsiSymbolReferenceServiceImpl implements PsiSymbolReferenceService {
   public @NotNull List<PsiSymbolReference> getReferences(@NotNull PsiElement element, @NotNull PsiSymbolReferenceHints hints) {
     List<PsiSymbolReference> result = ContainerUtil.newArrayList(element.getOwnReferences());
     if (element instanceof PsiExternalReferenceHost) {
-      result.addAll(getExternalReferences((PsiExternalReferenceHost)element, hints));
+      result.addAll(doGetExternalReferences((PsiExternalReferenceHost)element, hints));
     }
     return applyHints(result, hints);
   }
@@ -44,6 +44,11 @@ final class PsiSymbolReferenceServiceImpl implements PsiSymbolReferenceService {
   @Override
   public @NotNull Collection<? extends PsiSymbolReference> getExternalReferences(@NotNull PsiExternalReferenceHost element,
                                                                                  @NotNull PsiSymbolReferenceHints hints) {
+    return applyHints(doGetExternalReferences(element, hints), hints);
+  }
+
+  private static @NotNull List<PsiSymbolReference> doGetExternalReferences(@NotNull PsiExternalReferenceHost element,
+                                                                           @NotNull PsiSymbolReferenceHints hints) {
     LanguageReferenceProviders languageReferenceProviders = ReferenceProviders.byLanguage(element.getLanguage());
     List<PsiSymbolReferenceProvider> providers = languageReferenceProviders.getProviders(element);
     List<PsiSymbolReference> result = new SmartList<>();
