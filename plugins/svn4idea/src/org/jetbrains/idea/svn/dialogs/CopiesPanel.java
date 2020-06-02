@@ -5,7 +5,6 @@ import com.intellij.configurationStore.StoreUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -23,6 +22,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
@@ -54,6 +54,7 @@ import java.util.List;
 import java.util.*;
 
 import static com.intellij.notification.NotificationDisplayType.STICKY_BALLOON;
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.ui.Messages.showWarningDialog;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static java.util.Collections.singletonList;
@@ -78,35 +79,7 @@ public class CopiesPanel {
 
   public CopiesPanel(@NotNull Project project) {
     myProject = project;
-
-    final Runnable focus = () -> IdeFocusManager.getInstance(myProject).requestFocus(myRefreshLabel, true);
-    final Runnable refreshView = () -> {
-      final List<WCInfo> infoList = getVcs().getWcInfosWithErrors();
-      final boolean hasErrors = !getVcs().getSvnFileUrlMapping().getErrorRoots().isEmpty();
-      final List<WorkingCopyFormat> supportedFormats = getSupportedFormats();
-      Runnable runnable = () -> {
-        infoList.sort(comparing(WCInfo::getPath));
-        updateList(infoList, supportedFormats);
-        myRefreshLabel.setEnabled(true);
-        showErrorNotification(hasErrors);
-        SwingUtilities.invokeLater(focus);
-      };
-      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL);
-    };
-    final Consumer<Boolean> refreshOnPooled = somethingNew -> {
-      if (Boolean.TRUE.equals(somethingNew)) {
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          refreshView.run();
-        }
-        else {
-          ApplicationManager.getApplication().executeOnPooledThread(refreshView);
-        }
-      }
-      else {
-        ApplicationManager.getApplication().invokeLater(() -> myRefreshLabel.setEnabled(true), ModalityState.NON_MODAL);
-      }
-    };
-    myProject.getMessageBus().connect().subscribe(SvnVcs.ROOTS_RELOADED, refreshOnPooled);
+    myProject.getMessageBus().connect().subscribe(SvnVcs.ROOTS_RELOADED, (Consumer<Boolean>)this::rootsReloaded);
 
     final JPanel holderPanel = new JPanel(new BorderLayout());
     FontMetrics fm = holderPanel.getFontMetrics(holderPanel.getFont());
@@ -125,13 +98,44 @@ public class CopiesPanel {
     myHolder = pane;
     myHolder.setBorder(null);
     setFocusableForLinks(myRefreshLabel);
-    refreshOnPooled.consume(true);
+    rootsReloaded(true);
     initView();
   }
 
   @NotNull
   private SvnVcs getVcs() {
     return SvnVcs.getInstance(myProject);
+  }
+
+  private void rootsReloaded(boolean rootsChanged) {
+    if (rootsChanged) {
+      if (getApplication().isUnitTestMode()) {
+        doRefresh();
+      }
+      else {
+        getApplication().executeOnPooledThread(this::doRefresh);
+      }
+    }
+    else {
+      getApplication().invokeLater(() -> myRefreshLabel.setEnabled(true), ModalityState.NON_MODAL);
+    }
+  }
+
+  private void doRefresh() {
+    List<WCInfo> infoList = getVcs().getWcInfosWithErrors();
+    boolean hasErrors = !getVcs().getSvnFileUrlMapping().getErrorRoots().isEmpty();
+    List<WorkingCopyFormat> supportedFormats = getSupportedFormats();
+
+    getApplication().invokeLater(() -> setWorkingCopies(infoList, hasErrors, supportedFormats), ModalityState.NON_MODAL);
+  }
+
+  @CalledInAwt
+  private void setWorkingCopies(@NotNull List<WCInfo> infoList, boolean hasErrors, List<WorkingCopyFormat> supportedFormats) {
+    infoList.sort(comparing(WCInfo::getPath));
+    updateList(infoList, supportedFormats);
+    myRefreshLabel.setEnabled(true);
+    showErrorNotification(hasErrors);
+    SwingUtilities.invokeLater(() -> IdeFocusManager.getInstance(myProject).requestFocus(myRefreshLabel, true));
   }
 
   private void updateList(@NotNull final List<WCInfo> infoList, @NotNull final List<WorkingCopyFormat> supportedFormats) {
@@ -156,47 +160,9 @@ public class CopiesPanel {
       infoPanel.addHyperlinkListener(new HyperlinkListener() {
         @Override
         public void hyperlinkUpdate(HyperlinkEvent e) {
-          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-            if (CONFIGURE_BRANCHES.equals(e.getDescription())) {
-              VirtualFile root = wcInfo.getRootInfo().getVirtualFile();
+          if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
 
-              if (!checkRoot(root, " invoke Configure Branches")) return;
-              BranchConfigurationDialog.configureBranches(myProject, root);
-            } else if (FIX_DEPTH.equals(e.getDescription())) {
-              final int result =
-                Messages.showOkCancelDialog(myProject,
-                                            "You are going to checkout into '" + wcInfo.getPath() + "' with 'infinity' depth.\n" +
-                                            "This will update your working copy to HEAD revision as well.",
-                                            "Set Working Copy Infinity Depth",
-                                            Messages.getWarningIcon());
-              if (result == Messages.OK) {
-                // update of view will be triggered by roots changed event
-                SvnCheckoutProvider.checkout(myProject, new File(wcInfo.getPath()), wcInfo.getUrl(), Revision.HEAD,
-                                             Depth.INFINITY, false, null, wcInfo.getFormat());
-              }
-            } else if (CHANGE_FORMAT.equals(e.getDescription())) {
-              changeFormat(wcInfo, upgradeFormats);
-            }
-            else if (MERGE_FROM.equals(e.getDescription())) {
-              VirtualFile root = wcInfo.getRootInfo().getVirtualFile();
-
-              if (!checkRoot(root, " invoke Merge From")) return;
-              mergeFrom(wcInfo, root, infoPanel);
-            }
-            else if (CLEANUP.equals(e.getDescription())) {
-              VirtualFile root = wcInfo.getRootInfo().getVirtualFile();
-
-              if (!checkRoot(root, " invoke Cleanup")) return;
-              new CleanupWorker(getVcs(), singletonList(root)).execute();
-            }
-          }
-        }
-
-        private boolean checkRoot(@NotNull VirtualFile root, @NotNull String actionName) {
-          if (root.isValid()) return true;
-
-          showWarningDialog(myProject, "Invalid working copy root: " + root.getPath(), "Can not " + actionName);
-          return false;
+          performAction(wcInfo, upgradeFormats, infoPanel, e.getDescription());
         }
       });
 
@@ -296,18 +262,77 @@ public class CopiesPanel {
     return canUpgradeTo;
   }
 
-  private void mergeFrom(@NotNull final WCInfo wcInfo, @NotNull final VirtualFile root, @Nullable final Component mergeLabel) {
+  private boolean checkRoot(@NotNull VirtualFile root, @NotNull String actionName) {
+    if (root.isValid()) return true;
+
+    showWarningDialog(myProject, "Invalid working copy root: " + root.getPath(), "Can not " + actionName);
+    return false;
+  }
+
+  private void performAction(@NotNull WCInfo wcInfo,
+                             @NotNull Collection<WorkingCopyFormat> upgradeFormats,
+                             @NotNull WorkingCopyInfoPanel infoPanel,
+                             @Nullable String actionName) {
+    if (CONFIGURE_BRANCHES.equals(actionName)) {
+      configureBranches(wcInfo);
+    }
+    else if (FIX_DEPTH.equals(actionName)) {
+      fixDepth(wcInfo);
+    }
+    else if (CHANGE_FORMAT.equals(actionName)) {
+      changeFormat(wcInfo, upgradeFormats);
+    }
+    else if (MERGE_FROM.equals(actionName)) {
+      mergeFrom(wcInfo, infoPanel);
+    }
+    else if (CLEANUP.equals(actionName)) {
+      cleanup(wcInfo);
+    }
+  }
+
+  private void configureBranches(@NotNull WCInfo info) {
+    VirtualFile root = info.getRootInfo().getVirtualFile();
+    if (!checkRoot(root, " invoke Configure Branches")) return;
+
+    BranchConfigurationDialog.configureBranches(myProject, root);
+  }
+
+  private void fixDepth(@NotNull WCInfo info) {
+    final int result =
+      Messages.showOkCancelDialog(myProject,
+                                  "You are going to checkout into '" + info.getPath() + "' with 'infinity' depth.\n" +
+                                  "This will update your working copy to HEAD revision as well.",
+                                  "Set Working Copy Infinity Depth",
+                                  Messages.getWarningIcon());
+    if (result == Messages.OK) {
+      // update of view will be triggered by roots changed event
+      SvnCheckoutProvider.checkout(myProject, new File(info.getPath()), info.getUrl(), Revision.HEAD,
+                                   Depth.INFINITY, false, null, info.getFormat());
+    }
+  }
+
+  private void mergeFrom(@NotNull WCInfo info, @NotNull WorkingCopyInfoPanel infoPanel) {
+    VirtualFile root = info.getRootInfo().getVirtualFile();
+    if (!checkRoot(root, " invoke Merge From")) return;
+
     SelectBranchPopup.showForBranchRoot(myProject, root, (project, configuration, branchUrl, revision) -> {
       try {
-        Url workingCopyUrlInSelectedBranch = getCorrespondingUrlInOtherBranch(configuration, wcInfo.getUrl(), branchUrl);
-        MergeContext mergeContext = new MergeContext(getVcs(), workingCopyUrlInSelectedBranch, wcInfo, branchUrl.getTail(), root);
+        Url workingCopyUrlInSelectedBranch = getCorrespondingUrlInOtherBranch(configuration, info.getUrl(), branchUrl);
+        MergeContext mergeContext = new MergeContext(getVcs(), workingCopyUrlInSelectedBranch, info, branchUrl.getTail(), root);
 
         new QuickMerge(mergeContext, new QuickMergeInteractionImpl(mergeContext)).execute();
       }
       catch (SvnBindException e) {
         AbstractVcsHelper.getInstance(myProject).showError(e, "Merge from " + branchUrl.getTail());
       }
-    }, "Select branch", mergeLabel);
+    }, "Select branch", infoPanel);
+  }
+
+  private void cleanup(@NotNull WCInfo info) {
+    VirtualFile root = info.getRootInfo().getVirtualFile();
+    if (!checkRoot(root, " invoke Cleanup")) return;
+
+    new CleanupWorker(getVcs(), singletonList(root)).execute();
   }
 
   @NotNull
