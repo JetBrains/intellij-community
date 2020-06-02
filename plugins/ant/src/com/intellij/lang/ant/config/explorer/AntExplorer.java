@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.execution.ExecutionBundle;
@@ -9,6 +9,7 @@ import com.intellij.execution.impl.RunDialog;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.ide.highlighter.XmlFileType;
@@ -77,26 +78,11 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   private final AntExplorerTreeStructure myTreeStructure;
   private StructureTreeModel myTreeModel;
 
-  private final TreeExpander myTreeExpander = new TreeExpander() {
+  private final TreeExpander myTreeExpander = new DefaultTreeExpander(() -> myTree) {
     @Override
-    public void expandAll() {
-      TreeUtil.expandAll(myTree);
-    }
-
-    @Override
-    public void collapseAll() {
-      TreeUtil.collapseAll(myTree, 1);
-    }
-
-    @Override
-    public boolean canExpand() {
+    protected boolean isEnabled(@NotNull JTree tree) {
       final AntConfiguration config = myConfig;
-      return config != null && !config.getBuildFileList().isEmpty();
-    }
-
-    @Override
-    public boolean canCollapse() {
-      return canExpand();
+      return config != null && !config.getBuildFileList().isEmpty() && super.isEnabled(tree);
     }
   };
 

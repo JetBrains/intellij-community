@@ -5,6 +5,7 @@ import com.intellij.diagnostic.VMOptions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.Disposable;
@@ -435,27 +436,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   @NotNull
   public static TreeExpander createTreeExpander(ActionsTree actionsTree) {
-    return new TreeExpander() {
-      @Override
-      public void expandAll() {
-        TreeUtil.expandAll(actionsTree.getTree());
-      }
-
-      @Override
-      public boolean canExpand() {
-        return true;
-      }
-
-      @Override
-      public void collapseAll() {
-        TreeUtil.collapseAll(actionsTree.getTree(), 0);
-      }
-
-      @Override
-      public boolean canCollapse() {
-        return true;
-      }
-    };
+    return new DefaultTreeExpander(() -> actionsTree == null ? null : actionsTree.getTree());
   }
 
   private void filterTreeByShortcut(Shortcut shortcut) {
