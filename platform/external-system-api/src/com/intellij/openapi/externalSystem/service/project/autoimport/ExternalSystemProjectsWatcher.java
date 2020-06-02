@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.service.project.autoimport;
 
 import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
@@ -23,7 +24,7 @@ import com.intellij.openapi.module.Module;
 public interface ExternalSystemProjectsWatcher {
   void markDirtyAllExternalProjects();
 
-  void markDirty(Module module);
+  void markDirty(@NotNull Module module);
 
-  void markDirty(String projectPath);
+  void markDirty(@NotNull String projectPath);
 }
