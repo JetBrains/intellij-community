@@ -12,8 +12,7 @@ public interface PsiSymbolReferenceHints {
    *
    * @return type of expected target symbol
    */
-  @Nullable
-  default Class<? extends Symbol> getTargetClass() {
+  default @Nullable Class<? extends Symbol> getTargetClass() {
     Symbol target = getTarget();
     return target != null ? target.getClass() : null;
   }
@@ -23,8 +22,7 @@ public interface PsiSymbolReferenceHints {
    *
    * @return expected target symbol
    */
-  @Nullable
-  default Symbol getTarget() {
+  default @Nullable Symbol getTarget() {
     return null;
   }
 
@@ -34,13 +32,11 @@ public interface PsiSymbolReferenceHints {
    *
    * @return offset in the element for which references are queried, or {@code null} if the offset doesn't matter
    */
-  @Nullable
-  default Integer getOffsetInElement() {
+  default @Nullable Integer getOffsetInElement() {
     return null;
   }
 
-  @NotNull
-  static PsiSymbolReferenceHints offsetHint(int offsetInElement) {
+  static @NotNull PsiSymbolReferenceHints offsetHint(int offsetInElement) {
     assert offsetInElement >= 0;
     return new PsiSymbolReferenceHints() {
       @Override
