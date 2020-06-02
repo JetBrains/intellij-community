@@ -149,6 +149,11 @@ public final class JavaNullMethodArgumentIndex extends ScalarIndexExtension<Java
     return true;
   }
 
+  @Override
+  public boolean needsForwardIndexWhenSharing() {
+    return false;
+  }
+
   public static final class MethodCallData {
     @NotNull
     private final String myMethodName;

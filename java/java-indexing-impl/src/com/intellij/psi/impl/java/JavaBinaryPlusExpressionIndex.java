@@ -96,6 +96,11 @@ public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boole
     return true;
   }
 
+  @Override
+  public boolean needsForwardIndexWhenSharing() {
+    return false;
+  }
+
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
