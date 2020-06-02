@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
@@ -15,7 +15,6 @@ import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.*;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
@@ -51,10 +50,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author cdr
- */
-public class QuickFixFactoryImpl extends QuickFixFactory {
+public final class QuickFixFactoryImpl extends QuickFixFactory {
   private static final Logger LOG = Logger.getInstance(QuickFixFactoryImpl.class);
 
   @NotNull
@@ -615,8 +611,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   public void registerFixesForUnusedParameter(@NotNull PsiParameter parameter, @NotNull Object highlightInfo) {
     Project myProject = parameter.getProject();
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
-    UnusedDeclarationInspectionBase unusedParametersInspection =
-      (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(UnusedSymbolLocalInspectionBase.SHORT_NAME, parameter);
+    BatchSuppressableTool unusedParametersInspection = profile.getUnwrappedTool(UnusedSymbolLocalInspectionBase.SHORT_NAME, parameter);
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || unusedParametersInspection != null);
     HighlightDisplayKey myUnusedSymbolKey = HighlightDisplayKey.find(UnusedSymbolLocalInspectionBase.SHORT_NAME);
     List<IntentionAction> options =
@@ -755,7 +750,9 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   private static boolean timeToOptimizeImports(@NotNull PsiFile file) {
-    if (!CodeInsightWorkspaceSettings.getInstance(file.getProject()).optimizeImportsOnTheFly) return false;
+    if (!CodeInsightWorkspaceSettings.getInstance(file.getProject()).isOptimizeImportsOnTheFly()) {
+      return false;
+    }
 
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(file.getProject());
     // dont optimize out imports in JSP since it can be included in other JSP
@@ -847,7 +844,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createAddMissingEnumBranchesFix(@NotNull PsiSwitchBlock switchBlock, @NotNull Set<String> missingCases) {
     return new CreateMissingSwitchBranchesFix(switchBlock, missingCases);
-  } 
+  }
 
   @NotNull
   @Override
@@ -885,10 +882,10 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return new AddEmptyRecordHeaderFix(psiClass);
   }
 
-  private static class OptimizeImportsAction implements IntentionAction {
+  private static final class OptimizeImportsAction implements IntentionAction {
     private final boolean myOnTheFly;
 
-    public OptimizeImportsAction(boolean onTheFly) {myOnTheFly = onTheFly;}
+    private OptimizeImportsAction(boolean onTheFly) {myOnTheFly = onTheFly;}
 
     @NotNull
     @Override
