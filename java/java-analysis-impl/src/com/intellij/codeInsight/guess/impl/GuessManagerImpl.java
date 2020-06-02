@@ -40,7 +40,6 @@ public final class GuessManagerImpl extends GuessManager {
     initMethodPatterns();
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   private void initMethodPatterns() {
     // Collection
     myMethodPatternMap.addPattern(new MethodPattern("add", 1, 0));
