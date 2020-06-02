@@ -8,9 +8,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.workspace.api.EntityChange
-import com.intellij.workspace.api.FacetEntity
-import com.intellij.workspace.api.ModuleEntity
+import com.intellij.workspaceModel.storage.EntityChange
+import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 internal class FacetEntityChangeListener(private val project: Project) {
 

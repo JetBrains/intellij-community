@@ -4,10 +4,11 @@ package com.intellij.workspace.legacyBridge.libraries.libraries
 import com.google.common.collect.ArrayListMultimap
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.ide.getInstance
+import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import kotlin.reflect.KClass
 
 /**
@@ -84,7 +85,7 @@ class LegacyModelRootsFilePointers(val project: Project) {
     }
   }
 
-  fun onModelChange(newStorage: TypedEntityStorage) {
+  fun onModelChange(newStorage: WorkspaceEntityStorage) {
     pointers.filterIsInstance<TypedEntityFileWatcher<*, *, *>>().forEach { it.onModelChange(newStorage) }
   }
 
@@ -93,8 +94,8 @@ class LegacyModelRootsFilePointers(val project: Project) {
   }
 }
 
-private interface LegacyFileWatcher<E : TypedEntity> {
-  fun onVfsChange(oldUrl: String, newUrl: String, diff: TypedEntityStorageBuilder)
+private interface LegacyFileWatcher<E : WorkspaceEntity> {
+  fun onVfsChange(oldUrl: String, newUrl: String, diff: WorkspaceEntityStorageBuilder)
 }
 
 private class EntitySourceFileWatcher<T : EntitySource>(
@@ -102,8 +103,8 @@ private class EntitySourceFileWatcher<T : EntitySource>(
   val containerToUrl: (T) -> String,
   val createNewSource: (T, VirtualFileUrl) -> T,
   val virtualFileManager: VirtualFileUrlManager
-) : LegacyFileWatcher<TypedEntity> {
-  override fun onVfsChange(oldUrl: String, newUrl: String, diff: TypedEntityStorageBuilder) {
+) : LegacyFileWatcher<WorkspaceEntity> {
+  override fun onVfsChange(oldUrl: String, newUrl: String, diff: WorkspaceEntityStorageBuilder) {
     val entities = diff.entitiesBySource { it::class == entitySource }
     for ((entitySource, mapOfEntities) in entities) {
       @Suppress("UNCHECKED_CAST")
@@ -125,7 +126,7 @@ private class EntitySourceFileWatcher<T : EntitySource>(
  * [containerListGetter] - function on how to extract from the entity a list of containers
  * There 2 functions are created for better convenience. You should use only one from them.
  */
-private class TypedEntityWithVfuFileWatcher<E : TypedEntity, M : ModifiableTypedEntity<E>>(
+private class TypedEntityWithVfuFileWatcher<E : WorkspaceEntity, M : ModifiableWorkspaceEntity<E>>(
   entityClass: KClass<E>,
   modifiableEntityClass: KClass<M>,
   containerGetter: E.() -> VirtualFileUrl? = { null },
@@ -139,8 +140,8 @@ private class TypedEntityWithVfuFileWatcher<E : TypedEntity, M : ModifiableTyped
 )
 
 /**
- * Legacy file pointer that can track and update urls stored in a [TypedEntity].
- * [entityClass] - class of a [TypedEntity] that contains an url being tracked
+ * Legacy file pointer that can track and update urls stored in a [WorkspaceEntity].
+ * [entityClass] - class of a [WorkspaceEntity] that contains an url being tracked
  * [modifiableEntityClass] - class of modifiable entity of [entityClass]
  * [containerToUrl] - function to extract the url from the container
  * [urlToContainer] - function on how to build a container from the url and the previous version of the container
@@ -151,7 +152,7 @@ private class TypedEntityWithVfuFileWatcher<E : TypedEntity, M : ModifiableTyped
  *   complicated structure like LibraryEntity -> roots (LibraryRoot) -> url (VirtualFileUrl).
  *     See a LegacyFilePointer for LibraryEntity.roots.url
  */
-private open class TypedEntityFileWatcher<T, E : TypedEntity, M : ModifiableTypedEntity<E>>(
+private open class TypedEntityFileWatcher<T, E : WorkspaceEntity, M : ModifiableWorkspaceEntity<E>>(
   val entityClass: KClass<E>,
   val modifiableEntityClass: KClass<M>,
   val containerToUrl: (T) -> String,
@@ -162,7 +163,7 @@ private open class TypedEntityFileWatcher<T, E : TypedEntity, M : ModifiableType
   // A multimap the associates the "url container" to the typed entity
   private val savedContainers = ArrayListMultimap.create<T, E>()
 
-  override fun onVfsChange(oldUrl: String, newUrl: String, diff: TypedEntityStorageBuilder) {
+  override fun onVfsChange(oldUrl: String, newUrl: String, diff: WorkspaceEntityStorageBuilder) {
     val toAdd = mutableListOf<Pair<T, E>>()
     val toRemove = mutableListOf<Pair<T, E>>()
 
@@ -187,7 +188,7 @@ private open class TypedEntityFileWatcher<T, E : TypedEntity, M : ModifiableType
     toAdd.forEach { savedContainers.put(it.first, it.second) }
   }
 
-  fun onModelChange(newStorage: TypedEntityStorage) {
+  fun onModelChange(newStorage: WorkspaceEntityStorage) {
     savedContainers.clear()
     newStorage.entities(entityClass.java).forEach {
       for (container in it.containerListGetter()) {

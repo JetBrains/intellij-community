@@ -47,7 +47,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.update.Update;
-import com.intellij.workspace.api.TypedEntityStorageBuilder;
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
@@ -1265,7 +1265,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public List<Module> importProjects() {
     if (MavenUtil.newModelEnabled(myProject)) {
-      TypedEntityStorageBuilder builder = TypedEntityStorageBuilder.Companion.create();
+      WorkspaceEntityStorageBuilder builder = WorkspaceEntityStorageBuilder.Companion.create();
       return importProjects(new LegacyBrigdeIdeModifiableModelsProvider(myProject, builder));
     }
     else {

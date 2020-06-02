@@ -21,7 +21,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ClassMap
-import com.intellij.workspace.api.TypedEntityStorageBuilder
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspace.legacyBridge.facet.FacetManagerViaWorkspaceModel
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleManagerComponent
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleRootComponent
@@ -30,7 +30,7 @@ import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeProje
 import org.jetbrains.idea.maven.utils.MavenLog
 
 class LegacyBrigdeIdeModifiableModelsProvider(val project: Project,
-                                              builder: TypedEntityStorageBuilder) : IdeModifiableModelsProvider {
+                                              builder: WorkspaceEntityStorageBuilder) : IdeModifiableModelsProvider {
   private val legacyBridgeModuleManagerComponent = LegacyBridgeModuleManagerComponent.getInstance(project)
   private val myProductionModulesForTestModules = HashMap<Module, String>()
   private val myModifiableModels = ClassMap<ModifiableModel>()

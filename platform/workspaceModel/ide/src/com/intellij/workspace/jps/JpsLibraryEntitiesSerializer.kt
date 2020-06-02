@@ -1,10 +1,11 @@
 package com.intellij.workspace.jps
 
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.JpsImportedEntitySource
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
+import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.SerializationConstants
@@ -68,7 +69,7 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
   override val mainEntityClass: Class<LibraryEntity>
     get() = LibraryEntity::class.java
 
-  override fun loadEntities(builder: TypedEntityStorageBuilder,
+  override fun loadEntities(builder: WorkspaceEntityStorageBuilder,
                             reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager) {
     val libraryTableTag = reader.loadComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME) ?: return
     for (libraryTag in libraryTableTag.getChildren(LIBRARY_TAG)) {
@@ -81,7 +82,7 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
   protected open fun createEntitySource(libraryTag: Element): EntitySource? = internalEntitySource
 
   override fun saveEntities(mainEntities: Collection<LibraryEntity>,
-                            entities: Map<Class<out TypedEntity>, List<TypedEntity>>,
+                            entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
                             writer: JpsFileContentWriter) {
     if (mainEntities.isEmpty()) return
 
@@ -97,7 +98,7 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
 
 private const val DEFAULT_JAR_DIRECTORY_TYPE = "CLASSES"
 
-internal fun loadLibrary(name: String, libraryElement: Element, libraryTableId: LibraryTableId, builder: TypedEntityStorageBuilder,
+internal fun loadLibrary(name: String, libraryElement: Element, libraryTableId: LibraryTableId, builder: WorkspaceEntityStorageBuilder,
                          source: EntitySource, virtualFileManager: VirtualFileUrlManager): LibraryEntity {
   val roots = ArrayList<LibraryRoot>()
   val excludedRoots = ArrayList<VirtualFileUrl>()

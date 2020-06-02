@@ -14,12 +14,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.ide.WorkspaceModelChangeListener
 import com.intellij.workspace.ide.WorkspaceModelTopics
 import com.intellij.workspace.legacyBridge.externalSystem.ExternalSystemModulePropertyManagerForWorkspaceModel
 import com.intellij.workspace.legacyBridge.facet.FacetManagerViaWorkspaceModel
+import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.picocontainer.MutablePicoContainer
 import java.io.File
 
@@ -28,8 +29,8 @@ internal class LegacyBridgeModuleImpl(
   name: String,
   project: Project,
   filePath: String?,
-  override var entityStore: TypedEntityStore,
-  override var diff: TypedEntityStorageDiffBuilder?
+  override var entityStorage: VersionedEntityStorage,
+  override var diff: WorkspaceEntityStorageDiffBuilder?
 ) : ModuleImpl(name, project, filePath), LegacyBridgeModule {
   private val directoryPath: String? = filePath?.let { File(it).parent }
   private var vfsRefreshWasCalled = false
@@ -40,9 +41,10 @@ internal class LegacyBridgeModuleImpl(
       val busConnection = project.messageBus.connect(this)
 
       WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object : WorkspaceModelChangeListener {
-        override fun beforeChanged(event: EntityStoreChanged) {
-          event.getChanges(ModuleEntity::class.java).filterIsInstance<EntityChange.Removed<ModuleEntity>>()
-            .forEach{ if (it.entity.persistentId() == moduleEntityId) entityStore = EntityStoreOnStorage(entityStore.current) }
+        override fun beforeChanged(event: VersionedStorageChanged) {
+          event.getChanges(ModuleEntity::class.java).filterIsInstance<EntityChange.Removed<ModuleEntity>>().forEach {
+            if (it.entity.persistentId() == moduleEntityId) entityStorage = VersionedEntityStorageOnStorage(entityStorage.current)
+          }
         }
       })
     }
@@ -87,7 +89,7 @@ internal class LegacyBridgeModuleImpl(
   }
 
   override fun getOptionValue(key: String): String? {
-    val moduleEntity = entityStore.current.resolve(moduleEntityId)
+    val moduleEntity = entityStorage.current.resolve(moduleEntityId)
     if (key == Module.ELEMENT_TYPE) {
       return moduleEntity?.type
     }
@@ -95,7 +97,7 @@ internal class LegacyBridgeModuleImpl(
   }
 
   override fun setOption(key: String, value: String?) {
-    fun updateOptionInEntity(diff: TypedEntityStorageDiffBuilder, entity: ModuleEntity) {
+    fun updateOptionInEntity(diff: WorkspaceEntityStorageDiffBuilder, entity: ModuleEntity) {
       if (key == Module.ELEMENT_TYPE) {
         diff.modifyEntity(ModifiableModuleEntity::class.java, entity, { type = value })
       }
@@ -121,7 +123,7 @@ internal class LegacyBridgeModuleImpl(
 
     val diff = diff
     if (diff != null) {
-      val entity = entityStore.current.resolve(moduleEntityId)
+      val entity = entityStorage.current.resolve(moduleEntityId)
       if (entity != null) {
         updateOptionInEntity(diff, entity)
       }

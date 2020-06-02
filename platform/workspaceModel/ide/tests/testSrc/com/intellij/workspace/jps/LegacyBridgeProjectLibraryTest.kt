@@ -14,7 +14,12 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.workspace.api.*
+import com.intellij.workspaceModel.storage.EntityChange
+import com.intellij.workspaceModel.storage.VersionedStorageChanged
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.ide.WorkspaceModelChangeListener
 import com.intellij.workspace.ide.WorkspaceModelTopics
@@ -49,7 +54,7 @@ class LegacyBridgeProjectLibraryTest {
     events = mutableListOf()
     val messageBusConnection = project.messageBus.connect(disposableRule.disposable)
     WorkspaceModelTopics.getInstance(project).subscribeImmediately(messageBusConnection, object : WorkspaceModelChangeListener {
-      override fun changed(event: EntityStoreChanged) {
+      override fun changed(event: VersionedStorageChanged) {
         events.addAll(event.getChanges(LibraryEntity::class.java))
       }
     })
@@ -262,7 +267,7 @@ class LegacyBridgeProjectLibraryTest {
     assertTrue(moduleFile.readText().contains(mavenLibraryName))
     assertFalse(moduleFile.readText().contains(antLibraryName))
 
-    val moduleDependencyItem = WorkspaceModel.getInstance(project).entityStore.current
+    val moduleDependencyItem = WorkspaceModel.getInstance(project).entityStorage.current
                                                                   .entities(ModuleEntity::class.java).first()
                                                                   .dependencies.last()
     assertTrue(moduleDependencyItem is ModuleDependencyItem.Exportable.LibraryDependency)
@@ -288,7 +293,7 @@ class LegacyBridgeProjectLibraryTest {
       rootModel.addLibraryEntry(library)
       rootModel.dispose()
     }
-    val moduleDependencies = WorkspaceModel.getInstance(project).entityStore.current
+    val moduleDependencies = WorkspaceModel.getInstance(project).entityStorage.current
                                                                 .entities(ModuleEntity::class.java).first()
                                                                 .dependencies
     assertEquals(1, moduleDependencies.size)

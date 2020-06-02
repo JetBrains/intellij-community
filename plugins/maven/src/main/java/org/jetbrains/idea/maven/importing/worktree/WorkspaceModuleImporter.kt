@@ -3,8 +3,10 @@ package org.jetbrains.idea.maven.importing.worktree
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.workspace.api.*
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspace.ide.getInstance
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter
 import org.jetbrains.idea.maven.importing.MavenModelUtil
 import org.jetbrains.idea.maven.model.MavenArtifact
@@ -21,7 +23,7 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertie
 class WorkspaceModuleImporter(private val project: Project,
                               private val mavenProject: MavenProject,
                               private val projectsTree: MavenProjectsTree,
-                              private val diff: TypedEntityStorageBuilder) {
+                              private val diff: WorkspaceEntityStorageBuilder) {
 
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
   private lateinit var moduleEntity: ModuleEntity

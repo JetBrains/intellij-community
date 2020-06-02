@@ -12,7 +12,13 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.MultiMap
-import com.intellij.workspace.api.*
+import com.intellij.workspaceModel.storage.EntityChange
+import com.intellij.workspaceModel.storage.VersionedStorageChanged
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.VersionedEntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.workspace.bracket
 import com.intellij.workspace.executeOrQueueOnDispatchThread
 import com.intellij.workspace.ide.WorkspaceModel
@@ -33,7 +39,7 @@ internal class LegacyBridgeProjectLibraryTableImpl(
 
   private val newLibraryInstances = mutableMapOf<LibraryId, LegacyBridgeLibraryImpl>()
 
-  private val entityStore: TypedEntityStore = WorkspaceModel.getInstance(parentProject).entityStore
+  private val entityStorage: VersionedEntityStorage = WorkspaceModel.getInstance(parentProject).entityStorage
 
   private val dispatcher = EventDispatcher.create(LibraryTable.Listener::class.java)
 
@@ -75,7 +81,7 @@ internal class LegacyBridgeProjectLibraryTableImpl(
     val messageBusConnection = project.messageBus.connect(this)
 
     WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(messageBusConnection, object : WorkspaceModelChangeListener {
-      override fun beforeChanged(event: EntityStoreChanged) {
+      override fun beforeChanged(event: VersionedStorageChanged) {
         val changes = event.getChanges(LibraryEntity::class.java).filterProjectLibraryChanges()
           .filterIsInstance<EntityChange.Removed<LibraryEntity>>()
         if (changes.isEmpty()) return
@@ -90,7 +96,7 @@ internal class LegacyBridgeProjectLibraryTableImpl(
         }
       }
 
-      override fun changed(event: EntityStoreChanged) {
+      override fun changed(event: VersionedStorageChanged) {
         val changes = event.getChanges(LibraryEntity::class.java).filterProjectLibraryChanges()
         if (changes.isEmpty()) return
 
@@ -101,7 +107,7 @@ internal class LegacyBridgeProjectLibraryTableImpl(
                 val addedLibraryId = change.entity.persistentId()
                 val alreadyCreatedLibrary = newLibraryInstances.remove(addedLibraryId)
                 val libraryImpl = if (alreadyCreatedLibrary != null) {
-                  alreadyCreatedLibrary.entityStore = entityStore
+                  alreadyCreatedLibrary.entityStorage = entityStorage
                   alreadyCreatedLibrary.modifiableModelFactory = null
                   alreadyCreatedLibrary
                 }
@@ -109,7 +115,7 @@ internal class LegacyBridgeProjectLibraryTableImpl(
                   libraryTable = this@LegacyBridgeProjectLibraryTableImpl,
                   project = project,
                   initialId = addedLibraryId,
-                  initialEntityStore = entityStore,
+                  initialEntityStorage = entityStorage,
                   parent = this@LegacyBridgeProjectLibraryTableImpl,
                   targetBuilder = null
                 )
@@ -156,7 +162,7 @@ internal class LegacyBridgeProjectLibraryTableImpl(
     })
 
     executeOrQueueOnDispatchThread {
-      entityStore.current
+      entityStorage.current
         .entities(LibraryEntity::class.java)
         .filter { it.tableId is LibraryTableId.ProjectLibraryTableId }
         .forEach { libraryEntity ->
@@ -164,7 +170,7 @@ internal class LegacyBridgeProjectLibraryTableImpl(
             libraryTable = this@LegacyBridgeProjectLibraryTableImpl,
             project = project,
             initialId = libraryEntity.persistentId(),
-            initialEntityStore = entityStore,
+            initialEntityStorage = entityStorage,
             parent = this@LegacyBridgeProjectLibraryTableImpl,
             targetBuilder = null
           )
@@ -218,14 +224,14 @@ internal class LegacyBridgeProjectLibraryTableImpl(
     LegacyBridgeProjectModifiableLibraryTableImpl(
       libraryTable = this,
       project = project,
-      originalStorage = entityStore.current
+      originalStorage = entityStorage.current
     )
 
-  override fun getModifiableModel(diff: TypedEntityStorageBuilder): LibraryTable.ModifiableModel =
+  override fun getModifiableModel(diff: WorkspaceEntityStorageBuilder): LibraryTable.ModifiableModel =
     LegacyBridgeProjectModifiableLibraryTableImpl(
       libraryTable = this,
       project = project,
-      originalStorage = entityStore.current,
+      originalStorage = entityStorage.current,
       diff = diff
     )
 

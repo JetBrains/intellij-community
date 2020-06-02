@@ -3,9 +3,10 @@ package com.intellij.workspace.jps
 
 import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.util.PathUtil
-import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.JpsImportedEntitySource
+import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.util.JpsPathUtil
@@ -17,7 +18,7 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
   override val skipLoadingIfFileDoesNotExist: Boolean
     get() = true
 
-  override fun loadEntities(builder: TypedEntityStorageBuilder, reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager) {
+  override fun loadEntities(builder: WorkspaceEntityStorageBuilder, reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager) {
   }
 
   override fun acceptsSource(entitySource: EntitySource): Boolean {
@@ -31,7 +32,7 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
     return Pair(options, options["externalSystem"])
   }
 
-  override fun loadExternalSystemOptions(builder: TypedEntityStorageBuilder,
+  override fun loadExternalSystemOptions(builder: WorkspaceEntityStorageBuilder,
                                          module: ModuleEntity,
                                          reader: JpsFileContentReader,
                                          externalSystemOptions: Map<String?, String?>,

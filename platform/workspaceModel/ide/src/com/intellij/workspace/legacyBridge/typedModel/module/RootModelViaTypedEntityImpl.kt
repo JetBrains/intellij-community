@@ -11,7 +11,14 @@ import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.workspace.api.*
+import com.intellij.workspaceModel.storage.VersionedEntityStorageOnStorage
+import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.FakeContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeCompilerModuleExtension
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleRootModel
@@ -23,11 +30,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.collections.HashMap
 
 internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: PersistentEntityId<ModuleEntity>,
-                                           val storage: TypedEntityStorage,
+                                           val storage: WorkspaceEntityStorage,
                                            private val moduleLibraryTable: LibraryTable,
                                            private val itemUpdater: ((Int, (ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?,
                                            private val rootModel: LegacyBridgeModuleRootModel,
-                                           internal val updater: (((TypedEntityStorageDiffBuilder) -> Unit) -> Unit)?) : RootModelBase(), Disposable {
+                                           internal val updater: (((WorkspaceEntityStorageDiffBuilder) -> Unit) -> Unit)?) : RootModelBase(), Disposable {
   private val module: LegacyBridgeModule = rootModel.legacyBridgeModule
 
   private val extensions by lazy {
@@ -94,7 +101,7 @@ internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: Persiste
 
   // TODO Deduplicate this code with other two root model implementations
   private val compilerModuleExtension by lazy {
-    LegacyBridgeCompilerModuleExtension(module, entityStore = EntityStoreOnStorage(storage), diff = null)
+    LegacyBridgeCompilerModuleExtension(module, entityStorage = VersionedEntityStorageOnStorage(storage), diff = null)
   }
 
   private val compilerModuleExtensionClass = CompilerModuleExtension::class.java
@@ -138,7 +145,7 @@ internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: Persiste
   }
 
   companion object {
-    internal fun loadExtensions(storage: TypedEntityStorage,
+    internal fun loadExtensions(storage: WorkspaceEntityStorage,
                                 module: LegacyBridgeModule,
                                 writable: Boolean,
                                 parentDisposable: Disposable): Set<ModuleExtension> {

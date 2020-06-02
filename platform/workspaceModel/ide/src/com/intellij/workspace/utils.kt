@@ -4,8 +4,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.workspace.api.VirtualFileUrl
-import com.intellij.workspace.api.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.VirtualFileUrl
+import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import kotlin.concurrent.getOrSet
 
 private val bracketIndent = ThreadLocal<Int>()

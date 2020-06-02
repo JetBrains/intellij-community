@@ -3,10 +3,14 @@ package com.intellij.workspace.jps
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.TempDirectory
-import com.intellij.workspace.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.JavaSourceRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
+import com.intellij.workspaceModel.storage.impl.VirtualFileUrlManagerImpl
 import com.intellij.workspace.ide.JpsFileEntitySource
 import org.junit.*
 import com.intellij.workspace.ide.JpsProjectConfigLocation
+import com.intellij.workspaceModel.storage.*
 import org.junit.Assert
 import org.junit.ClassRule
 import org.junit.Rule
@@ -53,7 +57,7 @@ class ImlReplaceBySourceTest {
 
     val configLocation = JpsProjectConfigLocation.DirectoryBased(temp.root.toVirtualFileUrl(virtualFileManager))
 
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = WorkspaceEntityStorageBuilder.create()
     JpsProjectEntitiesLoader.loadModule(moduleFile, configLocation, builder, virtualFileManager)
 
     moduleFile.writeText("""
@@ -71,7 +75,7 @@ class ImlReplaceBySourceTest {
       </module>
     """.trimIndent())
 
-    val replaceWith = TypedEntityStorageBuilder.create()
+    val replaceWith = WorkspaceEntityStorageBuilder.create()
     val source = builder.entities(ModuleEntity::class.java).first().entitySource as JpsFileEntitySource.FileInDirectory
     JpsProjectEntitiesLoader.loadModule(moduleFile, source, configLocation, replaceWith, virtualFileManager)
 
@@ -97,10 +101,10 @@ class ImlReplaceBySourceTest {
   }
 
   private fun replaceBySourceFullReplace(projectFile: File) {
-    val storageBuilder1 = TypedEntityStorageBuilder.create()
+    val storageBuilder1 = WorkspaceEntityStorageBuilder.create()
     val data = loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder1, virtualFileManager)
 
-    val storageBuilder2 = TypedEntityStorageBuilder.create()
+    val storageBuilder2 = WorkspaceEntityStorageBuilder.create()
     val reader = CachingJpsFileContentReader(projectFile.asConfigLocation(virtualFileManager).baseDirectoryUrlString)
     data.loadAll(reader, storageBuilder2)
 

@@ -5,13 +5,11 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.impl.ModuleLibraryTableBase
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Disposer
-import com.intellij.workspace.api.LibraryEntity
-import com.intellij.workspace.api.LibraryId
-import com.intellij.workspace.api.LibraryTableId
-import com.intellij.workspace.ide.WorkspaceModel
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
 
 internal class LegacyBridgeModuleLibraryTableImpl(private val legacyBridgeModule: LegacyBridgeModule) : ModuleLibraryTableBase(), LegacyBridgeModuleLibraryTable {
@@ -20,7 +18,7 @@ internal class LegacyBridgeModuleLibraryTableImpl(private val legacyBridgeModule
   init {
     val moduleLibraryTableId = LibraryTableId.ModuleLibraryTableId(legacyBridgeModule.moduleEntityId)
 
-    legacyBridgeModule.entityStore.current
+    legacyBridgeModule.entityStorage.current
       .entities(LibraryEntity::class.java)
       .filter { it.tableId == moduleLibraryTableId }
       .forEach { libraryEntity ->
@@ -66,7 +64,7 @@ internal class LegacyBridgeModuleLibraryTableImpl(private val legacyBridgeModule
       libraryTable = this,
       project = module.project,
       initialId = libraryId,
-      initialEntityStore = legacyBridgeModule.entityStore,
+      initialEntityStorage = legacyBridgeModule.entityStorage,
       parent = this,
       targetBuilder = null
     )

@@ -8,7 +8,13 @@ import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.util.CachedValueImpl
-import com.intellij.workspace.api.*
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
+import com.intellij.workspaceModel.storage.VirtualFileUrl
+import com.intellij.workspaceModel.storage.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addSourceRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.asJavaResourceRoot
+import com.intellij.workspaceModel.storage.bridgeEntities.asJavaSourceRoot
 import com.intellij.workspace.ide.getInstance
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModifiableRootModel
 import com.intellij.workspace.legacyBridge.typedModel.module.ContentEntryViaTypedEntity
@@ -24,7 +30,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer
 
 internal class LegacyBridgeModifiableContentEntryImpl(
-  private val diff: TypedEntityStorageDiffBuilder,
+  private val diff: WorkspaceEntityStorageDiffBuilder,
   private val modifiableRootModel: LegacyBridgeModifiableRootModel,
   val contentEntryUrl: VirtualFileUrl
 ): ContentEntry {

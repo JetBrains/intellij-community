@@ -6,9 +6,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
-import com.intellij.workspace.api.TypedEntityStorage
-import com.intellij.workspace.api.TypedEntityStorageBuilder
-import com.intellij.workspace.api.VirtualFileUrlManagerImpl
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.impl.VirtualFileUrlManagerImpl
 import java.io.File
 import java.nio.file.Paths
 import kotlin.system.exitProcess
@@ -26,8 +26,8 @@ fun main() {
   exitProcess(0)
 }
 
-private fun loadProject(): Pair<JpsProjectSerializers, TypedEntityStorage> {
-  val builder = TypedEntityStorageBuilder.create()
+private fun loadProject(): Pair<JpsProjectSerializers, WorkspaceEntityStorage> {
+  val builder = WorkspaceEntityStorageBuilder.create()
   val virtualFileManager = VirtualFileUrlManagerImpl()
   val projectDir = File(PathManager.getHomePath()).asConfigLocation(virtualFileManager)
   val serializers = JpsProjectEntitiesLoader.loadProject(projectDir, builder, Paths.get("/tmp"), virtualFileManager)

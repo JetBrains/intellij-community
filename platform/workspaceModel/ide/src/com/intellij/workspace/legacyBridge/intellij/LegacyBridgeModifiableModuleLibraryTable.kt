@@ -6,16 +6,16 @@ import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.impl.ModuleLibraryTableBase
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
-import com.intellij.workspace.api.*
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibrary
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeModifiableBase
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal class LegacyBridgeModifiableModuleLibraryTable(private val modifiableModel: LegacyBridgeModifiableRootModel,
                                                         originalLibraries: List<LegacyBridgeLibraryImpl>) : ModuleLibraryTableBase(), LegacyBridgeModuleLibraryTable {
   private val libraries: MutableList<LegacyBridgeLibraryImpl> = originalLibraries.mapTo(ArrayList()) {
-    LegacyBridgeLibraryImpl(this, modifiableModel.project, it.libraryId, modifiableModel.entityStoreOnDiff, this, modifiableModel.diff)
+    LegacyBridgeLibraryImpl(this, modifiableModel.project, it.libraryId, modifiableModel.entityStorageOnDiff, this, modifiableModel.diff)
   }
 
   override fun getLibraryIterator(): Iterator<Library> {
@@ -73,7 +73,7 @@ internal class LegacyBridgeModifiableModuleLibraryTable(private val modifiableMo
       libraryTable = LegacyBridgeModuleRootComponent.getInstance(modifiableModel.module).moduleLibraryTable,
       project = modifiableModel.project,
       initialId = libraryId,
-      initialEntityStore = modifiableModel.entityStoreOnDiff,
+      initialEntityStorage = modifiableModel.entityStorageOnDiff,
       parent = this,
       targetBuilder = modifiableModel.diff
     )
@@ -121,7 +121,7 @@ internal class LegacyBridgeModifiableModuleLibraryTable(private val modifiableMo
             "Library moduleId: '${moduleLibraryTableId.moduleId}', this model moduleId: '${modifiableModel.moduleId}'")
     }
 
-    val libraryEntity = library.libraryId.resolve(modifiableModel.entityStoreOnDiff.current)
+    val libraryEntity = library.libraryId.resolve(modifiableModel.entityStorageOnDiff.current)
                         ?: error("Unable to resolve module library by id: ${library.libraryId}")
 
     modifiableModel.updateDependencies { dependencies ->

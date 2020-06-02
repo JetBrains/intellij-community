@@ -3,12 +3,12 @@ package com.intellij.workspace.legacyBridge.intellij
 
 import com.intellij.openapi.roots.ModuleRootModel
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
-import com.intellij.workspace.api.TypedEntityStorage
-import com.intellij.workspace.api.VirtualFileUrl
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.VirtualFileUrl
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 
 internal interface LegacyBridgeModuleRootModel: ModuleRootModel {
-  val storage: TypedEntityStorage
+  val storage: WorkspaceEntityStorage
   val legacyBridgeModule: LegacyBridgeModule
   val accessor: RootConfigurationAccessor
 

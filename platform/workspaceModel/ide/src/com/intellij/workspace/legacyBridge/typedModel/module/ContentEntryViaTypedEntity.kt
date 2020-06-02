@@ -6,9 +6,9 @@ import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.workspace.api.ContentRootEntity
-import com.intellij.workspace.api.SourceRootEntity
-import com.intellij.workspace.api.TypedEntityStorageDiffBuilder
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProvider
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerScope
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleRootModel
@@ -18,7 +18,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 internal class ContentEntryViaTypedEntity(internal val model: LegacyBridgeModuleRootModel,
                                           val sourceRootEntities: List<SourceRootEntity>,
                                           val entity: ContentRootEntity,
-                                          val updater: (((TypedEntityStorageDiffBuilder) -> Unit) -> Unit)?) : ContentEntry {
+                                          val updater: (((WorkspaceEntityStorageDiffBuilder) -> Unit) -> Unit)?) : ContentEntry {
   private val excludeFolders by lazy {
     entity.excludedUrls.map { ExcludeFolderViaTypedEntity(this, it) }
   }

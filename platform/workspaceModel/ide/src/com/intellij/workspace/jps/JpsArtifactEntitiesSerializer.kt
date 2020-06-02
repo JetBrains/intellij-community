@@ -3,13 +3,14 @@ package com.intellij.workspace.jps
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import com.intellij.util.xmlb.XmlSerializer
-import com.intellij.workspace.api.*
-import com.intellij.workspace.api.pstorage.EntityDataDelegation
-import com.intellij.workspace.api.pstorage.PEntityData
-import com.intellij.workspace.api.pstorage.PModifiableTypedEntity
-import com.intellij.workspace.api.pstorage.PTypedEntity
+import com.intellij.workspaceModel.storage.impl.EntityDataDelegation
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.legacyBridge.intellij.toLibraryTableId
+import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.artifact.ArtifactPropertiesState
@@ -39,7 +40,7 @@ internal class JpsArtifactsFileSerializer(fileUrl: VirtualFileUrl, entitySource:
   : JpsArtifactEntitiesSerializer(fileUrl, entitySource, true, virtualFileManager), JpsFileEntityTypeSerializer<ArtifactEntity> {
   override val isExternalStorage: Boolean
     get() = false
-  override val additionalEntityTypes: List<Class<out TypedEntity>>
+  override val additionalEntityTypes: List<Class<out WorkspaceEntity>>
     get() = listOf(ArtifactsOrderEntity::class.java)
 }
 
@@ -48,18 +49,18 @@ internal class JpsArtifactsFileSerializer(fileUrl: VirtualFileUrl, entitySource:
  * unnecessary modifications of ipr file.
  */
 @Suppress("unused")
-internal class ArtifactsOrderEntityData : PEntityData<ArtifactsOrderEntity>() {
+internal class ArtifactsOrderEntityData : WorkspaceEntityData<ArtifactsOrderEntity>() {
   lateinit var orderOfArtifacts: List<String>
-  override fun createEntity(snapshot: TypedEntityStorage): ArtifactsOrderEntity {
+  override fun createEntity(snapshot: WorkspaceEntityStorage): ArtifactsOrderEntity {
     return ArtifactsOrderEntity(orderOfArtifacts).also { addMetaData(it, snapshot) }
   }
 }
 
 internal class ArtifactsOrderEntity(
   val orderOfArtifacts: List<String>
-) : PTypedEntity()
+) : WorkspaceEntityBase()
 
-internal class ModifiableArtifactsOrderEntity : PModifiableTypedEntity<ArtifactsOrderEntity>()  {
+internal class ModifiableArtifactsOrderEntity : ModifiableWorkspaceEntityBase<ArtifactsOrderEntity>()  {
   var orderOfArtifacts: List<String> by EntityDataDelegation()
 }
 
@@ -70,7 +71,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
   override val mainEntityClass: Class<ArtifactEntity>
     get() = ArtifactEntity::class.java
 
-  override fun loadEntities(builder: TypedEntityStorageBuilder, reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager) {
+  override fun loadEntities(builder: WorkspaceEntityStorageBuilder, reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager) {
     val artifactListElement = reader.loadComponent(fileUrl.url, ARTIFACT_MANAGER_COMPONENT_NAME)
     if (artifactListElement == null) return
 
@@ -104,7 +105,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
 
   private fun loadPackagingElement(element: Element,
                                    source: EntitySource,
-                                   builder: TypedEntityStorageBuilder): PackagingElementEntity {
+                                   builder: WorkspaceEntityStorageBuilder): PackagingElementEntity {
     fun loadElementChildren() = element.children.mapTo(ArrayList()) { loadPackagingElement(it, source, builder) }
     fun getAttribute(name: String) = element.getAttributeValue(name)!!
     fun getOptionalAttribute(name: String) = element.getAttributeValue(name)
@@ -135,7 +136,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
   }
 
   override fun saveEntities(mainEntities: Collection<ArtifactEntity>,
-                            entities: Map<Class<out TypedEntity>, List<TypedEntity>>,
+                            entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
                             writer: JpsFileContentWriter) {
     if (mainEntities.isEmpty()) return
 

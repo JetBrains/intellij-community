@@ -6,7 +6,11 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer
-import com.intellij.workspace.api.*
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.VirtualFileUrl
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
 
 data class LegacyBridgeFileContainer(
   val urls: List<VirtualFileUrl>,
@@ -41,7 +45,7 @@ internal fun LegacyBridgeFileContainer.getAndCacheVirtualFilePointerContainer(pr
  *   it's probably already used everywhere it should be used.
  */
 internal sealed class LegacyBridgeFilePointerScope(
-  val checkUrl: (TypedEntity, VirtualFileUrl) -> Boolean
+  val checkUrl: (WorkspaceEntity, VirtualFileUrl) -> Boolean
 ) {
   object SourceRoot : LegacyBridgeFilePointerScope({ entity, url -> entity is SourceRootEntity && entity.url == url })
   object ExcludedRoots : LegacyBridgeFilePointerScope({ entity, url -> entity is ContentRootEntity && url in entity.excludedUrls })

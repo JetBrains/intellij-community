@@ -2,11 +2,8 @@ package com.intellij.workspace.jps
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.ApplicationRule
-import com.intellij.workspace.api.*
-import com.intellij.workspace.api.pstorage.EntityDataDelegation
-import com.intellij.workspace.api.pstorage.PEntityData
-import com.intellij.workspace.api.pstorage.PModifiableTypedEntity
-import com.intellij.workspace.api.pstorage.PTypedEntity
+import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.impl.*
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Test
@@ -35,7 +32,7 @@ class ImlSerializationTest {
 
   @Test
   fun externalIndexIsNotSerialized() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = WorkspaceEntityStorageBuilder.create()
     val entity = builder.addEntity(ModifiableSampleEntity::class.java, Source) {
       this.data = "Test"
     }
@@ -46,12 +43,12 @@ class ImlSerializationTest {
   }
 
   private fun loadProjectAndCheck(projectFile: File) {
-    val storageBuilder = TypedEntityStorageBuilder.create()
+    val storageBuilder = WorkspaceEntityStorageBuilder.create()
     loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder, virtualFileManager)
     serializationRoundTrip(storageBuilder)
   }
 
-  private fun serializationRoundTrip(storageBuilder: TypedEntityStorageBuilder) {
+  private fun serializationRoundTrip(storageBuilder: WorkspaceEntityStorageBuilder) {
     val storage = storageBuilder.toStorage()
     val timeMillis = measureTimeMillis {
       val byteArray = SerializationRoundTripChecker.verifyPSerializationRoundTrip(storage, virtualFileManager)
@@ -68,16 +65,16 @@ class ImlSerializationTest {
 }
 
 @Suppress("unused")
-internal class SampleEntityData : PEntityData<SampleEntity>() {
+internal class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
   lateinit var data: String
-  override fun createEntity(snapshot: TypedEntityStorage): SampleEntity {
+  override fun createEntity(snapshot: WorkspaceEntityStorage): SampleEntity {
     return SampleEntity(data).also { addMetaData(it, snapshot) }
   }
 }
 
-internal class SampleEntity(val data: String) : PTypedEntity()
+internal class SampleEntity(val data: String) : WorkspaceEntityBase()
 
-internal class ModifiableSampleEntity : PModifiableTypedEntity<SampleEntity>() {
+internal class ModifiableSampleEntity : ModifiableWorkspaceEntityBase<SampleEntity>() {
   var data: String by EntityDataDelegation()
 }
 

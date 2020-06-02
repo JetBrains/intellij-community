@@ -29,10 +29,13 @@ import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.util.ui.UIUtil
-import com.intellij.workspace.api.*
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.toVirtualFileUrl
 import com.intellij.workspace.ide.*
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
 import com.intellij.workspace.toVirtualFileUrl
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.jps.model.module.UnknownSourceRootType
 import org.jetbrains.jps.model.module.UnknownSourceRootTypeProperties
@@ -79,7 +82,7 @@ class LegacyBridgeModulesTest {
       }
 
       assertTrue(moduleManager.modules.contains(module))
-      assertSame(WorkspaceModel.getInstance(project).entityStore, module.entityStore)
+      assertSame(WorkspaceModel.getInstance(project).entityStorage, module.entityStorage)
 
       val contentRootUrl = temporaryDirectoryRule.newPath("contentRoot").toVirtualFileUrl(virtualFileManager)
 
@@ -175,7 +178,7 @@ class LegacyBridgeModulesTest {
   fun `test rename module and all dependencies in other modules`() =
     WriteCommandAction.runWriteCommandAction(project) {
       val checkModuleDependency = { moduleName: String, dependencyModuleName: String ->
-        assertNotNull(WorkspaceModel.getInstance(project).entityStore.current.entities(ModuleEntity::class.java)
+        assertNotNull(WorkspaceModel.getInstance(project).entityStorage.current.entities(ModuleEntity::class.java)
                         .first { it.persistentId().name == moduleName }.dependencies
                         .find { it is ModuleDependencyItem.Exportable.ModuleDependency && it.module.name == dependencyModuleName })
       }
@@ -269,14 +272,14 @@ class LegacyBridgeModulesTest {
 
       assertEquals(
         "xxx-lib",
-        projectModel.entityStore.current.entities(LibraryEntity::class.java).toList().single().name)
+        projectModel.entityStorage.current.entities(LibraryEntity::class.java).toList().single().name)
 
       ModuleRootModificationUtil.updateModel(module) { model ->
         val orderEntry = model.orderEntries.filterIsInstance<LibraryOrderEntry>().single()
         model.removeOrderEntry(orderEntry)
       }
 
-      assertEmpty(projectModel.entityStore.current.entities(LibraryEntity::class.java).toList())
+      assertEmpty(projectModel.entityStorage.current.entities(LibraryEntity::class.java).toList())
     }
 
   @Test
@@ -296,13 +299,13 @@ class LegacyBridgeModulesTest {
 
       assertEquals(
         "xxx-lib",
-        projectModel.entityStore.current.entities(LibraryEntity::class.java).toList().single().name)
+        projectModel.entityStorage.current.entities(LibraryEntity::class.java).toList().single().name)
 
       ModuleRootModificationUtil.updateModel(module) { model ->
         model.clear()
       }
 
-      assertEmpty(projectModel.entityStore.current.entities(LibraryEntity::class.java).toList())
+      assertEmpty(projectModel.entityStorage.current.entities(LibraryEntity::class.java).toList())
     }
 
   @Test
@@ -385,7 +388,7 @@ class LegacyBridgeModulesTest {
 
   @Test
   fun `test module libraries loaded from cache`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = WorkspaceEntityStorageBuilder.create()
 
     val tempDir = temporaryDirectoryRule.newPath().toFile()
 
@@ -401,8 +404,9 @@ class LegacyBridgeModulesTest {
       source = source
     )
     builder.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
-      dependencies = listOf(ModuleDependencyItem.Exportable.LibraryDependency(
-        moduleLibraryEntity.persistentId(), false, ModuleDependencyItem.DependencyScope.COMPILE))
+      dependencies = listOf(
+        ModuleDependencyItem.Exportable.LibraryDependency(moduleLibraryEntity.persistentId(), false, ModuleDependencyItem.DependencyScope.COMPILE)
+      )
     }
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
@@ -426,7 +430,7 @@ class LegacyBridgeModulesTest {
 
   @Test
   fun `test libraries are loaded from cache`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = WorkspaceEntityStorageBuilder.create()
 
     val tempDir = temporaryDirectoryRule.newPath().toFile()
 
@@ -488,7 +492,7 @@ class LegacyBridgeModulesTest {
       assertTrue(contentEntry.sourceFolders[1].rootType is TestCustomSourceRootType)
       assertEquals(null, (contentEntry.sourceFolders[1].jpsElement.properties as TestCustomSourceRootProperties).testString)
 
-      val customRoots = WorkspaceModel.getInstance(project).entityStore.current.entities(CustomSourceRootPropertiesEntity::class.java)
+      val customRoots = WorkspaceModel.getInstance(project).entityStorage.current.entities(CustomSourceRootPropertiesEntity::class.java)
         .toList()
         .sortedBy { it.sourceRoot.url.url }
       assertEquals(2, customRoots.size)
@@ -527,7 +531,7 @@ class LegacyBridgeModulesTest {
       assertSame(UnknownSourceRootType.getInstance("unsupported-custom-source-root-type"), sourceFolder.rootType)
       assertTrue(sourceFolder.jpsElement.properties is UnknownSourceRootTypeProperties<*>)
 
-      val customRoot = WorkspaceModel.getInstance(project).entityStore.current.entities(CustomSourceRootPropertiesEntity::class.java)
+      val customRoot = WorkspaceModel.getInstance(project).entityStorage.current.entities(CustomSourceRootPropertiesEntity::class.java)
         .toList().single()
 
       assertEquals("<sourceFolder param1=\"x y z\" />", customRoot.propertiesXmlTag)
@@ -590,7 +594,7 @@ class LegacyBridgeModulesTest {
     }
     StoreUtil.saveDocumentsAndProjectSettings(project)
     assertTrue(moduleFile.readText().contains(antLibraryFolder))
-    val entityStore = WorkspaceModel.getInstance(project).entityStore
+    val entityStore = WorkspaceModel.getInstance(project).entityStorage
     assertEquals(1, entityStore.current.entities(ContentRootEntity::class.java).count())
     assertEquals(1, entityStore.current.entities(JavaSourceRootEntity::class.java).count())
 
@@ -618,7 +622,7 @@ class LegacyBridgeModulesTest {
       contentEntry.addSourceFolder("$url/$antLibraryFolder", false)
     }
 
-    val entityStore = WorkspaceModel.getInstance(project).entityStore
+    val entityStore = WorkspaceModel.getInstance(project).entityStorage
     assertEquals(1, entityStore.current.entities(ContentRootEntity::class.java).count())
     assertEquals(1, entityStore.current.entities(SourceRootEntity::class.java).count())
 
@@ -655,7 +659,7 @@ class LegacyBridgeModulesTest {
 
 internal fun createEmptyTestProject(temporaryDirectory: TemporaryDirectory, disposableRule: DisposableRule): Project {
   val projectDir = temporaryDirectory.newPath("project")
-  val project = WorkspaceModelInitialTestContent.withInitialContent(TypedEntityStorageBuilder.create()) {
+  val project = WorkspaceModelInitialTestContent.withInitialContent(WorkspaceEntityStorageBuilder.create()) {
     ProjectManager.getInstance().createProject("testProject", projectDir.resolve("testProject.ipr").toString())!!
   }
   invokeAndWaitIfNeeded { PlatformTestUtil.openProject(project) }

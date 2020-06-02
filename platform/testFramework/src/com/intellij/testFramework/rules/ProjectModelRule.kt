@@ -20,7 +20,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.testFramework.*
-import com.intellij.workspace.api.TypedEntityStorageBuilder
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspace.ide.WorkspaceModelInitialTestContent
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
@@ -35,7 +35,7 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
   private val projectResource = object : ExternalResource() {
     override fun before() {
       project = if (forceEnableWorkspaceModel) {
-        WorkspaceModelInitialTestContent.withInitialContent(TypedEntityStorageBuilder.create()) {
+        WorkspaceModelInitialTestContent.withInitialContent(WorkspaceEntityStorageBuilder.create()) {
           createHeavyProject(baseProjectDir.root.toPath())
         }
       }

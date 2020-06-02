@@ -12,14 +12,20 @@ import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.workspace.api.*
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
+import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableFacetEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.subFacets
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.JpsImportedEntitySource
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
 
-internal class ModifiableFacetModelViaWorkspaceModel(private val initialStorage: TypedEntityStorage,
-                                                     private val diff: TypedEntityStorageDiffBuilder,
+internal class ModifiableFacetModelViaWorkspaceModel(private val initialStorage: WorkspaceEntityStorage,
+                                                     private val diff: WorkspaceEntityStorageDiffBuilder,
                                                      legacyBridgeModule: LegacyBridgeModule,
                                                      private val facetManager: FacetManagerViaWorkspaceModel)
   : FacetModelViaWorkspaceModel(legacyBridgeModule), ModifiableFacetModel {
@@ -104,7 +110,7 @@ internal class ModifiableFacetModelViaWorkspaceModel(private val initialStorage:
     }
   }
 
-  private fun populateModel(replaceMap: Map<TypedEntity, TypedEntity>) {
+  private fun populateModel(replaceMap: Map<WorkspaceEntity, WorkspaceEntity>) {
     val mapInNewStore: HashBiMap<FacetEntity, Facet<*>> = HashBiMap.create()
     entityToFacet.forEach { (key, value) -> mapInNewStore[replaceMap.getOrDefault(key, key) as FacetEntity] = value }
     facetManager.model.populateFrom(mapInNewStore)

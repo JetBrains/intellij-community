@@ -3,10 +3,11 @@ package com.intellij.workspace.legacyBridge.libraries.libraries
 import com.intellij.configurationStore.serialize
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.workspace.api.*
+import com.intellij.workspaceModel.storage.VersionedEntityStorageOnBuilder
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 
-abstract class LegacyBridgeModifiableBase(internal val diff: TypedEntityStorageBuilder) {
-  internal val entityStoreOnDiff = EntityStoreOnBuilder(diff)
+abstract class LegacyBridgeModifiableBase(internal val diff: WorkspaceEntityStorageBuilder) {
+  internal val entityStorageOnDiff = VersionedEntityStorageOnBuilder(diff)
 
   private var committedOrDisposed = false
 

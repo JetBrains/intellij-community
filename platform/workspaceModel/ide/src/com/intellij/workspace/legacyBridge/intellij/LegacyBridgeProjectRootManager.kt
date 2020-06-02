@@ -18,11 +18,13 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar.APPLICATION_L
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.util.containers.BidirectionalMultiMap
-import com.intellij.workspace.api.*
+import com.intellij.workspaceModel.storage.EntityChange
+import com.intellij.workspaceModel.storage.VersionedStorageChanged
 import com.intellij.workspace.bracket
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.ide.WorkspaceModelChangeListener
 import com.intellij.workspace.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 
 @Suppress("ComponentNotRegistered")
 class LegacyBridgeProjectRootManager(project: Project) : ProjectRootManagerComponent(project) {
@@ -37,7 +39,7 @@ class LegacyBridgeProjectRootManager(project: Project) : ProjectRootManagerCompo
     val bus = project.messageBus.connect(this)
 
     WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(bus, object : WorkspaceModelChangeListener {
-      override fun changed(event: EntityStoreChanged) {
+      override fun changed(event: VersionedStorageChanged) {
         if (myProject.isDisposed || Disposer.isDisposing(myProject)) return
         LOG.bracket("ProjectRootManager.EntityStoreChange") {
           // Roots changed even should be fired for the global libraries linked with module
@@ -68,7 +70,7 @@ class LegacyBridgeProjectRootManager(project: Project) : ProjectRootManagerCompo
 
       override fun jdkNameChanged(jdk: Sdk, previousName: String) {
         //todo make this more efficient by storing mapping between sdks and modules
-        val affectedModules = WorkspaceModel.getInstance(myProject).entityStore.current.entities(ModuleEntity::class.java)
+        val affectedModules = WorkspaceModel.getInstance(myProject).entityStorage.current.entities(ModuleEntity::class.java)
           .filter { module ->
             module.dependencies.asSequence().filterIsInstance<ModuleDependencyItem.SdkDependency>().any {
               it.sdkName == previousName && it.sdkType == jdk.sdkType.name

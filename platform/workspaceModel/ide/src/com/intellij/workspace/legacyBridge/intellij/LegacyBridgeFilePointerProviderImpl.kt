@@ -14,10 +14,10 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.containers.MultiMap
-import com.intellij.workspace.api.EntityChange
-import com.intellij.workspace.api.EntityStoreChanged
-import com.intellij.workspace.api.VirtualFileUrl
-import com.intellij.workspace.api.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.EntityChange
+import com.intellij.workspaceModel.storage.VersionedStorageChanged
+import com.intellij.workspaceModel.storage.VirtualFileUrl
+import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspace.ide.WorkspaceModelChangeListener
 import com.intellij.workspace.ide.WorkspaceModelTopics
 import com.intellij.workspace.ide.getInstance
@@ -76,7 +76,7 @@ internal class LegacyBridgeFilePointerProviderImpl(project: Project) : LegacyBri
     }, this)
 
     WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(), object : WorkspaceModelChangeListener {
-      override fun changed(event: EntityStoreChanged) {
+      override fun changed(event: VersionedStorageChanged) {
         synchronized(this@LegacyBridgeFilePointerProviderImpl) {
           event.getAllChanges().filterIsInstance<EntityChange.Removed<*>>().forEach { change ->
             val toRemove = ArrayList<Pair<VirtualFileUrl, Disposable>>()

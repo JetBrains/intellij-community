@@ -3,16 +3,16 @@ package com.intellij.workspace.ide
 
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
-import com.intellij.workspace.api.TypedEntityStorageBuilder
-import com.intellij.workspace.api.TypedEntityStore
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.VersionedEntityStorage
 
 interface WorkspaceModel {
-  val entityStore: TypedEntityStore
+  val entityStorage: VersionedEntityStorage
 
-  fun <R> updateProjectModel(updater: (TypedEntityStorageBuilder) -> R): R
+  fun <R> updateProjectModel(updater: (WorkspaceEntityStorageBuilder) -> R): R
 
   /** Update project model without the notification to message bus */
-  fun <R> updateProjectModelSilent(updater: (TypedEntityStorageBuilder) -> R): R
+  fun <R> updateProjectModelSilent(updater: (WorkspaceEntityStorageBuilder) -> R): R
 
   companion object {
     @JvmStatic

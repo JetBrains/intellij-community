@@ -7,10 +7,12 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Disposer
-import com.intellij.workspace.api.*
+import com.intellij.workspaceModel.storage.EntityChange
+import com.intellij.workspaceModel.storage.VersionedStorageChanged
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 
 internal class LegacyBridgeProjectRootsChangeListener(private val project: Project) {
-  fun beforeChanged(event: EntityStoreChanged) {
+  fun beforeChanged(event: VersionedStorageChanged) {
     if (project.isDisposed || Disposer.isDisposing(project)) return
     val projectRootManager = ProjectRootManager.getInstance(project)
     if (projectRootManager !is LegacyBridgeProjectRootManager) return
@@ -18,7 +20,7 @@ internal class LegacyBridgeProjectRootsChangeListener(private val project: Proje
     if (performUpdate) projectRootManager.fireRootsChanged(true)
   }
 
-  fun changed(event: EntityStoreChanged) {
+  fun changed(event: VersionedStorageChanged) {
     if (project.isDisposed || Disposer.isDisposing(project)) return
     val projectRootManager = ProjectRootManager.getInstance(project)
     if (projectRootManager !is LegacyBridgeProjectRootManager) return
@@ -26,7 +28,7 @@ internal class LegacyBridgeProjectRootsChangeListener(private val project: Proje
     if (performUpdate) projectRootManager.fireRootsChanged(false)
   }
 
-  private fun shouldFireRootsChanged(events: EntityStoreChanged, project: Project): Boolean {
+  private fun shouldFireRootsChanged(events: VersionedStorageChanged, project: Project): Boolean {
     return events.getAllChanges().any {
       val entity = when (it) {
         is EntityChange.Added -> it.entity

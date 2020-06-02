@@ -12,8 +12,8 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.rules.TempDirectory
-import com.intellij.workspace.api.VirtualFileUrlManager
-import com.intellij.workspace.api.toVirtualFileUrl
+import com.intellij.workspaceModel.storage.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.toVirtualFileUrl
 import com.intellij.workspace.ide.getInstance
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFileContainer
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProvider

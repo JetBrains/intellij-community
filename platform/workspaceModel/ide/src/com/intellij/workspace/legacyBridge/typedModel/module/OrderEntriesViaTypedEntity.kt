@@ -15,10 +15,10 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtil
-import com.intellij.workspace.api.LibraryId
-import com.intellij.workspace.api.LibraryTableId
-import com.intellij.workspace.api.ModuleDependencyItem
-import com.intellij.workspace.api.ModuleId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspace.legacyBridge.intellij.*
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer

@@ -3,10 +3,14 @@ package com.intellij.workspace.jps
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.ApplicationRule
-import com.intellij.workspace.api.*
+import com.intellij.workspaceModel.storage.EntityChange
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.JpsProjectConfigLocation
-import com.intellij.workspace.api.VirtualFileUrlManagerImpl
+import com.intellij.workspaceModel.storage.impl.VirtualFileUrlManagerImpl
+import com.intellij.workspaceModel.storage.append
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Before
 import org.junit.ClassRule
@@ -133,15 +137,15 @@ class JpsProjectSaveAfterChangesTest {
 
   private fun checkSaveProjectAfterChange(directoryNameForDirectoryBased: String,
                                           directoryNameForFileBased: String,
-                                          change: (TypedEntityStorageBuilder, JpsProjectConfigLocation) -> Unit) {
+                                          change: (WorkspaceEntityStorageBuilder, JpsProjectConfigLocation) -> Unit) {
     checkSaveProjectAfterChange(sampleDirBasedProjectFile, directoryNameForDirectoryBased, change)
     checkSaveProjectAfterChange(sampleFileBasedProjectFile, directoryNameForFileBased, change)
   }
 
   private fun checkSaveProjectAfterChange(originalProjectFile: File, changedFilesDirectoryName: String?,
-                                          change: (TypedEntityStorageBuilder, JpsProjectConfigLocation) -> Unit) {
+                                          change: (WorkspaceEntityStorageBuilder, JpsProjectConfigLocation) -> Unit) {
     val projectData = copyAndLoadProject(originalProjectFile, virtualFileManager)
-    val builder = TypedEntityStorageBuilder.from(projectData.storage)
+    val builder = WorkspaceEntityStorageBuilder.from(projectData.storage)
     change(builder, projectData.configLocation)
     val changesMap = builder.collectChanges(projectData.storage)
     val changedSources = changesMap.values.flatMapTo(HashSet()) { changes -> changes.flatMap { change ->

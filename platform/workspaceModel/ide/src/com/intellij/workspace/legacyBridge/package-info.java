@@ -2,7 +2,7 @@
 
 /**
  * Classes in this package and its subpackages provide implementation of interfaces from the old IDE project model which stores data in
- * {@link com.intellij.workspace.api.TypedEntity} instances.
+ * {@link com.intellij.workspaceModel.storage.WorkspaceEntity} instances.
  *
  * <p>
  * All classes in this package aren't supposed to be used in external code.

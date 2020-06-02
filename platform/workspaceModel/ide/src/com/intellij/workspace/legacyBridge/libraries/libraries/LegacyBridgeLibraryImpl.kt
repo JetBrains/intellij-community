@@ -17,11 +17,13 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TraceableDisposable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
-import com.intellij.workspace.api.*
-import com.intellij.workspace.ide.WorkspaceModel
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProviderImpl
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleLibraryTable
 import com.intellij.workspace.legacyBridge.typedModel.library.LibraryViaTypedEntity
+import com.intellij.workspaceModel.storage.*
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 
@@ -29,7 +31,7 @@ interface LegacyBridgeLibrary : LibraryEx {
   val libraryId: LibraryId
 
   @ApiStatus.Internal
-  fun getModifiableModel(builder: TypedEntityStorageBuilder): LibraryEx.ModifiableModelEx
+  fun getModifiableModel(builder: WorkspaceEntityStorageBuilder): LibraryEx.ModifiableModelEx
 }
 
 @ApiStatus.Internal
@@ -37,9 +39,9 @@ internal class LegacyBridgeLibraryImpl(
   private val libraryTable: LibraryTable,
   val project: Project,
   initialId: LibraryId,
-  initialEntityStore: TypedEntityStore,
+  initialEntityStorage: VersionedEntityStorage,
   parent: Disposable,
-  private var targetBuilder: TypedEntityStorageDiffBuilder?
+  private var targetBuilder: WorkspaceEntityStorageDiffBuilder?
 ) : LegacyBridgeLibrary, RootProvider, TraceableDisposable(true) {
 
   init {
@@ -50,7 +52,7 @@ internal class LegacyBridgeLibraryImpl(
 
   val filePointerProvider = LegacyBridgeFilePointerProviderImpl(project).also { Disposer.register(this, it) }
 
-  var entityStore: TypedEntityStore = initialEntityStore
+  var entityStorage: VersionedEntityStorage = initialEntityStorage
     internal set(value) {
       ApplicationManager.getApplication().assertWriteAccessAllowed()
       field = value
@@ -61,10 +63,10 @@ internal class LegacyBridgeLibraryImpl(
   private var disposed = false
 
   // null to update project model via ProjectModelUpdater
-  var modifiableModelFactory: ((LibraryViaTypedEntity, TypedEntityStorageBuilder) -> LegacyBridgeLibraryModifiableModelImpl)? = null
+  var modifiableModelFactory: ((LibraryViaTypedEntity, WorkspaceEntityStorageBuilder) -> LegacyBridgeLibraryModifiableModelImpl)? = null
 
   internal fun cleanCachedValue() {
-    entityStore.clearCachedValue(librarySnapshotCached, entityId)
+    entityStorage.clearCachedValue(librarySnapshotCached, entityId)
   }
 
   private val dispatcher = EventDispatcher.create(RootSetChangedListener::class.java)
@@ -81,7 +83,7 @@ internal class LegacyBridgeLibraryImpl(
   internal val librarySnapshot: LibraryViaTypedEntity
     get() {
       checkDisposed()
-      return entityStore.cachedValue(librarySnapshotCached, entityId)
+      return entityStorage.cachedValue(librarySnapshotCached, entityId)
     }
 
   override val libraryId: LibraryId
@@ -90,9 +92,9 @@ internal class LegacyBridgeLibraryImpl(
   override fun getRootProvider(): RootProvider = this
 
   override fun getModifiableModel(): LibraryEx.ModifiableModelEx {
-    return getModifiableModel(TypedEntityStorageBuilder.from(librarySnapshot.storage))
+    return getModifiableModel(WorkspaceEntityStorageBuilder.from(librarySnapshot.storage))
   }
-  override fun getModifiableModel(builder: TypedEntityStorageBuilder): LibraryEx.ModifiableModelEx {
+  override fun getModifiableModel(builder: WorkspaceEntityStorageBuilder): LibraryEx.ModifiableModelEx {
     return LegacyBridgeLibraryModifiableModelImpl(this, librarySnapshot, builder, targetBuilder)
   }
   override fun getSource(): Library? = null
@@ -196,11 +198,11 @@ internal class LegacyBridgeLibraryImpl(
         throw NotImplementedError()
       }
 
-    override fun <R : TypedEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R> = emptySequence()
+    override fun <R : WorkspaceEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R> = emptySequence()
     override val tableId: LibraryTableId
       get() = throw NotImplementedError()
 
-    override fun hasEqualProperties(e: TypedEntity): Boolean {
+    override fun hasEqualProperties(e: WorkspaceEntity): Boolean {
       return e is LibraryEntity && e.name == name && e.roots.isEmpty() && e.excludedRoots.isEmpty()
     }
 

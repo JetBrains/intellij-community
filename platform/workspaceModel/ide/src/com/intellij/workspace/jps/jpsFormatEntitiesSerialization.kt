@@ -1,9 +1,10 @@
 package com.intellij.workspace.jps
 
 import com.intellij.openapi.module.impl.ModulePath
-import com.intellij.workspace.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.JpsProjectConfigLocation
+import com.intellij.workspaceModel.storage.*
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 
@@ -22,21 +23,21 @@ interface JpsFileContentWriter {
 /**
  * Represents a serializer for a configuration XML file in JPS format.
  */
-interface JpsFileEntitiesSerializer<E : TypedEntity> {
+interface JpsFileEntitiesSerializer<E : WorkspaceEntity> {
   val internalEntitySource: JpsFileEntitySource
   val fileUrl: VirtualFileUrl
   val mainEntityClass: Class<E>
-  fun loadEntities(builder: TypedEntityStorageBuilder, reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager)
-  fun saveEntities(mainEntities: Collection<E>, entities: Map<Class<out TypedEntity>, List<TypedEntity>>, writer: JpsFileContentWriter)
+  fun loadEntities(builder: WorkspaceEntityStorageBuilder, reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager)
+  fun saveEntities(mainEntities: Collection<E>, entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>, writer: JpsFileContentWriter)
 
-  val additionalEntityTypes: List<Class<out TypedEntity>>
+  val additionalEntityTypes: List<Class<out WorkspaceEntity>>
     get() = emptyList()
 }
 
 /**
  * Represents a serializer which is responsible for serializing all entities of the given type (e.g. libraries in *.ipr file).
  */
-interface JpsFileEntityTypeSerializer<E : TypedEntity> : JpsFileEntitiesSerializer<E> {
+interface JpsFileEntityTypeSerializer<E : WorkspaceEntity> : JpsFileEntitiesSerializer<E> {
   val isExternalStorage: Boolean
   val entityFilter: (E) -> Boolean
     get() = { true }
@@ -45,7 +46,7 @@ interface JpsFileEntityTypeSerializer<E : TypedEntity> : JpsFileEntitiesSerializ
 /**
  * Represents a directory containing configuration files (e.g. .idea/libraries).
  */
-interface JpsDirectoryEntitiesSerializerFactory<E : TypedEntity> {
+interface JpsDirectoryEntitiesSerializerFactory<E : WorkspaceEntity> {
   val directoryUrl: String
   val entityClass: Class<E>
   val entityFilter: (E) -> Boolean
@@ -94,15 +95,15 @@ interface JpsProjectSerializers {
     }
   }
 
-  fun loadAll(reader: JpsFileContentReader, builder: TypedEntityStorageBuilder)
+  fun loadAll(reader: JpsFileContentReader, builder: WorkspaceEntityStorageBuilder)
 
   fun reloadFromChangedFiles(change: JpsConfigurationFilesChange,
-                             reader: JpsFileContentReader): Pair<Set<EntitySource>, TypedEntityStorageBuilder>
+                             reader: JpsFileContentReader): Pair<Set<EntitySource>, WorkspaceEntityStorageBuilder>
 
   @TestOnly
-  fun saveAllEntities(storage: TypedEntityStorage, writer: JpsFileContentWriter)
+  fun saveAllEntities(storage: WorkspaceEntityStorage, writer: JpsFileContentWriter)
 
-  fun saveEntities(storage: TypedEntityStorage, affectedSources: Set<EntitySource>, writer: JpsFileContentWriter)
+  fun saveEntities(storage: WorkspaceEntityStorage, affectedSources: Set<EntitySource>, writer: JpsFileContentWriter)
   
   fun getAllModulePaths(): List<ModulePath>
 }

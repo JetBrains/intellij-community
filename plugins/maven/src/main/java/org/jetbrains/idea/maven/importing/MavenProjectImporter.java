@@ -31,9 +31,9 @@ import com.intellij.packaging.impl.artifacts.ArtifactManagerImpl;
 import com.intellij.packaging.impl.artifacts.ArtifactModelImpl;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.Stack;
-import com.intellij.workspace.api.TypedEntity;
-import com.intellij.workspace.api.TypedEntityStorage;
-import com.intellij.workspace.api.TypedEntityStorageBuilder;
+import com.intellij.workspaceModel.storage.WorkspaceEntity;
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
 import com.intellij.workspace.ide.WorkspaceModel;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -105,7 +105,7 @@ public class MavenProjectImporter {
     }
   }
 
-  private <T extends TypedEntity> T findFirst(TypedEntityStorage storage, Class<T> klass, Predicate<T> filter) {
+  private <T extends WorkspaceEntity> T findFirst(WorkspaceEntityStorage storage, Class<T> klass, Predicate<T> filter) {
     Iterator<T> iterator = storage.entities(klass).iterator();
     while (iterator.hasNext()) {
       T next = iterator.next();
@@ -129,17 +129,17 @@ public class MavenProjectImporter {
 
 
     LegacyBrigdeIdeModifiableModelsProvider legacyBridgeModelsProvider = (LegacyBrigdeIdeModifiableModelsProvider)myModelsProvider;
-    TypedEntityStorageBuilder diff = legacyBridgeModelsProvider.getDiff();
+    WorkspaceEntityStorageBuilder diff = legacyBridgeModelsProvider.getDiff();
 
     for (MavenProject each : myAllProjects) {
       new WorkspaceModuleImporter(myProject, each, myProjectsTree, diff).importModule();
       myMavenProjectToModuleName.put(each, each.getDisplayName());
     }
 
-    Iterator<TypedEntity> entities = diff.entities(TypedEntity.class).iterator();
+    Iterator<WorkspaceEntity> entities = diff.entities(WorkspaceEntity.class).iterator();
 
     while (entities.hasNext()) {
-      TypedEntity next = entities.next();
+      WorkspaceEntity next = entities.next();
       diff.changeSource(next, MavenExternalSource.getINSTANCE());
     }
 
@@ -151,8 +151,8 @@ public class MavenProjectImporter {
     });
 
 
-    TypedEntityStorageBuilder facetDiff =
-      TypedEntityStorageBuilder.Companion.from(WorkspaceModel.getInstance(myProject).getEntityStore().getCurrent());
+    WorkspaceEntityStorageBuilder facetDiff =
+      WorkspaceEntityStorageBuilder.Companion.from(WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent());
     LegacyBrigdeIdeModifiableModelsProvider providerForFacets = new LegacyBrigdeIdeModifiableModelsProvider(myProject, facetDiff);
 
     List<Module> modulesToMavenize = new ArrayList<>();

@@ -2,7 +2,10 @@
 package com.intellij.workspace.legacyBridge.typedModel.module
 
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.workspace.api.*
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jdom.Element
 import org.jetbrains.jps.model.JpsDummyElement
 import org.jetbrains.jps.model.JpsElement
@@ -62,7 +65,7 @@ internal object SourceRootPropertiesHelper {
     return JDOMUtil.writeElement(sourceElement)
   }
 
-  internal fun applyChanges(diff: TypedEntityStorageBuilder, entity: SourceRootEntity, actualSourceRootData: JpsModuleSourceRoot) {
+  internal fun applyChanges(diff: WorkspaceEntityStorageBuilder, entity: SourceRootEntity, actualSourceRootData: JpsModuleSourceRoot) {
     if (hasEqualProperties(entity, actualSourceRootData)) {
       return
     }
@@ -94,7 +97,7 @@ internal object SourceRootPropertiesHelper {
 
   }
 
-  internal fun <P : JpsElement?> addPropertiesEntity(diff: TypedEntityStorageDiffBuilder,
+  internal fun <P : JpsElement?> addPropertiesEntity(diff: WorkspaceEntityStorageDiffBuilder,
                                                      sourceRootEntity: SourceRootEntity,
                                                      entitySource: EntitySource,
                                                      properties: P,

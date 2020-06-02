@@ -29,10 +29,10 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtil
-import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.*
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleManagerComponent
 import com.intellij.workspace.legacyBridge.intellij.isExternalModuleFile
+import com.intellij.workspaceModel.storage.*
 import org.jdom.Element
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
@@ -107,7 +107,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
       }
     })
     WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(), object : WorkspaceModelChangeListener {
-      override fun changed(event: EntityStoreChanged) {
+      override fun changed(event: VersionedStorageChanged) {
         event.getAllChanges().forEach {
           when (it) {
             is EntityChange.Added -> sourcesToSave.add(it.entity.entitySource)
@@ -131,7 +131,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
     val serializers = JpsProjectEntitiesLoader.createProjectSerializers(configLocation, fileContentReader, externalStoragePath, false, virtualFileManager)
     this.serializers.set(serializers)
     registerListener()
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = WorkspaceEntityStorageBuilder.create()
 
     childActivity = childActivity.endAndStart("(wm) Load state of unloaded modules")
     loadStateOfUnloadedModules(serializers.getAllModulePaths())
@@ -172,7 +172,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
     if (!enabled) return
 
     val data = serializers.get() ?: return
-    val storage = WorkspaceModel.getInstance(project).entityStore.current
+    val storage = WorkspaceModel.getInstance(project).entityStorage.current
     val affectedSources = synchronized(sourcesToSave) {
       val copy = HashSet(sourcesToSave)
       sourcesToSave.clear()

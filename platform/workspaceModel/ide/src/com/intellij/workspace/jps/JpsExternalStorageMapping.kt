@@ -3,8 +3,8 @@ package com.intellij.workspace.jps
 
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.PathUtil
-import com.intellij.workspace.api.VirtualFileUrl
-import com.intellij.workspace.api.append
+import com.intellij.workspaceModel.storage.VirtualFileUrl
+import com.intellij.workspaceModel.storage.append
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.JpsProjectConfigLocation
 

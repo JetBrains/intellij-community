@@ -9,15 +9,17 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
-import com.intellij.workspace.api.*
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.JpsImportedEntitySource
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 
 class ExternalSystemModulePropertyManagerForWorkspaceModel(private val module: Module) : ExternalSystemModulePropertyManager() {
   private fun findEntity(): ExternalSystemModuleOptionsEntity? {
-    val storage = (module as LegacyBridgeModule).entityStore.current
+    val storage = (module as LegacyBridgeModule).entityStorage.current
     val moduleEntity = storage.resolve(module.moduleEntityId)
     return moduleEntity?.externalSystemOptions
   }
@@ -25,7 +27,7 @@ class ExternalSystemModulePropertyManagerForWorkspaceModel(private val module: M
   private fun editEntity(action: ModifiableExternalSystemModuleOptionsEntity.() -> Unit) {
     val diff = (module as LegacyBridgeModule).diff
     if (diff != null) {
-      val moduleEntity = module.entityStore.current.resolve(module.moduleEntityId) ?: return
+      val moduleEntity = module.entityStorage.current.resolve(module.moduleEntityId) ?: return
       val options = diff.getOrCreateExternalSystemModuleOptions(moduleEntity, moduleEntity.entitySource)
       diff.modifyEntity(ModifiableExternalSystemModuleOptionsEntity::class.java, options, action)
     }
@@ -42,7 +44,7 @@ class ExternalSystemModulePropertyManagerForWorkspaceModel(private val module: M
 
   private fun updateSource() {
     WriteAction.runAndWait<RuntimeException> {
-      val storage = (module as LegacyBridgeModule).entityStore.current
+      val storage = (module as LegacyBridgeModule).entityStorage.current
       val moduleEntity = storage.resolve(module.moduleEntityId) ?: return@runAndWait
       val externalSystemId = moduleEntity.externalSystemOptions?.externalSystem
       val entitySource = moduleEntity.entitySource
@@ -57,7 +59,7 @@ class ExternalSystemModulePropertyManagerForWorkspaceModel(private val module: M
         JpsImportedEntitySource(entitySource as JpsFileEntitySource, externalSystemId, module.project.isExternalStorageEnabled)
       }
 
-      fun changeSources(diffBuilder: TypedEntityStorageDiffBuilder, storage: TypedEntityStorage) {
+      fun changeSources(diffBuilder: WorkspaceEntityStorageDiffBuilder, storage: WorkspaceEntityStorage) {
         val entitiesMap = storage.entitiesBySource { it == entitySource }
         entitiesMap.values.asSequence().flatMap { it.values.asSequence().flatten() }.forEach {
           if (it !is FacetEntity) {

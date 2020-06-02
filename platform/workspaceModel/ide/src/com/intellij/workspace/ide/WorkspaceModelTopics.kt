@@ -10,12 +10,12 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.messages.Topic
-import com.intellij.workspace.api.EntityStoreChanged
+import com.intellij.workspaceModel.storage.VersionedStorageChanged
 import java.util.*
 
 interface WorkspaceModelChangeListener : EventListener {
-  fun beforeChanged(event: EntityStoreChanged) {}
-  fun changed(event: EntityStoreChanged) {}
+  fun beforeChanged(event: VersionedStorageChanged) {}
+  fun changed(event: VersionedStorageChanged) {}
 }
 
 /**
@@ -85,10 +85,10 @@ class WorkspaceModelTopics : Disposable {
 
   private class EventsDispatcher(val originalListener: WorkspaceModelChangeListener) : WorkspaceModelChangeListener {
 
-    internal val events = mutableListOf<Pair<Boolean, EntityStoreChanged>>()
+    internal val events = mutableListOf<Pair<Boolean, VersionedStorageChanged>>()
     internal var collectToQueue = true
 
-    override fun beforeChanged(event: EntityStoreChanged) {
+    override fun beforeChanged(event: VersionedStorageChanged) {
       if (collectToQueue) {
         events += true to event
       }
@@ -97,7 +97,7 @@ class WorkspaceModelTopics : Disposable {
       }
     }
 
-    override fun changed(event: EntityStoreChanged) {
+    override fun changed(event: VersionedStorageChanged) {
       if (collectToQueue) {
         events += false to event
       }

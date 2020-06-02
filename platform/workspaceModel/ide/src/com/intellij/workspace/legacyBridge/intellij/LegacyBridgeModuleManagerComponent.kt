@@ -24,16 +24,16 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.graph.*
-import com.intellij.workspace.api.*
 import com.intellij.workspace.bracket
 import com.intellij.workspace.executeOrQueueOnDispatchThread
 import com.intellij.workspace.ide.*
 import com.intellij.workspace.jps.JpsProjectEntitiesLoader
 import com.intellij.workspace.legacyBridge.facet.FacetEntityChangeListener
+import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.*
@@ -104,7 +104,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
       val rootsChangeListener = LegacyBridgeProjectRootsChangeListener(project)
       WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object: WorkspaceModelChangeListener {
-        override fun beforeChanged(event: EntityStoreChanged) = LOG.bracket("ModuleManagerComponent.BeforeEntityStoreChange") {
+        override fun beforeChanged(event: VersionedStorageChanged) = LOG.bracket("ModuleManagerComponent.BeforeEntityStoreChange") {
           for (change in event.getAllChanges()) {
             @Suppress("UNCHECKED_CAST")
             when (change.entity()) {
@@ -114,7 +114,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
           rootsChangeListener.beforeChanged(event)
         }
 
-        override fun changed(event: EntityStoreChanged) = LOG.bracket("ModuleManagerComponent.EntityStoreChange") {
+        override fun changed(event: VersionedStorageChanged) = LOG.bracket("ModuleManagerComponent.EntityStoreChange") {
 
           val moduleLibraryChanges = event.getChanges(LibraryEntity::class.java).filterModuleLibraryChanges()
           val changes = event.getChanges(ModuleEntity::class.java)
@@ -214,7 +214,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
           unloadedModulesSet.remove(change.entity.name)
           unloadedModules.remove(change.entity.name)
 
-          (alreadyCreatedModule as LegacyBridgeModuleImpl).entityStore = entityStore
+          (alreadyCreatedModule as LegacyBridgeModuleImpl).entityStorage = entityStore
           alreadyCreatedModule.diff = null
           if (WorkspaceModelTopics.getInstance(project).modulesAreLoaded) addModule(alreadyCreatedModule)
           alreadyCreatedModule
@@ -346,7 +346,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
     }))
   }
 
-  private val entityStore by lazy { WorkspaceModel.getInstance(project).entityStore }
+  private val entityStore by lazy { WorkspaceModel.getInstance(project).entityStorage }
 
   private fun loadModules(entities: List<ModuleEntity>) {
     val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", JobSchedulerImpl.getCPUCoresCount())
@@ -387,9 +387,9 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
   }
 
   override fun getModifiableModel(): ModifiableModuleModel =
-    LegacyBridgeModifiableModuleModel(project, this, TypedEntityStorageBuilder.from(entityStore.current))
+    LegacyBridgeModifiableModuleModel(project, this, WorkspaceEntityStorageBuilder.from(entityStore.current))
 
-  fun getModifiableModel(diff: TypedEntityStorageBuilder): ModifiableModuleModel =
+  fun getModifiableModel(diff: WorkspaceEntityStorageBuilder): ModifiableModuleModel =
     LegacyBridgeModifiableModuleModel(project, this, diff)
 
   override fun newModule(filePath: String, moduleTypeId: String): Module {
@@ -560,8 +560,8 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
   }
 
   fun createModuleInstance(moduleEntity: ModuleEntity,
-                           entityStore: TypedEntityStore,
-                           diff: TypedEntityStorageDiffBuilder?,
+                           versionedStorage: VersionedEntityStorage,
+                           diff: WorkspaceEntityStorageDiffBuilder?,
                            isNew: Boolean): LegacyBridgeModule {
     val modulePath = getModuleFilePath(moduleEntity)
     val module = LegacyBridgeModuleImpl(
@@ -569,7 +569,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
       project = project,
       filePath = modulePath,
       moduleEntityId = moduleEntity.persistentId(),
-      entityStore = entityStore,
+      entityStorage = versionedStorage,
       diff = diff
     )
 
@@ -600,27 +600,27 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
     private fun List<EntityChange<LibraryEntity>>.filterModuleLibraryChanges() = filter { it.isModuleLibrary() }
 
-    private fun EntityChange<*>.entity(): TypedEntity = when (this) {
+    private fun EntityChange<*>.entity(): WorkspaceEntity = when (this) {
       is EntityChange.Added -> entity
       is EntityChange.Removed -> entity
       is EntityChange.Replaced -> oldEntity
     }
 
-    internal fun getModuleGroupPath(module: Module, entityStore: TypedEntityStore): Array<String>? {
+    internal fun getModuleGroupPath(module: Module, entityStorage: VersionedEntityStorage): Array<String>? {
       val moduleId = (module as LegacyBridgeModule).moduleEntityId
 
-      val storage = entityStore.current
+      val storage = entityStorage.current
       val moduleEntity = storage.resolve(moduleId) ?: return null
 
       return moduleEntity.groupPath?.path?.toTypedArray()
     }
 
-    internal fun getModulePath(module: Module, entityStore: TypedEntityStore): ModulePath = ModulePath(
+    internal fun getModulePath(module: Module, entityStorage: VersionedEntityStorage): ModulePath = ModulePath(
       path = module.moduleFilePath,
-      group = getModuleGroupPath(module, entityStore)?.joinToString(separator = ModuleManagerImpl.MODULE_GROUP_SEPARATOR)
+      group = getModuleGroupPath(module, entityStorage)?.joinToString(separator = ModuleManagerImpl.MODULE_GROUP_SEPARATOR)
     )
 
-    internal fun hasModuleGroups(entityStore: TypedEntityStore) =
-      entityStore.current.entities(ModuleGroupPathEntity::class.java).firstOrNull() != null
+    internal fun hasModuleGroups(entityStorage: VersionedEntityStorage) =
+      entityStorage.current.entities(ModuleGroupPathEntity::class.java).firstOrNull() != null
   }
 }

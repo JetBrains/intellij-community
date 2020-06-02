@@ -1,31 +1,34 @@
 package com.intellij.workspace.legacyBridge.libraries.libraries
 
-import com.intellij.configurationStore.runAsWriteActionIfNeeded
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Disposer
-import com.intellij.workspace.api.*
+import com.intellij.workspaceModel.storage.CachedValueWithParameter
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
+import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryPropertiesEntity
 import com.intellij.workspace.ide.*
 import com.intellij.workspace.jps.JpsProjectEntitiesLoader
-import com.intellij.workspace.legacyBridge.typedModel.library.LibraryViaTypedEntity
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal class LegacyBridgeProjectModifiableLibraryTableImpl(
-  originalStorage: TypedEntityStorage,
+  originalStorage: WorkspaceEntityStorage,
   private val libraryTable: LegacyBridgeProjectLibraryTableImpl,
   private val project: Project,
-  diff: TypedEntityStorageBuilder = TypedEntityStorageBuilder.from(originalStorage)
+  diff: WorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilder.from(originalStorage)
 ) : LegacyBridgeModifiableBase(diff), LibraryTable.ModifiableModel {
 
   private val myLibrariesToAdd = mutableListOf<LegacyBridgeLibraryImpl>()
   private val myLibrariesToRemove = mutableListOf<Library>()
 
-  private val librariesValue = CachedValueWithParameter { _: TypedEntityStorage, (librariesToAdd, librariesToRemove): Pair<List<Library>, List<Library>> ->
+  private val librariesValue = CachedValueWithParameter { _: WorkspaceEntityStorage, (librariesToAdd, librariesToRemove): Pair<List<Library>, List<Library>> ->
     val libs = libraryTable.libraries.toMutableList()
     libs.removeAll(librariesToRemove)
     libs.addAll(librariesToAdd)
@@ -33,7 +36,7 @@ internal class LegacyBridgeProjectModifiableLibraryTableImpl(
   }
 
   private val libraries
-    get() = WorkspaceModel.getInstance(project).entityStore.cachedValue(librariesValue, myLibrariesToAdd to myLibrariesToRemove)
+    get() = WorkspaceModel.getInstance(project).entityStorage.cachedValue(librariesValue, myLibrariesToAdd to myLibrariesToRemove)
 
 /*  private fun getLibraryModifiableModel(library: LibraryViaTypedEntity,
                                         diff: TypedEntityStorageBuilder): LegacyBridgeLibraryModifiableModelImpl {
@@ -82,7 +85,7 @@ internal class LegacyBridgeProjectModifiableLibraryTableImpl(
       libraryTable = libraryTable,
       project = project,
       initialId = LibraryId(name, libraryTableId),
-      initialEntityStore = entityStoreOnDiff,
+      initialEntityStorage = entityStorageOnDiff,
       parent = libraryTable,
       targetBuilder = this.diff
     ).also { libraryImpl ->
@@ -93,7 +96,7 @@ internal class LegacyBridgeProjectModifiableLibraryTableImpl(
   override fun removeLibrary(library: Library) {
     assertModelIsLive()
 
-    val currentStorage = entityStoreOnDiff.current
+    val currentStorage = entityStorageOnDiff.current
 
     val entityId = when (library) {
       is LegacyBridgeLibraryImpl -> library.entityId

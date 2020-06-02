@@ -17,7 +17,6 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.isEmpty
-import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.ide.getInstance
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibrary
@@ -29,6 +28,8 @@ import com.intellij.workspace.legacyBridge.typedModel.module.OrderEntryViaTypedE
 import com.intellij.workspace.legacyBridge.typedModel.module.RootModelViaTypedEntityImpl
 import com.intellij.workspace.legacyBridge.typedModel.module.SdkOrderEntryViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.SourceRootPropertiesHelper
+import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jdom.Element
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
@@ -36,10 +37,10 @@ import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 import java.util.concurrent.ConcurrentHashMap
 
 class LegacyBridgeModifiableRootModel(
-  diff: TypedEntityStorageBuilder,
+  diff: WorkspaceEntityStorageBuilder,
   override val legacyBridgeModule: LegacyBridgeModule,
   internal val moduleId: ModuleId,
-  private val initialStorage: TypedEntityStorage,
+  private val initialStorage: WorkspaceEntityStorage,
   override val accessor: RootConfigurationAccessor
 ) : LegacyBridgeModifiableBase(diff), ModifiableRootModel, ModificationTracker, LegacyBridgeModuleRootModel {
 
@@ -63,7 +64,7 @@ class LegacyBridgeModifiableRootModel(
   }
 
   internal val moduleEntity: ModuleEntity
-    get() = entityStoreOnDiff.cachedValue(moduleEntityValue) ?: error("Unable to resolve module by id '$moduleId'")
+    get() = entityStorageOnDiff.cachedValue(moduleEntityValue) ?: error("Unable to resolve module by id '$moduleId'")
 
   private val moduleLibraryTable = LegacyBridgeModifiableModuleLibraryTable(this,
                                                                             LegacyBridgeModuleRootComponent.getInstance(module).moduleLibraryTable.moduleLibraries)
@@ -81,15 +82,15 @@ class LegacyBridgeModifiableRootModel(
     }
   }
 
-  override val storage: TypedEntityStorage
-    get() = entityStoreOnDiff.current
+  override val storage: WorkspaceEntityStorage
+    get() = entityStorageOnDiff.current
 
   override fun getOrCreateJpsRootProperties(sourceRootUrl: VirtualFileUrl, creator: () -> JpsModuleSourceRoot): JpsModuleSourceRoot {
     return sourceRootPropertiesMap.computeIfAbsent(sourceRootUrl) { creator() }
   }
 
   private val contentEntries
-    get() = entityStoreOnDiff.cachedValue(contentEntriesImplValue)
+    get() = entityStorageOnDiff.cachedValue(contentEntriesImplValue)
 
   override fun getProject(): Project = legacyBridgeModule.project
 
@@ -293,7 +294,7 @@ class LegacyBridgeModifiableRootModel(
     }
   }
 
-  fun collectChangesAndDispose(): TypedEntityStorageBuilder? {
+  fun collectChangesAndDispose(): WorkspaceEntityStorageBuilder? {
     assertModelIsLive()
     Disposer.dispose(moduleLibraryTable)
     if (!isChanged) return null
@@ -488,10 +489,10 @@ class LegacyBridgeModifiableRootModel(
   }
 
   internal val currentModel
-    get() = entityStoreOnDiff.cachedValue(modelValue)
+    get() = entityStorageOnDiff.cachedValue(modelValue)
 
   private val compilerModuleExtension by lazy {
-    LegacyBridgeCompilerModuleExtension(legacyBridgeModule, entityStore = entityStoreOnDiff, diff = diff)
+    LegacyBridgeCompilerModuleExtension(legacyBridgeModule, entityStorage = entityStorageOnDiff, diff = diff)
   }
   private val compilerModuleExtensionClass = CompilerModuleExtension::class.java
 

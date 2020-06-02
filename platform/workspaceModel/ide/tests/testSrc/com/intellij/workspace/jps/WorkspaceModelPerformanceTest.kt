@@ -22,10 +22,10 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.workspace.api.ModuleDependencyItem
-import com.intellij.workspace.api.ModuleEntity
-import com.intellij.workspace.api.TypedEntityStorageBuilder
-import com.intellij.workspace.api.addModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
 import com.intellij.workspace.ide.NonPersistentEntitySource
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleManagerComponent
@@ -197,7 +197,7 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
     if (!Registry.`is`("ide.new.project.model")) return@runWriteCommandAction
 
     val workspaceModel = WorkspaceModel.getInstance(project)
-    var diff = TypedEntityStorageBuilder.from(workspaceModel.entityStore.current)
+    var diff = WorkspaceEntityStorageBuilder.from(workspaceModel.entityStorage.current)
 
     val moduleType = EmptyModuleType.getInstance().id
     val dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency)
@@ -208,17 +208,17 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
       workspaceModel.updateProjectModel { it.addDiff(diff) }
     }
 
-    var entities = workspaceModel.entityStore.current.entities(ModuleEntity::class.java)
+    var entities = workspaceModel.entityStorage.current.entities(ModuleEntity::class.java)
     logExecutionTimeInInNano("Loop thorough the entities from store") { entities.forEach { it.name } }
     assertEquals(modulesCount + 100, entities.toList().size)
 
-    diff = TypedEntityStorageBuilder.from(workspaceModel.entityStore.current)
+    diff = WorkspaceEntityStorageBuilder.from(workspaceModel.entityStorage.current)
     logExecutionTimeInMillis("Remove hundred entities from store") {
-      workspaceModel.entityStore.current.entities(ModuleEntity::class.java).take(100).forEach { diff.removeEntity(it) }
+      workspaceModel.entityStorage.current.entities(ModuleEntity::class.java).take(100).forEach { diff.removeEntity(it) }
       workspaceModel.updateProjectModel { it.addDiff(diff) }
     }
 
-    entities = workspaceModel.entityStore.current.entities(ModuleEntity::class.java)
+    entities = workspaceModel.entityStorage.current.entities(ModuleEntity::class.java)
     assertEquals(modulesCount, entities.toList().size)
   }
 

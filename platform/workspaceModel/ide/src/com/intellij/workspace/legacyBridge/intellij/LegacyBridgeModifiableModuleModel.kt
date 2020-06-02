@@ -13,17 +13,19 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.PathUtil
-import com.intellij.workspace.api.*
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspace.ide.NonPersistentEntitySource
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.ide.getInstance
 import com.intellij.workspace.jps.JpsProjectEntitiesLoader
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeModifiableBase
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 
 internal class LegacyBridgeModifiableModuleModel(
   private val project: Project,
   private val moduleManager: LegacyBridgeModuleManagerComponent,
-  diff: TypedEntityStorageBuilder
+  diff: WorkspaceEntityStorageBuilder
 ) : LegacyBridgeModifiableBase(diff), ModifiableModuleModel {
 
   override fun getProject(): Project = project
@@ -52,7 +54,7 @@ internal class LegacyBridgeModifiableModuleModel(
       source = NonPersistentEntitySource
     )
 
-    val module = LegacyBridgeModuleImpl(moduleEntity.persistentId(), moduleName, project, null, entityStoreOnDiff, diff)
+    val module = LegacyBridgeModuleImpl(moduleEntity.persistentId(), moduleName, project, null, entityStorageOnDiff, diff)
     moduleManager.addUncommittedModule(module)
     myModulesToAdd[moduleName] = module
 
@@ -87,7 +89,7 @@ internal class LegacyBridgeModifiableModuleModel(
       source = entitySource
     )
 
-    val moduleInstance = moduleManager.createModuleInstance(moduleEntity, entityStoreOnDiff, diff = diff, isNew = true)
+    val moduleInstance = moduleManager.createModuleInstance(moduleEntity, entityStorageOnDiff, diff = diff, isNew = true)
     moduleManager.addUncommittedModule(moduleInstance)
     myModulesToAdd[moduleName] = moduleInstance
 
@@ -113,7 +115,8 @@ internal class LegacyBridgeModifiableModuleModel(
     // If module name equals to already unloaded module, the previous should be removed from store
     val unloadedModuleDescription = moduleManager.getUnloadedModuleDescription(moduleName)
     if (unloadedModuleDescription != null) {
-      val moduleEntity = entityStoreOnDiff.current.resolve(ModuleId(unloadedModuleDescription.name))
+      val moduleEntity = entityStorageOnDiff.current.resolve(
+        ModuleId(unloadedModuleDescription.name))
                          ?: error("Could not find module to remove by id: ${unloadedModuleDescription.name}")
       diff.removeEntity(moduleEntity)
     }
@@ -184,10 +187,10 @@ internal class LegacyBridgeModifiableModuleModel(
     }
   }
 
-  fun collectChanges(): TypedEntityStorageBuilder {
+  fun collectChanges(): WorkspaceEntityStorageBuilder {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
 
-    val storage = entityStoreOnDiff.current
+    val storage = entityStorageOnDiff.current
 
     for (moduleToDispose in myModulesToDispose.values) {
       val moduleEntity = storage.resolve(moduleToDispose.moduleEntityId)
@@ -224,7 +227,7 @@ internal class LegacyBridgeModifiableModuleModel(
       else {
         myNewNameToModule[newName] = module
       }
-      val entity = entityStoreOnDiff.current.resolve(oldId) ?: error("Unable to resolve module by id: $oldId")
+      val entity = entityStorageOnDiff.current.resolve(oldId) ?: error("Unable to resolve module by id: $oldId")
       diff.modifyEntity(ModifiableModuleEntity::class.java, entity) {
         name = newName
       }
@@ -240,14 +243,14 @@ internal class LegacyBridgeModifiableModuleModel(
   override fun getActualName(module: Module): String = getNewName(module) ?: module.name
 
   override fun getModuleGroupPath(module: Module): Array<String>? =
-    LegacyBridgeModuleManagerComponent.getModuleGroupPath(module, entityStoreOnDiff)
+    LegacyBridgeModuleManagerComponent.getModuleGroupPath(module, entityStorageOnDiff)
 
-  override fun hasModuleGroups(): Boolean = LegacyBridgeModuleManagerComponent.hasModuleGroups(entityStoreOnDiff)
+  override fun hasModuleGroups(): Boolean = LegacyBridgeModuleManagerComponent.hasModuleGroups(entityStorageOnDiff)
 
   override fun setModuleGroupPath(module: Module, groupPath: Array<out String>?) {
     val moduleId = (module as LegacyBridgeModule).moduleEntityId
 
-    val storage = entityStoreOnDiff.current
+    val storage = entityStorageOnDiff.current
 
     val moduleEntity = storage.resolve(moduleId) ?: error("Could not resolve module by moduleId: $moduleId")
     val moduleGroupEntity = moduleEntity.groupPath

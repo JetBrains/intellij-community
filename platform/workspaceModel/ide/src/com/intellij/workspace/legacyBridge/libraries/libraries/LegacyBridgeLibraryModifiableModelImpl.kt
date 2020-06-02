@@ -14,17 +14,18 @@ import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.ide.getInstance
 import com.intellij.workspace.legacyBridge.typedModel.library.LibraryViaTypedEntity
+import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jdom.Element
 
 internal class LegacyBridgeLibraryModifiableModelImpl(
   private val originalLibrary: LegacyBridgeLibraryImpl,
   private val originalLibrarySnapshot: LibraryViaTypedEntity,
-  diff: TypedEntityStorageBuilder,
-  private val targetBuilder: TypedEntityStorageDiffBuilder?
+  diff: WorkspaceEntityStorageBuilder,
+  private val targetBuilder: WorkspaceEntityStorageDiffBuilder?
 ) : LegacyBridgeModifiableBase(diff), LibraryEx.ModifiableModelEx, LibraryEx, RootProvider {
 
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(originalLibrary.project)
@@ -43,7 +44,7 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
   }
 
   private val currentLibrary: LibraryViaTypedEntity
-    get() = entityStoreOnDiff.cachedValue(currentLibraryValue)
+    get() = entityStorageOnDiff.cachedValue(currentLibraryValue)
 
   override fun getFiles(rootType: OrderRootType): Array<VirtualFile> = currentLibrary.getFiles(rootType)
   override fun getKind(): PersistentLibraryKind<*>? = currentLibrary.kind

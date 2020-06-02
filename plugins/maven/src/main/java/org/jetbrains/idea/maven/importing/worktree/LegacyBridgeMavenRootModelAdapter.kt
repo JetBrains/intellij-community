@@ -10,12 +10,14 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.workspace.api.*
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspace.ide.getInstance
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeCompilerModuleExtension
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleManagerComponent
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleRootComponent
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.idea.maven.importing.MavenModelUtil
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapterInterface
 import org.jetbrains.idea.maven.model.MavenArtifact
@@ -38,7 +40,7 @@ class LegacyBridgeMavenRootModelAdapter(private val myMavenProject: MavenProject
                                         private val project: Project,
                                         initialModuleEntity: ModuleEntity,
                                         private val legacyBridgeModifiableModelsProvider: LegacyBrigdeIdeModifiableModelsProvider,
-                                        private val builder: TypedEntityStorageBuilder) : MavenRootModelAdapterInterface {
+                                        private val builder: WorkspaceEntityStorageBuilder) : MavenRootModelAdapterInterface {
 
   private var moduleEntity: ModuleEntity = initialModuleEntity
   private val legacyBridge = LegacyBridgeModuleRootComponent.getInstance(module)
@@ -152,7 +154,7 @@ class LegacyBridgeMavenRootModelAdapter(private val myMavenProject: MavenProject
   }
 
   override fun useModuleOutput(production: String, test: String) {
-    LegacyBridgeCompilerModuleExtension(module, module.entityStore, builder).apply {
+    LegacyBridgeCompilerModuleExtension(module, module.entityStorage, builder).apply {
       inheritCompilerOutputPath(false);
       setCompilerOutputPath(toUrl(production).getUrl());
       setCompilerOutputPathForTests(toUrl(test).getUrl());

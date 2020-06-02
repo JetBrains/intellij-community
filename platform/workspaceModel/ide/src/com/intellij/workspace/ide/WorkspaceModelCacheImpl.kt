@@ -15,9 +15,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.pooledThreadSingleAlarm
-import com.intellij.workspace.api.*
-import com.intellij.workspace.api.pstorage.PSerializer
+import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspace.bracket
+import com.intellij.workspaceModel.storage.*
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.AtomicMoveNotSupportedException
@@ -31,7 +31,7 @@ internal class WorkspaceModelCacheImpl(private val project: Project, parentDispo
 
   private val cacheFile: File
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
-  private val serializer: EntityStorageSerializer = PSerializer(PluginAwareEntityTypesResolver, virtualFileManager)
+  private val serializer: EntityStorageSerializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager)
 
   init {
     Disposer.register(parentDisposable, this)
@@ -48,14 +48,14 @@ internal class WorkspaceModelCacheImpl(private val project: Project, parentDispo
     LOG.info("Project Model Cache at $cacheFile")
 
     WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(this), object : WorkspaceModelChangeListener {
-      override fun changed(event: EntityStoreChanged) = LOG.bracket("${javaClass.simpleName}.EntityStoreChange") {
+      override fun changed(event: VersionedStorageChanged) = LOG.bracket("${javaClass.simpleName}.EntityStoreChange") {
         saveAlarm.request()
       }
     })
   }
 
   private val saveAlarm = pooledThreadSingleAlarm(1000, this) {
-    val storage = WorkspaceModel.getInstance(project).entityStore.current
+    val storage = WorkspaceModel.getInstance(project).entityStorage.current
 
     if (!cachesInvalidated.get()) {
       LOG.info("Saving project model cache to $cacheFile")
@@ -69,7 +69,7 @@ internal class WorkspaceModelCacheImpl(private val project: Project, parentDispo
 
   override fun dispose() = Unit
 
-  fun loadCache(): TypedEntityStorage? {
+  fun loadCache(): WorkspaceEntityStorage? {
     try {
       if (!cacheFile.exists()) return null
 
@@ -93,7 +93,7 @@ internal class WorkspaceModelCacheImpl(private val project: Project, parentDispo
   }
 
   // Serialize and atomically replace cacheFile. Delete temporary file in any cache to avoid junk in cache folder
-  private fun saveCache(storage: TypedEntityStorage) {
+  private fun saveCache(storage: WorkspaceEntityStorage) {
     val tmpFile = FileUtil.createTempFile(cacheFile.parentFile, "cache", ".tmp")
     try {
       tmpFile.outputStream().use { serializer.serializeCache(it, storage) }

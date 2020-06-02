@@ -13,8 +13,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.workspace.api.ModuleDependencyItem
-import com.intellij.workspace.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
 import org.junit.Assert.*
@@ -222,9 +222,7 @@ class LegacyBridgeModuleLibraryTest {
       assertEquals(2, libraries.size)
       libraries.forEach { assertEquals(antLibraryName, it.name) }
 
-      val libraryDependencies = WorkspaceModel.getInstance(project).entityStore.current
-                                              .entities(ModuleEntity::class.java).first()
-                                              .dependencies.drop(1)
+      val libraryDependencies = WorkspaceModel.getInstance(project).entityStorage.current.entities(ModuleEntity::class.java).first().dependencies.drop(1)
       assertEquals(2, libraryDependencies.size)
       val libraryDepOne = libraryDependencies[0] as ModuleDependencyItem.Exportable.LibraryDependency
       val libraryDepTwo = libraryDependencies[1] as ModuleDependencyItem.Exportable.LibraryDependency
@@ -249,7 +247,7 @@ class LegacyBridgeModuleLibraryTest {
     assertTrue(moduleFile.readText().contains(gradleLibraryName))
     assertFalse(moduleFile.readText().contains(antLibraryName))
 
-    val libraryDependencies = WorkspaceModel.getInstance(project).entityStore.current
+    val libraryDependencies = WorkspaceModel.getInstance(project).entityStorage.current
       .entities(ModuleEntity::class.java).first()
       .dependencies.drop(1)
     assertEquals(2, libraryDependencies.size)
@@ -326,7 +324,7 @@ class LegacyBridgeModuleLibraryTest {
       libraries.forEach { assertEquals(libraryName, it.name) }
       rootModel.dispose()
     }
-    val moduleDependencyItem = WorkspaceModel.getInstance(project).entityStore.current
+    val moduleDependencyItem = WorkspaceModel.getInstance(project).entityStorage.current
                                                                   .entities(ModuleEntity::class.java).first()
                                                                   .dependencies.last()
     assertTrue(moduleDependencyItem is ModuleDependencyItem.Exportable.LibraryDependency)

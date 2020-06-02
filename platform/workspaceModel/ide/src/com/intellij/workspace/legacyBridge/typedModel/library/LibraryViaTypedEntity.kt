@@ -4,23 +4,23 @@ import com.intellij.configurationStore.ComponentSerializationUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectModelExternalSource
-import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.impl.libraries.UnknownLibraryKind
 import com.intellij.openapi.roots.libraries.*
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
-import com.intellij.workspace.api.*
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspace.ide.JpsImportedEntitySource
 import com.intellij.workspace.ide.toExternalSource
 import com.intellij.workspace.legacyBridge.intellij.*
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import java.io.StringReader
 
 internal class LibraryViaTypedEntity(
   val libraryEntity: LibraryEntity,
   internal val filePointerProvider: LegacyBridgeFilePointerProvider,
-  val storage: TypedEntityStorage,
+  val storage: WorkspaceEntityStorage,
   val libraryTable: LibraryTable) {
   private val roots = libraryEntity.roots.groupBy { it.type }.mapValues {(_, roots) ->
     val urls = roots.filter { it.inclusionOptions == LibraryRoot.InclusionOptions.ROOT_ITSELF }.map { it.url }

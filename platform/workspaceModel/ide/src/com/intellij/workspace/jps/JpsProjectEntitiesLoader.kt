@@ -6,10 +6,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.workspace.ide.*
+import com.intellij.workspaceModel.storage.*
 import org.jdom.Element
 import java.io.File
 import java.nio.file.Path
@@ -27,7 +28,7 @@ object JpsProjectEntitiesLoader {
     return createProjectEntitiesSerializers(configLocation, reader, externalStoragePath, serializeArtifacts, virtualFileManager)
   }
 
-  fun loadProject(configLocation: JpsProjectConfigLocation, builder: TypedEntityStorageBuilder,
+  fun loadProject(configLocation: JpsProjectConfigLocation, builder: WorkspaceEntityStorageBuilder,
                   externalStoragePath: Path, virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
     val reader = CachingJpsFileContentReader(configLocation.baseDirectoryUrlString)
     val data = createProjectEntitiesSerializers(configLocation, reader, externalStoragePath, true, virtualFileManager)
@@ -35,7 +36,7 @@ object JpsProjectEntitiesLoader {
     return data
   }
 
-  fun loadModule(moduleFile: File, configLocation: JpsProjectConfigLocation, builder: TypedEntityStorageBuilder, virtualFileManager: VirtualFileUrlManager) {
+  fun loadModule(moduleFile: File, configLocation: JpsProjectConfigLocation, builder: WorkspaceEntityStorageBuilder, virtualFileManager: VirtualFileUrlManager) {
     val source = JpsFileEntitySource.FileInDirectory(moduleFile.parentFile.toVirtualFileUrl(virtualFileManager), configLocation)
     loadModule(moduleFile, source, configLocation, builder, virtualFileManager)
   }
@@ -43,7 +44,7 @@ object JpsProjectEntitiesLoader {
   internal fun loadModule(moduleFile: File,
                           source: JpsFileEntitySource.FileInDirectory,
                           configLocation: JpsProjectConfigLocation,
-                          builder: TypedEntityStorageBuilder,
+                          builder: WorkspaceEntityStorageBuilder,
                           virtualFileManager: VirtualFileUrlManager) {
     val reader = CachingJpsFileContentReader(configLocation.baseDirectoryUrlString)
     val serializer = ModuleListSerializerImpl.createModuleEntitiesSerializer(moduleFile.toVirtualFileUrl(virtualFileManager), source, null)

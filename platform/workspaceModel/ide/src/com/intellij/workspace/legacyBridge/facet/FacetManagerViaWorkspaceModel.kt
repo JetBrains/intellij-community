@@ -9,7 +9,11 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.workspace.api.*
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
+import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableFacetEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.facets
 import com.intellij.workspace.ide.JpsImportedEntitySource
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.ide.toExternalSource
@@ -23,7 +27,7 @@ class FacetManagerViaWorkspaceModel(module: Module) : FacetManagerBase() {
   private fun isThisModule(moduleEntity: ModuleEntity) = moduleEntity.name == module.name
 
   override fun checkConsistency() {
-    model.checkConsistency(module.entityStore.current.entities(FacetEntity::class.java).filter { isThisModule(it.module) }.toList())
+    model.checkConsistency(module.entityStorage.current.entities(FacetEntity::class.java).filter { isThisModule(it.module) }.toList())
   }
 
   override fun facetConfigurationChanged(facet: Facet<*>) {
@@ -44,12 +48,12 @@ class FacetManagerViaWorkspaceModel(module: Module) : FacetManagerBase() {
   override fun getModel(): FacetModel = model
   override fun getModule(): Module = module
   override fun createModifiableModel(): ModifiableFacetModel {
-    val diff = TypedEntityStorageDiffBuilder.create(module.entityStore.current)
+    val diff = WorkspaceEntityStorageDiffBuilder.create(module.entityStorage.current)
     return createModifiableModel(diff)
   }
 
-  fun createModifiableModel(diff: TypedEntityStorageDiffBuilder): ModifiableFacetModel {
-    return ModifiableFacetModelViaWorkspaceModel(module.entityStore.current, diff, module, this)
+  fun createModifiableModel(diff: WorkspaceEntityStorageDiffBuilder): ModifiableFacetModel {
+    return ModifiableFacetModelViaWorkspaceModel(module.entityStorage.current, diff, module, this)
   }
 
 }

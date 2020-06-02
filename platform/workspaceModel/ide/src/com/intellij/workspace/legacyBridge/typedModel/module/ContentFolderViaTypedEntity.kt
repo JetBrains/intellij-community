@@ -6,10 +6,11 @@ import com.intellij.openapi.roots.ExcludeFolder
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.workspace.api.*
+import com.intellij.workspaceModel.storage.VirtualFileUrl
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProvider
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerScope
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleRootComponent
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType

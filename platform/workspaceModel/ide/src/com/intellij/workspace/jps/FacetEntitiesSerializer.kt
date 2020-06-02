@@ -3,13 +3,19 @@ package com.intellij.workspace.jps
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.xmlb.XmlSerializer
-import com.intellij.workspace.api.*
-import com.intellij.workspace.api.pstorage.EntityDataDelegation
-import com.intellij.workspace.api.pstorage.PEntityData
-import com.intellij.workspace.api.pstorage.PModifiableTypedEntity
-import com.intellij.workspace.api.pstorage.PTypedEntity
-import com.intellij.workspace.api.pstorage.references.MutableOneToOneChild
-import com.intellij.workspace.api.pstorage.references.OneToOneChild
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.VirtualFileUrl
+import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
+import com.intellij.workspaceModel.storage.impl.EntityDataDelegation
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.references.MutableOneToOneChild
+import com.intellij.workspaceModel.storage.impl.references.OneToOneChild
+import com.intellij.workspaceModel.storage.referrers
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.JpsImportedEntitySource
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
@@ -20,7 +26,7 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
                                        private val internalSource: JpsFileEntitySource,
                                        private val componentName: String,
                                        private val externalStorage: Boolean) {
-  internal fun loadFacetEntities(builder: TypedEntityStorageBuilder, moduleEntity: ModuleEntity, reader: JpsFileContentReader) {
+  internal fun loadFacetEntities(builder: WorkspaceEntityStorageBuilder, moduleEntity: ModuleEntity, reader: JpsFileContentReader) {
     val facetManagerTag = reader.loadComponent(imlFileUrl.url, componentName) ?: return
     val facetManagerState = XmlSerializer.deserialize(facetManagerTag, FacetManagerState::class.java)
     val orderOfFacets = ArrayList<String>()
@@ -41,7 +47,7 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
     }
   }
 
-  private fun loadFacetEntities(facetStates: List<FacetState>, builder: TypedEntityStorageBuilder, moduleEntity: ModuleEntity,
+  private fun loadFacetEntities(facetStates: List<FacetState>, builder: WorkspaceEntityStorageBuilder, moduleEntity: ModuleEntity,
                                 underlyingFacet: FacetEntity?, orderOfFacets: MutableList<String>) {
     for (facetState in facetStates) {
       orderOfFacets.add(facetState.name)
@@ -108,21 +114,21 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
  */
 
 @Suppress("unused")
-internal class FacetsOrderEntityData : PEntityData<FacetsOrderEntity>() {
+internal class FacetsOrderEntityData : WorkspaceEntityData<FacetsOrderEntity>() {
   lateinit var orderOfFacets: List<String>
 
-  override fun createEntity(snapshot: TypedEntityStorage): FacetsOrderEntity {
+  override fun createEntity(snapshot: WorkspaceEntityStorage): FacetsOrderEntity {
     return FacetsOrderEntity(orderOfFacets).also { addMetaData(it, snapshot) }
   }
 }
 
 internal class FacetsOrderEntity(
   val orderOfFacets: List<String>
-) : PTypedEntity() {
+) : WorkspaceEntityBase() {
   val module: ModuleEntity by OneToOneChild.NotNull(ModuleEntity::class.java, true)
 }
 
-internal class ModifiableFacetsOrderEntity : PModifiableTypedEntity<FacetsOrderEntity>() {
+internal class ModifiableFacetsOrderEntity : ModifiableWorkspaceEntityBase<FacetsOrderEntity>() {
   var orderOfFacets: List<String> by EntityDataDelegation()
   var module: ModuleEntity by MutableOneToOneChild.NotNull(FacetsOrderEntity::class.java, ModuleEntity::class.java, true)
 }

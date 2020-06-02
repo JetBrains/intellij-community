@@ -7,16 +7,19 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.util.ArrayUtilRt
-import com.intellij.workspace.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.JavaModuleSettingsEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableJavaModuleSettingsEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsEntity
 import com.intellij.workspace.ide.getInstance
 import com.intellij.workspace.toVirtualFileUrl
 import com.intellij.workspace.virtualFile
+import com.intellij.workspaceModel.storage.*
 import java.util.*
 
 class LegacyBridgeCompilerModuleExtension(
   private val module: LegacyBridgeModule,
-  private val entityStore: TypedEntityStore,
-  private val diff: TypedEntityStorageDiffBuilder?
+  private val entityStorage: VersionedEntityStorage,
+  private val diff: WorkspaceEntityStorageDiffBuilder?
 ) : CompilerModuleExtension() {
 
   private var changed = false
@@ -26,7 +29,7 @@ class LegacyBridgeCompilerModuleExtension(
   }
 
   private val javaSettings
-    get() = entityStore.cachedValue(javaSettingsValue)
+    get() = entityStorage.cachedValue(javaSettingsValue)
 
   private fun getSanitizedModuleName(): String {
     val file = module.moduleFile
@@ -81,7 +84,7 @@ class LegacyBridgeCompilerModuleExtension(
       error("Read-only $javaClass")
     }
 
-    val moduleEntity = entityStore.current.resolve(module.moduleEntityId) ?: error("Could not resolve ${module.moduleEntityId}")
+    val moduleEntity = entityStorage.current.resolve(module.moduleEntityId) ?: error("Could not resolve ${module.moduleEntityId}")
     val moduleSource = moduleEntity.entitySource
 
     val oldJavaSettings = javaSettings ?: diff.addJavaModuleSettingsEntity(

@@ -8,9 +8,9 @@ import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.JpsProjectConfigLocation
+import com.intellij.workspaceModel.storage.*
 import junit.framework.AssertionFailedError
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
@@ -23,7 +23,7 @@ internal val sampleFileBasedProjectFile = File(PathManagerEx.getCommunityHomePat
                                                "jps/model-serialization/testData/sampleProject-ipr/sampleProject.ipr")
 
 internal data class LoadedProjectData(
-  val storage: TypedEntityStorage,
+  val storage: WorkspaceEntityStorage,
   val serializers: JpsProjectSerializersImpl,
   val configLocation: JpsProjectConfigLocation,
   val originalProjectDir: File
@@ -38,7 +38,7 @@ internal fun copyAndLoadProject(originalProjectFile: File, virtualFileManager: V
   val projectDir = FileUtil.createTempDirectory("jpsProjectTest", null)
   val originalProjectDir = if (originalProjectFile.isFile) originalProjectFile.parentFile else originalProjectFile
   FileUtil.copyDir(originalProjectDir, projectDir)
-  val originalBuilder = TypedEntityStorageBuilder.create()
+  val originalBuilder = WorkspaceEntityStorageBuilder.create()
   val projectFile = if (originalProjectFile.isFile) File(projectDir, originalProjectFile.name) else projectDir
   val configLocation = projectFile.asConfigLocation(virtualFileManager)
   val serializers = loadProject(configLocation, originalBuilder, virtualFileManager) as JpsProjectSerializersImpl
@@ -47,12 +47,12 @@ internal fun copyAndLoadProject(originalProjectFile: File, virtualFileManager: V
   return loadedProjectData
 }
 
-internal fun   loadProject(configLocation: JpsProjectConfigLocation, originalBuilder: TypedEntityStorageBuilder, virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
+internal fun   loadProject(configLocation: JpsProjectConfigLocation, originalBuilder: WorkspaceEntityStorageBuilder, virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
   val cacheDirUrl = configLocation.baseDirectoryUrl.append("cache")
   return JpsProjectEntitiesLoader.loadProject(configLocation, originalBuilder, File(VfsUtil.urlToPath(cacheDirUrl.url)).toPath(), virtualFileManager)
 }
 
-internal fun JpsProjectSerializersImpl.saveAllEntities(storage: TypedEntityStorage, projectDir: File) {
+internal fun JpsProjectSerializersImpl.saveAllEntities(storage: WorkspaceEntityStorage, projectDir: File) {
   val writer = JpsFileContentWriterImpl()
   saveAllEntities(storage, writer)
   writer.writeFiles(projectDir)
@@ -160,7 +160,7 @@ internal fun createProjectSerializers(projectDir: File, virtualFileManager: Virt
   return JpsProjectEntitiesLoader.createProjectSerializers(projectDir.asConfigLocation(virtualFileManager), reader, externalStoragePath, true, virtualFileManager) as JpsProjectSerializersImpl
 }
 
-fun JpsProjectSerializersImpl.checkConsistency(projectBaseDirUrl: String, storage: TypedEntityStorage, virtualFileManager: VirtualFileUrlManager) {
+fun JpsProjectSerializersImpl.checkConsistency(projectBaseDirUrl: String, storage: WorkspaceEntityStorage, virtualFileManager: VirtualFileUrlManager) {
   fun getNonNullActualFileUrl(source: EntitySource): String {
     return getActualFileUrl(source) ?: throw AssertionFailedError("file name is not registered for $source")
   }
@@ -193,7 +193,7 @@ fun JpsProjectSerializersImpl.checkConsistency(projectBaseDirUrl: String, storag
     assertTrue(it in fileSerializersByUrl[getNonNullActualFileUrl(it.internalEntitySource)])
   }
 
-  fun <E : TypedEntity> isSerializerWithoutEntities(serializer: JpsFileEntitiesSerializer<E>) =
+  fun <E : WorkspaceEntity> isSerializerWithoutEntities(serializer: JpsFileEntitiesSerializer<E>) =
     serializer is JpsFileEntityTypeSerializer<E> && storage.entities(serializer.mainEntityClass).none { serializer.entityFilter(it) }
 
   val allSources = storage.entitiesBySource { true }

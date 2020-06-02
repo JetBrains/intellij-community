@@ -12,7 +12,11 @@ import com.intellij.openapi.roots.impl.OrderRootsCache
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.workspace.api.*
+import com.intellij.workspaceModel.storage.CachedValue
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.VirtualFileUrl
+import com.intellij.workspaceModel.storage.impl.DisposableCachedValue
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
 import com.intellij.workspace.legacyBridge.typedModel.module.RootModelViaTypedEntityImpl
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
@@ -29,7 +33,7 @@ class LegacyBridgeModuleRootComponent(
   internal val newModuleLibraries = mutableListOf<LegacyBridgeLibraryImpl>()
 
   private val modelValue = DisposableCachedValue(
-    { legacyBridgeModule.entityStore },
+    { legacyBridgeModule.entityStorage },
     CachedValue { storage ->
       RootModelViaTypedEntityImpl(
         moduleEntityId = legacyBridgeModule.moduleEntityId,
@@ -63,8 +67,8 @@ class LegacyBridgeModuleRootComponent(
   private val model: RootModelViaTypedEntityImpl
     get() = modelValue.value
 
-  override val storage: TypedEntityStorage
-    get() = legacyBridgeModule.entityStore.current
+  override val storage: WorkspaceEntityStorage
+    get() = legacyBridgeModule.entityStorage.current
 
   override val accessor: RootConfigurationAccessor
     get() = RootConfigurationAccessor.DEFAULT_INSTANCE
@@ -84,7 +88,7 @@ class LegacyBridgeModuleRootComponent(
     modelValue.dropCache()
   }
 
-  override fun getModificationCountForTests(): Long = legacyBridgeModule.entityStore.version
+  override fun getModificationCountForTests(): Long = legacyBridgeModule.entityStorage.version
 
   override fun getExternalSource(): ProjectModelExternalSource? =
     ExternalProjectSystemRegistry.getInstance().getExternalSource(module)
@@ -93,9 +97,9 @@ class LegacyBridgeModuleRootComponent(
 
   override fun getModifiableModel(): ModifiableRootModel = getModifiableModel(RootConfigurationAccessor.DEFAULT_INSTANCE)
   override fun getModifiableModel(accessor: RootConfigurationAccessor): ModifiableRootModel = LegacyBridgeModifiableRootModel(
-    TypedEntityStorageBuilder.from(legacyBridgeModule.entityStore.current),
+    WorkspaceEntityStorageBuilder.from(legacyBridgeModule.entityStorage.current),
     legacyBridgeModule, legacyBridgeModule.moduleEntityId,
-    legacyBridgeModule.entityStore.current, accessor)
+    legacyBridgeModule.entityStorage.current, accessor)
 
   /**
    * If the model creates from IdeModifiableModelsProviderImpl it should use the same storage which uses in the module.
@@ -115,15 +119,15 @@ class LegacyBridgeModuleRootComponent(
    * to the module because entitySource is different (ModuleImlFileEntitiesSerializer#saveModuleEntities).
    */
   override fun getModifiableModelForExternalSystem(accessor: RootConfigurationAccessor): ModifiableRootModel = LegacyBridgeModifiableRootModel(
-    (legacyBridgeModule.diff as? TypedEntityStorageBuilder) ?: TypedEntityStorageBuilder.from(legacyBridgeModule.entityStore.current),
+    (legacyBridgeModule.diff as? WorkspaceEntityStorageBuilder) ?: WorkspaceEntityStorageBuilder.from(legacyBridgeModule.entityStorage.current),
     legacyBridgeModule, legacyBridgeModule.moduleEntityId,
-    legacyBridgeModule.entityStore.current, accessor)
+    legacyBridgeModule.entityStorage.current, accessor)
 
-  fun getModifiableModel(diff: TypedEntityStorageBuilder,
+  fun getModifiableModel(diff: WorkspaceEntityStorageBuilder,
                          accessor: RootConfigurationAccessor): ModifiableRootModel = LegacyBridgeModifiableRootModel(diff,
                                                                                                                      legacyBridgeModule,
                                                                                                                      legacyBridgeModule.moduleEntityId,
-                                                                                                                     legacyBridgeModule.entityStore.current,
+                                                                                                                     legacyBridgeModule.entityStorage.current,
                                                                                                                      accessor)
 
 
@@ -136,7 +140,7 @@ class LegacyBridgeModuleRootComponent(
   override fun orderEntries(): OrderEnumerator = ModuleOrderEnumerator(this, orderRootsCache)
 
   private val compilerModuleExtension by lazy {
-    LegacyBridgeCompilerModuleExtension(legacyBridgeModule, entityStore = legacyBridgeModule.entityStore, diff = null)
+    LegacyBridgeCompilerModuleExtension(legacyBridgeModule, entityStorage = legacyBridgeModule.entityStorage, diff = null)
   }
 
   private val compilerModuleExtensionClass = CompilerModuleExtension::class.java

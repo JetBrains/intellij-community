@@ -14,7 +14,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.xmlb.annotations.Attribute
-import com.intellij.workspace.api.LibraryPropertiesEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryPropertiesEntity
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
 import org.junit.After
@@ -66,7 +66,7 @@ class LibraryPropertiesTest {
         projectLibTableModel.commit()
       }
 
-      WorkspaceModel.getInstance(project).entityStore.current.entities(LibraryPropertiesEntity::class.java).forEach {
+      WorkspaceModel.getInstance(project).entityStorage.current.entities(LibraryPropertiesEntity::class.java).forEach {
         assertEquals(kindId, it.libraryType)
         assertEquals(elementAsString, it.propertiesXmlTag)
       }
@@ -98,7 +98,7 @@ class LibraryPropertiesTest {
       rootModel.commit()
     }
 
-    WorkspaceModel.getInstance(project).entityStore.current.entities(LibraryPropertiesEntity::class.java).forEach {
+    WorkspaceModel.getInstance(project).entityStorage.current.entities(LibraryPropertiesEntity::class.java).forEach {
       assertEquals(antLibraryName, it.library.name)
       assertEquals(kindId, it.libraryType)
       assertEquals(elementAsString, it.propertiesXmlTag)
