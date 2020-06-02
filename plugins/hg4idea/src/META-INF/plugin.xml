@@ -17,6 +17,12 @@
   <depends>com.intellij.modules.vcs</depends>
 
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="hg4idea.process.ignored" defaultValue="true"
+                 description="Process and highlight mercurial ignored files.
+                              Switching this option on may lead to some performance problems."/>
+    <registryKey key="hg4idea.execute.with.mediator" defaultValue="true"
+                 description="Use wrapper executable on Windows to support soft Mercurial process cancellation."/>
+
     <search.projectOptionsTopHitProvider implementation="org.zmlx.hg4idea.HgOptionsTopHitProvider"/>
     <vcs name="hg4idea" vcsClass="org.zmlx.hg4idea.HgVcs" displayName="Mercurial" administrativeAreaName=".hg"/>
     <checkoutProvider implementation="org.zmlx.hg4idea.provider.HgCheckoutProvider"/>
