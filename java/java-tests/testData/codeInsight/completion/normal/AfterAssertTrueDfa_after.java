@@ -5,7 +5,7 @@ public class ExampleTest {
         Map<String, Object> data = doWork();
         Object value = data.get("name");
         assertTrue(value instanceof Map);
-        ((Map) value).getOrDefault()
+        ((Map<?, ?>) value).getOrDefault()
     }
 
     native Map<String, Object> doWork();

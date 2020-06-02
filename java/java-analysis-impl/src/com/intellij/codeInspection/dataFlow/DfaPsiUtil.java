@@ -563,7 +563,18 @@ public class DfaPsiUtil {
     if (psiClass == null) return classType;
     PsiType expressionType = expression.getType();
     if (!(expressionType instanceof PsiClassType)) return classType;
-    return GenericsUtil.getExpectedGenericType(expression, psiClass, (PsiClassType)expressionType);
+    PsiClassType result = GenericsUtil.getExpectedGenericType(expression, psiClass, (PsiClassType)expressionType);
+    if (result.isRaw()) {
+      PsiClass aClass = result.resolve();
+      if (aClass != null) {
+        int length = aClass.getTypeParameters().length;
+        PsiWildcardType wildcard = PsiWildcardType.createUnbounded(aClass.getManager());
+        PsiType[] arguments = new PsiType[length];
+        Arrays.fill(arguments, wildcard);
+        return JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, arguments);
+      }
+    }
+    return result;
   }
 
   /**
