@@ -30,5 +30,16 @@ interface GHPRChangesDataProvider {
   fun loadCommitsFromApi(): CompletableFuture<List<GHCommit>>
 
   @CalledInAwt
+  fun addCommitsListener(disposable: Disposable, listener: () -> Unit)
+
+  @CalledInAwt
+  fun loadCommitsFromApi(disposable: Disposable, consumer: (CompletableFuture<List<GHCommit>>) -> Unit) {
+    addCommitsListener(disposable) {
+      consumer(loadCommitsFromApi())
+    }
+    consumer(loadCommitsFromApi())
+  }
+
+  @CalledInAwt
   fun fetchHeadBranch(): CompletableFuture<Unit>
 }

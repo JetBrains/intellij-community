@@ -73,6 +73,9 @@ class GHPRChangesDataProviderImpl(private val changesService: GHPRChangesService
 
   override fun loadCommitsFromApi() = apiCommitsRequestValue.value
 
+  override fun addCommitsListener(disposable: Disposable, listener: () -> Unit) =
+    apiCommitsRequestValue.addDropEventListener(disposable, listener)
+
   override fun fetchHeadBranch() = headBranchFetchRequestValue.value
 
   override fun dispose() {}

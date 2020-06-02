@@ -101,11 +101,7 @@ internal class GHPRComponentFactory(private val project: Project) {
                                          disposable: Disposable): JComponent {
 
     val detailsLoadingModel = createDetailsLoadingModel(dataProvider.detailsData, disposable)
-
-    val commitsModel = GHPRCommitsModelImpl()
-    val cumulativeChangesModel = GHPRChangesModelImpl(project)
-
-    val changesLoadingModel = createChangesLoadingModel(commitsModel, cumulativeChangesModel, dataProvider.changesData, disposable)
+    val changesLoadingModel = createChangesLoadingModel(dataProvider.changesData, disposable)
 
     val infoComponent = createInfoComponent(dataContext, dataProvider, detailsLoadingModel, changesLoadingModel, disposable)
     val commitsComponent = createCommitsComponent(dataContext, dataProvider, changesLoadingModel, disposable)
@@ -119,13 +115,13 @@ internal class GHPRComponentFactory(private val project: Project) {
       sideComponent = createReturnToListSideComponent(viewController)
     }
 
-    fun updateCommitsTabText() {
-      val commitsCount = commitsModel.commitsWithChanges?.size
-      commitsTabInfo.text = if (commitsCount == null) GithubBundle.message("pull.request.commits")
-      else GithubBundle.message("pull.request.commits.count", commitsCount)
+    dataProvider.changesData.loadCommitsFromApi(disposable) {
+      it.handleOnEdt(disposable) { commits, _ ->
+        val commitsCount = commits?.size
+        commitsTabInfo.text = if (commitsCount == null) GithubBundle.message("pull.request.commits")
+        else GithubBundle.message("pull.request.commits.count", commitsCount)
+      }
     }
-    updateCommitsTabText()
-    commitsModel.addStateChangesListener(::updateCommitsTabText)
 
     return object : SingleHeightTabs(project, disposable) {
       override fun adjust(each: TabInfo?) {}
@@ -234,10 +230,9 @@ internal class GHPRComponentFactory(private val project: Project) {
     return diffHelper
   }
 
-  private fun createChangesLoadingModel(commitsModel: GHPRCommitsModel,
-                                        cumulativeChangesModel: GHPRChangesModel,
-                                        changesProvider: GHPRChangesDataProvider,
-                                        disposable: Disposable): GHPRChangesLoadingModel {
+  private fun createChangesLoadingModel(changesProvider: GHPRChangesDataProvider, disposable: Disposable): GHPRChangesLoadingModel {
+    val commitsModel = GHPRCommitsModelImpl()
+    val cumulativeChangesModel = GHPRChangesModelImpl(project)
     val model = GHPRChangesLoadingModel(commitsModel, cumulativeChangesModel, disposable)
     changesProvider.loadChanges(disposable) {
       model.future = it
