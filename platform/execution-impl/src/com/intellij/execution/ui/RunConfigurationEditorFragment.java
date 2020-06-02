@@ -24,13 +24,13 @@ public abstract class RunConfigurationEditorFragment<Settings, C extends JCompon
 
   public abstract void applyEditorTo(@NotNull RunnerAndConfigurationSettingsImpl s);
 
-  public static <Settings> SettingsEditorFragment<Settings, JButton> createSettingsTag(String id, String name, String group,
+  public static <Settings> SettingsEditorFragment<Settings, ?> createSettingsTag(String id, String name, String group,
                                                                                        Predicate<RunnerAndConfigurationSettingsImpl> getter,
                                                                                        BiConsumer<RunnerAndConfigurationSettingsImpl, Boolean> setter,
                                                                                        int menuPosition) {
-    Ref<SettingsEditorFragment<?, JButton>> ref = new Ref<>();
+    Ref<SettingsEditorFragment<?, ?>> ref = new Ref<>();
     TagButton button = new TagButton(name, () -> ref.get().setSelected(false));
-    RunConfigurationEditorFragment<Settings, JButton> fragment = new RunConfigurationEditorFragment<Settings, JButton>(id, name, group, button, 0) {
+    RunConfigurationEditorFragment<Settings, ?> fragment = new RunConfigurationEditorFragment<Settings, JComponent>(id, name, group, button, 0) {
 
       @Override
       public void resetEditorFrom(@NotNull RunnerAndConfigurationSettingsImpl s) {

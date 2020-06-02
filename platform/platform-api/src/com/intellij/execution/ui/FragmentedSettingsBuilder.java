@@ -60,7 +60,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     }
     buildCommandLinePanel(fragments);
 
-    JPanel tagsPanel = new JPanel(new WrapLayout(FlowLayout.LEADING));
+    JPanel tagsPanel = new JPanel(new WrapLayout(FlowLayout.LEADING, 0, 0));
     for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
       if (fragment.isTag()) {
         tagsPanel.add(fragment.getComponent());

@@ -20,6 +20,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.WrapLayout;
 import org.jetbrains.annotations.NotNull;
@@ -36,17 +37,23 @@ import java.util.stream.Collectors;
 public class BeforeRunComponent extends JPanel implements DnDTarget, Disposable {
   private List<TaskButton> myTags;
   private final InplaceButton myAddButton;
+  private final JPanel myAddPanel;
   Runnable myChangeListener;
   private RunConfiguration myConfiguration;
   private final LinkLabel<Object> myAddLabel;
 
   public BeforeRunComponent() {
-    super(new WrapLayout(FlowLayout.LEADING));
-    setBorder(JBUI.Borders.emptyLeft(-5));
-    add(new JLabel(ExecutionBundle.message("run.configuration.before.run.label")));
+    super(new WrapLayout(FlowLayout.LEADING, 0, 0));
+    JLabel label = new JLabel(ExecutionBundle.message("run.configuration.before.run.label"));
+    JBEmptyBorder border = JBUI.Borders.empty(3, 0, 0, 5);
+    label.setBorder(border);
+    add(label);
     myAddButton = new InplaceButton(ExecutionBundle.message("run.configuration.before.run.add.task"), AllIcons.General.Add, e -> showPopup());
-    myAddLabel =
-      new LinkLabel<>(ExecutionBundle.message("run.configuration.before.run.add.task"), null, (aSource, aLinkData) -> showPopup());
+    myAddPanel = new JPanel();
+    myAddPanel.setBorder(border);
+    myAddPanel.add(myAddButton);
+    myAddLabel = new LinkLabel<>(ExecutionBundle.message("run.configuration.before.run.add.task"), null, (aSource, aLinkData) -> showPopup());
+    myAddLabel.setBorder(border);
     DnDManager.getInstance().registerTarget(this, this);
   }
 
@@ -122,7 +129,7 @@ public class BeforeRunComponent extends JPanel implements DnDTarget, Disposable 
   }
 
   private void buildPanel() {
-    remove(myAddButton);
+    remove(myAddPanel);
     remove(myAddLabel);
     for (TaskButton tag : myTags) {
       remove(tag);
@@ -132,7 +139,7 @@ public class BeforeRunComponent extends JPanel implements DnDTarget, Disposable 
         add(tag);
       }
     }
-    add(myAddButton);
+    add(myAddPanel);
     add(myAddLabel);
     updateAddLabel();
   }
@@ -197,22 +204,21 @@ public class BeforeRunComponent extends JPanel implements DnDTarget, Disposable 
           }
         }
       });
-      DnDManager.getInstance().registerSource(this, this);
+      DnDManager.getInstance().registerSource(this, myButton);
     }
 
     private void setTask(@Nullable BeforeRunTask<?> task) {
       myTask = task;
       setVisible(task != null);
       if (task != null) {
-        setText(myProvider.getDescription(task));
-        setIcon(myProvider.getTaskIcon(task));
+        updateButton(myProvider.getDescription(task), myProvider.getTaskIcon(task));
       }
     }
 
     @Override
     public void dispose() {
       super.dispose();
-      DnDManager.getInstance().unregisterSource(this, this);
+      DnDManager.getInstance().unregisterSource(this, myButton);
     }
 
     @Override

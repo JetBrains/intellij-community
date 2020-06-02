@@ -28,7 +28,6 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
 import java.util.List;
@@ -201,10 +200,10 @@ public class LogsFragment<T extends RunConfigurationBase<?>> extends NestedGroup
                                      t.setSaveOutputToFile(StringUtil.isNotEmpty(component.getComponent().getText()));
                                    },
                                    t -> t.isSaveOutputToFile());
-    SettingsEditorFragment<T, JButton> stdOut = SettingsEditorFragment
+    SettingsEditorFragment<T, ?> stdOut = SettingsEditorFragment
       .createTag("logs.stdout", DiagnosticBundle.message("log.monitor.fragment.stdout"), null, t -> t.isShowConsoleOnStdOut(),
                  (t, value) -> t.setShowConsoleOnStdOut(value));
-    SettingsEditorFragment<T, JButton> stdErr = SettingsEditorFragment
+    SettingsEditorFragment<T, ?> stdErr = SettingsEditorFragment
       .createTag("logs.stderr", DiagnosticBundle.message("log.monitor.fragment.stderr"), null, t -> t.isShowConsoleOnStdErr(),
                  (t, value) -> t.setShowConsoleOnStdErr(value));
     return Arrays.asList(fragment, stdOut, stdErr);
