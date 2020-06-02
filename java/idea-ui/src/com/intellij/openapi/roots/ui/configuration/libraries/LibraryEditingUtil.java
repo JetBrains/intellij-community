@@ -23,7 +23,7 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.impl.ModuleLibraryTable;
+import com.intellij.openapi.roots.impl.ModuleLibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.*;
@@ -145,7 +145,7 @@ public class LibraryEditingUtil {
 
   public static LibraryTablePresentation getLibraryTablePresentation(@NotNull Project project, @NotNull String level) {
     if (level.equals(LibraryTableImplUtil.MODULE_LEVEL)) {
-      return ModuleLibraryTable.MODULE_LIBRARY_TABLE_PRESENTATION;
+      return ModuleLibraryTableBase.MODULE_LIBRARY_TABLE_PRESENTATION;
     }
     final LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(level, project);
     LOG.assertTrue(table != null, level);
