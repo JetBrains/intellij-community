@@ -72,12 +72,6 @@ public final class DfaRelation extends DfaCondition {
     else if (dfaRight instanceof DfaTypeValue && dfaLeft.getDfType() instanceof DfConstantType) {
       return createConstBasedRelation((DfaTypeValue)dfaRight, relationType, dfaLeft);
     }
-    if (dfaLeft instanceof DfaInstanceofValue && dfaRight.getDfType() instanceof DfConstantType) {
-      return new DfaRelation(dfaLeft, dfaRight, relationType);
-    }
-    if (dfaLeft.getDfType() instanceof DfConstantType && dfaRight instanceof DfaInstanceofValue) {
-      return new DfaRelation(dfaRight, dfaLeft, relationType);
-    }
     return null;
   }
 
