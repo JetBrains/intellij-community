@@ -30,7 +30,6 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataPro
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanel
-import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.changes.*
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModelImpl
 import org.jetbrains.plugins.github.util.GithubUIUtil
@@ -100,11 +99,8 @@ internal class GHPRComponentFactory(private val project: Project) {
                                          viewController: GHPRViewController,
                                          disposable: Disposable): JComponent {
 
-    val detailsLoadingModel = createDetailsLoadingModel(dataProvider.detailsData, disposable)
-    val changesLoadingModel = createChangesLoadingModel(dataProvider.changesData, disposable)
-
-    val infoComponent = createInfoComponent(dataContext, dataProvider, detailsLoadingModel, changesLoadingModel, disposable)
-    val commitsComponent = createCommitsComponent(dataContext, dataProvider, changesLoadingModel, disposable)
+    val infoComponent = createInfoComponent(dataContext, dataProvider, disposable)
+    val commitsComponent = createCommitsComponent(dataContext, dataProvider, disposable)
 
     val infoTabInfo = TabInfo(infoComponent).apply {
       text = GithubBundle.message("pull.request.info")
@@ -151,12 +147,8 @@ internal class GHPRComponentFactory(private val project: Project) {
       .withBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM))
   }
 
-  private fun createInfoComponent(dataContext: GHPRDataContext,
-                                  dataProvider: GHPRDataProvider,
-                                  detailsLoadingModel: GHSimpleLoadingModel<GHPullRequest>,
-                                  changesLoadingModel: GHPRChangesLoadingModel,
-                                  disposable: Disposable): JComponent {
-
+  private fun createInfoComponent(dataContext: GHPRDataContext, dataProvider: GHPRDataProvider, disposable: Disposable): JComponent {
+    val detailsLoadingModel = createDetailsLoadingModel(dataProvider.detailsData, disposable)
     val detailsLoadingPanel = GHLoadingPanel.create(detailsLoadingModel, {
       val detailsModel = GHPRDetailsModelImpl(detailsLoadingModel,
                                               dataContext.securityService,
@@ -172,6 +164,7 @@ internal class GHPRComponentFactory(private val project: Project) {
       ActionManager.getInstance().getAction("Github.PullRequest.Details.Reload").registerCustomShortcutSet(it, disposable)
     }
 
+    val changesLoadingModel = createChangesLoadingModel(dataProvider.changesData, disposable)
     val changesBrowser = GHPRChangesBrowserFactory(ActionManager.getInstance(), project).create(
       changesLoadingModel,
       changesLoadingModel.cumulativeChangesModel,
@@ -187,13 +180,11 @@ internal class GHPRComponentFactory(private val project: Project) {
     }
   }
 
-  private fun createCommitsComponent(dataContext: GHPRDataContext,
-                                     dataProvider: GHPRDataProvider,
-                                     changesLoadingModel: GHPRChangesLoadingModel,
-                                     disposable: Disposable): JComponent {
+  private fun createCommitsComponent(dataContext: GHPRDataContext, dataProvider: GHPRDataProvider, disposable: Disposable): JComponent {
 
     val changesModel = GHPRChangesModelImpl(project)
 
+    val changesLoadingModel = createChangesLoadingModel(dataProvider.changesData, disposable)
     val commitsLoadingPanel = GHLoadingPanel.create(changesLoadingModel, {
       GHPRCommitsBrowserComponent.create(changesLoadingModel.commitsModel, changesModel)
     },
