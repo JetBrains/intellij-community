@@ -534,7 +534,7 @@ public final class IconLoader {
   @ApiStatus.Internal
   @NotNull
   public static Icon getMenuBarIcon(@NotNull Icon icon, boolean dark) {
-    if (icon instanceof RetrievableIcon) {
+    while (icon instanceof RetrievableIcon) {
       icon = ((RetrievableIcon)icon).retrieveIcon();
     }
     if (icon instanceof MenuBarIconProvider) {
