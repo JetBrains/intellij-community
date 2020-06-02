@@ -109,12 +109,8 @@ internal class GHPRComponentFactory(private val project: Project) {
     val changesLoadingModel = createChangesLoadingModel(commitsModel, cumulativeChangesModel, diffHelper, dataProvider.changesData,
                                                         disposable)
 
-    val infoComponent = createInfoComponent(dataContext, dataProvider, detailsLoadingModel, changesLoadingModel, disposable).also {
-      installActionData(it, dataContext, pullRequest, dataProvider)
-    }
-    val commitsComponent = createCommitsComponent(dataContext, dataProvider, changesLoadingModel, disposable).also {
-      installActionData(it, dataContext, pullRequest, dataProvider)
-    }
+    val infoComponent = createInfoComponent(dataContext, dataProvider, detailsLoadingModel, changesLoadingModel, disposable)
+    val commitsComponent = createCommitsComponent(dataContext, dataProvider, changesLoadingModel, disposable)
 
     val infoTabInfo = TabInfo(infoComponent).apply {
       text = GithubBundle.message("pull.request.info")
@@ -136,21 +132,16 @@ internal class GHPRComponentFactory(private val project: Project) {
     return object : SingleHeightTabs(project, disposable) {
       override fun adjust(each: TabInfo?) {}
     }.apply {
+      val actionDataContext = GHPRFixedActionDataContext(dataContext, pullRequest, dataProvider)
+      setDataProvider { dataId ->
+        when {
+          GHPRActionKeys.ACTION_DATA_CONTEXT.`is`(dataId) -> actionDataContext
+          GHPRChangesDiffHelper.DATA_KEY.`is`(dataId) -> diffHelper
+          else -> null
+        }
+      }
       addTab(infoTabInfo)
       addTab(commitsTabInfo)
-    }
-  }
-
-  private fun installActionData(component: JComponent,
-                                dataContext: GHPRDataContext,
-                                pullRequest: GHPRIdentifier,
-                                dataProvider: GHPRDataProvider) {
-    val actionDataContext = GHPRFixedActionDataContext(dataContext, pullRequest, dataProvider)
-    DataManager.registerDataProvider(component) { dataId ->
-      when {
-        GHPRActionKeys.ACTION_DATA_CONTEXT.`is`(dataId) -> actionDataContext
-        else -> null
-      }
     }
   }
 
@@ -186,12 +177,11 @@ internal class GHPRComponentFactory(private val project: Project) {
       ActionManager.getInstance().getAction("Github.PullRequest.Details.Reload").registerCustomShortcutSet(it, disposable)
     }
 
-    val changesBrowser = GHPRChangesBrowser.create(project,
-                                                   changesLoadingModel,
-                                                   changesLoadingModel.cumulativeChangesModel,
-                                                   changesLoadingModel.diffHelper,
-                                                   GithubBundle.message("pull.request.does.not.contain.changes"),
-                                                   disposable)
+    val changesBrowser = GHPRChangesBrowserFactory(ActionManager.getInstance(), project).create(
+      changesLoadingModel,
+      changesLoadingModel.cumulativeChangesModel,
+      GithubBundle.message("pull.request.does.not.contain.changes"),
+      disposable)
 
     return OnePixelSplitter(true, "Github.PullRequest.Info.Component", 0.33f).apply {
       isOpaque = true
@@ -218,11 +208,8 @@ internal class GHPRComponentFactory(private val project: Project) {
                                                       dataProvider.changesData.reloadChanges()
                                                     })
 
-    val changesBrowser = GHPRChangesBrowser.create(project,
-                                                   changesModel,
-                                                   changesLoadingModel.diffHelper,
-                                                   GithubBundle.message("pull.request.select.commit.to.view.changes"),
-                                                   disposable)
+    val changesBrowser = GHPRChangesBrowserFactory(ActionManager.getInstance(), project)
+      .create(changesModel, GithubBundle.message("pull.request.select.commit.to.view.changes"))
 
     return OnePixelSplitter(true, "Github.PullRequest.Commits.Component", 0.4f).apply {
       isOpaque = true

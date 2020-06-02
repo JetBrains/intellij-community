@@ -21,30 +21,20 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanel
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-object GHPRChangesBrowser {
+class GHPRChangesBrowserFactory(private val actionManager: ActionManager, private val project: Project) {
 
-  fun create(project: Project,
-             changesModel: GHPRChangesModel,
-             diffHelper: GHPRChangesDiffHelper,
-             @Nls(capitalization = Nls.Capitalization.Sentence) panelEmptyText: String,
-             disposable: Disposable): JComponent {
-
-    val actionManager = ActionManager.getInstance()
-
-    val diffAction = GHPRShowDiffAction().apply {
-      ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON)
-    }
-    val reloadAction = actionManager.getAction("Github.PullRequest.Changes.Reload")
+  fun create(changesModel: GHPRChangesModel,
+             @Nls(capitalization = Nls.Capitalization.Sentence) panelEmptyText: String): JComponent {
 
     val changesTreePanel = GHPRChangesTree.createLazyTreePanel(changesModel) {
-      createTree(project, changesModel, diffAction, diffHelper, reloadAction, it, disposable).apply {
+      createTree(project, changesModel, it).apply {
         emptyText.text = panelEmptyText
       }
     }.apply {
       emptyText.text = panelEmptyText
     }
 
-    val toolbar = createToolbar(actionManager, diffAction, changesTreePanel)
+    val toolbar = createToolbar(actionManager, changesTreePanel)
     val scrollPane = ScrollPaneFactory.createScrollPane(changesTreePanel, SideBorder.TOP).apply {
       isOpaque = false
       viewport.isOpaque = false
@@ -55,8 +45,12 @@ object GHPRChangesBrowser {
       .addToCenter(scrollPane)
   }
 
-  private fun createToolbar(actionManager: ActionManager, diffAction: GHPRShowDiffAction, target: JComponent)
+  private fun createToolbar(actionManager: ActionManager, target: JComponent)
     : TreeActionsToolbarPanel {
+
+    val diffAction = GHPRShowDiffAction().apply {
+      ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON)
+    }
 
     val reviewSubmitAction = GHPRReviewSubmitAction()
     val changesToolbarActionGroup = DefaultActionGroup(diffAction, reviewSubmitAction, Separator(),
@@ -67,22 +61,13 @@ object GHPRChangesBrowser {
     return TreeActionsToolbarPanel(changesToolbar, treeActionsGroup, target)
   }
 
-  fun create(project: Project,
-             loadingModel: GHLoadingModel,
+  fun create(loadingModel: GHLoadingModel,
              changesModel: GHPRChangesModel,
-             diffHelper: GHPRChangesDiffHelper,
              @Nls(capitalization = Nls.Capitalization.Sentence) panelEmptyText: String = "",
              disposable: Disposable): JComponent {
 
-    val actionManager = ActionManager.getInstance()
-
-    val diffAction = GHPRShowDiffAction().apply {
-      ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON)
-    }
-    val reloadAction = actionManager.getAction("Github.PullRequest.Changes.Reload")
-
     val loadingPanel = GHLoadingPanel.create(loadingModel, {
-      createTree(project, changesModel, diffAction, diffHelper, reloadAction, it, disposable).apply {
+      createTree(project, changesModel, it).apply {
         emptyText.text = panelEmptyText
       }.let { tree ->
         ScrollPaneFactory.createScrollPane(tree, true)
@@ -91,27 +76,24 @@ object GHPRChangesBrowser {
       border = IdeBorderFactory.createBorder(SideBorder.TOP)
     }
 
-    val toolbar = createToolbar(actionManager, diffAction, loadingPanel)
+    val toolbar = createToolbar(actionManager, loadingPanel)
 
     return BorderLayoutPanel().andTransparent()
       .addToTop(toolbar)
       .addToCenter(loadingPanel)
   }
 
-  private fun createTree(project: Project, changesModel: GHPRChangesModel,
-                         diffAction: GHPRShowDiffAction, diffHelper: GHPRChangesDiffHelper, reloadAction: AnAction,
-                         parentPanel: JPanel,
-                         disposable: Disposable) =
+  private fun createTree(project: Project, changesModel: GHPRChangesModel, parentPanel: JPanel) =
     GHPRChangesTree.create(project, changesModel).also {
-      DataManager.registerDataProvider(parentPanel) { dataId ->
-        when {
-          GHPRChangesDiffHelper.DATA_KEY.`is`(dataId) -> diffHelper
-          else -> it.getData(dataId)
-        }
+      DataManager.registerDataProvider(parentPanel, it::getData)
+
+      val diffAction = GHPRShowDiffAction().apply {
+        ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON)
       }
+      val reloadAction = actionManager.getAction("Github.PullRequest.Changes.Reload")
 
       diffAction.registerCustomShortcutSet(CompositeShortcutSet(diffAction.shortcutSet, CommonShortcuts.DOUBLE_CLICK_1), it)
-      reloadAction.registerCustomShortcutSet(it, disposable)
+      reloadAction.registerCustomShortcutSet(it, null)
       it.installPopupHandler(DefaultActionGroup(diffAction, reloadAction))
     }
 }
