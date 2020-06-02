@@ -104,8 +104,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
       }
       final Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
       Project project = currentCommand == null ? null : CommandProcessor.getInstance().getCurrentCommandProject();
-      if (project == null)
+      if (project == null) {
         project = ProjectUtil.guessProjectForFile(getFile(document));
+      }
       String lineSeparator = CodeStyle.getProjectOrDefaultSettings(project).getLineSeparator();
       document.putUserData(LINE_SEPARATOR_KEY, lineSeparator);
 
@@ -868,7 +869,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
 
   /** @deprecated another dirty Rider hack; don't use */
   @Deprecated
-  @SuppressWarnings("ALL")
   public static boolean ourConflictsSolverEnabled = true;
 
   protected void cacheDocument(@NotNull VirtualFile file, @NotNull Document document) {

@@ -39,7 +39,7 @@ public interface JavaDocElementType {
   class JavaDocCompositeElementType extends IJavaDocElementType implements ICompositeElementType {
     private final Supplier<? extends ASTNode> myConstructor;
 
-    private JavaDocCompositeElementType(@NonNls final String debugName, @NotNull Supplier<? extends ASTNode> nodeClass) {
+    private JavaDocCompositeElementType(@NonNls @NotNull String debugName, @NotNull Supplier<? extends ASTNode> nodeClass) {
       super(debugName);
       myConstructor = nodeClass;
     }

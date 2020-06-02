@@ -27,11 +27,11 @@ public interface JavaElementType {
   class JavaCompositeElementType extends IJavaElementType implements ICompositeElementType {
     private final Supplier<? extends ASTNode> myConstructor;
 
-    private JavaCompositeElementType(@NonNls final String debugName, @NotNull Supplier<? extends ASTNode> constructor) {
+    private JavaCompositeElementType(@NonNls @NotNull String debugName, @NotNull Supplier<? extends ASTNode> constructor) {
       this(debugName, constructor, false);
     }
 
-    private JavaCompositeElementType(@NonNls final String debugName, Supplier<? extends ASTNode> constructor, final boolean leftBound) {
+    private JavaCompositeElementType(@NonNls @NotNull String debugName, @NotNull Supplier<? extends ASTNode> constructor, boolean leftBound) {
       super(debugName, leftBound);
       myConstructor = constructor;
     }
