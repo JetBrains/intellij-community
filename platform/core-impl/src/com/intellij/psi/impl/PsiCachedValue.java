@@ -58,6 +58,9 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
         }
       }
     }
+    if (dependencies.length == 1 && isPsiModificationCount(dependencies[0])) {
+      return dependencies;
+    }
     if (dependencies.length > 0 && ContainerUtil.and(dependencies, this::anyChangeImpliesPsiCounterChange)) {
       return ArrayUtil.prepend(PSI_MOD_COUNT_OPTIMIZATION, dependencies);
     }
