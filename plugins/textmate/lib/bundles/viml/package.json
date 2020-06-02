@@ -1,0 +1,40 @@
+{
+	"name": "language-viml",
+	"author": "Evan Hahn",
+	"maintainers": [{
+		"name":  "John Gardner",
+		"email": "gardnerjohng@gmail.com",
+		"url":   "https://github.com/Alhadis"
+	}],
+	"description": "Vim Script language support for Atom",
+	"keywords": ["Vim", "VimScript", "VimL", "Vim Script", "Vi"],
+	"version": "1.2.1",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Alhadis/language-viml.git"
+	},
+	"license": "MIT",
+	"engines": {
+		"atom": ">0.50.0"
+	},
+	"contributes": {
+		"languages": [{
+			"id": "VimL",
+			"extensions": [
+				".vim",
+				".vimrc",
+				".gvimrc",
+				".nvimrc",
+				"_vimrc",
+				".vmb",
+				".ideavimrc"
+			],
+			"aliases": [ "vim", "viml", "vim script" ]
+		}],
+		"grammars": [{
+			"language": "VimL",
+			"scopeName": "source.viml",
+			"path": "./grammars/viml.json"
+		}]
+	}
+}
