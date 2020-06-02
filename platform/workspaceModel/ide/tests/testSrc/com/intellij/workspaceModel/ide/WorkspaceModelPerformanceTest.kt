@@ -29,6 +29,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import org.junit.Assert.assertEquals
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -40,6 +41,7 @@ private const val JAVA_CLASS_PREFIX = "JavaClass"
 private const val MODULE_PREFIX = "module"
 private const val TEST_MODULE_PREFIX = "test"
 
+@Ignore
 @RunWith(Parameterized::class)
 class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
   @Rule
