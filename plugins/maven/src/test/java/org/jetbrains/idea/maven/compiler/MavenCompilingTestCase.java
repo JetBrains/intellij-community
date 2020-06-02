@@ -103,7 +103,7 @@ public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
   }
 
   @Nullable
-  protected static String extractJdkVersion(@NotNull Module module) {
+  protected static String extractJdkVersion(@NotNull Module module, boolean fallbackToInternal) {
     String jdkVersion = null;
     Optional<Sdk> sdk = Optional.ofNullable(ModuleRootManager.getInstance(module).getSdk());
 
@@ -121,7 +121,7 @@ public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
       jdkVersion = sdk.get().getVersionString();
     }
 
-    if (jdkVersion == null) {
+    if (jdkVersion == null && fallbackToInternal) {
       jdkVersion = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getVersionString();
     }
 
