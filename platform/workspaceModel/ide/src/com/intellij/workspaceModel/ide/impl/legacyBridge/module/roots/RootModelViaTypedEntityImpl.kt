@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.legacyBridge.typedModel.module
+package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.configurationStore.deserializeAndLoadState
 import com.intellij.openapi.Disposable
@@ -19,10 +19,9 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.FakeContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeCompilerModuleExtension
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleRootModel
-import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibrary
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.LegacyBridgeCompilerModuleExtension
+import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeModule
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyBridgeLibrary
 import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 import java.util.*
@@ -46,7 +45,7 @@ internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: Persiste
   private val orderEntriesArray: Array<OrderEntry>
     get() {
       // This variable should not be cached unless
-      //   com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleRootComponent.moduleLibraries is mutable
+      //   com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.LegacyBridgeModuleRootComponent.moduleLibraries is mutable
       val moduleEntity = storage.resolve(moduleEntityId) ?: return emptyArray()
       return moduleEntity.dependencies.mapIndexed { index, e ->
         toOrderEntry(e, index)

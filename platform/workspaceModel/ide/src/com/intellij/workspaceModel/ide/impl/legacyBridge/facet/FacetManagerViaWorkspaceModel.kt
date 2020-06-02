@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.legacyBridge.facet
+package com.intellij.workspaceModel.ide.impl.legacyBridge.facet
 
 import com.google.common.collect.HashBiMap
 import com.intellij.facet.*
@@ -14,10 +14,10 @@ import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableFacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.facets
-import com.intellij.workspace.ide.JpsImportedEntitySource
-import com.intellij.workspace.ide.WorkspaceModel
-import com.intellij.workspace.ide.toExternalSource
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
+import com.intellij.workspaceModel.ide.JpsImportedEntitySource
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.toExternalSource
+import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeModule
 import org.jetbrains.jps.model.serialization.facet.FacetState
 
 class FacetManagerViaWorkspaceModel(module: Module) : FacetManagerBase() {

@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.jps
+package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.xmlb.XmlSerializer
@@ -16,8 +16,8 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.references.MutableOneToOneChild
 import com.intellij.workspaceModel.storage.impl.references.OneToOneChild
 import com.intellij.workspaceModel.storage.referrers
-import com.intellij.workspace.ide.JpsFileEntitySource
-import com.intellij.workspace.ide.JpsImportedEntitySource
+import com.intellij.workspaceModel.ide.JpsFileEntitySource
+import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.facet.FacetManagerState
 import org.jetbrains.jps.model.serialization.facet.FacetState

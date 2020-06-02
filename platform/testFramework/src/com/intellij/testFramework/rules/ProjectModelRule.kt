@@ -21,7 +21,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.testFramework.*
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspace.ide.WorkspaceModelInitialTestContent
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
 import org.junit.runner.Description

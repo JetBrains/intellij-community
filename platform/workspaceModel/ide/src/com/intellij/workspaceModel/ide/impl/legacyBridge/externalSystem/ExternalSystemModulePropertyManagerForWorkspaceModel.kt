@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.legacyBridge.externalSystem
+package com.intellij.workspaceModel.ide.impl.legacyBridge.externalSystem
 
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
@@ -11,10 +11,10 @@ import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
-import com.intellij.workspace.ide.JpsFileEntitySource
-import com.intellij.workspace.ide.JpsImportedEntitySource
-import com.intellij.workspace.ide.WorkspaceModel
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
+import com.intellij.workspaceModel.ide.JpsFileEntitySource
+import com.intellij.workspaceModel.ide.JpsImportedEntitySource
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeModule
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 
 class ExternalSystemModulePropertyManagerForWorkspaceModel(private val module: Module) : ExternalSystemModulePropertyManager() {

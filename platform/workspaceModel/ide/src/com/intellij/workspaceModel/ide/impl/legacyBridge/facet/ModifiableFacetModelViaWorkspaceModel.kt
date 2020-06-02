@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.legacyBridge.facet
+package com.intellij.workspaceModel.ide.impl.legacyBridge.facet
 
 import com.google.common.collect.HashBiMap
 import com.intellij.facet.Facet
@@ -19,10 +19,10 @@ import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableFacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.subFacets
-import com.intellij.workspace.ide.JpsFileEntitySource
-import com.intellij.workspace.ide.JpsImportedEntitySource
-import com.intellij.workspace.ide.WorkspaceModel
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
+import com.intellij.workspaceModel.ide.JpsFileEntitySource
+import com.intellij.workspaceModel.ide.JpsImportedEntitySource
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeModule
 
 internal class ModifiableFacetModelViaWorkspaceModel(private val initialStorage: WorkspaceEntityStorage,
                                                      private val diff: WorkspaceEntityStorageDiffBuilder,

@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.legacyBridge.intellij
+package com.intellij.workspaceModel.ide.impl.legacyBridge
 
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.diagnostic.logger
@@ -14,15 +14,21 @@ import com.intellij.openapi.roots.impl.ModifiableModelCommitterService
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.workspace.ide.WorkspaceModel
-import com.intellij.workspace.ide.WorkspaceModelImpl
-import com.intellij.workspace.ide.WorkspaceModelInitialTestContent
-import com.intellij.workspace.ide.WorkspaceModelTopics
-import com.intellij.workspace.jps.JpsProjectModelSynchronizer
-import com.intellij.workspace.legacyBridge.externalSystem.ExternalStorageConfigurationManagerForWorkspaceModel
-import com.intellij.workspace.legacyBridge.facet.FacetEntityChangeListener
-import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeProjectLibraryTableImpl
-import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeRootsWatcher
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
+import com.intellij.workspaceModel.ide.impl.legacyBridge.externalSystem.ExternalStorageConfigurationManagerForWorkspaceModel
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.LegacyBridgeModifiableModelCommitterService
+import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyBridgeProjectLibraryTableImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.LegacyBridgeRootsWatcher
+import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.LegacyBridgeFilePointerProvider
+import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.LegacyBridgeFilePointerProviderImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.LegacyBridgeModuleManagerComponent
+import com.intellij.workspaceModel.ide.impl.legacyBridge.project.LegacyBridgeProjectRootManager
+import com.intellij.workspaceModel.ide.impl.legacyBridge.project.LegacyBridgeProjectStoreFactory
 import org.jetbrains.annotations.ApiStatus
 import org.picocontainer.MutablePicoContainer
 

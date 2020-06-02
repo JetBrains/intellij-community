@@ -1,4 +1,4 @@
-package com.intellij.workspace.legacyBridge.intellij
+package com.intellij.workspaceModel.ide.legacyBridge
 
 import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId

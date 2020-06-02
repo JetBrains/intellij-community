@@ -47,7 +47,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeProjectLifecycleListener;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeProjectLifecycleListener;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jdom.JDOMException;

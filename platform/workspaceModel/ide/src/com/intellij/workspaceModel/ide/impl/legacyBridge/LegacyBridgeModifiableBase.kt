@@ -1,4 +1,4 @@
-package com.intellij.workspace.legacyBridge.libraries.libraries
+package com.intellij.workspaceModel.ide.impl.legacyBridge
 
 import com.intellij.configurationStore.serialize
 import com.intellij.openapi.components.PersistentStateComponent

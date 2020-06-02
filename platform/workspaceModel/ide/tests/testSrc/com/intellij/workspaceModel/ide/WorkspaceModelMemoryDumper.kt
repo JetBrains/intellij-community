@@ -1,11 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.jps
+package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
+import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectSerializers
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.impl.VirtualFileUrlManagerImpl

@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.legacyBridge.libraries.libraries
+package com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer
 
 import com.google.common.io.Files
 import com.intellij.ide.highlighter.ModuleFileType
@@ -29,10 +29,10 @@ import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.workspaceModel.storage.VersionedStorageChanged
 import com.intellij.workspaceModel.storage.VirtualFileUrl
-import com.intellij.workspace.bracket
-import com.intellij.workspace.ide.WorkspaceModel
-import com.intellij.workspace.ide.WorkspaceModelChangeListener
-import com.intellij.workspace.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.ide.impl.bracket
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture

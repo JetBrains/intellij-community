@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.legacyBridge.intellij
+package com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
@@ -18,10 +18,10 @@ import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChanged
 import com.intellij.workspaceModel.storage.VirtualFileUrl
 import com.intellij.workspaceModel.storage.VirtualFileUrlManager
-import com.intellij.workspace.ide.WorkspaceModelChangeListener
-import com.intellij.workspace.ide.WorkspaceModelTopics
-import com.intellij.workspace.ide.getInstance
-import com.intellij.workspace.toVirtualFileUrl
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.ide.impl.getInstance
+import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.locks.ReentrantLock

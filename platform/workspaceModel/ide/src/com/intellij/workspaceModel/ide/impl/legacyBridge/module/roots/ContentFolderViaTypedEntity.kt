@@ -1,4 +1,4 @@
-package com.intellij.workspace.legacyBridge.typedModel.module
+package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.ContentFolder
@@ -7,9 +7,8 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspaceModel.storage.VirtualFileUrl
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProvider
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerScope
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleRootComponent
+import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.LegacyBridgeFilePointerProvider
+import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.LegacyBridgeFilePointerScope
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot

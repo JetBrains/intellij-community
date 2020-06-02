@@ -34,7 +34,7 @@ import com.intellij.util.containers.Stack;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
-import com.intellij.workspace.ide.WorkspaceModel;
+import com.intellij.workspaceModel.ide.WorkspaceModel;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;

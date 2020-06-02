@@ -1,4 +1,4 @@
-package com.intellij.workspace.legacyBridge.typedModel.module
+package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ExcludeFolder
@@ -9,9 +9,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProvider
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerScope
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleRootModel
+import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.LegacyBridgeFilePointerProvider
+import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.LegacyBridgeFilePointerScope
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 

@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.jps
+package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
@@ -7,10 +7,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
-import com.intellij.workspace.ide.*
+import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.*
 import org.jdom.Element
 import java.io.File

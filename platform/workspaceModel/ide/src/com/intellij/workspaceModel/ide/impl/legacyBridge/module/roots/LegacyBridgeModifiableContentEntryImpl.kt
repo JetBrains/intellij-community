@@ -1,4 +1,4 @@
-package com.intellij.workspace.legacyBridge.roots
+package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.roots.ContentEntry
@@ -15,13 +15,8 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableContentRootE
 import com.intellij.workspaceModel.storage.bridgeEntities.addSourceRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.asJavaResourceRoot
 import com.intellij.workspaceModel.storage.bridgeEntities.asJavaSourceRoot
-import com.intellij.workspace.ide.getInstance
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModifiableRootModel
-import com.intellij.workspace.legacyBridge.typedModel.module.ContentEntryViaTypedEntity
-import com.intellij.workspace.legacyBridge.typedModel.module.ExcludeFolderViaTypedEntity
-import com.intellij.workspace.legacyBridge.typedModel.module.SourceFolderViaTypedEntity
-import com.intellij.workspace.legacyBridge.typedModel.module.SourceRootPropertiesHelper
-import com.intellij.workspace.toVirtualFileUrl
+import com.intellij.workspaceModel.ide.impl.getInstance
+import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.java.JavaResourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootProperties

@@ -1,4 +1,4 @@
-package com.intellij.workspace.legacyBridge.intellij
+package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.roots.CompilerProjectExtension
@@ -10,9 +10,12 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.workspaceModel.storage.bridgeEntities.JavaModuleSettingsEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableJavaModuleSettingsEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsEntity
-import com.intellij.workspace.ide.getInstance
-import com.intellij.workspace.toVirtualFileUrl
-import com.intellij.workspace.virtualFile
+import com.intellij.workspaceModel.ide.impl.getInstance
+import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeModule
+import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
+import com.intellij.workspaceModel.ide.impl.virtualFile
+import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.LegacyBridgeFilePointerProvider
+import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.LegacyBridgeFilePointerScope
 import com.intellij.workspaceModel.storage.*
 import java.util.*
 

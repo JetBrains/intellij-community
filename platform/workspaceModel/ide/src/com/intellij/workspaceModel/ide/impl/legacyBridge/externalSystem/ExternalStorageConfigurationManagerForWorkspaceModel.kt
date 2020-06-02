@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.legacyBridge.externalSystem
+package com.intellij.workspaceModel.ide.impl.legacyBridge.externalSystem
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
@@ -8,8 +8,8 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.project.ExternalStorageConfiguration
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
-import com.intellij.workspace.ide.JpsImportedEntitySource
-import com.intellij.workspace.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.JpsImportedEntitySource
+import com.intellij.workspaceModel.ide.WorkspaceModel
 
 @State(name = "ExternalStorageConfigurationManager")
 internal class ExternalStorageConfigurationManagerForWorkspaceModel(private val project: Project)

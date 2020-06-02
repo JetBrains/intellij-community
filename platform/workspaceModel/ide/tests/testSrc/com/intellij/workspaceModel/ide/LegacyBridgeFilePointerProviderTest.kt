@@ -1,4 +1,4 @@
-package com.intellij.workspace.jps
+package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.WriteCommandAction
@@ -14,11 +14,11 @@ import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.toVirtualFileUrl
-import com.intellij.workspace.ide.getInstance
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFileContainer
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProvider
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProviderImpl
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerScope
+import com.intellij.workspaceModel.ide.impl.getInstance
+import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.LegacyBridgeFileContainer
+import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.LegacyBridgeFilePointerProvider
+import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.LegacyBridgeFilePointerProviderImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.LegacyBridgeFilePointerScope
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule

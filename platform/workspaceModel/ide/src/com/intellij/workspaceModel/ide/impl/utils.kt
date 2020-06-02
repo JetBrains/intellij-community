@@ -1,4 +1,4 @@
-package com.intellij.workspace
+package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger

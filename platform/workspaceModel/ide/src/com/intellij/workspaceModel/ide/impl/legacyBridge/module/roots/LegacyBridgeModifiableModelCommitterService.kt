@@ -1,10 +1,11 @@
-package com.intellij.workspace.legacyBridge.intellij
+package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.impl.ModifiableModelCommitterService
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspace.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.LegacyBridgeModifiableModuleModel
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

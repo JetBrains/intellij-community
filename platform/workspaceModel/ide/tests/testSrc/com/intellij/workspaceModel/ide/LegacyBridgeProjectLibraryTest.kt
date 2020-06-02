@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.jps
+package com.intellij.workspaceModel.ide
 
 import com.intellij.configurationStore.StoreUtil
 import com.intellij.openapi.command.WriteCommandAction
@@ -20,10 +20,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspace.ide.WorkspaceModel
-import com.intellij.workspace.ide.WorkspaceModelChangeListener
-import com.intellij.workspace.ide.WorkspaceModelTopics
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
+import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeModule
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule

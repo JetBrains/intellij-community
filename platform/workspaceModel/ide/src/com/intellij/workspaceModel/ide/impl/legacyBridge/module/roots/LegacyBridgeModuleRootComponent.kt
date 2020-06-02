@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.legacyBridge.intellij
+package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -12,13 +12,14 @@ import com.intellij.openapi.roots.impl.OrderRootsCache
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeModule
 import com.intellij.workspaceModel.storage.CachedValue
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.VirtualFileUrl
 import com.intellij.workspaceModel.storage.impl.DisposableCachedValue
-import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
-import com.intellij.workspace.legacyBridge.typedModel.module.RootModelViaTypedEntityImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyBridgeLibraryImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.LegacyBridgeCompilerModuleExtension
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 

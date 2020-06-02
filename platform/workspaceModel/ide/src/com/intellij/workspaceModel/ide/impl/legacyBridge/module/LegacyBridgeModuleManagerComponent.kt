@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.legacyBridge.intellij
+package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.ProjectTopics
 import com.intellij.concurrency.JobSchedulerImpl
@@ -27,11 +27,15 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.graph.*
-import com.intellij.workspace.bracket
-import com.intellij.workspace.executeOrQueueOnDispatchThread
-import com.intellij.workspace.ide.*
-import com.intellij.workspace.jps.JpsProjectEntitiesLoader
-import com.intellij.workspace.legacyBridge.facet.FacetEntityChangeListener
+import com.intellij.workspaceModel.ide.impl.bracket
+import com.intellij.workspaceModel.ide.impl.executeOrQueueOnDispatchThread
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
+import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
+import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeModule
+import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.impl.getInstance
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.LegacyBridgeModuleRootComponent
+import com.intellij.workspaceModel.ide.impl.legacyBridge.project.LegacyBridgeProjectRootsChangeListener
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.annotations.ApiStatus

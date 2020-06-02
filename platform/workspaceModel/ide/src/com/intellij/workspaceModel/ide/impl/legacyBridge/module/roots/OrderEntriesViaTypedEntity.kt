@@ -1,4 +1,4 @@
-package com.intellij.workspace.legacyBridge.typedModel.module
+package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -19,8 +19,9 @@ import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
-import com.intellij.workspace.legacyBridge.intellij.*
-import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyBridgeLibraryImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.LegacyBridgeModuleManagerComponent
+import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeModule
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal abstract class OrderEntryViaTypedEntity(

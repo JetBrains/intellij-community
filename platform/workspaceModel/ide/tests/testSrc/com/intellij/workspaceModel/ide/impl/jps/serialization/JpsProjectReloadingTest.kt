@@ -1,4 +1,4 @@
-package com.intellij.workspace.jps
+package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
@@ -7,7 +7,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.bridgeEntities.projectLibraries
-import com.intellij.workspace.ide.getInstance
+import com.intellij.workspaceModel.ide.impl.getInstance
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Before
 import org.junit.Test

@@ -10,15 +10,15 @@
     <registryKey key="ide.workspace.model.jps.enabled" defaultValue="true" restartRequired="false"
                  description="Enable .iml reading/writing including settings (temporary key)"/>
 
-    <cachesInvalidator implementation="com.intellij.workspace.ide.WorkspaceModelCachesInvalidator"/>
+    <cachesInvalidator implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidator"/>
 
     <projectService serviceInterface="com.intellij.workspaceModel.storage.VirtualFileUrlManager"
                     serviceImplementation="com.intellij.workspaceModel.storage.impl.VirtualFileUrlManagerImpl" />
-    <projectServiceContainerCustomizer implementation="com.intellij.workspace.legacyBridge.intellij.LegacyBridgeProjectLifecycleListener"/>
-    <projectServiceContainerInitializedListener implementation="com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleManagerComponent$MyProjectServiceContainerInitializedListener"/>
+    <projectServiceContainerCustomizer implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeProjectLifecycleListener"/>
+    <projectServiceContainerInitializedListener implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.LegacyBridgeModuleManagerComponent$MyProjectServiceContainerInitializedListener"/>
 
     <applicationService serviceInterface="com.intellij.configurationStore.StoreReloadManager"
-                        serviceImplementation="com.intellij.workspace.jps.LegacyBridgeStoreReloadManager"
+                        serviceImplementation="com.intellij.workspaceModel.ide.impl.jps.serialization.LegacyBridgeStoreReloadManager"
                         overrides="true"/>
   </extensions>
 </idea-plugin>

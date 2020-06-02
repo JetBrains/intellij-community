@@ -1,4 +1,4 @@
-package com.intellij.workspace.legacyBridge.intellij
+package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.configurationStore.serializeStateInto
 import com.intellij.openapi.application.ApplicationManager
@@ -17,17 +17,13 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.isEmpty
-import com.intellij.workspace.ide.WorkspaceModel
-import com.intellij.workspace.ide.getInstance
-import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibrary
-import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
-import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeModifiableBase
-import com.intellij.workspace.legacyBridge.roots.LegacyBridgeModifiableContentEntryImpl
-import com.intellij.workspace.legacyBridge.typedModel.module.LibraryOrderEntryViaTypedEntity
-import com.intellij.workspace.legacyBridge.typedModel.module.OrderEntryViaTypedEntity
-import com.intellij.workspace.legacyBridge.typedModel.module.RootModelViaTypedEntityImpl
-import com.intellij.workspace.legacyBridge.typedModel.module.SdkOrderEntryViaTypedEntity
-import com.intellij.workspace.legacyBridge.typedModel.module.SourceRootPropertiesHelper
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.impl.getInstance
+import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeModule
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyBridgeLibrary
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyBridgeLibraryImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.LegacyBridgeCompilerModuleExtension
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jdom.Element

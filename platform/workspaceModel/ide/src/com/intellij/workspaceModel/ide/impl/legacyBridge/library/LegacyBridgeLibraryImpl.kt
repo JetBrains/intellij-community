@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.legacyBridge.libraries.libraries
+package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -21,9 +21,8 @@ import com.intellij.util.EventDispatcher
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProviderImpl
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleLibraryTable
-import com.intellij.workspace.legacyBridge.typedModel.library.LibraryViaTypedEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.LegacyBridgeFilePointerProviderImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.LegacyBridgeModuleLibraryTable
 import com.intellij.workspaceModel.storage.*
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -182,7 +181,7 @@ internal class LegacyBridgeLibraryImpl(
 
       var index = 1
       while (true) {
-        val candidate = "$legacyLibraryName${UNIQUE_INDEX_LIBRARY_NAME_SUFFIX}$index"
+        val candidate = "$legacyLibraryName$UNIQUE_INDEX_LIBRARY_NAME_SUFFIX$index"
         if (!exists(candidate)) {
           return candidate
         }

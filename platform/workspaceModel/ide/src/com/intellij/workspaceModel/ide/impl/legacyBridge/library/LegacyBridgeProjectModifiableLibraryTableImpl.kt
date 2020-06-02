@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.legacyBridge.libraries.libraries
+package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
@@ -15,8 +15,9 @@ import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryPropertiesEntity
-import com.intellij.workspace.ide.*
-import com.intellij.workspace.jps.JpsProjectEntitiesLoader
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal class LegacyBridgeProjectModifiableLibraryTableImpl(

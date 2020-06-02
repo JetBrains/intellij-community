@@ -1,4 +1,4 @@
-package com.intellij.workspace.legacyBridge.intellij
+package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.google.common.collect.HashBiMap
 import com.intellij.openapi.application.ApplicationManager
@@ -15,11 +15,12 @@ import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.PathUtil
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.VirtualFileUrlManager
-import com.intellij.workspace.ide.NonPersistentEntitySource
-import com.intellij.workspace.ide.WorkspaceModel
-import com.intellij.workspace.ide.getInstance
-import com.intellij.workspace.jps.JpsProjectEntitiesLoader
-import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeModifiableBase
+import com.intellij.workspaceModel.ide.NonPersistentEntitySource
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.impl.getInstance
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
+import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeModule
+import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 
 internal class LegacyBridgeModifiableModuleModel(

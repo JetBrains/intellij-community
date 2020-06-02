@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.legacyBridge.intellij
+package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.facet.FacetFromExternalSourcesStorage
 import com.intellij.facet.FacetManager
@@ -14,11 +14,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.workspace.ide.WorkspaceModel
-import com.intellij.workspace.ide.WorkspaceModelChangeListener
-import com.intellij.workspace.ide.WorkspaceModelTopics
-import com.intellij.workspace.legacyBridge.externalSystem.ExternalSystemModulePropertyManagerForWorkspaceModel
-import com.intellij.workspace.legacyBridge.facet.FacetManagerViaWorkspaceModel
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.ide.impl.legacyBridge.externalSystem.ExternalSystemModulePropertyManagerForWorkspaceModel
+import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerViaWorkspaceModel
+import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeModule
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.LegacyBridgeModuleRootComponent
+import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.LegacyBridgeFilePointerProvider
+import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.LegacyBridgeFilePointerProviderImpl
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.picocontainer.MutablePicoContainer

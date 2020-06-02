@@ -1,16 +1,17 @@
-package com.intellij.workspace.jps
+package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
 import com.intellij.workspaceModel.storage.bridgeEntities.JavaSourceRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import com.intellij.workspaceModel.storage.impl.VirtualFileUrlManagerImpl
-import com.intellij.workspace.ide.JpsFileEntitySource
-import org.junit.*
-import com.intellij.workspace.ide.JpsProjectConfigLocation
+import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
 import com.intellij.workspaceModel.storage.*
+import org.junit.*
 import org.junit.Assert
 import org.junit.ClassRule
 import org.junit.Rule
@@ -102,7 +103,8 @@ class ImlReplaceBySourceTest {
 
   private fun replaceBySourceFullReplace(projectFile: File) {
     val storageBuilder1 = WorkspaceEntityStorageBuilder.create()
-    val data = loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder1, virtualFileManager)
+    val data = com.intellij.workspaceModel.ide.impl.jps.serialization.loadProject(projectFile.asConfigLocation(virtualFileManager),
+                                                                                  storageBuilder1, virtualFileManager)
 
     val storageBuilder2 = WorkspaceEntityStorageBuilder.create()
     val reader = CachingJpsFileContentReader(projectFile.asConfigLocation(virtualFileManager).baseDirectoryUrlString)

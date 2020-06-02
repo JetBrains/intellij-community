@@ -1,4 +1,4 @@
-package com.intellij.workspace.legacyBridge.intellij
+package com.intellij.workspaceModel.ide.impl.legacyBridge.project
 
 import com.intellij.configurationStore.*
 import com.intellij.openapi.components.Storage
@@ -9,9 +9,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectStoreFactory
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
-import com.intellij.workspace.jps.JpsFileContentWriter
-import com.intellij.workspace.jps.JpsProjectModelSynchronizer
-import com.intellij.workspace.jps.getProjectStateStorage
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentWriter
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
+import com.intellij.workspaceModel.ide.impl.jps.serialization.getProjectStateStorage
 import org.jdom.Element
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.concurrent.ConcurrentHashMap

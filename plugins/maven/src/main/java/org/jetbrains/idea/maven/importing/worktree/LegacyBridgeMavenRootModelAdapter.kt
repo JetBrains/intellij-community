@@ -12,11 +12,11 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.VirtualFileUrlManager
-import com.intellij.workspace.ide.getInstance
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeCompilerModuleExtension
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleManagerComponent
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleRootComponent
+import com.intellij.workspaceModel.ide.impl.getInstance
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.LegacyBridgeCompilerModuleExtension
+import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeModule
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.LegacyBridgeModuleManagerComponent
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.LegacyBridgeModuleRootComponent
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.idea.maven.importing.MavenModelUtil
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapterInterface

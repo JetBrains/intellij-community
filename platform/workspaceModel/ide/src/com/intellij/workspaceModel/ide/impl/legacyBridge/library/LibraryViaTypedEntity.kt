@@ -1,4 +1,4 @@
-package com.intellij.workspace.legacyBridge.typedModel.library
+package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.configurationStore.ComponentSerializationUtil
 import com.intellij.openapi.module.Module
@@ -10,10 +10,13 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspace.ide.JpsImportedEntitySource
-import com.intellij.workspace.ide.toExternalSource
-import com.intellij.workspace.legacyBridge.intellij.*
-import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
+import com.intellij.workspaceModel.ide.JpsImportedEntitySource
+import com.intellij.workspaceModel.ide.toExternalSource
+import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.LegacyBridgeFileContainer
+import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.LegacyBridgeFilePointerProvider
+import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.LegacyBridgeJarDirectory
+import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.getAndCacheVirtualFilePointerContainer
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.LegacyBridgeModuleLibraryTable
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import java.io.StringReader
 

@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.legacyBridge
+package com.intellij.workspaceModel.ide.impl.legacyBridge
 
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.ModuleManager
@@ -7,11 +7,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProvider
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProviderImpl
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleRootComponent
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeProjectLifecycleListener
-import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.LegacyBridgeFilePointerProvider
+import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.LegacyBridgeFilePointerProviderImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.LegacyBridgeModuleRootComponent
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyBridgeLibraryImpl
 import org.jetbrains.annotations.ApiStatus
 
 object LegacyBridgeTestFrameworkUtils {

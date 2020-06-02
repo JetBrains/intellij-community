@@ -1,9 +1,9 @@
-package com.intellij.workspace.legacyBridge.intellij
+package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.configurationStore.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.module.Module
-import com.intellij.workspace.jps.JpsProjectModelSynchronizer
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 
 internal class LegacyBridgeModuleStoreImpl(module: Module) : ModuleStoreBase() {
   private val enabled: Boolean

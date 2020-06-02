@@ -1,12 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.legacyBridge.libraries.libraries
+package com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer
 
 import com.google.common.collect.ArrayListMultimap
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.workspace.ide.JpsFileEntitySource
-import com.intellij.workspace.ide.WorkspaceModel
-import com.intellij.workspace.ide.getInstance
+import com.intellij.workspaceModel.ide.JpsFileEntitySource
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.impl.getInstance
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import kotlin.reflect.KClass

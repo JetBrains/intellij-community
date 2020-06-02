@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.jps
+package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.configurationStore.*
 import com.intellij.diagnostic.StartUpMeasurer
@@ -29,9 +29,11 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtil
-import com.intellij.workspace.ide.*
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleManagerComponent
-import com.intellij.workspace.legacyBridge.intellij.isExternalModuleFile
+import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
+import com.intellij.workspaceModel.ide.impl.getInstance
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.LegacyBridgeModuleManagerComponent
+import com.intellij.workspaceModel.ide.impl.legacyBridge.project.isExternalModuleFile
 import com.intellij.workspaceModel.storage.*
 import org.jdom.Element
 import org.jetbrains.jps.util.JpsPathUtil

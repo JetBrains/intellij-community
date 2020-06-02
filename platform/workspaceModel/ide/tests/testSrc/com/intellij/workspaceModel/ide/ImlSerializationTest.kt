@@ -1,7 +1,9 @@
-package com.intellij.workspace.jps
+package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.ApplicationRule
+import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
+import com.intellij.workspaceModel.ide.impl.jps.serialization.loadProject
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.*
 import org.junit.Before

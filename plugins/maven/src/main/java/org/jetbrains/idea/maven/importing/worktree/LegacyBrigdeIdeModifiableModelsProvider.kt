@@ -22,11 +22,11 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ClassMap
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspace.legacyBridge.facet.FacetManagerViaWorkspaceModel
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleManagerComponent
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleRootComponent
-import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibrary
-import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeProjectLibraryTable
+import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerViaWorkspaceModel
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.LegacyBridgeModuleManagerComponent
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.LegacyBridgeModuleRootComponent
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyBridgeLibrary
+import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeProjectLibraryTable
 import org.jetbrains.idea.maven.utils.MavenLog
 
 class LegacyBrigdeIdeModifiableModelsProvider(val project: Project,

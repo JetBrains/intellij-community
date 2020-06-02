@@ -1,4 +1,4 @@
-package com.intellij.workspace.jps
+package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker

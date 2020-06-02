@@ -57,7 +57,7 @@ import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.ref.GCUtil
 import com.intellij.util.ui.UIUtil
-import com.intellij.workspace.legacyBridge.LegacyBridgeTestFrameworkUtils
+import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeTestFrameworkUtils
 import junit.framework.AssertionFailedError
 import org.jetbrains.annotations.ApiStatus
 import sun.awt.AWTAutoShutdown

@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.jps
+package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.EmptyModuleType
@@ -15,8 +15,7 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryPropertiesEntity
-import com.intellij.workspace.ide.WorkspaceModel
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
+import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeModule
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
