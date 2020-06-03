@@ -30,6 +30,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.ListWithFilter;
+import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
@@ -72,6 +73,10 @@ public class RecentProjectPanel extends JPanel {
   private int myHoverIndex = -1;
 
   public RecentProjectPanel(@NotNull Disposable parentDisposable) {
+    this(parentDisposable, true);
+  }
+
+  public RecentProjectPanel(@NotNull Disposable parentDisposable, boolean withSpeedSearch) {
     super(new BorderLayout());
 
     List<AnAction> recentProjectActions = RecentProjectListActionProvider.getInstance().getActions(false, isUseGroups());
@@ -161,23 +166,9 @@ public class RecentProjectPanel extends JPanel {
       = new JBScrollPane(myList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scroll.setBorder(JBUI.Borders.empty());
 
-    JComponent list = recentProjectActions.isEmpty()
-                      ? myList
-                      : ListWithFilter.wrap(myList, scroll, o -> {
-                        if (o instanceof ReopenProjectAction) {
-                          ReopenProjectAction item = (ReopenProjectAction)o;
-                          String home = SystemProperties.getUserHome();
-                          String path = item.getProjectPath();
-                          if (FileUtil.startsWith(path, home)) {
-                            path = path.substring(home.length());
-                          }
-                          return item.getProjectName() + " " + path;
-                        } else if (o instanceof ProjectGroupActionGroup) {
-                          return ((ProjectGroupActionGroup)o).getGroup().getName();
-                        }
-                        return o.toString();
-                      });
-    add(list, BorderLayout.CENTER);
+    boolean wrapListWithFiltered = !recentProjectActions.isEmpty() && withSpeedSearch;
+    JComponent list = wrapListWithFiltered ? ListWithFilter.wrap(myList, scroll, createProjectNameFunction()) : myList;
+    add(wrapListWithFiltered ? list : scroll, BorderLayout.CENTER);
 
     JPanel title = createTitle();
 
@@ -186,6 +177,24 @@ public class RecentProjectPanel extends JPanel {
     }
 
     setBorder(new LineBorder(WelcomeScreenColors.BORDER_COLOR));
+  }
+
+  public static Function<? super AnAction, String> createProjectNameFunction() {
+    return o -> {
+      if (o instanceof ReopenProjectAction) {
+        ReopenProjectAction item = (ReopenProjectAction)o;
+        String home = SystemProperties.getUserHome();
+        String path = item.getProjectPath();
+        if (FileUtil.startsWith(path, home)) {
+          path = path.substring(home.length());
+        }
+        return item.getProjectName() + " " + path;
+      }
+      else if (o instanceof ProjectGroupActionGroup) {
+        return ((ProjectGroupActionGroup)o).getGroup().getName();
+      }
+      return o.toString();
+    };
   }
 
   @NotNull
