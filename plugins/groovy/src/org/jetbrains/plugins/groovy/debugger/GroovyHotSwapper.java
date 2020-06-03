@@ -43,7 +43,7 @@ final class GroovyHotSwapper extends JavaProgramPatcher {
     return CachedValuesManager.getManager(project).getCachedValue(project, () ->
       CachedValueProvider.Result.create(
         FileTypeIndex.containsFileOfType(GroovyFileType.GROOVY_FILE_TYPE, GlobalSearchScope.projectScope(project)),
-        PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+        PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   private static boolean hasSpringLoadedReloader(JavaParameters javaParameters) {

@@ -59,10 +59,10 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     super(viewProvider, language);
     CachedValuesManager cachedValuesManager = CachedValuesManager.getManager(viewProvider.getManager().getProject());
     myAnnotationsCache = cachedValuesManager.createCachedValue(() -> Result.create(
-      buildCache(true), this, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT
+      buildCache(true), this, PsiModificationTracker.MODIFICATION_COUNT
     ), false);
     myDeclarationsCache = cachedValuesManager.createCachedValue(() -> Result.create(
-      buildCache(false), this, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT
+      buildCache(false), this, PsiModificationTracker.MODIFICATION_COUNT
     ), false);
     myAllCachedDeclarations = (processor, state, place) ->
       myAnnotationsCache.getValue().processDeclarations(processor, state, place) &&

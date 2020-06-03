@@ -170,6 +170,6 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
 
   @Override
   public Object @NotNull [] getDirectoryCachedValueDependencies(@NotNull PsiPackage psiPackage) {
-    return new Object[] { PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, ProjectRootManager.getInstance(psiPackage.getProject()) };
+    return new Object[] {PsiModificationTracker.MODIFICATION_COUNT, ProjectRootManager.getInstance(psiPackage.getProject()) };
   }
 }

@@ -152,10 +152,10 @@ public class HighlightClassUtil {
       PsiField[] fields = aClass.getFields();
       for (PsiField field : fields) {
         if (field instanceof PsiEnumConstant && ((PsiEnumConstant)field).getInitializingClass() != null) {
-          return new CachedValueProvider.Result<>(true, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+          return new CachedValueProvider.Result<>(true, PsiModificationTracker.MODIFICATION_COUNT);
         }
       }
-      return new CachedValueProvider.Result<>(false, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return new CachedValueProvider.Result<>(false, PsiModificationTracker.MODIFICATION_COUNT);
     });
 
   }

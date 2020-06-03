@@ -58,7 +58,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
       GrCodeReferenceElement qualifier = reference == null ? null : reference.getQualifier();
       PsiElement target = qualifier == null ? null : qualifier.resolve();
       PsiClass clazz = target instanceof PsiClass ? (PsiClass)target : null;
-      return CachedValueProvider.Result.create(clazz, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, this);
+      return CachedValueProvider.Result.create(clazz, PsiModificationTracker.MODIFICATION_COUNT, this);
     });
   }
 

@@ -56,13 +56,13 @@ public abstract class TestFrameworks {
   @Nullable
   public static TestFramework detectFramework(@NotNull final PsiClass psiClass) {
     return CachedValuesManager.getCachedValue(psiClass, () -> CachedValueProvider.Result
-      .create(computeFramework(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+      .create(computeFramework(psiClass), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   @NotNull
   public static Set<TestFramework> detectApplicableFrameworks(@NotNull final PsiClass psiClass) {
     return CachedValuesManager.getCachedValue(psiClass, () -> CachedValueProvider.Result
-      .create(computeFrameworks(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+      .create(computeFrameworks(psiClass), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   private static Set<TestFramework> computeFrameworks(PsiClass psiClass) {

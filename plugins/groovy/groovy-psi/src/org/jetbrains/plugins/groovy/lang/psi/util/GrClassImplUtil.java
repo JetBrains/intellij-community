@@ -126,7 +126,7 @@ public class GrClassImplUtil {
       List<PsiMethod> list = new ArrayList<>();
       getAllMethodsInner(grType, list, new HashSet<>());
       return CachedValueProvider.Result
-        .create(list.toArray(PsiMethod.EMPTY_ARRAY), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, grType);
+        .create(list.toArray(PsiMethod.EMPTY_ARRAY), PsiModificationTracker.MODIFICATION_COUNT, grType);
     });
   }
 
@@ -559,7 +559,7 @@ public class GrClassImplUtil {
 
   public static GrAccessorMethod findSetter(GrField field) {
     return CachedValuesManager.getCachedValue(field, () -> CachedValueProvider.Result.create(
-      doGetSetter(field), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT
+      doGetSetter(field), PsiModificationTracker.MODIFICATION_COUNT
     ));
   }
 
@@ -578,7 +578,7 @@ public class GrClassImplUtil {
 
   public static GrAccessorMethod[] findGetters(GrField field) {
     return CachedValuesManager.getCachedValue(field, () -> CachedValueProvider.Result.create(
-      doGetGetters(field), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT
+      doGetGetters(field), PsiModificationTracker.MODIFICATION_COUNT
     ));
   }
 

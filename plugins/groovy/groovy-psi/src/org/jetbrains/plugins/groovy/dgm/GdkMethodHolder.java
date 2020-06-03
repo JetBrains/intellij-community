@@ -108,7 +108,7 @@ public class GdkMethodHolder {
         return CachedValueProvider.Result.create(result, rootManager);
       }
 
-      return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, rootManager);
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT, rootManager);
     }, false);
   }
 

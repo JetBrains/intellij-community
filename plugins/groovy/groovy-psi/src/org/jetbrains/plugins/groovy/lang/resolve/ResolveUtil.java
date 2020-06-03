@@ -293,7 +293,7 @@ public class ResolveUtil {
     final Map<String, Set<String>> cache =
       CachedValuesManager.getManager(project).getCachedValue(project, () -> {
         final Map<String, Set<String>> result = new ConcurrentHashMap<>();
-        return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
       });
 
     final PsiClass cls = PsiUtil.resolveClassInType(base);

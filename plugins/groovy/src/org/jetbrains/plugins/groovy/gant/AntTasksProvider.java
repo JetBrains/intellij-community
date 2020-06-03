@@ -69,7 +69,7 @@ public class AntTasksProvider {
         methods.addAll(methods(file, name, antObjects.get(name), mapType, stringType, closureType));
       }
       return CachedValueProvider.Result
-        .create(methods, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
+        .create(methods, PsiModificationTracker.MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
     }, false);
   }
 
