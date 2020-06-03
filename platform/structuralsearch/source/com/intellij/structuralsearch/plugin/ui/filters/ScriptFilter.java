@@ -23,6 +23,7 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings("ComponentNotRegistered")
 public class ScriptFilter extends FilterAction {
 
   public ScriptFilter(FilterTable filterTable) {

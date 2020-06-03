@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -28,6 +28,7 @@ public abstract class NamedScriptableDefinition implements JDOMExternalizable {
 
   public abstract NamedScriptableDefinition copy();
 
+  @NotNull
   public String getName() {
     return name;
   }
@@ -36,6 +37,7 @@ public abstract class NamedScriptableDefinition implements JDOMExternalizable {
     this.name = name;
   }
 
+  @NotNull
   public String getScriptCodeConstraint() {
     return scriptCodeConstraint;
   }
