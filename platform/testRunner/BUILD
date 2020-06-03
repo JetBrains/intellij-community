@@ -5,6 +5,7 @@ iml_module(
     name = "intellij.platform.testRunner",
     srcs = ["src"],
     iml_files = ["intellij.platform.testRunner.iml"],
+    resources = ["resources"],
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
