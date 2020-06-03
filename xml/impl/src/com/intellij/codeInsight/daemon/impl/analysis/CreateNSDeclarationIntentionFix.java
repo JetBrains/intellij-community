@@ -32,6 +32,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
@@ -66,12 +67,6 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   @NotNull
   private XmlFile getFile() {
     return (XmlFile)myElement.getFile();
-  }
-
-  @Nullable
-  public static CreateNSDeclarationIntentionFix createFix(@NotNull final PsiElement element, @NotNull final String namespacePrefix) {
-    PsiFile file = element.getContainingFile();
-    return file instanceof XmlFile ? new CreateNSDeclarationIntentionFix(element, namespacePrefix) : null;
   }
 
   protected CreateNSDeclarationIntentionFix(@NotNull final PsiElement element,
@@ -118,8 +113,10 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    if (!(file instanceof XmlFile)) return false;
     PsiElement element = myElement.retrieve();
-    return element != null && element.isValid();
+    XmlTag rootTag = ((XmlFile)file).getRootTag();
+    return element != null && rootTag != null && !PsiUtilCore.hasErrorElementChild(rootTag);
   }
 
   /** Looks up the unbound namespaces and sorts them */
