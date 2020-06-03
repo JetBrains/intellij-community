@@ -42,7 +42,7 @@ class GitConflictsView(
     toolbarGroup.addAction(Separator.getInstance())
     toolbarGroup.addAction(actionManager.getAction(ChangesTree.GROUP_BY_ACTION_GROUP))
     val toolbar = actionManager.createActionToolbar("GitConflictsView", toolbarGroup, false)
-    toolbar.setTargetComponent(conflictsPanel.component)
+    toolbar.setTargetComponent(conflictsPanel.preferredFocusableComponent)
 
     val mainPanel = JPanel(BorderLayout())
 
