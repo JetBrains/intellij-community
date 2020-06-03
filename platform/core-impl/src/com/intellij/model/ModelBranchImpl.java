@@ -6,6 +6,7 @@ import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SimpleModificationTracker;
@@ -15,6 +16,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -171,11 +173,12 @@ public class ModelBranchImpl implements ModelBranch {
 
     for (Document document : myDocumentChanges.keySet()) {
       VirtualFile file = Objects.requireNonNull(FileDocumentManager.getInstance().getFile(document));
-      Document original = FileDocumentManager.getInstance().getDocument(findOriginalFile(file));
+      DocumentImpl original = (DocumentImpl) FileDocumentManager.getInstance().getDocument(findOriginalFile(file));
       assert original != null;
 
       for (DocumentEvent event : myDocumentChanges.get(document)) {
-        original.replaceString(event.getOffset(), event.getOffset() + event.getOldLength(), event.getNewFragment());
+        original.replaceString(event.getOffset(), event.getOffset() + event.getOldLength(), event.getMoveOffset(),
+                               event.getNewFragment(), LocalTimeCounter.currentTime(), false);
       }
     }
 
