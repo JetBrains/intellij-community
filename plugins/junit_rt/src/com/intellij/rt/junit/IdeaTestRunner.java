@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public interface IdeaTestRunner {
-  void createListeners(ArrayList listeners, int count);
+  void createListeners(ArrayList<String> listeners, int count);
 
   /**
    * @return -2 internal failure
@@ -16,7 +16,7 @@ public interface IdeaTestRunner {
   int startRunnerWithArgs(String[] args, String name, int count, boolean sendTree);
 
   Object getTestToStart(String[] args, String name);
-  List getChildTests(Object description);
+  List<?> getChildTests(Object description);
   String getStartDescription(Object child);
 
   String getTestClassName(Object child);
@@ -24,7 +24,7 @@ public interface IdeaTestRunner {
   class Repeater {
     public static int startRunnerWithArgs(IdeaTestRunner testRunner,
                                           String[] args,
-                                          ArrayList listeners,
+                                          ArrayList<String> listeners,
                                           String name,
                                           int count,
                                           boolean sendTree) {
@@ -33,8 +33,8 @@ public interface IdeaTestRunner {
         return testRunner.startRunnerWithArgs(args, name, count, sendTree);
       }
       else {
+        boolean success = true;
         if (count > 0) {
-          boolean success = true;
           int i = 0;
           while (i++ < count) {
             final int result = testRunner.startRunnerWithArgs(args, name, count, sendTree);
@@ -48,7 +48,6 @@ public interface IdeaTestRunner {
           return success ? 0 : -1;
         }
         else {
-          boolean success = true;
           while (true) {
             int result = testRunner.startRunnerWithArgs(args, name, count, sendTree);
             if (result == -2) {

@@ -29,11 +29,11 @@ import java.util.stream.Collectors;
 
 public class JUnit5IdeaTestRunner implements IdeaTestRunner {
   private final List<JUnit5TestExecutionListener> myExecutionListeners = new ArrayList<>();
-  private ArrayList myListeners;
+  private ArrayList<String> myListeners;
   private Launcher myLauncher;
 
   @Override
-  public void createListeners(ArrayList listeners, int count) {
+  public void createListeners(ArrayList<String> listeners, int count) {
     myListeners = listeners;
     do {
       JUnit5TestExecutionListener currentListener = new JUnit5TestExecutionListener();
@@ -96,7 +96,7 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
   }
 
   @Override
-  public List getChildTests(Object description) {
+  public List<?> getChildTests(Object description) {
     if (description == FAKE_ROOT) {
       return myForkedTestPlan.getRoots()
         .stream()

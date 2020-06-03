@@ -20,9 +20,10 @@ import com.intellij.rt.execution.testFrameworks.AbstractExpectedPatterns;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class ExpectedPatterns extends AbstractExpectedPatterns {
-  private static final List PATTERNS = new ArrayList();
+  private static final List<Pattern> PATTERNS = new ArrayList<Pattern>();
 
   private static final String[] PATTERN_STRINGS = new String[]{
     "\nexpected: is \"(.*)\"\n\\s*got: \"(.*)\"\n",
@@ -76,7 +77,7 @@ public class ExpectedPatterns extends AbstractExpectedPatterns {
     return isComparisonFailure(throwable.getClass());
   }
 
-  private static boolean isComparisonFailure(Class aClass) {
+  private static boolean isComparisonFailure(Class<?> aClass) {
     if (aClass == null) return false;
     final String throwableClassName = aClass.getName();
     if (throwableClassName.equals(JUNIT_FRAMEWORK_COMPARISON_NAME) ||

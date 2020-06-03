@@ -11,10 +11,12 @@ public class IDEATestNGSuiteListener implements ISuiteListener {
     myListener = listener;
   }
 
+  @Override
   public void onStart(ISuite suite) {
     myListener.onStart(suite);
   }
 
+  @Override
   public void onFinish(ISuite suite) {
     myListener.onFinish(suite);
   }

@@ -91,6 +91,7 @@ public class JUnit4TestRunnerUtil {
             }
 
             return classMethods.isEmpty() ? allClasses : allClasses.filterWith(new Filter() {
+              @Override
               public boolean shouldRun(Description description) {
                 if (description.isTest()) {
                   final Set<String> methods = classMethods.get(JUnit4ReflectionUtil.getClassName(description));
@@ -121,6 +122,7 @@ public class JUnit4TestRunnerUtil {
                 return true;
               }
 
+              @Override
               public String describe() {
                 return "Tests";
               }
@@ -151,10 +153,12 @@ public class JUnit4TestRunnerUtil {
                 final Request classRequest = JUnit45ClassesRequestBuilder.createIgnoreIgnoredClassRequest(clazz, true);
                 final Filter ignoredTestFilter = Filter.matchMethodDescription(testMethodDescription);
                 return classRequest.filterWith(new Filter() {
+                  @Override
                   public boolean shouldRun(Description description) {
                     return ignoredTestFilter.shouldRun(description);
                   }
 
+                  @Override
                   public String describe() {
                     return "Ignored " + methodName;
                   }
@@ -188,6 +192,7 @@ public class JUnit4TestRunnerUtil {
             return Request.method(clazz, methodName);
           }
           return Request.aClass(clazz).filterWith(new Filter() {
+            @Override
             public boolean shouldRun(Description description) {
               if (description.isTest() && description.getDisplayName().startsWith("warning(junit.framework.TestSuite$")) {
                 return true;
@@ -196,6 +201,7 @@ public class JUnit4TestRunnerUtil {
               return methodFilter.shouldRun(description);
             }
 
+            @Override
             public String describe() {
               return methodFilter.describe();
             }
@@ -248,6 +254,7 @@ public class JUnit4TestRunnerUtil {
         Class.forName("org.junit.runners.BlockJUnit4ClassRunner"); //ignore for junit4.4 and <
         final Constructor<? extends Runner> runnerConstructor = runnerClass.getConstructor(Class.class);
         return Request.runner(runnerConstructor.newInstance(clazz)).filterWith(new Filter() {
+          @Override
           public boolean shouldRun(Description description) {
             final String descriptionMethodName = description.getMethodName();
             //filter by params
@@ -264,6 +271,7 @@ public class JUnit4TestRunnerUtil {
             return true;
           }
 
+          @Override
           public String describe() {
             if (parameterString == null) {
               return methodName + " with any parameter";

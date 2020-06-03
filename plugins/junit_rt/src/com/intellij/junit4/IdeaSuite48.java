@@ -16,6 +16,7 @@
 package com.intellij.junit4;
 
 import org.junit.experimental.categories.Categories;
+import org.junit.runner.Runner;
 import org.junit.runner.manipulation.NoTestsRemainException;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.RunnerBuilder;
@@ -23,17 +24,17 @@ import org.junit.runners.model.RunnerBuilder;
 import java.util.List;
 
 public class IdeaSuite48 extends IdeaSuite {
-  public IdeaSuite48(List runners, String name, Class category) throws InitializationError {
+  public IdeaSuite48(List<Runner> runners, String name, Class<?> category) throws InitializationError {
     super(runners, name);
     filterByCategory(category);
   }
   
-  public IdeaSuite48(RunnerBuilder builder, Class[] classes, String name, Class category) throws InitializationError {
+  public IdeaSuite48(RunnerBuilder builder, Class<?>[] classes, String name, Class<?> category) throws InitializationError {
     super(builder, classes, name);
     filterByCategory(category);
   }
 
-  private void filterByCategory(Class category) throws InitializationError {
+  private void filterByCategory(Class<?> category) {
     if (category != null) {
       try {
         final Categories.CategoryFilter categoryFilter = Categories.CategoryFilter.include(category);

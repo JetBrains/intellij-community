@@ -17,6 +17,7 @@ import java.util.Map;
 public class TestNGXmlSuiteHelper {
   public interface Logger {
     Logger DEAF = new Logger() {
+      @Override
       public void log(Throwable e) {}
     };
 

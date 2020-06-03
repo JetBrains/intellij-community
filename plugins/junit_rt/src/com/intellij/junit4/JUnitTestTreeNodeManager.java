@@ -14,6 +14,7 @@ public interface JUnitTestTreeNodeManager {
   String getTestLocation(Description description, String className, String methodName);
 
   JUnitTestTreeNodeManager JAVA_NODE_NAMES_MANAGER = new JUnitTestTreeNodeManager() {
+    @Override
     public TestNodePresentation getRootNodePresentation(String fullName) {
       if (fullName == null) {
         return new TestNodePresentation(null, null);
@@ -28,6 +29,7 @@ public interface JUnitTestTreeNodeManager {
       return new TestNodePresentation(name, comment);
     }
 
+    @Override
     public String getNodeName(String fqName, boolean splitBySlash) {
       if (fqName == null) return null;
       final int idx = fqName.indexOf("[");
@@ -45,6 +47,7 @@ public interface JUnitTestTreeNodeManager {
       return dotInClassFQNIdx > -1 ? fqName.substring(dotInClassFQNIdx + 1) : fqName;
     }
 
+    @Override
     public String getTestLocation(Description description, String className, String methodName) {
       return "locationHint='java:test://" +
              MapSerializerUtil.escapeStr(className + "/" + getNodeName(methodName, true), MapSerializerUtil.STD_ESCAPER) +

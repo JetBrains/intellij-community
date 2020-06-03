@@ -12,30 +12,37 @@ public class IDEATestNGTestListener implements ITestListener {
     myListener = listener;
   }
 
+  @Override
   public void onTestStart(ITestResult result) {
     myListener.onTestStart(result);
   }
 
+  @Override
   public void onTestSuccess(ITestResult result) {
     myListener.onTestSuccess(result);
   }
 
+  @Override
   public void onTestFailure(ITestResult result) {
     myListener.onTestFailure(result);
   }
 
+  @Override
   public void onTestSkipped(ITestResult result) {
     myListener.onTestSkipped(result);
   }
 
+  @Override
   public void onTestFailedButWithinSuccessPercentage(ITestResult result) {
     myListener.onTestFailedButWithinSuccessPercentage(result);
   }
 
+  @Override
   public void onStart(ITestContext context) {
     myListener.onStart(context);
   }
 
+  @Override
   public void onFinish(ITestContext context) {
     myListener.onFinish(context);
   }

@@ -16,11 +16,11 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInspection.reference.RefMethod;
+import com.intellij.util.containers.Stack;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Stack;
 
 public class MethodInheritanceUtils {
 

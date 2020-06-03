@@ -12,7 +12,6 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Vector;
 
 public class RemoteTestNGStarter {
   private static final String SOCKET = "-socket";
@@ -22,7 +21,7 @@ public class RemoteTestNGStarter {
     String param = null;
     String commandFileName = null;
     String workingDirs = null;
-    Vector resultArgs = new Vector();
+    List<String> resultArgs = new ArrayList<String>();
     for (; i < args.length; i++) {
       String arg = args[i];
       if (arg.startsWith("@name")) {
@@ -67,7 +66,7 @@ public class RemoteTestNGStarter {
 
     final BufferedReader reader = new BufferedReader(new FileReader(temp));
 
-    final List newArgs = new ArrayList();
+    final List<String> newArgs = new ArrayList<String>();
     try {
       final String cantRunMessage = "CantRunException";
       while (true) {
@@ -105,7 +104,7 @@ public class RemoteTestNGStarter {
     }
     final IDEARemoteTestNG testNG = new IDEARemoteTestNG(param);
     CommandLineArgs cla = new CommandLineArgs();
-    new JCommander(Collections.singletonList(cla), (String[])resultArgs.toArray(new String[0]));
+    new JCommander(Collections.singletonList(cla), resultArgs.toArray(new String[0]));
     testNG.configure(cla);
     testNG.run();
   }
