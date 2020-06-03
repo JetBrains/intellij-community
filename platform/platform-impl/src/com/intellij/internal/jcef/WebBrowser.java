@@ -94,6 +94,44 @@ public class WebBrowser extends AnAction implements DumbAware {
 
     frame.add(controlPanel, BorderLayout.SOUTH);
 
+    JMenuBar menuBar = new JMenuBar();
+    frame.setJMenuBar(menuBar);
+    JMenu menu = new JMenu("Tools");
+    menuBar.add(menu);
+    JMenuItem menuItem = new JMenuItem("Load HTML with URL");
+    menu.add(menuItem);
+    menuItem.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        JDialog dialog = new JDialog(frame, "Load HTML with URL");
+        JPanel panel = new JPanel();
+        JTextField url = new JTextField("file://");
+        JTextArea html = new JTextArea("<html>\n</html>");
+
+        JPanel buttonPanel = new JPanel();
+        JButton cancelButton = new JButton("Cancel");
+        cancelButton.addActionListener(ae -> dialog.dispose());
+        JButton loadButton = new JButton("Load");
+        loadButton.addActionListener(ae -> {
+          dialog.dispose();
+          myUrlBar.setText(url.getText());
+          SwingUtilities.invokeLater(() -> myJBCefBrowser.loadHTML(html.getText(), url.getText()));
+        });
+        buttonPanel.add(cancelButton);
+        buttonPanel.add(loadButton);
+
+        dialog.add(panel);
+        panel.setLayout(new BorderLayout());
+        panel.add(url, BorderLayout.NORTH);
+        panel.add(html, BorderLayout.CENTER);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+
+        dialog.setSize(640, 480);
+        dialog.setLocationRelativeTo(null);
+        dialog.setVisible(true);
+      }
+    });
+
     frame.setVisible(true);
   }
 }
