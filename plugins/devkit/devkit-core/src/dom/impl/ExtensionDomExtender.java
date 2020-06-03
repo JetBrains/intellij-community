@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.dom.impl;
 import com.google.common.base.CaseFormat;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -105,7 +106,8 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
             }
           }
 
-          if ("language".equals(attributeName)) {
+          if ("language".equals(attributeName) ||
+              StringUtil.endsWith(attributeName, "Language")) {
             extension.setConverter(LANGUAGE_CONVERTER);
           }
           else if ("action".equals(attributeName)) {
