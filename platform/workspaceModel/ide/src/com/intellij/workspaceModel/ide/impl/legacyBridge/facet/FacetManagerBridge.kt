@@ -22,7 +22,7 @@ import org.jetbrains.jps.model.serialization.facet.FacetState
 
 class FacetManagerBridge(module: Module) : FacetManagerBase() {
   internal val module = module as ModuleBridge
-  internal val model = FacetModelViaWorkspaceModel(this.module)
+  internal val model = FacetModelBridge(this.module)
 
   private fun isThisModule(moduleEntity: ModuleEntity) = moduleEntity.name == module.name
 
@@ -58,7 +58,7 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
 
 }
 
-internal open class FacetModelViaWorkspaceModel(protected val moduleBridge: ModuleBridge) : FacetModelBase() {
+internal open class FacetModelBridge(protected val moduleBridge: ModuleBridge) : FacetModelBase() {
   protected val entityToFacet: HashBiMap<FacetEntity, Facet<*>> = HashBiMap.create()
 
   override fun getAllFacets(): Array<Facet<*>> {
@@ -100,7 +100,7 @@ internal open class FacetModelViaWorkspaceModel(protected val moduleBridge: Modu
     facetsChanged()
   }
 
-  internal fun populateFrom(mapping: FacetModelViaWorkspaceModel) {
+  internal fun populateFrom(mapping: FacetModelBridge) {
     entityToFacet.putAll(mapping.entityToFacet)
     facetsChanged()
   }

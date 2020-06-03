@@ -62,8 +62,8 @@ class ModifiableRootModelBridge(
   internal val moduleEntity: ModuleEntity
     get() = entityStorageOnDiff.cachedValue(moduleEntityValue) ?: error("Unable to resolve module by id '$moduleId'")
 
-  private val moduleLibraryTable = ModifiableModuleLibraryTableBridgeBridge(this,
-                                                                            ModuleRootComponentBridge.getInstance(module).moduleLibraryTable.moduleLibraries)
+  private val moduleLibraryTable = ModifiableModuleLibraryTableBridge(this,
+                                                                      ModuleRootComponentBridge.getInstance(module).moduleLibraryTable.moduleLibraries)
 
   private val contentEntriesImplValue: CachedValue<List<ModifiableContentEntryBridge>> = CachedValue { storage ->
     val moduleEntity = storage.resolve(moduleId) ?: return@CachedValue emptyList<ModifiableContentEntryBridge>()

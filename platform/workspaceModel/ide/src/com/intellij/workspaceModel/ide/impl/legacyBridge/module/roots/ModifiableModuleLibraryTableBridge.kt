@@ -12,8 +12,8 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableB
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
-internal class ModifiableModuleLibraryTableBridgeBridge(private val modifiableModel: ModifiableRootModelBridge,
-                                                        originalLibraries: List<LibraryBridgeImpl>) : ModuleLibraryTableBase(), ModuleLibraryTableBridge {
+internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: ModifiableRootModelBridge,
+                                                  originalLibraries: List<LibraryBridgeImpl>) : ModuleLibraryTableBase(), ModuleLibraryTableBridge {
   private val libraries: MutableList<LibraryBridgeImpl> = originalLibraries.mapTo(ArrayList()) {
     LibraryBridgeImpl(this, modifiableModel.project, it.libraryId, modifiableModel.entityStorageOnDiff, this, modifiableModel.diff)
   }

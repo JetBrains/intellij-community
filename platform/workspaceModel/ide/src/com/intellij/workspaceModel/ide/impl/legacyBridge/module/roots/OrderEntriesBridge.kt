@@ -290,7 +290,7 @@ internal class LibraryOrderEntryBridge(
     val libraryDependencyItemCopy = libraryDependencyItem.copy(library = libraryId)
 
     val moduleLibraryCopy = moduleLibrary?.let {
-      val libraryTable = rootModel.moduleLibraryTable as ModifiableModuleLibraryTableBridgeBridge
+      val libraryTable = rootModel.moduleLibraryTable as ModifiableModuleLibraryTableBridge
       libraryTable.createLibraryCopy(it as LibraryBridgeImpl)
     }
     return LibraryOrderEntryBridge(rootModel as ModuleRootModelBridge, index, libraryDependencyItemCopy, moduleLibraryCopy, null)
