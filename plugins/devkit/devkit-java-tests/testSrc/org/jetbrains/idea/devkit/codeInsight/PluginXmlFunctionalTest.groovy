@@ -163,7 +163,8 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                        "  @Attribute public String serviceImplementation; " +
                        "  @Attribute public java.util.concurrent.TimeUnit timeUnit; " +
                        "  @Attribute public java.lang.Integer integerNullable; " +
-                       "  @Attribute public int intProperty; " +
+                       "  @Attribute public int intPropertyForClass; " +
+                       "  @Attribute public boolean forClass; " +
                        "}")
 
     configureByFile()
