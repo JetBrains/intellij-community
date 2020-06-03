@@ -84,6 +84,7 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myRenamePreselect                       = null;
   private Boolean myWrapWhenTypingReachesRightMargin      = null;
   private Boolean myShowIntentionBulb                     = null;
+  private Boolean myShowingSpecialCharacters              = null;
 
   private List<Integer> mySoftMargins = null;
 
@@ -744,5 +745,20 @@ public class SettingsImpl implements EditorSettings {
   @Override
   public void setLanguageSupplier(@Nullable Supplier<? extends Language> languageSupplier) {
     myLanguageSupplier = languageSupplier;
+  }
+
+  @Override
+  public boolean isShowingSpecialChars() {
+    return myShowingSpecialCharacters == null ? Registry.is("editor.show.special.chars") : myShowingSpecialCharacters;
+  }
+
+  @Override
+  public void setShowingSpecialChars(boolean value) {
+    boolean oldState = isShowingSpecialChars();
+    myShowingSpecialCharacters = value;
+    boolean newState = isShowingSpecialChars();
+    if (newState != oldState) {
+      fireEditorRefresh();
+    }
   }
 }
