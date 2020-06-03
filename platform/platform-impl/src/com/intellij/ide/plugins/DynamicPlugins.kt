@@ -43,6 +43,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.objectTree.ThrowableInterner
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
@@ -53,11 +54,13 @@ import com.intellij.serviceContainer.ComponentManagerImpl.DescriptorToLoad
 import com.intellij.util.CachedValuesManagerImpl
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.util.messages.Topic
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.xmlb.BeanBinding
 import java.awt.Window
+import java.io.File
 import java.nio.file.FileVisitResult
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
@@ -102,6 +105,8 @@ object DynamicPlugins {
   private val LOG = logger<DynamicPlugins>()
   private val GROUP = NotificationGroup("Dynamic plugin installation", NotificationDisplayType.BALLOON, false)
 
+  private val classloadersFromUnloadedPlugins = ContainerUtil.createWeakValueMap<PluginId, PluginClassLoader>()
+
   @JvmStatic
   @JvmOverloads
   fun allowLoadUnloadWithoutRestart(descriptor: IdeaPluginDescriptorImpl, baseDescriptor: IdeaPluginDescriptorImpl? = null): Boolean {
@@ -132,6 +137,9 @@ object DynamicPlugins {
   ): String? {
     if (InstalledPluginsState.getInstance().isRestartRequired) {
       return "Not allowing load/unload without restart because of pending restart operation"
+    }
+    if (classloadersFromUnloadedPlugins[descriptor.pluginId] != null) {
+      return "Not allowing load/unload because of incomplete previous unload operation"
     }
 
     if (!RegistryManager.getInstance().`is`("ide.plugins.allow.unload")) {
@@ -493,10 +501,12 @@ object DynamicPlugins {
         return true
       }
 
-      val classLoaderUnloaded = if (waitForClassloaderUnload)
-        loadedPluginDescriptor.unloadClassLoader(Registry.intValue("ide.plugins.unload.timeout", 5000))
+      classloadersFromUnloadedPlugins[pluginDescriptor.pluginId] = loadedPluginDescriptor.pluginClassLoader as? PluginClassLoader
+      val timeout = if (waitForClassloaderUnload)
+        Registry.intValue("ide.plugins.unload.timeout", 5000)
       else
-        true
+        0
+      var classLoaderUnloaded = loadedPluginDescriptor.unloadClassLoader(timeout)
 
       if (!classLoaderUnloaded) {
         InstalledPluginsState.getInstance().isRestartRequired = true
@@ -506,6 +516,11 @@ object DynamicPlugins {
           val snapshotDate = SimpleDateFormat("dd.MM.yyyy_HH.mm.ss").format(Date())
           val snapshotPath = "$snapshotFolder/unload-${pluginDescriptor.pluginId}-$snapshotDate.hprof"
           MemoryDumpHelper.captureMemoryDump(snapshotPath)
+          if (classloadersFromUnloadedPlugins[pluginDescriptor.pluginId] == null) {
+            LOG.info("Successfully unloaded plugin ${pluginDescriptor.pluginId} (classloader collected during memory snapshot generation)")
+            FileUtil.asyncDelete(File(snapshotPath))
+            classLoaderUnloaded = true
+          }
           notify("Captured memory snapshot on plugin unload fail: $snapshotPath", NotificationType.WARNING)
           LOG.info("Plugin ${pluginDescriptor.pluginId} is not unload-safe because class loader cannot be unloaded. Memory snapshot created at $snapshotPath")
         }
