@@ -252,6 +252,12 @@ public class FindFunctionalInterfaceTest extends LightJavaCodeInsightFixtureTest
     assertOneElement(FunctionalExpressionSearch.search(fooClasses[1]).findAll());
   }
 
+  public void testInvalidCode() {
+    configure();
+    // whatever, but it shouldn't throw
+    assertEmpty(FunctionalExpressionSearch.search(findClass("I")).findAll());
+  }
+
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/lambda/findUsages/";

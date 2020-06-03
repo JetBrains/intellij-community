@@ -133,7 +133,7 @@ public class FunExprOccurrence {
 
   private boolean isCompatible(ReferenceChainLink link, PsiMember member, List<? extends PsiClass> samClasses) {
     if (link.isCall) {
-      return member instanceof PsiMethod && hasCompatibleParameter((PsiMethod)member, argIndex, samClasses);
+      return member instanceof PsiMethod && argIndex >= 0 && hasCompatibleParameter((PsiMethod)member, argIndex, samClasses);
     }
     if (member instanceof PsiClass) {
       return samClasses.contains(member);
