@@ -434,9 +434,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     return panel;
   }
 
-  @NotNull
-  public static TreeExpander createTreeExpander(ActionsTree actionsTree) {
-    return new DefaultTreeExpander(() -> actionsTree == null ? null : actionsTree.getTree());
+  public static @NotNull TreeExpander createTreeExpander(@NotNull ActionsTree actionsTree) {
+    return new DefaultTreeExpander(actionsTree::getTree);
   }
 
   private void filterTreeByShortcut(Shortcut shortcut) {

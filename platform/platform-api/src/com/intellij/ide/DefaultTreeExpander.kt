@@ -9,13 +9,13 @@ open class DefaultTreeExpander(private val supplier: () -> JTree?) : TreeExpande
   constructor(tree: JTree) : this({ tree })
 
 
-  override fun canExpand() = supplier.invoke()?.let { canCollapse(it) } ?: false
+  override fun canExpand() = supplier()?.let { canCollapse(it) } ?: false
 
   protected open fun canExpand(tree: JTree) = isEnabled(tree)
 
 
   override fun expandAll() {
-    supplier.invoke()?.let { expandAll(it) }
+    supplier()?.let { expandAll(it) }
   }
 
   protected open fun expandAll(tree: JTree) {
@@ -24,13 +24,13 @@ open class DefaultTreeExpander(private val supplier: () -> JTree?) : TreeExpande
   }
 
 
-  override fun canCollapse() = supplier.invoke()?.let { canCollapse(it) } ?: false
+  override fun canCollapse() = supplier()?.let { canCollapse(it) } ?: false
 
   protected open fun canCollapse(tree: JTree) = isEnabled(tree)
 
 
   override fun collapseAll() {
-    supplier.invoke()?.let { collapseAll(it, 1) }
+    supplier()?.let { collapseAll(it, 1) }
   }
 
   protected open fun collapseAll(tree: JTree, keepSelectionLevel: Int) {
