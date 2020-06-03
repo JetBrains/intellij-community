@@ -91,20 +91,28 @@ public class GitStagingAreaHolder {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     VirtualFile root = myRepository.getRoot();
 
-    List<GitFileStatus> rootRecords = GitIndexStatusUtilKt.getStatus(myProject, root, dirtyPaths, true, false, false);
-    rootRecords.removeIf(record -> {
-      VirtualFile recordRoot = vcsManager.getVcsRootFor(record.getPath());
-      boolean isUnderOurRoot = root.equals(recordRoot) || isSubmoduleStatus(record, recordRoot);
-      if (!isUnderOurRoot) {
-        LOG.warn(String.format("Ignoring change under another root: %s; root: %s; mapped root: %s", record, root, recordRoot));
-      }
-      return !isUnderOurRoot;
-    });
-
     RecursiveFilePathSet dirtyScope = new RecursiveFilePathSet(true); // GitVcs#needsCaseSensitiveDirtyScope is true
     for (FilePath path : dirtyPaths) {
       dirtyScope.add(path);
     }
+
+    List<GitFileStatus> rootRecords = GitIndexStatusUtilKt.getStatus(myProject, root, dirtyPaths, true, false, false);
+    rootRecords.removeIf(record -> {
+      FilePath recordPath = record.getPath();
+      FilePath recordOrigPath = record.getOrigPath();
+      boolean isUnderDirtyScope = dirtyScope.hasAncestor(recordPath) ||
+                                  recordOrigPath != null && dirtyScope.hasAncestor(recordOrigPath);
+      if (!isUnderDirtyScope) return true;
+
+      VirtualFile recordRoot = vcsManager.getVcsRootFor(recordPath);
+      boolean isUnderOurRoot = root.equals(recordRoot) || isSubmoduleStatus(record, recordRoot);
+      if (!isUnderOurRoot) {
+        LOG.warn(String.format("Ignoring change under another root: %s; root: %s; mapped root: %s", record, root, recordRoot));
+        return true;
+      }
+
+      return false;
+    });
 
     synchronized (LOCK) {
       myRecords.removeIf(record -> dirtyScope.hasAncestor(record.getPath()));
