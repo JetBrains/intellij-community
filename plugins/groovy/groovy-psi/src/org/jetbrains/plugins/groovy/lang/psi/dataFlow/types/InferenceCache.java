@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.openapi.util.Pair;
@@ -30,8 +30,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt.findReadDepe
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt.getVarIndexes;
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper.getDefUseMaps;
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper.isSharedVariable;
-import static org.jetbrains.plugins.groovy.util.GraphKt.findNodesOutsideCycles;
-import static org.jetbrains.plugins.groovy.util.GraphKt.mapGraph;
+import static org.jetbrains.plugins.groovy.util.GraphKt.*;
 
 class InferenceCache {
 
@@ -41,6 +40,7 @@ class InferenceCache {
 
   private final Lazy<TObjectIntHashMap<VariableDescriptor>> myVarIndexes;
   private final Lazy<List<DefinitionMap>> myDefinitionMaps;
+  private final Lazy<Set<Instruction>> myFlowAcyclicInstructions;
 
   private final AtomicReference<List<TypeDfaState>> myVarTypes;
   private final SharedVariableInferenceCache mySharedVariableInferenceCache;
@@ -51,6 +51,7 @@ class InferenceCache {
     myFlow = scope.getControlFlow();
     myVarIndexes = lazyPub(() -> getVarIndexes(myScope));
     myDefinitionMaps = lazyPub(() -> getDefUseMaps(myFlow, myVarIndexes.getValue()));
+    myFlowAcyclicInstructions = lazyPub(() -> findNodesOutsideCycles(mapFlow(myFlow)));
     mySharedVariableInferenceCache = new SharedVariableInferenceCache(scope);
     myFromByElements = Arrays.stream(myFlow).filter(it -> it.getElement() != null).collect(Collectors.groupingBy(Instruction::getElement));
     List<TypeDfaState> noTypes = new ArrayList<>();
@@ -151,6 +152,10 @@ class InferenceCache {
                            acyclicInstructions,
                            interestingDescriptors,
                            dependentOnSharedVariables);
+  }
+
+  public Set<Instruction> getFlowAcyclicInstructions() {
+    return myFlowAcyclicInstructions.getValue();
   }
 
   @NotNull

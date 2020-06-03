@@ -1880,4 +1880,18 @@ class A {
 }
 ''', JAVA_LANG_INTEGER
   }
+
+  void 'test cyclic flow with closure'() {
+    allowNestedContext(2, testRootDisposable)
+    doTest '''
+def x
+for (def i = 0; i < 10; i++) {
+  1.with {
+    x = i
+    i++
+    <caret>x
+  }
+}
+''', JAVA_LANG_INTEGER
+  }
 }
