@@ -343,7 +343,13 @@ public class DisposableWrapperList<E> extends AbstractList<E> {
 
     @NotNull
     private String classInfo(@NotNull E o) {
-      return o + " (" + o.getClass().getName() + "; super interfaces: " + Arrays.toString(o.getClass().getInterfaces()) +")";
+      try {
+        return o + " (" + o.getClass() + "; super interfaces: " + Arrays.toString(o.getClass().getInterfaces()) +")";
+      }
+      catch (Throwable e) {
+        // ignore in case of Proxy object with poorly-implemented toString()
+        return e.getMessage();
+      }
     }
   }
 
