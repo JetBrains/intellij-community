@@ -58,7 +58,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       @Override
       public void modificationCountChanged() {
         myClassCache.clear();
-        final long now = modificationTracker.getJavaStructureModificationCount();
+        final long now = modificationTracker.getModificationCount();
         if (lastTimeSeen != now) {
           lastTimeSeen = now;
           myPackageCache.clear();

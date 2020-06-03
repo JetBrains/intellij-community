@@ -136,7 +136,7 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
       return myManager.getModificationTracker().getOutOfCodeBlockModificationCount();
     }
     if (dependency == PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT) {
-      return myManager.getModificationTracker().getJavaStructureModificationCount();
+      return myManager.getModificationTracker().getModificationCount();
     }
 
     return super.getTimeStamp(dependency);

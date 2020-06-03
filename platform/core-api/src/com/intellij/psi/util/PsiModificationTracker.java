@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * <ol>
  *   <li/> Get a stamp of current PSI state. This stamp is increased when PSI is modified, allowing other subsystems
  *   to check if PSI has changed since they accessed it last time. This can be used to flush and rebuild various internal caches.
- *   See {@link #getModificationCount()}, {@link #getJavaStructureModificationCount()}, {@link #getOutOfCodeBlockModificationCount()}
+ *   See {@link #getModificationCount()}
  *
  *   <li/> Make a {@link CachedValue} instance dependent on a specific PSI modification tracker.
  *   To achieve that, one should can one of the constants in this interface as {@link CachedValueProvider.Result}
@@ -65,7 +66,8 @@ public interface PsiModificationTracker extends ModificationTracker {
    * @deprecated rarely supported by JVM language plugins; also a wrong way for optimisations
    */
   @Deprecated
-  Key JAVA_STRUCTURE_MODIFICATION_COUNT = Key.create("JAVA_STRUCTURE_MODIFICATION_COUNT");
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  Key JAVA_STRUCTURE_MODIFICATION_COUNT = MODIFICATION_COUNT;
 
   /**
    * A topic to subscribe for all PSI modification count changes.
@@ -82,14 +84,14 @@ public interface PsiModificationTracker extends ModificationTracker {
   long getModificationCount();
 
   /**
-   * @return Same as {@link #getJavaStructureModificationCount()}, but also includes changes in non-Java files, e.g. XML. Rarely needed.
+   * @return Same as {@link #getModificationCount()}.
    * @deprecated rarely supported by language plugins; also a wrong way for optimisations
    */
   @Deprecated
   long getOutOfCodeBlockModificationCount();
 
   /**
-   * @return an object returning {@link #getOutOfCodeBlockModificationCount()}
+   * @return an object returning {@link #getModificationCount()}
    * @deprecated rarely supported by language plugins; also a wrong way for optimisations
    */
   @Deprecated
@@ -103,13 +105,15 @@ public interface PsiModificationTracker extends ModificationTracker {
    * @deprecated rarely supported by JVM language plugins; also a wrong way for optimisations
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   long getJavaStructureModificationCount();
 
   /**
-   * @return an object returning {@link #getJavaStructureModificationCount()}
+   * @return an object returning {@link #getModificationCount()}
    * @deprecated rarely supported by JVM language plugins; also a wrong way for optimisations
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   @NotNull
   ModificationTracker getJavaStructureModificationTracker();
 
