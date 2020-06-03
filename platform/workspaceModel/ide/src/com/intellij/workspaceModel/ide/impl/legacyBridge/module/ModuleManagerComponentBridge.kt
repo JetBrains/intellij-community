@@ -19,7 +19,7 @@ import com.intellij.openapi.module.impl.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
-import com.intellij.openapi.project.impl.ProjectServiceContainerInitializedListener
+import com.intellij.openapi.project.ProjectServiceContainerInitializedListener
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
@@ -127,15 +127,13 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
             executeOrQueueOnDispatchThread {
               incModificationCount()
 
-              val modulesToCheck = mutableSetOf<Module>()
-
               val unloadedModulesSetOriginal = unloadedModules.keys.toList()
               val unloadedModulesSet = unloadedModulesSetOriginal.toMutableSet()
               val oldModuleNames = mutableMapOf<Module, String>()
 
               for (change in moduleLibraryChanges) when (change) {
-                is EntityChange.Removed -> processModuleLibraryChange(change, modulesToCheck)
-                is EntityChange.Replaced -> processModuleLibraryChange(change, modulesToCheck)
+                is EntityChange.Removed -> processModuleLibraryChange(change)
+                is EntityChange.Replaced -> processModuleLibraryChange(change)
                 is EntityChange.Added -> Unit
               }
 
@@ -150,7 +148,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
               for (change in moduleLibraryChanges) when (change) {
                 is EntityChange.Removed -> Unit
                 is EntityChange.Replaced -> Unit
-                is EntityChange.Added -> processModuleLibraryChange(change, modulesToCheck)
+                is EntityChange.Added -> processModuleLibraryChange(change)
               }
 
               for (change in facetChanges) when (change) {
@@ -160,7 +158,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
               }
 
               // After every change processed
-              postProcessModules(modulesToCheck, oldModuleNames, unloadedModulesSet)
+              postProcessModules(oldModuleNames, unloadedModulesSet)
 
               incModificationCount()
             }
@@ -173,18 +171,8 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     }
   }
 
-  private fun postProcessModules(modulesToCheck: MutableSet<Module>,
-                                 oldModuleNames: MutableMap<Module, String>,
+  private fun postProcessModules(oldModuleNames: MutableMap<Module, String>,
                                  unloadedModulesSet: MutableSet<String>) {
-    for (module in modulesToCheck) {
-      val newModuleLibraries = ModuleRootComponentBridge.getInstance(module).newModuleLibraries
-      if (newModuleLibraries.isNotEmpty()) {
-        LOG.error("Not all module library instances were handled in change event. Leftovers:\n" +
-                  newModuleLibraries.joinToString(separator = "\n"))
-        newModuleLibraries.clear()
-      }
-    }
-
     if (oldModuleNames.isNotEmpty()) {
       project.messageBus
         .syncPublisher(ProjectTopics.MODULES)
@@ -252,7 +240,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     }
   }
 
-  private fun processModuleLibraryChange(change: EntityChange<LibraryEntity>, modulesToCheck: MutableSet<Module>) {
+  private fun processModuleLibraryChange(change: EntityChange<LibraryEntity>) {
     when (change) {
       is EntityChange.Removed -> {
         val moduleRootComponent = getModuleRootComponentByLibrary(change.entity)
@@ -278,7 +266,6 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       }
       is EntityChange.Added -> {
         val moduleRootComponent = getModuleRootComponentByLibrary(change.entity)
-        modulesToCheck.add(moduleRootComponent.module)
 
         val addedLibraryId = change.entity.persistentId()
         moduleRootComponent.moduleLibraryTable.addLibrary(addedLibraryId)

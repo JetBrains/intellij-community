@@ -31,8 +31,6 @@ class ModuleRootComponentBridge(
 
   private val orderRootsCache =  OrderRootsCache(currentModule)
 
-  internal val newModuleLibraries = mutableListOf<LibraryBridgeImpl>()
-
   private val modelValue = DisposableCachedValue(
     { moduleBridge.entityStorage },
     CachedValue { storage ->
