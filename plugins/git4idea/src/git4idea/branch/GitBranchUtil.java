@@ -146,7 +146,16 @@ public class GitBranchUtil {
                                                              @NotNull Collection<? extends GitRepository> repositories,
                                                              @NotNull String dialogTitle,
                                                              @Nullable String initialName) {
-    return new GitNewBranchDialog(project, repositories, dialogTitle, initialName, true, false).showAndGetOptions();
+    return getNewBranchNameFromUser(project, repositories, dialogTitle, initialName, false);
+  }
+
+  @Nullable
+  public static GitNewBranchOptions getNewBranchNameFromUser(@NotNull Project project,
+                                                             @NotNull Collection<? extends GitRepository> repositories,
+                                                             @NotNull String dialogTitle,
+                                                             @Nullable String initialName,
+                                                             boolean showTrackingOption) {
+    return new GitNewBranchDialog(project, repositories, dialogTitle, initialName, true, false, showTrackingOption).showAndGetOptions();
   }
 
   /**
