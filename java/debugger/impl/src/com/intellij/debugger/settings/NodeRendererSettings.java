@@ -569,6 +569,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
             createLabelRenderer(" size = ", "size()", null),
             createExpressionArrayChildrenRenderer("toArray()", "!isEmpty()", arrayRenderer));
       setClassName(CommonClassNames.JAVA_UTIL_LIST);
+      setIsApplicableChecker(type -> DebuggerUtilsAsync.instanceOf(type, getClassName()));
     }
 
     @Override
