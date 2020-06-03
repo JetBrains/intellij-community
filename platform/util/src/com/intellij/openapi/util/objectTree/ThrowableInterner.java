@@ -138,5 +138,6 @@ public class ThrowableInterner {
     for (Throwable t : myTraceInterner.getValues()) {
       clearBacktrace(t);
     }
+    myTraceInterner.clear();
   }
 }
