@@ -1,18 +1,28 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configuration.RunConfigurationExtensionBase;
 import com.intellij.execution.configuration.RunConfigurationExtensionsManager;
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class RunConfigurationFragmentedEditor<Settings extends FragmentedSettings> extends FragmentedSettingsEditor<Settings> {
-
+  private final static Logger LOG = Logger.getInstance(RunConfigurationFragmentedEditor.class);
   private final Settings myRunConfiguration;
   private final RunConfigurationExtensionsManager<RunConfigurationBase<?>, RunConfigurationExtensionBase<RunConfigurationBase<?>>> myExtensionsManager;
 
@@ -27,7 +37,61 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends Fragment
     for (SettingsEditorFragment<RunConfigurationBase<?>, ?> wrapper : myExtensionsManager.createFragments((RunConfigurationBase<?>)myRunConfiguration)) {
       fragments.add((SettingsEditorFragment<Settings, ?>)wrapper);
     }
+    addRunnerSettingsEditors((RunConfigurationBase<?>)myRunConfiguration, fragments);
     return fragments;
+  }
+
+  private void addRunnerSettingsEditors(RunConfigurationBase<?> runConfiguration, List<SettingsEditorFragment<Settings, ?>> fragments) {
+    for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensionList()) {
+      ProgramRunner<RunnerSettings> runner = ProgramRunner.getRunner(executor.getId(), runConfiguration);
+      if (runner == null) {
+        continue;
+      }
+      SettingsEditor<ConfigurationPerRunnerSettings> configEditor = runConfiguration.getRunnerSettingsEditor(runner);
+      SettingsEditor<RunnerSettings> runnerEditor = runner.getSettingsEditor(executor, runConfiguration);
+      if (configEditor == null && runnerEditor == null) {
+        continue;
+      }
+      JComponent component;
+      if (configEditor == null) {
+        component = runnerEditor.getComponent();
+      }
+      else if (runnerEditor == null) {
+        component = configEditor.getComponent();
+      }
+      else {
+        component = new JPanel(new BorderLayout());
+        component.add(configEditor.getComponent(), BorderLayout.CENTER);
+        component.add(runnerEditor.getComponent(), BorderLayout.SOUTH);
+      }
+      fragments.add(new RunConfigurationEditorFragment<Settings, JComponent>(executor.getId() + ".config", executor.getStartActionText(),
+                                                                             ExecutionBundle.message("run.configuration.startup.connection.rab.title"), component, 0) {
+        @Override
+        public void resetEditorFrom(@NotNull RunnerAndConfigurationSettingsImpl s) {
+          if (configEditor != null) {
+            configEditor.resetFrom(s.getConfigurationSettings(runner));
+          }
+          if (runnerEditor != null) {
+            runnerEditor.resetFrom(s.getRunnerSettings(runner));
+          }
+        }
+
+        @Override
+        public void applyEditorTo(@NotNull RunnerAndConfigurationSettingsImpl s) {
+          try {
+            if (configEditor != null) {
+              configEditor.applyTo(s.getConfigurationSettings(runner));
+            }
+            if (runnerEditor != null) {
+              runnerEditor.applyTo(s.getRunnerSettings(runner));
+            }
+          }
+          catch (ConfigurationException e) {
+            LOG.error(e);
+          }
+        }
+      });
+    }
   }
 
   protected abstract List<SettingsEditorFragment<Settings, ?>> createRunFragments();
