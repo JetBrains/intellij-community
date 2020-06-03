@@ -58,7 +58,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class RecursionManager {
   private static final Logger LOG = Logger.getInstance(RecursionManager.class);
-  private static final ThreadLocal<CalculationStack> ourStack = ThreadLocal.withInitial(CalculationStack::new);
+  private static final ThreadLocal<CalculationStack> ourStack = ThreadLocal.withInitial(() -> new CalculationStack());
   private static final AtomicBoolean ourAssertOnPrevention = new AtomicBoolean();
   private static final AtomicBoolean ourAssertOnMissedCache = new AtomicBoolean();
 
