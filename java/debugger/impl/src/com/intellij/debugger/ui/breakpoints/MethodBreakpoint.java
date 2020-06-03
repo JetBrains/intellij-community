@@ -59,10 +59,12 @@ import org.jetbrains.org.objectweb.asm.MethodVisitor;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 
@@ -564,23 +566,23 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       MultiMap<ReferenceType, ReferenceType> inheritance = MultiMap.createConcurrentSet();
       List<ReferenceType> allTypes = classType.virtualMachine().allClasses();
       int allSize = allTypes.size();
-      CompletableFuture[] futures = new CompletableFuture[allSize];
-      for (int i = 0; i < allSize; i++) {
+      List<CompletableFuture> futures = new ArrayList<>();
+      AtomicInteger processed = new AtomicInteger();
+      for (ReferenceType type : allTypes) {
         if (progressIndicator.isCanceled()) {
           return;
         }
-        ReferenceType type = allTypes.get(i);
         if (type.isPrepared()) {
           try {
-            futures[i] = DebuggerUtilsAsync.supertypes(type).thenAccept(r -> r.forEach(st -> inheritance.putValue(st, type)));
+            futures.add(DebuggerUtilsAsync.supertypes(type)
+                          .thenAccept(supertypes -> supertypes.forEach(st -> inheritance.putValue(st, type)))
+                          .thenRun(() -> updateProgress(progressIndicator, processed.incrementAndGet(), allSize)));
           }
           catch (ObjectCollectedException ignored) {
           }
         }
-        progressIndicator.setText2(i + "/" + allSize);
-        progressIndicator.setFraction((double)i / allSize);
       }
-      CompletableFuture.allOf(futures).join();
+      CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
       List<ReferenceType> types = StreamEx.ofTree(classType, t -> StreamEx.of(inheritance.get(t))).skip(1).toList();
 
       if (LOG.isDebugEnabled()) {
@@ -593,22 +595,26 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
 
       ClassesByNameProvider classesByName = ClassesByNameProvider.createCache(allTypes);
 
-      for (int i = 0; i < types.size(); i++) {
+      int typesSize = types.size();
+      for (int i = 0; i < typesSize; i++) {
         if (progressIndicator.isCanceled()) {
           return;
         }
         consumer.accept(types.get(i), classesByName);
-
-        progressIndicator.setText2(i + "/" + types.size());
-        progressIndicator.setFraction((double)i / types.size());
+        updateProgress(progressIndicator, i, typesSize);
       }
 
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Created " + types.size() + " requests in " + (System.currentTimeMillis() - start) + "ms");
+        LOG.debug("Created " + typesSize + " requests in " + (System.currentTimeMillis() - start) + "ms");
       }
     }
     finally {
       progressIndicator.stop();
     }
+  }
+
+  private static void updateProgress(ProgressIndicator progressIndicator, int current, int total) {
+    progressIndicator.setText2(current + "/" + total);
+    progressIndicator.setFraction((double)current / total);
   }
 }
