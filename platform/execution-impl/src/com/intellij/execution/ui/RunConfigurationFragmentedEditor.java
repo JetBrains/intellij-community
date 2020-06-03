@@ -21,7 +21,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class RunConfigurationFragmentedEditor<Settings extends FragmentedSettings> extends FragmentedSettingsEditor<Settings> {
+public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfigurationBase<?>> extends FragmentedSettingsEditor<Settings> {
   private final static Logger LOG = Logger.getInstance(RunConfigurationFragmentedEditor.class);
   private final Settings myRunConfiguration;
   private final RunConfigurationExtensionsManager<RunConfigurationBase<?>, RunConfigurationExtensionBase<RunConfigurationBase<?>>> myExtensionsManager;
@@ -34,21 +34,21 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends Fragment
   @Override
   protected final List<SettingsEditorFragment<Settings, ?>> createFragments() {
     List<SettingsEditorFragment<Settings, ?>> fragments = new ArrayList<>(createRunFragments());
-    for (SettingsEditorFragment<RunConfigurationBase<?>, ?> wrapper : myExtensionsManager.createFragments((RunConfigurationBase<?>)myRunConfiguration)) {
+    for (SettingsEditorFragment<RunConfigurationBase<?>, ?> wrapper : myExtensionsManager.createFragments(myRunConfiguration)) {
       fragments.add((SettingsEditorFragment<Settings, ?>)wrapper);
     }
-    addRunnerSettingsEditors((RunConfigurationBase<?>)myRunConfiguration, fragments);
+    addRunnerSettingsEditors(fragments);
     return fragments;
   }
 
-  private void addRunnerSettingsEditors(RunConfigurationBase<?> runConfiguration, List<SettingsEditorFragment<Settings, ?>> fragments) {
+  private void addRunnerSettingsEditors(List<SettingsEditorFragment<Settings, ?>> fragments) {
     for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensionList()) {
-      ProgramRunner<RunnerSettings> runner = ProgramRunner.getRunner(executor.getId(), runConfiguration);
+      ProgramRunner<RunnerSettings> runner = ProgramRunner.getRunner(executor.getId(), myRunConfiguration);
       if (runner == null) {
         continue;
       }
-      SettingsEditor<ConfigurationPerRunnerSettings> configEditor = runConfiguration.getRunnerSettingsEditor(runner);
-      SettingsEditor<RunnerSettings> runnerEditor = runner.getSettingsEditor(executor, runConfiguration);
+      SettingsEditor<ConfigurationPerRunnerSettings> configEditor = myRunConfiguration.getRunnerSettingsEditor(runner);
+      SettingsEditor<RunnerSettings> runnerEditor = runner.getSettingsEditor(executor, myRunConfiguration);
       if (configEditor == null && runnerEditor == null) {
         continue;
       }
