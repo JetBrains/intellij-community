@@ -1584,7 +1584,7 @@ public final class PluginManagerCore {
                                                                                withOptionalDeps,
                                                                                findPluginByModuleDependency(ALL_MODULES_MARKER) != null);
     Graph<IdeaPluginDescriptorImpl> graph = GraphGenerator.generate(semiGraph);
-    Set<IdeaPluginDescriptorImpl> dependencies = new HashSet<>();
+    Set<IdeaPluginDescriptorImpl> dependencies = new LinkedHashSet<>();
     GraphAlgorithms.getInstance().collectOutsRecursively(graph, rootDescriptor, dependencies);
     for (IdeaPluginDescriptorImpl dependency : dependencies) {
       if (dependency == rootDescriptor) continue;
