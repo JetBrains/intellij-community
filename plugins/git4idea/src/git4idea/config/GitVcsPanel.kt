@@ -134,9 +134,9 @@ internal class GitVcsPanel(private val project: Project) :
                                                       disposable: Disposable) :
     InlineErrorNotifier(inlineComponent, modalityState, disposable) {
     @CalledInAny
-    override fun showError(text: String, description: String?, fixOption: ErrorNotifier.FixOption) {
+    override fun showError(text: String, description: String?, fixOption: ErrorNotifier.FixOption?) {
       if (fixOption is ErrorNotifier.FixOption.Configure) {
-        showError(text)
+        super.showError(text, description, null)
       }
       else {
         super.showError(text, description, fixOption)

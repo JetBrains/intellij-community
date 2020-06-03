@@ -40,10 +40,10 @@ interface ErrorNotifier {
   @CalledInAny
   fun showError(@Nls(capitalization = Sentence) text: String,
                 @Nls(capitalization = Sentence) description: String? = null,
-                fixOption: FixOption)
+                fixOption: FixOption?)
 
   @CalledInAny
-  fun showError(@Nls(capitalization = Sentence) text: String, fixOption: FixOption) {
+  fun showError(@Nls(capitalization = Sentence) text: String, fixOption: FixOption?) {
     showError(text, null, fixOption)
   }
 

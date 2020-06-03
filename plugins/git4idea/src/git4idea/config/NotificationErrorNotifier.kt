@@ -14,11 +14,13 @@ import org.jetbrains.annotations.Nls
 internal class NotificationErrorNotifier(val project: Project) : ErrorNotifier {
   override fun showError(@Nls(capitalization = Nls.Capitalization.Sentence) text: String,
                          @Nls(capitalization = Nls.Capitalization.Sentence) description: String?,
-                         fixOption: ErrorNotifier.FixOption) {
+                         fixOption: ErrorNotifier.FixOption?) {
     val notification = createNotification(text, description)
-    notification.addAction(NotificationAction.createSimpleExpiring(fixOption.text) {
-      fixOption.fix()
-    })
+    if (fixOption != null) {
+      notification.addAction(NotificationAction.createSimpleExpiring(fixOption.text) {
+        fixOption.fix()
+      })
+    }
     GitExecutableProblemsNotifier.notify(project, notification)
   }
 
