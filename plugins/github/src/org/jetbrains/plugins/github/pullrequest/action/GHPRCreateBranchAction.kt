@@ -4,11 +4,9 @@ package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.vcs.VcsNotifier
 import git4idea.branch.GitBranchUiHandlerImpl
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitBranchWorker
@@ -41,7 +39,6 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
     if (!options.checkout) {
       object : Task.Backgroundable(project, GithubBundle.message("pull.request.branch.checkout.create.task.title"), true) {
         private val git = Git.getInstance()
-        private val vcsNotifier = project.service<VcsNotifier>()
 
         override fun run(indicator: ProgressIndicator) {
           val sha = GithubAsyncUtil.awaitFuture(indicator, dataProvider.detailsData.loadDetails()).headRefOid
@@ -51,20 +48,11 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
           GitBranchWorker(project, git, GitBranchUiHandlerImpl(project, git, indicator))
             .createBranch(options.name, mapOf(repository to sha))
         }
-
-        override fun onSuccess() {
-          vcsNotifier.notifySuccess(GithubBundle.message("pull.request.branch.checkout.created", options.name))
-        }
-
-        override fun onThrowable(error: Throwable) {
-          vcsNotifier.notifyError(GithubBundle.message("pull.request.branch.checkout.create.failed"), error.message.orEmpty())
-        }
       }.queue()
     }
     else {
       object : Task.Backgroundable(project, GithubBundle.message("pull.request.branch.checkout.task.title"), true) {
         private val git = Git.getInstance()
-        private val vcsNotifier = project.service<VcsNotifier>()
 
         override fun run(indicator: ProgressIndicator) {
           val sha = GithubAsyncUtil.awaitFuture(indicator, dataProvider.detailsData.loadDetails()).headRefOid
@@ -73,14 +61,6 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
           indicator.text = GithubBundle.message("pull.request.branch.checkout.task.indicator")
           GitBranchWorker(project, git, GitBranchUiHandlerImpl(project, git, indicator))
             .checkoutNewBranchStartingFrom(options.name, sha, listOf(repository))
-        }
-
-        override fun onSuccess() {
-          vcsNotifier.notifySuccess(GithubBundle.message("pull.request.branch.checkout.checked.out", options.name))
-        }
-
-        override fun onThrowable(error: Throwable) {
-          vcsNotifier.notifyError(GithubBundle.message("pull.request.branch.checkout.failed"), error.message.orEmpty())
         }
       }.queue()
     }
