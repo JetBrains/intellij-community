@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
@@ -202,7 +203,9 @@ public final class GitVersion implements Comparable<GitVersion> {
    */
   public boolean isSupported() {
     Type type = getType();
-    return type != Type.NULL && type != Type.WSL1 && compareTo(MIN) >= 0;
+    return type != Type.NULL &&
+           (Registry.is("git.allow.wsl1.executables") || type != Type.WSL1) &&
+           compareTo(MIN) >= 0;
   }
 
   /**

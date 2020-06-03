@@ -270,9 +270,9 @@ public class GitExecutableManager {
     if (result.getResult() == null) {
       Exception e = result.getException();
       if (e instanceof NoSuchFileException && executable.getExePath().equals(GitExecutableDetector.getDefaultExecutable())) {
-        throw new GitNotInstalledException("Git not installed", e);
+        throw new GitNotInstalledException(GitBundle.message("executable.error.git.not.installed"), e);
       }
-      throw new GitVersionIdentificationException("Cannot identify version of git executable " + executable, e);
+      throw new GitVersionIdentificationException(GitBundle.message("git.executable.validation.cant.identify.executable.message", executable), e);
     }
     else {
       return result.getResult();
