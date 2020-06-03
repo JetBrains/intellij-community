@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,6 +30,7 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
@@ -36,6 +38,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.jar.JarFile;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -306,7 +309,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @NotNull
-  private static VirtualFile findByPath(String path) {
+  private static VirtualFile findByPath(@NotNull String path) {
     VirtualFile file = JarFileSystem.getInstance().findFileByPath(path);
     assertNotNull(file);
     assertPathsEqual(path, file.getPath());
@@ -323,5 +326,45 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     public int read(byte @NotNull [] b, int off, int len) {
       return len;
     }
+  }
+
+  @Test
+  public void testCrazyBackSlashesInZipEntriesMustBeTreatedAsRegularDirectorySeparators() {
+    VirtualFile vFile = createJar("src\\core\\log/", "src\\core\\log/log4sql_conf.jsp", "META-INF/MANIFEST.MF");
+    String jarPath = vFile.getPath();
+    VirtualFile manifest = findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + JarFile.MANIFEST_NAME);
+    assertNotNull(manifest);
+
+    VirtualFile jarRoot = JarFileSystem.getInstance().findFileByPath(jarPath + JarFileSystem.JAR_SEPARATOR);
+    assertNotNull(jarRoot);
+    assertNotNull(findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + "src/core/log/log4sql_conf.jsp"));
+    assertNull(jarRoot.findChild("src\\core\\log"));
+    VirtualFile src = jarRoot.findChild("src");
+    assertNotNull(src);
+    VirtualFile core = src.findChild("core");
+    assertNotNull(core);
+    VirtualFile log = core.findChild("log");
+    assertNotNull(log);
+    VirtualFile jsp = log.findChild("log4sql_conf.jsp");
+    assertNotNull(jsp);
+  }
+
+  @Test
+  public void testCrazyJarWithDuplicateFileAndDirEntriesMustNotCrashAnything() {
+    VirtualFile vFile = createJar("com", "/com/Hello.class");
+    assertNotNull(vFile);
+
+    VirtualFile jarRoot = JarFileSystem.getInstance().getRootByLocal(vFile);
+    assertNotNull(jarRoot);
+    String[] children = JarFileSystem.getInstance().list(jarRoot);
+    assertEquals("com", UsefulTestCase.assertOneElement(children));
+    assertEquals("Hello.class", UsefulTestCase.assertOneElement(JarFileSystem.getInstance().list(jarRoot.findFileByRelativePath("com"))));
+  }
+
+  @NotNull
+  private VirtualFile createJar(String @NotNull ... entryNames) {
+    String[] namesAndTexts = Arrays.stream(entryNames).flatMap(n -> Stream.of(n, null)).toArray(String[]::new);
+    File jar = IoTestUtil.createTestJar(tempDir.newFile("p.jar"), namesAndTexts);
+    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar);
   }
 }
