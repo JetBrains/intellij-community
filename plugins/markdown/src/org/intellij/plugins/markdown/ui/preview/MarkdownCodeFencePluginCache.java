@@ -56,10 +56,10 @@ public class MarkdownCodeFencePluginCache implements Disposable {
 
   private static List<File> getPluginSystemPaths() {
     return Arrays.stream(MarkdownCodeFencePluginGeneratingProvider.Companion.getEP_NAME().getExtensions())
-                 .filter(MarkdownCodeFenceCacheableProvider.class::isInstance)
-                 .map(MarkdownCodeFenceCacheableProvider.class::cast)
-                 .map(provider -> new File(provider.getCacheRootPath()))
-                 .collect(Collectors.toList());
+      .filter(MarkdownCodeFenceCacheableProvider.class::isInstance)
+      .map(MarkdownCodeFenceCacheableProvider.class::cast)
+      .map(provider -> provider.getCacheRootPath().toFile())
+      .collect(Collectors.toList());
   }
 
   public Collection<File> collectFilesToRemove() {
@@ -77,10 +77,10 @@ public class MarkdownCodeFencePluginCache implements Disposable {
           continue;
         }
 
-        for (File imgFile : getChildren(sourceFileCacheDirectory)) {
-          if (!isCachedSourceFile(sourceFileCacheDirectory, sourceFile) || aliveCachedFiles.contains(imgFile)) continue;
+        for (File file : getChildren(sourceFileCacheDirectory)) {
+          if (!isCachedSourceFile(sourceFileCacheDirectory, sourceFile) || aliveCachedFiles.contains(file)) continue;
 
-          filesToDelete.add(imgFile);
+          filesToDelete.add(file);
         }
       }
     }
@@ -103,16 +103,18 @@ public class MarkdownCodeFencePluginCache implements Disposable {
 
   private void scheduleClearCache() {
     myAlarm.addRequest(() -> {
-      Collection<File> filesToDelete = ContainerUtil.union(myAdditionalCacheToDelete, collectFilesToRemove());
-      FileUtil.asyncDelete(filesToDelete);
-
-      clear();
+      clearCache();
 
       scheduleClearCache();
     }, Registry.intValue("markdown.clear.cache.interval"));
   }
 
-  private void clear() {
+  public synchronized void clearCache() {
+    Collection<File> filesToDelete = ContainerUtil.union(myAdditionalCacheToDelete, collectFilesToRemove());
+    for (File file: filesToDelete) {
+      FileUtil.delete(file);
+    }
+
     myAdditionalCacheToDelete.clear();
     myCodeFencePluginCaches.clear();
   }

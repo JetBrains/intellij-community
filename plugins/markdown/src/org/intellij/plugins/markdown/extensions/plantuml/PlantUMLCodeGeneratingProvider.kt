@@ -4,44 +4,44 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceCacheableProvider
 import org.intellij.plugins.markdown.settings.MarkdownSettingsConfigurable
-import org.intellij.plugins.markdown.ui.preview.MarkdownCodeFencePluginCache.MARKDOWN_FILE_PATH_KEY
 import org.intellij.plugins.markdown.ui.preview.MarkdownCodeFencePluginCacheCollector
-import org.intellij.plugins.markdown.ui.preview.MarkdownUtil
 import java.io.File
 import java.io.IOException
 import java.net.URLClassLoader
 
-internal class PlantUMLProvider(private var cacheCollector: MarkdownCodeFencePluginCacheCollector?) : MarkdownCodeFenceCacheableProvider {
+internal class PlantUMLCodeGeneratingProvider(collector: MarkdownCodeFencePluginCacheCollector?)
+  : MarkdownCodeFenceCacheableProvider(collector) {
   // this empty constructor is needed for the component initialization
   constructor() : this(null)
 
-  override fun generateHtml(text: String): String {
-    val newDiagramFile = File("${getCacheRootPath()}${File.separator}" +
-                              "${MarkdownUtil.md5(cacheCollector?.file?.path, MARKDOWN_FILE_PATH_KEY)}${File.separator}" +
-                              "${MarkdownUtil.md5(text, "plantUML-diagram")}.png")
-
-    cacheDiagram(newDiagramFile.absolutePath, text)
-    cacheCollector?.addAliveCachedFile(newDiagramFile)
-
-    return "<img src=\"${newDiagramFile.toURI()}\"/>"
+  override fun isApplicable(language: String): Boolean {
+    return ((language == "puml" || language == "plantuml") && MarkdownSettingsConfigurable.isPlantUMLAvailable())
   }
 
-  private fun cacheDiagram(newDiagramPath: String, text: String) {
-    if (!FileUtil.exists(newDiagramPath)) generateDiagram(text, newDiagramPath)
+  override fun generateHtml(language: String, raw: String): String {
+    val key = getUniqueFile(language, raw, "png").toFile()
+
+    cacheDiagram(key, raw)
+    collector?.addAliveCachedFile(this, key)
+
+    return "<img src=\"${key.toURI()}\"/>"
+  }
+
+  override fun onLAFChanged() {}
+
+  private fun cacheDiagram(path: File, text: String) {
+    if (!path.exists()) generateDiagram(text, path)
   }
 
   @Throws(IOException::class)
-  private fun generateDiagram(text: CharSequence, diagramPath: String) {
+  private fun generateDiagram(text: CharSequence, diagramPath: File) {
     var innerText: String = text.toString().trim()
     if (!innerText.startsWith("@startuml")) innerText = "@startuml\n$innerText"
     if (!innerText.endsWith("@enduml")) innerText += "\n@enduml"
 
-    FileUtil.createParentDirs(File(diagramPath))
+    FileUtil.createParentDirs(diagramPath)
     storeDiagram(innerText, diagramPath)
   }
-
-  override fun isApplicable(language: String): Boolean = (language == "puml" || language == "plantuml")
-                                                         && MarkdownSettingsConfigurable.isPlantUMLAvailable()
 
   companion object {
     private val LOG = Logger.getInstance(PlantUMLCodeFenceLanguageProvider::class.java)
@@ -72,10 +72,9 @@ internal class PlantUMLProvider(private var cacheCollector: MarkdownCodeFencePlu
     }
   }
 
-  @Throws(IOException::class)
-  private fun storeDiagram(source: String, fileName: String) {
+  private fun storeDiagram(source: String, fileName: File) {
     try {
-      generateImageMethod?.invoke(sourceStringReader?.getConstructor(String::class.java)?.newInstance(source), File(fileName))
+      generateImageMethod?.invoke(sourceStringReader?.getConstructor(String::class.java)?.newInstance(source), fileName)
     }
     catch (e: Exception) {
       LOG.warn("Cannot save diagram PlantUML diagram. ", e)
