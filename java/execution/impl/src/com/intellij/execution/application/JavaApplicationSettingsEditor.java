@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.application;
 
-import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.diagnostic.logging.LogsFragment;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaRunConfigurationExtensionManager;
@@ -31,8 +30,12 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
   protected List<SettingsEditorFragment<ApplicationConfiguration, ?>> createRunFragments() {
     List<SettingsEditorFragment<ApplicationConfiguration, ?>> fragments = new ArrayList<>();
 
-    SettingsEditorFragment<ApplicationConfiguration, LabeledComponent<ModuleDescriptionsComboBox>> moduleClasspath = CommonJavaFragments.moduleClasspath(myProject);
-    Computable<Boolean> hasModule = () -> moduleClasspath.component().getComponent().getSelectedModule() != null;
+    ModuleClasspathCombo.Item item = new ModuleClasspathCombo.Item(ExecutionBundle.message("application.configuration.include.provided.scope"));
+    SettingsEditorFragment<ApplicationConfiguration, LabeledComponent<ModuleClasspathCombo>>
+      moduleClasspath = CommonJavaFragments.moduleClasspath(item, configuration -> configuration.isProvidedScopeIncluded(),
+                                                            (configuration, value) -> configuration.setIncludeProvidedScope(value));
+    ModuleClasspathCombo classpathCombo = moduleClasspath.component().getComponent();
+    Computable<Boolean> hasModule = () -> classpathCombo.getSelectedModule() != null;
 
     fragments.add(CommonTags.parallelRun());
     fragments.add(CommonParameterFragments.createRedirectFragment(hasModule));
@@ -71,8 +74,8 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
                                                configuration -> isNotEmpty(configuration.getVMParameters())));
     fragments.add(moduleClasspath);
 
-    ShortenCommandLineModeCombo combo =
-      new ShortenCommandLineModeCombo(myProject, jrePathEditor, moduleClasspath.component().getComponent());
+    ShortenCommandLineModeCombo combo = new ShortenCommandLineModeCombo(myProject, jrePathEditor, () -> classpathCombo.getSelectedModule(),
+                                                                        listener -> classpathCombo.addActionListener(listener));
     fragments.add(new SettingsEditorFragment<>("shorten.command.line",
                                                ExecutionBundle.message("application.configuration.shorten.command.line"),
                                                group, LabeledComponent.create(combo, ExecutionBundle.message("application.configuration.shorten.command.line.label"), BorderLayout.WEST),

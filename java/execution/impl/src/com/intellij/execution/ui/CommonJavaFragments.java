@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
-import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
@@ -10,7 +9,6 @@ import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 
 import static com.intellij.util.containers.ContainerUtil.exists;
 
@@ -80,17 +80,16 @@ public class CommonJavaFragments {
     };
   }
 
-  public static <S extends ModuleBasedConfiguration> SettingsEditorFragment<S, LabeledComponent<ModuleDescriptionsComboBox>> moduleClasspath(Project project) {
-    ModuleDescriptionsComboBox comboBox = new ModuleDescriptionsComboBox();
-    ConfigurationModuleSelector selector = new ConfigurationModuleSelector(project, comboBox);
-    LabeledComponent<ModuleDescriptionsComboBox> component = LabeledComponent.create(comboBox, ExecutionBundle.message("use.module.classpath"));
-    component.setLabelLocation(BorderLayout.WEST);
+  public static <S extends ModuleBasedConfiguration> SettingsEditorFragment<S, LabeledComponent<ModuleClasspathCombo>> moduleClasspath(
+    ModuleClasspathCombo.Item option, Predicate<S> getter, BiConsumer<S, Boolean> setter) {
+    ModuleClasspathCombo comboBox = new ModuleClasspathCombo(option);
+    LabeledComponent<ModuleClasspathCombo> component = LabeledComponent.create(comboBox, ExecutionBundle.message("use.module.classpath"), BorderLayout.WEST);
     return new SettingsEditorFragment<>("module.classpath",
                                         ExecutionBundle.message("application.configuration.use.classpath.and.jdk.of.module"),
                                         ExecutionBundle.message("group.java.options"),
                                         component, 0,
-                                        (s, c) -> selector.reset(s),
-                                        (s, c) -> selector.applyTo(s),
+                                        (s, c) -> { comboBox.reset(s); option.myOptionValue = getter.test(s); },
+                                        (s, c) -> { comboBox.applyTo(s); setter.accept(s, option.myOptionValue); },
                                         s -> s.getConfigurationModule() != null);
   }
 }
