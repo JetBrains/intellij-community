@@ -8,13 +8,16 @@ import com.intellij.workspaceModel.storage.impl.indices.VirtualFileUrlNullablePr
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileUrlProperty
 import com.intellij.workspaceModel.storage.impl.references.ManyToOne
 import com.intellij.workspaceModel.storage.impl.references.MutableManyToOne
-import com.intellij.workspaceModel.storage.impl.references.OneToMany
 
 internal data class SampleEntitySource(val name: String) : EntitySource
 
-internal object MySource : EntitySource
+internal object MySource : EntitySource {
+  override fun toString(): String = "MySource"
+}
 
-internal object AnotherSource : EntitySource
+internal object AnotherSource : EntitySource {
+  override fun toString(): String = "AnotherSource"
+}
 
 // ---------------------------------------
 
