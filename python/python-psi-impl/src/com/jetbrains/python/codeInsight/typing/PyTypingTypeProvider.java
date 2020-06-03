@@ -123,6 +123,12 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .put("frozenset", "FrozenSet")
     .build();
 
+  public static final ImmutableMap<String, String> TYPING_BUILTINS_GENERIC_ALIASES = ImmutableMap.<String, String>builder()
+    .putAll(TYPING_COLLECTION_CLASSES.entrySet())
+    .put("type", "Type")
+    .put("tuple", "Tuple")
+    .build();
+
   public static final ImmutableSet<String> GENERIC_CLASSES = ImmutableSet.<String>builder()
     // special forms
     .add(TUPLE, GENERIC, PROTOCOL, CALLABLE, TYPE, CLASS_VAR, FINAL, LITERAL)

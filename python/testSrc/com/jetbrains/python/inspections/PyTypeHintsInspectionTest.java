@@ -921,6 +921,23 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  public void testParameterizedBuiltinCollectionsBefore39() {
+    runWithLanguageLevel(LanguageLevel.PYTHON38, () -> {
+      doTestByText("xs: <warning descr=\"Builtin 'type' cannot be parameterized directly\">type[str]</warning>\n" +
+                   "ys: <warning descr=\"Builtin 'tuple' cannot be parameterized directly\">tuple[int, str]</warning>\n" +
+                   "zs: <warning descr=\"Builtin 'dict' cannot be parameterized directly\">dict[int, str]</warning>");
+    });
+  }
+
+  // PY-42418
+  public void testParameterizedBuiltinCollections() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doTestByText("xs: type[str]\n" +
+                   "ys: tuple[int, str]\n" +
+                   "zs: dict[int, str]");
+    });
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
