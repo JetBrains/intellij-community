@@ -5,9 +5,12 @@ import com.google.common.collect.BiMap
 import com.google.common.collect.HashBiMap
 import com.intellij.util.containers.HashSetInterner
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.impl.ConnectionId.ConnectionType
 import com.intellij.workspaceModel.storage.impl.containers.*
-import com.intellij.workspaceModel.storage.impl.containers.LinkedBidirectionalMap
 
+/**
+ * [isChildNullable] property is ignored for [ConnectionType.ONE_TO_ABSTRACT_MANY] and [ConnectionType.ONE_TO_MANY]
+ */
 internal class ConnectionId private constructor(
   val parentClass: Int,
   val childClass: Int,
@@ -21,6 +24,22 @@ internal class ConnectionId private constructor(
     ONE_TO_ABSTRACT_MANY,
     ABSTRACT_ONE_TO_ONE
   }
+
+  /**
+   * This function returns true if this connection allows removing children of parent.
+   *
+   * E.g. child is nullable for parent entity, so the child can be safely removed.
+   */
+  fun canRemoveChild(): Boolean {
+    return connectionType == ConnectionType.ONE_TO_ABSTRACT_MANY || connectionType == ConnectionType.ONE_TO_MANY || isChildNullable
+  }
+
+  /**
+   * This function returns true if this connection allows removing parent of child.
+   *
+   * E.g. parent is optional (nullable) for child entity, so the parent can be safely removed.
+   */
+  fun canRemoveParent(): Boolean = isParentNullable
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
