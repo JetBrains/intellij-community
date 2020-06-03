@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class ExpressionChildrenRenderer extends TypeRenderer implements ChildrenRenderer {
+public final class ExpressionChildrenRenderer extends ReferenceRenderer implements ChildrenRenderer {
   public static final @NonNls String UNIQUE_ID = "ExpressionChildrenRenderer";
   private static final Key<Value> EXPRESSION_VALUE = new Key<>("EXPRESSION_VALUE");
   private static final Key<NodeRenderer> LAST_CHILDREN_RENDERER = new Key<>("LAST_CHILDREN_RENDERER");

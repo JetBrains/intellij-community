@@ -61,8 +61,8 @@ public class CompoundReferenceRenderer extends NodeRendererImpl implements FullV
     myLabelRenderer = labelRenderer;
     myChildrenRenderer = childrenRenderer;
     myProperties.setClassName(CommonClassNames.JAVA_LANG_OBJECT);
-    LOG.assertTrue(labelRenderer == null || labelRenderer instanceof TypeRenderer);
-    LOG.assertTrue(childrenRenderer == null || childrenRenderer instanceof TypeRenderer);
+    LOG.assertTrue(labelRenderer == null || labelRenderer instanceof ReferenceRenderer);
+    LOG.assertTrue(childrenRenderer == null || childrenRenderer instanceof ReferenceRenderer);
   }
 
   public CompoundReferenceRenderer(String name, ValueLabelRenderer labelRenderer, ChildrenRenderer childrenRenderer) {
@@ -120,8 +120,8 @@ public class CompoundReferenceRenderer extends NodeRendererImpl implements FullV
     myLabelRenderer = isBaseRenderer(labelRenderer) ? null : labelRenderer;
     final ValueLabelRenderer currentRenderer = getLabelRenderer();
     if (prevRenderer != currentRenderer) {
-      if (currentRenderer instanceof TypeRenderer) {
-        ((TypeRenderer)currentRenderer).setClassName(getClassName());
+      if (currentRenderer instanceof ReferenceRenderer) {
+        ((ReferenceRenderer)currentRenderer).setClassName(getClassName());
       }
     }
   }
@@ -131,8 +131,8 @@ public class CompoundReferenceRenderer extends NodeRendererImpl implements FullV
     myChildrenRenderer = isBaseRenderer(childrenRenderer) ? null : childrenRenderer;
     final ChildrenRenderer currentRenderer = getChildrenRenderer();
     if (prevRenderer != currentRenderer) {
-      if (currentRenderer instanceof TypeRenderer) {
-        ((TypeRenderer)currentRenderer).setClassName(getClassName());
+      if (currentRenderer instanceof ReferenceRenderer) {
+        ((ReferenceRenderer)currentRenderer).setClassName(getClassName());
       }
     }
   }
@@ -164,14 +164,14 @@ public class CompoundReferenceRenderer extends NodeRendererImpl implements FullV
   public void setClassName(@NotNull String name) {
     myProperties.setClassName(name);
     if (getRawLabelRenderer() != null) {
-      if (myLabelRenderer instanceof TypeRenderer) {
-        ((TypeRenderer)myLabelRenderer).setClassName(name);
+      if (myLabelRenderer instanceof ReferenceRenderer) {
+        ((ReferenceRenderer)myLabelRenderer).setClassName(name);
       }
     }
 
     if (getRawChildrenRenderer() != null) {
-      if (myChildrenRenderer instanceof TypeRenderer) {
-        ((TypeRenderer)myChildrenRenderer).setClassName(name);
+      if (myChildrenRenderer instanceof ReferenceRenderer) {
+        ((ReferenceRenderer)myChildrenRenderer).setClassName(name);
       }
     }
   }
