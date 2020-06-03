@@ -16,13 +16,15 @@
 package com.intellij.java.codeInsight.daemon.lambda;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.JavaFunctionalExpressionSearcher;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -184,8 +186,23 @@ public class FindFunctionalInterfaceTest extends LightJavaCodeInsightFixtureTest
     }
   }
 
-  private PsiClass findClass(String i) {
-    return JavaPsiFacade.getInstance(getProject()).findClass(i, GlobalSearchScope.allScope(getProject()));
+  public void testReturnedFunExpressionsDoNotHoldAst() {
+    PsiClass sam = myFixture.addClass("interface I { void foo(); }");
+    PsiFile usages = myFixture.addFileToProject("Some.java", "class Some { " +
+                                                              "{ I[] is = { () -> {}, this::toString }; }" +
+                                                              "}");
+    assertFalse(((PsiFileImpl) usages).isContentsLoaded());
+    assertNull(((PsiFileImpl) usages).derefStub());
+
+    Collection<PsiFunctionalExpression> all = FunctionalExpressionSearch.search(sam).findAll();
+    assertSize(2, all);
+    for (PsiFunctionalExpression expression : all) {
+      LeakHunter.checkLeak(expression, ASTNode.class);
+    }
+  }
+
+  private PsiClass findClass(String fqName) {
+    return myFixture.findClass(fqName);
   }
 
   private void configure() {
