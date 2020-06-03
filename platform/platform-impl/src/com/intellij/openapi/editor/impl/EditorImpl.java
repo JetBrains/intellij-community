@@ -350,10 +350,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myIsViewer = viewer;
     myKind = kind;
     mySettings = new SettingsImpl(this, kind);
-    if (!mySettings.isUseSoftWraps() && shouldSoftWrapsBeForced()) {
-      mySettings.setUseSoftWrapsQuiet();
-      putUserData(FORCED_SOFT_WRAPS, Boolean.TRUE);
-    }
 
     MarkupModelEx documentMarkup = (MarkupModelEx)DocumentMarkupModel.forDocument(myDocument, myProject, true);
 
@@ -729,20 +725,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    */
   boolean shouldScrollBarBeOpaque() {
     return !myBackgroundImageSet && !Registry.is("editor.transparent.scrollbar");
-  }
-
-  public boolean shouldSoftWrapsBeForced() {
-    if (myProject != null && PsiDocumentManager.getInstance(myProject).isDocumentBlockedByPsi(myDocument)) {
-      // Disable checking for files in intermediate states - e.g. for files during refactoring.
-      return false;
-    }
-    int lineWidthLimit = Registry.intValue("editor.soft.wrap.force.limit");
-    for (int i = 0; i < myDocument.getLineCount(); i++) {
-      if (myDocument.getLineEndOffset(i) - myDocument.getLineStartOffset(i) > lineWidthLimit) {
-        return true;
-      }
-    }
-    return false;
   }
 
   @NotNull
