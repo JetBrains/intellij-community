@@ -71,4 +71,19 @@ class Main {
         for (String arg: <error descr="foreach not applicable to type 'Main.Hello'">iterableExistingHello</error>) { }
         for (String arg: iterableUnresolvedWorld) {}
     }
+
+    interface A {}
+    interface B {}
+    void test(Object x) {
+        java.util.Optional.of((A & B)x).ifPresent(valueOfAandB -> {
+            for(Object foo : <error descr="foreach not applicable to type 'Main.A & Main.B'">valueOfAandB</error>) {
+                System.out.println(foo);
+            }
+        });
+        java.util.Optional.of((A & <error descr="Cannot resolve symbol 'World'">World</error>)x).ifPresent(valueOfAandUnresolvedWorld -> {
+            for(Object foo : <error descr="foreach not applicable to type 'Main.A & World'">valueOfAandUnresolvedWorld</error>) {
+                System.out.println(foo);
+            }
+        });
+    }
 }
