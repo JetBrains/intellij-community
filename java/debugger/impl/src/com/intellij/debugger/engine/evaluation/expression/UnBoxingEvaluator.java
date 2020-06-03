@@ -16,8 +16,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+
+import static java.util.concurrent.CompletableFuture.completedFuture;
 
 /**
  * @author Eugene Zhuravlev
@@ -85,11 +88,11 @@ public class UnBoxingEvaluator implements Evaluator {
   public static CompletableFuture<PrimitiveValue> getInnerPrimitiveValue(@Nullable ObjectReference value, boolean now) {
     if (value != null) {
       ReferenceType type = value.referenceType();
-      return DebuggerUtilsAsync.fields(type)
+      return fields(type, now)
         .thenCompose(fields -> {
           Field valueField = ContainerUtil.find(fields, f -> "value".equals(f.name()));
           if (valueField != null) {
-            return DebuggerUtilsAsync.getValue(value, valueField, now)
+            return getValue(value, valueField, now)
               .thenApply(primitiveValue -> {
                 if (primitiveValue instanceof PrimitiveValue) {
                   LOG.assertTrue(
@@ -99,9 +102,18 @@ public class UnBoxingEvaluator implements Evaluator {
                 return null;
               });
           }
-          return CompletableFuture.completedFuture(null);
+          return completedFuture(null);
         });
     }
-    return CompletableFuture.completedFuture(null);
+    return completedFuture(null);
+  }
+
+  // TODO: need to make normal async join
+  private static CompletableFuture<List<Field>> fields(ReferenceType type, boolean now) {
+    return now ? completedFuture(type.fields()) : DebuggerUtilsAsync.fields(type);
+  }
+
+  private static CompletableFuture<Value> getValue(ObjectReference ref, Field field, boolean now) {
+    return now ? completedFuture(ref.getValue(field)) : DebuggerUtilsAsync.getValue(ref, field);
   }
 }

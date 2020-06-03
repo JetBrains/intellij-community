@@ -60,8 +60,8 @@ public class DebuggerUtilsAsync {
     return completedFuture(value.type());
   }
 
-  public static CompletableFuture<Value> getValue(ObjectReference ref, Field field, boolean now) {
-    if (!now && ref instanceof ObjectReferenceImpl && Registry.is("debugger.async.jdi")) {
+  public static CompletableFuture<Value> getValue(ObjectReference ref, Field field) {
+    if (ref instanceof ObjectReferenceImpl && Registry.is("debugger.async.jdi")) {
       return reschedule(((ObjectReferenceImpl)ref).getValueAsync(field));
     }
     return completedFuture(ref.getValue(field));
