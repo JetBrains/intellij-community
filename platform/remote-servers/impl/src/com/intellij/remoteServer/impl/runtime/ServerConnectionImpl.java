@@ -219,17 +219,17 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   }
 
   @Override
-  public void undeploy(@NotNull Deployment deployment, final @NotNull DeploymentRuntime runtime) {
+  public void undeploy(@NotNull Deployment deployment, final @Nullable DeploymentRuntime runtime) {
     String deploymentName = deployment.getName();
     final MyDeployments.UndeployTransition undeployInProgress = myAllDeployments.startUndeploy(deploymentName);
 
     myEventDispatcher.queueDeploymentsChanged(this);
 
     final List<LoggingHandlerImpl> handlers = myPerProjectLogManagers.values().stream()
-                                                                     .map(nextForProject -> nextForProject.findManager(deployment))
-                                                                     .filter(Objects::nonNull)
-                                                                     .map(DeploymentLogManagerImpl::getMainLoggingHandler)
-                                                                     .collect(Collectors.toList());
+      .map(nextForProject -> nextForProject.findManager(deployment))
+      .filter(Objects::nonNull)
+      .map(DeploymentLogManagerImpl::getMainLoggingHandler)
+      .collect(Collectors.toList());
 
     final Consumer<String> logConsumer = message -> {
       if (handlers.isEmpty()) {
@@ -241,7 +241,8 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     };
 
     logConsumer.consume("Undeploying '" + deploymentName + "'...");
-    runtime.undeploy(new DeploymentRuntime.UndeploymentTaskCallback() {
+
+    DeploymentRuntime.UndeploymentTaskCallback undeploymentTaskCallback = new DeploymentRuntime.UndeploymentTaskCallback() {
       @Override
       public void succeeded() {
         logConsumer.consume("'" + deploymentName + "' has been undeployed successfully.");
@@ -270,7 +271,14 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
         myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
       }
-    });
+    };
+
+    if (runtime == null) {
+      undeploymentTaskCallback.succeeded();
+    }
+    else {
+      runtime.undeploy(undeploymentTaskCallback);
+    }
   }
 
   public void disposeAllLogs(@NotNull DeploymentImpl deployment) {
@@ -400,9 +408,9 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     private final DeploymentImpl myDeployment;
 
     DeploymentOperationCallbackImpl(String deploymentName,
-                                           DeploymentTaskImpl<D> deploymentTask,
-                                           LoggingHandlerImpl handler,
-                                           DeploymentImpl deployment) {
+                                    DeploymentTaskImpl<D> deploymentTask,
+                                    LoggingHandlerImpl handler,
+                                    DeploymentImpl deployment) {
       myDeploymentName = deploymentName;
       myDeploymentTask = deploymentTask;
       myLoggingHandler = handler;
@@ -613,7 +621,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
       public void succeeded() {
         synchronized (myLock) {
-          if (tryChangeToTerminalState(DeploymentStatus.NOT_DEPLOYED, true)) {
+          if (tryChangeToTerminalState(DeploymentStatus.NOT_DEPLOYED, true) || myDeployment.getRuntime() == null) {
             forgetDeployment(myDeployment);
 
             for (Deployment nextImplicitlyUndeployed : mySubDeployments) {

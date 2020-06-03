@@ -47,7 +47,7 @@ public interface ServerConnection<D extends DeploymentConfiguration> {
 
   void computeDeployments(@NotNull Runnable onFinished);
 
-  void undeploy(@NotNull Deployment deployment, @NotNull DeploymentRuntime runtime);
+  void undeploy(@NotNull Deployment deployment, @Nullable DeploymentRuntime runtime);
 
   @NotNull
   Collection<Deployment> getDeployments();
