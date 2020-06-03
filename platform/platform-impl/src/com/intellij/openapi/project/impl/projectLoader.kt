@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ProjectLoadHelper")
 @file:ApiStatus.Internal
-package com.intellij.openapi.project
+package com.intellij.openapi.project.impl
 
 import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.PluginException
@@ -14,23 +14,20 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.runBackgroundableTask
-import com.intellij.openapi.progress.runModalTask
-import com.intellij.openapi.project.impl.ProjectImpl
-import com.intellij.openapi.project.impl.ProjectLifecycleListener
+import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.ExecutionException
-import java.util.concurrent.Future
 
 // Code maybe located in a ProjectImpl, but it is not possible due to non-technical reasons to convert ProjectImpl into modern language.
 internal fun registerComponents(project: ProjectImpl) {
-  var activity = createActivity(project) { "project ${Activities.REGISTER_COMPONENTS_SUFFIX}" }
+  var activity = createActivity(
+    project) { "project ${Activities.REGISTER_COMPONENTS_SUFFIX}" }
   //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
   @Suppress("UNCHECKED_CAST")
   project.registerComponents(PluginManagerCore.getLoadedPlugins() as List<IdeaPluginDescriptorImpl>)
 
   activity = activity?.endAndStart("projectComponentRegistered")
-  runHandler(ProjectServiceContainerCustomizer.getEp()) {
+  runHandler(
+    ProjectServiceContainerCustomizer.getEp()) {
     it.serviceRegistered(project)
   }
   activity?.end()
@@ -43,7 +40,9 @@ internal fun notifyThatComponentCreated(project: ProjectImpl) {
   app.messageBus.syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(project)
 
   activity = activity?.endAndStart("projectComponentCreated")
-  runHandler(getExtensionPoint<ProjectServiceContainerInitializedListener>("com.intellij.projectServiceContainerInitializedListener")) {
+  runHandler(
+    getExtensionPoint<ProjectServiceContainerInitializedListener>(
+      "com.intellij.projectServiceContainerInitializedListener")) {
     it.serviceCreated(project)
   }
   activity?.end()
@@ -84,7 +83,8 @@ private fun <T : Any> getExtensionPoint(name: String): ExtensionPointImpl<T> {
 interface ProjectServiceContainerCustomizer {
   companion object {
     @JvmStatic
-    fun getEp() = getExtensionPoint<ProjectServiceContainerCustomizer>("com.intellij.projectServiceContainerCustomizer")
+    fun getEp() = getExtensionPoint<ProjectServiceContainerCustomizer>(
+      "com.intellij.projectServiceContainerCustomizer")
   }
 
   /**
@@ -104,32 +104,4 @@ interface ProjectServiceContainerInitializedListener {
    * but before components are instantiated.
    */
   fun serviceCreated(project: Project)
-}
-
-internal fun waitInTestMode(future: Future<*>) {
-  val app = ApplicationManager.getApplication()
-  if (!app.isUnitTestMode) {
-    return
-  }
-
-  fun wait() {
-    try {
-      future.get()
-    }
-    catch (e: ExecutionException) {
-      throw e.cause ?: e
-    }
-  }
-
-  if (app.isDispatchThread) {
-    // process event queue during waiting
-    // tasks is run as backgroundable to allow `invokeAndWait` inside startup activities
-    // note that this is still a blocking call in tests
-    runBackgroundableTask("wait in tests") {
-      wait()
-    }
-  }
-  else {
-    wait()
-  }
 }

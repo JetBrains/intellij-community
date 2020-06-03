@@ -16,13 +16,13 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.*
-import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.ProjectSelfieUtil
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtil
@@ -304,7 +304,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     return when {
       existing != null -> existing
       ProjectUtil.isValidProjectPath(projectFile) -> {
-        PlatformProjectOpenProcessor.openExistingProject(projectFile, openProjectOptions)
+        ProjectManagerEx.getInstanceEx().loadAndOpenProject(projectFile, openProjectOptions)
       }
       else -> {
         // If .idea is missing in the recent project's dir; this might mean, for instance, that 'git clean' was called.

@@ -33,7 +33,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -170,7 +169,7 @@ public final class NewProjectUtil {
 
       if (newProject != projectToClose) {
         ProjectUtil.updateLastProjectLocation(projectFilePath);
-        PlatformProjectOpenProcessor.openExistingProject(projectFile, projectDir, OpenProjectTask.withCreatedProject(newProject));
+        ProjectManagerEx.getInstanceEx().loadAndOpenProject(projectDir, OpenProjectTask.withCreatedProject(newProject, projectFile));
       }
 
       if (!ApplicationManager.getApplication().isUnitTestMode()) {

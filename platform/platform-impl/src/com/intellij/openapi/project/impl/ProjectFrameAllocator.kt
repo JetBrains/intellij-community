@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.platform
+package com.intellij.openapi.project.impl
 
 import com.intellij.conversion.CannotConvertException
 import com.intellij.diagnostic.ActivityCategory
@@ -17,12 +17,12 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.*
+import com.intellij.platform.ProjectSelfieUtil
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.ScreenUtil
@@ -37,6 +37,12 @@ import java.nio.file.Path
 import kotlin.math.min
 
 internal open class ProjectFrameAllocator {
+  companion object {
+    internal fun getPresentableName(options: OpenProjectTask, projectStoreBaseDir: Path): String {
+      return options.projectName ?: (options.contentRoot ?: projectStoreBaseDir).fileName.toString()
+    }
+  }
+
   open fun run(task: () -> Unit): Boolean {
     task()
     return true
@@ -54,7 +60,7 @@ internal open class ProjectFrameAllocator {
   open fun projectOpened(project: Project) {}
 }
 
-internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, private val projectFile: Path) : ProjectFrameAllocator() {
+internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, private val projectStoreBaseDir: Path) : ProjectFrameAllocator() {
   // volatile not required because created in run (before executing run task)
   private var frameHelper: ProjectFrameHelper? = null
 
@@ -65,7 +71,9 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
 
   override fun run(task: () -> Unit): Boolean {
     var completed = false
-    val progressTitle = IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name", options.projectName ?: projectFile.fileName.toString())
+    val progressTitle = IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name",
+                                                                        getPresentableName(
+                                                                          options, projectStoreBaseDir))
     ApplicationManager.getApplication().invokeAndWait {
       val frame = createFrameIfNeeded()
       val progressTask = object : Task.Modal(null, progressTitle, true) {
@@ -115,7 +123,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
     if (options.frame?.bounds == null) {
       val recentProjectManager = RecentProjectsManager.getInstance()
       if (recentProjectManager is RecentProjectsManagerBase) {
-        val info = recentProjectManager.getProjectMetaInfo(projectFile)
+        val info = recentProjectManager.getProjectMetaInfo(projectStoreBaseDir)
         if (info != null) {
           options = options.copy(frame = info.frame, projectWorkspaceId = info.projectWorkspaceId)
         }
@@ -125,7 +133,8 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
     var projectSelfie: Image? = null
     if (options.projectWorkspaceId != null && Registry.`is`("ide.project.loading.show.last.state")) {
       try {
-        projectSelfie = ProjectSelfieUtil.readProjectSelfie(options.projectWorkspaceId!!, ScaleContext.create(frame))
+        projectSelfie = ProjectSelfieUtil.readProjectSelfie(options.projectWorkspaceId!!,
+                                                            ScaleContext.create(frame))
       }
       catch (e: Throwable) {
         if (e.cause !is EOFException) {
@@ -167,11 +176,9 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
     }
 
     runActivity("create a frame", ActivityCategory.MAIN) {
-      var frame = SplashManager.getAndUnsetProjectFrame() as IdeFrameImpl?
-      if (frame == null) {
-        frame = createNewProjectFrame(forceDisableAutoRequestFocus = options.sendFrameBack)
-      }
-      return frame
+      return SplashManager.getAndUnsetProjectFrame() as IdeFrameImpl?
+             ?: createNewProjectFrame(
+               forceDisableAutoRequestFocus = options.sendFrameBack)
     }
   }
 

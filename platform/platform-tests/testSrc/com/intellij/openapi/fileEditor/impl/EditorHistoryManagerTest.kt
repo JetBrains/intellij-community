@@ -4,15 +4,13 @@
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.diagnostic.ThreadDumper
-import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectServiceContainerCustomizer
+import com.intellij.openapi.project.impl.ProjectServiceContainerCustomizer
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.util.io.systemIndependentPath
@@ -86,7 +84,7 @@ class EditorHistoryManagerTest {
 }
 
 private fun openProjectPerformTaskCloseProject(projectDir: Path, task: (Project) -> Unit) {
-  val project = PlatformProjectOpenProcessor.openExistingProject(projectDir, OpenProjectTask())!!
+  val project = ProjectManagerEx.getInstanceEx().loadAndOpenProject(projectDir, createTestOpenProjectOptions())!!
   try {
     runInEdtAndWait {
       task(project)

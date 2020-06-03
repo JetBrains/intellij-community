@@ -270,6 +270,17 @@ fun createHeavyProject(path: Path, useDefaultProjectAsTemplate: Boolean = false)
   return ProjectManagerEx.getInstanceEx().newProject(path, null, OpenProjectTask(useDefaultProjectAsTemplate = useDefaultProjectAsTemplate, isNewProject = true))!!
 }
 
+fun createTestOpenProjectOptions(): OpenProjectTask {
+  // In tests it is caller responsibility to refresh VFS (because often not only the project file must be refreshed, but the whole dir - so, no need to refresh several times).
+  // Also, cleanPersistedContents is called on start test application.
+  return OpenProjectTask(forceOpenInNewFrame = true,
+                         isRefreshVfsNeeded = false,
+                         runConversionsBeforeOpen = false,
+                         runConfiguratorsIfNoModules = false,
+                         showWelcomeScreen = false,
+                         useDefaultProjectAsTemplate = false)
+}
+
 suspend fun Project.use(task: suspend (Project) -> Unit) {
   val projectManager = ProjectManagerEx.getInstanceEx()
   try {

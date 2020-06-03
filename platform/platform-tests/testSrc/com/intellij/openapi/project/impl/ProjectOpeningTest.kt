@@ -2,7 +2,6 @@
 package com.intellij.openapi.project.impl
 
 import com.intellij.configurationStore.StoreUtil
-import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -16,7 +15,6 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.io.createDirectories
@@ -56,7 +54,7 @@ class ProjectOpeningTest {
     val foo = tempDir.newPath()
     ProgressManager.getInstance().run(object : Task.Modal(null, "", true) {
       override fun run(indicator: ProgressIndicator) {
-        val project = PlatformProjectOpenProcessor.openExistingProject(foo)
+        val project = ProjectManagerEx.getInstanceEx().loadAndOpenProject(foo, createTestOpenProjectOptions())
         if (project != null) {
           runInEdtAndWait {
             PlatformTestUtil.forceCloseProjectWithoutSaving(project)
@@ -88,7 +86,7 @@ class ProjectOpeningTest {
           }
         })
       runModalTask("") {
-        project = PlatformProjectOpenProcessor.openExistingProject(foo, OpenProjectTask())!!
+        project = ProjectManagerEx.getInstanceEx().loadAndOpenProject(foo, createTestOpenProjectOptions())!!
       }
       assertThat(project.isOpen).isFalse()
       assertThat(project.isDisposed).isTrue()

@@ -6,7 +6,7 @@ import com.intellij.execution.IS_RUN_MANAGER_INITIALIZED
 import com.intellij.execution.RunManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectServiceContainerInitializedListener
+import com.intellij.openapi.project.impl.ProjectServiceContainerInitializedListener
 
 private class ProjectRunConfigurationInitializer : ProjectServiceContainerInitializedListener {
   override fun serviceCreated(project: Project) {

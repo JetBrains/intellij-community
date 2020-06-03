@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.FrameInfo
 import com.intellij.projectImport.ProjectOpenedCallback
+import java.nio.file.Path
 
 data class OpenProjectTask(@JvmField val forceOpenInNewFrame: Boolean = false,
                            @JvmField val projectToClose: Project? = null,
@@ -24,6 +25,11 @@ data class OpenProjectTask(@JvmField val forceOpenInNewFrame: Boolean = false,
                            val projectWorkspaceId: String? = null,
                            val line: Int = -1,
                            val column: Int = -1,
+                           val isRefreshVfsNeeded: Boolean = true,
+                           /**
+                            * Used to build presentable name of project or as content root for a dummy project.
+                            */
+                           val contentRoot: Path? = null,
                            /**
                             * Ignored if isNewProject is set to true.
                             */
@@ -38,8 +44,8 @@ data class OpenProjectTask(@JvmField val forceOpenInNewFrame: Boolean = false,
     }
 
     @JvmStatic
-    fun newProjectWithCallback(projectToClose: Project?, callback: ProjectOpenedCallback?): OpenProjectTask {
-      return OpenProjectTask(projectToClose = projectToClose, isNewProject = true, callback = callback)
+    fun newProjectWithCallback(projectToClose: Project?, callback: ProjectOpenedCallback?, isRefreshVfsNeeded: Boolean): OpenProjectTask {
+      return OpenProjectTask(projectToClose = projectToClose, isNewProject = true, callback = callback, isRefreshVfsNeeded = isRefreshVfsNeeded)
     }
 
     @JvmStatic
@@ -48,15 +54,12 @@ data class OpenProjectTask(@JvmField val forceOpenInNewFrame: Boolean = false,
     }
 
     @JvmStatic
-    fun withCreatedProject(project: Project?): OpenProjectTask {
-      return OpenProjectTask(project = project)
+    fun withCreatedProject(project: Project?, contentRoot: Path?): OpenProjectTask {
+      return OpenProjectTask(project = project, contentRoot = contentRoot)
     }
   }
 
   /** Used only by [ProjectUtil.openOrImport] */
   @JvmField
   var checkDirectoryForFileBasedProjects = true
-
-  @JvmField
-  var isRefreshVfsNeeded = true
 }

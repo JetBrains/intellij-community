@@ -144,7 +144,7 @@ public final class ProjectUtil {
     }
 
     if (isValidProjectPath(file)) {
-      return PlatformProjectOpenProcessor.openExistingProject(file, options);
+      return ProjectManagerEx.getInstanceEx().loadAndOpenProject(file, options);
     }
 
     if (options.checkDirectoryForFileBasedProjects && Files.isDirectory(file)) {
@@ -282,7 +282,7 @@ public final class ProjectUtil {
     }
 
     try {
-      return PlatformProjectOpenProcessor.openExistingProject(file, options);
+      return ProjectManagerEx.getInstanceEx().loadAndOpenProject(file, options);
     }
     catch (Exception e) {
       Messages.showMessageDialog(IdeBundle.message("error.cannot.load.project", e.getMessage()),

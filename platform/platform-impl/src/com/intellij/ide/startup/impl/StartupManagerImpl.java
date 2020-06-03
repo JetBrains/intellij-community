@@ -410,8 +410,8 @@ public class StartupManagerImpl extends StartupManagerEx {
     catch (ProcessCanceledException e) {
       throw e;
     }
-    catch (Throwable ex) {
-      LOG.error(ex);
+    catch (Throwable e) {
+      LOG.error(e);
     }
   }
 

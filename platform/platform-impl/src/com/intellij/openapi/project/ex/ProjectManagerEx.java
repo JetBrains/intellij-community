@@ -42,6 +42,9 @@ public abstract class ProjectManagerEx extends ProjectManager {
     return loadProject(Paths.get(filePath).toAbsolutePath());
   }
 
+  @ApiStatus.Internal
+  public abstract @Nullable Project loadAndOpenProject(@NotNull Path projectStoreBaseDir, @NotNull OpenProjectTask options);
+
   @NotNull
   public abstract Project loadProject(@NotNull Path path);
 

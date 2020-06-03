@@ -4,7 +4,6 @@ package com.intellij.testFramework;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
@@ -29,10 +28,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.project.impl.TooManyProjectLeakedException;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -268,12 +265,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
   public static @NotNull Project createProject(@NotNull Path file) {
     try {
-      ProjectManagerImpl projectManager = (ProjectManagerImpl)ProjectManager.getInstance();
-      OpenProjectTask options = new OpenProjectTask();
-      options.useDefaultProjectAsTemplate = false;
-      // in tests it is caller responsibility to refresh VFS (because often not only the project file must be refreshed, but the whole dir - so, no need to refresh several times)
-      options.isRefreshVfsNeeded = false;
-      return Objects.requireNonNull(projectManager.newProject(file, null, options));
+      return Objects.requireNonNull(ProjectManagerEx.getInstanceEx().newProject(file, null, FixtureRuleKt.createTestOpenProjectOptions()));
     }
     catch (TooManyProjectLeakedException e) {
       if (ourReportedLeakedProjects) {
