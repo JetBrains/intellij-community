@@ -22,15 +22,17 @@ import com.intellij.openapi.roots.OrderEnumerationHandler;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
 
-class ModulesOrderEnumerator extends OrderEnumeratorBase {
+@ApiStatus.Internal
+public class ModulesOrderEnumerator extends OrderEnumeratorBase {
   private final Collection<? extends Module> myModules;
 
-  ModulesOrderEnumerator(@NotNull Collection<? extends Module> modules) {
+  public ModulesOrderEnumerator(@NotNull Collection<? extends Module> modules) {
     super(null);
     myModules = modules;
   }
