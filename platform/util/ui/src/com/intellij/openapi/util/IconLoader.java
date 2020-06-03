@@ -433,6 +433,14 @@ public final class IconLoader {
    */
   @NotNull
   public static Icon getDisabledIcon(@NotNull Icon icon) {
+    return getDisabledIcon(icon, null);
+  }
+
+  /**
+   * Same as {@link #getDisabledIcon(Icon)} with an ancestor component for HiDPI-awareness.
+   */
+  @NotNull
+  public static Icon getDisabledIcon(@NotNull Icon icon, @Nullable Component ancestor) {
     if (!ourIsActivated) {
       return icon;
     }
@@ -442,7 +450,7 @@ public final class IconLoader {
     Icon disabledIcon = ourIcon2DisabledIcon.get(icon);
     if (disabledIcon == null) {
       disabledIcon = ConcurrencyUtil.cacheOrGet(ourIcon2DisabledIcon, icon,
-           filterIcon(icon, UIUtil::getGrayFilter/* returns laf-aware instance */, null)); // [tav] todo: lack ancestor
+        filterIcon(icon, UIUtil::getGrayFilter/* returns laf-aware instance */, ancestor));
     }
     return disabledIcon;
   }
