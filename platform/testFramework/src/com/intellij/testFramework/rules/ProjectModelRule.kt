@@ -19,9 +19,11 @@ import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.systemIndependentPath
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.*
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import org.junit.Assume
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
 import org.junit.runner.Description
@@ -29,6 +31,17 @@ import org.junit.runners.model.Statement
 import java.io.File
 
 class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) : TestRule {
+  companion object {
+    @JvmStatic
+    val isWorkspaceModelEnabled: Boolean
+      get() = Registry.`is`("ide.new.project.model")
+
+    @JvmStatic
+    fun ignoreTestUnderWorkspaceModel() {
+      Assume.assumeFalse("Not applicable to workspace model", isWorkspaceModelEnabled)
+    }
+  }
+
   val baseProjectDir = TempDirectory()
   private val disposableRule = DisposableRule()
   lateinit var project: Project

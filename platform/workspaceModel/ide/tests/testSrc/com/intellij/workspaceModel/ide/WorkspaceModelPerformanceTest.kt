@@ -22,6 +22,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
@@ -194,7 +195,7 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
 
   @Test
   fun `test base operations in store`()  = WriteCommandAction.runWriteCommandAction(project) {
-    if (!Registry.`is`("ide.new.project.model")) return@runWriteCommandAction
+    if (!ProjectModelRule.isWorkspaceModelEnabled) return@runWriteCommandAction
 
     val workspaceModel = WorkspaceModel.getInstance(project)
     var diff = WorkspaceEntityStorageBuilder.from(workspaceModel.entityStorage.current)
