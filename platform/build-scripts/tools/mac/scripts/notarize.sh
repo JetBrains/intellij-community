@@ -81,7 +81,7 @@ PATH="$PATH:/usr/local/bin/"
 log "Notarization request sent, awaiting response"
 spent=0
 
-max_wait=180
+max_wait=300
 while true; do
   # For some reason altool prints everything to stderr, not stdout
   xcrun altool --username "$APPL_USER" --notarization-info "$notarization_info" --password "$APPL_PASSWORD" >"altool.check.out" 2>&1 || true
