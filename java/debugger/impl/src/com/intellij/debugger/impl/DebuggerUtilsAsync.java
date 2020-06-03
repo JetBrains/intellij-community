@@ -43,6 +43,13 @@ public class DebuggerUtilsAsync {
     return completedFuture(type.allFields());
   }
 
+  public static CompletableFuture<List<Field>> fields(ReferenceType type) {
+    if (type instanceof ReferenceTypeImpl && Registry.is("debugger.async.jdi")) {
+      return reschedule(((ReferenceTypeImpl)type).fieldsAsync());
+    }
+    return completedFuture(type.fields());
+  }
+
   public static CompletableFuture<? extends Type> type(@Nullable Value value) {
     if (value == null) {
       return completedFuture(null);
