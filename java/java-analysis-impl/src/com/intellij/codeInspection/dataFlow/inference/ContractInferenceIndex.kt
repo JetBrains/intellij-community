@@ -3,7 +3,11 @@ package com.intellij.codeInspection.dataFlow.inference
 
 import com.intellij.lang.LighterAST
 import com.intellij.lang.LighterASTNode
+import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.impl.source.JavaLightStubBuilder
 import com.intellij.psi.impl.source.JavaLightTreeUtil
@@ -12,6 +16,7 @@ import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.psi.impl.source.tree.JavaElementType.*
 import com.intellij.psi.impl.source.tree.LightTreeUtil
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
+import com.intellij.psi.stubs.StubTextInconsistencyException
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.gist.GistManager
@@ -184,22 +189,53 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
   }
 }
 
+fun handleInconsistency(method: PsiMethodImpl, cachedData: MethodData, e: Throwable) {
+  if (e is ProcessCanceledException) throw e
+
+  val file = method.containingFile
+  val gistMap = gist.getFileData(file)
+  GistManager.getInstance().invalidateData(file.viewProvider.virtualFile)
+
+  val psiMap = indexFile(file.node.lighterAST)
+  if (gistMap != psiMap) {
+    GistManager.getInstance().invalidateData(file.viewProvider.virtualFile)
+
+    throw RuntimeExceptionWithAttachments("Gist outdated", e,
+                                               Attachment("persisted.txt", gistMap.toString()),
+                                               Attachment("psi.txt", gistMap.toString()))
+  }
+
+  StubTextInconsistencyException.checkStubTextConsistency(file)
+  val actualData = bindMethods(psiMap, file)[method]
+  if (actualData != cachedData) {
+    throw RuntimeExceptionWithAttachments("Cache outdated",
+                                          Attachment("actual.txt", actualData.toString()),
+                                          Attachment("cached.txt", cachedData.toString()))
+
+  }
+
+  throw e
+}
+
 fun getIndexedData(method: PsiMethodImpl): MethodData? {
   val file = method.containingFile
   val map = CachedValuesManager.getCachedValue(file) {
-    val fileData = gist.getFileData(file)
-    val result = hashMapOf<PsiMethod, MethodData>()
-    if (fileData != null) {
-      val spine = (file as PsiFileImpl).stubbedSpine
-      var methodIndex = 0
-      for (i in 0 until spine.stubCount) {
-        if (spine.getStubType(i) === METHOD) {
-          fileData[methodIndex]?.let { result[spine.getStubPsi(i) as PsiMethod] = it }
-          methodIndex++
-        }
-      }
-    }
-    CachedValueProvider.Result.create(result, file)
+    CachedValueProvider.Result.create(bindMethods(gist.getFileData(file), file), file)
   }
   return map[method]
+}
+
+private fun bindMethods(fileData: Map<Int, MethodData>?, file: PsiFile): Map<PsiMethod, MethodData> {
+  val result = hashMapOf<PsiMethod, MethodData>()
+  if (fileData != null) {
+    val spine = (file as PsiFileImpl).stubbedSpine
+    var methodIndex = 0
+    for (i in 0 until spine.stubCount) {
+      if (spine.getStubType(i) === METHOD) {
+        fileData[methodIndex]?.let { result[spine.getStubPsi(i) as PsiMethod] = it }
+        methodIndex++
+      }
+    }
+  }
+  return result
 }

@@ -175,14 +175,14 @@ data class MethodData(
       method.body!!
   }
 
-  private fun getDetachedBody(method: PsiMethod): PsiCodeBlock {
+  private fun getDetachedBody(method: PsiMethodImpl): PsiCodeBlock {
     val document = method.containingFile.viewProvider.document ?: return method.body!!
     try {
       val bodyText = PsiDocumentManager.getInstance(method.project).getLastCommittedText(document).substring(bodyStart, bodyEnd)
       return JavaPsiFacade.getElementFactory(method.project).createCodeBlockFromText(bodyText, method)
     }
     catch (e: Exception) {
-      GistManager.getInstance().invalidateData(method.containingFile.viewProvider.virtualFile)
+      handleInconsistency(method, this, e);
       throw e
     }
   }
