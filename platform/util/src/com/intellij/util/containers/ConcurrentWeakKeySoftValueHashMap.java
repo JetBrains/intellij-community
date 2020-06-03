@@ -293,7 +293,6 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
   @Override
   public Collection<V> values() {
     List<V> values = new ArrayList<>();
-    processQueues();
     for (ValueReference<K, V> valueReference : myMap.values()) {
       V v = com.intellij.reference.SoftReference.deref(valueReference);
       if (v != null) {
