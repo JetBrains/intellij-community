@@ -23,10 +23,7 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.*;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.debugger.ui.tree.render.ArrayRenderer;
-import com.intellij.debugger.ui.tree.render.ClassRenderer;
-import com.intellij.debugger.ui.tree.render.NodeRenderer;
-import com.intellij.debugger.ui.tree.render.PrimitiveRenderer;
+import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -138,6 +135,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     myRequestManager = new RequestManagerImpl(this);
     NodeRendererSettings.getInstance().addListener(this::reloadRenderers, myDisposable);
     NodeRenderer.EP_NAME.addChangeListener(this::reloadRenderers, myDisposable);
+    NodeRendererProvider.EP_NAME.addChangeListener(this::reloadRenderers, myDisposable);
     reloadRenderers();
     myDebugProcessDispatcher.addListener(new DebugProcessListener() {
       @Override

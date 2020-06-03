@@ -203,6 +203,9 @@
     <extensionPoint qualifiedName="com.intellij.debugger.nodeRenderer"
                     interface="com.intellij.debugger.ui.tree.render.NodeRenderer" dynamic="true"/>
 
+    <extensionPoint qualifiedName="com.intellij.debugger.nodeRendererProvider"
+                    interface="com.intellij.debugger.ui.tree.render.NodeRendererProvider" dynamic="true"/>
+
     <extensionPoint qualifiedName="com.intellij.debugger.javaDebugAware"
                     interface="com.intellij.debugger.engine.JavaDebugAware" dynamic="true"/>
 
@@ -737,23 +740,23 @@
     <debugger.asyncStackTraceProvider
         implementation="com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint$CaptureAsyncStackTraceProvider"/>
 
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$BooleanRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$ByteRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$CharacterRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$ShortRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$IntegerRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$LongRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$FloatRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$DoubleRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.ColorObjectRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.IconObjectRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.GraphicsObjectRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.BinaryRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.TimestampRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.ByteArrayAsStringRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.FileObjectRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.StackTraceElementObjectRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.ClassObjectRenderer"/>
+    <debugger.nodeRendererProvider implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$BooleanRenderer"/>
+    <debugger.nodeRendererProvider implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$ByteRenderer"/>
+    <debugger.nodeRendererProvider implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$CharacterRenderer"/>
+    <debugger.nodeRendererProvider implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$ShortRenderer"/>
+    <debugger.nodeRendererProvider implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$IntegerRenderer"/>
+    <debugger.nodeRendererProvider implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$LongRenderer"/>
+    <debugger.nodeRendererProvider implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$FloatRenderer"/>
+    <debugger.nodeRendererProvider implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$DoubleRenderer"/>
+    <debugger.nodeRendererProvider implementation="com.intellij.debugger.ui.tree.render.ColorObjectRenderer"/>
+    <debugger.nodeRendererProvider implementation="com.intellij.debugger.ui.tree.render.IconObjectRenderer"/>
+    <debugger.nodeRendererProvider implementation="com.intellij.debugger.ui.tree.render.GraphicsObjectRenderer"/>
+    <debugger.nodeRendererProvider implementation="com.intellij.debugger.ui.tree.render.BinaryRenderer"/>
+    <debugger.nodeRendererProvider implementation="com.intellij.debugger.ui.tree.render.TimestampRenderer"/>
+    <debugger.nodeRendererProvider implementation="com.intellij.debugger.ui.tree.render.ByteArrayAsStringRenderer"/>
+    <debugger.nodeRendererProvider implementation="com.intellij.debugger.ui.tree.render.FileObjectRenderer"/>
+    <debugger.nodeRendererProvider implementation="com.intellij.debugger.ui.tree.render.StackTraceElementObjectRenderer"/>
+    <debugger.nodeRendererProvider implementation="com.intellij.debugger.ui.tree.render.ClassObjectRenderer"/>
 
     <debugger.nodeNameAdjuster implementation="com.intellij.debugger.ui.impl.watch.FieldOuterLocalNameAdjuster"/>
 

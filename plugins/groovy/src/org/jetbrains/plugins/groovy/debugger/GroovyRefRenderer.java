@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.debugger;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -22,7 +21,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.sun.jdi.*;
+import com.sun.jdi.Field;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -37,24 +39,14 @@ public class GroovyRefRenderer extends NodeRendererImpl {
 
   public GroovyRefRenderer() {
     super("Groovy Reference", true);
+    setIsApplicableChecker(type -> type instanceof ReferenceType
+                                   ? DebuggerUtilsAsync.instanceOf(type, GroovyCommonClassNames.GROOVY_LANG_REFERENCE)
+                                   : CompletableFuture.completedFuture(false));
   }
 
   @Override
   public String getUniqueId() {
     return "GroovyRefRenderer";
-  }
-
-  @Override
-  public boolean isApplicable(Type type) {
-    return type instanceof ReferenceType && DebuggerUtils.instanceOf(type, GroovyCommonClassNames.GROOVY_LANG_REFERENCE);
-  }
-
-  @Override
-  public CompletableFuture<Boolean> isApplicableAsync(Type type) {
-    if (type instanceof ReferenceType) {
-      return DebuggerUtilsAsync.instanceOf(type, GroovyCommonClassNames.GROOVY_LANG_REFERENCE);
-    }
-    return CompletableFuture.completedFuture(false);
   }
 
   @Override

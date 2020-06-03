@@ -153,9 +153,9 @@ public final class EnumerationChildrenRenderer extends TypeRenderer implements C
   @Nullable
   public static EnumerationChildrenRenderer getCurrent(ValueDescriptorImpl valueDescriptor) {
     Renderer renderer = valueDescriptor.getLastRenderer();
-    if (renderer instanceof CompoundNodeRenderer &&
+    if (renderer instanceof CompoundReferenceRenderer &&
         NodeRendererSettings.getInstance().getCustomRenderers().contains((NodeRenderer)renderer)) {
-      ChildrenRenderer childrenRenderer = ((CompoundNodeRenderer)renderer).getChildrenRenderer();
+      ChildrenRenderer childrenRenderer = ((CompoundReferenceRenderer)renderer).getChildrenRenderer();
       if (childrenRenderer instanceof EnumerationChildrenRenderer) {
         return (EnumerationChildrenRenderer)childrenRenderer;
       }

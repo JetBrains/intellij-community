@@ -3,16 +3,15 @@ package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.NotNull;
 
-public class FileObjectRenderer extends CompoundReferenceRenderer {
-  public FileObjectRenderer() {
-    super("File", null, NodeRendererSettings.createExpressionChildrenRenderer("listFiles()", null));
-    setClassName("java.io.File");
-    setEnabled(true);
-  }
-
+public class FileObjectRenderer implements NodeRendererProvider {
   @Override
-  public boolean isEnabled() {
-    return Registry.is("debugger.renderers.file");
+  public @NotNull NodeRenderer createRenderer() {
+    return new RendererBuilder("File")
+      .childrenRenderer(NodeRendererSettings.createExpressionChildrenRenderer("listFiles()", null))
+      .isApplicableForInheritors("java.io.File")
+      .enabled(Registry.is("debugger.renderers.file"))
+      .build();
   }
 }

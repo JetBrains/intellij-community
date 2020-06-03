@@ -12,6 +12,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 public abstract class TypeRenderer implements Renderer {
   private static final Logger LOG = Logger.getInstance(ReferenceRenderer.class);

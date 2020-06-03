@@ -8,13 +8,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public interface ValueLabelRenderer extends Renderer, ValueIconRenderer {
-  String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException;
-
-  @Override
+public interface ValueIconRenderer {
   @Nullable
-  default Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener)
-    throws EvaluateException {
-    return null;
-  }
+  Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener)
+    throws EvaluateException;
 }

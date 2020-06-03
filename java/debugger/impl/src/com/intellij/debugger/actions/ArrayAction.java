@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -75,8 +75,8 @@ public abstract class ArrayAction extends DebuggerAction {
     if (value instanceof JavaValue) {
       ValueDescriptorImpl descriptor = ((JavaValue)value).getDescriptor();
       Renderer lastRenderer = descriptor.getLastRenderer();
-      if (lastRenderer instanceof CompoundNodeRenderer) {
-        ChildrenRenderer childrenRenderer = ((CompoundNodeRenderer)lastRenderer).getChildrenRenderer();
+      if (lastRenderer instanceof CompoundReferenceRenderer) {
+        ChildrenRenderer childrenRenderer = ((CompoundReferenceRenderer)lastRenderer).getChildrenRenderer();
         if (childrenRenderer instanceof ExpressionChildrenRenderer) {
           lastRenderer = ExpressionChildrenRenderer.getLastChildrenRenderer(descriptor);
           if (lastRenderer == null) {
@@ -111,8 +111,8 @@ public abstract class ArrayAction extends DebuggerAction {
             ((JavaValue)container).setRenderer(newRenderer, node);
             node.invokeNodeUpdate(() -> node.getTree().expandPath(node.getPath()));
           }
-          else if (lastRenderer instanceof CompoundNodeRenderer) {
-            final CompoundNodeRenderer compoundRenderer = (CompoundNodeRenderer)lastRenderer;
+          else if (lastRenderer instanceof CompoundReferenceRenderer) {
+            final CompoundReferenceRenderer compoundRenderer = (CompoundReferenceRenderer)lastRenderer;
             final ChildrenRenderer childrenRenderer = compoundRenderer.getChildrenRenderer();
             if (childrenRenderer instanceof ExpressionChildrenRenderer) {
               ExpressionChildrenRenderer.setPreferableChildrenRenderer(descriptor, newRenderer);

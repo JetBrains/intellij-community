@@ -6,19 +6,29 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.expression.UnBoxingEvaluator;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.ReferenceType;
-import com.sun.jdi.Type;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.CompletableFuture;
 
-public abstract class UnboxableTypeRenderer extends CompoundReferenceRenderer {
-  public UnboxableTypeRenderer(String className) {
-    super(StringUtil.getShortName(className), new LabelRenderer() {
+public abstract class UnboxableTypeRenderer implements NodeRendererProvider {
+  private static final Logger LOG = Logger.getInstance(UnboxableTypeRenderer.class);
+  private final String myClassName;
+
+  protected UnboxableTypeRenderer(String className) {
+    myClassName = className;
+  }
+
+  @Override
+  public @NotNull NodeRenderer createRenderer() {
+    LOG.assertTrue(UnBoxingEvaluator.isTypeUnboxable(myClassName));
+    LabelRenderer labelRenderer = new LabelRenderer() {
       @Override
       public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener)
         throws EvaluateException {
@@ -50,20 +60,12 @@ public abstract class UnboxableTypeRenderer extends CompoundReferenceRenderer {
       public boolean isOnDemand(EvaluationContext evaluationContext, ValueDescriptor valueDescriptor) {
         return false;
       }
-    }, null);
-    LOG.assertTrue(UnBoxingEvaluator.isTypeUnboxable(className));
-    setClassName(className);
-    setEnabled(true);
-  }
-
-  @Override
-  public boolean isApplicable(Type type) {
-    return type instanceof ReferenceType && StringUtil.equals(type.name(), getClassName());
-  }
-
-  @Override
-  public CompletableFuture<Boolean> isApplicableAsync(Type type) {
-    return CompletableFuture.completedFuture(type instanceof ReferenceType && StringUtil.equals(type.name(), getClassName()));
+    };
+    return new RendererBuilder(StringUtil.getShortName(myClassName))
+      .labelRenderer(labelRenderer)
+      .isApplicable(type -> CompletableFuture.completedFuture(type instanceof ReferenceType && StringUtil.equals(type.name(), myClassName)))
+      .enabled(true)
+      .build();
   }
 
   public static class BooleanRenderer extends UnboxableTypeRenderer {

@@ -443,8 +443,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   public Renderer getLastLabelRenderer() {
     Renderer lastRenderer = getLastRenderer();
-    if (lastRenderer instanceof CompoundTypeRenderer) {
-      lastRenderer = ((CompoundTypeRenderer)lastRenderer).getLabelRenderer();
+    if (lastRenderer instanceof CompoundReferenceRenderer) {
+      lastRenderer = ((CompoundReferenceRenderer)lastRenderer).getLabelRenderer();
     }
     return lastRenderer;
   }
