@@ -601,6 +601,8 @@ class CommunityLibraryLicenses {
                        url: "https://x-stream.github.io/", licenseUrl: "https://x-stream.github.io/license.html"),
     new LibraryLicense(name: "XZ for Java", libraryName: "xz", license: "Public Domain",
                        url: "http://tukaani.org/xz/java.html"),
+    new LibraryLicense(name: "Zstd-JNI", libraryName: "com.github.luben:zstd", license: "BSD",
+                       url: "https://raw.githubusercontent.com/luben/zstd-jni/master/LICENSE"),
 
     jetbrainsLibrary("change-reminder-prediction-model"),
     jetbrainsLibrary("completion-ranking-java"),
