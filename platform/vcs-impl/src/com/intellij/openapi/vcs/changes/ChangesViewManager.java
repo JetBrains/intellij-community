@@ -706,7 +706,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
         invokeLaterIfNeeded(() -> {
           if (myDisposed) return;
-          indicator.checkCanceled();
+          if (canBeCancelled) indicator.checkCanceled();
 
           for (ChangesViewModifier extension : ChangesViewModifier.KEY.getExtensions(myProject)) {
             extension.modifyTreeModelBuilder(treeModelBuilder);
