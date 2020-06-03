@@ -42,7 +42,7 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
     val options = GitBranchUtil.getNewBranchNameFromUser(project, listOf(repository),
                                                          GithubBundle.message("pull.request.branch.checkout.create.dialog.title",
                                                                               pullRequestNumber),
-                                                         "pull/${pullRequestNumber}") ?: return
+                                                         "pull/${pullRequestNumber}", true) ?: return
 
     if (!options.checkout) {
       object : Task.Backgroundable(project, GithubBundle.message("pull.request.branch.checkout.create.task.title"), true) {
@@ -56,7 +56,9 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
           indicator.text = GithubBundle.message("pull.request.branch.checkout.create.task.indicator")
           GitBranchWorker(project, git, GitBranchUiHandlerImpl(project, git, indicator))
             .createBranch(options.name, mapOf(repository to sha))
-          trySetTrackingUpstreamBranch(git, repository, dataProvider, options.name, ghPullRequest)
+          if (options.setTracking) {
+            trySetTrackingUpstreamBranch(git, repository, dataProvider, options.name, ghPullRequest)
+          }
         }
       }.queue()
     }
@@ -72,7 +74,9 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
           indicator.text = GithubBundle.message("pull.request.branch.checkout.task.indicator")
           GitBranchWorker(project, git, GitBranchUiHandlerImpl(project, git, indicator))
             .checkoutNewBranchStartingFrom(options.name, sha, listOf(repository))
-          trySetTrackingUpstreamBranch(git, repository, dataProvider, options.name, ghPullRequest)
+          if (options.setTracking) {
+            trySetTrackingUpstreamBranch(git, repository, dataProvider, options.name, ghPullRequest)
+          }
         }
       }.queue()
     }
