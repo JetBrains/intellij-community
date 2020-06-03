@@ -333,6 +333,10 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
     doTest(false);
   }
 
+  public void testEolComment() {
+    doTest(false);
+  }
+  
   private void doTest(final boolean inlineDef, String conflictMessage) {
     try {
       doTest(inlineDef);
