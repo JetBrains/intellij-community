@@ -66,11 +66,18 @@ public final class ProjectUtil {
 
   private ProjectUtil() { }
 
+  /**
+   * @deprecated Use {@link #updateLastProjectLocation(Path)}
+   */
+  @Deprecated
   public static void updateLastProjectLocation(@NotNull String projectFilePath) {
-    File lastProjectLocation = new File(projectFilePath);
-    if (lastProjectLocation.isFile()) {
+    updateLastProjectLocation(Paths.get(projectFilePath));
+  }
+
+  public static void updateLastProjectLocation(@NotNull Path lastProjectLocation) {
+    if (Files.isRegularFile(lastProjectLocation)) {
       // for directory-based project storage
-      lastProjectLocation = lastProjectLocation.getParentFile();
+      lastProjectLocation = lastProjectLocation.getParent();
     }
 
     if (lastProjectLocation == null) {
@@ -79,12 +86,12 @@ public final class ProjectUtil {
     }
 
     // the candidate directory to be saved
-    lastProjectLocation = lastProjectLocation.getParentFile();
+    lastProjectLocation = lastProjectLocation.getParent();
     if (lastProjectLocation == null) {
       return;
     }
 
-    String path = lastProjectLocation.getPath();
+    String path = lastProjectLocation.toString();
     try {
       path = FileUtil.resolveShortWindowsName(path);
     }

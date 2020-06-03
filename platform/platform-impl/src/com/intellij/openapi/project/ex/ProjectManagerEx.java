@@ -19,34 +19,29 @@ public abstract class ProjectManagerEx extends ProjectManager {
     return (ProjectManagerEx)ApplicationManager.getApplication().getService(ProjectManager.class);
   }
 
-  @Nullable
-  public static ProjectManagerEx getInstanceExIfCreated() {
+  public static @Nullable ProjectManagerEx getInstanceExIfCreated() {
     return (ProjectManagerEx)ProjectManager.getInstanceIfCreated();
   }
 
   /**
    * @param filePath path to .ipr file or directory where .idea directory is located
    */
-  @Nullable
-  public abstract Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy);
+  public abstract @Nullable Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy);
 
-  @Nullable
-  public abstract Project newProject(@NotNull Path file, @Nullable String projectName, @NotNull OpenProjectTask options);
+  public abstract @Nullable Project newProject(@NotNull Path file, @Nullable String projectName, @NotNull OpenProjectTask options);
 
   /**
    * @deprecated Use {@link #loadProject(Path)}
    */
-  @NotNull
   @Deprecated
-  public final Project loadProject(@NotNull String filePath) {
+  public final @NotNull Project loadProject(@NotNull String filePath) {
     return loadProject(Paths.get(filePath).toAbsolutePath());
   }
 
   @ApiStatus.Internal
   public abstract @Nullable Project loadAndOpenProject(@NotNull Path projectStoreBaseDir, @NotNull OpenProjectTask options);
 
-  @NotNull
-  public abstract Project loadProject(@NotNull Path path);
+  public abstract @NotNull Project loadProject(@NotNull Path path);
 
   public abstract boolean openProject(@NotNull Project project);
 
@@ -71,14 +66,12 @@ public abstract class ProjectManagerEx extends ProjectManager {
    */
   public abstract boolean closeAndDispose(@NotNull Project project);
 
-  @Nullable
   @Override
-  public Project createProject(@Nullable String name, @NotNull String path) {
+  public @Nullable Project createProject(@Nullable String name, @NotNull String path) {
     return newProject(name, path, true, false);
   }
 
-  @Nullable
-  public abstract Project findOpenProjectByHash(@Nullable String locationHash);
+  public abstract @Nullable Project findOpenProjectByHash(@Nullable String locationHash);
 
   @ApiStatus.Internal
   public abstract @NotNull List<String> getAllExcludedUrls();

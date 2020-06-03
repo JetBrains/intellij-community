@@ -168,7 +168,7 @@ public final class NewProjectUtil {
       }
 
       if (newProject != projectToClose) {
-        ProjectUtil.updateLastProjectLocation(projectFilePath);
+        ProjectUtil.updateLastProjectLocation(projectFile);
         ProjectManagerEx.getInstanceEx().loadAndOpenProject(projectDir, OpenProjectTask.withCreatedProject(newProject, projectFile));
       }
 
