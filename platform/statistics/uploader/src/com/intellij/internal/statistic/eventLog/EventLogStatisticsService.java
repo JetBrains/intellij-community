@@ -86,22 +86,26 @@ public class EventLogStatisticsService implements StatisticsService {
       return new StatisticsResult(StatisticsResult.ResultCode.ERROR_IN_CONFIG, "ERROR: unknown Statistics Service URL.");
     }
 
-    if (!isSendLogsEnabled(device, settings.getPermittedTraffic())) {
+    if (!settings.isSendEnabled()) {
       cleanupEventLogFiles(logs, logger);
       return new StatisticsResult(StatisticsResult.ResultCode.NOT_PERMITTED_SERVER, "NOT_PERMITTED");
     }
 
     final boolean isInternal = info.isInternal();
     final String productCode = info.getProductCode();
-    final LogEventFilter filter = settings.getEventFilter();
+    EventLogBuildType defaultBuildType = getDefaultBuildType(info);
+    LogEventFilter baseFilter = settings.getBaseEventFilter();
     try {
       decorator.onLogsLoaded(logs.size());
       final List<File> toRemove = new ArrayList<>(logs.size());
       int size = Math.min(MAX_FILES_TO_SEND, logs.size());
       for (int i = 0; i < size; i++) {
-        final File file = logs.get(i).getFile();
-        final String deviceId = device.getDeviceId();
-        final LogEventRecordRequest recordRequest =
+        EventLogFile logFile = logs.get(i);
+        File file = logFile.getFile();
+        EventLogBuildType type = logFile.getType(defaultBuildType);
+        LogEventFilter filter = settings.getEventFilter(baseFilter, type);
+        String deviceId = device.getDeviceId();
+        LogEventRecordRequest recordRequest =
           LogEventRecordRequest.Companion.create(file, config.getRecorderId(), productCode, deviceId, filter, isInternal, logger);
         final String error = validate(recordRequest, file);
         if (isNotEmpty(error) || recordRequest == null) {
@@ -146,6 +150,11 @@ public class EventLogStatisticsService implements StatisticsService {
   }
 
   @NotNull
+  private static EventLogBuildType getDefaultBuildType(EventLogApplicationInfo info) {
+    return info.isEAP() ? EventLogBuildType.EAP : EventLogBuildType.RELEASE;
+  }
+
+  @NotNull
   private static String loadAndLogResponse(@NotNull DataCollectorDebugLogger logger,
                                            @NotNull StatsHttpResponse response,
                                            @NotNull File file) throws IOException {
@@ -156,13 +165,6 @@ public class EventLogStatisticsService implements StatisticsService {
       logger.trace(file.getName() + " -> " + content);
     }
     return content;
-  }
-
-  private static boolean isSendLogsEnabled(@NotNull DeviceConfiguration userData, int percent) {
-    if (percent == 0) {
-      return false;
-    }
-    return userData.getBucket() < percent * 2.56;
   }
 
   @Nullable

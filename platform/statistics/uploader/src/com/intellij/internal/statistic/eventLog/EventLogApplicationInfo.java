@@ -11,11 +11,16 @@ public interface EventLogApplicationInfo {
   String getProductCode();
 
   @NotNull
+  String getProductVersion();
+
+  @NotNull
   String getUserAgent();
 
   boolean isInternal();
 
   boolean isTest();
+
+  boolean isEAP();
 
   @NotNull
   DataCollectorDebugLogger getLogger();

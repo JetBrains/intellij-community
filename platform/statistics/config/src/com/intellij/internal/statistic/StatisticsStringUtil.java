@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public final class StatisticsStringUtil {
   @Contract(value = "null -> true", pure = true)
@@ -59,5 +60,10 @@ public final class StatisticsStringUtil {
       result.add(text.substring(pos));
     }
     return result;
+  }
+
+  @Contract(value = "null -> null; !null -> !null", pure = true)
+  public static String toLowerCase(@Nullable String str) {
+    return str == null ? null : str.toLowerCase(Locale.ENGLISH);
   }
 }

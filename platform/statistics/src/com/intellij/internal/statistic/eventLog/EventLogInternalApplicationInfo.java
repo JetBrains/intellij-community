@@ -39,6 +39,12 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
     return ApplicationInfo.getInstance().getBuild().getProductCode();
   }
 
+  @Override
+  public @NotNull String getProductVersion() {
+    final ApplicationInfo info = ApplicationInfo.getInstance();
+    return info.getMajorVersion() + "." + info.getMinorVersion();
+  }
+
   @NotNull
   @Override
   public String getUserAgent() {
@@ -59,6 +65,11 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
   @Override
   public boolean isTest() {
     return myIsTest;
+  }
+
+  @Override
+  public boolean isEAP() {
+    return ApplicationManager.getApplication().isEAP();
   }
 
   @NotNull

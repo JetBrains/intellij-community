@@ -12,10 +12,16 @@ public interface EventLogSettingsService {
   @Nullable
   String getDictionaryServiceUrl();
 
-  int getPermittedTraffic();
+  /**
+   * @return false if there are no available configurations, true otherwise
+   */
+  boolean isSendEnabled();
 
   @NotNull
-  LogEventFilter getEventFilter();
+  LogEventFilter getBaseEventFilter();
+
+  @NotNull
+  LogEventFilter getEventFilter(@NotNull LogEventFilter base, @NotNull EventLogBuildType type);
 
   @NotNull
   EventLogApplicationInfo getApplicationInfo();

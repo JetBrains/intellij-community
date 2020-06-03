@@ -7,17 +7,15 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.utils.DateUtils;
 import org.apache.http.util.EntityUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.stream.Stream;
 
 public class StatsHttpResponse {
-  @NonNls private static final String UTF8 = "UTF-8";
-
   private final HttpResponse myResponse;
   private final int myCode;
 
@@ -32,6 +30,7 @@ public class StatsHttpResponse {
 
   @Nullable
   public Long lastModified() {
+    if (myResponse == null) return null;
     Header[] headers = myResponse.getHeaders(HttpHeaders.LAST_MODIFIED);
     return Stream.of(headers).
       map(header -> header.getValue()).
@@ -42,13 +41,13 @@ public class StatsHttpResponse {
 
   @Nullable
   public String readAsString() throws IOException {
-    HttpEntity entity = myResponse.getEntity();
-    return entity != null ? EntityUtils.toString(entity, UTF8) : null;
+    HttpEntity entity = myResponse != null ? myResponse.getEntity() : null;
+    return entity != null ? EntityUtils.toString(entity, StandardCharsets.UTF_8) : null;
   }
 
   @Nullable
   public InputStream read() throws IOException {
-    HttpEntity entity = myResponse.getEntity();
+    HttpEntity entity = myResponse != null ? myResponse.getEntity() : null;
     return entity != null ? entity.getContent() : null;
   }
 }

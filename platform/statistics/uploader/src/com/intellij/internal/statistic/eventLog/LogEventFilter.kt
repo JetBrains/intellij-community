@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.service.fus.StatisticsWhitelistConditions
+import com.intellij.internal.statistic.config.bean.EventLogBucketRange
 
 interface LogEventFilter {
   fun accepts(event: LogEvent) : Boolean
@@ -10,6 +11,13 @@ interface LogEventFilter {
 class LogEventWhitelistFilter(val whitelist: StatisticsWhitelistConditions) : LogEventFilter {
   override fun accepts(event: LogEvent): Boolean {
     return whitelist.accepts(event.group.id, event.group.version, event.build)
+  }
+}
+
+class LogEventBucketsFilter(val buckets: List<EventLogBucketRange>) : LogEventFilter {
+  override fun accepts(event: LogEvent): Boolean {
+    val bucket = event.bucket.toIntOrNull() ?: return false
+    return buckets.any { it.contains(bucket) }
   }
 }
 
@@ -29,5 +37,11 @@ class LogEventCompositeFilter(vararg val filters : LogEventFilter) : LogEventFil
 object LogEventTrueFilter : LogEventFilter {
   override fun accepts(event: LogEvent): Boolean {
     return true
+  }
+}
+
+object LogEventFalseFilter : LogEventFilter {
+  override fun accepts(event: LogEvent): Boolean {
+    return false
   }
 }

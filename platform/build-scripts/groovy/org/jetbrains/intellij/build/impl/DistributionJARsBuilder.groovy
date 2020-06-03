@@ -168,6 +168,7 @@ class DistributionJARsBuilder {
       addModule("intellij.spellchecker")
       addModule("intellij.platform.statistics")
       addModule("intellij.platform.statistics.uploader")
+      addModule("intellij.platform.statistics.config")
       addModule("intellij.platform.statistics.devkit")
 
       addModule("intellij.relaxng", "intellij-xml.jar")
