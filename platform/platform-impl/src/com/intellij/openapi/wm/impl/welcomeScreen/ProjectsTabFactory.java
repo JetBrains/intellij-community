@@ -9,16 +9,22 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WelcomeScreenTab;
 import com.intellij.openapi.wm.WelcomeTabFactory;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.speedSearch.NameFilteringListModel;
+import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 
 import static com.intellij.openapi.actionSystem.impl.ActionButton.HIDE_DROPDOWN_ICON;
@@ -41,7 +47,7 @@ public class ProjectsTabFactory implements WelcomeTabFactory {
         }
         JPanel mainPanel = JBUI.Panels.simplePanel().withBorder(JBUI.Borders.empty(13, 12)).withBackground(getProjectsBackground());
         final SearchTextField projectSearch = createSearchProjectsField();
-        NewRecentProjectPanel projectsPanel = new NewRecentProjectPanel(parentDisposable);
+        NewRecentProjectPanel projectsPanel = createProjectsPanelWithExternalSearch(projectSearch);
         projectsPanel.setBorder(JBUI.Borders.emptyTop(10));
 
         JPanel northPanel =
@@ -61,6 +67,35 @@ public class ProjectsTabFactory implements WelcomeTabFactory {
         mainPanel.add(createNotificationsPanel(parentDisposable), BorderLayout.SOUTH);
 
         return mainPanel;
+      }
+
+      @NotNull
+      private NewRecentProjectPanel createProjectsPanelWithExternalSearch(@NotNull SearchTextField projectSearch) {
+        return new NewRecentProjectPanel(parentDisposable, false) {
+          @Override
+          protected JBList<AnAction> createList(AnAction[] recentProjectActions, Dimension size) {
+            JBList<AnAction> projectsList = super.createList(recentProjectActions, size);
+            SpeedSearch speedSearch = new SpeedSearch();
+
+            NameFilteringListModel<AnAction> model = new NameFilteringListModel<>(
+              projectsList.getModel(), createProjectNameFunction(), speedSearch::shouldBeShowing,
+              () -> StringUtil.notNullize(speedSearch.getFilter()));
+            projectsList.setModel(model);
+
+            projectSearch.addDocumentListener(new DocumentAdapter() {
+              @Override
+              protected void textChanged(@NotNull DocumentEvent e) {
+                speedSearch.updatePattern(projectSearch.getText());
+                model.refilter();
+                int closestMatchIndex = model.getClosestMatchIndex();
+                if (closestMatchIndex >= 0) {
+                  projectsList.setSelectedIndex(closestMatchIndex);
+                }
+              }
+            });
+            return projectsList;
+          }
+        };
       }
 
       @NotNull
