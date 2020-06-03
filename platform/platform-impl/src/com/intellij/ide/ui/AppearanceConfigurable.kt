@@ -63,7 +63,6 @@ private val cdCyclicListScrolling                     get() = CheckboxDescriptor
 private val cdShowQuickNavigationIcons                get() = CheckboxDescriptor(message("checkbox.show.icons.in.quick.navigation"), settings::showIconInQuickNavigation, groupName = uiOptionGroupName)
 private val cdUseCompactTreeIndents                   get() = CheckboxDescriptor(message("checkbox.compact.tree.indents"), settings::compactTreeIndents, groupName = uiOptionGroupName)
 private val cdShowTreeIndents                         get() = CheckboxDescriptor(message("checkbox.show.tree.indent.guides"), settings::showTreeIndentGuides, groupName = uiOptionGroupName)
-private val cdMoveCursorOnButton                      get() = CheckboxDescriptor(message("checkbox.position.cursor.on.default.button"), settings::moveMouseOnDefaultButton, groupName = uiOptionGroupName)
 private val cdHideNavigationPopups                    get() = CheckboxDescriptor(message("hide.navigation.popups.on.focus.loss"), settings::hideNavigationOnFocusLoss, groupName = uiOptionGroupName)
 private val cdDnDWithAlt                              get() = CheckboxDescriptor(message("dnd.with.alt.pressed.only"), settings::dndWithPressedAltOnly, groupName = uiOptionGroupName)
 
@@ -90,7 +89,6 @@ internal val appearanceOptionDescriptors: List<OptionDescription>
     cdShowQuickNavigationIcons,
     cdUseCompactTreeIndents,
     cdShowTreeIndents,
-    cdMoveCursorOnButton,
     cdHideNavigationPopups,
     cdDnDWithAlt,
     cdFullPathsInTitleBar
@@ -189,7 +187,6 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         fullRow { checkBox(cdShowQuickNavigationIcons) }
         fullRow { checkBox(cdUseCompactTreeIndents) }
         fullRow { checkBox(cdShowTreeIndents) }
-        fullRow { checkBox(cdMoveCursorOnButton) }
         fullRow { checkBox(cdHideNavigationPopups) }
         fullRow { checkBox(cdDnDWithAlt) }
         val backgroundImageAction = ActionManager.getInstance().getAction("Images.SetBackgroundImage")

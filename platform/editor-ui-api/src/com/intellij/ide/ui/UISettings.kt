@@ -10,6 +10,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.scale.JBUIScale
@@ -18,6 +19,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Transient
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.RenderingHints
@@ -214,6 +216,8 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var moveMouseOnDefaultButton: Boolean
+    @ScheduledForRemoval(inVersion = "2020.3")
+    @Deprecated("Use registry key 'ide.settings.move.mouse.on.default.button'")
     get() = state.moveMouseOnDefaultButton
     set(value) {
       state.moveMouseOnDefaultButton = value
@@ -657,6 +661,10 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
     if (state.ideAAType == AntialiasingType.SUBPIXEL && !AntialiasingType.canUseSubpixelAAForIDE()) {
       state.ideAAType = AntialiasingType.GREYSCALE;
+    }
+    if (state.moveMouseOnDefaultButton) {
+      Registry.get("ide.settings.move.mouse.on.default.button").setValue(true)
+      state.moveMouseOnDefaultButton = false
     }
   }
 
