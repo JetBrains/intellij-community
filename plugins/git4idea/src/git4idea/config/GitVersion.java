@@ -201,7 +201,8 @@ public final class GitVersion implements Comparable<GitVersion> {
    * @return true if the version is supported by the plugin
    */
   public boolean isSupported() {
-    return getType() != Type.NULL && compareTo(MIN) >= 0;
+    Type type = getType();
+    return type != Type.NULL && type != Type.WSL1 && compareTo(MIN) >= 0;
   }
 
   /**
