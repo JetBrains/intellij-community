@@ -23,6 +23,6 @@ import com.jetbrains.python.psi.PyElementType;
  * @author Mikhail Golubev
  */
 public interface PyFunctionTypeAnnotationElementTypes {
-  PyElementType FUNCTION_SIGNATURE = new PyElementType("FUNCTION_SIGNATURE", PyFunctionTypeAnnotation::new);
-  PyElementType PARAMETER_TYPE_LIST = new PyElementType("PARAMETER_TYPE_LIST", PyParameterTypeList::new);
+  PyElementType FUNCTION_SIGNATURE = new PyElementType("FUNCTION_SIGNATURE", node -> new PyFunctionTypeAnnotation(node));
+  PyElementType PARAMETER_TYPE_LIST = new PyElementType("PARAMETER_TYPE_LIST", node -> new PyParameterTypeList(node));
 }
