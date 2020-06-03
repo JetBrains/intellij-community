@@ -42,13 +42,13 @@ public class PsiModificationTrackerTreeChangesUpdatesTest extends HeavyPlatformT
       final VirtualFile dir2 = PlatformTestUtil.getOrCreateProjectTestBaseDir(getProject()).createChildDirectory(this, "dir2");
       VirtualFile child = dir1.createChildData(this, "child");
 
-      long outOfCodeBlockCount = myTracker.getOutOfCodeBlockModificationCount();
+      long outOfCodeBlockCount = myTracker.getModificationCount();
       child.move(this, dir2);
-      assertFalse(myTracker.getOutOfCodeBlockModificationCount() == outOfCodeBlockCount);
+      assertFalse(myTracker.getModificationCount() == outOfCodeBlockCount);
 
-      outOfCodeBlockCount = myTracker.getOutOfCodeBlockModificationCount();
+      outOfCodeBlockCount = myTracker.getModificationCount();
       child.move(this, dir1);
-      assertFalse(myTracker.getOutOfCodeBlockModificationCount() == outOfCodeBlockCount);
+      assertFalse(myTracker.getModificationCount() == outOfCodeBlockCount);
     });
   }
 
@@ -58,13 +58,13 @@ public class PsiModificationTrackerTreeChangesUpdatesTest extends HeavyPlatformT
       final VirtualFile dir2 = PlatformTestUtil.getOrCreateProjectTestBaseDir(getProject()).createChildDirectory(this, "dir2");
       VirtualFile child = dir1.createChildDirectory(this, "child");
 
-      long outOfCodeBlockCount = myTracker.getOutOfCodeBlockModificationCount();
+      long outOfCodeBlockCount = myTracker.getModificationCount();
       child.move(this, dir2);
-      assertFalse(myTracker.getOutOfCodeBlockModificationCount() == outOfCodeBlockCount);
+      assertFalse(myTracker.getModificationCount() == outOfCodeBlockCount);
 
-      outOfCodeBlockCount = myTracker.getOutOfCodeBlockModificationCount();
+      outOfCodeBlockCount = myTracker.getModificationCount();
       child.move(this, dir1);
-      assertFalse(myTracker.getOutOfCodeBlockModificationCount() == outOfCodeBlockCount);
+      assertFalse(myTracker.getModificationCount() == outOfCodeBlockCount);
     });
   }
 }

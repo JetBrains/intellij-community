@@ -117,7 +117,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     @NotNull
     private List<RatedResolveResult> multiResolve(@NotNull String name) {
       synchronized (myNameDefinerNegativeCache) {
-        final long modCount = myModificationTracker.getOutOfCodeBlockModificationCount();
+        final long modCount = myModificationTracker.getModificationCount();
         if (modCount != myNameDefinerOOCBModCount) {
           myNameDefinerNegativeCache.clear();
           myNameDefinerOOCBModCount = modCount;

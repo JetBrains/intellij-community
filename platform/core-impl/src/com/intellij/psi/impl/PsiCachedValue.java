@@ -119,7 +119,7 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
   @Override
   protected long getTimeStamp(@NotNull Object dependency) {
     if (dependency instanceof PsiDirectory) {
-      return myManager.getModificationTracker().getOutOfCodeBlockModificationCount();
+      return myManager.getModificationTracker().getModificationCount();
     }
 
     if (dependency instanceof PsiElement) {
@@ -133,7 +133,7 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
       return myManager.getModificationTracker().getModificationCount();
     }
     if (dependency == PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT) {
-      return myManager.getModificationTracker().getOutOfCodeBlockModificationCount();
+      return myManager.getModificationTracker().getModificationCount();
     }
     if (dependency == PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT) {
       return myManager.getModificationTracker().getModificationCount();

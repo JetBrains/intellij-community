@@ -57,7 +57,8 @@ public interface PsiModificationTracker extends ModificationTracker {
    * @deprecated rarely supported by language plugins; also a wrong way for optimisations
    */
   @Deprecated
-  Key OUT_OF_CODE_BLOCK_MODIFICATION_COUNT = Key.create("OUT_OF_CODE_BLOCK_MODIFICATION_COUNT");
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  Key OUT_OF_CODE_BLOCK_MODIFICATION_COUNT = MODIFICATION_COUNT;
 
   /**
    * This key can be passed as a dependency in a {@link CachedValueProvider}.
@@ -88,6 +89,7 @@ public interface PsiModificationTracker extends ModificationTracker {
    * @deprecated rarely supported by language plugins; also a wrong way for optimisations
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   long getOutOfCodeBlockModificationCount();
 
   /**
@@ -95,6 +97,7 @@ public interface PsiModificationTracker extends ModificationTracker {
    * @deprecated rarely supported by language plugins; also a wrong way for optimisations
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   @NotNull
   ModificationTracker getOutOfCodeBlockModificationTracker();
 
