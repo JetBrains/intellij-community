@@ -367,4 +367,19 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     File jar = IoTestUtil.createTestJar(tempDir.newFile("p.jar"), namesAndTexts);
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar);
   }
+
+  @Test
+  public void testCrazyJarWithBackSlashedLongEntryMustNotCrashAnything() {
+    VirtualFile vFile = createJar("META-INF/MANIFEST.MF", "\\META-INF\\RETLD-00.00015.xml");
+
+    VirtualFile jarRoot = JarFileSystem.getInstance().getRootByLocal(vFile);
+    assertNotNull(jarRoot);
+    VirtualFile child = UsefulTestCase.assertOneElement(jarRoot.getChildren());
+    String[] children = JarFileSystem.getInstance().list(jarRoot);
+    assertEquals("META-INF", UsefulTestCase.assertOneElement(children));
+
+    child.getChildren();
+    assertNotNull(jarRoot.findFileByRelativePath("META-INF/MANIFEST.MF"));
+    assertNotNull(jarRoot.findFileByRelativePath("META-INF/RETLD-00.00015.xml"));
+  }
 }
