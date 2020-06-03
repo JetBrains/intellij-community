@@ -56,9 +56,13 @@ internal object GHPRCommitsBrowserComponent {
     }
 
     commitsModel.addStateChangesListener {
-      val selectedCommit = commitsList.selectedValue
-      commitsListModel.replaceAll(commitsModel.commitsWithChanges?.keys?.toList().orEmpty())
-      commitsList.setSelectedValue(selectedCommit, true)
+      val currentList = commitsListModel.toList()
+      val newList = commitsModel.commitsWithChanges?.keys?.toList().orEmpty()
+      if (currentList != newList) {
+        val selectedCommit = commitsList.selectedValue
+        commitsListModel.replaceAll(newList)
+        commitsList.setSelectedValue(selectedCommit, true)
+      }
     }
 
     val commitDetailsModel = SingleValueModel<GHCommit?>(null)
