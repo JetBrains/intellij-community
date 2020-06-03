@@ -30,6 +30,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.impl.ui.EditKeymapsDialog;
 import com.intellij.openapi.project.Project;
@@ -51,7 +52,6 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.xml.DomEventListener;
 import com.intellij.util.xml.DomManager;
 import icons.AntIcons;
 import org.jetbrains.annotations.NonNls;
@@ -66,7 +66,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.*;
 
@@ -159,12 +158,28 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     setContent(ScrollPaneFactory.createScrollPane(myTree));
     ToolTipManager.sharedInstance().registerComponent(myTree);
 
-    final Object refresher = Proxy.newProxyInstance(this.getClass().getClassLoader(),
-      new Class[]{KeymapManagerListener.class, DomEventListener.class},
-      (proxy, method, args) -> treeModel.invalidate()
-    );
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(KeymapManagerListener.TOPIC, (KeymapManagerListener)refresher);
-    DomManager.getDomManager(project).addDomEventListener((DomEventListener)refresher, this);
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
+      @Override
+      public void keymapAdded(@NotNull Keymap keymap) {
+        treeModel.invalidate();
+      }
+
+      @Override
+      public void keymapRemoved(@NotNull Keymap keymap) {
+        treeModel.invalidate();
+      }
+
+      @Override
+      public void activeKeymapChanged(@Nullable Keymap keymap) {
+        treeModel.invalidate();
+      }
+
+      @Override
+      public void shortcutChanged(@NotNull Keymap keymap, @NotNull String actionId) {
+        treeModel.invalidate();
+      }
+    });
+    DomManager.getDomManager(project).addDomEventListener(__ -> treeModel.invalidate(), this);
 
     project.getMessageBus().connect(this).subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
       @Override
