@@ -19,6 +19,7 @@
                     dynamic="true"
                     beanClass="com.intellij.model.psi.PsiSymbolReferenceProviderBean">
       <with attribute="hostElementClass" implements="com.intellij.model.psi.PsiExternalReferenceHost"/>
+      <with attribute="referenceClass" implements="com.intellij.model.psi.PsiSymbolReference"/>
       <with attribute="targetClass" implements="com.intellij.model.Symbol"/>
       <with attribute="implementationClass" implements="com.intellij.model.psi.PsiSymbolReferenceProvider"/>
     </extensionPoint>

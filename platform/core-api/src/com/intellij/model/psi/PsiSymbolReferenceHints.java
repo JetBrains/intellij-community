@@ -8,6 +8,15 @@ import org.jetbrains.annotations.Nullable;
 public interface PsiSymbolReferenceHints {
 
   /**
+   * Provider may return only references of this type if the type is not {@code null}.
+   *
+   * @return type of expected reference
+   */
+  default @NotNull Class<? extends PsiSymbolReference> getReferenceClass() {
+    return PsiSymbolReference.class;
+  }
+
+  /**
    * Provider may return only references which could be resolved to symbols of this type if the type is not {@code null}.
    *
    * @return type of expected target symbol
@@ -34,6 +43,16 @@ public interface PsiSymbolReferenceHints {
    */
   default @Nullable Integer getOffsetInElement() {
     return null;
+  }
+
+  static @NotNull PsiSymbolReferenceHints referenceClassHint(@NotNull Class<? extends PsiSymbolReference> referenceClass) {
+    assert referenceClass != PsiSymbolReference.class;
+    return new PsiSymbolReferenceHints() {
+      @Override
+      public @NotNull Class<? extends PsiSymbolReference> getReferenceClass() {
+        return referenceClass;
+      }
+    };
   }
 
   static @NotNull PsiSymbolReferenceHints offsetHint(int offsetInElement) {

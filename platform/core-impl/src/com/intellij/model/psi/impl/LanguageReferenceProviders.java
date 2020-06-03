@@ -2,10 +2,8 @@
 package com.intellij.model.psi.impl;
 
 import com.intellij.model.psi.PsiExternalReferenceHost;
-import com.intellij.model.psi.PsiSymbolReferenceProvider;
 import com.intellij.model.psi.PsiSymbolReferenceProviderBean;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -25,13 +23,8 @@ final class LanguageReferenceProviders {
   }
 
   @NotNull
-  List<PsiSymbolReferenceProvider> getProviders(@NotNull PsiExternalReferenceHost element) {
-    return ContainerUtil.map(byHostClass(element), PsiSymbolReferenceProviderBean::getInstance);
-  }
-
-  @NotNull
-  private List<PsiSymbolReferenceProviderBean> byHostClass(@NotNull PsiExternalReferenceHost element) {
-    return myBeansByHostClass.computeIfAbsent(element.getClass(), this::byHostClassInner);
+  List<PsiSymbolReferenceProviderBean> byHostClass(@NotNull Class<? extends PsiExternalReferenceHost> aClass) {
+    return myBeansByHostClass.computeIfAbsent(aClass, this::byHostClassInner);
   }
 
   @NotNull
