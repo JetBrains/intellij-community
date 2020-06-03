@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater
 import kotlin.collections.ArrayList
 import kotlin.collections.LinkedHashMap
 
-val LOG = logger<BaseState>()
+internal val LOG = logger<BaseState>()
 
 private val factory: StatePropertyFactory = ServiceLoader.load(StatePropertyFactory::class.java, BaseState::class.java.classLoader).first()
 
