@@ -45,7 +45,6 @@ public class MavenGeneralPanel implements PanelWithAnchor {
   private JBLabel myMultiProjectBuildFailPolicyLabel;
   private JCheckBox alwaysUpdateSnapshotsCheckBox;
   private JTextField threadsEditor;
-  private JCheckBox updateIndicesOnProjectOpen;
   private final DefaultComboBoxModel outputLevelComboModel = new DefaultComboBoxModel();
   private final DefaultComboBoxModel checksumPolicyComboModel = new DefaultComboBoxModel();
   private final DefaultComboBoxModel failPolicyComboModel = new DefaultComboBoxModel();
@@ -97,7 +96,6 @@ public class MavenGeneralPanel implements PanelWithAnchor {
     data.setFailureBehavior((MavenExecutionOptions.FailureMode)ComboBoxUtil.getSelectedValue(failPolicyComboModel));
     data.setPluginUpdatePolicy((MavenExecutionOptions.PluginUpdatePolicy)ComboBoxUtil.getSelectedValue(pluginUpdatePolicyComboModel));
     data.setAlwaysUpdateSnapshots(alwaysUpdateSnapshotsCheckBox.isSelected());
-    data.setUpdateIndicesOnProjectOpen(updateIndicesOnProjectOpen.isSelected());
     data.setThreads(threadsEditor.getText());
 
     data.endUpdate();
@@ -112,7 +110,6 @@ public class MavenGeneralPanel implements PanelWithAnchor {
     checkboxUsePluginRegistry.setSelected(data.isUsePluginRegistry());
     checkboxRecursive.setSelected(!data.isNonRecursive());
     alwaysUpdateSnapshotsCheckBox.setSelected(data.isAlwaysUpdateSnapshots());
-    updateIndicesOnProjectOpen.setSelected(data.isUpdateIndicesOnProjectOpen());
     threadsEditor.setText(StringUtil.notNullize(data.getThreads()));
 
     ComboBoxUtil.select(outputLevelComboModel, data.getOutputLevel());
