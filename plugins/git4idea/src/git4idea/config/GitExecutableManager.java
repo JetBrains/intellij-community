@@ -14,6 +14,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.ThreeState;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
@@ -56,6 +57,13 @@ public class GitExecutableManager {
   }
 
   private static GitVersion doGetGitVersion(@NotNull GitExecutable executable) throws VcsException, ParseException {
+    GitVersion.Type type = null;
+    if (executable instanceof GitExecutable.Wsl) {
+      WSLDistribution distribution = ((GitExecutable.Wsl)executable).getDistribution();
+      type = WSLUtil.isWsl1(distribution) == ThreeState.YES ? GitVersion.Type.WSL1
+                                                            : GitVersion.Type.WSL2;
+    }
+
     LOG.debug("Acquiring git version for " + executable);
     GitLineHandler handler = new GitLineHandler(null,
                                                 new File("."),
@@ -68,8 +76,8 @@ public class GitExecutableManager {
     handler.setStdoutSuppressed(false);
     GitCommandResult result = Git.getInstance().runCommand(handler);
     String rawResult = result.getOutputOrThrow();
-    GitVersion version = GitVersion.parse(rawResult, executable);
-    LOG.info("Git version for " + executable + " : " + version.getPresentation());
+    GitVersion version = GitVersion.parse(rawResult, type);
+    LOG.info("Git version for " + executable + ": " + version.toString());
     return version;
   }
 

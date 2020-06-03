@@ -41,7 +41,8 @@ public final class GitVersion implements Comparable<GitVersion> {
     UNIX,
     MSYS,
     CYGWIN,
-    WSL,
+    WSL1,
+    WSL2,
     /**
      * The type doesn't matter or couldn't be detected.
      */
@@ -102,7 +103,7 @@ public final class GitVersion implements Comparable<GitVersion> {
    * Parses output of "git version" command.
    */
   @NotNull
-  public static GitVersion parse(@NotNull String output, @Nullable GitExecutable executable) throws ParseException {
+  public static GitVersion parse(@NotNull String output, @Nullable Type type) throws ParseException {
     if (StringUtil.isEmptyOrSpaces(output)) {
       throw new ParseException("Empty git --version output: " + output, 0);
     }
@@ -115,22 +116,20 @@ public final class GitVersion implements Comparable<GitVersion> {
     int rev = getIntGroup(m, 3);
     int patch = getIntGroup(m, 4);
 
-    Type type;
-    if (SystemInfo.isWindows) {
-      String suffix = getStringGroup(m, 5);
-      if (executable instanceof GitExecutable.Wsl) {
-        type = Type.WSL;
-      }
-      else if (StringUtil.toLowerCase(suffix).contains("msysgit") ||
-               StringUtil.toLowerCase(suffix).contains("windows")) {
-        type = Type.MSYS;
+    if (type == null) {
+      if (SystemInfo.isWindows) {
+        String suffix = getStringGroup(m, 5);
+        if (StringUtil.toLowerCase(suffix).contains("msysgit") ||
+            StringUtil.toLowerCase(suffix).contains("windows")) {
+          type = Type.MSYS;
+        }
+        else {
+          type = Type.CYGWIN;
+        }
       }
       else {
-        type = Type.CYGWIN;
+        type = Type.UNIX;
       }
-    }
-    else {
-      type = Type.UNIX;
     }
 
     return new GitVersion(major, minor, rev, patch, type);
