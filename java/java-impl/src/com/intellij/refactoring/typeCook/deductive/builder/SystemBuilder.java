@@ -706,6 +706,8 @@ public class SystemBuilder {
       final PsiAnchor anchor = PsiAnchor.create(root);
 
       if (!myVisitedConstructions.contains(anchor)) {
+        //return from lambda is processed inside visitReturnStatement
+        //noinspection UnsafeReturnStatementVisitor
         root.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override public void visitAssignmentExpression(final PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
