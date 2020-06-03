@@ -59,7 +59,8 @@ public class KeywordArgumentCompletionUtil {
     if (type.isCallable()) {
       final List<PyCallableParameter> parameters = type.getParameters(context);
       if (parameters != null) {
-        for (PyCallableParameter parameter : parameters) {
+        int indexOfPySlashParameter = getIndexOfPySlashParameter(parameters);
+        for (PyCallableParameter parameter : parameters.subList(indexOfPySlashParameter + 1, parameters.size())) {
           if (parameter.isKeywordContainer() || parameter.isPositionalContainer()) {
             continue;
           }
@@ -86,6 +87,10 @@ public class KeywordArgumentCompletionUtil {
     return result.getElement();
   }
 
+  private static int getIndexOfPySlashParameter(@NotNull List<PyCallableParameter> parameters) {
+    return ContainerUtil.indexOf(parameters, parameter -> parameter.getParameter() instanceof PySlashParameter);
+  }
+
   private static void addKeywordArgumentVariantsForFunction(@NotNull final PyCallExpression callExpr,
                                                             @NotNull final PyFunction function,
                                                             @NotNull final List<String> ret,
@@ -98,8 +103,12 @@ public class KeywordArgumentCompletionUtil {
     boolean needSelf = function.getContainingClass() != null && function.getModifier() != PyFunction.Modifier.STATICMETHOD;
     final KwArgParameterCollector collector = new KwArgParameterCollector(needSelf, ret);
 
+    List<PyCallableParameter> parameters = function.getParameters(context);
+    int indexOfPySlashParameter = getIndexOfPySlashParameter(parameters);
+
     StreamEx
-      .of(function.getParameters(context))
+      .of(parameters)
+      .skip(indexOfPySlashParameter + 1)
       .map(PyCallableParameter::getParameter)
       .nonNull()
       .forEach(parameter -> parameter.accept(collector));
