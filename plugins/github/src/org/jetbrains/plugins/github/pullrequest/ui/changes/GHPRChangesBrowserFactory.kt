@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
 import com.intellij.ui.IdeBorderFactory
@@ -16,14 +17,16 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRReviewSubmitAction
 import org.jetbrains.plugins.github.pullrequest.action.GHPRShowDiffAction
-import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
+import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
+import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
+import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 class GHPRChangesBrowserFactory(private val actionManager: ActionManager, private val project: Project) {
 
-  fun create(changesModel: GHPRChangesModel,
+  fun create(changesModel: SingleValueModel<List<Change>?>,
              @Nls(capitalization = Nls.Capitalization.Sentence) panelEmptyText: String): JComponent {
 
     val changesTreePanel = GHPRChangesTree.createLazyTreePanel(changesModel) {
@@ -61,15 +64,14 @@ class GHPRChangesBrowserFactory(private val actionManager: ActionManager, privat
     return TreeActionsToolbarPanel(changesToolbar, treeActionsGroup, target)
   }
 
-  fun create(loadingModel: GHLoadingModel,
-             changesModel: GHPRChangesModel,
+  fun create(loadingModel: GHSimpleLoadingModel<GHPRChangesProvider>,
              @Nls(capitalization = Nls.Capitalization.Sentence) panelEmptyText: String = "",
              disposable: Disposable): JComponent {
 
     val loadingPanel = GHLoadingPanelFactory(loadingModel,
                                              errorPrefix = GithubBundle.message("cannot.load.changes"))
-      .createWithUpdatesStripe(disposable) {
-        createTree(project, changesModel, it).apply {
+      .createWithUpdatesStripe(disposable) { parent, model ->
+        createTree(project, model.map { it.changes }, parent).apply {
           emptyText.text = panelEmptyText
         }.let { tree ->
           ScrollPaneFactory.createScrollPane(tree, true)
@@ -85,7 +87,7 @@ class GHPRChangesBrowserFactory(private val actionManager: ActionManager, privat
       .addToCenter(loadingPanel)
   }
 
-  private fun createTree(project: Project, changesModel: GHPRChangesModel, parentPanel: JPanel) =
+  private fun createTree(project: Project, changesModel: SingleValueModel<List<Change>?>, parentPanel: JPanel) =
     GHPRChangesTree.create(project, changesModel).also {
       DataManager.registerDataProvider(parentPanel, it::getData)
 

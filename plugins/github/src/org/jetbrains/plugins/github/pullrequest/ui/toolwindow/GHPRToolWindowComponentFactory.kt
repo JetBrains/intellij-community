@@ -202,8 +202,8 @@ internal class GHPRToolWindowComponentFactory(private val project: Project,
                                      val contextRepository = dataContextRepository
                                      contextRepository.clearContext(remoteUrl)
                                      loadingModel.future = contextRepository.acquireContext(remoteUrl, account, requestExecutor)
-                                   }).create {
-        GHPRComponentFactory(project).createComponent(loadingModel.result!!, uiDisposable)
+                                   }).create { _, result ->
+        GHPRComponentFactory(project).createComponent(result, uiDisposable)
       }
     }
   }

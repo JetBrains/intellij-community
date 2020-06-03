@@ -15,22 +15,23 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.GHHtmlErrorPanel
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
+import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class GHLoadingPanelFactory(private val model: GHLoadingModel,
-                            @Nls(capitalization = Nls.Capitalization.Sentence) private val notLoadingText: String? = null,
-                            @Nls(capitalization = Nls.Capitalization.Sentence) private val errorPrefix: String =
-                              GithubBundle.message("cannot.load.data"),
-                            private val errorHandler: GHLoadingErrorHandler? = null) {
+class GHLoadingPanelFactory<T>(private val model: GHSimpleLoadingModel<T>,
+                               @Nls(capitalization = Nls.Capitalization.Sentence) private val notLoadingText: String? = null,
+                               @Nls(capitalization = Nls.Capitalization.Sentence) private val errorPrefix: String =
+                                 GithubBundle.message("cannot.load.data"),
+                               private val errorHandler: GHLoadingErrorHandler? = null) {
 
 
-  fun createWithUpdatesStripe(parentDisposable: Disposable, contentFactory: (JPanel) -> JComponent): JComponent {
+  fun createWithUpdatesStripe(parentDisposable: Disposable, contentFactory: (JPanel, SingleValueModel<T>) -> JComponent): JComponent {
     val panel = NonOpaquePanel()
-    object : ContentController(model, panel, notLoadingText, errorPrefix, errorHandler) {
-      override fun createContent(parentPanel: JPanel): JComponent {
-        val stripe = ProgressStripe(contentFactory(parentPanel), parentDisposable,
+    object : ContentController<T>(model, panel, notLoadingText, errorPrefix, errorHandler) {
+      override fun createContent(parentPanel: JPanel, valueModel: SingleValueModel<T>): JComponent {
+        val stripe = ProgressStripe(contentFactory(parentPanel, valueModel), parentDisposable,
                                     ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
           isOpaque = false
         }
@@ -52,24 +53,31 @@ class GHLoadingPanelFactory(private val model: GHLoadingModel,
     return panel
   }
 
-  fun create(contentFactory: (JPanel) -> JComponent): JComponent {
+  fun create(contentFactory: (JPanel, T) -> JComponent): JComponent {
     val panel = NonOpaquePanel()
-    object : ContentController(model, panel, notLoadingText, errorPrefix, errorHandler) {
-      override fun createContent(parentPanel: JPanel) = contentFactory(parentPanel)
+    object : ContentController<T>(model, panel, notLoadingText, errorPrefix, errorHandler) {
+      override fun createContent(parentPanel: JPanel, valueModel: SingleValueModel<T>) =
+        contentFactory(parentPanel, valueModel.value)
+    }
+    return panel
+  }
+
+  fun createWithModel(contentFactory: (JPanel, SingleValueModel<T>) -> JComponent): JComponent {
+    val panel = NonOpaquePanel()
+    object : ContentController<T>(model, panel, notLoadingText, errorPrefix, errorHandler) {
+      override fun createContent(parentPanel: JPanel, valueModel: SingleValueModel<T>) = contentFactory(parentPanel, valueModel)
     }
     return panel
   }
 
   companion object {
-    private abstract class ContentController(private val model: GHLoadingModel, private val panel: Wrapper,
-                                             private val notLoadingText: String?,
-                                             private val errorPrefix: String,
-                                             private val errorHandler: GHLoadingErrorHandler?) {
+    private abstract class ContentController<T>(private val model: GHSimpleLoadingModel<T>, private val panel: Wrapper,
+                                                private val notLoadingText: String?,
+                                                private val errorPrefix: String,
+                                                private val errorHandler: GHLoadingErrorHandler?) {
 
-      private var lastResultAvailable = false
-      private val content by lazy(LazyThreadSafetyMode.NONE) {
-        createContent(panel)
-      }
+      private var valueModel: SingleValueModel<T>? = null
+      private var content: JComponent? = null
 
       init {
         model.addStateChangeListener(object : GHLoadingModel.StateChangeListener {
@@ -80,20 +88,46 @@ class GHLoadingPanelFactory(private val model: GHLoadingModel,
       }
 
       private fun update() {
-        if (lastResultAvailable == model.resultAvailable && model.resultAvailable) return
-
-        val content = when {
-          model.resultAvailable -> content
-          model.loading -> createLoadingLabelPanel()
-          model.error != null -> createErrorPanel(model.error!!)
-          else -> createEmptyContent()
+        if (model.resultAvailable) {
+          @Suppress("UNCHECKED_CAST")
+          val model = getValueModel(model.result as T)
+          val content = getContent(model)
+          if (panel.targetComponent !== content) {
+            panel.setContent(content)
+            panel.repaint()
+          }
         }
-        panel.setContent(content)
-        panel.repaint()
-        lastResultAvailable = model.resultAvailable
+        else {
+          val content = when {
+            model.loading -> createLoadingLabelPanel()
+            model.error != null -> createErrorPanel(model.error!!)
+            else -> createEmptyContent()
+          }
+          panel.setContent(content)
+          panel.repaint()
+        }
       }
 
-      abstract fun createContent(parentPanel: JPanel): JComponent
+      private fun getValueModel(result: T): SingleValueModel<T> {
+        var current = valueModel
+        if (current != null) {
+          current.value = result
+          return current
+        }
+        current = SingleValueModel(result)
+        valueModel = current
+        return current
+      }
+
+      private fun getContent(valueModel: SingleValueModel<T>): JComponent {
+        var current = content
+        if (current != null) return current
+        current = createContent(panel, valueModel)
+        content = current
+        return current
+      }
+
+      abstract fun createContent(parentPanel: JPanel, valueModel: SingleValueModel<T>): JComponent
 
       private fun createEmptyContent(): JComponent? {
         if (notLoadingText == null) return null

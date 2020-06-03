@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.ui.FontUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
@@ -22,9 +23,7 @@ import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.GHGitActor
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCommitsListCellRenderer
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCommitsModel
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.GithubUIUtil
@@ -35,8 +34,8 @@ import javax.swing.ScrollPaneConstants
 
 internal object GHPRCommitsBrowserComponent {
 
-  fun create(commitsModel: GHPRCommitsModel, changesModel: GHPRChangesModelImpl): JComponent {
-    val commitsListModel = CollectionListModel(commitsModel.commitsWithChanges?.keys?.toList().orEmpty())
+  fun create(commitsModel: SingleValueModel<Map<GHCommit, List<Change>>>, onCommitSelected: (GHCommit?) -> Unit): JComponent {
+    val commitsListModel = CollectionListModel(commitsModel.value.keys.toList())
 
     val actionManager = ActionManager.getInstance()
     val commitsList = JBList(commitsListModel).apply {
@@ -55,9 +54,9 @@ internal object GHPRCommitsBrowserComponent {
       ListSpeedSearch(it) { commit -> commit.messageHeadlineHTML }
     }
 
-    commitsModel.addStateChangesListener {
+    commitsModel.addValueChangedListener {
       val currentList = commitsListModel.toList()
-      val newList = commitsModel.commitsWithChanges?.keys?.toList().orEmpty()
+      val newList = commitsModel.value
       if (currentList != newList) {
         val selectedCommit = commitsList.selectedValue
         commitsListModel.replaceAll(newList)
@@ -70,7 +69,7 @@ internal object GHPRCommitsBrowserComponent {
 
     commitsList.addListSelectionListener { e ->
       if (e.valueIsAdjusting) return@addListSelectionListener
-      changesModel.changes = commitsList.selectedValue?.let { commitsModel.commitsWithChanges?.get(it) }
+      onCommitSelected(commitsList.selectedValue)
     }
 
     val commitsScrollPane = ScrollPaneFactory.createScrollPane(commitsList, true).apply {
