@@ -135,11 +135,23 @@ internal class LibraryBridgeImpl(
   }
 
   override fun equals(other: Any?): Boolean {
-    val otherLib = other as? LibraryBridgeImpl ?: return false
-    return librarySnapshot.libraryEntity == otherLib.librarySnapshot.libraryEntity
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as LibraryBridgeImpl
+    if (name != other.name) return false
+    if (kind != other.kind) return false
+    if (properties != other.properties) return false
+    if (librarySnapshot.libraryEntity.roots != other.librarySnapshot.libraryEntity.roots) return false
+    if (!excludedRoots.contentEquals(other.excludedRoots)) return false
+    return true
   }
 
-  override fun hashCode(): Int = librarySnapshot.libraryEntity.hashCode()
+  override fun hashCode(): Int {
+    var result = librarySnapshot.name.hashCode()
+    result = 31 * result + librarySnapshot.libraryEntity.roots.hashCode()
+    return result
+  }
 
   internal fun fireRootSetChanged() {
     dispatcher.multicaster.rootSetChanged(this)
