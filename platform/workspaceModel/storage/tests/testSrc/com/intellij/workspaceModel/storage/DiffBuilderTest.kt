@@ -1,14 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
+import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.entities.ModifiableChildSampleEntity
 import com.intellij.workspaceModel.storage.entities.ModifiableSampleEntity
 import com.intellij.workspaceModel.storage.entities.ChildSampleEntity
 import com.intellij.workspaceModel.storage.entities.SampleEntity
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageImpl
+import org.junit.Assert.*
 import org.junit.Test
 
 private fun WorkspaceEntityStorageBuilder.applyDiff(anotherBuilder: WorkspaceEntityStorageBuilder): WorkspaceEntityStorage {
@@ -79,6 +80,27 @@ class DiffBuilderTest {
     }
     val storage = target.applyDiff(source)
     assertEquals(emptyList<SampleEntity>(), storage.entities(SampleEntity::class.java).toList())
+  }
+
+  @Test
+  fun `modify removed child entity`() {
+    val target = WorkspaceEntityStorageBuilderImpl.create()
+    val parent = target.addParentEntity("parent")
+    val child = target.addChildEntity(parent, "child")
+    val source = WorkspaceEntityStorageBuilderImpl.from(target)
+    target.removeEntity(child)
+    source.modifyEntity(ModifiableParentEntity::class.java, parent) {
+      this.parentProperty = "new property"
+    }
+    source.modifyEntity(ModifiableChildEntity::class.java, child) {
+      this.childProperty = "new property"
+    }
+
+    val res = target.applyDiff(source) as WorkspaceEntityStorageImpl
+    res.assertConsistency()
+
+    assertOneElement(res.entities(ParentEntity::class.java).toList())
+    assertTrue(res.entities(ChildEntity::class.java).toList().isEmpty())
   }
 
   @Test

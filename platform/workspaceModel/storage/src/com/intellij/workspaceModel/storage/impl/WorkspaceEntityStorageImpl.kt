@@ -646,11 +646,14 @@ internal class WorkspaceEntityStorageBuilderImpl(
                                updatedParents: ParentConnectionsInfo) {
     // Restore children references of the entity
     for ((connectionId, children) in updatedChildren) {
-      refs.updateChildrenOfParent(connectionId, entityId, children.toList())
+      val (missingChildren, existingChildren) = children.partition { this.entityDataById(it) == null }
+      if (missingChildren.isNotEmpty() && !connectionId.canRemoveChild()) error("Cannot restore some dependencies")
+      refs.updateChildrenOfParent(connectionId, entityId, existingChildren)
     }
 
     // Restore parent references of the entity
     for ((connection, parent) in updatedParents) {
+      if (this.entityDataById(parent) == null && !connection.canRemoveParent()) error("Cannot restore some dependencies")
       refs.updateParentOfChild(connection, entityId, parent)
     }
   }
