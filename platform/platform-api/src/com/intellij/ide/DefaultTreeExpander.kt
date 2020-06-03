@@ -34,7 +34,11 @@ open class DefaultTreeExpander(private val supplier: () -> JTree?) : TreeExpande
   }
 
   protected open fun collapseAll(tree: JTree, keepSelectionLevel: Int) {
-    TreeUtil.collapseAll(tree, keepSelectionLevel)
+    collapseAll(tree, true, keepSelectionLevel)
+  }
+
+  protected open fun collapseAll(tree: JTree, strict: Boolean, keepSelectionLevel: Int) {
+    TreeUtil.collapseAll(tree, strict, keepSelectionLevel)
     showSelectionCentered(tree)
   }
 
