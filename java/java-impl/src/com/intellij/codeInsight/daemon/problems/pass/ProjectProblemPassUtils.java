@@ -4,12 +4,14 @@ package com.intellij.codeInsight.daemon.problems.pass;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.JavaLensProvider;
+import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.hints.BlockConstrainedPresentation;
 import com.intellij.codeInsight.hints.BlockConstraints;
 import com.intellij.codeInsight.hints.BlockInlayRenderer;
 import com.intellij.codeInsight.hints.presentation.*;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.SmartHashMap;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
@@ -21,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -31,10 +34,14 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 import java.util.*;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 
 public class ProjectProblemPassUtils {
@@ -118,9 +125,14 @@ public class ProjectProblemPassUtils {
     });
   }
 
-  static @NotNull HighlightInfo createHighlightInfo(@NotNull Editor editor,
+  static @NotNull HighlightInfo createHighlightInfo(@NotNull Editor editor, @NotNull PsiElement identifier, @NotNull Set<PsiElement> brokenUsages) {
+    ShowBrokenUsagesAction brokenUsagesAction = new ShowBrokenUsagesAction(brokenUsages);
+    return createHighlightInfo(editor, identifier, brokenUsagesAction);
+  }
+
+  private static @NotNull HighlightInfo createHighlightInfo(@NotNull Editor editor,
                                                     @NotNull PsiElement identifier,
-                                                    @NotNull Set<PsiElement> brokenUsages) {
+                                                    @NotNull IntentionAction action) {
     Color textColor = editor.getColorsScheme().getAttributes(CodeInsightColors.WEAK_WARNING_ATTRIBUTES).getEffectColor();
     TextAttributes attributes = new TextAttributes(null, null, textColor, null, Font.PLAIN);
 
@@ -130,7 +142,7 @@ public class ProjectProblemPassUtils {
       .descriptionAndTooltip(JavaBundle.message("project.problems.fix.description", identifier.getText()))
       .createUnconditionally();
 
-    QuickFixAction.registerQuickFixAction(info, new ShowBrokenUsagesAction(brokenUsages));
+    QuickFixAction.registerQuickFixAction(info, action);
     return info;
   }
 
@@ -177,10 +189,32 @@ public class ProjectProblemPassUtils {
           info.myInlay = inlayModel.addBlockElement(memberOffset, true, true, BlockInlayPriority.PROBLEMS, renderer);
           Disposer.dispose(inlay);
         }
+
+        PsiElement identifier = getIdentifier(member);
+        if (identifier != null) {
+          HighlightInfo oldHighlightInfo = info.myHighlightInfo;
+          if (!identifier.getTextRange().equalsToRange(oldHighlightInfo.getActualStartOffset(), oldHighlightInfo.getActualEndOffset())) {
+            IntentionAction action = getRegisteredAction(oldHighlightInfo);
+            if (action != null) {
+              HighlightInfo newHighlightInfo = createHighlightInfo(editor, identifier, action);
+              UpdateHighlightersUtil.setHighlightersToEditor(member.getProject(), editor.getDocument(), 0,
+                                                             member.getContainingFile().getTextLength(),
+                                                             Collections.singletonList(newHighlightInfo), editor.getColorsScheme(), -1);
+              info.myHighlightInfo = newHighlightInfo;
+            }
+          }
+        }
+
         editorInfos.put(member, info);
       }
     });
     return editorInfos;
+  }
+
+  private static @Nullable IntentionAction getRegisteredAction(@NotNull HighlightInfo highlightInfo) {
+    List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> actionRanges = highlightInfo.quickFixActionRanges;
+    if (actionRanges == null || actionRanges.size() != 1) return null;
+    return actionRanges.get(0).first.getAction();
   }
 
   static void updateInfos(@NotNull Editor editor, @NotNull Map<PsiMember, EditorInfo> infos) {
@@ -209,10 +243,17 @@ public class ProjectProblemPassUtils {
     document.putUserData(PREV_MODIFICATION_COUNT, timestamp);
   }
 
+  @Nullable
+  static PsiElement getIdentifier(@NotNull PsiMember psiMember) {
+    PsiNameIdentifierOwner identifierOwner = tryCast(psiMember, PsiNameIdentifierOwner.class);
+    if (identifierOwner == null) return null;
+    return identifierOwner.getNameIdentifier();
+  }
+
   static class EditorInfo {
 
     Inlay<?> myInlay;
-    final HighlightInfo myHighlightInfo;
+    HighlightInfo myHighlightInfo;
 
     EditorInfo(@NotNull Inlay<?> inlay, @NotNull HighlightInfo info) {
       myInlay = inlay;
