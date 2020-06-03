@@ -98,13 +98,10 @@ public class GitStagingAreaHolder {
 
     List<GitFileStatus> rootRecords = GitIndexStatusUtilKt.getStatus(myProject, root, dirtyPaths, true, false, false);
     rootRecords.removeIf(record -> {
-      FilePath recordPath = record.getPath();
-      FilePath recordOrigPath = record.getOrigPath();
-      boolean isUnderDirtyScope = dirtyScope.hasAncestor(recordPath) ||
-                                  recordOrigPath != null && dirtyScope.hasAncestor(recordOrigPath);
+      boolean isUnderDirtyScope = isUnder(record, dirtyScope);
       if (!isUnderDirtyScope) return true;
 
-      VirtualFile recordRoot = vcsManager.getVcsRootFor(recordPath);
+      VirtualFile recordRoot = vcsManager.getVcsRootFor(record.getPath());
       boolean isUnderOurRoot = root.equals(recordRoot) || isSubmoduleStatus(record, recordRoot);
       if (!isUnderOurRoot) {
         LOG.warn(String.format("Ignoring change under another root: %s; root: %s; mapped root: %s", record, root, recordRoot));
@@ -115,13 +112,18 @@ public class GitStagingAreaHolder {
     });
 
     synchronized (LOCK) {
-      myRecords.removeIf(record -> dirtyScope.hasAncestor(record.getPath()));
+      myRecords.removeIf(record -> isUnder(record, dirtyScope));
       myRecords.addAll(rootRecords);
     }
 
     BackgroundTaskUtil.syncPublisher(myProject, TOPIC).stagingAreaChanged(myRepository);
 
     return rootRecords;
+  }
+
+  private static boolean isUnder(@NotNull GitFileStatus record, @NotNull RecursiveFilePathSet dirtyScope) {
+    return dirtyScope.hasAncestor(record.getPath()) ||
+           record.getOrigPath() != null && dirtyScope.hasAncestor(record.getOrigPath());
   }
 
   private static boolean isSubmoduleStatus(@NotNull GitFileStatus record, @Nullable VirtualFile candidateRoot) {
