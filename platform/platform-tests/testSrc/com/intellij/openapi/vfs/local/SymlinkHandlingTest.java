@@ -417,12 +417,12 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
     while (!FileUtil.pathsEqual(f.getPath(), sub1.getPath())) {
       if (f.getName().equals(link.getName())) {
         assertTrue(f.getPath(),f.is(VFileProperty.SYMLINK));
-        assertTrue(f.getPath(), f.isRecursiveOrCircularSymLink());
+        assertTrue(f.getPath(), f.isRecursiveOrCircularSymlink());
       }
       else {
         assertEquals(f.getPath(), sub1.getName(), f.getName());
         assertFalse(f.getPath(),f.is(VFileProperty.SYMLINK));
-        assertFalse(f.isRecursiveOrCircularSymLink());
+        assertFalse(f.isRecursiveOrCircularSymlink());
       }
       f = f.getParent();
     }
@@ -449,14 +449,14 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
 
     assertEquals(link1.getName(), f.getName());
     assertTrue(f.getPath(), f.is(VFileProperty.SYMLINK));
-    assertTrue(f.getPath(), f.isRecursiveOrCircularSymLink());
+    assertTrue(f.getPath(), f.isRecursiveOrCircularSymlink());
     f = f.getParent();
     assertEquals(ss1.getName(), f.getName());
     assertFalse(f.getPath(), f.is(VFileProperty.SYMLINK));
-    assertFalse(f.getPath(), f.isRecursiveOrCircularSymLink());
+    assertFalse(f.getPath(), f.isRecursiveOrCircularSymlink());
     f = f.getParent();
     assertEquals(link1.getName(), f.getName());
     assertTrue(f.getPath(), f.is(VFileProperty.SYMLINK));
-    assertTrue(f.getPath(), f.isRecursiveOrCircularSymLink());
+    assertTrue(f.getPath(), f.isRecursiveOrCircularSymlink());
   }
 }

@@ -732,7 +732,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * Returns {@code true} if this file is a symlink that is either <i>recursive</i> (i.e. points to this file' parent) or
    * <i>circular</i> (i.e. its path has a form of "/.../linkX/.../linkX").
    */
-  public boolean isRecursiveOrCircularSymLink() {
+  public boolean isRecursiveOrCircularSymlink() {
     if (!is(VFileProperty.SYMLINK)) return false;
     VirtualFile resolved = getCanonicalFile();
     // invalid symlink

@@ -54,9 +54,7 @@ class SymbolicLinkRefresher {
     Set<String> toRefresh = new HashSet<>();
     FileWatcher fileWatcher = mySystem.getFileWatcher();
 
-    Consumer<String> queuePath = path -> {
-      toRefresh.addAll(fileWatcher.mapToAllSymlinks(FileUtil.toSystemDependentName(path)));
-    };
+    Consumer<String> queuePath = path -> toRefresh.addAll(fileWatcher.mapToAllSymlinks(FileUtil.toSystemDependentName(path)));
     Consumer<VirtualFile> queueFile = file -> {
       if (file instanceof VirtualFileSystemEntry) {
         if (((VirtualFileSystemEntry)file).hasSymlink() && !isUnderRecursiveOrCircularSymlink(file)) {
@@ -71,7 +69,7 @@ class SymbolicLinkRefresher {
       }
     };
 
-    for (VFileEvent event: events) {
+    for (VFileEvent event : events) {
       if (event.isFromRefresh() || event.getFileSystem() != mySystem) {
         continue;
       }
@@ -84,10 +82,12 @@ class SymbolicLinkRefresher {
         if (((VFilePropertyChangeEvent)event).getPropertyName().equals(PROP_NAME)) {
           queuePath.accept(((VFilePropertyChangeEvent)event).getOldPath());
           queueFile.accept(file.getParent());
-        } else {
+        }
+        else {
           queueFile.accept(file);
         }
-      } else if (event instanceof VFileCreateEvent) {
+      }
+      else if (event instanceof VFileCreateEvent) {
         queueFile.accept(((VFileCreateEvent)event).getParent());
       }
       else if (event instanceof VFileCopyEvent) {
@@ -123,12 +123,12 @@ class SymbolicLinkRefresher {
     RefreshQueue.getInstance().refresh(false, false, null, files);
   }
 
-  private static boolean isUnderRecursiveOrCircularSymlink(VirtualFile file) {
+  private static boolean isUnderRecursiveOrCircularSymlink(@NotNull VirtualFile file) {
     if (((VirtualFileSystemEntry)file).hasSymlink()) {
       while (file != null && !file.is(VFileProperty.SYMLINK)) {
         file = file.getParent();
       }
-      return file != null && file.isRecursiveOrCircularSymLink();
+      return file != null && file.isRecursiveOrCircularSymlink();
     }
     return false;
   }
