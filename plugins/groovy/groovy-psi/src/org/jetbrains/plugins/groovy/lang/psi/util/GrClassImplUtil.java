@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -540,7 +540,7 @@ public class GrClassImplUtil {
   public static Set<MethodSignature> getDuplicatedSignatures(@NotNull PsiClass clazz) {
     return CachedValuesManager.getCachedValue(clazz, () -> {
       PsiElementFactory factory = JavaPsiFacade.getInstance(clazz.getProject()).getElementFactory();
-      MostlySingularMultiMap<MethodSignature, PsiMethod> signatures = MostlySingularMultiMap.newMap();
+      MostlySingularMultiMap<MethodSignature, PsiMethod> signatures = new MostlySingularMultiMap<>();
       for (PsiMethod method : clazz.getMethods()) {
         MethodSignature signature = method.getSignature(factory.createRawSubstitutor(method));
         signatures.add(signature, method);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,7 +9,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +45,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
-public class JpsProjectLoader extends JpsLoaderBase {
+public final class JpsProjectLoader extends JpsLoaderBase {
   public static final String MODULE_MANAGER_COMPONENT = "ProjectModuleManager";
   public static final String MODULES_TAG = "modules";
   public static final String MODULE_TAG = "module";
@@ -306,7 +306,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
       }
     }
 
-    final Set<Path> foundFiles = new THashSet<>();
+    final Set<Path> foundFiles = new ObjectOpenHashSet<>();
     final List<Path> moduleFiles = new ArrayList<>();
     for (Element moduleElement : JDOMUtil.getChildren(componentElement.getChild(MODULES_TAG), MODULE_TAG)) {
       final String path = moduleElement.getAttributeValue(FILE_PATH_ATTRIBUTE);

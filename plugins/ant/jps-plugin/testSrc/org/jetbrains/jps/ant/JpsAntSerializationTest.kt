@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.ant
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.SystemProperties
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.directoryContent
-import gnu.trove.THashSet
 import org.jetbrains.jps.ant.model.JpsAntExtensionService
 import org.jetbrains.jps.ant.model.impl.artifacts.JpsAntArtifactExtensionImpl
 import org.jetbrains.jps.model.artifact.JpsArtifactService
@@ -110,7 +110,7 @@ class JpsAntSerializationTest : JpsSerializationTestCase() {
     const val OPTIONS_PATH = "plugins/ant/jps-plugin/testData/config/options"
 
     private fun toFiles(classpath: List<String>): Set<File> {
-      val result = THashSet(FileUtil.FILE_HASHING_STRATEGY)
+      val result = CollectionFactory.createFileSet()
       for (path in classpath) {
         result.add(File(path))
       }

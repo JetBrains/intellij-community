@@ -4,7 +4,6 @@ package org.jetbrains.settingsRepository.test
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.SmartList
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.settingsRepository.git.cloneBare
@@ -50,7 +49,7 @@ internal class BareGitTest {
 
     val repository = cloneBare(remoteRepository.workTree.absolutePath, tempDirManager.newPath())
 
-    val data = Object2ObjectOpenHashMap<String, String>()
+    val data = HashMap<String, String>()
     repository.processChildren("keymaps") {name, input ->
       data.put(name, FileUtil.loadTextAndClose(input))
       true

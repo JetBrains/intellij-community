@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
 import com.intellij.openapi.util.SystemInfo
@@ -7,7 +7,8 @@ import com.intellij.util.text.nullize
 import com.sun.jna.*
 import com.sun.jna.ptr.IntByReference
 import com.sun.jna.ptr.PointerByReference
-import gnu.trove.TIntObjectHashMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 
 val isMacOsCredentialStoreSupported: Boolean
   get() = SystemInfo.isMacIntel64 && SystemInfo.isMacOSLeopard
@@ -71,7 +72,7 @@ internal class KeyChainCredentialStore : CredentialStore {
       }
       else {
         val buf = CharArray(library.CFStringGetLength(translated).toInt())
-        for (i in 0 until buf.size) {
+        for (i in buf.indices) {
           buf[i] = library.CFStringGetCharacterAtIndex(translated, i.toLong())
         }
         library.CFRelease(translated)
@@ -233,8 +234,8 @@ internal class SecKeychainAttribute : Structure, Structure.ByReference {
   internal constructor() : super()
 }
 
-private fun readAttributes(list: SecKeychainAttributeList): TIntObjectHashMap<String> {
-  val map = TIntObjectHashMap<String>()
+private fun readAttributes(list: SecKeychainAttributeList): Int2ObjectMap<String> {
+  val map = Int2ObjectOpenHashMap<String>()
   val attrList = SecKeychainAttribute(list.attr!!)
   attrList.read()
   @Suppress("UNCHECKED_CAST")

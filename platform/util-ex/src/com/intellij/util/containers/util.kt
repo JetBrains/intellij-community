@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
-import gnu.trove.THashSet
 import java.util.*
 import java.util.stream.Stream
 
@@ -146,12 +145,10 @@ inline fun <T, R> Collection<T>.mapSmart(transform: (T) -> R): List<R> {
 inline fun <T, R> Collection<T>.mapSmartSet(transform: (T) -> R): Set<R> {
   return when (val size = size) {
     1 -> {
-      val result = SmartHashSet<R>()
-      result.add(transform(first()))
-      result
+      Collections.singleton(transform(first()))
     }
     0 -> emptySet()
-    else -> mapTo(THashSet(size), transform)
+    else -> mapTo(HashSet(size), transform)
   }
 }
 

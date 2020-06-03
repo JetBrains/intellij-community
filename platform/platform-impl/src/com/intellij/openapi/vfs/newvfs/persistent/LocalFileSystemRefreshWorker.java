@@ -16,12 +16,9 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Queue;
-import com.intellij.util.text.FilePathHashingStrategy;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -34,10 +31,9 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.openapi.vfs.newvfs.persistent.VfsEventGenerationHelper.LOG;
 
-class LocalFileSystemRefreshWorker {
+final class LocalFileSystemRefreshWorker {
   private final boolean myIsRecursive;
   private final NewVirtualFile myRefreshRoot;
   private final VfsEventGenerationHelper myHelper = new VfsEventGenerationHelper();
@@ -74,21 +70,19 @@ class LocalFileSystemRefreshWorker {
       fs = PersistentFS.replaceWithNativeFS(fs);
     }
 
-    RefreshContext context = createRefreshContext(fs, PersistentFS.getInstance(), FilePathHashingStrategy.create(fs.isCaseSensitive()));
+    RefreshContext context = createRefreshContext(fs, PersistentFS.getInstance(), fs.isCaseSensitive());
     context.submitRefreshRequest(() -> processFile(root, context));
     context.waitForRefreshToFinish();
   }
 
-  @NotNull
-  private RefreshContext createRefreshContext(@NotNull NewVirtualFileSystem fs,
-                                              @NotNull PersistentFS persistentFS,
-                                              @NotNull TObjectHashingStrategy<String> strategy) {
+  private @NotNull RefreshContext createRefreshContext(@NotNull NewVirtualFileSystem fs,
+                                                       @NotNull PersistentFS persistentFS,
+                                                       boolean isFsCaseSensitive) {
     int parallelism = Registry.intValue("vfs.use.nio-based.local.refresh.worker.parallelism", Runtime.getRuntime().availableProcessors() - 1);
-
     if (myIsRecursive && parallelism > 0 && !ApplicationManager.getApplication().isDispatchThread()) {
-      return new ConcurrentRefreshContext(fs, persistentFS, strategy, parallelism);
+      return new ConcurrentRefreshContext(fs, persistentFS, isFsCaseSensitive, parallelism);
     }
-    return new SequentialRefreshContext(fs, persistentFS, strategy);
+    return new SequentialRefreshContext(fs, persistentFS, isFsCaseSensitive);
   }
 
   private void processFile(@NotNull NewVirtualFile file, @NotNull RefreshContext refreshContext) {
@@ -121,13 +115,13 @@ class LocalFileSystemRefreshWorker {
   private abstract static class RefreshContext {
     final NewVirtualFileSystem fs;
     final PersistentFS persistence;
-    final TObjectHashingStrategy<String> strategy;
+    final boolean isFsCaseSensitive;
     final BlockingQueue<NewVirtualFile> filesToBecomeDirty = new LinkedBlockingQueue<>();
 
-    RefreshContext(@NotNull NewVirtualFileSystem fs, @NotNull PersistentFS persistence, @NotNull TObjectHashingStrategy<String> strategy) {
+    RefreshContext(@NotNull NewVirtualFileSystem fs, @NotNull PersistentFS persistence, boolean isFsCaseSensitive) {
       this.fs = fs;
       this.persistence = persistence;
-      this.strategy = strategy;
+      this.isFsCaseSensitive = isFsCaseSensitive;
     }
 
     abstract void submitRefreshRequest(@NotNull Runnable action);
@@ -193,7 +187,7 @@ class LocalFileSystemRefreshWorker {
         return null;
       }
       VirtualFile[] children = dir.getChildren();
-      return pair(getNames(children), Arrays.asList(children));
+      return new Pair<>(getNames(children), Arrays.asList(children));
     });
   }
 
@@ -209,7 +203,7 @@ class LocalFileSystemRefreshWorker {
   private void partialDirRefresh(@NotNull VirtualDirectoryImpl dir, @NotNull RefreshContext refreshContext) {
     while (true) {
       // obtaining directory snapshot
-      Pair<List<VirtualFile>, List<String>> result = ReadAction.compute(() -> pair(dir.getCachedChildren(), dir.getSuspiciousNames()));
+      Pair<List<VirtualFile>, List<String>> result = ReadAction.compute(() -> new Pair<>(dir.getCachedChildren(), dir.getSuspiciousNames()));
 
       List<VirtualFile> cached = result.getFirst();
       List<String> wanted = result.getSecond();
@@ -269,8 +263,8 @@ class LocalFileSystemRefreshWorker {
   private static class SequentialRefreshContext extends RefreshContext {
     private final Queue<Runnable> myRefreshRequests = new Queue<>(100);
 
-    SequentialRefreshContext(@NotNull NewVirtualFileSystem fs, @NotNull PersistentFS persistentFS, @NotNull TObjectHashingStrategy<String> strategy) {
-      super(fs, persistentFS, strategy);
+    SequentialRefreshContext(@NotNull NewVirtualFileSystem fs, @NotNull PersistentFS persistentFS, boolean isFsCaseSensitive) {
+      super(fs, persistentFS, isFsCaseSensitive);
     }
 
     @Override
@@ -286,16 +280,16 @@ class LocalFileSystemRefreshWorker {
     }
   }
 
-  private static class ConcurrentRefreshContext extends RefreshContext {
+  private static final class ConcurrentRefreshContext extends RefreshContext {
     private final ExecutorService service;
     private final AtomicInteger tasksScheduled = new AtomicInteger();
     private final CountDownLatch refreshFinishedLatch = new CountDownLatch(1);
 
     ConcurrentRefreshContext(@NotNull NewVirtualFileSystem fs,
                              @NotNull PersistentFS persistentFS,
-                             @NotNull TObjectHashingStrategy<String> strategy,
+                             boolean isFsCaseSensitive,
                              int parallelism) {
-      super(fs, persistentFS, strategy);
+      super(fs, persistentFS, isFsCaseSensitive);
       service = AppExecutorUtil.createBoundedApplicationPoolExecutor("Refresh Worker", parallelism);
     }
 
@@ -325,7 +319,7 @@ class LocalFileSystemRefreshWorker {
     }
   }
 
-  private class RefreshingFileVisitor extends SimpleFileVisitor<Path> {
+  private final class RefreshingFileVisitor extends SimpleFileVisitor<Path> {
     private final VfsEventGenerationHelper myHelper = new VfsEventGenerationHelper();
     private final Map<String, VirtualFile> myPersistentChildren;
     private final Set<String> myChildrenWeAreInterested; // null - no limit
@@ -339,13 +333,15 @@ class LocalFileSystemRefreshWorker {
                           @NotNull Collection<? extends VirtualFile> existingPersistentChildren) {
       myFileOrDir = fileOrDir;
       myRefreshContext = refreshContext;
-      myPersistentChildren = new THashMap<>(existingPersistentChildren.size(), refreshContext.strategy);
-      myChildrenWeAreInterested = childrenToRefresh == null ? null : new THashSet<>(childrenToRefresh, refreshContext.strategy);
+      myPersistentChildren = CollectionFactory.createFilePathMap(existingPersistentChildren.size(), refreshContext.isFsCaseSensitive);
+      myChildrenWeAreInterested = childrenToRefresh == null ? null : CollectionFactory.createFilePathSet(childrenToRefresh, refreshContext.isFsCaseSensitive);
 
       for (VirtualFile child : existingPersistentChildren) {
         String name = child.getName();
         myPersistentChildren.put(name, child);
-        if (myChildrenWeAreInterested != null) myChildrenWeAreInterested.add(name);
+        if (myChildrenWeAreInterested != null) {
+          myChildrenWeAreInterested.add(name);
+        }
       }
     }
 

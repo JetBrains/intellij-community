@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.impl.runtime.ui;
 
 import com.intellij.execution.services.ServiceEventListener;
@@ -19,17 +19,17 @@ import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure.Remot
 import com.intellij.remoteServer.runtime.*;
 import com.intellij.remoteServer.runtime.ui.RemoteServersView;
 import com.intellij.util.Alarm;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.SmartHashSet;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class RemoteServersDeploymentManager {
+public final class RemoteServersDeploymentManager {
   private static final int POLL_DEPLOYMENTS_DELAY = 2000;
 
   public static RemoteServersDeploymentManager getInstance(Project project) {
@@ -38,7 +38,7 @@ public class RemoteServersDeploymentManager {
 
   private final Project myProject;
   private final ServersTreeNodeSelector myNodeSelector;
-  private final Map<RemoteServersServiceViewContributor, Boolean> myContributors = ContainerUtil.createConcurrentWeakMap();
+  private final Map<RemoteServersServiceViewContributor, Boolean> myContributors = CollectionFactory.createConcurrentWeakMap();
   private final Map<RemoteServer<?>, MessagePanel> myServerToContent = new HashMap<>();
 
   public RemoteServersDeploymentManager(@NotNull Project project) {
@@ -52,7 +52,7 @@ public class RemoteServersDeploymentManager {
 
   private void initListeners() {
     myProject.getMessageBus().connect().subscribe(ServerConnectionListener.TOPIC, new ServerConnectionListener() {
-      private final Set<ServerConnection<?>> myConnectionsToExpand = new SmartHashSet<>();
+      private final Set<ServerConnection<?>> myConnectionsToExpand = new HashSet<>();
 
       @Override
       public void onConnectionCreated(@NotNull ServerConnection<?> connection) {

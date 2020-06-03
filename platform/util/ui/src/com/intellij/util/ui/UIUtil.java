@@ -1919,7 +1919,7 @@ public final class UIUtil {
     }
     if (component != null && component.getParent() instanceof JLayeredPane) { // Handle LoadingDecorator
       Component[] components = ((JLayeredPane)component.getParent()).getComponentsInLayer(JLayeredPane.DEFAULT_LAYER);
-      if (components.length == 1 && ArrayUtil.indexOf(components, component) == -1) {
+      if (components.length == 1 && ArrayUtilRt.indexOf(components, component, 0, components.length) == -1) {
         component = getDeepestComponentAtForComponent(parent, x, y, components[0]);
       }
     }

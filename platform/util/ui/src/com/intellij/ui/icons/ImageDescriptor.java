@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.icons;
 
 import com.intellij.diagnostic.StartUpMeasurer;
@@ -10,6 +10,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.SVGLoader;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,7 @@ import java.util.concurrent.ConcurrentMap;
 public final class ImageDescriptor {
   private static final ConcurrentMap<String, Pair<Image, ImageLoader.Dimension2DDouble>> ourCache = ContainerUtil.createConcurrentSoftValueMap();
   private static final ConcurrentMap<String, Image> ourLargeImageCache = ContainerUtil.createConcurrentWeakValueMap();
-  private static final ConcurrentMap<Image, ImageLoader.Dimension2DDouble> ourLargeImageDimensionMap = ContainerUtil.createConcurrentWeakMap();
+  private static final ConcurrentMap<Image, ImageLoader.Dimension2DDouble> ourLargeImageDimensionMap = CollectionFactory.createConcurrentWeakMap();
 
   final @NotNull String path;
   public final double scale; // initial scale factor
