@@ -13,6 +13,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,17 +53,13 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
       if (configEditor == null && runnerEditor == null) {
         continue;
       }
-      JComponent component;
-      if (configEditor == null) {
-        component = runnerEditor.getComponent();
-      }
-      else if (runnerEditor == null) {
-        component = configEditor.getComponent();
-      }
-      else {
-        component = new JPanel(new BorderLayout());
+      JComponent component = new JPanel(new BorderLayout());
+      component.setBorder(IdeBorderFactory.createTitledBorder(executor.getStartActionText(), false));
+      if (configEditor != null) {
         component.add(configEditor.getComponent(), BorderLayout.CENTER);
-        component.add(runnerEditor.getComponent(), BorderLayout.SOUTH);
+      }
+      if (runnerEditor != null) {
+        component.add(runnerEditor.getComponent(), configEditor == null ? BorderLayout.CENTER : BorderLayout.SOUTH);
       }
       fragments.add(new RunConfigurationEditorFragment<Settings, JComponent>(executor.getId() + ".config", executor.getStartActionText(),
                                                                              ExecutionBundle.message("run.configuration.startup.connection.rab.title"), component, 0) {

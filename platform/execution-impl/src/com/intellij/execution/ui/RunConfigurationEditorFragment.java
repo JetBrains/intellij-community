@@ -17,7 +17,7 @@ public abstract class RunConfigurationEditorFragment<Settings, C extends JCompon
                                         @Nls(capitalization = Nls.Capitalization.Title) String group,
                                         C component,
                                         int commandLinePosition) {
-    super(id, name, group, component, commandLinePosition, (settings, c) -> {}, (settings, c) -> {}, settings -> true);
+    super(id, name, group, component, commandLinePosition, (settings, c) -> {}, (settings, c) -> {}, settings -> false);
   }
 
   public abstract void resetEditorFrom(@NotNull RunnerAndConfigurationSettingsImpl s);
