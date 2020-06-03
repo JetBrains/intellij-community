@@ -232,7 +232,10 @@ public class MavenServerConnector implements @NotNull Disposable {
         return r.execute();
       }
       catch (RemoteException e) {
-        mySupport.stopAll(false);
+        MavenServerRemoteProcessSupport processSupport = mySupport;
+        if (processSupport != null) {
+          processSupport.stopAll(false);
+        }
         cleanUp();
         connect();
       }
