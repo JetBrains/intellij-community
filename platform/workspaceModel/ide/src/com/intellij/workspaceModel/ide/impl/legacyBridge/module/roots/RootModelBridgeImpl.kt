@@ -42,15 +42,12 @@ internal class RootModelBridgeImpl(internal val moduleEntityId: PersistentEntity
 
   val moduleEntity: ModuleEntity? = storage.resolve(moduleEntityId)
 
-  private val orderEntriesArray: Array<OrderEntry>
-    get() {
-      // This variable should not be cached unless
-      //   com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.LegacyBridgeModuleRootComponent.moduleLibraries is mutable
-      val moduleEntity = storage.resolve(moduleEntityId) ?: return emptyArray()
-      return moduleEntity.dependencies.mapIndexed { index, e ->
-        toOrderEntry(e, index)
-      }.toTypedArray()
-    }
+  private val orderEntriesArray: Array<OrderEntry> by lazy {
+    val moduleEntity = storage.resolve(moduleEntityId) ?: return@lazy emptyArray<OrderEntry>()
+    moduleEntity.dependencies.mapIndexed { index, e ->
+      toOrderEntry(e, index)
+    }.toTypedArray()
+  }
 
   val contentEntities: List<ContentRootEntity> by lazy {
     val moduleEntity = storage.resolve(moduleEntityId) ?: return@lazy emptyList<ContentRootEntity>()
