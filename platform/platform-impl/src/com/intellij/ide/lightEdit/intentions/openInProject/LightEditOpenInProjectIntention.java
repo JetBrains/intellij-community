@@ -18,6 +18,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.ProjectStatus.Open;
+
 public final class LightEditOpenInProjectIntention implements IntentionAction, LightEditCompatible, DumbAware {
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Override
@@ -48,7 +50,10 @@ public final class LightEditOpenInProjectIntention implements IntentionAction, L
       ((LightEditorManagerImpl)LightEditService.getInstance().getEditorManager()).findOpen(currFile);
     if (editorInfo != null) {
       Project openProject = findOpenProject(currFile);
-      if (openProject == null) {
+      if (openProject != null) {
+        LightEditFeatureUsagesUtil.logOpenFileInProject(Open);
+      }
+      else {
         VirtualFile projectRoot = ProjectRootSearchUtil.findProjectRoot(currFile);
         if (projectRoot != null) {
           openProject = PlatformProjectOpenProcessor.getInstance().openProjectAndFile(projectRoot, -1, -1, false);

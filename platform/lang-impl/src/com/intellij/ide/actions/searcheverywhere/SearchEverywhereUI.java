@@ -10,6 +10,7 @@ import com.intellij.ide.actions.BigPopupUI;
 import com.intellij.ide.actions.SearchEverywhereClassifier;
 import com.intellij.ide.actions.bigPopup.ShowFilterAction;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
@@ -76,6 +77,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -102,6 +104,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
   private SETab mySelectedTab;
   private final List<SETab> myTabs = new ArrayList<>();
+  private final Function<String, String> myShortcutSupplier;
 
   private boolean myEverywhereAutoSet = true;
   private String myNotFoundString;
@@ -116,14 +119,21 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   private final PersistentSearchEverywhereContributorFilter<String> myContributorsFilter;
   private ActionToolbar myToolbar;
 
-  public SearchEverywhereUI(Project project,
-                            List<? extends SearchEverywhereContributor<?>> contributors) {
+  public SearchEverywhereUI(@NotNull Project project,
+                            @NotNull List<? extends SearchEverywhereContributor<?>> contributors) {
+    this(project, contributors, s -> null);
+  }
+
+  public SearchEverywhereUI(@NotNull Project project,
+                            @NotNull List<? extends SearchEverywhereContributor<?>> contributors,
+                            @NotNull Function<String, String> shortcutSupplier) {
     super(project);
     List<SEResultsEqualityProvider> equalityProviders = SEResultsEqualityProvider.getProviders();
     myBufferedListener = new ThrottlingListenerWrapper(THROTTLING_TIMEOUT, mySearchListener, Runnable::run);
     mySearcher = new MultiThreadSearcher(myBufferedListener, run ->
       ApplicationManager.getApplication().invokeLater(run), equalityProviders);
     myShownContributors = contributors;
+    myShortcutSupplier = shortcutSupplier;
     Map<String, String> namesMap = ContainerUtil.map2Map(contributors, c -> Pair.create(c.getSearchProviderId(), c.getFullGroupName()));
     myContributorsFilter = new PersistentSearchEverywhereContributorFilter<>(
       ContainerUtil.map(contributors, c -> c.getSearchProviderId()),
@@ -149,6 +159,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
     mySelectionTracker = new SEListSelectionTracker(myResultsList, myListModel);
     myResultsList.addListSelectionListener(mySelectionTracker);
+
+    Disposer.register(this, SearchFieldStatisticsCollector.createAndStart(mySearchField, myProject));
   }
 
   @Override
@@ -461,6 +473,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     SETab(@Nullable SearchEverywhereContributor<?> contributor) {
       super(contributor == null ? IdeBundle.message("searcheverywhere.allelements.tab.name") : contributor.getGroupName());
       this.contributor = contributor;
+      updateTooltip();
       Runnable onChanged = () -> {
         myToolbar.updateActionsImmediately();
         rebuildList();
@@ -503,6 +516,13 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
           featureTriggered(SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, data);
         }
       });
+    }
+
+    private void updateTooltip() {
+      String shortcut = myShortcutSupplier.apply(getID());
+      if (shortcut != null) {
+        setToolTipText(shortcut);
+      }
     }
 
     public String getID() {
@@ -907,7 +927,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
         .orElse(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID);
 
       String reportableContributorID = SearchEverywhereUsageTriggerCollector.getReportableContributorID(contributor);
-      FeatureUsageData data = SearchEverywhereUsageTriggerCollector.createData(reportableContributorID, selectedTabContributorID);
+      FeatureUsageData data = SearchEverywhereUsageTriggerCollector.createData(reportableContributorID, selectedTabContributorID, i);
       if (value instanceof PsiElement) {
         data.addLanguage(((PsiElement) value).getLanguage());
       }

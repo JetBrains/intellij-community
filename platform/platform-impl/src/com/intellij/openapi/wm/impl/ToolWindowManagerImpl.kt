@@ -620,7 +620,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     info.isActiveOnStart = false
     info.isVisible = false
-    activeStack.remove(entry, true)
+    activeStack.remove(entry, false)
   }
 
   override val toolWindowIds: Array<String>
@@ -807,7 +807,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     if (hideSide && info.type != ToolWindowType.FLOATING && info.type != ToolWindowType.WINDOWED) {
       for (each in getVisibleToolWindowsOn(info.anchor)) {
-        activeStack.remove(each, true)
+        activeStack.remove(each, false)
       }
       if (isStackEnabled) {
         while (!sideStack.isEmpty(info.anchor)) {

@@ -26,6 +26,7 @@ import com.intellij.remote.ext.CredentialsCase
 import com.jetbrains.python.remote.PyRemotePathMapper
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.remote.PyRemoteSocketToLocalHostProvider
+import java.io.IOException
 
 interface PythonConsoleRemoteProcessCreator<T> {
   val credentialsType: CredentialsType<T>
@@ -38,7 +39,18 @@ interface PythonConsoleRemoteProcessCreator<T> {
                                  runnerFileFromHelpers: String,
                                  credentials: T): RemoteConsoleProcessData
 
+  /**
+   * Tries to create a remote tunnel.
+   * @return Port on the remote server or null if port forwarding by this method is not implemented.
+   */
+  @JvmDefault
+  @Throws(IOException::class)
+  fun createRemoteTunnel(project: Project,
+                         data: PyRemoteSdkAdditionalDataBase,
+                         localPort: Int): Int? = localPort
+
   companion object {
+    @JvmField
     val EP_NAME: ExtensionPointName<PythonConsoleRemoteProcessCreator<Any>> = ExtensionPointName.create<PythonConsoleRemoteProcessCreator<Any>>(
       "Pythonid.remoteConsoleProcessCreator")
   }

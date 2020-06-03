@@ -788,7 +788,7 @@ fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
     isKotlinDslUsed = project.isKotlinDsl
   )
   waitAMoment()
-  step("gradle reimport after editing gradle files") {
+  step("gradle project reload after editing gradle files") {
     gradleReimport()
   }
   waitAMoment()
@@ -877,7 +877,7 @@ fun KotlinGuiTestCase.testGradleProjectWithKotlin(
     isKotlinDslUsed = gradleOptions.useKotlinDsl
   )
   waitAMoment()
-  step("gradle reimport after editing gradle files") {
+  step("gradle project reload after editing gradle files") {
     gradleReimport()
   }
   waitAMoment()

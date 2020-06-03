@@ -40,11 +40,13 @@ import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.ui.treeStructure.treetable.TreeTableModel
 import com.intellij.util.containers.Convertor
 import com.intellij.util.ui.ColumnInfo
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcsUtil.VcsUtil
@@ -147,6 +149,7 @@ open class MultipleFileMergeDialog(
           table = it
           it.setTreeCellRenderer(virtualFileRenderer)
           it.rowHeight = virtualFileRenderer.preferredSize.height
+          it.preferredScrollableViewportSize = JBUI.size(600, 300)
         }).constraints(growX, growY, pushX, pushY)
 
         cell(isVerticalFlow = true) {

@@ -9,7 +9,7 @@ SHELL_SCRIPT
         PsiElement($)('$')
         SHELL_PARAMETER_EXPANSION
           PsiElement({)('{')
-          PsiElement(parameter_expansion_body)('GROUND_USER')
+          PsiElement(word)('GROUND_USER')
           PsiElement(})('}')
       LITERAL
         PsiElement(word)('@')
@@ -17,5 +17,5 @@ SHELL_SCRIPT
         PsiElement($)('$')
         SHELL_PARAMETER_EXPANSION
           PsiElement({)('{')
-          PsiElement(parameter_expansion_body)('GROUND')
+          PsiElement(word)('GROUND')
           PsiElement(})('}')

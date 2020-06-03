@@ -68,7 +68,7 @@ SHELL_SCRIPT
                 PsiElement($)('$')
                 SHELL_PARAMETER_EXPANSION
                   PsiElement({)('{')
-                  PsiElement(parameter_expansion_body)('branch')
+                  PsiElement(word)('branch')
                   PsiElement(})('}')
                 PsiElement(word)(']')
         PsiElement())(')')
@@ -91,7 +91,7 @@ SHELL_SCRIPT
             PsiElement($)('$')
             SHELL_PARAMETER_EXPANSION
               PsiElement({)('{')
-              PsiElement(parameter_expansion_body)('branch')
+              PsiElement(word)('branch')
               PsiElement(})('}')
           PsiWhiteSpace(' ')
           PsiElement(])(']')
@@ -135,7 +135,7 @@ SHELL_SCRIPT
               PsiElement($)('$')
               SHELL_PARAMETER_EXPANSION
                 PsiElement({)('{')
-                PsiElement(parameter_expansion_body)('branch')
+                PsiElement(word)('branch')
                 PsiElement(})('}')
             PsiWhiteSpace(' ')
             PsiElement(!=)('!=')

@@ -55,10 +55,10 @@ public class JavaFxApplicationClassBrowser extends ClassBrowser<JTextField> {
   }
 
   public static JavaFxApplicationClassBrowser appClassBrowser(Project project, Artifact artifact) {
-    return new JavaFxApplicationClassBrowser(project, "javafx.application.Application", "Choose Application Class", artifact);
+    return new JavaFxApplicationClassBrowser(project, "Choose Application Class", "javafx.application.Application", artifact);
   }
 
   public static JavaFxApplicationClassBrowser preloaderClassBrowser(Project project, Artifact artifact) {
-    return new JavaFxApplicationClassBrowser(project, "javafx.application.Preloader", "Choose Preloader Class", artifact);
+    return new JavaFxApplicationClassBrowser(project, "Choose Preloader Class", "javafx.application.Preloader", artifact);
   }
 }

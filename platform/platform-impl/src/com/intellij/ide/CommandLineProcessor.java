@@ -4,9 +4,10 @@ package com.intellij.ide;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
 import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
-import com.intellij.idea.SplashManager;
+import com.intellij.idea.CommandLineArgs;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -30,6 +31,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.CommandLine;
 
 public final class CommandLineProcessor {
   private static final Logger LOG = Logger.getInstance(CommandLineProcessor.class);
@@ -74,7 +77,9 @@ public final class CommandLineProcessor {
       NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(file));
       Project project = findBestProject(file, projects);
       if (LightEdit.owns(project)) {
-        LightEdit.openFile(file);
+        if (LightEdit.openFile(file)) {
+          LightEditFeatureUsagesUtil.logFileOpen(CommandLine);
+        }
       }
       else {
         Navigatable navigatable = line > 0
@@ -157,7 +162,7 @@ public final class CommandLineProcessor {
 
     for (int i = 0; i < args.size(); i++) {
       String arg = args.get(i);
-      if (SplashManager.NO_SPLASH.equals(arg) || OPTION_WAIT.equals(arg)) {
+      if (CommandLineArgs.isKnownArgument(arg) || OPTION_WAIT.equals(arg)) {
         continue;
       }
 
@@ -190,6 +195,7 @@ public final class CommandLineProcessor {
       if (!file.isAbsolute()) {
         file = currentDirectory == null ? file.toAbsolutePath() : Paths.get(currentDirectory).resolve(file);
       }
+      file = file.normalize();
 
       if (!Files.exists(file)) {
         return CommandLineProcessorResult.createError("Cannot find file '" + file + "'");

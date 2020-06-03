@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.formatter;
 
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -14,14 +14,25 @@ public class FormattingContext {
   private final AlignmentProvider myAlignmentProvider;
 
   private final boolean myForbidWrapping;
+  private final boolean myForbidNewLineInSpacing;
 
   public FormattingContext(@NotNull CommonCodeStyleSettings settings,
                            @NotNull AlignmentProvider provider,
-                           @NotNull GroovyCodeStyleSettings groovySettings, boolean forbidWrapping) {
+                           @NotNull GroovyCodeStyleSettings groovySettings,
+                           boolean forbidWrapping,
+                           boolean forbidNewLineInSpacing) {
     mySettings = settings;
     myAlignmentProvider = provider;
     myGroovySettings = groovySettings;
     this.myForbidWrapping = forbidWrapping;
+    this.myForbidNewLineInSpacing = forbidNewLineInSpacing;
+  }
+
+  public FormattingContext(@NotNull CommonCodeStyleSettings settings,
+                           @NotNull AlignmentProvider provider,
+                           @NotNull GroovyCodeStyleSettings groovySettings,
+                           boolean forbidWrapping) {
+    this(settings, provider, groovySettings, forbidWrapping, false);
   }
 
   public CommonCodeStyleSettings getSettings() {
@@ -36,11 +47,21 @@ public class FormattingContext {
     return myGroovySettings;
   }
 
-  public FormattingContext createContext(boolean forbidWrapping) {
-    return new FormattingContext(mySettings, myAlignmentProvider, myGroovySettings, myForbidWrapping || forbidWrapping);
+  public FormattingContext createContext(boolean forbidWrapping, boolean forbidNewLineInSpacing) {
+    return new FormattingContext(
+      mySettings,
+      myAlignmentProvider,
+      myGroovySettings,
+      myForbidWrapping || forbidWrapping,
+      myForbidNewLineInSpacing || forbidNewLineInSpacing
+    );
   }
 
   public boolean isForbidWrapping() {
     return myForbidWrapping;
+  }
+
+  public boolean isForbidNewLineInSpacing() {
+    return myForbidNewLineInSpacing;
   }
 }

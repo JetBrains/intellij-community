@@ -10,11 +10,15 @@ import org.jetbrains.annotations.NotNull;
 
 public class ShLexer extends MergingLexerAdapterBase implements ShTokenTypes {
   private static final MergeFunction FUNCTION = (type, lexer) -> {
-    if (type != HEREDOC_CONTENT && type != STRING_CONTENT) return type;
+    if (type != HEREDOC_CONTENT && type != STRING_CONTENT && type != PARAM_SEPARATOR) return type;
 
     if (type == HEREDOC_CONTENT) {
       advanceLexerWhile(lexer, HEREDOC_CONTENT);
       return HEREDOC_CONTENT;
+    }
+    else if (type == PARAM_SEPARATOR) {
+      advanceLexerWhile(lexer, PARAM_SEPARATOR);
+      return PARAM_SEPARATOR;
     }
     else {
       advanceLexerWhile(lexer, STRING_CONTENT);

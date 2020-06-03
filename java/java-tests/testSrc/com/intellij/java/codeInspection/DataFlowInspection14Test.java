@@ -21,4 +21,8 @@ public class DataFlowInspection14Test extends DataFlowInspectionTestCase {
   public void testSwitchStatements() { doTest(); }
   public void testSwitchExpressions() { doTest(); }
   public void testSwitchExpressionsNullability() { doTest(); }
+  public void testConstantDescAsWrapperSupertype() {
+    myFixture.addClass("package java.lang.constant; public interface ConstantDesc {}");
+    doTest();
+  }
 }

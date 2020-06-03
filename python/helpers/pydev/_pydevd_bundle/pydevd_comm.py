@@ -212,6 +212,7 @@ class PyDBDaemonThread(threading.Thread):
                     PyCore.Py.setSystemState(ss)
 
                 self._stop_trace()
+                self._warn_pydevd_thread_is_traced()
                 self._on_run()
             except:
                 if sys is not None and traceback is not None:
@@ -232,6 +233,10 @@ class PyDBDaemonThread(threading.Thread):
     def _stop_trace(self):
         if self.pydev_do_not_trace:
             pydevd_tracing.SetTrace(None)  # no debugging on this thread
+
+    def _warn_pydevd_thread_is_traced(self):
+        if sys.gettrace():
+            pydevd_log(1, "The debugger thread '%s' is traced which may lead to debugging performance issues." % self.__class__.__name__)
 
 
 def mark_as_pydevd_daemon_thread(thread):

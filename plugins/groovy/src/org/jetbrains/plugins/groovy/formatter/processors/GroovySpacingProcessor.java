@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.Block;
@@ -76,6 +76,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   private final GroovyCodeStyleSettings myGroovySettings;
   private final CommonCodeStyleSettings mySettings;
+  private final boolean myForbidNewLineInSpacing;
 
   private Spacing myResult;
   private ASTNode myChild1;
@@ -86,6 +87,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   public GroovySpacingProcessor(GroovyBlock block1, GroovyBlock block2, FormattingContext context) {
     mySettings = context.getSettings();
     myGroovySettings = context.getGroovySettings();
+    myForbidNewLineInSpacing = context.isForbidNewLineInSpacing();
 
     final ASTNode node = block2.getNode();
 
@@ -437,7 +439,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     boolean spacesWithinBraces = closure.getParent() instanceof GrStringInjection
                                  ? myGroovySettings.SPACE_WITHIN_GSTRING_INJECTION_BRACES
                                  : mySettings.SPACE_WITHIN_BRACES;
-    boolean simpleClosure = shouldHandleAsSimpleClosure(closure, mySettings);
+    boolean simpleClosure = shouldHandleAsSimpleClosure(closure, mySettings) || myForbidNewLineInSpacing;
     int spaces = simpleClosure && spacesWithinBraces ? 1 : 0;
     if (myGroovySettings.USE_FLYING_GEESE_BRACES && myType2 == GroovyTokenTypes.mRCURLY && rBraceAtTheEnd != null) {
       String text = rBraceAtTheEnd.getTreeParent().getText();
@@ -446,7 +448,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
        foo {
          bar {print x}<we are here>}
         */
-        myResult = Spacing.createSpacing(1, 1, 1, false, 1);
+        myResult = Spacing.createSpacing(1, 1, simpleClosure ? 0 : 1, false, 1);
       }
       else {
         myResult = Spacing.createSpacing(0, 0, 0, true, 100, 0);
@@ -472,7 +474,8 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   @Override
   public void visitOpenBlock(@NotNull GrOpenBlock block) {
     boolean isMethod = block.getParent() instanceof GrMethod;
-    boolean keepInOneLine = isMethod ? mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE : mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE;
+    boolean keepInOneLine = myForbidNewLineInSpacing ||
+                            isMethod ? mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE : mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE;
 
     if (myType1 == GroovyTokenTypes.mLCURLY && myType2 == GroovyTokenTypes.mRCURLY) {
       createLF(!keepInOneLine);

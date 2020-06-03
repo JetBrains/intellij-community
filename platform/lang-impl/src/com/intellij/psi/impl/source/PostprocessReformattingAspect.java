@@ -10,6 +10,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
@@ -85,9 +86,9 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
 
       @Override
       public void writeActionFinished(@NotNull final Object action) {
-        CommandProcessor processor = CommandProcessor.getInstance();
+        CommandProcessor processor = ServiceManager.getServiceIfCreated(CommandProcessor.class);
         if (processor != null) {
-          final Project project1 = processor.getCurrentCommandProject();
+          Project project1 = processor.getCurrentCommandProject();
           if (project1 == myProject) {
             decrementPostponedCounter();
           }

@@ -24,9 +24,9 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.Restarter;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.text.VersionComparatorUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +41,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
@@ -101,7 +103,7 @@ public final class ConfigImportHelper {
     }
     catch (Exception ignored) { }
 
-    List<Path> guessedOldConfigDirs = findConfigDirectories(newConfigDir);
+    @NotNull List<PathAndFileTime> guessedOldConfigDirs = findConfigDirectories(newConfigDir);
     File tempBackup = null;
     boolean vmOptionFileChanged = false;
 
@@ -138,8 +140,13 @@ public final class ConfigImportHelper {
         }
       }
       else {
-        Path bestConfigGuess = guessedOldConfigDirs.get(0);
-        oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess); // todo maybe integrate into findConfigDirectories
+        PathAndFileTime bestConfigGuess = guessedOldConfigDirs.get(0);
+        if (isConfigOld(bestConfigGuess.fileTime)) {
+          oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs);
+        }
+        else {
+          oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess.path);
+        }
       }
 
       if (oldConfigDirAndOldIdePath != null) {
@@ -183,6 +190,11 @@ public final class ConfigImportHelper {
     }
   }
 
+  private static boolean isConfigOld(@NotNull FileTime time) {
+    Instant deadline = Instant.now().minus(6 * 30, ChronoUnit.DAYS);
+    return time.toInstant().compareTo(deadline) < 0;
+  }
+
   private static boolean doesVmOptionFileExist(@NotNull Path configDir) {
     return Files.isRegularFile(configDir.resolve(VMOptions.getCustomVMOptionsFileName()));
   }
@@ -215,12 +227,12 @@ public final class ConfigImportHelper {
 
     deleteCurrentConfigDir(currentConfig, log, smartDelete);
 
-    File pluginsDir = new File(PathManager.getPluginsPath());
-    if (pluginsDir.exists() && !FileUtil.isAncestor(currentConfig.toFile(), pluginsDir, false)) {
+    Path pluginsDir = currentConfig.getFileSystem().getPath(PathManager.getPluginsPath());
+    if (Files.exists(pluginsDir) && !pluginsDir.startsWith(currentConfig)) {
       File pluginsBackup = new File(tempBackupDir, PLUGINS);
       log.info("Backup plugins dir separately from " + pluginsDir + " to " + pluginsBackup);
       if (pluginsBackup.mkdir()) {
-        FileUtil.copyDir(pluginsDir, pluginsBackup);
+        FileUtil.copyDir(new File(pluginsDir.toString()), pluginsBackup);
         FileUtil.delete(pluginsDir);
       }
       else {
@@ -287,8 +299,9 @@ public final class ConfigImportHelper {
   }
 
   @Nullable
-  private static Pair<Path, Path> showDialogAndGetOldConfigPath(@NotNull List<Path> guessedOldConfigDirs) {
-    ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(guessedOldConfigDirs, ConfigImportHelper::findConfigDirectoryByPath);
+  private static Pair<Path, Path> showDialogAndGetOldConfigPath(@NotNull List<PathAndFileTime> guessedOldConfigDirs) {
+    ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(ContainerUtil.map(guessedOldConfigDirs, it -> it.path),
+                                                             ConfigImportHelper::findConfigDirectoryByPath);
     dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
     AppUIUtil.updateWindowIcon(dialog);
 
@@ -329,7 +342,17 @@ public final class ConfigImportHelper {
     return Arrays.stream(OPTIONS).anyMatch(name -> Files.exists(candidate.resolve(name)));
   }
 
-  static @NotNull List<Path> findConfigDirectories(@NotNull Path newConfigDir) {
+  static class PathAndFileTime {
+    final Path path;
+    final FileTime fileTime;
+
+    PathAndFileTime(@NotNull Path path, @NotNull FileTime fileTime) {
+      this.path = path;
+      this.fileTime = fileTime;
+    }
+  }
+
+  static @NotNull List<PathAndFileTime> findConfigDirectories(@NotNull Path newConfigDir) {
     // looking for existing config directories ...
     Set<Path> homes = new HashSet<>();
     homes.add(newConfigDir.getParent());  // ... in the vicinity of the new config directory
@@ -366,7 +389,7 @@ public final class ConfigImportHelper {
       return Collections.emptyList();
     }
 
-    Map<Path, FileTime> lastModified = new THashMap<>();
+    List<PathAndFileTime> lastModified = new ArrayList<>();
     for (Path child : candidates) {
       Path candidate = child, config = child.resolve(CONFIG);
       if (Files.isDirectory(config)) candidate = config;
@@ -382,18 +405,17 @@ public final class ConfigImportHelper {
         catch (IOException ignore) { }
       }
 
-      lastModified.put(candidate, max != null ? max : FileTime.fromMillis(0));
+      lastModified.add(new PathAndFileTime(candidate, max != null ? max : FileTime.fromMillis(0)));
     }
 
-    List<Path> result = new ArrayList<>(lastModified.keySet());
-    result.sort((o1, o2) -> {
-      int diff = lastModified.get(o2).compareTo(lastModified.get(o1));
+    lastModified.sort((o1, o2) -> {
+      int diff = o2.fileTime.compareTo(o1.fileTime);
       if (diff == 0) {
-        diff = StringUtil.naturalCompare(o2.toString(), o1.toString());
+        diff = StringUtil.naturalCompare(o2.path.toString(), o1.path.toString());
       }
       return diff;
     });
-    return result;
+    return lastModified;
   }
 
   private static String getNameWithVersion(Path configDir) {

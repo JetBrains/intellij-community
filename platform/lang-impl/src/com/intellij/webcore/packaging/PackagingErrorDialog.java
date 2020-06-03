@@ -18,6 +18,7 @@ package com.intellij.webcore.packaging;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.components.JBLabel;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +42,8 @@ public class PackagingErrorDialog extends DialogWrapper {
   private JTextPane myMessage;
   private JBLabel myMessageIcon;
 
-  public PackagingErrorDialog(@NotNull String title, @NotNull PackageManagementService.ErrorDescription errorDescription) {
+  public PackagingErrorDialog(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
+                              @NotNull PackageManagementService.ErrorDescription errorDescription) {
     super(false);
     init();
     setResizable(false);

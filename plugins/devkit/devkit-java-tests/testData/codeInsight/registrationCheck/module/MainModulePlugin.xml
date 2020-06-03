@@ -9,9 +9,12 @@
 
   <extensionPoints>
     <extensionPoint name="myMainModuleClassEp" interface="MainModuleClass"/>
+    <extensionPoint name="myMainModuleClassEpBeanClass" beanClass="MainModuleBeanClass">
+      <with attribute="implementationClass" implements="DependencyModuleClass"/>
+    </extensionPoint>
     <extensionPoint name="myDependencyModuleClassEp" interface="DependencyModuleClass"/>
     <extensionPoint name="myAdditionalClassEp" beanClass="AdditionalModuleClass"/>
-    <<error descr="Element should be registered in 'anotherModule' module where its class 'DependencyModuleClassWithEpName' is defined">extensionPoint</error> name="myDependencyModuleClassWithEpNameEp" interface="DependencyModuleClassWithEpName"/>
+    <<warning descr="Element should be registered in 'anotherModule' module where its class 'DependencyModuleClassWithEpName' is defined">extensionPoint</warning> name="myDependencyModuleClassWithEpNameEp" interface="DependencyModuleClassWithEpName"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -22,12 +25,12 @@
     <myPlugin.filetype.myExtPoint filetype="MyFiletypeID" implementationClass="MyFileTypeExtension"/>
     <myPlugin.filetype.myOwnExtPoint filetype="MyFiletypeID" implementationClass="MyFileTypeExtension"/>
 
-    <<error descr="Element should be registered in 'anotherModule' module where its class 'MyLanguageExtension' is defined">myPlugin.lang.myExtPoint</error> language="" implementationClass="MyLanguageExtension"/>
-    <<error descr="Element should be registered in 'anotherModule' module where its class 'MyLanguageExtension' is defined">myPlugin.lang.myOwnExtPoint</error> language="" implementationClass="MyLanguageExtension"/>
-    <<error descr="Element should be registered in 'anotherModule' module where its class 'DependencyModuleClass' is defined">myPlugin.myDependencyModuleClassEp</error> implementation="DependencyModuleClass"/>
+    <<warning descr="Element should be registered in 'anotherModule' module where its class 'MyLanguageExtension' is defined">myPlugin.lang.myExtPoint</warning> language="" implementationClass="MyLanguageExtension"/>
+    <<warning descr="Element should be registered in 'anotherModule' module where its class 'MyLanguageExtension' is defined">myPlugin.lang.myOwnExtPoint</warning> language="" implementationClass="MyLanguageExtension"/>
+    <<warning descr="Element should be registered in 'anotherModule' module where its class 'DependencyModuleClass' is defined">myPlugin.myDependencyModuleClassEp</warning> implementation="DependencyModuleClass"/>
   </extensions>
 
   <actions>
-    <<error descr="Element should be registered in 'anotherModule' module where its class 'DependencyModuleAction' is defined">action</error> class="DependencyModuleAction"/>
+    <<warning descr="Element should be registered in 'anotherModule' module where its class 'DependencyModuleAction' is defined">action</warning> class="DependencyModuleAction"/>
   </actions>
 </idea-plugin>

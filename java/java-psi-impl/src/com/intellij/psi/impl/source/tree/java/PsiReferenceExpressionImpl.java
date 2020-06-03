@@ -244,7 +244,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
           if (!(element instanceof PsiReferenceExpressionImpl)) return;
           PsiReferenceExpressionImpl chainedQualifier = (PsiReferenceExpressionImpl)element;
           RecursionGuard.StackStamp stamp = RecursionManager.markStack();
-          ResolveResult[] res = resolveCache.resolveWithCaching(chainedQualifier, INSTANCE, false, false, containingFile);
+          ResolveResult[] res = resolveCache.resolveWithCaching(chainedQualifier, INSTANCE, true, false, containingFile);
           if (stamp.mayCacheNow()) {
             ourQualifierCache.get().put(chainedQualifier, res);
           }

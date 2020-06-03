@@ -12,6 +12,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -24,6 +27,7 @@ import java.util.zip.ZipFile;
 
 import static com.intellij.openapi.util.io.IoTestUtil.*;
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * @author Dmitry Avdeev
@@ -218,5 +222,17 @@ public class UrlClassLoaderTest {
 
   private static void withCustomCachedClassloader(URL url, ThrowableConsumer<UrlClassLoader, IOException> testAction) throws IOException {
     testAction.consume(UrlClassLoader.build().useCache().urls(url).get());
+  }
+
+  @Test
+  public void testUncInClasspath() throws IOException {
+    assumeWindows();
+    Path uncRootPath = Paths.get(toLocalUncPath(tempDir.getRoot().getPath()));
+    assumeTrue("Cannot access " + uncRootPath, Files.isDirectory(uncRootPath));
+
+    String entryName = "test_res_dir/test_res.txt";
+    File jar = createTestJar(tempDir.newFile("test.jar"), entryName, "-");
+    UrlClassLoader cl = UrlClassLoader.build().urls(uncRootPath.resolve(jar.getName()).toUri().toURL()).get();
+    assertNotNull(cl.findResource(entryName));
   }
 }

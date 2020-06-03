@@ -159,7 +159,7 @@ public interface ShTypes {
   IElementType OPEN_QUOTE = new ShTokenType("OPEN_QUOTE");
   IElementType OR_OR = new ShTokenType("||");
   IElementType OUTPUT_PROCESS_SUBSTITUTION = new ShTokenType(">(");
-  IElementType PARAMETER_EXPANSION_BODY = new ShTokenType("parameter_expansion_body");
+  IElementType PARAM_SEPARATOR = new ShTokenType("param_separator");
   IElementType PIPE = new ShTokenType("|");
   IElementType PIPE_AMP = new ShTokenType("|&");
   IElementType PLUS = new ShTokenType("+");

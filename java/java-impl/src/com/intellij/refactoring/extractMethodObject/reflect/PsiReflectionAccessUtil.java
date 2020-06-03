@@ -17,8 +17,23 @@ import java.util.*;
  * @author Vitaliy.Bibaev
  */
 class PsiReflectionAccessUtil {
-  public static boolean isAccessibleMember(@NotNull PsiMember classMember) {
+  public static boolean isPublicMember(@NotNull PsiMember classMember) {
     return classMember.hasModifierProperty(PsiModifier.PUBLIC) && isAccessible(classMember.getContainingClass());
+  }
+
+  public static boolean isAccessibleMember(@NotNull PsiMember classMember,
+                                           @NotNull PsiClass outerClass,
+                                           @Nullable PsiExpression qualifier) {
+    if (!isPublicMember(classMember)) {
+      return false;
+    }
+
+    if (qualifier != null) {
+      return isQualifierAccessible(qualifier);
+    }
+
+    // consider member as inaccessible if it has no qualifier and in the same file as outer class
+    return !Objects.equals(outerClass.getContainingFile(), classMember.getContainingFile());
   }
 
   /**
@@ -57,15 +72,8 @@ class PsiReflectionAccessUtil {
     else {
       PsiTypeElement qualifierType = methodReference.getQualifierType();
       boolean qualifierAccessible = qualifierType == null || isAccessibleType(qualifierType.getType());
-      return qualifierAccessible && isAccessibleMember((PsiMember)method);
+      return qualifierAccessible && isPublicMember((PsiMember)method);
     }
-  }
-
-  @Nullable
-  public static String extractQualifier(@NotNull PsiReferenceExpression referenceExpression) {
-    PsiExpression qualifierExpression = referenceExpression.getQualifierExpression();
-    PsiType expressionType = qualifierExpression != null ? qualifierExpression.getType() : null;
-    return expressionType == null ? null : qualifierExpression.getText();
   }
 
   @Contract(value = "null -> true")

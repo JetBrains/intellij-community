@@ -337,7 +337,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     if (myState.get() == State.SMART || myState.get() == State.WAITING_FOR_FINISH) {
       enterDumbMode(modality, trace);
-      new TrackedEdtActivity(this::startBackgroundProcess).invokeLater();
+      new TrackedEdtActivity(this::startBackgroundProcess).invokeLaterIfProjectNotDisposed();
     }
   }
 
@@ -888,14 +888,18 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
 
     void invokeLater() {
-      ApplicationManager.getApplication().invokeLater(this, getExpirationCondition());
+      ApplicationManager.getApplication().invokeLater(this, getActivityExpirationCondition());
+    }
+
+    void invokeLaterIfProjectNotDisposed() {
+      ApplicationManager.getApplication().invokeLater(this, getProjectActivityExpirationCondition());
     }
 
     void invokeLaterAfterProjectInitialized() {
       StartupManager startupManager = StartupManager.getInstance(myProject);
       startupManager.runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
         Application app = ApplicationManager.getApplication();
-        app.invokeLater(this, myDumbStartModality, getExpirationCondition());
+        app.invokeLater(this, myDumbStartModality, getProjectActivityExpirationCondition());
       });
     }
 
@@ -907,7 +911,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     @SuppressWarnings({"RedundantCast", "unchecked", "rawtypes"})
     @NotNull
-    private Condition getExpirationCondition() {
+    private Condition getProjectActivityExpirationCondition() {
       return Conditions.or((Condition)myProject.getDisposed(), (Condition)getActivityExpirationCondition());
     }
 

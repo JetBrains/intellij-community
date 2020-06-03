@@ -34,7 +34,7 @@ SHELL_SCRIPT
         PsiElement($)('$')
         SHELL_PARAMETER_EXPANSION
           PsiElement({)('{')
-          PsiElement(parameter_expansion_body)('MAIN_SERVICE')
+          PsiElement(word)('MAIN_SERVICE')
           PsiElement(})('}')
         PsiElement(STRING_CONTENT)('.service.d')
         PsiElement(CLOSE_QUOTE)('"')
@@ -51,7 +51,7 @@ SHELL_SCRIPT
         PsiElement($)('$')
         SHELL_PARAMETER_EXPANSION
           PsiElement({)('{')
-          PsiElement(parameter_expansion_body)('MAIN_SERVICE')
+          PsiElement(word)('MAIN_SERVICE')
           PsiElement(})('}')
         PsiElement(STRING_CONTENT)('.service.d/add-localhost.conf')
         PsiElement(CLOSE_QUOTE)('"')

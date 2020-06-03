@@ -350,7 +350,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     if (!FileModificationService.getInstance().prepareVirtualFilesForWrite(myProject, Collections.singleton(file))) {
       return;
     }
-    WriteAction.run(() -> {
+    WriteAction.run(() -> WriteCommandAction.runWriteCommandAction(myProject, ResourceBundleEditorBundle.message(
+      "resource.bundle.update.property.value"), null, () -> {
       PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file, myProject);
       if (propertiesFile != null) {
         if (currentValue.isEmpty() &&
@@ -361,7 +362,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
           myPropertiesInsertDeleteManager.insertOrUpdateTranslation(currentSelectedProperty, currentValue, propertiesFile);
         }
       }
-    });
+    }));
   }
 
   void recreateEditorsPanel() {

@@ -6,6 +6,7 @@ import com.intellij.ide.structureView.impl.StructureViewElementWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.JBIterable;
@@ -39,7 +40,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
       try {
         myChildren = new ArrayList<>();
         rebuildSubtree();
-      } catch (ProcessCanceledException pce) {
+      } catch (IndexNotReadyException | ProcessCanceledException pce) {
         myChildren = null;
         throw pce;
       }

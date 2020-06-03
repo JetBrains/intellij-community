@@ -202,13 +202,13 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
     }
   }
 
-  @Override
+   @Override
   protected void collectPackagesToOpen(List<String> options) {
     TestData data = getConfiguration().getPersistantData();
-    if (data.TEST_OBJECT == TestType.METHOD.getType() || data.TEST_OBJECT == TestType.CLASS.getType()) {
+    if (TestType.METHOD.getType().equals(data.TEST_OBJECT) || TestType.CLASS.getType().equals(data.TEST_OBJECT)) {
       options.add(StringUtil.getPackageName(data.MAIN_CLASS_NAME));
     }
-    else if (data.TEST_OBJECT == TestType.PACKAGE.getType()){
+    else if (TestType.PACKAGE.getType().equals(data.TEST_OBJECT)){
       PsiPackage aPackage = JavaPsiFacade.getInstance(getConfiguration().getProject()).findPackage(data.PACKAGE_NAME);
       if (aPackage != null) {
         SourceScope sourceScope = data.getScope().getSourceScope(getConfiguration());

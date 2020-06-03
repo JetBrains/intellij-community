@@ -246,10 +246,12 @@ public class InstalledPackagesPanel extends JPanel {
                 myCurrentlyInstalling.remove(packageName);
                 myPackagesTable.setPaintBusy(!myCurrentlyInstalling.isEmpty());
                 if (errorDescription == null) {
-                  myNotificationArea.showSuccess("Package " + packageName + " successfully upgraded");
+                  myNotificationArea.showSuccess(IdeBundle.message("package.successfully.upgraded", packageName));
                 }
                 else {
-                  myNotificationArea.showError("Upgrade packages failed. <a href=\"xxx\">Details...</a>", "Upgrade Packages Failed",
+                  myNotificationArea.showError(IdeBundle.message("upgrade.packages.failed") +
+                                               " <a href=\"xxx\">" + IdeBundle.message("upgrade.packages.failure.details") + "</a>",
+                                               IdeBundle.message("upgrade.packages.failed.dialog.title"),
                                                errorDescription);
                 }
 
@@ -272,8 +274,10 @@ public class InstalledPackagesPanel extends JPanel {
 
       @Override
       public void consume(Exception e) {
-        ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog("Error occurred. Please, check your internet connection.",
-                                                                                     "Upgrade Package Failed."), ModalityState.any());
+        ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(
+          IdeBundle.message("error.occurred.please.check.your.internet.connection"),
+          IdeBundle.message("upgrade.package.failed.title")
+        ), ModalityState.any());
       }
     });
   }
@@ -357,14 +361,16 @@ public class InstalledPackagesPanel extends JPanel {
             myPackagesTable.setPaintBusy(!myCurrentlyInstalling.isEmpty());
             if (errorDescription == null) {
               if (packageName != null) {
-                myNotificationArea.showSuccess("Package '" + packageName + "' successfully uninstalled");
+                myNotificationArea.showSuccess(IdeBundle.message("package.successfully.uninstalled", packageName));
               }
               else {
-                myNotificationArea.showSuccess("Packages successfully uninstalled");
+                myNotificationArea.showSuccess(IdeBundle.message("packages.successfully.uninstalled"));
               }
             }
             else {
-              myNotificationArea.showError("Uninstall packages failed. <a href=\"xxx\">Details...</a>", "Uninstall Packages Failed",
+              myNotificationArea.showError(IdeBundle.message("uninstall.packages.failed") +
+                                           " <a href=\"xxx\">" + IdeBundle.message("uninstall.packages.failure.details") + "</a>",
+                                           IdeBundle.message("uninstall.packages.failed.dialog.title"),
                                            errorDescription);
             }
           }, modalityState);

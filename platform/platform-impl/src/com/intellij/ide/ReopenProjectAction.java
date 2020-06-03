@@ -43,7 +43,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups();
 
     Project project = e.getProject();
-    Path file = Paths.get(myProjectPath);
+    Path file = Paths.get(myProjectPath).normalize();
     if (!Files.exists(file)) {
       if (Messages.showDialog(project, IdeBundle
                                 .message("message.the.path.0.does.not.exist.maybe.on.remote", PathUtil.toSystemDependentName(myProjectPath)),

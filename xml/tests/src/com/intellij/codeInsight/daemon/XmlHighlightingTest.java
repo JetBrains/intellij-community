@@ -1919,6 +1919,10 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(getFullRelativeTestName(".html"), true, true);
   }
 
+  public void testSvgAttrValueInHtml() throws Exception {
+    doTest(getFullRelativeTestName(".html"), true, false);
+  }
+
   public void testAnyAttribute() {
     configureByFiles(null, BASE_PATH + "anyAttribute.xml", BASE_PATH + "services-1.0.xsd");
     doDoTest(true, false);

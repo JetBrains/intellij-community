@@ -4,7 +4,12 @@ SHELL_SCRIPT
       PsiElement($)('$')
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
-        PsiElement(parameter_expansion_body)('a-"(x)"')
+        PsiElement(word)('a')
+        PsiElement(param_separator)('-')
+        STRING
+          PsiElement(OPEN_QUOTE)('"')
+          PsiElement(STRING_CONTENT)('(x)')
+          PsiElement(CLOSE_QUOTE)('"')
         PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -12,7 +17,11 @@ SHELL_SCRIPT
       PsiElement($)('$')
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
-        PsiElement(parameter_expansion_body)('a-(x)')
+        PsiElement(word)('a')
+        PsiElement(param_separator)('-')
+        PsiElement(word)('(')
+        PsiElement(word)('x')
+        PsiElement(word)(')')
         PsiElement(})('}')
   PsiWhiteSpace(' ')
   PsiComment(Comment)('#is a valid expression, same as {a-"(x)"}')
@@ -22,5 +31,17 @@ SHELL_SCRIPT
       PsiElement($)('$')
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
-        PsiElement(parameter_expansion_body)('x-`$[1]`')
+        PsiElement(word)('x')
+        PsiElement(param_separator)('-')
+        COMMAND_SUBSTITUTION_COMMAND
+          PsiElement(OPEN_BACKQUOTE)('`')
+          COMPOUND_LIST
+            GENERIC_COMMAND_DIRECTIVE
+              OLD_ARITHMETIC_EXPANSION
+                PsiElement(ARITH_SQUARE_LEFT)('$[')
+                LITERAL_EXPRESSION
+                  NUMBER
+                    PsiElement(int)('1')
+                PsiElement(ARITH_SQUARE_RIGHT)(']')
+          PsiElement(CLOSE_BACKQUOTE)('`')
         PsiElement(})('}')

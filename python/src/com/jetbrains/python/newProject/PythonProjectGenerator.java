@@ -310,7 +310,8 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
 
     final ErrorDescription errorDescription = getErrorDescription(sdkAndException);
     final Application app = ApplicationManager.getApplication();
-    app.invokeLater(() -> PackagesNotificationPanel.showError(String.format("Install %s failed", frameworkName), errorDescription));
+    app.invokeLater(() -> PackagesNotificationPanel.showError(PyBundle.message("python.new.project.install.failed.title", frameworkName),
+                                                              errorDescription));
   }
 
   @NotNull

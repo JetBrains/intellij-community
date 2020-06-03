@@ -503,7 +503,8 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
     if (StringUtil.equals(BUNDLED_MAVEN_2, mavenHome) && ApplicationManager.getApplication().isUnitTestMode()) {
       return resolveEmbeddedMaven2HomeForTests().getMavenHome();
     }
-    if (StringUtil.equals(BUNDLED_MAVEN_3, mavenHome)) {
+    if (StringUtil.equals(BUNDLED_MAVEN_3, mavenHome) ||
+        StringUtil.equals(MavenProjectBundle.message("maven.bundled.version.title"), mavenHome)) {
       return resolveEmbeddedMavenHome().getMavenHome();
     }
     final File home = new File(mavenHome);

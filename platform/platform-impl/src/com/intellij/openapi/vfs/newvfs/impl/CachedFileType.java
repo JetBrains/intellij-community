@@ -46,6 +46,15 @@ public class CachedFileType {
     }
   }
 
+  public static void remove(FileType type) {
+    synchronized (ourInterner) {
+      CachedFileType cached = ourInterner.get(type);
+      if (cached != null) {
+        cached.fileType = null;
+      }
+    }
+  }
+
   public static class PsiListener implements PsiModificationTracker.Listener {
     @Override
     public void modificationCountChanged() {

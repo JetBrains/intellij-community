@@ -97,7 +97,7 @@ static bool IsPathWatchable(const char *pathToWatch) {
         if (attributes != INVALID_FILE_ATTRIBUTES && IS_SET(attributes, FILE_ATTRIBUTE_REPARSE_POINT)) {
             if (__GetFinalPathNameByHandle != NULL) {
                 HANDLE h = CreateFileW(path, 0, FILE_SHARE_ALL, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
-                if (h != NULL) {
+                if (h != INVALID_HANDLE_VALUE) {
                     DWORD result = __GetFinalPathNameByHandle(h, buffer, bufferSize, 0);
                     CloseHandle(h);
                     if (result > 0 && result < bufferSize && wcsncmp(buffer, L"\\\\?\\UNC\\", 8) == 0) {
@@ -107,8 +107,8 @@ static bool IsPathWatchable(const char *pathToWatch) {
                 }
             }
 
-            path[pathLen] = L'\\';
-            path[pathLen + 1] = L'\0';
+            path[pathLen - 1] = L'\\';
+            path[pathLen] = L'\0';
             if (GetVolumeNameForVolumeMountPointW(path, buffer, bufferSize) != 0) {
                 watchable = false;
                 break;

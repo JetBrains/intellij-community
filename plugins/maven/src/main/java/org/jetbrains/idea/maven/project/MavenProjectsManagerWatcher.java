@@ -2,11 +2,11 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ProjectTopics;
+import com.intellij.execution.Executor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -24,6 +25,7 @@ import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 import static org.jetbrains.idea.maven.project.MavenGeneralSettingsWatcher.registerGeneralSettingsWatcher;
 
@@ -38,6 +40,7 @@ public class MavenProjectsManagerWatcher {
   private final MavenProjectsProcessor myReadingProcessor;
   private final MavenProjectsAware myProjectsAware;
   private final ExternalSystemProjectTracker myProjectTracker;
+  private final ExecutorService myBackgroundExecutor;
   private final Disposable myDisposable;
 
   public MavenProjectsManagerWatcher(Project project,
@@ -52,6 +55,7 @@ public class MavenProjectsManagerWatcher {
     myReadingProcessor = readingProcessor;
     myProjectsAware = new MavenProjectsAware(project, manager, projectsTree);
     myProjectTracker = ExternalSystemProjectTracker.getInstance(project);
+    myBackgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("MavenProjectsManagerWatcher.backgroundExecutor", 1);
     myDisposable = Disposer.newDisposable(MavenProjectsManagerWatcher.class.toString());
   }
 
@@ -59,8 +63,7 @@ public class MavenProjectsManagerWatcher {
     MessageBusConnection busConnection = myProject.getMessageBus().connect(myDisposable);
     busConnection.subscribe(ProjectTopics.MODULES, new MavenIgnoredModulesWatcher());
     busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootChangesListener());
-    myManager.addManagerListener(new MavenProjectWatcher());
-    registerGeneralSettingsWatcher(myManager, this, myDisposable);
+    registerGeneralSettingsWatcher(myManager, this, myBackgroundExecutor, myDisposable);
     myProjectTracker.register(myProjectsAware);
     myProjectTracker.activate(myProjectsAware.getProjectId());
   }
@@ -196,18 +199,6 @@ public class MavenProjectsManagerWatcher {
       // this method is needed to return non-ignored status for modules that were deleted (and thus ignored) and then created again with a different module type
       MavenProject mavenProject = myManager.findProject(module);
       if (mavenProject != null) myManager.setIgnoredState(Collections.singletonList(mavenProject), false);
-    }
-  }
-
-  private class MavenProjectWatcher implements MavenProjectsManager.Listener {
-    @Override
-    public void projectsScheduled() {
-      scheduleReloadNotificationUpdate();
-    }
-
-    @Override
-    public void importAndResolveScheduled() {
-      scheduleReloadNotificationUpdate();
     }
   }
 }

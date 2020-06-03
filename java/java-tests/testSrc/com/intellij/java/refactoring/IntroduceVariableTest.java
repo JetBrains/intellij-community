@@ -240,7 +240,8 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testPolyadic() { doTest("b1", true, true, true, "boolean"); }
   public void testAssignmentToUnresolvedReference() { doTest("collection", true, true, true, "java.util.List<? extends java.util.Collection<?>>"); }
   public void testSubstringInSwitch() { doTest("ba", false, false, false, JAVA_LANG_STRING);}
-
+  public void testEnumValues() { doTest("vs", false, false, false, "E[]"); }
+  
   public void testNameSuggestion() {
     String expectedTypeName = "Path";
     doTest(new MockIntroduceVariableHandler("path", true, false, false, expectedTypeName) {

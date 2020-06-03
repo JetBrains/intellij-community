@@ -11,6 +11,7 @@ interface ExternalSystemProjectTracker {
   /**
    * Enables/disables auto reload external changes for all projects
    */
+  @Deprecated("Use ExternalSystemProjectTrackerSettings.autoReloadType instead")
   var isAutoReloadExternalChanges: Boolean
 
   /**

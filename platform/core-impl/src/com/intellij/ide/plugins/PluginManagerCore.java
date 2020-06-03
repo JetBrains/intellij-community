@@ -106,6 +106,10 @@ public final class PluginManagerCore {
   @SuppressWarnings("StaticNonFinalField")
   @ApiStatus.Internal
   public static Set<PluginId> ourPluginsToEnable;
+
+  @ApiStatus.Internal
+  public static boolean ourDisableNonBundledPlugins;
+
   /**
    * Bundled plugins that were updated.
    * When we update bundled plugin it becomes not bundled, so it is more difficult for analytics to use that data.
@@ -610,8 +614,7 @@ public final class PluginManagerCore {
 
   private static @NotNull URL localFileToUrl(@NotNull Path file, @NotNull IdeaPluginDescriptor descriptor) {
     try {
-      // it is important not to have traversal elements in classpath
-      return new URL("file", "", file.normalize().toUri().getRawPath());
+      return file.normalize().toUri().toURL();  // it is important not to have traversal elements in classpath
     }
     catch (MalformedURLException e) {
       throw new PluginException("Corrupted path element: `" + file + '`', e, descriptor.getPluginId());
@@ -1496,6 +1499,9 @@ public final class PluginManagerCore {
   private static void disableIncompatiblePlugins(@NotNull List<IdeaPluginDescriptorImpl> descriptors,
                                                  @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
                                                  @NotNull List<PluginError> errors) {
+    if (ourDisableNonBundledPlugins) {
+      getLogger().info("Running with disableThirdPartyPlugins argument, third-party plugins will be disabled");
+    }
     String selectedIds = System.getProperty("idea.load.plugins.id");
     String selectedCategory = System.getProperty("idea.load.plugins.category");
 
@@ -1556,6 +1562,10 @@ public final class PluginManagerCore {
       else if (!shouldLoadPlugins) {
         descriptor.setEnabled(false);
         errors.add(new PluginError(descriptor, "is skipped (plugins loading disabled)", null));
+      }
+      else if (!descriptor.isBundled() && ourDisableNonBundledPlugins) {
+        descriptor.setEnabled(false);
+        errors.add(new PluginError(descriptor, "is skipped (third-party plugins loading disabled)", null));
       }
     }
   }
@@ -1808,9 +1818,10 @@ public final class PluginManagerCore {
                                               @NotNull Set<PluginId> disabledRequiredIds,
                                               @NotNull Set<PluginId> disabledPlugins,
                                               @NotNull List<PluginError> errors) {
-    if (descriptor.getPluginId() == CORE_ID || descriptor.isImplementationDetail()) {
+    if (descriptor.getPluginId() == CORE_ID) {
       return true;
     }
+    boolean notifyUser = !descriptor.isImplementationDetail();
 
     // no deps at all or all are optional
     if (descriptor.getDependentPluginIds().length == descriptor.getOptionalDependentPluginIds().length) {
@@ -1833,14 +1844,14 @@ public final class PluginManagerCore {
       String depName = dep == null ? null : dep.getName();
       if (depName == null) {
         if (findErrorForPlugin(errors, depId) != null) {
-          errors.add(new PluginError(descriptor, "depends on plugin " + toPresentableName(depId.getIdString()) + " that failed to load", null));
+          errors.add(new PluginError(descriptor, "depends on plugin " + toPresentableName(depId.getIdString()) + " that failed to load", null, notifyUser));
         }
         else {
-          errors.add(new PluginError(descriptor, "requires " + toPresentableName(depId.getIdString()) + " plugin to be installed", null));
+          errors.add(new PluginError(descriptor, "requires " + toPresentableName(depId.getIdString()) + " plugin to be installed", null, notifyUser));
         }
       }
       else {
-        PluginError error = new PluginError(descriptor, "requires " + toPresentableName(depName) + " plugin to be enabled", null);
+        PluginError error = new PluginError(descriptor, "requires " + toPresentableName(depName) + " plugin to be enabled", null, notifyUser);
         error.setDisabledDependency(dep.getPluginId());
         errors.add(error);
       }

@@ -28,7 +28,7 @@ import java.util.stream.Stream;
  */
 public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
   /**
-   * @return names of the methods for which this matcher may return true. For any other method it guaranteed to return false
+   * @return distinct names of the methods for which this matcher may return true. For any other method it guaranteed to return false
    */
   Stream<String> names();
 
@@ -57,14 +57,14 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
   /**
    * Returns a new matcher which will return true if any of supplied matchers return true
    *
-   * @param matchers
+   * @param matchers matchers to delegate to
    * @return a new matcher
    */
   static CallMatcher anyOf(CallMatcher... matchers) {
     return new CallMatcher() {
       @Override
       public Stream<String> names() {
-        return Stream.of(matchers).flatMap(CallMatcher::names);
+        return Stream.of(matchers).flatMap(CallMatcher::names).distinct();
       }
 
       @Override

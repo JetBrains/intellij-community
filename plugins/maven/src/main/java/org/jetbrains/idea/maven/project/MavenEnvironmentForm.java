@@ -143,7 +143,11 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
   public void getData(MavenGeneralSettings data) {
     final String resolvedMavenHome = resolveMavenHome(data.getMavenHome());
     final String mavenHome = ObjectUtils.chooseNotNull(resolvedMavenHome, data.getMavenHome());
-    mavenHomeField.setText(mavenHome != null ? FileUtil.toSystemIndependentName(mavenHome): null);
+    String text = mavenHome != null ? FileUtil.toSystemIndependentName(mavenHome) : null;
+    if (MavenServerManager.BUNDLED_MAVEN_3.equals(mavenHome)) {
+      text = MavenProjectBundle.message("maven.bundled.version.title");
+    }
+    mavenHomeField.setText(text);
     mavenHomeField.addCurrentTextToHistory();
     updateMavenVersionLabel();
     userSettingsFileOverrider.reset(data.getUserSettingsFile());

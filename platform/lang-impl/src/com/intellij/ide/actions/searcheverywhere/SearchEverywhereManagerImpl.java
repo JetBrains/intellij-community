@@ -2,9 +2,12 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -37,6 +40,8 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   public static final String ALL_CONTRIBUTORS_GROUP_ID = "SearchEverywhereContributor.All";
   private static final String LOCATION_SETTINGS_KEY = "search.everywhere.popup";
 
+  private final Map<String, String> myTabsShortcutsMap;
+
   private final Project myProject;
 
   private JBPopup myBalloon;
@@ -50,6 +55,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
 
   public SearchEverywhereManagerImpl(Project project) {
     myProject = project;
+    myTabsShortcutsMap = createShortcutsMap();
   }
 
   @Override
@@ -66,9 +72,11 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
       new RecentFilesSEContributor(initEvent),
       new RunConfigurationsSEContributor(project, contextComponent, () -> mySearchEverywhereUI.getSearchField().getText())
     );
+
     List<SearchEverywhereContributor<?>> contributors = new ArrayList<>(serviceContributors);
     for (SearchEverywhereContributorFactory<?> factory : SearchEverywhereContributor.EP_NAME.getExtensionList()) {
-      contributors.add(factory.createContributor(initEvent));
+      SearchEverywhereContributor<?> contributor = factory.createContributor(initEvent);
+      contributors.add(contributor);
     }
     Collections.sort(contributors, Comparator.comparingInt(SearchEverywhereContributor::getSortWeight));
 
@@ -211,7 +219,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
 
   private SearchEverywhereUI createView(Project project,
                                         List<? extends SearchEverywhereContributor<?>> contributors) {
-    SearchEverywhereUI view = new SearchEverywhereUI(project, contributors);
+    SearchEverywhereUI view = new SearchEverywhereUI(project, contributors, myTabsShortcutsMap::get);
 
     view.setSearchFinishedHandler(() -> {
       if (isShown()) {
@@ -307,6 +315,23 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     if (myHistoryIterator == null || !myHistoryIterator.getContributorID().equals(selectedContributorID)) {
       myHistoryIterator = myHistoryList.getIterator(selectedContributorID);
     }
+  }
+
+  private static Map<String, String> createShortcutsMap() {
+    Map<String, String> res = new HashMap<>();
+
+    res.put(ALL_CONTRIBUTORS_GROUP_ID, "Double Shift");
+    addShortcut(res, "ClassSearchEverywhereContributor", "GotoClass");
+    addShortcut(res, "FileSearchEverywhereContributor", "GotoFile");
+    addShortcut(res, "SymbolSearchEverywhereContributor", "GotoSymbol");
+    addShortcut(res, "ActionSearchEverywhereContributor", "GotoAction");
+
+    return res;
+  }
+
+  private static void addShortcut(Map<String, String> map, String contributorID, String actionID) {
+    KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(actionID);
+    if (shortcut != null) map.put(contributorID, KeymapUtil.getShortcutText(shortcut));
   }
 
   private static class SearchHistoryList {

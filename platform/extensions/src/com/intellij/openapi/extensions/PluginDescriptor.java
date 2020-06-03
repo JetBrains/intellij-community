@@ -90,6 +90,11 @@ public interface PluginDescriptor {
     return false;
   }
 
+  /**
+   * If true, this plugin requires restart even if it otherwise fulfills the requirements of dynamic plugins.
+   */
+  default boolean isRequireRestart() { return false; }
+
   boolean isEnabled();
 
   void setEnabled(boolean enabled);

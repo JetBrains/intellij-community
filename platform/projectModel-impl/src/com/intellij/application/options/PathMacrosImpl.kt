@@ -4,7 +4,7 @@ package com.intellij.application.options
 import com.intellij.openapi.application.PathMacroContributor
 import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.containers.ContainerUtil
 import gnu.trove.THashSet
@@ -13,7 +13,6 @@ import org.jetbrains.jps.model.serialization.JpsGlobalLoader.PathVariablesSerial
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
-import java.util.function.Consumer
 import kotlin.collections.HashMap
 import kotlin.collections.LinkedHashMap
 
@@ -30,6 +29,8 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
   private var userMacroMapCache: Map<String, String>? = null
 
   companion object {
+    private val EP_NAME = ExtensionPointName<PathMacroContributor>("com.intellij.pathMacroContributor")
+
     const val IGNORED_MACRO_ELEMENT = "ignoredMacro"
     const val MAVEN_REPOSITORY = "MAVEN_REPOSITORY"
     private val SYSTEM_MACROS: MutableSet<String> = THashSet()
@@ -146,10 +147,18 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
     }
 
     loadState(Element("state"))
+    // https://youtrack.jetbrains.com/issue/IDEA-239124
+    modificationStamp.incrementAndGet()
   }
 
   override fun loadState(element: Element) {
     val newMacros = linkedMapOf<String, String>()
+    // register first because may be overridden by user
+    val newLegacyMacros = HashMap(legacyMacros)
+    EP_NAME.forEachExtensionSafe { contributor ->
+      contributor.registerPathMacros(newMacros, newLegacyMacros)
+    }
+
     for (macro in element.getChildren(PathVariablesSerializer.MACRO_TAG)) {
       val name = macro.getAttributeValue(PathVariablesSerializer.NAME_ATTRIBUTE) ?: continue
       var value = macro.getAttributeValue(PathVariablesSerializer.VALUE_ATTRIBUTE) ?: continue
@@ -170,11 +179,6 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
         newIgnoredMacros.add(ignoredName)
       }
     }
-
-    val newLegacyMacros = HashMap(legacyMacros)
-    PathMacroContributor.EP_NAME.forEachExtensionSafe(Consumer { contributor ->
-      contributor.registerPathMacros(newMacros, newLegacyMacros)
-    })
 
     macros = if (newMacros.isEmpty()) emptyMap() else Collections.unmodifiableMap(newMacros)
     legacyMacros = if (newLegacyMacros.isEmpty()) emptyMap() else Collections.unmodifiableMap(newLegacyMacros)

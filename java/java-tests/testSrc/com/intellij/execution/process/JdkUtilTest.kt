@@ -4,7 +4,6 @@ package com.intellij.execution.process
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
-import com.intellij.execution.target.local.LocalTargetEnvironment
 import com.intellij.execution.target.local.LocalTargetEnvironmentFactory
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.util.io.FileUtil
@@ -17,6 +16,8 @@ import org.junit.Before
 import org.junit.Test
 import java.io.File
 import java.nio.charset.StandardCharsets
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class JdkUtilTest : BareTestFixtureTestCase() {
   companion object {
@@ -93,6 +94,10 @@ class JdkUtilTest : BareTestFixtureTestCase() {
   @Test fun dynamicClasspathWithArgFile() {
     setModuleMode()
     doTest("-Xmx256m", "-Dan.option=1", "#arg_file#", "-m", "hello/hello.Main", "hello")
+    val content = filesToDelete?.find { it.name.contains("idea_arg_file") }?.readLines()?.dropWhile { it.contains("-p") }
+    val modulePath = content?.first()
+    assertNotNull(modulePath)
+    assertTrue { modulePath.isNotEmpty() }
   }
 
   @Test fun dynamicClasspathWithArgFileAndParameters() {
@@ -124,7 +129,7 @@ class JdkUtilTest : BareTestFixtureTestCase() {
     filesToDelete = cmd.filesToDeleteOnTermination
 
     val actual = ParametersList()
-    actual.addParametersString(cmd.build().getCommandPresentation(LocalTargetEnvironment(request)))
+    cmd.build().collectCommandsSynchronously().forEach {actual.add(it)}
     val toCompare = mutableListOf<String>()
     actual.parameters.forEachIndexed { i, arg ->
       if (i > 0 && !arg.startsWith("-Dfile.encoding=")) {

@@ -120,7 +120,7 @@ class ProjectSettingsTracker(
     settingsFilesCRC.set(state.settingsFiles.toMap())
   }
 
-  private fun isAsyncAllowed() = !ApplicationManager.getApplication().isHeadlessEnvironment
+  private fun isAsyncAllowed() = projectTracker.isAsyncChangesProcessing
 
   private fun submitSettingsFilesRefresh(callback: () -> Unit = {}) {
     invokeLater {
@@ -201,7 +201,7 @@ class ProjectSettingsTracker(
         status.markModified(currentTime(), modificationType)
       }
       else {
-        status.markDirty(currentTime())
+        status.markDirty(currentTime(), modificationType)
       }
     }
 

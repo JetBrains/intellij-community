@@ -210,7 +210,7 @@ private class PySdkToInstallOnWindows(name: String,
 
     e.message?.let {
       PackagesNotificationPanel.showError(
-        "Failed to install $name",
+        PyBundle.message("python.sdk.failed.to.install.title", name),
         PackageManagementService.ErrorDescription(
           it,
           null,
@@ -235,7 +235,7 @@ private class PySdkToInstallOnWindows(name: String,
 
     if (processOutput.isCancelled) {
       PackagesNotificationPanel.showError(
-        "$name installation has been cancelled",
+        PyBundle.message("python.sdk.installation.has.been.cancelled.title", name),
         PackageManagementService.ErrorDescription(
           "Some Python components that have been installed might get inconsistent after cancellation.",
           e.commandLine.commandLineString,
@@ -246,7 +246,7 @@ private class PySdkToInstallOnWindows(name: String,
     }
     else {
       PackagesNotificationPanel.showError(
-        "Failed to install $name",
+        PyBundle.message("python.sdk.failed.to.install.title", name),
         PackageManagementService.ErrorDescription(
           if (processOutput.isTimeout) "Timed out" else "Exit code ${processOutput.exitCode}",
           e.commandLine.commandLineString,
@@ -271,7 +271,7 @@ private class PySdkToInstallOnWindows(name: String,
 
     e.cause.message?.let {
       PackagesNotificationPanel.showError(
-        "Failed to install $name",
+        PyBundle.message("python.sdk.failed.to.install.title", name),
         PackageManagementService.ErrorDescription(
           it,
           e.commandLine.commandLineString,

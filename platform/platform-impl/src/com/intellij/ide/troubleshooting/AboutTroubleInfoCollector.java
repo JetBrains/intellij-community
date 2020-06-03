@@ -2,6 +2,7 @@
 package com.intellij.ide.troubleshooting;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.Project;
@@ -52,6 +53,12 @@ public class AboutTroubleInfoCollector implements GeneralTroubleInfoCollector {
     output += "JVM version: ";
     output += properties.getProperty("java.vm.name", "unknown");
     output += ' ' + properties.getProperty("java.vendor", "unknown");
+    output += '\n';
+
+    output += PathManager.PROPERTY_CONFIG_PATH + "=" + PathManager.getConfigPath() + "\n";
+    output += PathManager.PROPERTY_SYSTEM_PATH + "=" + PathManager.getSystemPath() + "\n";
+    output += PathManager.PROPERTY_PLUGINS_PATH + "=" + PathManager.getPluginsPath() + "\n";
+    output += PathManager.PROPERTY_LOG_PATH + "=" + PathManager.getLogPath() + "\n";
 
     return output;
   }

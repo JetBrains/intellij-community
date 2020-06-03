@@ -11,16 +11,19 @@ public class ThisReferenceDescriptor implements ItemToReplaceDescriptor {
   private final PsiThisExpression myThisExpression;
   private final PsiClass myPsiClass;
 
-  public ThisReferenceDescriptor(PsiThisExpression expression, PsiClass aClass) {
+  public ThisReferenceDescriptor(PsiThisExpression expression, PsiClass referredClass) {
     myThisExpression = expression;
-    myPsiClass = aClass;
+    myPsiClass = referredClass;
   }
 
   @Nullable
   public static ItemToReplaceDescriptor createIfInaccessible(@NotNull PsiThisExpression thisExpression) {
     PsiType expressionType = thisExpression.getType();
-    if (expressionType != null && !PsiReflectionAccessUtil.isAccessibleType(expressionType)) {
-      return new ThisReferenceDescriptor(thisExpression, PsiTypesUtil.getPsiClass(expressionType));
+    if (expressionType != null) {
+      PsiClass psiClass = PsiTypesUtil.getPsiClass(expressionType);
+      if (psiClass != null) {
+        return new ThisReferenceDescriptor(thisExpression, psiClass);
+      }
     }
 
     return null;

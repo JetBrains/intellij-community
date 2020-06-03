@@ -114,7 +114,7 @@ class Cls {
 
     assert gotoSymbol('pkg.Cls.bar') as Set == methods[1..3] as Set
     assert gotoSymbol('pkg.Cls#bar') as Set == methods[1..3] as Set
-    
+
     assert gotoSymbol('pkg.Cls#bar(int)') == [methods[1]]
     assert gotoSymbol('pkg.Cls#bar(boolean)') == [methods[2]]
     assert gotoSymbol('pkg.Cls#bar(java.util.List)') == [methods[3]]
@@ -451,7 +451,7 @@ class Intf {
     assert gotoClass('SomeClass') == [camel, upper]
     assert gotoFile('SomeClass.java') == [camel.containingFile, upper.containingFile]
   }
-  
+
   void "test prefer closer path match"() {
     def index = addEmptyFile("content/objc/features/index.html")
     def i18n = addEmptyFile("content/objc/features/screenshots/i18n.html")
@@ -531,16 +531,16 @@ class Intf {
                     "ffffffffffffffffff/ggggggggggggggggg/hhhhhhhhhhhhhhhh/ClassName.java") == [veryLongNameFile]
   }
 
-  private List<Object> gotoClass(String text, boolean checkboxState = false) {
-    return getContributorElements(createClassContributor(project, null, checkboxState), text)
+  private List<Object> gotoClass(String text, boolean checkboxState = false, PsiElement context = null) {
+    return getContributorElements(createClassContributor(project, context, checkboxState), text)
   }
 
-  private List<Object> gotoSymbol(String text, boolean checkboxState = false) {
-    return getContributorElements(createSymbolContributor(project, null, checkboxState), text)
+  private List<Object> gotoSymbol(String text, boolean checkboxState = false, PsiElement context = null) {
+    return getContributorElements(createSymbolContributor(project, context, checkboxState), text)
   }
 
-  private List<Object> gotoFile(String text, boolean checkboxState = false) {
-    return getContributorElements(createFileContributor(project, null, checkboxState), text)
+  private List<Object> gotoFile(String text, boolean checkboxState = false, PsiElement context = null) {
+    return getContributorElements(createFileContributor(project, context, checkboxState), text)
   }
 
   private static List<Object> getContributorElements(SearchEverywhereContributor<?> contributor, String text) {

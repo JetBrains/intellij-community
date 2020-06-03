@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit.statusBar;
 
+import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
 import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.ide.lightEdit.LightEditorListener;
 import com.intellij.ide.lightEdit.LightEditorManager;
@@ -128,6 +129,7 @@ public class LightEditAutosaveWidget implements StatusBarWidget, StatusBarWidget
 
   @Override
   public void autosaveModeChanged(boolean isAutosave) {
+    LightEditFeatureUsagesUtil.logAutosaveModeChanged(isAutosave);
     if (myStatusBar != null) {
       myStatusBar.updateWidget(ID());
     }

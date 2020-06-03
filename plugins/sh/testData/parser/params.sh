@@ -144,3 +144,18 @@ function addConf {
     reportInfo "Successfully added entry $*"
     return 0
 }
+
+type="${entry%[[:space:]]*}"
+
+${parameter-word}
+${parameter=word}
+${parameter?word}
+${parameter+word}
+${@}
+
+line="${line%$'\r'}"
+${parameter:-abc}
+
+line="${line%'\r'}"
+line="${line%$'\r'}"
+line="${line%"\r"}"

@@ -26,6 +26,8 @@
                         serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker"
                     serviceImplementation="com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker"/>
+    <projectService serviceInterface="com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings"
+                    serviceImplementation="com.intellij.openapi.externalSystem.autoimport.ProjectTrackerSettings"/>
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware"/>
     <editorFloatingToolbarProvider implementation="com.intellij.openapi.externalSystem.autoimport.ProjectRefreshFloatingProvider"/>
     <projectService serviceInterface="com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager"

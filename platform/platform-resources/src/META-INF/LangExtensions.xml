@@ -599,8 +599,10 @@
              order="after sameLogicalRoot"/>
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.InResolveScopeWeigher" id="inResolveScope"
              order="after sameModule"/>
-    <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SdkOrLibraryWeigher" id="sdkOrLibrary"
+    <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.DirectoryTypeWeigher" id="directoryType"
              order="after inResolveScope"/>
+    <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SdkOrLibraryWeigher" id="sdkOrLibrary"
+             order="after directoryType"/>
 
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.StatisticsWeigher" id="stats"
              order="after prefix"/>
@@ -970,7 +972,7 @@
     <statistics.projectUsagesCollector implementation="com.intellij.codeInsight.hints.InlayProviderUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFileCollector"/>
 
-    <statistics.counterUsagesCollector groupId="searchEverywhere" version="3"/>
+    <statistics.counterUsagesCollector groupId="searchEverywhere" version="4"/>
     <statistics.counterUsagesCollector groupId="actions.runAnything" version="1"/>
     <statistics.counterUsagesCollector groupId="surround.with" version="2"/>
     <statistics.counterUsagesCollector groupId="find" version="3"/>

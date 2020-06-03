@@ -2,6 +2,8 @@ import java.text.*;
 
 class Test {
   void test(boolean b) {
+    new SimpleDateFormat("HH:mm dd-MM-yyyy");
+    new SimpleDateFormat("dd-MM HH:mm");
     new SimpleDateFormat("<warning descr="Uppercase 'YYYY' (week year) pattern is used: probably 'yyyy' (year) was intended">YYYY</warning>");
     new SimpleDateFormat("ww/YYYY");
     new SimpleDateFormat("<warning descr="Uppercase 'YYYY' (week year) pattern is used: probably 'yyyy' (year) was intended">YYYY</warning>-MM-<warning descr="Uppercase 'DD' (day of year) pattern is used: probably 'dd' (day of month) was intended">DD</warning>");

@@ -2,6 +2,7 @@
 package com.intellij.openapi.application
 
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.application.ConfigImportHelper.PathAndFileTime
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
@@ -14,6 +15,7 @@ import com.intellij.util.SystemProperties
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Condition
+import org.jetbrains.annotations.NotNull
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
@@ -49,7 +51,7 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
   @Test fun `find pre-migration config directory`() {
     val cfg201 = createConfigDir("2020.1", modern = false)
     val newConfigPath = createConfigDir("2020.1", modern = true)
-    assertThat(ConfigImportHelper.findConfigDirectories(newConfigPath)).containsExactly(cfg201)
+    assertThat(findConfigDirectories(newConfigPath)).containsExactly(cfg201)
   }
 
   @Test fun `find both historic and current config directories`() {
@@ -58,7 +60,7 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
     val cfg201 = createConfigDir("2020.1", storageTS = 1585731600000)
 
     val newConfigPath = createConfigDir("2020.2")
-    assertThat(ConfigImportHelper.findConfigDirectories(newConfigPath)).containsExactly(cfg201, cfg193, cfg15)
+    assertThat(findConfigDirectories(newConfigPath)).containsExactly(cfg201, cfg193, cfg15)
   }
 
   @Test fun `find recent config directory`() {
@@ -67,10 +69,10 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
     val cfg221 = createConfigDir("2022.1", storageTS = 300)
 
     val newConfigPath = createConfigDir("2022.3")
-    assertThat(ConfigImportHelper.findConfigDirectories(newConfigPath)).containsExactly(cfg221, cfg211, cfg201)
+    assertThat(findConfigDirectories(newConfigPath)).containsExactly(cfg221, cfg211, cfg201)
 
     writeStorageFile(cfg211, 400)
-    assertThat(ConfigImportHelper.findConfigDirectories(newConfigPath)).containsExactly(cfg211, cfg221, cfg201)
+    assertThat(findConfigDirectories(newConfigPath)).containsExactly(cfg211, cfg221, cfg201)
   }
 
   @Test fun `sort if no anchor files`() {
@@ -79,7 +81,7 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
     val cfg221 = createConfigDir("2022.1")
 
     val newConfigPath = createConfigDir("2022.3")
-    assertThat(ConfigImportHelper.findConfigDirectories(newConfigPath)).containsExactly(cfg221, cfg211, cfg201)
+    assertThat(findConfigDirectories(newConfigPath)).containsExactly(cfg221, cfg211, cfg201)
   }
 
   @Test fun `sort some real historic config dirs`() {
@@ -96,7 +98,7 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
     val cfg173 = createConfigDir("2017.3", product = "DataGrip", storageTS = 1549092322000)
 
     val newConfigPath = createConfigDir("2020.1", product = "DataGrip")
-    assertThat(ConfigImportHelper.findConfigDirectories(newConfigPath)).containsExactly(
+    assertThat(findConfigDirectories(newConfigPath)).containsExactly(
       cfg173, cfg191, cfg182, cfg183, cfg181, cfg163, cfg172, cfg171, cfg161, cfg162, cfg10)
   }
 
@@ -109,6 +111,8 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
     doKeyMapTest("2019.2", isMigrationExpected = false)
     doKeyMapTest("2019.3", isMigrationExpected = false)
   }
+
+  private fun findConfigDirectories(newConfigPath: Path) = ConfigImportHelper.findConfigDirectories(newConfigPath).map { it.path }
 
   private fun doKeyMapTest(version: String, isMigrationExpected: Boolean) {
     assumeTrue("macOS-only", SystemInfo.isMac)

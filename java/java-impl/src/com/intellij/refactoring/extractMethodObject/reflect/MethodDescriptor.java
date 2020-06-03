@@ -36,7 +36,7 @@ public class MethodDescriptor implements ItemToReplaceDescriptor {
   public static MethodDescriptor createIfInaccessible(@NotNull PsiClass outerClass, @NotNull PsiMethodCallExpression expression) {
     PsiMethod method = expression.resolveMethod();
     if (method != null && !Objects.equals(method.getContainingClass(), outerClass)) {
-      return needReplace(method, expression) ? new MethodDescriptor(expression, method) : null;
+      return needReplace(outerClass, method, expression) ? new MethodDescriptor(expression, method) : null;
     }
 
     return null;
@@ -76,9 +76,11 @@ public class MethodDescriptor implements ItemToReplaceDescriptor {
     myCallExpression.replace(elementFactory.createExpressionFromText(newMethodCallExpression, myCallExpression));
   }
 
-  private static boolean needReplace(@NotNull PsiMethod method, @NotNull PsiMethodCallExpression referenceExpression) {
-    return !PsiReflectionAccessUtil.isAccessibleMember(method) ||
-           !PsiReflectionAccessUtil.isQualifierAccessible(referenceExpression.getMethodExpression().getQualifierExpression());
+  private static boolean needReplace(@NotNull PsiClass outerClass,
+                                     @NotNull PsiMethod method,
+                                     @NotNull PsiMethodCallExpression referenceExpression) {
+    PsiExpression qualifier = referenceExpression.getMethodExpression().getQualifierExpression();
+    return !PsiReflectionAccessUtil.isAccessibleMember(method, outerClass, qualifier);
   }
 
   @Nullable

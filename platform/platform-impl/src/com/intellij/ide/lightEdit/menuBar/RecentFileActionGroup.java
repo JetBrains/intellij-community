@@ -3,6 +3,7 @@ package com.intellij.ide.lightEdit.menuBar;
 
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
 import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -23,6 +24,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
+
+import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.RecentFiles;
 
 class RecentFileActionGroup extends ActionGroup implements DumbAware, AlwaysVisibleActionGroup {
   RecentFileActionGroup() {
@@ -67,6 +70,7 @@ class RecentFileActionGroup extends ActionGroup implements DumbAware, AlwaysVisi
       Project project = e.getProject();
       if (project != null) {
         LightEditUtil.markUnknownFileTypeAsPlainTextIfNeeded(project, myFile);
+        LightEditFeatureUsagesUtil.logFileOpen(RecentFiles);
         new OpenFileDescriptor(project, myFile).navigate(true);
       }
     }

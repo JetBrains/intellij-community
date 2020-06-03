@@ -15,6 +15,7 @@
  */
 package com.intellij.java.codeInspection
 
+import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.dataFlow.DataFlowInspection
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.roots.ModuleRootManager
@@ -30,6 +31,11 @@ import groovy.transform.CompileStatic
  */
 @CompileStatic
 class DataFlowInspectionHeavyTest extends JavaCodeInsightFixtureTestCase {
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/"
+  }
 
   void testDifferentAnnotationsWithDifferentLanguageLevels() {
     def module6 = PsiTestUtil.addModule(project, StdModuleTypes.JAVA, 'mod6', myFixture.tempDirFixture.findOrCreateDir('mod6'))
@@ -104,4 +110,23 @@ class Foo {
     myFixture.enableInspections(new DataFlowInspection())
     myFixture.checkHighlighting()
   }
+
+  void testTypeQualifierNicknameWithoutDeclarations() {
+    myFixture.addClass("package javax.annotation.meta; public @interface TypeQualifierNickname {}")
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture)
+
+    def noJsr305dep = 'noJsr305dep'
+    def anotherModule = PsiTestUtil.addModule(project, StdModuleTypes.JAVA, noJsr305dep, myFixture.tempDirFixture.findOrCreateDir(noJsr305dep))
+    ModuleRootModificationUtil.setModuleSdk(anotherModule, ModuleRootManager.getInstance(module).sdk)
+
+    def nullableNick = myFixture.addFileToProject("$noJsr305dep/bar/NullableNick.java", DataFlowInspectionTest.barNullableNick())
+
+    // We load AST for anno attribute. In cls usages, this isn't an issue, but for simplicity we're testing with red Java source here
+    myFixture.allowTreeAccessForFile(nullableNick.virtualFile)
+
+    myFixture.enableInspections(new DataFlowInspection())
+    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject("TypeQualifierNickname.java", "$noJsr305dep/a.java"))
+    myFixture.checkHighlighting(true, false, false)
+  }
+
 }

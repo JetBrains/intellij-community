@@ -208,6 +208,6 @@ object UpdateInstaller {
   private fun getJdkSuffix(): String = when {
     !SystemInfo.isMac && Files.isDirectory(Paths.get(PathManager.getHomePath(), "jbr-x86")) -> "-jbr11-x86"
     Files.isDirectory(Paths.get(PathManager.getHomePath(), "jbr")) -> "-jbr11"
-    else -> ""  // Android Studio: no "-no-jbr"
+    else -> "-no-jbr"
   }
 }

@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.ListPopupStepEx;
 import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.ui.ColorUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -109,10 +110,13 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
     if (step.hasSubstep(value) && isSelectable) {
       myNextStepLabel.setVisible(true);
-      myNextStepLabel.setIcon(isSelected ? AllIcons.Icons.Ide.NextStepInverted : AllIcons.Icons.Ide.NextStep);
+      final boolean isDark = ColorUtil.isDark(UIUtil.getListSelectionBackground(true));
+      myNextStepLabel.setIcon(isDark ? AllIcons.Icons.Ide.NextStepInverted
+                                     : AllIcons.Icons.Ide.NextStep);
     }
     else {
       myNextStepLabel.setVisible(false);
+      //myNextStepLabel.setIcon(PopupIcons.EMPTY_ICON);
     }
 
     setSelected(myComponent, isSelected && isSelectable);

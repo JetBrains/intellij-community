@@ -30,6 +30,8 @@ import java.nio.file.Path;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.CommandLine;
+
 public final class LightEditUtil {
   private static final String ENABLED_FILE_OPEN_KEY = "light.edit.file.open.enabled";
   private static final String OPEN_FILE_IN_PROJECT_HREF = "open_file_in_project";
@@ -40,7 +42,10 @@ public final class LightEditUtil {
   public static boolean openFile(@NotNull Path path) {
     VirtualFile virtualFile = VfsUtil.findFile(path, true);
     if (virtualFile != null) {
-      return LightEdit.openFile(virtualFile);
+      if (LightEdit.openFile(virtualFile)) {
+        LightEditFeatureUsagesUtil.logFileOpen(CommandLine);
+        return true;
+      }
     }
     return false;
   }
