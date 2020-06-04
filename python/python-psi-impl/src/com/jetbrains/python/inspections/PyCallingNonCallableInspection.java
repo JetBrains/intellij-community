@@ -66,6 +66,8 @@ public class PyCallingNonCallableInspection extends PyInspection {
     }
 
     private void checkCallable(@NotNull PyElement node, @Nullable PyExpression callee) {
+      if (node.getParent() instanceof PyDecorator) return; //we've already been here
+
       if (callee != null && isCallable(callee, myTypeEvalContext) == Boolean.FALSE) {
         final PyType calleeType = myTypeEvalContext.getType(callee);
         String message = "Expression is not callable";

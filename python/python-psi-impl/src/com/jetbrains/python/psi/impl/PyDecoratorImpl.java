@@ -68,8 +68,13 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
 
   @Override
   public boolean hasArgumentList() {
-    final ASTNode arglistNode = getNode().findChildByType(PyElementTypes.ARGUMENT_LIST);
-    return (arglistNode != null) && (arglistNode.findChildByType(PyTokenTypes.LPAR) != null);
+    return findChildByClass(PyCallExpression.class) != null;
+  }
+
+  @Override
+  public PyArgumentList getArgumentList() {
+    final PyCallExpression callExpr = findChildByClass(PyCallExpression.class);
+    return callExpr != null ? callExpr.getArgumentList() : null;
   }
 
   @Override
@@ -80,7 +85,8 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
       return stub.getQualifiedName();
     }
     else {
-      final PyReferenceExpression node = PsiTreeUtil.getChildOfType(this, PyReferenceExpression.class);
+      final PyCallExpression callExpr = findChildByClass(PyCallExpression.class);
+      final PyReferenceExpression node = PsiTreeUtil.getChildOfType(callExpr != null ? callExpr : this, PyReferenceExpression.class);
       if (node != null) {
         return node.asQualifiedName();
       }
@@ -91,15 +97,8 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
   @Override
   @Nullable
   public PyExpression getCallee() {
-    try {
-      return (PyExpression)getFirstChild().getNextSibling(); // skip the @ before call
-    }
-    catch (NullPointerException npe) { // no sibling
-      return null;
-    }
-    catch (ClassCastException cce) { // error node instead
-      return null;
-    }
+    final PyExpression exprAfterAt = findChildByClass(PyExpression.class);
+    return exprAfterAt instanceof PyCallExpression ? ((PyCallExpression)exprAfterAt).getCallee() : exprAfterAt;
   }
 
   @NotNull
@@ -150,5 +149,11 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
   @Nullable
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return PyCallExpressionHelper.getCallType(this, context, key);
+  }
+
+  @Override
+  public boolean hasPlainReferenceCallee() {
+    final PyExpression callee = getCallee();
+    return callee instanceof PyReferenceExpression && ((PyReferenceExpression)callee).asQualifiedName() != null;
   }
 }

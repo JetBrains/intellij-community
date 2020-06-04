@@ -369,6 +369,11 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(true, true);
   }
 
+  // PY-41305
+  public void testExpressionAsDecorator() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
   // PY-25381
   public void testBuiltinDecorator() {
     doTest(true, true);
