@@ -258,8 +258,8 @@ public class ListPluginComponent extends JPanel {
     if (myPlugin.getProductCode() == null) {
       if (myMarketplace && !LicensePanel.isEA2Product(myPlugin.getPluginId().getIdString())) {
         List<String> tags = ((PluginNode)myPlugin).getTags();
-        if (tags != null && tags.contains("Paid")) {
-          tag = "Paid";
+        if (tags != null && tags.contains(Tags.Paid.name())) {
+          tag = Tags.Paid.name();
         }
       }
     }

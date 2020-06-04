@@ -68,7 +68,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * @author Alexander Lobas
@@ -1203,17 +1202,17 @@ public class PluginManagerConfigurable
 
       if (productCode != null) {
         if (LicensePanel.isEA2Product(productCode)) {
-          if (tags != null && tags.contains("Paid")) {
+          if (tags != null && tags.contains(Tags.Paid.name())) {
             tags = new ArrayList<>(tags);
-            tags.remove("Paid");
+            tags.remove(Tags.Paid.name());
           }
         }
         else if (tags == null) {
-          return Collections.singletonList("Paid");
+          return Collections.singletonList(Tags.Paid.name());
         }
-        else if (!tags.contains("Paid")) {
+        else if (!tags.contains(Tags.Paid.name())) {
           tags = new ArrayList<>(tags);
-          tags.add("Paid");
+          tags.add(Tags.Paid.name());
         }
       }
     }
@@ -1222,10 +1221,10 @@ public class PluginManagerConfigurable
       if (instance != null) {
         String stamp = instance.getConfirmationStamp(productCode);
         if (stamp != null) {
-          return Collections.singletonList(stamp.startsWith("eval:") ? "Trial" : "Purchased");
+          return Collections.singletonList(stamp.startsWith("eval:") ? Tags.Trial.name() : Tags.Purchased.name());
         }
       }
-      return Collections.singletonList("Paid");
+      return Collections.singletonList(Tags.Paid.name());
     }
     if (ContainerUtil.isEmpty(tags)) {
       return Collections.emptyList();
@@ -1233,11 +1232,11 @@ public class PluginManagerConfigurable
 
     if (tags.size() > 1) {
       tags = new ArrayList<>(tags);
-      if (tags.remove("EAP")) {
-        tags.add(0, "EAP");
+      if (tags.remove(Tags.EAP.name())) {
+        tags.add(0, Tags.EAP.name());
       }
-      if (tags.remove("Paid")) {
-        tags.add(0, "Paid");
+      if (tags.remove(Tags.Paid.name())) {
+        tags.add(0, Tags.Paid.name());
       }
     }
 

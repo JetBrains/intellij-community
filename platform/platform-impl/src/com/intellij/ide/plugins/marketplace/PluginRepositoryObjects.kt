@@ -4,8 +4,7 @@ package com.intellij.ide.plugins.marketplace
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.ide.plugins.PluginNode
-
-const val PAID_TAG = "Paid"
+import com.intellij.ide.plugins.newui.Tags
 
 /**
  * Object from Search Service for getting compatible updates for IDE.
@@ -85,7 +84,7 @@ internal class MarketplaceSearchPluginData(
     pluginNode.vendor = vendor
     pluginNode.externalPluginId = externalPluginId
     pluginNode.externalUpdateId = externalUpdateId
-    if (isPaid) pluginNode.tags = listOf(PAID_TAG)
+    if (isPaid) pluginNode.tags = listOf(Tags.Paid.name)
     return pluginNode
   }
 }
