@@ -692,10 +692,7 @@ public class PluginManagerConfigurable
                 List<PluginNode> pluginsFromMarketplace = MarketplaceRequests.getInstance().searchPlugins(parser.getUrlQuery(), 10000);
                 List<IdeaPluginDescriptor> plugins = UpdateChecker.mergePluginsFromRepositories(
                   pluginsFromMarketplace,
-                  customRepositoriesMap.values()
-                    .stream()
-                    .flatMap(list -> list.stream())
-                    .collect(Collectors.toList())
+                  ContainerUtil.flatten(customRepositoriesMap.values())
                 ); // compare plugin versions between marketplace & custom repositories
                 result.descriptors.addAll(plugins);
 
