@@ -4,9 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.openapi.application.ApplicationStarter;
 import org.jetbrains.annotations.NotNull;
 
-import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 
 public class InspectionMain implements ApplicationStarter {
   private InspectionApplication myApplication;
@@ -104,14 +102,6 @@ public class InspectionMain implements ApplicationStarter {
   private static void printHelp() {
     System.out.println(InspectionsBundle.message("inspection.command.line.explanation"));
     System.exit(1);
-  }
-
-  public void enablePathProfiling() {
-    myApplication.myPathProfiling = true;
-  }
-
-  public Map<Path, Long> getPathProfile() {
-    return myApplication.myCompleteProfile;
   }
 }
 
