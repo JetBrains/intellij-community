@@ -52,6 +52,9 @@
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" />
     <orderEntry type="library" name="StreamEx" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl" />
     <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="library" name="netty-codec-http" level="project" />
   </component>
 </module>
