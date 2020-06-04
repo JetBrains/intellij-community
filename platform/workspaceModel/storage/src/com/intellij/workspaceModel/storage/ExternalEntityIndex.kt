@@ -3,7 +3,7 @@ package com.intellij.workspaceModel.storage
 
 /**
  * Provides a way to associate [WorkspaceEntity] with external data. The association survives when a entity is modified. Use
- * [WorkspaceEntityStorageDiffBuilder.getOrCreateExternalIndex] to fill the index and [WorkspaceEntityStorage.getExternalIndex] to access it.
+ * [WorkspaceEntityStorageDiffBuilder.getMutableExternalIndex] to fill the index and [WorkspaceEntityStorage.getExternalIndex] to access it.
  */
 interface ExternalEntityIndex<T> {
   fun getEntities(data: T): List<WorkspaceEntity>

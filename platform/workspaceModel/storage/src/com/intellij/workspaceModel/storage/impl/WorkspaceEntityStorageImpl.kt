@@ -7,7 +7,9 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.exceptions.rbsFailed
+import com.intellij.workspaceModel.storage.impl.external.EmptyExternalEntityIndex
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityIndexImpl
+import com.intellij.workspaceModel.storage.impl.external.ExternalEntityIndexImpl.MutableExternalEntityIndexImpl
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -577,16 +579,9 @@ internal class WorkspaceEntityStorageBuilderImpl(
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T> getOrCreateExternalIndex(identifier: String): MutableExternalEntityIndex<T> {
-    val index = indexes.externalIndices.computeIfAbsent(identifier) { ExternalEntityIndexImpl.MutableExternalEntityIndexImpl<T>() } as ExternalEntityIndexImpl.MutableExternalEntityIndexImpl<T>
+  override fun <T> getMutableExternalIndex(identifier: String): MutableExternalEntityIndex<T> {
+    val index = indexes.externalIndices.computeIfAbsent(identifier) { MutableExternalEntityIndexImpl<T>() } as MutableExternalEntityIndexImpl<T>
     index.setTypedEntityStorage(this)
-    return index
-  }
-
-  @Suppress("UNCHECKED_CAST")
-  override fun <T> getExternalIndex(identifier: String): MutableExternalEntityIndex<T>? {
-    val index = indexes.externalIndices[identifier] as? ExternalEntityIndexImpl.MutableExternalEntityIndexImpl<T>
-    index?.setTypedEntityStorage(this)
     return index
   }
 
@@ -770,9 +765,10 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T> getExternalIndex(identifier: String): ExternalEntityIndex<T>? {
+  override fun <T> getExternalIndex(identifier: String): ExternalEntityIndex<T> {
     val index = indexes.externalIndices[identifier] as? ExternalEntityIndexImpl<T>
-    index?.setTypedEntityStorage(this)
+    if (index == null) return EmptyExternalEntityIndex as ExternalEntityIndex<T>
+    index.setTypedEntityStorage(this)
     return index
   }
 

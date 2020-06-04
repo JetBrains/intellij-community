@@ -38,7 +38,7 @@ class ImlSerializationTest {
     val entity = builder.addEntity(ModifiableSampleEntity::class.java, Source) {
       this.data = "Test"
     }
-    val index = builder.getOrCreateExternalIndex<String>("MyIndex")
+    val index = builder.getMutableExternalIndex<String>("MyIndex")
     index.index(entity, "Hello")
 
     serializationRoundTrip(builder)

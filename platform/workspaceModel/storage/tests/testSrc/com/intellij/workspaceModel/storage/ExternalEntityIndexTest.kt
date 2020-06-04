@@ -17,7 +17,7 @@ class ExternalEntityIndexTest {
   fun `base index test`() {
     val builder = WorkspaceEntityStorageBuilderImpl.create()
 
-    val index = builder.getOrCreateExternalIndex<Int>(INDEX_ID)
+    val index = builder.getMutableExternalIndex<Int>(INDEX_ID)
     val entity = builder.addSourceEntity("hello", SampleEntitySource("source"))
     index.index(entity, 1)
     index.index(entity, 2)
@@ -30,7 +30,7 @@ class ExternalEntityIndexTest {
     val storage = builder.toStorage()
     val newIndex = storage.getExternalIndex<Int>(INDEX_ID)
     assertNotNull(newIndex)
-    assertEquals(3, newIndex!!.getDataByEntity(entity))
+    assertEquals(3, newIndex.getDataByEntity(entity))
     assertEquals(entity, newIndex.getEntities(3).get(0))
   }
 
@@ -38,16 +38,16 @@ class ExternalEntityIndexTest {
   fun `update in diff test`() {
     val builder = WorkspaceEntityStorageBuilderImpl.create()
 
-    val index = builder.getOrCreateExternalIndex<Int>(INDEX_ID)
+    val index = builder.getMutableExternalIndex<Int>(INDEX_ID)
     val entity = builder.addSourceEntity("hello", SampleEntitySource("source"))
     index.index(entity, 1)
     assertEquals(1, index.getDataByEntity(entity))
 
     val diff = WorkspaceEntityStorageBuilderImpl.from(builder.toStorage())
-    val externalIndex = diff.getExternalIndex<Int>(INDEX_ID)
+    val externalIndex = diff.getMutableExternalIndex<Int>(INDEX_ID)
     assertNotNull(externalIndex)
     assertNotEquals(index, externalIndex)
-    assertEquals(1, externalIndex!!.getDataByEntity(entity))
+    assertEquals(1, externalIndex.getDataByEntity(entity))
     externalIndex.index(entity, 2)
     assertEquals(1, index.getDataByEntity(entity))
     assertEquals(2, externalIndex.getDataByEntity(entity))
@@ -66,16 +66,16 @@ class ExternalEntityIndexTest {
   fun `remove from diff test`() {
     val builder = WorkspaceEntityStorageBuilderImpl.create()
 
-    val index = builder.getOrCreateExternalIndex<Int>(INDEX_ID)
+    val index = builder.getMutableExternalIndex<Int>(INDEX_ID)
     val entity = builder.addSourceEntity("hello", SampleEntitySource("source"))
     index.index(entity, 1)
     assertEquals(1, index.getDataByEntity(entity))
 
     val diff = WorkspaceEntityStorageBuilderImpl.from(builder.toStorage())
-    val externalIndex = diff.getExternalIndex<Int>(INDEX_ID)
+    val externalIndex = diff.getMutableExternalIndex<Int>(INDEX_ID)
     assertNotNull(externalIndex)
     assertNotEquals(index, externalIndex)
-    assertEquals(1, externalIndex!!.getDataByEntity(entity))
+    assertEquals(1, externalIndex.getDataByEntity(entity))
     externalIndex.remove(entity)
     assertEquals(1, index.getDataByEntity(entity))
     assertNull(externalIndex.getDataByEntity(entity))
@@ -94,17 +94,17 @@ class ExternalEntityIndexTest {
   fun `add to diff test`() {
     val builder = WorkspaceEntityStorageBuilderImpl.create()
 
-    val index = builder.getOrCreateExternalIndex<Int>(INDEX_ID)
+    val index = builder.getMutableExternalIndex<Int>(INDEX_ID)
     val entity = builder.addSourceEntity("hello", SampleEntitySource("source"))
     index.index(entity, 1)
     assertEquals(1, index.getDataByEntity(entity))
 
     val diff = WorkspaceEntityStorageBuilderImpl.from(builder.toStorage())
     val newEntity = builder.addSourceEntity("world", SampleEntitySource("source"))
-    val externalIndex = diff.getExternalIndex<Int>(INDEX_ID)
+    val externalIndex = diff.getMutableExternalIndex<Int>(INDEX_ID)
     assertNotNull(externalIndex)
     assertNotEquals(index, externalIndex)
-    assertEquals(1, externalIndex!!.getDataByEntity(entity))
+    assertEquals(1, externalIndex.getDataByEntity(entity))
     externalIndex.index(newEntity, 2)
     assertEquals(1, index.getDataByEntity(entity))
     assertEquals(1, externalIndex.getDataByEntity(entity))
@@ -118,7 +118,7 @@ class ExternalEntityIndexTest {
     val newIndex = storage.getExternalIndex<Int>(INDEX_ID)
     assertNotNull(newIndex)
     assertNotEquals(index, newIndex)
-    assertEquals(1, newIndex!!.getDataByEntity(entity))
+    assertEquals(1, newIndex.getDataByEntity(entity))
     assertEquals(2, newIndex.getDataByEntity(newEntity))
     assertEquals(entity, newIndex.getEntities(1).get(0))
     assertEquals(newEntity, newIndex.getEntities(2).get(0))
@@ -128,22 +128,22 @@ class ExternalEntityIndexTest {
   fun `remove index from diff test`() {
     val builder = WorkspaceEntityStorageBuilderImpl.create()
 
-    val index = builder.getOrCreateExternalIndex<Int>(INDEX_ID)
+    val index = builder.getMutableExternalIndex<Int>(INDEX_ID)
     val entity = builder.addSourceEntity("hello", SampleEntitySource("source"))
     index.index(entity, 1)
     assertEquals(1, index.getDataByEntity(entity))
 
     val diff = WorkspaceEntityStorageBuilderImpl.from(builder.toStorage())
     diff.removeExternalIndex(INDEX_ID)
-    assertNull(diff.getExternalIndex<Int>(INDEX_ID))
+    assertNull(diff.getExternalIndex<Int>(INDEX_ID).getDataByEntity(entity))
     assertEquals(1, index.getDataByEntity(entity))
 
     builder.addDiff(diff)
     assertEquals(1, index.getDataByEntity(entity))
-    assertNull(builder.getExternalIndex<Int>(INDEX_ID))
+    assertNull(builder.getExternalIndex<Int>(INDEX_ID).getDataByEntity(entity))
 
     val storage = builder.toStorage()
-    assertNull(storage.getExternalIndex<Int>(INDEX_ID))
+    assertNull(storage.getExternalIndex<Int>(INDEX_ID).getDataByEntity(entity))
   }
 
   @Test
@@ -151,12 +151,12 @@ class ExternalEntityIndexTest {
     val builder = WorkspaceEntityStorageBuilderImpl.create()
 
     val entity = builder.addSourceEntity("hello", SampleEntitySource("source"))
-    assertNull(builder.getExternalIndex<Int>(INDEX_ID))
+    assertNull(builder.getExternalIndex<Int>(INDEX_ID).getDataByEntity(entity))
 
     val diff = WorkspaceEntityStorageBuilderImpl.from(builder.toStorage())
-    val index = diff.getOrCreateExternalIndex<Int>(INDEX_ID)
+    val index = diff.getMutableExternalIndex<Int>(INDEX_ID)
     index.index(entity, 1)
-    assertNull(builder.getExternalIndex<Int>(INDEX_ID))
+    assertNull(builder.getExternalIndex<Int>(INDEX_ID).getDataByEntity(entity))
     assertEquals(1, index.getDataByEntity(entity))
 
     builder.addDiff(diff)
@@ -164,12 +164,12 @@ class ExternalEntityIndexTest {
     val entityIndex = builder.getExternalIndex<Int>(INDEX_ID)
     assertNotNull(entityIndex)
     assertNotEquals(index, entityIndex)
-    assertEquals(1, entityIndex!!.getDataByEntity(entity))
+    assertEquals(1, entityIndex.getDataByEntity(entity))
 
     val storage = builder.toStorage()
     val newIndex = storage.getExternalIndex<Int>(INDEX_ID)
     assertNotNull(newIndex)
     assertNotEquals(entityIndex, newIndex)
-    assertEquals(1, newIndex!!.getDataByEntity(entity))
+    assertEquals(1, newIndex.getDataByEntity(entity))
   }
 }

@@ -111,7 +111,7 @@ interface WorkspaceEntityStorage {
   fun <E : WorkspaceEntity, R : WorkspaceEntity> referrers(e: E, entityClass: KClass<R>, property: KProperty1<R, EntityReference<E>>): Sequence<R>
   fun <E : WorkspaceEntityWithPersistentId, R : WorkspaceEntity> referrers(id: PersistentEntityId<E>, entityClass: Class<R>): Sequence<R>
   fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E?
-  fun <T> getExternalIndex(identifier: String): ExternalEntityIndex<T>?
+  fun <T> getExternalIndex(identifier: String): ExternalEntityIndex<T>
   fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>>
 }
 
@@ -162,8 +162,8 @@ interface WorkspaceEntityStorageDiffBuilder {
 
   // Returns an association between an entity in diff and an entity in the current builder
   fun addDiff(diff: WorkspaceEntityStorageDiffBuilder): Map<WorkspaceEntity, WorkspaceEntity>
-  fun <T> getExternalIndex(identifier: String): MutableExternalEntityIndex<T>?
-  fun <T> getOrCreateExternalIndex(identifier: String): MutableExternalEntityIndex<T>
+  fun <T> getExternalIndex(identifier: String): ExternalEntityIndex<T>
+  fun <T> getMutableExternalIndex(identifier: String): MutableExternalEntityIndex<T>
 
   val modificationCount: Long
 

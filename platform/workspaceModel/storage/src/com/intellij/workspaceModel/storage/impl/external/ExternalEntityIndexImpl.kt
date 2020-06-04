@@ -107,3 +107,8 @@ open class ExternalEntityIndexImpl<T> private constructor(internal val index: Bi
     }
   }
 }
+
+object EmptyExternalEntityIndex : ExternalEntityIndex<Any> {
+  override fun getEntities(data: Any): List<WorkspaceEntity> = emptyList()
+  override fun getDataByEntity(entity: WorkspaceEntity): Any? = null
+}
