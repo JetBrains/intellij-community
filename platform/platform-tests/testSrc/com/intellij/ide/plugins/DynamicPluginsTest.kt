@@ -91,13 +91,13 @@ class DynamicPluginsTest {
   @Test
   fun testClassloaderAfterReload() {
     val path = inMemoryFs.fs.getPath("/plugin")
-    PluginBuilder().id("bar").build(path)
+    val builder = PluginBuilder().randomId("bar").also { it.build(path) }
     val descriptor = loadDescriptorInTest(path)
     assertThat(descriptor).isNotNull
 
     DynamicPlugins.loadPlugin(descriptor)
 
-    DisabledPluginsState.saveDisabledPlugins(arrayListOf(PluginId.getId("bar")), false)
+    DisabledPluginsState.saveDisabledPlugins(arrayListOf(PluginId.getId(builder.id)), false)
     DynamicPlugins.unloadPlugin(descriptor, DynamicPlugins.UnloadPluginOptions(disable = true))
     assertThat(PluginManagerCore.getPlugin(descriptor.pluginId)?.pluginClassLoader as? PluginClassLoader).isNull()
 
@@ -182,9 +182,9 @@ class DynamicPluginsTest {
 
   @Test
   fun loadOptionalDependency() {
-    val plugin2Builder = PluginBuilder().id("bar")
+    val plugin2Builder = PluginBuilder().randomId("bar")
     val plugin1Disposable = loadPluginWithOptionalDependency(
-      PluginBuilder().id("foo"),
+      PluginBuilder().randomId("foo"),
       PluginBuilder().actions("""<group id="FooBarGroup"></group>"""),
       plugin2Builder
     )
@@ -207,7 +207,7 @@ class DynamicPluginsTest {
   fun loadOptionalDependencyDuplicateNotification() {
     InspectionToolRegistrar.getInstance().createTools()
 
-    val barBuilder = PluginBuilder().id("bar")
+    val barBuilder = PluginBuilder().randomId("bar")
     val barDisposable = loadPluginWithText(barBuilder)
     val fooDisposable = loadPluginWithOptionalDependency(
       PluginBuilder().extensions("""<globalInspection implementationClass="${MyInspectionTool::class.java.name}"/>"""),
