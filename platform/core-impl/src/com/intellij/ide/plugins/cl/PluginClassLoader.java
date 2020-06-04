@@ -47,6 +47,9 @@ public final class PluginClassLoader extends UrlClassLoader {
   private final AtomicInteger loadedClassCounter = new AtomicInteger();
   private ClassLoader myCoreLoader;
 
+  // to simplify analyzing of heap dump (dynamic plugin reloading)
+  private final PluginId pluginId;
+
   public PluginClassLoader(@NotNull List<URL> urls,
                            @NotNull ClassLoader @NotNull [] parents,
                            @NotNull IdeaPluginDescriptor pluginDescriptor,
@@ -56,12 +59,13 @@ public final class PluginClassLoader extends UrlClassLoader {
 
   public PluginClassLoader(@NotNull Builder builder,
                            @NotNull ClassLoader @NotNull [] parents,
-                           @Nullable IdeaPluginDescriptor pluginDescriptor,
+                           @NotNull IdeaPluginDescriptor pluginDescriptor,
                            @Nullable Path pluginRoot) {
     super(builder);
 
     myParents = parents;
     myPluginDescriptor = pluginDescriptor;
+    pluginId = pluginDescriptor.getPluginId();
 
     myLibDirectories = new SmartList<>();
     if (pluginRoot != null) {
@@ -377,7 +381,7 @@ public final class PluginClassLoader extends UrlClassLoader {
   }
 
   public @NotNull PluginId getPluginId() {
-    return myPluginDescriptor.getPluginId();
+    return pluginId;
   }
 
   public @NotNull IdeaPluginDescriptor getPluginDescriptor() {
