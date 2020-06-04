@@ -44,7 +44,7 @@ class PySdkStatusBarWidgetFactory : StatusBarWidgetFactory {
   override fun canBeEnabledOn(statusBar: StatusBar): Boolean = true
 }
 
-class PySwitchSdkAction : DumbAwareAction("Switch Project Interpreter", null, null) {
+class PySwitchSdkAction : DumbAwareAction(PyBundle.message("switch.python.interpreter"), null, null) {
 
   override fun update(e: AnActionEvent) {
     e.presentation.isVisible = e.getData(CommonDataKeys.VIRTUAL_FILE) != null && e.project != null
