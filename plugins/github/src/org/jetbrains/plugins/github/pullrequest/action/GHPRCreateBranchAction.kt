@@ -42,7 +42,7 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
     val options = GitBranchUtil.getNewBranchNameFromUser(project, listOf(repository),
                                                          GithubBundle.message("pull.request.branch.checkout.create.dialog.title",
                                                                               pullRequestNumber),
-                                                         "pull/${pullRequestNumber}", true) ?: return
+                                                         generateSuggestedBranchName(pullRequestNumber, dataProvider), true) ?: return
 
     if (!options.checkout) {
       object : Task.Backgroundable(project, GithubBundle.message("pull.request.branch.checkout.create.task.title"), true) {
@@ -81,6 +81,9 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
       }.queue()
     }
   }
+
+  private fun generateSuggestedBranchName(pullRequestNumber: Long, dataProvider: GHPRDataProvider): String =
+    dataProvider.detailsData.loadedDetails?.headRefName ?: "pull/${pullRequestNumber}"
 
   private fun trySetTrackingUpstreamBranch(git: Git,
                                            repository: GitRepository,
