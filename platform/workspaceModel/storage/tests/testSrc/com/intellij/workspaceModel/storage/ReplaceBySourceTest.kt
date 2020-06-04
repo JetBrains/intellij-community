@@ -304,6 +304,18 @@ class ReplaceBySourceTest {
   }
 
   @Test
+  fun `remove child of different source`() {
+    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val parent = builder.addParentEntity(source = AnotherSource)
+    val child = builder.addChildEntity(parent, source = MySource)
+
+    val replacement = WorkspaceEntityStorageBuilderImpl.from(builder)
+    replacement.removeEntity(child)
+
+    builder.replaceBySource({ it is MySource }, replacement)
+  }
+
+  @Test
   fun `entity with soft reference`() {
     val builder = WorkspaceEntityStorageBuilderImpl.create()
     val named = builder.addNamedEntity("MyName")
