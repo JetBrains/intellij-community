@@ -80,6 +80,13 @@ class BuildOptions {
    * Android Studio: If 'true', the UI test framework plugin and UI test code will be bundled.
    */
   boolean includeUiTests = SystemProperties.getBooleanProperty("bundle.ui.tests", false)
+
+  /**
+   * Android Studio: If 'true' we are only building the platform, without the android plugins.
+   * This is temporary and will be the default once the migration is complete.
+   */
+  boolean studioSdk = SystemProperties.getBooleanProperty("studio.sdk", false)
+
   /**
    * Pass 'true' to this system property to produce an additional .dmg archive for macOS without bundled JRE.
    */

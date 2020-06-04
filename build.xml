@@ -12,6 +12,9 @@
   <condition property="intellij.build.output.root" else="${project.home}/out/studio">
     <isset property="intellij.build.output.root"/>
   </condition>
+  <condition property="build.android">
+    <isfalse value="${studio.sdk}"/>
+  </condition>
 
   <!-- References to Bazel workspace and Bazel commandline to use -->
   <dirname property="workspace" file="${project.home}/../"/>
@@ -31,19 +34,21 @@
       </exec>
     </sequential>
   </macrodef>
+  <propertyset id="intellij.build.properties">
+    <propertyref name="build.number"/>
+    <propertyref prefix="intellij.build."/>
+    <propertyref prefix="custom.project."/>
+    <propertyref name="ui.test.groups"/>
+    <propertyref name="include.aswb" />
+    <propertyref name="bundle.ui.tests"/>
+    <propertyref name="studio.sdk"/>
+    <propertyref name="idea.debug.mode"/>
+    <propertyref prefix="idea.gui.test."/>
+    <propertyref prefix="pass."/>  <!-- handled by TestingTasksImpl.runTests -->
+  </propertyset>
 
-  <target name="init">
-    <propertyset id="intellij.build.properties">
-      <propertyref name="build.number"/>
-      <propertyref prefix="intellij.build."/>
-      <propertyref prefix="custom.project."/>
-      <propertyref name="ui.test.groups"/>
-      <propertyref name="include.aswb" />
-      <propertyref name="bundle.ui.tests"/>
-      <propertyref name="idea.debug.mode"/>
-      <propertyref prefix="idea.gui.test."/>
-      <propertyref prefix="pass."/>  <!-- handled by TestingTasksImpl.runTests -->
-    </propertyset>
+  <target name="init" if="${build.android}">
+    <propertyset refid="intellij.build.properties"/>
     <ant antfile="${project.home}/../adt/idea/android/build.xml" target="preBuild">
       <property name="config" value="release"/>
     </ant>

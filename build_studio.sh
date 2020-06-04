@@ -36,10 +36,13 @@ function get_absolute_path() {
 ASWB=
 ASWB_PROPERTY=
 UITESTS=false
+STUDIO_SDK=false
 while [[ -n "$1" ]]; do
   if [[ $1 == "--enable-aswb" ]]; then
       ASWB=true
       ASWB_PROPERTY="-Dinclude.aswb=true"
+  elif [[ $1 == "--studio-sdk" ]]; then
+    STUDIO_SDK=true
   elif [[ $1 == "--uitests" ]]; then
     UITESTS=true
   else
@@ -64,13 +67,14 @@ ANT="java -jar lib/ant/lib/ant-launcher.jar -f build.xml"
 BAZEL="../base/bazel/bazel"
 
 echo "## Building android-studio ##"
-echo "## Dist dir : $DIST"
+echo "## Dist dir: $DIST"
 echo "## Qualifier: $QUAL"
 echo "## Build Num: $BNUM"
-echo "## Out dir  : $OUT"
-echo "## Prog dir : $PROG_DIR"
-echo "## ASWB?    : $ASWB"
-echo "## UITESTS? : $UITESTS"
+echo "## Out dir: $OUT"
+echo "## Prog dir: $PROG_DIR"
+echo "## ASWB?: $ASWB"
+echo "## UITESTS?: $UITESTS"
+echo "## STUDIO_SDK: $STUDIO_SDK"
 echo
 
 set_java_home
@@ -88,11 +92,14 @@ echo "## BAZEL_BIN: $BAZEL_BIN"
 
 readonly AS_BUILD_NUMBER="$(sed "s/SNAPSHOT/${BNUM}/" build.txt)"
 
-$ANT "-Dintellij.build.output.root=$OUT" "-Dbuild.number=$AS_BUILD_NUMBER" "$ASWB_PROPERTY" "-Dbundle.ui.tests=$UITESTS" build
+$ANT "-Dintellij.build.output.root=$OUT" "-Dbuild.number=$AS_BUILD_NUMBER" "$ASWB_PROPERTY" "-Dstudio.sdk=$STUDIO_SDK" "-Dbundle.ui.tests=$UITESTS" build
 
-$ANT "-Dintellij.build.output.root=$OUT/updater" fullupdater
+if [[ "${STUDIO_SDK}" == "false" ]]; then
+  # TODO fullupdater builds sdk-updater, so for now we don't build it
+  $ANT "-Dintellij.build.output.root=$OUT/updater" fullupdater
 
-$BAZEL build //tools/idea/updater:updater_deploy.jar
+  $BAZEL build //tools/idea/updater:updater_deploy.jar
+fi
 
 echo "## Copying android-studio distribution files"
 mkdir -p "$DIST"
@@ -101,16 +108,19 @@ if [ "$ASWB" = true ]; then
 else
   cp -Rfv "$OUT"/artifacts/android-studio* "$DIST"
 
-  cp -Rfv "${BAZEL_BIN}"/tools/idea/updater/updater_deploy.jar "$DIST"/android-studio-updater.jar
-  cp -Rfv "$OUT"/updater/artifacts/sdk-patcher.zip "$DIST"/sdk-patcher.zip
+  if [[ "${STUDIO_SDK}" == "false" ]]; then
+    cp -Rfv "${BAZEL_BIN}"/tools/idea/updater/updater_deploy.jar "$DIST"/android-studio-updater.jar
+    cp -Rfv "$OUT"/updater/artifacts/sdk-patcher.zip "$DIST"/sdk-patcher.zip
+  fi
 
   # write the version number into the windows installer dir
   echo $BNUM > ../adt/idea/native/installer/win/version
   (cd ../adt/idea/native/installer/win && zip -r - ".") > "$DIST"/android-studio-bundle-data.zip
 fi
 
-# execute a bunch of sanity checks on the final artifacts
-$BAZEL test \
+if [[ "${STUDIO_SDK}" == "false" ]]; then
+  # execute a bunch of sanity checks on the final artifacts
+  $BAZEL test \
     --config=cloud_resultstore \
     //tools/idea:test_studio \
     --test_arg=--java_home="$JAVA_HOME" \
@@ -121,3 +131,4 @@ $BAZEL test \
     --test_strategy=standalone \
     --spawn_strategy=standalone \
     --nocache_test_results
+fi

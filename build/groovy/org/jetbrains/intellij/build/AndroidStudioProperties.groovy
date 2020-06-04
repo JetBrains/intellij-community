@@ -38,21 +38,25 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     additionalIDEPropertiesFilePaths = ["$home/build/conf/ideaCE.properties".toString()]
     toolsJarRequired = true
     scrambleMainJar = false
+    buildSourcesArchive = buildOptions.studioSdk;
     buildCrossPlatformDistribution = true
 
     allLibraryLicenses.addAll(AndroidStudioLibraryLicenses.LICENSES_LIST)
+
+    if (!buildOptions.studioSdk) {
     // TODO: This doesn't cover all used libraries, but it's exactly what ShowLicensesUsedAction is checking.
-    additionalDirectoriesWithLicenses.addAll(
-      "$home/../adt/idea/android/lib/licenses",
-      "$home/../studio/google/appindexing/lib/licenses",
-      "$home/../studio/google/cloud/testing/firebase-testing/lib/licenses",
-      "$home/../studio/google/cloud/testing/test-recorder/lib/licenses",
-      "$home/../studio/google/cloud/tools/android-studio-plugin/lib/licenses",
-      "$home/../studio/google/cloud/tools/core-plugin/lib/licenses",
-      "$home/../studio/google/cloud/tools/google-login-plugin/lib/licenses",
-      "$home/../vendor/google/firebase/lib/licenses",
-      "$home/../../prebuilts/studio/layoutlib/licenses",
-    )
+      additionalDirectoriesWithLicenses.addAll(
+        "$home/../adt/idea/android/lib/licenses",
+        "$home/../studio/google/appindexing/lib/licenses",
+        "$home/../studio/google/cloud/testing/firebase-testing/lib/licenses",
+        "$home/../studio/google/cloud/testing/test-recorder/lib/licenses",
+        "$home/../studio/google/cloud/tools/android-studio-plugin/lib/licenses",
+        "$home/../studio/google/cloud/tools/core-plugin/lib/licenses",
+        "$home/../studio/google/cloud/tools/google-login-plugin/lib/licenses",
+        "$home/../vendor/google/firebase/lib/licenses",
+        "$home/../../prebuilts/studio/layoutlib/licenses",
+      )
+    }
 
     productLayout.productApiModules = JAVA_IDE_API_MODULES
     productLayout.productImplementationModules = JAVA_IDE_IMPLEMENTATION_MODULES +
@@ -72,19 +76,22 @@ class AndroidStudioProperties extends BaseIdeaProperties {
                                                   ["intellij.platform.jps.model.impl", "intellij.platform.jps.model.serialization"]
     productLayout.additionalPlatformJars.putAll("resources.jar", "intellij.idea.community.resources", "intellij.android.adt.branding")
 
-    // Android Studio: including the common base library to avoid classloader issues (?)
-    productLayout.additionalPlatformJars.put("android-base-common.jar", "android.sdktools.common")
-    // Android Studio: include metrics libraries in $install/lib
-    productLayout.additionalPlatformJars.putAll("google-analytics-library.jar",
-                                                "android.sdktools.android-annotations",
-                                                "analytics-shared",
-                                                "analytics-tracker",
-                                                "analytics-publisher",
-                                                "analytics-crash")
+    if (!buildOptions.studioSdk) {
+      // Android Studio: including the common base library to avoid classloader issues (?)
+      productLayout.additionalPlatformJars.put("android-base-common.jar", "android.sdktools.common")
+      // Android Studio: include metrics libraries in $install/lib
+      productLayout.additionalPlatformJars.putAll("google-analytics-library.jar",
+                                                  "android.sdktools.android-annotations",
+                                                  "analytics-shared",
+                                                  "analytics-tracker",
+                                                  "analytics-publisher",
+                                                  "analytics-crash")
+    }
 
-    productLayout.bundledPluginModules = ProductModulesLayout.DEFAULT_BUNDLED_PLUGINS + BUNDLED_PLUGIN_MODULES +
-                                         [
-                                           // Android Studio bundles these:
+    productLayout.bundledPluginModules = ProductModulesLayout.DEFAULT_BUNDLED_PLUGINS + BUNDLED_PLUGIN_MODULES
+    if (!buildOptions.studioSdk) {
+      // Android Studio bundles these:
+      productLayout.bundledPluginModules.addAll(
                                            "android-apk",
                                            "android-ndk",
                                            "firebase",
@@ -94,23 +101,27 @@ class AndroidStudioProperties extends BaseIdeaProperties {
                                            "google-cloud-tools-as",
                                            "google-cloud-tools-core-as",
                                            "google-samples",
+                                           "intellij.android.plugin",
                                            "intellij.android.compose-ide-plugin",
                                            "intellij.android.layoutlib",
                                            "intellij.android.layoutlib-native",
                                            "intellij.android.smali",
                                            "test-recorder",
-                                           "url-assistant",
-                                         ]
+                                           "url-assistant")
+    }
     productLayout.mainModules = ["intellij.idea.community.main"]
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.buildAllCompatiblePlugins = false
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
       JavaPluginLayout.javaPlugin(),
-      androidPluginInStudio([:]),
       CommunityRepositoryModules.groovyPlugin([]),
-      layoutlibPlugin(),
-      layoutlibNativePlugin(),
     ]
+    if (!buildOptions.studioSdk) {
+      productLayout.allNonTrivialPlugins.addAll(
+        androidPluginInStudio([:]),
+        layoutlibPlugin(),
+        layoutlibNativePlugin())
+    }
     if (buildOptions.includeUiTests) {
       modulesToCompileTests += ["intellij.android.guiTests", "intellij.android.guiTestFramework", "intellij.android.testFramework"]
       productLayout.allNonTrivialPlugins.add(uitestPlugin())
@@ -280,6 +291,11 @@ class AndroidStudioProperties extends BaseIdeaProperties {
   @CompileDynamic
   void copyAdditionalFiles(BuildContext buildContext, String targetDirectory) {
     super.copyAdditionalFiles(buildContext, targetDirectory)
+
+    if (buildContext.options.studioSdk) {
+      return
+    }
+
     buildContext.ant.copy(todir: targetDirectory) {
       fileset(file: "$buildContext.paths.communityHome/LICENSE.txt")
       fileset(file: "$buildContext.paths.communityHome/NOTICE.txt")
@@ -422,6 +438,10 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       @Override
       @CompileDynamic
       void copyAdditionalFiles(BuildContext context, String targetDirectory) {
+        if (context.options.studioSdk) {
+          return
+        }
+
         def root = "$context.paths.communityHome/../.."
         context.ant.copy(todir: "$targetDirectory/plugins/sdk-updates/offline-repo") {
           fileset(dir: "$root/prebuilts/tools/windows-x86_64/offline-sdk")
@@ -496,6 +516,10 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       @Override
       @CompileDynamic
       void copyAdditionalFiles(BuildContext context, String targetDirectory) {
+        if (context.options.studioSdk) {
+          return
+        }
+
         def root = "$context.paths.communityHome/../.."
         context.ant.copy(todir: "$targetDirectory/plugins/sdk-updates/offline-repo") {
           fileset(dir: "$root/prebuilts/tools/linux-x86_64/offline-sdk")
@@ -581,6 +605,19 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     @CompileDynamic
     void copyAdditionalFiles(BuildContext context, String targetDirectory) {
       def root = "$context.paths.communityHome/../.."
+
+      context.ant.copy(file: "$root/tools/idea/platform/build-scripts/tools/mac/scripts/entitlements.xml", tofile: "$targetDirectory/_codesign/entitlements.xml")
+
+      def bundleName = getRootDirectoryName(context.applicationInfo, context.buildNumber)
+      context.ant.copy(file: "$root/tools/idea/macos_codesign_filelist.txt", tofile: "$targetDirectory/_codesign/filelist")
+      context.ant.replace(file: "$targetDirectory/_codesign/filelist") {
+        replaceFilter(token: "@@bundle@@", value: bundleName)
+      }
+
+      if (context.options.studioSdk) {
+        return
+      }
+
       context.ant.copy(todir: "$targetDirectory/plugins/sdk-updates/offline-repo") {
         fileset(dir: "$root/prebuilts/tools/darwin-x86_64/offline-sdk")
       }
@@ -620,14 +657,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       }
       extraExecutables.add("bin/clang/mac/clangd")
       extraExecutables.add("bin/clang/mac/clang-tidy")
-
-      context.ant.copy(file: "$root/tools/idea/platform/build-scripts/tools/mac/scripts/entitlements.xml", tofile: "$targetDirectory/_codesign/entitlements.xml")
-
-      def bundleName = getRootDirectoryName(context.applicationInfo, context.buildNumber)
-      context.ant.copy(file: "$root/tools/idea/macos_codesign_filelist.txt", tofile: "$targetDirectory/_codesign/filelist")
-      context.ant.replace(file: "$targetDirectory/_codesign/filelist") {
-        replaceFilter(token: "@@bundle@@", value: bundleName)
-      }
     }
   }
 
