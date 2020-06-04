@@ -231,10 +231,6 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     ThreeState approximate = approximateHasType(expression, ContainerUtil.map(descriptors, d -> d.samClass));
     if (approximate != ThreeState.UNSURE) return approximate == ThreeState.YES;
 
-    return hasType2(descriptors, expression);
-  }
-
-  private static boolean hasType2(@NotNull List<? extends SamDescriptor> descriptors, @NotNull PsiFunctionalExpression expression) {
     PsiClass actualClass = LambdaUtil.resolveFunctionalInterfaceClass(expression);
     return ContainerUtil.exists(descriptors, d -> InheritanceUtil.isInheritorOrSelf(actualClass, d.samClass, true));
   }
