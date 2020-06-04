@@ -312,6 +312,12 @@ public abstract class UsefulTestCase extends TestCase {
       .run();
   }
 
+  /**
+   * Test root disposable is used for add an activity on test {@link #tearDown()}
+   * 
+   * @see #disposeOnTearDown(Disposable)
+   * @see #tearDown() 
+   */
   @NotNull
   public Disposable getTestRootDisposable() {
     return myTestRootDisposable;
