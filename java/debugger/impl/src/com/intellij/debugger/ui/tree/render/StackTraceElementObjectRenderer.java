@@ -3,6 +3,7 @@ package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.FullValueEvaluatorProvider;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.execution.filters.ExceptionFilter;
@@ -16,53 +17,63 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
-class StackTraceElementObjectRenderer implements NodeRendererProvider {
+class StackTraceElementObjectRenderer extends CompoundRendererProvider {
   private static final Logger LOG = Logger.getInstance(StackTraceElementObjectRenderer.class);
 
   @Override
-  public @NotNull NodeRenderer createRenderer() {
-    return new RendererBuilder("StackTraceElement")
-      .isApplicableForInheritors("java.lang.StackTraceElement")
-      .enabled(true)
-      .fullValueEvaluator(
-        (evaluationContext, valueDescriptor) -> new JavaValue.JavaFullValueEvaluator(JavaDebuggerBundle.message("message.node.navigate"),
-                                                                                     evaluationContext) {
-          @Override
-          public void evaluate(@NotNull XFullValueEvaluationCallback callback) {
-            Value value = valueDescriptor.getValue();
-            ClassType type = ((ClassType)value.type());
-            Method toString = DebuggerUtils.findMethod(type, "toString", "()Ljava/lang/String;");
-            if (toString != null) {
-              try {
-                Value res =
-                  evaluationContext.getDebugProcess()
-                    .invokeMethod(evaluationContext, (ObjectReference)value, toString, Collections.emptyList());
-                if (res instanceof StringReference) {
-                  callback.evaluated("");
-                  final String line = ((StringReference)res).value();
-                  ApplicationManager.getApplication().runReadAction(() -> {
-                    ExceptionFilter filter = new ExceptionFilter(evaluationContext.getDebugProcess().getSession().getSearchScope());
-                    Filter.Result result = filter.applyFilter(line, line.length());
-                    if (result != null) {
-                      final HyperlinkInfo info = result.getFirstHyperlinkInfo();
-                      if (info != null) {
-                        DebuggerUIUtil.invokeLater(() -> info.navigate(valueDescriptor.getProject()));
-                      }
-                    }
-                  });
+  protected String getName() {
+    return "StackTraceElement";
+  }
+
+  @Override
+  protected String getClassName() {
+    return "java.lang.StackTraceElement";
+  }
+
+  @Override
+  protected boolean isEnabled() {
+    return true;
+  }
+
+  @Override
+  protected FullValueEvaluatorProvider getFullValueEvaluatorProvider() {
+    return (evaluationContext, valueDescriptor) -> new JavaValue.JavaFullValueEvaluator(JavaDebuggerBundle.message("message.node.navigate"),
+                                                                                        evaluationContext) {
+      @Override
+      public void evaluate(@NotNull XFullValueEvaluationCallback callback) {
+        Value value = valueDescriptor.getValue();
+        ClassType type = ((ClassType)value.type());
+        Method toString = DebuggerUtils.findMethod(type, "toString", "()Ljava/lang/String;");
+        if (toString != null) {
+          try {
+            Value res =
+              evaluationContext.getDebugProcess()
+                .invokeMethod(evaluationContext, (ObjectReference)value, toString, Collections.emptyList());
+            if (res instanceof StringReference) {
+              callback.evaluated("");
+              final String line = ((StringReference)res).value();
+              ApplicationManager.getApplication().runReadAction(() -> {
+                ExceptionFilter filter = new ExceptionFilter(evaluationContext.getDebugProcess().getSession().getSearchScope());
+                Filter.Result result = filter.applyFilter(line, line.length());
+                if (result != null) {
+                  final HyperlinkInfo info = result.getFirstHyperlinkInfo();
+                  if (info != null) {
+                    DebuggerUIUtil.invokeLater(() -> info.navigate(valueDescriptor.getProject()));
+                  }
                 }
-              }
-              catch (EvaluateException e) {
-                LOG.info("Exception while getting stack info", e);
-              }
+              });
             }
           }
-
-          @Override
-          public boolean isShowValuePopup() {
-            return false;
+          catch (EvaluateException e) {
+            LOG.info("Exception while getting stack info", e);
           }
-        })
-      .build();
+        }
+      }
+
+      @Override
+      public boolean isShowValuePopup() {
+        return false;
+      }
+    };
   }
 }

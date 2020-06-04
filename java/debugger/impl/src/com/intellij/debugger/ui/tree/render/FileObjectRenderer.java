@@ -3,15 +3,25 @@ package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.openapi.util.registry.Registry;
-import org.jetbrains.annotations.NotNull;
 
-public class FileObjectRenderer implements NodeRendererProvider {
+public class FileObjectRenderer extends CompoundRendererProvider {
   @Override
-  public @NotNull NodeRenderer createRenderer() {
-    return new RendererBuilder("File")
-      .childrenRenderer(NodeRendererSettings.createExpressionChildrenRenderer("listFiles()", null))
-      .isApplicableForInheritors("java.io.File")
-      .enabled(Registry.is("debugger.renderers.file"))
-      .build();
+  protected String getName() {
+    return "File";
+  }
+
+  @Override
+  protected ChildrenRenderer getChildrenRenderer() {
+    return NodeRendererSettings.createExpressionChildrenRenderer("listFiles()", null);
+  }
+
+  @Override
+  protected String getClassName() {
+    return "java.io.File";
+  }
+
+  @Override
+  protected boolean isEnabled() {
+    return Registry.is("debugger.renderers.file");
   }
 }

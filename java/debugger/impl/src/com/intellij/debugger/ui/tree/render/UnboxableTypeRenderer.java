@@ -13,22 +13,28 @@ import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.ReferenceType;
-import org.jetbrains.annotations.NotNull;
+import com.sun.jdi.Type;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
-public abstract class UnboxableTypeRenderer implements NodeRendererProvider {
+public abstract class UnboxableTypeRenderer extends CompoundRendererProvider {
   private static final Logger LOG = Logger.getInstance(UnboxableTypeRenderer.class);
   private final String myClassName;
 
   protected UnboxableTypeRenderer(String className) {
+    LOG.assertTrue(UnBoxingEvaluator.isTypeUnboxable(className));
     myClassName = className;
   }
 
   @Override
-  public @NotNull NodeRenderer createRenderer() {
-    LOG.assertTrue(UnBoxingEvaluator.isTypeUnboxable(myClassName));
-    LabelRenderer labelRenderer = new LabelRenderer() {
+  protected String getName() {
+    return StringUtil.getShortName(myClassName);
+  }
+
+  @Override
+  protected ValueLabelRenderer getValueLabelRenderer() {
+    return new LabelRenderer() {
       @Override
       public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener)
         throws EvaluateException {
@@ -61,11 +67,16 @@ public abstract class UnboxableTypeRenderer implements NodeRendererProvider {
         return false;
       }
     };
-    return new RendererBuilder(StringUtil.getShortName(myClassName))
-      .labelRenderer(labelRenderer)
-      .isApplicable(type -> CompletableFuture.completedFuture(type instanceof ReferenceType && StringUtil.equals(type.name(), myClassName)))
-      .enabled(true)
-      .build();
+  }
+
+  @Override
+  protected Function<Type, CompletableFuture<Boolean>> getIsApplicableChecker() {
+    return type -> CompletableFuture.completedFuture(type instanceof ReferenceType && StringUtil.equals(type.name(), myClassName));
+  }
+
+  @Override
+  protected boolean isEnabled() {
+    return true;
   }
 
   public static class BooleanRenderer extends UnboxableTypeRenderer {

@@ -3,47 +3,58 @@ package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.FullValueEvaluatorProvider;
 import com.sun.jdi.*;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class GraphicsObjectRenderer implements NodeRendererProvider {
+public class GraphicsObjectRenderer extends CompoundRendererProvider {
   @Override
-  public @NotNull NodeRenderer createRenderer() {
-    return new RendererBuilder("Graphics")
-      .isApplicableForInheritors("sun.java2d.SunGraphics2D")
-      .enabled(true)
-      .fullValueEvaluator((evaluationContext, valueDescriptor) -> {
-        try {
-          ObjectReference value = (ObjectReference)valueDescriptor.getValue();
-          Field surfaceField = ((ClassType)value.type()).fieldByName("surfaceData");
-          if (surfaceField == null) return null;
-          ObjectReference surfaceDataValue = (ObjectReference)value.getValue(surfaceField);
-          if (surfaceDataValue == null) return null;
+  protected String getName() {
+    return "Graphics";
+  }
 
-          Field imgField = ((ReferenceType)surfaceDataValue.type()).fieldByName("bufImg"); // BufImgSurfaceData
-          if (imgField == null) {
-            imgField = ((ReferenceType)surfaceDataValue.type()).fieldByName("offscreenImage"); // CGLSurfaceData
-          }
-          if (imgField == null) return null;
+  @Override
+  protected String getClassName() {
+    return "sun.java2d.SunGraphics2D";
+  }
 
-          final Value bufImgValue = surfaceDataValue.getValue(imgField);
-          Type type = bufImgValue.type();
-          if (!(type instanceof ReferenceType) || !DebuggerUtils.instanceOf(type, "java.awt.Image")) {
-            return null;
+  @Override
+  protected boolean isEnabled() {
+    return true;
+  }
+
+  @Override
+  protected FullValueEvaluatorProvider getFullValueEvaluatorProvider() {
+    return (evaluationContext, valueDescriptor) -> {
+      try {
+        ObjectReference value = (ObjectReference)valueDescriptor.getValue();
+        Field surfaceField = ((ClassType)value.type()).fieldByName("surfaceData");
+        if (surfaceField == null) return null;
+        ObjectReference surfaceDataValue = (ObjectReference)value.getValue(surfaceField);
+        if (surfaceDataValue == null) return null;
+
+        Field imgField = ((ReferenceType)surfaceDataValue.type()).fieldByName("bufImg"); // BufImgSurfaceData
+        if (imgField == null) {
+          imgField = ((ReferenceType)surfaceDataValue.type()).fieldByName("offscreenImage"); // CGLSurfaceData
+        }
+        if (imgField == null) return null;
+
+        final Value bufImgValue = surfaceDataValue.getValue(imgField);
+        Type type = bufImgValue.type();
+        if (!(type instanceof ReferenceType) || !DebuggerUtils.instanceOf(type, "java.awt.Image")) {
+          return null;
+        }
+        return new ImageObjectRenderer.IconPopupEvaluator(JavaDebuggerBundle.message("message.node.show.image"), evaluationContext) {
+          @Override
+          protected Icon getData() {
+            return ImageObjectRenderer.getIcon(getEvaluationContext(), bufImgValue, "imageToBytes");
           }
-          return new ImageObjectRenderer.IconPopupEvaluator(JavaDebuggerBundle.message("message.node.show.image"), evaluationContext) {
-            @Override
-            protected Icon getData() {
-              return ImageObjectRenderer.getIcon(getEvaluationContext(), bufImgValue, "imageToBytes");
-            }
-          };
-        }
-        catch (Exception ignored) {
-        }
-        return null;
-      })
-      .build();
+        };
+      }
+      catch (Exception ignored) {
+      }
+      return null;
+    };
   }
 }

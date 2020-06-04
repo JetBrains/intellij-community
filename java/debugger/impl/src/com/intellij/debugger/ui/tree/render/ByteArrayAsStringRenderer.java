@@ -6,13 +6,22 @@ import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.Value;
-import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.StandardCharsets;
 
-final class ByteArrayAsStringRenderer implements NodeRendererProvider {
+final class ByteArrayAsStringRenderer extends CompoundRendererProvider {
   @Override
-  public @NotNull NodeRenderer createRenderer() {
+  protected String getName() {
+    return "String";
+  }
+
+  @Override
+  protected String getClassName() {
+    return "byte[]";
+  }
+
+  @Override
+  protected ValueLabelRenderer getValueLabelRenderer() {
     LabelRenderer labelRenderer = new LabelRenderer() {
       @Override
       public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener)
@@ -31,10 +40,6 @@ final class ByteArrayAsStringRenderer implements NodeRendererProvider {
       }
     };
     labelRenderer.setLabelExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "new String(this)"));
-
-    return new RendererBuilder("String")
-      .isApplicableForInheritors("byte[]")
-      .labelRenderer(labelRenderer)
-      .build();
+    return labelRenderer;
   }
 }

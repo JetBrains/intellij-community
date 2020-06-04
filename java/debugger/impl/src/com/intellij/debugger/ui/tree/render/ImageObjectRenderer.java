@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.FullValueEvaluatorProvider;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -25,22 +26,33 @@ import java.awt.image.BufferedImage;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
-final class ImageObjectRenderer implements NodeRendererProvider {
+final class ImageObjectRenderer extends CompoundRendererProvider {
   private static final Logger LOG = Logger.getInstance(ImageObjectRenderer.class);
 
   @Override
-  public @NotNull NodeRenderer createRenderer() {
-    return new RendererBuilder("Image")
-      .isApplicableForInheritors("java.awt.Image")
-      .enabled(true)
-      .fullValueEvaluator((evaluationContext, valueDescriptor) ->
-                                new IconPopupEvaluator(JavaDebuggerBundle.message("message.node.show.image"), evaluationContext) {
-                                  @Override
-                                  protected Icon getData() {
-                                    return getIcon(getEvaluationContext(), valueDescriptor.getValue(), "imageToBytes");
-                                  }
-                                })
-      .build();
+  protected String getName() {
+    return "Image";
+  }
+
+  @Override
+  protected String getClassName() {
+    return "java.awt.Image";
+  }
+
+  @Override
+  protected boolean isEnabled() {
+    return true;
+  }
+
+  @Override
+  protected FullValueEvaluatorProvider getFullValueEvaluatorProvider() {
+    return (evaluationContext, valueDescriptor) ->
+      new IconPopupEvaluator(JavaDebuggerBundle.message("message.node.show.image"), evaluationContext) {
+        @Override
+        protected Icon getData() {
+          return getIcon(getEvaluationContext(), valueDescriptor.getValue(), "imageToBytes");
+        }
+      };
   }
 
   static JComponent createIconViewer(@Nullable Icon icon) {

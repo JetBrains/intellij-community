@@ -17,64 +17,74 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
 
-class ColorObjectRenderer implements NodeRendererProvider {
+class ColorObjectRenderer extends CompoundRendererProvider {
   private static final Logger LOG = Logger.getInstance(ColorObjectRenderer.class);
 
   @Override
-  public @NotNull NodeRenderer createRenderer() {
-    String className = "java.awt.Color";
-    return new RendererBuilder("Color")
-      .isApplicableForInheritors(className)
-      .iconRenderer((descriptor, evaluationContext, listener) -> {
-        Value value = descriptor.getValue();
-        if (value instanceof ObjectReference) {
-          try {
-            ObjectReference objRef = (ObjectReference)value;
-            ReferenceType refType = objRef.referenceType();
-            if (refType instanceof ClassType) {
-              Value rgbValue = null;
-              Method getRGBMethod = DebuggerUtils.findMethod(refType, "getRGB", "()I");
-              if (getRGBMethod != null) {
-                ReferenceType rgbMethodDeclaringType = getRGBMethod.declaringType();
-                if (rgbMethodDeclaringType.name().equals(className)) { // getRGB is not overridden
-                  Field valueField = rgbMethodDeclaringType.fieldByName("value");
-                  if (valueField != null) {
-                    rgbValue = objRef.getValue(valueField);
-                  }
+  protected String getName() {
+    return "Color";
+  }
+
+  @Override
+  protected String getClassName() {
+    return "java.awt.Color";
+  }
+
+  @Override
+  protected ValueIconRenderer getIconRenderer() {
+    return (descriptor, evaluationContext, listener) -> {
+      Value value = descriptor.getValue();
+      if (value instanceof ObjectReference) {
+        try {
+          ObjectReference objRef = (ObjectReference)value;
+          ReferenceType refType = objRef.referenceType();
+          if (refType instanceof ClassType) {
+            Value rgbValue = null;
+            Method getRGBMethod = DebuggerUtils.findMethod(refType, "getRGB", "()I");
+            if (getRGBMethod != null) {
+              ReferenceType rgbMethodDeclaringType = getRGBMethod.declaringType();
+              if (rgbMethodDeclaringType.name().equals("java.awt.Color")) { // getRGB is not overridden
+                Field valueField = rgbMethodDeclaringType.fieldByName("value");
+                if (valueField != null) {
+                  rgbValue = objRef.getValue(valueField);
                 }
-                if (rgbValue instanceof IntegerValue) {
-                  return createIcon((IntegerValue)rgbValue);
-                }
-                else {
-                  EvaluationContextImpl evalContext = ((EvaluationContextImpl)evaluationContext);
-                  DebugProcessImpl debugProcess = evalContext.getDebugProcess();
-                  debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(evalContext.getSuspendContext()) {
-                    @Override
-                    public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-                      try {
-                        Value rgbValue = debugProcess.invokeMethod(evaluationContext, objRef, getRGBMethod, Collections.emptyList());
-                        if (rgbValue instanceof IntegerValue) {
-                          descriptor.setValueIcon(createIcon((IntegerValue)rgbValue));
-                          listener.labelChanged();
-                        }
-                      }
-                      catch (EvaluateException e) {
-                        LOG.info(e);
+              }
+              if (rgbValue instanceof IntegerValue) {
+                return createIcon((IntegerValue)rgbValue);
+              }
+              else {
+                EvaluationContextImpl evalContext = ((EvaluationContextImpl)evaluationContext);
+                DebugProcessImpl debugProcess = evalContext.getDebugProcess();
+                debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(evalContext.getSuspendContext()) {
+                  @Override
+                  public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+                    try {
+                      Value rgbValue = debugProcess.invokeMethod(evaluationContext, objRef, getRGBMethod, Collections.emptyList());
+                      if (rgbValue instanceof IntegerValue) {
+                        descriptor.setValueIcon(createIcon((IntegerValue)rgbValue));
+                        listener.labelChanged();
                       }
                     }
-                  });
-                }
+                    catch (EvaluateException e) {
+                      LOG.info(e);
+                    }
+                  }
+                });
               }
             }
           }
-          catch (Exception e) {
-            throw new EvaluateException(e.getMessage(), e);
-          }
         }
-        return null;
-      })
-      .enabled(true)
-      .build();
+        catch (Exception e) {
+          throw new EvaluateException(e.getMessage(), e);
+        }
+      }
+      return null;
+    };
+  }
+
+  @Override
+  protected boolean isEnabled() {
+    return true;
   }
 
   private static Icon createIcon(IntegerValue rgbValue) {

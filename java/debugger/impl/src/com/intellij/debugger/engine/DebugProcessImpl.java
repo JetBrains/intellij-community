@@ -135,7 +135,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     myRequestManager = new RequestManagerImpl(this);
     NodeRendererSettings.getInstance().addListener(this::reloadRenderers, myDisposable);
     NodeRenderer.EP_NAME.addChangeListener(this::reloadRenderers, myDisposable);
-    NodeRendererProvider.EP_NAME.addChangeListener(this::reloadRenderers, myDisposable);
+    CompoundRendererProvider.EP_NAME.addChangeListener(this::reloadRenderers, myDisposable);
     reloadRenderers();
     myDebugProcessDispatcher.addListener(new DebugProcessListener() {
       @Override
