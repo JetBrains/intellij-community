@@ -24,6 +24,7 @@ import com.intellij.notification.NotificationsManager
 import com.intellij.notification.impl.NotificationsManagerImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
@@ -546,8 +547,12 @@ object DynamicPlugins {
     }
   }
 
-  internal fun notify(text: String, notificationType: NotificationType) {
-    GROUP.createNotification(text, notificationType).notify(null)
+  internal fun notify(text: String, notificationType: NotificationType, vararg actions: AnAction) {
+    val notification = GROUP.createNotification(text, notificationType)
+    for (action in actions) {
+      notification.addAction(action)
+    }
+    notification.notify(null)
   }
 
   // PluginId cannot be used to unload related resources because one plugin descriptor may consist of several sub descriptors, each of them depends on presense of another plugin,

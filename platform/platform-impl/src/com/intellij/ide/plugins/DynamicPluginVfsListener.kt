@@ -3,6 +3,8 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.FrameStateListener
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
@@ -61,14 +63,24 @@ class DynamicPluginVfsListener : AsyncFileListener {
       override fun afterVfsChange() {
         ApplicationManager.getApplication().invokeLater {
           val reloaded = mutableListOf<String>()
+          val unloadFailed = mutableListOf<String>()
           for (pluginDescriptor in descriptorsToReload) {
             if (!DynamicPlugins.unloadPlugin(pluginDescriptor, DynamicPlugins.UnloadPluginOptions(isUpdate = true, waitForClassloaderUnload = true))) {
+              unloadFailed.add(pluginDescriptor.name)
               continue
             }
             reloaded.add(pluginDescriptor.name)
             DynamicPlugins.loadPlugin(pluginDescriptor)
           }
-          if (reloaded.isNotEmpty()) {
+          if (unloadFailed.isNotEmpty()) {
+            DynamicPlugins.notify("Failed to unload modified plugins: ${unloadFailed.joinToString()}", NotificationType.INFORMATION,
+              object : AnAction("Restart") {
+                override fun actionPerformed(e: AnActionEvent) {
+                  ApplicationManager.getApplication().restart()
+                }
+              })
+          }
+          else if (reloaded.isNotEmpty()) {
             DynamicPlugins.notify("${reloaded.joinToString()} reloaded successfully", NotificationType.INFORMATION)
           }
         }
