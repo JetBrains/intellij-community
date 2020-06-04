@@ -16,9 +16,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author cdr
- */
 public class StructureViewComposite implements StructureView {
   
   private final StructureViewDescriptor[] myStructureViews;

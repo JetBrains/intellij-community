@@ -19,9 +19,6 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 
 import java.util.Collection;
 
-/**
- * @author cdr
- */
 public interface I18nizeQuickFixModel {
   String getValue();
 

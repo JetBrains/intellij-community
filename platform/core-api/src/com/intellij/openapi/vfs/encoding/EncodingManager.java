@@ -11,9 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.charset.Charset;
 import java.util.Collection;
 
-/**
- * @author cdr
- */
 public abstract class EncodingManager extends EncodingRegistry {
   @NonNls public static final String PROP_NATIVE2ASCII_SWITCH = "native2ascii";
   @NonNls public static final String PROP_PROPERTIES_FILES_ENCODING = "propertiesFilesEncoding";

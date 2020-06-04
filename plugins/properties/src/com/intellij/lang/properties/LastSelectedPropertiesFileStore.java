@@ -17,9 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-/**
- * @author cdr
- */
 @State(
   name = "LastSelectedPropertiesFileStore",
   storages = @Storage(value = "lastSelectedPropertiesFile.xml", roamingType = RoamingType.DISABLED)

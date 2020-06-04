@@ -14,9 +14,6 @@ import com.intellij.testFramework.HeavyPlatformTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
- */
 @HeavyPlatformTestCase.WrapInCommand
 public class PropertiesResolveTest extends JavaCodeInsightTestCase {
   private static final String BASE_PATH = "testData/resolve/";

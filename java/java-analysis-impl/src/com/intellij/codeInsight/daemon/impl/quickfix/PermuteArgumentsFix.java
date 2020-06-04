@@ -36,9 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author cdr
- */
 public class PermuteArgumentsFix implements IntentionAction, HighPriorityAction {
   private static final Logger LOG = Logger.getInstance(PermuteArgumentsFix.class);
   private final PsiCall myCall;

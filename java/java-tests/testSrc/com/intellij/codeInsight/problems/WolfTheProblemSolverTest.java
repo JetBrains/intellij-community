@@ -33,9 +33,6 @@ import java.util.*;
 
 import static java.util.Collections.emptySet;
 
-/**
- * @author cdr
- */
 public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/projectWide";
   private MockWolfTheProblemSolver myWolfTheProblemSolver;

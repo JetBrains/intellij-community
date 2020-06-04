@@ -41,9 +41,6 @@ import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.ar;
 
-/**
- * @author cdr
- */
 public class UnscrambleDialog extends DialogWrapper {
   @NonNls private static final String PROPERTY_LOG_FILE_HISTORY_URLS = "UNSCRAMBLE_LOG_FILE_URL";
   @NonNls private static final String PROPERTY_LOG_FILE_LAST_URL = "UNSCRAMBLE_LOG_FILE_LAST_URL";

@@ -25,9 +25,6 @@ import com.intellij.slicer.*;
 import java.util.Collection;
 import java.util.Map;
 
-/**
- * @author cdr
- */
 public class SliceForwardTest extends SliceTestCase {
   private void dotest() throws Exception {
     configureByFile("/codeInsight/slice/forward/"+getTestName(false)+".java");

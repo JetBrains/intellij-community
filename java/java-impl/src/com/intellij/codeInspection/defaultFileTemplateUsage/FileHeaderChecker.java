@@ -40,9 +40,6 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author cdr
- */
 public class FileHeaderChecker {
   private static final Logger LOG = Logger.getInstance(FileHeaderChecker.class);
 

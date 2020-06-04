@@ -22,9 +22,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author cdr
- */
 public abstract class QuickFixFactory {
   public static QuickFixFactory getInstance() {
     return ServiceManager.getService(QuickFixFactory.class);

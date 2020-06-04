@@ -30,9 +30,6 @@ import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
-/**
- * @author cdr
- */
 public final class ThreadTracker {
   private static final Logger LOG = Logger.getInstance(ThreadTracker.class);
   private final Map<String, Thread> before;

@@ -18,9 +18,6 @@ package com.intellij.util;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
- */
 public class WalkingState<T> {
   public interface TreeGuide<T> {
     T getNextSibling(@NotNull T element);

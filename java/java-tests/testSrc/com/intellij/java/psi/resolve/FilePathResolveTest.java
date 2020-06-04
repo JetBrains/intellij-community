@@ -23,9 +23,6 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.impl.include.FileIncludeInfo;
 import com.intellij.psi.impl.include.FileIncludeManager;
 
-/**
- * @author cdr
- */
 public class FilePathResolveTest extends JavaCodeInsightTestCase {
   private static final String BASE_PATH = "/psi/resolve/filePath/";
 

@@ -21,9 +21,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.WalkingState;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
- */
 public abstract class PsiWalkingState extends WalkingState<PsiElement> {
   private static final Logger LOG = Logger.getInstance(PsiWalkingState.class);
   private final PsiElementVisitor myVisitor;

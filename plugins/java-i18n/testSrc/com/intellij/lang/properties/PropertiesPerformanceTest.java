@@ -19,9 +19,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-/**
- * @author cdr
- */
 @HardwareAgentRequired
 public class PropertiesPerformanceTest extends JavaCodeInsightTestCase {
   @Override

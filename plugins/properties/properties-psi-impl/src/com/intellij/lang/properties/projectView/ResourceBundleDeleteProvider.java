@@ -30,9 +30,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-/**
- * @author cdr
- */
 public class ResourceBundleDeleteProvider implements DeleteProvider {
   private static final Logger LOG = Logger.getInstance(ResourceBundleDeleteProvider.class);
 

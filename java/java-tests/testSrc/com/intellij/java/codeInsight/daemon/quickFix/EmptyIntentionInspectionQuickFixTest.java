@@ -32,9 +32,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author cdr
- */
 public class EmptyIntentionInspectionQuickFixTest extends LightQuickFixTestCase {
   @Override
   @NonNls

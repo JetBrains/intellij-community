@@ -22,9 +22,6 @@ import com.intellij.problems.Problem;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
- */
 public class ProblemImpl implements Problem {
   private final VirtualFile virtualFile;
   private final HighlightInfo highlightInfo;

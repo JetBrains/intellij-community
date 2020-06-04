@@ -24,9 +24,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
- */
 public class PropertiesFileStructureViewComponent extends PropertiesGroupingStructureViewComponent {
   private final PropertiesFile myPropertiesFile;
 

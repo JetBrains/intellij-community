@@ -38,9 +38,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
-/**
- * @author cdr
- */
 class SliceForwardUtil {
   static boolean processUsagesFlownFromThe(@NotNull PsiElement element,
                                            @NotNull final JavaSliceUsage parent,

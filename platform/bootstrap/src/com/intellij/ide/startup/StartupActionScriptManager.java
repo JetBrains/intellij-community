@@ -17,9 +17,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author cdr
- */
 public class StartupActionScriptManager {
   public static final String STARTUP_WIZARD_MODE = "StartupWizardMode";
   public static final String ACTION_SCRIPT_FILE = "action.script";

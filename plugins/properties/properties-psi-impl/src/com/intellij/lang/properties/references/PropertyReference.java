@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author cdr
- */
 public class PropertyReference extends PropertyReferenceBase implements LocalQuickFixProvider {
   @Nullable private final String myBundleName;
 

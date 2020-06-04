@@ -29,9 +29,6 @@ import com.intellij.usages.TextChunk;
 import com.intellij.util.FontUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
- */
 class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
   @Override
   public void customizeCellRendererFor(@NotNull SliceUsage sliceUsage) {

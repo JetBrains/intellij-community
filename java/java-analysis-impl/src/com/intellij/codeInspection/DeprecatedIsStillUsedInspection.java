@@ -10,9 +10,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
- */
 public class DeprecatedIsStillUsedInspection extends LocalInspectionTool {
   @NotNull
   @Override

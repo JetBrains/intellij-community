@@ -20,9 +20,6 @@ import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author cdr
- */
 public class ControlFlowTest extends LightJavaCodeInsightTestCase {
   @NonNls private static final String BASE_PATH = "/psi/controlFlow";
 

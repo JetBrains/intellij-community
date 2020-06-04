@@ -16,9 +16,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author cdr
- */
 public class MoveInitializerToConstructorAction extends BaseMoveInitializerToMethodAction {
   @Override
   @NotNull

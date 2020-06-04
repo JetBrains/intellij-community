@@ -23,9 +23,6 @@ import com.intellij.psi.impl.source.xml.XmlAttributeValueImpl;
 import com.intellij.psi.xml.XmlAttribute;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
-*/
 public class XmlAttributeLiteralEscaper extends LiteralTextEscaper<XmlAttributeValueImpl> {
   private final XmlAttribute myXmlAttribute;
 

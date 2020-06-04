@@ -19,9 +19,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.java.JavaBundle;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
- */
 public abstract class ReplaceWithFileTemplateFix implements LocalQuickFix {
   @Override
   @NotNull
