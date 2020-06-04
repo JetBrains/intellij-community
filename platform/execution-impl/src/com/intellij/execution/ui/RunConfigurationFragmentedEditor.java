@@ -13,6 +13,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -61,33 +62,42 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
       if (runnerEditor != null) {
         component.add(runnerEditor.getComponent(), configEditor == null ? BorderLayout.CENTER : BorderLayout.SOUTH);
       }
-      fragments.add(new RunConfigurationEditorFragment<Settings, JComponent>(executor.getId() + ".config", executor.getStartActionText(),
-                                                                             ExecutionBundle.message("run.configuration.startup.connection.rab.title"), component, 0) {
-        @Override
-        public void resetEditorFrom(@NotNull RunnerAndConfigurationSettingsImpl s) {
-          if (configEditor != null) {
-            configEditor.resetFrom(s.getConfigurationSettings(runner));
-          }
-          if (runnerEditor != null) {
-            runnerEditor.resetFrom(s.getRunnerSettings(runner));
-          }
-        }
-
-        @Override
-        public void applyEditorTo(@NotNull RunnerAndConfigurationSettingsImpl s) {
-          try {
+      RunConfigurationEditorFragment<Settings, JComponent> fragment =
+        new RunConfigurationEditorFragment<Settings, JComponent>(executor.getId() + ".config", executor.getStartActionText(),
+                                                                 ExecutionBundle.message("run.configuration.startup.connection.rab.title"),
+                                                                 component, 0) {
+          @Override
+          public void resetEditorFrom(@NotNull RunnerAndConfigurationSettingsImpl s) {
             if (configEditor != null) {
-              configEditor.applyTo(s.getConfigurationSettings(runner));
+              configEditor.resetFrom(s.getConfigurationSettings(runner));
             }
             if (runnerEditor != null) {
-              runnerEditor.applyTo(s.getRunnerSettings(runner));
+              runnerEditor.resetFrom(s.getRunnerSettings(runner));
             }
           }
-          catch (ConfigurationException e) {
-            LOG.error(e);
+
+          @Override
+          public void applyEditorTo(@NotNull RunnerAndConfigurationSettingsImpl s) {
+            try {
+              if (configEditor != null) {
+                configEditor.applyTo(s.getConfigurationSettings(runner));
+              }
+              if (runnerEditor != null) {
+                runnerEditor.applyTo(s.getRunnerSettings(runner));
+              }
+            }
+            catch (ConfigurationException e) {
+              LOG.error(e);
+            }
           }
-        }
-      });
+        };
+      if (configEditor != null) {
+        Disposer.register(fragment, configEditor);
+      }
+      if (runnerEditor != null) {
+        Disposer.register(fragment, runnerEditor);
+      }
+      fragments.add(fragment);
     }
   }
 
