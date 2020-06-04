@@ -73,11 +73,8 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
            isPsiModificationCount(dependency);
   }
 
-  @SuppressWarnings("deprecation")
   private static boolean isPsiModificationCount(@NotNull Object dependency) {
     return dependency instanceof PsiModificationTracker ||
-           dependency == PsiModificationTracker.MODIFICATION_COUNT ||
-           dependency == PsiModificationTracker.MODIFICATION_COUNT ||
            dependency == PsiModificationTracker.MODIFICATION_COUNT;
   }
 
@@ -115,7 +112,6 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
     return super.isDependencyOutOfDate(dependency, oldTimeStamp);
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   protected long getTimeStamp(@NotNull Object dependency) {
     if (dependency instanceof PsiDirectory) {
@@ -130,12 +126,6 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
     }
 
     if (dependency == PsiModificationTracker.MODIFICATION_COUNT || dependency == PSI_MOD_COUNT_OPTIMIZATION) {
-      return myManager.getModificationTracker().getModificationCount();
-    }
-    if (dependency == PsiModificationTracker.MODIFICATION_COUNT) {
-      return myManager.getModificationTracker().getModificationCount();
-    }
-    if (dependency == PsiModificationTracker.MODIFICATION_COUNT) {
       return myManager.getModificationTracker().getModificationCount();
     }
 
