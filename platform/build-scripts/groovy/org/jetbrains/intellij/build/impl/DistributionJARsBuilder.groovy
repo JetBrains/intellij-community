@@ -229,8 +229,7 @@ class DistributionJARsBuilder {
    * @return module names which are required to run necessary tools from build scripts
    */
   static List<String> getToolModules() {
-    ["intellij.java.rt", "intellij.platform.main", /*required to build searchable options index*/ "intellij.platform.updater",
-     "intellij.android.updater.ui"]  // Android Studio: added by Change If9fe9db0 / commit 520343f
+    ["intellij.java.rt", "intellij.platform.main", /*required to build searchable options index*/ "intellij.platform.updater"]
   }
 
   Collection<String> getIncludedProjectArtifacts() {
