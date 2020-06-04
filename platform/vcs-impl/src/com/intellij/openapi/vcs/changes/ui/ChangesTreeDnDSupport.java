@@ -18,11 +18,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.treeStructure.Tree;
@@ -36,90 +32,48 @@ import java.awt.dnd.DnDConstants;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.unshelveSilentlyWithDnd;
-import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.IGNORED_FILES_TAG;
-import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG;
-import static com.intellij.openapi.vcs.changes.ui.ChangesListView.getChanges;
-import static com.intellij.openapi.vcs.changes.ui.ChangesListView.getFilePaths;
-import static java.util.stream.Collectors.toList;
+public abstract class ChangesTreeDnDSupport implements DnDDropHandler, DnDTargetChecker {
+  @NotNull protected final ChangesTree myTree;
 
-public class ChangesDnDSupport implements DnDDropHandler, DnDTargetChecker {
-
-  @NotNull private final Project myProject;
-  @NotNull private final ChangeListManagerImpl myChangeListManager;
-  @NotNull private final Tree myTree;
-
-  public static void install(@NotNull Project project, @NotNull Tree tree) {
-    new ChangesDnDSupport(project, tree).install();
-  }
-
-  private ChangesDnDSupport(@NotNull Project project, @NotNull Tree tree) {
-    myProject = project;
-    myChangeListManager = ChangeListManagerImpl.getInstanceImpl(project);
+  public ChangesTreeDnDSupport(@NotNull ChangesTree tree) {
     myTree = tree;
   }
 
-  private void install() {
+  public void install(@NotNull Disposable disposable) {
     DnDSupport.createBuilder(myTree)
       .setTargetChecker(this)
       .setDropHandler(this)
       .setImageProvider(this::createDraggedImage)
       .setBeanProvider(this::createDragStartBean)
-      .setDisposableParent(myTree instanceof Disposable ? (Disposable)myTree : myProject)
+      .setDisposableParent(disposable)
       .install();
   }
 
   @NotNull
-  private DnDImage createDraggedImage(@NotNull DnDActionInfo info) {
-    int count = getSelectionCount();
+  protected DnDImage createDraggedImage(@NotNull DnDActionInfo info) {
+    int count = getSelectionCount(myTree);
     String imageText = count + " " + StringUtil.pluralize("file", count);
-    Image image = DnDAwareTree.getDragImage(myTree, imageText, null).getFirst();
-
-    return new DnDImage(image, new Point(-image.getWidth(null), -image.getHeight(null)));
+    return createDragImage(myTree, imageText);
   }
 
   @Nullable
-  private DnDDragStartBean createDragStartBean(@NotNull DnDActionInfo info) {
-    DnDDragStartBean result = null;
+  protected abstract DnDDragStartBean createDragStartBean(@NotNull DnDActionInfo info);
 
-    if (info.isMove()) {
-      Change[] changes = getChanges(myProject, myTree.getSelectionPaths()).toArray(Change[]::new);
-      List<FilePath> unversionedFiles = getFilePaths(myTree.getSelectionPaths(), UNVERSIONED_FILES_TAG).collect(toList());
-      List<FilePath> ignoredFiles = getFilePaths(myTree.getSelectionPaths(), IGNORED_FILES_TAG).collect(toList());
-
-      if (changes.length > 0 || !unversionedFiles.isEmpty() || !ignoredFiles.isEmpty()) {
-        result = new DnDDragStartBean(new ChangeListDragBean(myTree, changes, unversionedFiles, ignoredFiles));
-      }
-    }
-
-    return result;
-  }
+  protected abstract boolean canHandleDropEvent(@NotNull DnDEvent aEvent, @NotNull ChangesBrowserNode<?> dropNode);
 
   @Override
   public boolean update(DnDEvent aEvent) {
     aEvent.hideHighlighter();
     aEvent.setDropPossible(false, "");
 
-    Object attached = aEvent.getAttachedObject();
     ChangesBrowserNode<?> dropNode = getDropRootNode(myTree, aEvent);
 
-    if (attached instanceof ChangeListDragBean) {
-      final ChangeListDragBean dragBean = (ChangeListDragBean)attached;
-      dragBean.setTargetNode(dropNode);
-      if (dragBean.getSourceComponent() != myTree || dropNode == null || !dropNode.canAcceptDrop(dragBean)) return true;
-    }
-    else if (attached instanceof ShelvedChangeListDragBean) {
-      if (!(dropNode == null || dropNode instanceof ChangesBrowserChangeListNode)) return true;
-    }
-    else {
-      return true;
-    }
+    boolean canHandle = dropNode != null && canHandleDropEvent(aEvent, dropNode);
+    if (!canHandle) return true;
 
-    if (dropNode != null) {
-      highlightDropNode(aEvent, dropNode);
-    }
-
+    highlightDropNode(aEvent, dropNode);
     aEvent.setDropPossible(true);
+
     return false;
   }
 
@@ -131,7 +85,7 @@ public class ChangesDnDSupport implements DnDDropHandler, DnDTargetChecker {
   }
 
   @Nullable
-  public static ChangesBrowserNode<?> getDropRootNode(@NotNull Tree tree, @NotNull DnDEvent event) {
+  public static ChangesBrowserNode<?> getDropRootNode(@NotNull ChangesTree tree, @NotNull DnDEvent event) {
     RelativePoint dropPoint = event.getRelativePoint();
     Point onTree = dropPoint.getPoint(tree);
     final TreePath dropPath = tree.getPathForLocation(onTree.x, onTree.y);
@@ -143,21 +97,6 @@ public class ChangesDnDSupport implements DnDDropHandler, DnDTargetChecker {
       dropNode = dropNode.getParent();
     }
     return dropNode;
-  }
-
-  @Override
-  public void drop(DnDEvent aEvent) {
-    Object attached = aEvent.getAttachedObject();
-    if (attached instanceof ShelvedChangeListDragBean) {
-      unshelveSilentlyWithDnd(myProject, (ShelvedChangeListDragBean)attached, getDropRootNode(myTree, aEvent), !isCopyAction(aEvent));
-    }
-    else if (attached instanceof ChangeListDragBean) {
-      final ChangeListDragBean dragBean = (ChangeListDragBean)attached;
-      final ChangesBrowserNode<?> changesBrowserNode = dragBean.getTargetNode();
-      if (changesBrowserNode != null) {
-        changesBrowserNode.acceptDrop(myChangeListManager, dragBean);
-      }
-    }
   }
 
   public static boolean isCopyAction(@NotNull DnDEvent aEvent) {
@@ -178,8 +117,14 @@ public class ChangesDnDSupport implements DnDDropHandler, DnDTargetChecker {
     return true;
   }
 
-  private int getSelectionCount() {
-    final TreePath[] paths = myTree.getSelectionModel().getSelectionPaths();
+  @NotNull
+  public static DnDImage createDragImage(@NotNull Tree tree, @NotNull String imageText) {
+    Image image = DnDAwareTree.getDragImage(tree, imageText, null).getFirst();
+    return new DnDImage(image, new Point(-image.getWidth(null), -image.getHeight(null)));
+  }
+
+  public static int getSelectionCount(@NotNull ChangesTree tree) {
+    final TreePath[] paths = tree.getSelectionModel().getSelectionPaths();
     int count = 0;
     final List<ChangesBrowserNode<?>> nodes = new ArrayList<>();
 
