@@ -15,6 +15,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.util.GHAccessTokenCreator
 import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
+import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil.DEFAULT_CLIENT_NAME
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.exceptions.GithubParseException
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -51,7 +52,6 @@ internal sealed class GithubCredentialsUI {
 
   internal class PasswordUI(
     private val serverTextField: ExtendableTextField,
-    private val clientName: String,
     private val executorFactory: GithubApiRequestExecutor.Factory,
     private val isAccountUnique: (login: String, server: GithubServerPath) -> Boolean
   ) : GithubCredentialsUI() {
@@ -101,7 +101,7 @@ internal sealed class GithubCredentialsUI {
                                       indicator: ProgressIndicator): Pair<String, String> {
       val login = loginTextField.text.trim()
       if (!isAccountUnique(login, server)) throw LoginNotUniqueException(login)
-      val token = GHAccessTokenCreator(server, executor, indicator).createMaster(clientName).token
+      val token = GHAccessTokenCreator(server, executor, indicator).createMaster(DEFAULT_CLIENT_NAME).token
       return login to token
     }
 
@@ -126,9 +126,9 @@ internal sealed class GithubCredentialsUI {
   }
 
   internal class TokenUI(
+    private val serverTextField: ExtendableTextField,
     val factory: GithubApiRequestExecutor.Factory,
-    val isAccountUnique: (name: String, server: GithubServerPath) -> Boolean,
-    private val serverTextField: ExtendableTextField
+    val isAccountUnique: (name: String, server: GithubServerPath) -> Boolean
   ) : GithubCredentialsUI() {
 
     private val tokenTextField = JBTextField()

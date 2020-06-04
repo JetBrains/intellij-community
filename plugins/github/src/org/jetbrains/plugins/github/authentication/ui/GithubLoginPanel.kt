@@ -16,10 +16,8 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
-import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
-import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.ui.util.DialogValidationUtils
-import org.jetbrains.plugins.github.ui.util.Validator
+import org.jetbrains.plugins.github.i18n.GithubBundle.message
+import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.notBlank
 import org.jetbrains.plugins.github.util.completionOnEdt
 import org.jetbrains.plugins.github.util.errorOnEdt
 import org.jetbrains.plugins.github.util.submitIOTask
@@ -30,15 +28,14 @@ import javax.swing.JTextField
 internal class GithubLoginPanel(executorFactory: GithubApiRequestExecutor.Factory,
                                 isAccountUnique: (name: String, server: GithubServerPath) -> Boolean,
                                 isDialogMode: Boolean = true) : Wrapper() {
-  private var clientName: String = GHSecurityUtil.DEFAULT_CLIENT_NAME
   private val serverTextField = ExtendableTextField(GithubServerPath.DEFAULT_HOST, 0)
   private var tokenAcquisitionError: ValidationInfo? = null
 
   private lateinit var currentUi: GithubCredentialsUI
-  private var passwordUi = GithubCredentialsUI.PasswordUI(serverTextField, clientName, executorFactory, isAccountUnique)
-  private var tokenUi = GithubCredentialsUI.TokenUI(executorFactory, isAccountUnique, serverTextField)
-  private val switchToPasswordUiLink = LinkLabel.create(GithubBundle.message("login.use.credentials")) { applyUi(passwordUi) }
-  private val switchToTokenUiLink = LinkLabel.create(GithubBundle.message("login.use.token")) { applyUi(tokenUi) }
+  private var passwordUi = GithubCredentialsUI.PasswordUI(serverTextField, executorFactory, isAccountUnique)
+  private var tokenUi = GithubCredentialsUI.TokenUI(serverTextField, executorFactory, isAccountUnique)
+  private val switchToPasswordUiLink = LinkLabel.create(message("login.use.credentials")) { applyUi(passwordUi) }
+  private val switchToTokenUiLink = LinkLabel.create(message("login.use.token")) { applyUi(tokenUi) }
 
   private val progressIcon = AnimatedIcon.Default()
   private val progressExtension = ExtendableTextComponent.Extension { progressIcon }
@@ -62,7 +59,7 @@ internal class GithubLoginPanel(executorFactory: GithubApiRequestExecutor.Factor
     row {
       cell(isFullWidth = true) {
         if (!dialogMode) {
-          val jbLabel = JBLabel(GithubBundle.message("login.to.github"), UIUtil.ComponentStyle.LARGE).apply {
+          val jbLabel = JBLabel(message("login.to.github"), UIUtil.ComponentStyle.LARGE).apply {
             font = JBFont.label().biggerOn(5.0f)
           }
           jbLabel()
@@ -83,36 +80,25 @@ internal class GithubLoginPanel(executorFactory: GithubApiRequestExecutor.Factor
   fun getPreferredFocus() = currentUi.getPreferredFocus()
 
   fun doValidateAll(): List<ValidationInfo> {
-    return listOf(DialogValidationUtils.chain(
-      DialogValidationUtils.chain(
-        { DialogValidationUtils.notBlank(serverTextField, GithubBundle.message("credentials.server.cannot.be.empty")) },
-        serverPathValidator(serverTextField)),
-      currentUi.getValidator()),
-                  { tokenAcquisitionError })
-      .mapNotNull { it() }
+    val uiError =
+      notBlank(serverTextField, message("credentials.server.cannot.be.empty"))
+      ?: validateServerPath(serverTextField)
+      ?: currentUi.getValidator().invoke()
+
+    return listOfNotNull(uiError, tokenAcquisitionError)
   }
 
-  private fun serverPathValidator(textField: JTextField): Validator {
-    return {
-      val text = textField.text
-      try {
-        GithubServerPath.from(text)
-        null
-      }
-      catch (e: Exception) {
-        ValidationInfo(GithubBundle.message("credentials.server.path.invalid", text, e.message.orEmpty()), textField)
-      }
+  private fun validateServerPath(field: JTextField): ValidationInfo? =
+    try {
+      GithubServerPath.from(field.text)
+      null
     }
-  }
+    catch (e: Exception) {
+      ValidationInfo(message("credentials.server.path.invalid", field.text, e.message.orEmpty()), field)
+    }
 
   private fun setBusy(busy: Boolean) {
-    if (busy) {
-      if (!serverTextField.extensions.contains(progressExtension))
-        serverTextField.addExtension(progressExtension)
-    }
-    else {
-      serverTextField.removeExtension(progressExtension)
-    }
+    serverTextField.apply { if (busy) addExtension(progressExtension) else removeExtension(progressExtension) }
     serverTextField.isEnabled = !busy
 
     switchToPasswordUiLink.isEnabled = !busy
@@ -127,23 +113,17 @@ internal class GithubLoginPanel(executorFactory: GithubApiRequestExecutor.Factor
     val server = getServer()
     val executor = currentUi.createExecutor()
 
-    return service<ProgressManager>().submitIOTask(progressIndicator) {
-      currentUi.acquireLoginAndToken(server, executor, it)
-    }.completionOnEdt(progressIndicator.modalityState) {
-      setBusy(false)
-    }.errorOnEdt(progressIndicator.modalityState) {
-      tokenAcquisitionError = currentUi.handleAcquireError(it)
-    }
+    return service<ProgressManager>()
+      .submitIOTask(progressIndicator) { currentUi.acquireLoginAndToken(server, executor, it) }
+      .completionOnEdt(progressIndicator.modalityState) { setBusy(false) }
+      .errorOnEdt(progressIndicator.modalityState) { setError(it) }
   }
 
-  fun getServer(): GithubServerPath = GithubServerPath.from(
-    serverTextField.text.trim())
+  fun getServer(): GithubServerPath = GithubServerPath.from(serverTextField.text.trim())
 
   fun setServer(path: String, editable: Boolean = true) {
-    serverTextField.apply {
-      text = path
-      isEditable = editable
-    }
+    serverTextField.text = path
+    serverTextField.isEditable = editable
   }
 
   fun setCredentials(login: String? = null, password: String? = null, editableLogin: Boolean = true) {
