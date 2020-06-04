@@ -29,7 +29,7 @@ public final class MarkdownApplicationSettings implements PersistentStateCompone
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(LafManagerListener.TOPIC, lafListener);
     // Let's init proper CSS scheme
     ApplicationManager.getApplication().invokeLater(() -> {
-      lafListener.reinit(StartupUiUtil.isUnderDarcula());
+      MarkdownLAFListener.reinit(StartupUiUtil.isUnderDarcula());
     });
   }
 
