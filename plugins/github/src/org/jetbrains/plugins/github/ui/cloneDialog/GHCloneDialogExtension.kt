@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionStatusLine
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
@@ -45,7 +44,6 @@ class GHCloneDialogExtension : VcsCloneDialogExtension {
     return GHCloneDialogExtensionComponent(project,
                                            GithubAuthenticationManager.getInstance(),
                                            GithubApiRequestExecutorManager.getInstance(),
-                                           GithubApiRequestExecutor.Factory.getInstance(),
                                            GithubAccountInformationProvider.getInstance(),
                                            CachingGithubUserAvatarLoader.getInstance(),
                                            GithubImageResizer.getInstance()
