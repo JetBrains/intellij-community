@@ -124,35 +124,36 @@ public abstract class ChangesTreeDnDSupport implements DnDDropHandler, DnDTarget
   }
 
   public static int getSelectionCount(@NotNull ChangesTree tree) {
-    final TreePath[] paths = tree.getSelectionModel().getSelectionPaths();
-    int count = 0;
-    final List<ChangesBrowserNode<?>> nodes = new ArrayList<>();
+    TreePath[] paths = tree.getSelectionModel().getSelectionPaths();
 
-    for (final TreePath path : paths) {
-      final ChangesBrowserNode<?> node = (ChangesBrowserNode<?>)path.getLastPathComponent();
+    List<ChangesBrowserNode<?>> parents = new ArrayList<>();
+    for (TreePath path : paths) {
+      ChangesBrowserNode<?> node = (ChangesBrowserNode<?>)path.getLastPathComponent();
       if (!node.isLeaf()) {
-        nodes.add(node);
-        count += node.getFileCount();
+        parents.add(node);
       }
     }
 
+    int count = 0;
+
+    outer:
     for (TreePath path : paths) {
-      final ChangesBrowserNode<?> element = (ChangesBrowserNode<?>)path.getLastPathComponent();
-      boolean child = false;
-      for (final ChangesBrowserNode<?> node : nodes) {
-        if (node.isNodeChild(element)) {
-          child = true;
-          break;
-        }
+      ChangesBrowserNode<?> node = (ChangesBrowserNode<?>)path.getLastPathComponent();
+      for (ChangesBrowserNode<?> parent : parents) {
+        if (isChildNode(parent, node)) continue outer;
       }
 
-      if (!child) {
-        if (element.isLeaf()) count++;
-      }
-      else if (!element.isLeaf()) {
-        count -= element.getFileCount();
-      }
+      count += node.getFileCount();
     }
     return count;
+  }
+
+  private static boolean isChildNode(ChangesBrowserNode<?> parent, ChangesBrowserNode<?> node) {
+    ChangesBrowserNode<?> nodeParent = node.getParent();
+    while (nodeParent != null) {
+      if (nodeParent == parent) return true;
+      nodeParent = nodeParent.getParent();
+    }
+    return false;
   }
 }
