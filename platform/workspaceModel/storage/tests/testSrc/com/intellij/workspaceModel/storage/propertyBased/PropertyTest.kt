@@ -3,11 +3,13 @@ package com.intellij.workspaceModel.storage.propertyBased
 
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.entities.*
-import com.intellij.workspaceModel.storage.impl.EntityId
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
-import com.intellij.workspaceModel.storage.impl.toClassId
+import com.intellij.workspaceModel.storage.impl.*
+import com.intellij.workspaceModel.storage.impl.containers.putAll
+import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
+import junit.framework.TestCase
 import org.jetbrains.jetCheck.GenerationEnvironment
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
@@ -16,6 +18,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Ignore
 import org.junit.Test
+import kotlin.reflect.full.memberProperties
 
 class PropertyTest {
 
@@ -30,11 +33,88 @@ class PropertyTest {
     }
   }
 
+  @Test
+  fun testReplaceBySource() {
+    PropertyChecker.checkScenarios {
+      ImperativeCommand { env ->
+        val workspace = env.generateValue(newEmptyWorkspace, "Generate empty workspace")
+        env.executeCommands(ReplaceBySource.create(workspace))
+        workspace.assertConsistency()
+      }
+    }
+  }
+
   // Keep this test ignored and empty.
   // This function is created for interactive debug sessions only.
   @Ignore
   @Test
   fun recheck() {
+    //PropertyChecker.customized()
+    //  .rechecking("7tzWpx7qpL2LCh8DAQEBCgAAAQECPAEAAwEAAAED")
+  }
+}
+
+private class ReplaceBySource(private val storage: WorkspaceEntityStorageBuilder) : ImperativeCommand {
+  override fun performCommand(env: ImperativeCommand.Environment) {
+    env.logMessage("Trying to perform replaceBySource")
+    val backup = storage.toStorage()
+    val another = WorkspaceEntityStorageBuilderImpl.from(backup)
+    env.logMessage("Modify original storage:")
+    env.executeCommands(getEntityManipulation(another))
+
+    val filter = env.generateValue(filter, null)
+    env.logMessage("Create filter for replaceBySource: ${filter.second}")
+
+    try {
+      storage.replaceBySource(filter.first, another)
+    } catch (e: ReplaceBySourceException) {
+      env.logMessage("Cannot perform replace by source: $e. Fallback to previous state")
+      (storage as WorkspaceEntityStorageBuilderImpl).restoreFromBackup(backup)
+    }
+  }
+
+  private fun WorkspaceEntityStorageBuilderImpl.restoreFromBackup(backup: WorkspaceEntityStorage) {
+    val backupBuilder = WorkspaceEntityStorageBuilderImpl.from(backup)
+    entitiesByType.entities.clear()
+    entitiesByType.entities.addAll(backupBuilder.entitiesByType.entities)
+
+    refs.oneToManyContainer.clear()
+    refs.oneToOneContainer.clear()
+    refs.oneToAbstractManyContainer.clear()
+    refs.abstractOneToOneContainer.clear()
+
+    refs.oneToManyContainer.putAll(backupBuilder.refs.oneToManyContainer)
+    refs.oneToOneContainer.putAll(backupBuilder.refs.oneToOneContainer)
+    refs.oneToAbstractManyContainer.putAll(backupBuilder.refs.oneToAbstractManyContainer)
+    refs.abstractOneToOneContainer.putAll(backupBuilder.refs.abstractOneToOneContainer)
+    // Just checking that all properties have been asserted
+    TestCase.assertEquals(4, RefsTable::class.memberProperties.size)
+
+
+    indexes.softLinks.clear()
+    indexes.virtualFileIndex.index.clear()
+    indexes.entitySourceIndex.index.clear()
+    indexes.persistentIdIndex.index.clear()
+    indexes.externalIndices.clear()
+
+    indexes.softLinks.putAll(backupBuilder.indexes.softLinks)
+    indexes.virtualFileIndex.index.putAll(backupBuilder.indexes.virtualFileIndex.index)
+    indexes.entitySourceIndex.index.putAll(backupBuilder.indexes.entitySourceIndex.index)
+    indexes.persistentIdIndex.index.putAll(backupBuilder.indexes.persistentIdIndex.index)
+    indexes.externalIndices.putAll(indexes.externalIndices)
+    // Just checking that all properties have been asserted
+    TestCase.assertEquals(5, StorageIndexes::class.memberProperties.size)
+  }
+
+  companion object {
+    val filter: Generator<Pair<(EntitySource) -> Boolean, String>> = Generator.sampledFrom(
+      { _: EntitySource -> true } to "Always true",
+      { _: EntitySource -> false } to "Always false",
+      { it: EntitySource -> it is MySource } to "MySource filter",
+      { it: EntitySource -> it is AnotherSource } to "AnotherSource filter"
+    )
+
+    fun create(workspace: WorkspaceEntityStorageBuilder): Generator<ReplaceBySource> = Generator.constant(ReplaceBySource(workspace))
   }
 }
 
