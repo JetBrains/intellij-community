@@ -27,7 +27,9 @@ abstract class EventField<T> {
   infix fun with(data: T): EventPair<T> = EventPair(this, data)
 }
 
-data class EventPair<T>(val field: EventField<T>, val data: T)
+data class EventPair<T>(val field: EventField<T>, val data: T) {
+   internal fun addData(featureUsageData: FeatureUsageData) = field.addData(featureUsageData, data)
+}
 
 data class StringEventField(override val name: String): EventField<String?>() {
   var customRuleId: String? = null
@@ -147,20 +149,14 @@ abstract class ObjectDescription {
 }
 
 class ObjectEventData(private vararg val values: EventPair<*>) {
-  fun buildObjectData(allowedFields: Array<out EventField<*>>): HashMap<String, Any> {
-    val map = hashMapOf<String, Any>()
+  fun buildObjectData(allowedFields: Array<out EventField<*>>): Map<String, Any> {
+    val data = FeatureUsageData()
     for (eventPair in values) {
       val eventField = eventPair.field
       if (eventField !in allowedFields) throw IllegalArgumentException("Field ${eventField.name} is not in allowed object fields")
-      var data = eventPair.data
-      if (data is ObjectEventData && eventField is ObjectEventField) {
-        data = data.buildObjectData(eventField.fields)
-      }
-      if (data != null) {
-        map[eventField.name] = data
-      }
+      eventPair.addData(data)
     }
-    return map
+    return data.build()
   }
 }
 
