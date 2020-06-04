@@ -11,7 +11,6 @@ import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.UIUtil
-import git4idea.i18n.GitBundle
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.util.GHAccessTokenCreator
@@ -21,11 +20,11 @@ import org.jetbrains.plugins.github.exceptions.GithubParseException
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils
 import org.jetbrains.plugins.github.ui.util.Validator
-import java.awt.event.ActionListener
-import java.awt.event.KeyEvent
 import java.net.UnknownHostException
 import java.util.function.Supplier
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JPasswordField
 
 internal sealed class GithubCredentialsUI {
   abstract fun getPreferredFocus(): JComponent
@@ -39,35 +38,16 @@ internal sealed class GithubCredentialsUI {
   abstract fun setBusy(busy: Boolean)
 
   var header: LayoutBuilder.() -> Unit = { }
+  var footer: LayoutBuilder.() -> Unit = { }
 
   fun getPanel(): JPanel =
     panel {
       header()
       centerPanel()
+      footer()
     }.apply { border = JBEmptyBorder(UIUtil.getRegularPanelInsets()) }
 
   protected abstract fun LayoutBuilder.centerPanel()
-
-  protected val loginButton = JButton(GitBundle.message("login.dialog.button.login")).apply { isVisible = false }
-  protected val cancelButton = JButton(Messages.getCancelButton()).apply { isVisible = false }
-
-  open fun setLoginAction(actionListener: ActionListener) {
-    loginButton.addActionListener(actionListener)
-    loginButton.setMnemonic('l')
-  }
-
-  fun setCancelAction(actionListener: ActionListener) {
-    cancelButton.addActionListener(actionListener)
-    cancelButton.setMnemonic('c')
-  }
-
-  fun setLoginButtonVisible(visible: Boolean) {
-    loginButton.isVisible = visible
-  }
-
-  fun setCancelButtonVisible(visible: Boolean) {
-    cancelButton.isVisible = visible
-  }
 
   internal class PasswordUI(
     private val serverTextField: ExtendableTextField,
@@ -88,25 +68,12 @@ internal sealed class GithubCredentialsUI {
       passwordField.text = password
     }
 
-    override fun setLoginAction(actionListener: ActionListener) {
-      super.setLoginAction(actionListener)
-      passwordField.setEnterPressedAction(actionListener)
-      loginTextField.setEnterPressedAction(actionListener)
-      serverTextField.setEnterPressedAction(actionListener)
-    }
-
     override fun LayoutBuilder.centerPanel() {
       row(GithubBundle.message("credentials.server.field")) { serverTextField(pushX, growX) }
       row(GithubBundle.message("credentials.login.field")) { loginTextField(pushX, growX) }
       row(GithubBundle.message("credentials.password.field")) {
         passwordField(comment = GithubBundle.message("credentials.password.not.saved"),
                       constraints = *arrayOf(pushX, growX))
-      }
-      row("") {
-        cell {
-          loginButton()
-          cancelButton()
-        }
       }
     }
 
@@ -178,12 +145,6 @@ internal sealed class GithubCredentialsUI {
           comment = GithubBundle.message("login.insufficient.scopes", GHSecurityUtil.MASTER_SCOPES),
           constraints = *arrayOf(pushX, growX))
       }
-      row("") {
-        cell {
-          loginButton()
-          cancelButton()
-        }
-      }
     }
 
     override fun getPreferredFocus() = tokenTextField
@@ -228,15 +189,5 @@ internal sealed class GithubCredentialsUI {
     fun setFixedLogin(fixedLogin: String?) {
       this.fixedLogin = fixedLogin
     }
-
-    override fun setLoginAction(actionListener: ActionListener) {
-      super.setLoginAction(actionListener)
-      tokenTextField.setEnterPressedAction(actionListener)
-      serverTextField.setEnterPressedAction(actionListener)
-    }
   }
-}
-
-private fun JComponent.setEnterPressedAction(actionListener: ActionListener) {
-  registerKeyboardAction(actionListener, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED)
 }

@@ -23,14 +23,13 @@ import org.jetbrains.plugins.github.ui.util.Validator
 import org.jetbrains.plugins.github.util.completionOnEdt
 import org.jetbrains.plugins.github.util.errorOnEdt
 import org.jetbrains.plugins.github.util.submitIOTask
-import java.awt.event.ActionListener
 import java.util.concurrent.CompletableFuture
 import javax.swing.JLabel
 import javax.swing.JTextField
 
-class GithubLoginPanel(executorFactory: GithubApiRequestExecutor.Factory,
-                       isAccountUnique: (name: String, server: GithubServerPath) -> Boolean,
-                       isDialogMode: Boolean = true) : Wrapper() {
+internal class GithubLoginPanel(executorFactory: GithubApiRequestExecutor.Factory,
+                                isAccountUnique: (name: String, server: GithubServerPath) -> Boolean,
+                                isDialogMode: Boolean = true) : Wrapper() {
   private var clientName: String = GHSecurityUtil.DEFAULT_CLIENT_NAME
   private val serverTextField = ExtendableTextField(GithubServerPath.DEFAULT_HOST, 0)
   private var tokenAcquisitionError: ValidationInfo? = null
@@ -43,6 +42,14 @@ class GithubLoginPanel(executorFactory: GithubApiRequestExecutor.Factory,
 
   private val progressIcon = AnimatedIcon.Default()
   private val progressExtension = ExtendableTextComponent.Extension { progressIcon }
+
+  var footer: LayoutBuilder.() -> Unit
+    get() = tokenUi.footer
+    set(value) {
+      passwordUi.footer = value
+      tokenUi.footer = value
+      applyUi(currentUi)
+    }
 
   init {
     passwordUi.header = { buildTitleAndLinkRow(isDialogMode, switchToTokenUiLink) }
@@ -155,25 +162,5 @@ class GithubLoginPanel(executorFactory: GithubApiRequestExecutor.Factory,
 
   fun setError(exception: Throwable) {
     tokenAcquisitionError = currentUi.handleAcquireError(exception)
-  }
-
-  fun setLoginListener(listener: ActionListener) {
-    passwordUi.setLoginAction(listener)
-    tokenUi.setLoginAction(listener)
-  }
-
-  fun setCancelListener(listener: ActionListener) {
-    passwordUi.setCancelAction(listener)
-    tokenUi.setCancelAction(listener)
-  }
-
-  fun setLoginButtonVisible(visible: Boolean) {
-    passwordUi.setLoginButtonVisible(visible)
-    tokenUi.setLoginButtonVisible(visible)
-  }
-
-  fun setCancelButtonVisible(visible: Boolean) {
-    passwordUi.setCancelButtonVisible(visible)
-    tokenUi.setCancelButtonVisible(visible)
   }
 }
