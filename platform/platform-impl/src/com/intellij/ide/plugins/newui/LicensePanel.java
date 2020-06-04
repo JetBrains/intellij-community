@@ -152,8 +152,8 @@ public class LicensePanel extends NonOpaquePanel {
     });
   }
 
-  public static boolean isEA2Product(@Nullable String productCode) {
+  public static boolean isEA2Product(@Nullable String productCodeOrPluginId) {
     LicensingFacade instance = LicensingFacade.getInstance();
-    return productCode != null && instance != null && instance.isEA2Product(productCode);
+    return productCodeOrPluginId != null && instance != null && instance.isEA2Product(productCodeOrPluginId);
   }
 }
