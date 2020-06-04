@@ -202,7 +202,7 @@ fun handleInconsistency(method: PsiMethodImpl, cachedData: MethodData, e: Throwa
 
     throw RuntimeExceptionWithAttachments("Gist outdated", e,
                                                Attachment("persisted.txt", gistMap.toString()),
-                                               Attachment("psi.txt", gistMap.toString()))
+                                               Attachment("psi.txt", psiMap.toString()))
   }
 
   StubTextInconsistencyException.checkStubTextConsistency(file)
