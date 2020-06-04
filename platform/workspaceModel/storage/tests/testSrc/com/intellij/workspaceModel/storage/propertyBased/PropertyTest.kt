@@ -2,11 +2,15 @@
 package com.intellij.workspaceModel.storage.propertyBased
 
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.entities.*
-import com.intellij.workspaceModel.storage.impl.*
+import com.intellij.workspaceModel.storage.entities.AnotherSource
+import com.intellij.workspaceModel.storage.entities.MySource
+import com.intellij.workspaceModel.storage.entities.SampleEntitySource
+import com.intellij.workspaceModel.storage.impl.EntityId
+import com.intellij.workspaceModel.storage.impl.RefsTable
+import com.intellij.workspaceModel.storage.impl.StorageIndexes
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.containers.putAll
 import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
 import junit.framework.TestCase
@@ -14,8 +18,6 @@ import org.jetbrains.jetCheck.GenerationEnvironment
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Ignore
 import org.junit.Test
 import kotlin.reflect.full.memberProperties
@@ -67,7 +69,8 @@ private class ReplaceBySource(private val storage: WorkspaceEntityStorageBuilder
 
     try {
       storage.replaceBySource(filter.first, another)
-    } catch (e: ReplaceBySourceException) {
+    }
+    catch (e: ReplaceBySourceException) {
       env.logMessage("Cannot perform replace by source: $e. Fallback to previous state")
       (storage as WorkspaceEntityStorageBuilderImpl).restoreFromBackup(backup)
     }
@@ -118,82 +121,10 @@ private class ReplaceBySource(private val storage: WorkspaceEntityStorageBuilder
   }
 }
 
-private fun getEntityManipulation(workspace: WorkspaceEntityStorageBuilderImpl): Generator<ImperativeCommand>? {
-  return Generator.anyOf(getRemoveGenerator(workspace), getAddGenerator(workspace))
-}
-
-private fun getAddGenerator(workspace: WorkspaceEntityStorageBuilderImpl): Generator<ImperativeCommand> {
-  return Generator.sampledFrom(
-    AddSampleEntity(workspace),
-    AddParentEntity(workspace),
-    AddChildEntity(workspace),
-    AddChildWithOptionalParentEntity(workspace)
-  )
-}
-
-private fun getRemoveGenerator(workspace: WorkspaceEntityStorageBuilderImpl) = Generator.sampledFrom(RemoveSomeEntity(workspace))
-
 private val newEmptyWorkspace
   get() = Generator.constant(WorkspaceEntityStorageBuilderImpl.create())
 
-private abstract class AddEntity(protected val storage: WorkspaceEntityStorageBuilderImpl,
-                                 private val entityDescription: String) : ImperativeCommand {
-  abstract fun makeEntity(source: EntitySource, someProperty: String, env: ImperativeCommand.Environment): WorkspaceEntity?
-  final override fun performCommand(env: ImperativeCommand.Environment) {
-    env.logMessage("Trying to add $entityDescription entity")
-    val property = env.generateValue(randomNames, null)
-    val source = env.generateValue(sources, null)
-    val createdEntity = makeEntity(source, property, env) as? WorkspaceEntityBase
-    if (createdEntity != null) {
-      assertNotNull(storage.entityDataById(createdEntity.id))
-      env.logMessage("New entity added: $createdEntity. Source: ${createdEntity.entitySource}")
-      env.logMessage("--------------------------------")
-    }
-  }
-}
-
-private class AddChildWithOptionalParentEntity(storage: WorkspaceEntityStorageBuilderImpl) : AddEntity(storage,
-                                                                                                       "ChildWithOptionalDependency") {
-  override fun makeEntity(source: EntitySource, someProperty: String, env: ImperativeCommand.Environment): WorkspaceEntity? {
-    val classId = ParentEntity::class.java.toClassId()
-    val parentId = env.generateValue(EntityIdOfFamilyGenerator.create(storage, classId), "Select parent for child: %s")
-    val parentEntity = parentId?.let { storage.entityDataByIdOrDie(it).createEntity(storage) as ParentEntity }
-    return storage.addChildWithOptionalParentEntity(parentEntity, someProperty, source)
-  }
-}
-
-private class AddChildEntity(storage: WorkspaceEntityStorageBuilderImpl) : AddEntity(storage, "Child") {
-  override fun makeEntity(source: EntitySource, someProperty: String, env: ImperativeCommand.Environment): WorkspaceEntity? {
-    val classId = ParentEntity::class.java.toClassId()
-    val parentId = env.generateValue(EntityIdOfFamilyGenerator.create(storage, classId), "Select parent for child: %s") ?: return null
-    return storage.addChildEntity(storage.entityDataByIdOrDie(parentId).createEntity(storage) as ParentEntity, someProperty, null, source)
-  }
-}
-
-private class AddParentEntity(storage: WorkspaceEntityStorageBuilderImpl) : AddEntity(storage, "Parent") {
-  override fun makeEntity(source: EntitySource, someProperty: String, env: ImperativeCommand.Environment): WorkspaceEntity? {
-    return storage.addParentEntity(someProperty, source)
-  }
-}
-
-private class AddSampleEntity(storage: WorkspaceEntityStorageBuilderImpl) : AddEntity(storage, "Sample") {
-  override fun makeEntity(source: EntitySource, someProperty: String, env: ImperativeCommand.Environment): WorkspaceEntity? {
-    return storage.addSampleEntity(someProperty, source)
-  }
-}
-
-private class RemoveSomeEntity(private val storage: WorkspaceEntityStorageBuilderImpl) : ImperativeCommand {
-  override fun performCommand(env: ImperativeCommand.Environment) {
-    env.logMessage("Trying to remove random entity")
-    val id = env.generateValue(WorkspaceIdGenerator.create(storage), "Generate random EntityId: %s") ?: return
-    storage.removeEntity(storage.entityDataByIdOrDie(id).createEntity(storage))
-    assertNull(storage.entityDataById(id))
-    env.logMessage("Entity removed")
-    env.logMessage("-------------------------")
-  }
-}
-
-private class WorkspaceIdGenerator(private val storage: WorkspaceEntityStorageBuilderImpl) : java.util.function.Function<GenerationEnvironment, EntityId?> {
+internal class EntityIdGenerator(private val storage: WorkspaceEntityStorageBuilderImpl) : java.util.function.Function<GenerationEnvironment, EntityId?> {
   override fun apply(t: GenerationEnvironment): EntityId? {
     val filtered = storage.entitiesByType.entities.asSequence().filterNotNull().flatMap { it.entities.filterNotNull().asSequence() }
     if (filtered.none()) return null
@@ -203,12 +134,12 @@ private class WorkspaceIdGenerator(private val storage: WorkspaceEntityStorageBu
   }
 
   companion object {
-    fun create(storage: WorkspaceEntityStorageBuilderImpl) = Generator.from(WorkspaceIdGenerator(storage))
+    fun create(storage: WorkspaceEntityStorageBuilderImpl) = Generator.from(EntityIdGenerator(storage))
   }
 }
 
-private class EntityIdOfFamilyGenerator(private val storage: WorkspaceEntityStorageBuilderImpl,
-                                        private val family: Int) : java.util.function.Function<GenerationEnvironment, EntityId?> {
+internal class EntityIdOfFamilyGenerator(private val storage: WorkspaceEntityStorageBuilderImpl,
+                                         private val family: Int) : java.util.function.Function<GenerationEnvironment, EntityId?> {
   override fun apply(t: GenerationEnvironment): EntityId? {
     val entityFamily = storage.entitiesByType.entities.getOrNull(family) ?: return null
     val existingEntities = entityFamily.entities.filterNotNull()
@@ -222,13 +153,13 @@ private class EntityIdOfFamilyGenerator(private val storage: WorkspaceEntityStor
   }
 }
 
-private val sources = Generator.anyOf(
+internal val sources = Generator.anyOf(
   Generator.constant(MySource),
   Generator.constant(AnotherSource),
   Generator.from { SampleEntitySource(it.generate(randomNames)) }
 )
 
-private val randomNames = Generator.sampledFrom(
+internal val randomNames = Generator.sampledFrom(
   "education",
   "health",
   "singer",
