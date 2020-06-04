@@ -18,6 +18,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -92,7 +93,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     assertNotNull(myTemplateManager.getTemplate("foo.txt"));
 
     File foo = FileUtilRt.createTempDirectory("foo", null, false);
-    final Project project = ProjectManager.getInstance().createProject("foo", foo.getPath());
+    Project project = PlatformTestUtil.loadAndOpenProject(foo.toPath());
     try {
       assertNotNull(project);
       assertNotNull(FileTemplateManager.getInstance(project).getTemplate("foo.txt"));
@@ -106,7 +107,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
   public void testSurviveOnProjectReopen() throws Exception {
     File foo = FileUtilRt.createTempDirectory("foo", null, false);
     Project reloaded = null;
-    final Project project = ProjectManager.getInstance().createProject("foo", foo.getPath());
+    Project project = PlatformTestUtil.loadAndOpenProject(foo.toPath());
     try {
       assertThat(project).isNotNull();
       FileTemplateManager manager = FileTemplateManager.getInstance(project);
@@ -138,7 +139,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
 
   public void testAddRemoveShared() throws Exception {
     File foo = FileUtilRt.createTempDirectory("foo", null, false);
-    final Project project = ProjectManager.getInstance().createProject("foo", foo.getPath());
+    Project project = PlatformTestUtil.loadAndOpenProject(foo.toPath());
     try {
       assertThat(project).isNotNull();
       FileTemplateManager manager = FileTemplateManager.getInstance(project);
@@ -179,7 +180,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     }
   }
 
-  private static void closeProject(final Project project) {
+  private static void closeProject(@Nullable Project project) {
     if (project != null && !project.isDisposed()) {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project);
     }

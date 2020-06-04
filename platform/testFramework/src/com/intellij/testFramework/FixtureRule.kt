@@ -267,7 +267,7 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
 }
 
 fun createHeavyProject(path: Path, useDefaultProjectAsTemplate: Boolean = false): Project {
-  return ProjectManagerEx.getInstanceEx().newProject(path, null, OpenProjectTask(useDefaultProjectAsTemplate = useDefaultProjectAsTemplate, isNewProject = true))!!
+  return ProjectManagerEx.getInstanceEx().newProject(path, OpenProjectTask(useDefaultProjectAsTemplate = useDefaultProjectAsTemplate, isNewProject = true))!!
 }
 
 fun createTestOpenProjectOptions(): OpenProjectTask {
@@ -276,7 +276,7 @@ fun createTestOpenProjectOptions(): OpenProjectTask {
   return OpenProjectTask(forceOpenInNewFrame = true,
                          isRefreshVfsNeeded = false,
                          runConversionBeforeOpen = false,
-                         runConfiguratorsIfNoModules = false,
+                         runConfigurators = false,
                          showWelcomeScreen = false,
                          useDefaultProjectAsTemplate = false)
 }

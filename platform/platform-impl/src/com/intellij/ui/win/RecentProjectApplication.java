@@ -26,7 +26,7 @@ final class RecentProjectApplication extends ApplicationStarterBase {
   @NotNull
   @Override
   protected Future<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) {
-    ProjectManagerEx.getInstanceEx().loadAndOpenProject(Paths.get(args.get(1)).normalize(), new OpenProjectTask());
+    ProjectManagerEx.getInstanceEx().openProject(Paths.get(args.get(1)).normalize(), new OpenProjectTask());
     return CompletableFuture.completedFuture(CliResult.OK);
   }
 }

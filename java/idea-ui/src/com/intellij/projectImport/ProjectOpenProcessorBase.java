@@ -2,7 +2,6 @@
 package com.intellij.projectImport;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
@@ -12,6 +11,7 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.StorageScheme;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -177,49 +177,29 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder<?>
             JavaUiBundle.message("project.import.open.existing.reimport"),
             CommonBundle.getCancelButtonText(),
             Messages.getQuestionIcon());
-          if (result == Messages.CANCEL) return null;
+          if (result == Messages.CANCEL) {
+            return null;
+          }
           shouldOpenExisting = result == Messages.YES;
           importToProject = !shouldOpenExisting;
         }
       }
 
-      ProjectUtil.updateLastProjectLocation(pathToOpen);
-
-      OpenProjectTask options = shouldOpenExisting ? new OpenProjectTask(forceOpenInNewFrame, projectToClose) : OpenProjectTask.newProject(true)
-        .withProjectName(wizardContext.getProjectName());
+      OpenProjectTask options = shouldOpenExisting ? OpenProjectTask.withProjectToClose(projectToClose, forceOpenInNewFrame) : OpenProjectTask.newProject();
       if (importToProject) {
-        options.withBeforeProjectCallback((project, module) -> importToProject(projectToClose, wizardContext, project));
+        options.withBeforeProjectCallback(project -> importToProject(projectToClose, wizardContext, project));
       }
+      options.withProjectName(wizardContext.getProjectName());
 
-      Project projectToOpen;
-      if (shouldOpenExisting) {
-        try {
-          projectToOpen = ProjectManagerEx.getInstanceEx().loadAndOpenProject(pathToOpen, options);
-        }
-        catch (Exception e) {
-          return null;
-        }
+      try {
+        Project project = ProjectManagerEx.getInstanceEx().openProject(pathToOpen, options);
+        ProjectUtil.updateLastProjectLocation(pathToOpen);
+        return project;
       }
-      else {
-        projectToOpen = ProjectManagerEx.getInstanceEx().newProject(pathToOpen, options);
-        if (projectToOpen == null || !importToProject(projectToClose, wizardContext, projectToOpen)) {
-          return null;
-        }
-
-        if (!forceOpenInNewFrame) {
-          Project[] openProjects = ProjectUtil.getOpenProjects();
-          if (openProjects.length > 0) {
-            int exitCode = ProjectUtil.confirmOpenNewProject(true);
-            if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
-              Project project = projectToClose != null ? projectToClose : openProjects[openProjects.length - 1];
-              ProjectManagerEx.getInstanceEx().closeAndDispose(project);
-            }
-          }
-        }
-
-        ProjectManagerEx.getInstanceEx().openProject(projectToOpen);
+      catch (Exception e) {
+        Logger.getInstance(ProjectOpenProcessorBase.class).warn(e);
+        return null;
       }
-      return projectToOpen;
     }
     finally {
       getBuilder().cleanup();
@@ -233,21 +213,23 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder<?>
 
     projectToOpen.save();
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      Sdk jdk1 = wizardContext.getProjectJdk();
-      if (jdk1 != null) {
-        NewProjectUtil.applyJdkToProject(projectToOpen, jdk1);
-      }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        Sdk jdk1 = wizardContext.getProjectJdk();
+        if (jdk1 != null) {
+          NewProjectUtil.applyJdkToProject(projectToOpen, jdk1);
+        }
 
-      String projectDirPath = wizardContext.getProjectFileDirectory();
-      String path = projectDirPath + (StringUtil.endsWithChar(projectDirPath, '/') ? "classes" : "/classes");
-      CompilerProjectExtension extension = CompilerProjectExtension.getInstance(projectToOpen);
-      if (extension != null) {
-        extension.setCompilerOutputUrl(getUrl(path));
-      }
+        String projectDirPath = wizardContext.getProjectFileDirectory();
+        String path = projectDirPath + (StringUtil.endsWithChar(projectDirPath, '/') ? "classes" : "/classes");
+        CompilerProjectExtension extension = CompilerProjectExtension.getInstance(projectToOpen);
+        if (extension != null) {
+          extension.setCompilerOutputUrl(getUrl(path));
+        }
+      });
+
+      getBuilder().commit(projectToOpen, null, ModulesProvider.EMPTY_MODULES_PROVIDER);
     });
-
-    getBuilder().commit(projectToOpen, null, ModulesProvider.EMPTY_MODULES_PROVIDER);
     return true;
   }
 

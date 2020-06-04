@@ -111,7 +111,11 @@ public final class ProjectUtil {
   }
 
   public static Project openOrImport(@NotNull Path path, Project projectToClose, boolean forceOpenInNewFrame) {
-    return openOrImport(path, new OpenProjectTask(forceOpenInNewFrame, projectToClose));
+    return openOrImport(path, OpenProjectTask.withProjectToClose(projectToClose, forceOpenInNewFrame));
+  }
+
+  public static Project openOrImport(@NotNull Path path) {
+    return openOrImport(path, new OpenProjectTask());
   }
 
   /**
@@ -122,8 +126,8 @@ public final class ProjectUtil {
    * installed importers (regardless of opening/import result)
    * null otherwise
    */
-  public static @Nullable Project openOrImport(@NotNull String path, Project projectToClose, boolean forceOpenInNewFrame) {
-    return openOrImport(Paths.get(path), new OpenProjectTask(forceOpenInNewFrame, projectToClose));
+  public static @Nullable Project openOrImport(@NotNull String path, @Nullable Project projectToClose, boolean forceOpenInNewFrame) {
+    return openOrImport(Paths.get(path), OpenProjectTask.withProjectToClose(projectToClose, forceOpenInNewFrame));
   }
 
   public static @Nullable Project openOrImport(@NotNull Path file, @NotNull OpenProjectTask options) {
@@ -151,7 +155,7 @@ public final class ProjectUtil {
     }
 
     if (isValidProjectPath(file)) {
-      return ProjectManagerEx.getInstanceEx().loadAndOpenProject(file, options);
+      return ProjectManagerEx.getInstanceEx().openProject(file, options);
     }
 
     if (options.checkDirectoryForFileBasedProjects && Files.isDirectory(file)) {
@@ -206,8 +210,7 @@ public final class ProjectUtil {
                                                           @NotNull Path file,
                                                           @NotNull OpenProjectTask options) {
     if (processors.size() == 1 && processors.get(0) instanceof PlatformProjectOpenProcessor) {
-      options.isNewProject = !isValidProjectPath(file);
-      Project project = PlatformProjectOpenProcessor.doOpenProject(file, options);
+      Project project = PlatformProjectOpenProcessor.doOpenProject(file, options.withNewProject(!isValidProjectPath(file)));
       if (project != null) {
         project.putUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR, Boolean.TRUE);
       }
@@ -223,7 +226,7 @@ public final class ProjectUtil {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       ProjectOpenProcessor processor = selectOpenProcessor(processors, virtualFile);
       if (processor != null) {
-        Project project = processor.doOpenProject(virtualFile, options.projectToClose, options.forceOpenInNewFrame);
+        Project project = processor.doOpenProject(virtualFile, options.getProjectToClose(), options.getForceOpenInNewFrame());
         if (project != null && processor instanceof PlatformProjectOpenProcessor) {
           project.putUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR, Boolean.TRUE);
         }
@@ -259,7 +262,7 @@ public final class ProjectUtil {
   }
 
   public static @Nullable Project openProject(@NotNull String path, @Nullable Project projectToClose, boolean forceOpenInNewFrame) {
-    return openProject(Paths.get(path), new OpenProjectTask(forceOpenInNewFrame, projectToClose));
+    return openProject(Paths.get(path), OpenProjectTask.withProjectToClose(projectToClose, forceOpenInNewFrame));
   }
 
   public static @Nullable Project openProject(@NotNull Path file, @NotNull OpenProjectTask options) {
@@ -289,7 +292,7 @@ public final class ProjectUtil {
     }
 
     try {
-      return ProjectManagerEx.getInstanceEx().loadAndOpenProject(file, options);
+      return ProjectManagerEx.getInstanceEx().openProject(file, options);
     }
     catch (Exception e) {
       Messages.showMessageDialog(IdeBundle.message("error.cannot.load.project", e.getMessage()),
@@ -490,7 +493,7 @@ public final class ProjectUtil {
     Project result = null;
 
     for (File file : list) {
-      result = openOrImport(file.toPath().toAbsolutePath(), project, true);
+      result = openOrImport(file.toPath().toAbsolutePath(), OpenProjectTask.withProjectToClose(project, true));
       if (result != null) {
         LOG.debug(location + ": load project from ", file);
         return result;

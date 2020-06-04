@@ -29,7 +29,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
-import java.util.function.BiPredicate
 
 private val LOG = logger<PlatformProjectOpenProcessor>()
 private val EP_NAME = ExtensionPointName<DirectoryProjectConfigurator>("com.intellij.directoryProjectConfigurator")
@@ -80,7 +79,11 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
                       line: Int,
                       callback: ProjectOpenedCallback?,
                       options: EnumSet<Option>): Project? {
-      val openProjectOptions = OpenProjectTask(forceOpenInNewFrame = options.contains(Option.FORCE_NEW_FRAME), projectToClose = projectToClose, callback = callback, line = line)
+      val openProjectOptions = OpenProjectTask(forceOpenInNewFrame = options.contains(Option.FORCE_NEW_FRAME),
+                                               projectToClose = projectToClose,
+                                               callback = callback,
+                                               runConfigurators = callback != null,
+                                               line = line)
       return doOpenProject(Paths.get(virtualFile.path), openProjectOptions)
     }
 
@@ -89,9 +92,9 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     fun createTempProjectAndOpenFile(file: Path, options: OpenProjectTask): Project? {
       val dummyProjectName = file.fileName.toString()
       val baseDir = FileUtilRt.createTempDirectory(dummyProjectName, null, true).toPath()
-      val copy = options.copy(isNewProject = true, projectName = dummyProjectName, contentRoot = file, beforeProjectOpen = BiPredicate { _, module ->
+      val copy = options.copy(isNewProject = true, projectName = dummyProjectName, runConfigurators = true, preparedToOpen = { module ->
         // add content root for chosen (single) file
-        ModuleRootModificationUtil.updateModel(module!!) { model ->
+        ModuleRootModificationUtil.updateModel(module) { model ->
           val entries = model.contentEntries
           // remove custom content entry created for temp directory
           if (entries.size == 1) {
@@ -99,18 +102,18 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
           }
           model.addContentEntry(VfsUtilCore.pathToUrl(file.toString()))
         }
-        true
       })
-      val project = ProjectManagerEx.getInstanceEx().loadAndOpenProject(baseDir, copy) ?: return null
+      val project = ProjectManagerEx.getInstanceEx().openProject(baseDir, copy) ?: return null
       openFileFromCommandLine(project, file, copy.line, copy.column)
       return project
     }
 
     @ApiStatus.Internal
     @JvmStatic
-    fun doOpenProject(file: Path, options: OpenProjectTask): Project? {
+    fun doOpenProject(file: Path, originalOptions: OpenProjectTask): Project? {
       LOG.info("Opening $file")
       var baseDir = file
+      var options = originalOptions
       if (!Files.isDirectory(file)) {
         if (LightEditUtil.openFile(file)) {
           return LightEditUtil.getProject()
@@ -129,7 +132,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
           }
 
           baseDir = file.parent
-          options.isNewProject = !Files.isDirectory(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER))
+          options = options.copy(isNewProject = !Files.isDirectory(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER)))
         }
         else {
           baseDir = baseDirCandidate
@@ -137,7 +140,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         }
       }
 
-      val project = ProjectManagerEx.getInstanceEx().loadAndOpenProject(baseDir, if (baseDir == file) options else options.copy(contentRoot = file))
+      val project = ProjectManagerEx.getInstanceEx().openProject(baseDir, if (baseDir == file) options else options.copy(projectName = file.fileName.toString()))
       if (project != null && file != baseDir && !Files.isDirectory(file)) {
         openFileFromCommandLine(project, file, options.line, options.column)
       }
@@ -149,10 +152,10 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @Deprecated(message = "If project base dir differs from project store base dir, specify it as contentRoot in the options", level = DeprecationLevel.ERROR)
     fun openExistingProject(file: Path, projectStoreBaseDir: Path, options: OpenProjectTask): Project? {
       if (file == projectStoreBaseDir) {
-        return ProjectManagerEx.getInstanceEx().loadAndOpenProject(projectStoreBaseDir, options)
+        return ProjectManagerEx.getInstanceEx().openProject(projectStoreBaseDir, options)
       }
       else {
-        return ProjectManagerEx.getInstanceEx().loadAndOpenProject(projectStoreBaseDir, options.copy(contentRoot = file))
+        return ProjectManagerEx.getInstanceEx().openProject(projectStoreBaseDir, options.copy(projectName = file.fileName.toString()))
       }
     }
 
@@ -191,11 +194,12 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
   override fun lookForProjectsInDirectory() = false
 
   override fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
+    val baseDir = virtualFile.toNioPath()
     // doesn't make sense to use default project in tests for heavy projects
-    val options = OpenProjectTask(forceOpenInNewFrame = forceOpenInNewFrame, projectToClose = projectToClose, useDefaultProjectAsTemplate = !ApplicationManager.getApplication().isUnitTestMode)
-    val baseDir = Paths.get(virtualFile.path)
-    options.isNewProject = !ProjectUtil.isValidProjectPath(baseDir)
-    return doOpenProject(baseDir, options)
+    return doOpenProject(baseDir, OpenProjectTask(forceOpenInNewFrame = forceOpenInNewFrame,
+                                                  projectToClose = projectToClose,
+                                                  isNewProject = !ProjectUtil.isValidProjectPath(baseDir),
+                                                  useDefaultProjectAsTemplate = !ApplicationManager.getApplication().isUnitTestMode))
   }
 
   override fun openProjectAndFile(virtualFile: VirtualFile, line: Int, column: Int, tempProject: Boolean): Project? {

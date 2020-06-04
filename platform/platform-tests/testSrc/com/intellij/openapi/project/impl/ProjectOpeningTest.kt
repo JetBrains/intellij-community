@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
@@ -54,7 +53,7 @@ class ProjectOpeningTest {
     val foo = tempDir.newPath()
     ProgressManager.getInstance().run(object : Task.Modal(null, "", true) {
       override fun run(indicator: ProgressIndicator) {
-        val project = ProjectManagerEx.getInstanceEx().loadAndOpenProject(foo, createTestOpenProjectOptions())
+        val project = ProjectManagerEx.getInstanceEx().openProject(foo, createTestOpenProjectOptions())
         if (project != null) {
           runInEdtAndWait {
             PlatformTestUtil.forceCloseProjectWithoutSaving(project)
@@ -86,7 +85,7 @@ class ProjectOpeningTest {
           }
         })
       runModalTask("") {
-        project = ProjectManagerEx.getInstanceEx().loadAndOpenProject(foo, createTestOpenProjectOptions())!!
+        project = ProjectManagerEx.getInstanceEx().openProject(foo, createTestOpenProjectOptions())!!
       }
       assertThat(project.isOpen).isFalse()
       assertThat(project.isDisposed).isTrue()
@@ -124,7 +123,7 @@ class ProjectOpeningTest {
     projectDir.createDirectories()
 
     val iprFilePath = projectDir.resolve("project.ipr")
-    val fileBasedProject = ProjectManager.getInstance().createProject(iprFilePath.fileName.toString(), iprFilePath.toAbsolutePath().toString())!!
+    val fileBasedProject = PlatformTestUtil.loadAndOpenProject(iprFilePath)
     Disposer.register(disposableRule.disposable, Disposable {
       runInEdtAndWait { closeProject(fileBasedProject) }
     })

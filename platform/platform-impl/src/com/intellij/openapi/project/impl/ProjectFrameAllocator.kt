@@ -39,7 +39,7 @@ import kotlin.math.min
 internal open class ProjectFrameAllocator {
   companion object {
     internal fun getPresentableName(options: OpenProjectTask, projectStoreBaseDir: Path): String {
-      return options.projectName ?: (options.contentRoot ?: projectStoreBaseDir).fileName.toString()
+      return options.projectName ?: projectStoreBaseDir.fileName.toString()
     }
   }
 

@@ -204,7 +204,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       }
     }
 
-    Project project = ProjectUtil.openOrImport(projectPath, null, false);
+    Project project = ProjectUtil.openOrImport(projectPath);
     if (project == null) {
       reportError("Unable to open project");
       gracefulExit();

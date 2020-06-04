@@ -51,7 +51,6 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -163,10 +162,6 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
   private static long CHECK_START = System.currentTimeMillis();
   private final Map<Project, String> myProjects = new WeakHashMap<>();
 
-  @Override
-  public @Nullable Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
-    return newProject(Paths.get(toCanonicalName(filePath)), OpenProjectTask.newProject(useDefaultProjectSettings).withProjectName(projectName));
-  }
 
   @Override
   public @Nullable Project newProject(@NotNull Path projectFile, @NotNull OpenProjectTask options) {
@@ -179,7 +174,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
 
     if (Files.isRegularFile(projectFile)) {
       try {
-        FileUtil.delete(projectFile);
+        Files.deleteIfExists(projectFile);
       }
       catch (IOException ignored) {
       }
@@ -196,7 +191,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
 
     ProjectImpl project = instantiateProject(projectFile, options.getProjectName());
     try {
-      Project template = options.useDefaultProjectAsTemplate ? getDefaultProject() : null;
+      Project template = options.getUseDefaultProjectAsTemplate() ? getDefaultProject() : null;
       initProject(projectFile, project, options.isRefreshVfsNeeded(), template, ProgressManager.getInstance().getProgressIndicator());
       if (LOG_PROJECT_LEAKAGE_IN_TESTS) {
         myProjects.put(project, null);

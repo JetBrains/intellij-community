@@ -16,8 +16,8 @@ import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,17 +25,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class ModulesConfigurationTest extends HeavyPlatformTestCase {
   public void testAddRemoveModule() throws IOException {
-    Pair<File, File> result = createProjectWithModule();
-    File projectDir = result.getFirst();
+    Pair<Path, Path> result = createProjectWithModule();
+    Path projectDir = result.getFirst();
 
-    Project reloaded = PlatformTestUtil.loadAndOpenProject(projectDir.toPath());
+    Project reloaded = PlatformTestUtil.loadAndOpenProject(projectDir);
     closeOnTearDown(reloaded);
     ModuleManager moduleManager = ModuleManager.getInstance(reloaded);
     Module module = assertOneElement(moduleManager.getModules());
     moduleManager.disposeModule(module);
     closeProject(reloaded, true);
 
-    reloaded = PlatformTestUtil.loadAndOpenProject(projectDir.toPath());
+    reloaded = PlatformTestUtil.loadAndOpenProject(projectDir);
     closeOnTearDown(reloaded);
     assertEmpty(ModuleManager.getInstance(reloaded).getModules());
     closeProject(reloaded, false);
@@ -43,15 +43,15 @@ public class ModulesConfigurationTest extends HeavyPlatformTestCase {
 
   // because of external storage, imls file can be missed on disk and it is not error
   public void testRemoveFailedToLoadModule() throws IOException {
-    Pair<File, File> result = createProjectWithModule();
-    File projectDir = result.getFirst();
-    File moduleFile = result.getSecond();
+    Pair<Path, Path> result = createProjectWithModule();
+    Path projectDir = result.getFirst();
+    Path moduleFile = result.getSecond();
 
     assertThat(moduleFile).exists();
-    WriteAction.run(() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleFile).delete(this));
+    WriteAction.run(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(moduleFile.toString())).delete(this));
     List<ConfigurationErrorDescription> errors = new ArrayList<>();
     ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(errors::add, getTestRootDisposable());
-    Project reloaded = PlatformTestUtil.loadAndOpenProject(projectDir.toPath());
+    Project reloaded = PlatformTestUtil.loadAndOpenProject(projectDir);
     closeOnTearDown(reloaded);
     ModuleManager moduleManager = ModuleManager.getInstance(reloaded);
     assertThat(moduleManager.getModules()).hasSize(1);
@@ -59,21 +59,20 @@ public class ModulesConfigurationTest extends HeavyPlatformTestCase {
     closeProject(reloaded, true);
     errors.clear();
 
-    reloaded = PlatformTestUtil.loadAndOpenProject(projectDir.toPath());
+    reloaded = PlatformTestUtil.loadAndOpenProject(projectDir);
     closeOnTearDown(reloaded);
     assertEmpty(errors);
     closeProject(reloaded, false);
   }
 
-  @NotNull
-  private Pair<File, File> createProjectWithModule() throws IOException {
-    File projectDir = FileUtil.createTempDirectory("project", null);
-    Project project = ProjectManager.getInstance().createProject("project", projectDir.getAbsolutePath());
+  private @NotNull Pair<Path, Path> createProjectWithModule() throws IOException {
+    Path projectDir = FileUtil.createTempDirectory("project", null).toPath();
+    Project project = PlatformTestUtil.loadAndOpenProject(projectDir);
     closeOnTearDown(project);
-    File moduleFile = new File(projectDir, "module.iml");
-    WriteAction.run(() -> ModuleManager.getInstance(project).newModule(moduleFile.getPath(), EmptyModuleType.EMPTY_MODULE));
+    Path moduleFile = projectDir.resolve("module.iml");
+    WriteAction.run(() -> ModuleManager.getInstance(project).newModule(moduleFile.toString(), EmptyModuleType.EMPTY_MODULE));
     closeProject(project, true);
-    return Pair.create(projectDir, moduleFile);
+    return new Pair<>(projectDir, moduleFile);
   }
 
   private static void closeProject(@NotNull Project project, boolean isSave) {

@@ -24,8 +24,9 @@ public abstract class ProjectManagerEx extends ProjectManager {
   }
 
   /**
-   * @param filePath path to .ipr file or directory where .idea directory is located
+   * @deprecated Use {@link #newProject(Path, OpenProjectTask)}
    */
+  @Deprecated
   public abstract @Nullable Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy);
 
   /**
@@ -46,8 +47,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
     return loadProject(Paths.get(filePath).toAbsolutePath());
   }
 
-  @ApiStatus.Internal
-  public abstract @Nullable Project loadAndOpenProject(@NotNull Path projectStoreBaseDir, @NotNull OpenProjectTask options);
+  public abstract @Nullable Project openProject(@NotNull Path projectStoreBaseDir, @NotNull OpenProjectTask options);
 
   public abstract @NotNull Project loadProject(@NotNull Path path);
 
@@ -67,17 +67,6 @@ public abstract class ProjectManagerEx extends ProjectManager {
 
   // return true if successful
   public abstract boolean closeAndDisposeAllProjects(boolean checkCanClose);
-
-  /**
-   * Save, close and dispose project. Please note that only the project will be saved, but not the application.
-   * @return true on success
-   */
-  public abstract boolean closeAndDispose(@NotNull Project project);
-
-  @Override
-  public @Nullable Project createProject(@Nullable String name, @NotNull String path) {
-    return newProject(name, path, true, false);
-  }
 
   public abstract @Nullable Project findOpenProjectByHash(@Nullable String locationHash);
 

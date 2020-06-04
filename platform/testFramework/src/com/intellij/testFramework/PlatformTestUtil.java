@@ -1098,7 +1098,7 @@ public final class PlatformTestUtil {
   }
 
   public static @NotNull Project loadAndOpenProject(@NotNull Path path) {
-    Project project = ProjectManagerEx.getInstanceEx().loadAndOpenProject(path, FixtureRuleKt.createTestOpenProjectOptions());
+    Project project = ProjectManagerEx.getInstanceEx().openProject(path, FixtureRuleKt.createTestOpenProjectOptions());
     if (ApplicationManager.getApplication().isDispatchThread()) {
       dispatchAllInvocationEventsInIdeEventQueue();
     }

@@ -7,12 +7,10 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.*
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
@@ -24,6 +22,7 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
+import java.nio.file.Path
 import java.nio.file.Paths
 
 @RunsInEdt
@@ -148,21 +147,21 @@ class AutomaticModuleUnloaderTest {
   }
 
   private fun createProject(): Project {
-    return ProjectManager.getInstance().createProject(null, tempDir.newPath("automaticReloaderTest").systemIndependentPath)!!
+    return ProjectManagerEx.getInstanceEx().newProject(tempDir.newPath("automaticReloaderTest"), createTestOpenProjectOptions())!!
   }
 
   private fun createModule(project: Project, moduleName: String): Module {
     return runWriteAction { ModuleManager.getInstance(project).newModule("${project.basePath}/$moduleName.iml", "JAVA") }
   }
 
-  private fun createNewModuleFiles(moduleNames: List<String>, setup: (Map<String, Module>) -> Unit): List<File> {
-    val newModulesProjectDir = tempDir.newPath("newModules").toFile()
-    val moduleFiles = moduleNames.map { File(newModulesProjectDir, "$it.iml") }
-    val project = ProjectManager.getInstance().createProject("newModules", newModulesProjectDir.absolutePath)!!
+  private fun createNewModuleFiles(moduleNames: List<String>, setup: (Map<String, Module>) -> Unit): List<Path> {
+    val newModulesProjectDir = tempDir.newPath("newModules")
+    val moduleFiles = moduleNames.map { newModulesProjectDir.resolve("$it.iml") }
+    val project = ProjectManagerEx.getInstanceEx().newProject(newModulesProjectDir, createTestOpenProjectOptions())!!
     try {
       runWriteAction {
         moduleFiles.map {
-          ModuleManager.getInstance(project).newModule(it.absolutePath, StdModuleTypes.JAVA.id)
+          ModuleManager.getInstance(project).newModule(it.toAbsolutePath().toString(), StdModuleTypes.JAVA.id)
         }
       }
       setup(ModuleManager.getInstance(project).modules.associateBy { it.name })
@@ -178,7 +177,7 @@ class AutomaticModuleUnloaderTest {
     ProjectManagerEx.getInstanceEx().forceCloseProject(project)
   }
 
-  private fun reloadProjectWithNewModules(project: Project, moduleFiles: List<File>, beforeReload: () -> Unit = {}): Project {
+  private fun reloadProjectWithNewModules(project: Project, moduleFiles: List<Path>, beforeReload: () -> Unit = {}): Project {
     saveAndCloseProject(project)
     val modulesXmlFile = File(project.basePath, ".idea/modules.xml")
     val rootElement = JDOMUtil.load(modulesXmlFile)

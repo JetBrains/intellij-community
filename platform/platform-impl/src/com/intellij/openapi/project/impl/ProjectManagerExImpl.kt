@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.StartupManager
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PlatformProjectOpenProcessor
@@ -42,13 +41,20 @@ import java.util.concurrent.Future
 
 @ApiStatus.Internal
 open class ProjectManagerExImpl : ProjectManagerImpl() {
-  override fun loadAndOpenProject(originalFilePath: String): Project? {
-    val projectStoreBaseDir = Paths.get(FileUtilRt.toSystemIndependentName(toCanonicalName(originalFilePath)))
-    return loadAndOpenProject(projectStoreBaseDir, OpenProjectTask())
+  final override fun createProject(name: String?, path: String): Project? {
+    return newProject(Paths.get(toCanonicalName(path)), OpenProjectTask(isNewProject = true, runConfigurators = false).withProjectName(name))
   }
 
-  override fun loadAndOpenProject(projectStoreBaseDir: Path, options: OpenProjectTask): Project? {
-    return openExistingProject(projectStoreBaseDir, options, this)
+  final override fun newProject(projectName: String?, path: String, useDefaultProjectAsTemplate: Boolean, isDummy: Boolean): Project? {
+    return newProject(Paths.get(toCanonicalName(path)), OpenProjectTask(isNewProject = true, useDefaultProjectAsTemplate = useDefaultProjectAsTemplate, projectName = projectName))
+  }
+
+  final override fun loadAndOpenProject(originalFilePath: String): Project? {
+    return openProject(Paths.get(toCanonicalName(originalFilePath)), OpenProjectTask())
+  }
+
+  final override fun openProject(projectStoreBaseDir: Path, options: OpenProjectTask): Project? {
+    return doOpenProject(projectStoreBaseDir, options, this)
   }
 
   @ApiStatus.Internal
@@ -77,7 +83,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
   }
 }
 
-private fun openExistingProject(projectStoreBaseDir: Path, options: OpenProjectTask, projectManager: ProjectManagerExImpl): Project? {
+private fun doOpenProject(projectStoreBaseDir: Path, options: OpenProjectTask, projectManager: ProjectManagerExImpl): Project? {
   if (options.project != null && projectManager.isProjectOpened(options.project)) {
     return null
   }
@@ -115,7 +121,7 @@ private fun openExistingProject(projectStoreBaseDir: Path, options: OpenProjectT
 
       val project = result.project
       frameAllocator.projectLoaded(project)
-      if ((options.beforeProjectOpen == null || options.beforeProjectOpen.test(project, result.module)) && projectManager.doOpenProject(project)) {
+      if (projectManager.doOpenProject(project)) {
         frameAllocator.projectOpened(project)
         result
       }
@@ -152,12 +158,13 @@ private fun prepareProject(options: OpenProjectTask, projectStoreBaseDir: Path, 
     indicator?.text = ""
   }
 
-  if (project == null) {
+  if (project == null || (options.beforeProjectOpen != null && !options.beforeProjectOpen.test(project))) {
     return null
   }
 
-  if (options.isNewProject || (options.runConfiguratorsIfNoModules && ModuleManager.getInstance(project).modules.isEmpty())) {
+  if (options.runConfigurators && (options.isNewProject || ModuleManager.getInstance(project).modules.isEmpty())) {
     val module = PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(projectStoreBaseDir, project, options.isNewProject)
+    options.preparedToOpen?.invoke(module)
     return PrepareProjectResult(project, module)
   }
   else {
@@ -165,7 +172,32 @@ private fun prepareProject(options: OpenProjectTask, projectStoreBaseDir: Path, 
   }
 }
 
-private fun checkExistingProjectOnOpen(projectToClose: Project, callback: ProjectOpenedCallback?, projectDir: Path?, projectManager: ProjectManagerExImpl): Boolean {
+private fun convertAndLoadProject(path: Path, options: OpenProjectTask): Project? {
+  var conversionResult: ConversionResult? = null
+  if (options.runConversionBeforeOpen) {
+    conversionResult = runMainActivity("project conversion") {
+      ConversionService.getInstance().convert(path)
+    }
+    if (conversionResult.openingIsCanceled()) {
+      return null
+    }
+  }
+
+  val project = ProjectManagerImpl.instantiateProject(path, options.projectName)
+  // template as null because convertAndLoadProject method is called only for an existing project
+  ProjectManagerImpl.initProject(path, project, options.isRefreshVfsNeeded, null, ProgressManager.getInstance().progressIndicator)
+  if (conversionResult != null && !conversionResult.conversionNotNeeded()) {
+    StartupManager.getInstance(project).runAfterOpened {
+      conversionResult.postStartupActivity(project)
+    }
+  }
+  return project
+}
+
+private fun checkExistingProjectOnOpen(projectToClose: Project,
+                                       callback: ProjectOpenedCallback?,
+                                       projectDir: Path?,
+                                       projectManager: ProjectManagerExImpl): Boolean {
   val settings = GeneralSettings.getInstance()
   val isValidProject = projectDir != null && ProjectUtil.isValidProjectPath(projectDir)
   if (projectDir != null && ProjectAttachProcessor.canAttachToProject() &&
@@ -201,27 +233,6 @@ private fun checkExistingProjectOnOpen(projectToClose: Project, callback: Projec
     }
   }
   return false
-}
-
-private fun convertAndLoadProject(path: Path, options: OpenProjectTask): Project? {
-  var conversionResult: ConversionResult? = null
-  if (options.runConversionBeforeOpen) {
-    conversionResult = runMainActivity("project conversion") {
-      ConversionService.getInstance().convert(path)
-    }
-    if (conversionResult.openingIsCanceled()) {
-      return null
-    }
-  }
-
-  val project = ProjectManagerImpl.instantiateProject(path, options.projectName)
-  ProjectManagerImpl.initProject(path, project, options.isRefreshVfsNeeded, null, ProgressManager.getInstance().progressIndicator)
-  if (conversionResult != null && !conversionResult.conversionNotNeeded()) {
-    StartupManager.getInstance(project).registerPostStartupActivity {
-      conversionResult.postStartupActivity(project)
-    }
-  }
-  return project
 }
 
 private fun openProject(project: Project, indicator: ProgressIndicator?): Future<*> {

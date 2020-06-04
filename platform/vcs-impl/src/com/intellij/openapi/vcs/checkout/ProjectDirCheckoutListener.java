@@ -21,7 +21,7 @@ final class ProjectDirCheckoutListener implements CheckoutListener {
       return false;
     }
 
-    ProjectManagerEx.getInstanceEx().loadAndOpenProject(directory, OpenProjectTask.withProjectToClose(project));
+    ProjectManagerEx.getInstanceEx().openProject(directory, OpenProjectTask.withProjectToClose(project));
     return true;
   }
 }

@@ -1,6 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("UsePropertyAccessSyntax")
-
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.diagnostic.ThreadDumper
@@ -8,8 +7,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectServiceContainerCustomizer
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.impl.ProjectServiceContainerCustomizer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
@@ -84,7 +83,7 @@ class EditorHistoryManagerTest {
 }
 
 private fun openProjectPerformTaskCloseProject(projectDir: Path, task: (Project) -> Unit) {
-  val project = ProjectManagerEx.getInstanceEx().loadAndOpenProject(projectDir, createTestOpenProjectOptions())!!
+  val project = ProjectManagerEx.getInstanceEx().openProject(projectDir, createTestOpenProjectOptions())!!
   try {
     runInEdtAndWait {
       task(project)

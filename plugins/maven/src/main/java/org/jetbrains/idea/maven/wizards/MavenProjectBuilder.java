@@ -117,10 +117,14 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
   }
 
   private void setupProjectName(@NotNull Project project) {
-    if (!(project instanceof ProjectEx)) return;
+    if (!(project instanceof ProjectEx)) {
+      return;
+    }
+
     String projectName = getSuggestedProjectName();
-    if (projectName == null) return;
-    ((ProjectEx)project).setProjectName(projectName);
+    if (projectName != null) {
+      ((ProjectEx)project).setProjectName(projectName);
+    }
   }
 
   @Nullable
@@ -356,12 +360,9 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     return getParameters().myImportRoot;
   }
 
-  public String getSuggestedProjectName() {
-    final List<MavenProject> list = getParameters().myMavenProjectTree.getRootProjects();
-    if (list.size() == 1) {
-      return list.get(0).getMavenId().getArtifactId();
-    }
-    return null;
+  public @Nullable String getSuggestedProjectName() {
+    List<MavenProject> list = getParameters().myMavenProjectTree.getRootProjects();
+    return list.size() == 1 ? list.get(0).getMavenId().getArtifactId() : null;
   }
 
   @Override

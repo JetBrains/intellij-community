@@ -304,7 +304,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     return when {
       existing != null -> existing
       ProjectUtil.isValidProjectPath(projectFile) -> {
-        ProjectManagerEx.getInstanceEx().loadAndOpenProject(projectFile, openProjectOptions)
+        ProjectManagerEx.getInstanceEx().openProject(projectFile, openProjectOptions)
       }
       else -> {
         // If .idea is missing in the recent project's dir; this might mean, for instance, that 'git clean' was called.

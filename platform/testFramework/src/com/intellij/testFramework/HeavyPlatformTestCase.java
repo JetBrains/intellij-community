@@ -265,7 +265,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
   public static @NotNull Project createProject(@NotNull Path file) {
     try {
-      return Objects.requireNonNull(ProjectManagerEx.getInstanceEx().newProject(file, null, FixtureRuleKt.createTestOpenProjectOptions()));
+      return Objects.requireNonNull(ProjectManagerEx.getInstanceEx().newProject(file, FixtureRuleKt.createTestOpenProjectOptions()));
     }
     catch (TooManyProjectLeakedException e) {
       if (ourReportedLeakedProjects) {

@@ -55,7 +55,7 @@ public final class SaveAsDirectoryBasedFormatAction extends AnAction implements 
       // closeAndDispose will also force save project
       ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
       projectManager.closeAndDispose(project);
-      projectManager.loadAndOpenProject(ideaDir.getParent(), new OpenProjectTask());
+      projectManager.openProject(ideaDir.getParent(), new OpenProjectTask());
     }
     catch (IOException e) {
       Messages.showErrorDialog(project, String.format("Unable to create '.idea' directory (%s): " + e.getMessage(), ideaDir),
