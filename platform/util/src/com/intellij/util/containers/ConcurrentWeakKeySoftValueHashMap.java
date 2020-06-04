@@ -220,15 +220,13 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
   @Override
   public V get(@NotNull Object key) {
     HardKey<K,V> hardKey = createHardKey(key);
-    V v;
     try {
       ValueReference<K, V> valueReference = myMap.get(hardKey);
-      v = com.intellij.reference.SoftReference.deref(valueReference);
+      return com.intellij.reference.SoftReference.deref(valueReference);
     }
     finally {
       hardKey.clear();
     }
-    return v;
   }
 
   @Override
@@ -245,15 +243,13 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
   public V remove(Object key) {
     processQueues();
     HardKey<K,V> hardKey = createHardKey(key);
-    V v;
     try {
       ValueReference<K, V> valueReference = myMap.remove(hardKey);
-      v = com.intellij.reference.SoftReference.deref(valueReference);
+      return com.intellij.reference.SoftReference.deref(valueReference);
     }
     finally {
       hardKey.clear();
     }
-    return v;
   }
 
   @Override
@@ -323,17 +319,15 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
     processQueues();
 
     HardKey<K, V> hardKey = createHardKey(key);
-    boolean result;
     try {
       ValueReference<K, V> valueReference = myMap.get(hardKey);
       V v = com.intellij.reference.SoftReference.deref(valueReference);
 
-      result = value.equals(v) && myMap.remove(hardKey, valueReference);
+      return value.equals(v) && myMap.remove(hardKey, valueReference);
     }
     finally {
       hardKey.clear();
     }
-    return result;
   }
 
   @Override

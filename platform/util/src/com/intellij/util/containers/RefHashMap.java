@@ -214,14 +214,12 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     if (key == null) return false;
     // optimization:
     myHardKeyInstance.set((K)key);
-    boolean result;
     try {
-      result = myMap.containsKey(myHardKeyInstance);
+      return myMap.containsKey(myHardKeyInstance);
     }
     finally {
       myHardKeyInstance.clear();
     }
-    return result;
   }
 
   @Override
@@ -234,14 +232,12 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     if (key == null) return null;
     //noinspection unchecked
     myHardKeyInstance.set((K)key);
-    V result;
     try {
-      result = myMap.get(myHardKeyInstance);
+      return myMap.get(myHardKeyInstance);
     }
     finally {
       myHardKeyInstance.clear();
     }
-    return result;
   }
 
   @Override
@@ -257,14 +253,12 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     // optimization:
     //noinspection unchecked
     myHardKeyInstance.set((K)key);
-    V result;
     try {
-      result = myMap.remove(myHardKeyInstance);
+      return myMap.remove(myHardKeyInstance);
     }
     finally {
       myHardKeyInstance.clear();
     }
-    return result;
   }
 
   @Override

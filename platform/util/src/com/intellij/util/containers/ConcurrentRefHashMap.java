@@ -135,14 +135,12 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   @Override
   public boolean containsKey(@Nullable Object key) {
     HardKey<K> hardKey = createHardKey(key);
-    boolean result;
     try {
-      result = myMap.containsKey(hardKey);
+      return myMap.containsKey(hardKey);
     }
     finally {
       hardKey.clear();
     }
-    return result;
   }
 
   @Override
@@ -198,14 +196,12 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   @Override
   public V get(@Nullable Object key) {
     HardKey<K> hardKey = createHardKey(key);
-    V result;
     try {
-      result = myMap.get(hardKey);
+      return myMap.get(hardKey);
     }
     finally {
       hardKey.clear();
     }
-    return result;
   }
 
   @Override
@@ -220,14 +216,12 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     processQueue();
 
     HardKey<?> hardKey = createHardKey(key);
-    V result;
     try {
-      result = myMap.remove(hardKey);
+      return myMap.remove(hardKey);
     }
     finally {
       hardKey.clear();
     }
-    return result;
   }
 
   @Override
