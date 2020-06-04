@@ -166,7 +166,7 @@ public class MavenServerConnector implements @NotNull Disposable {
         UnicastRemoteObject.unexportObject(myLogger, true);
       }
       catch (RemoteException e) {
-        MavenLog.LOG.error(e);
+        MavenLog.LOG.warn(e);
       }
       myLoggerExported = false;
     }
@@ -175,7 +175,7 @@ public class MavenServerConnector implements @NotNull Disposable {
         UnicastRemoteObject.unexportObject(myDownloadListener, true);
       }
       catch (RemoteException e) {
-        MavenLog.LOG.error(e);
+        MavenLog.LOG.warn(e);
       }
       myDownloadListenerExported = false;
     }
