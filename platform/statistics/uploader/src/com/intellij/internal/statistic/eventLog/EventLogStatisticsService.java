@@ -81,14 +81,18 @@ public class EventLogStatisticsService implements StatisticsService {
       return new StatisticsResult(ResultCode.NOTHING_TO_SEND, "No files to send");
     }
 
-    final String serviceUrl = settings.getServiceUrl();
-    if (serviceUrl == null) {
-      return new StatisticsResult(StatisticsResult.ResultCode.ERROR_IN_CONFIG, "ERROR: unknown Statistics Service URL.");
+    if (!settings.isSettingsReachable()) {
+      return new StatisticsResult(StatisticsResult.ResultCode.ERROR_IN_CONFIG, "ERROR: settings server is unreachable");
     }
 
     if (!settings.isSendEnabled()) {
       cleanupEventLogFiles(logs, logger);
       return new StatisticsResult(StatisticsResult.ResultCode.NOT_PERMITTED_SERVER, "NOT_PERMITTED");
+    }
+
+    final String serviceUrl = settings.getServiceUrl();
+    if (serviceUrl == null) {
+      return new StatisticsResult(StatisticsResult.ResultCode.ERROR_IN_CONFIG, "ERROR: unknown Statistics Service URL.");
     }
 
     final boolean isInternal = info.isInternal();

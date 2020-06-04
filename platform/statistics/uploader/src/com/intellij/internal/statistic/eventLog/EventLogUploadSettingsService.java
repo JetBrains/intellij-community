@@ -44,6 +44,11 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   }
 
   @Override
+  public boolean isSettingsReachable() {
+    return getExternalSettings() != null;
+  }
+
+  @Override
   public boolean isSendEnabled() {
     final EventLogExternalSendSettings settings = getExternalSettings();
     return settings != null && settings.isSendEnabled();

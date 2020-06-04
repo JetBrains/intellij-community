@@ -13,7 +13,12 @@ public interface EventLogSettingsService {
   String getDictionaryServiceUrl();
 
   /**
-   * @return false if there are no available configurations, true otherwise
+   * @return true if it's possible to load settings from server, false otherwise
+   */
+  boolean isSettingsReachable();
+
+  /**
+   * @return true if send is enable for a current IDE version (i.e. send configuration exists), false otherwise
    */
   boolean isSendEnabled();
 
