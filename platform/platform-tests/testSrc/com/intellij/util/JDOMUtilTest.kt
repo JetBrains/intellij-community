@@ -84,6 +84,39 @@ internal class JDOMUtilTest {
   }
 
   @Test
+  fun `test reduce children`() {
+    val element = JDOMUtil.load("""
+      |  <component name="CompilerConfiguration">
+      |    <bytecodeTargetLevel target="1.7">
+      |      <module name="module1" target="11" />
+      |    </bytecodeTargetLevel>
+      |    <bytecodeTargetLevel>
+      |      <module name="module2" target="13" />
+      |      <module name="module3" target="14" />
+      |    </bytecodeTargetLevel>
+      |  </component>""".trimMargin()
+    )
+    assertThat(JDOMUtil.reduceChildren("bytecodeTargetLevel", element))
+      .isEqualTo("""
+        |  <bytecodeTargetLevel target="1.7">
+        |    <module name="module1" target="11" />
+        |    <module name="module2" target="13" />
+        |    <module name="module3" target="14" />
+        |  </bytecodeTargetLevel>""".trimMargin()
+      )
+    assertThat(element)
+      .isEqualTo("""
+        |  <component name="CompilerConfiguration">
+        |    <bytecodeTargetLevel target="1.7">
+        |      <module name="module1" target="11" />
+        |      <module name="module2" target="13" />
+        |      <module name="module3" target="14" />
+        |    </bytecodeTargetLevel>
+        |  </component>""".trimMargin()
+      )
+  }
+
+  @Test
   fun testBillionLaughs() {
     assertThatThrownBy {
       JDOMUtil.loadDocument(File(PlatformTestUtil.getPlatformTestDataPath() + File.separator + "tools" + File.separator + "BillionLaughs.xml"))

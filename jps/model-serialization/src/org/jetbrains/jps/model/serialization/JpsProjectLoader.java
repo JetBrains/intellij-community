@@ -45,6 +45,8 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
+import static org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL;
+
 public final class JpsProjectLoader extends JpsLoaderBase {
   public static final String MODULE_MANAGER_COMPONENT = "ProjectModuleManager";
   public static final String MODULES_TAG = "modules";
@@ -128,12 +130,14 @@ public final class JpsProjectLoader extends JpsLoaderBase {
         break;
       }
     }
-    if (data == null) {
-      return externalData;
-    }
-    else if (externalData != null) {
-      return JDOMUtil.deepMerge(data, externalData);
-    }
+    return deepMergeCompilerConfigurations(data, externalData);
+  }
+
+  private static @Nullable Element deepMergeCompilerConfigurations(@Nullable Element data, @Nullable Element externalData) {
+    if (data == null) return externalData;
+    if (externalData == null) return data;
+    JDOMUtil.deepMerge(data, externalData);
+    JDOMUtil.reduceChildren(BYTECODE_TARGET_LEVEL, data);
     return data;
   }
 
