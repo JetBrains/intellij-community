@@ -34,13 +34,15 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   }
 
   @Override
-  protected void doTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> super.doTest());
+  protected void setUp() throws Exception {
+    super.setUp();
+    setLanguageLevel(LanguageLevel.getLatest());
   }
 
   @Override
-  protected void doMultiFileTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> super.doMultiFileTest());
+  protected void tearDown() throws Exception {
+    setLanguageLevel(null);
+    super.tearDown();
   }
 
   // PY-9289
@@ -333,7 +335,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                  "    y = attr.ib(default=0, type=int)\n" +
                  "    z = attr.ib(default=attr.Factory(list), type=typing.List[int])\n" +
                  "    \n" +
-                 "Strong(1, <warning descr=\"Expected type 'int', got 'str' instead\">\"str\"</warning>, <warning descr=\"Expected type 'List[int]', got 'List[str]' instead\">[\"str\"]</warning>)");
+                 "Strong(1, <warning descr=\"Expected type 'int', got 'str' instead\">\"str\"</warning>, <warning descr=\"Expected type 'list[int]', got 'list[str]' instead\">[\"str\"]</warning>)");
   }
 
   // PY-28957
