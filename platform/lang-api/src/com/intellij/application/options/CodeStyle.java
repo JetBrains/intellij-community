@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
@@ -86,6 +87,10 @@ public class CodeStyle {
     }
 
     if (!file.isPhysical()) {
+      PsiFile originalFile = file.getUserData(PsiFileFactory.ORIGINAL_FILE);
+      if (originalFile != null && originalFile.isPhysical()) {
+        return getSettings(originalFile);
+      }
       return getSettings(project);
     }
     CodeStyleSettings cachedSettings = CodeStyleCachingService.getInstance(project).tryGetSettings(file);

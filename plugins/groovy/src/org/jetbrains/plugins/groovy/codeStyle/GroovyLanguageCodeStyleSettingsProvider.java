@@ -418,6 +418,9 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
   @Override
   public CodeStyleFieldAccessor getAccessor(@NotNull Object codeStyleObject,
                                             @NotNull Field field) {
+    if (PackageEntryTable.class.isAssignableFrom(field.getType())) {
+      return new JavaPackageEntryTableAccessor(codeStyleObject, field);
+    }
     if (codeStyleObject instanceof GroovyCodeStyleSettings) {
       if (field.getName().endsWith("_ORDER_WEIGHT")) {
         // Ignore all ORDER_WEIGHT_FIELDS for now
