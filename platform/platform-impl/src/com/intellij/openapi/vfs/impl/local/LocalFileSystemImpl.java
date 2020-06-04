@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,15 +20,9 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public final class LocalFileSystemImpl extends LocalFileSystemBase implements Disposable, VirtualFilePointerCapableFileSystem {
@@ -125,6 +120,22 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
         }
       }
     }
+  }
+
+  @Override
+  public @NotNull Iterable<@NotNull VirtualFile> findCachedFilesForPath(@NotNull String path) {
+    return ContainerUtil.mapNotNull(getAliasedPaths(path), this::findFileByPathIfCached);
+  }
+
+  // Finds paths that denote the same physical file (canonical path + symlinks)
+  // Returns [canonical_path + symlinks], if path is canonical
+  //         [path], otherwise
+  private @NotNull List<@NotNull @SystemDependent String> getAliasedPaths(@NotNull String path) {
+    path = FileUtil.toSystemDependentName(path);
+    List<@NotNull String> aliases = new ArrayList<>(getFileWatcher().mapToAllSymlinks(path));
+    assert !aliases.contains(path);
+    aliases.add(0, path);
+    return aliases;
   }
 
   @NotNull
