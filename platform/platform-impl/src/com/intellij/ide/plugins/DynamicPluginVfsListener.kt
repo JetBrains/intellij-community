@@ -62,7 +62,7 @@ class DynamicPluginVfsListener : AsyncFileListener {
         ApplicationManager.getApplication().invokeLater {
           val reloaded = mutableListOf<String>()
           for (pluginDescriptor in descriptorsToReload) {
-            if (!DynamicPlugins.unloadPlugin(pluginDescriptor, isUpdate = true)) {
+            if (!DynamicPlugins.unloadPlugin(pluginDescriptor, DynamicPlugins.UnloadPluginOptions(isUpdate = true, waitForClassloaderUnload = true))) {
               continue
             }
             reloaded.add(pluginDescriptor.name)

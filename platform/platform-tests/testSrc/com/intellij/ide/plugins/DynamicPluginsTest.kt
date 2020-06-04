@@ -83,7 +83,7 @@ class DynamicPluginsTest {
     app.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
     assertThat(receivedNotifications).hasSize(1)
 
-    DynamicPlugins.unloadPlugin(descriptor, false)
+    DynamicPlugins.unloadPlugin(descriptor)
     app.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
     assertThat(receivedNotifications).hasSize(1)
   }
@@ -98,7 +98,7 @@ class DynamicPluginsTest {
     DynamicPlugins.loadPlugin(descriptor)
 
     DisabledPluginsState.saveDisabledPlugins(arrayListOf(PluginId.getId("bar")), false)
-    DynamicPlugins.unloadPlugin(descriptor, true)
+    DynamicPlugins.unloadPlugin(descriptor, DynamicPlugins.UnloadPluginOptions(disable = true))
     assertThat(PluginManagerCore.getPlugin(descriptor.pluginId)?.pluginClassLoader as? PluginClassLoader).isNull()
 
     DisabledPluginsState.saveDisabledPlugins(arrayListOf(), false)
@@ -480,7 +480,7 @@ class DynamicPluginsTest {
     return Disposable {
       val unloadDescriptor = loadDescriptorInTest(plugin.parent.parent)
       val canBeUnloaded = DynamicPlugins.allowLoadUnloadWithoutRestart(unloadDescriptor)
-      DynamicPlugins.unloadPlugin(unloadDescriptor, disable = false)
+      DynamicPlugins.unloadPlugin(unloadDescriptor)
       assertThat(canBeUnloaded).isTrue()
     }
   }
