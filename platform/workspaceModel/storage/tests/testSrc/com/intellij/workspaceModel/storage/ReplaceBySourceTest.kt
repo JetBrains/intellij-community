@@ -260,6 +260,22 @@ class ReplaceBySourceTest {
     builder.replaceBySource({ it is MySource }, replacement)
   }
 
+  @Test
+  fun `child and parent - two children of different sources`() {
+    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val parent = builder.addParentEntity(source = AnotherSource)
+    builder.addChildEntity(parent, "MySourceChild", source = MySource)
+    val replacement = WorkspaceEntityStorageBuilderImpl.from(builder)
+    replacement.addChildEntity(parent, "AnotherSourceChild", source = AnotherSource)
+
+    builder.replaceBySource({ it is MySource }, replacement)
+
+    builder.assertConsistency()
+    assertOneElement(builder.entities(ParentEntity::class.java).toList())
+    val child = assertOneElement(builder.entities(ChildEntity::class.java).toList())
+    assertEquals("MySourceChild", child.childProperty)
+  }
+
   @Test(expected = ReplaceBySourceException::class)
   fun `child and parent - trying to remove parent and leave child`() {
     val builder = WorkspaceEntityStorageBuilderImpl.create()

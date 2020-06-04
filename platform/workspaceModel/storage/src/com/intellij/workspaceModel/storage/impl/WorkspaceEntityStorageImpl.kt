@@ -394,7 +394,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
         }
 
         for ((connectionId, parentId) in replaceWith.refs.getParentRefsOfChild(unmatchedId)) {
-          if (!sourceFilter(this.entityDataByIdOrDie(parentId).entitySource)) continue
+          if (!sourceFilter(replaceWith.entityDataByIdOrDie(parentId).entitySource)) continue
           val localParentId = replaceMap.inverse().getValue(parentId)
           this.refs.updateParentOfChild(connectionId, unmatchedId, localParentId)
         }
@@ -408,7 +408,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
         for ((connectionId, childrenId) in replaceWith.refs.getChildrenRefsOfParentBy(unmatchedId)) {
           for (childId in childrenId) {
-            if (!sourceFilter(this.entityDataByIdOrDie(childId).entitySource)) continue
+            if (!sourceFilter(replaceWith.entityDataByIdOrDie(childId).entitySource)) continue
             val localChildId = replaceMap.inverse().getValue(childId)
             this.refs.updateParentOfChild(connectionId, localChildId, unmatchedId)
           }
