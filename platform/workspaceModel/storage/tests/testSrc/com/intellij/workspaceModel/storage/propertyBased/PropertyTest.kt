@@ -108,7 +108,8 @@ private class RemoveSomeEntity(private val storage: WorkspaceEntityStorageBuilde
     val id = env.generateValue(WorkspaceIdGenerator.create(storage), "Generate random EntityId: %s") ?: return
     storage.removeEntity(storage.entityDataByIdOrDie(id).createEntity(storage))
     assertNull(storage.entityDataById(id))
-    env.logMessage("Entity removed -------------------------")
+    env.logMessage("Entity removed")
+    env.logMessage("-------------------------")
   }
 }
 
@@ -116,7 +117,9 @@ private class WorkspaceIdGenerator(private val storage: WorkspaceEntityStorageBu
   override fun apply(t: GenerationEnvironment): EntityId? {
     val filtered = storage.entitiesByType.entities.asSequence().filterNotNull().flatMap { it.entities.filterNotNull().asSequence() }
     if (filtered.none()) return null
-    return filtered.toList().random().createPid()
+    val nonNullIds = filtered.toList()
+    val id = t.generate(Generator.integers(0, nonNullIds.lastIndex))
+    return nonNullIds[id].createPid()
   }
 
   companion object {
@@ -130,7 +133,8 @@ private class EntityIdOfFamilyGenerator(private val storage: WorkspaceEntityStor
     val entityFamily = storage.entitiesByType.entities.getOrNull(family) ?: return null
     val existingEntities = entityFamily.entities.filterNotNull()
     if (existingEntities.isEmpty()) return null
-    return existingEntities.random().createPid()
+    val randomId = t.generate(Generator.integers(0, existingEntities.lastIndex))
+    return existingEntities[randomId].createPid()
   }
 
   companion object {
