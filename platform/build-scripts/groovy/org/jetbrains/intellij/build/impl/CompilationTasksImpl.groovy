@@ -79,7 +79,9 @@ class CompilationTasksImpl extends CompilationTasks {
   @Override
   void buildProjectArtifacts(Collection<String> artifactNames) {
     if (!artifactNames.isEmpty()) {
-      boolean buildIncludedModules = !context.options.useCompiledClassesFromProjectOutput && context.options.pathToCompiledClassesArchive == null
+      boolean buildIncludedModules = !context.options.useCompiledClassesFromProjectOutput &&
+                                     context.options.pathToCompiledClassesArchive == null &&
+                                     context.options.pathToCompiledClassesArchivesMetadata == null
       try {
         new JpsCompilationRunner(context).buildArtifacts(artifactNames, buildIncludedModules)
       }
