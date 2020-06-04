@@ -16,7 +16,7 @@ open class ExternalEntityIndexImpl<T> private constructor(internal val index: Bi
   : ExternalEntityIndex<T> {
   private lateinit var entityStorage: AbstractEntityStorage
 
-  override fun getEntities(data: T): List<WorkspaceEntity> = index.getKeysByValue(data)?.toMutableList()?.mapNotNull {
+  override fun getEntities(data: T): List<WorkspaceEntity> = index.getKeysByValue(data)?.mapNotNull {
     entityStorage.entityDataById(it)?.createEntity(entityStorage)
   } ?: emptyList()
 

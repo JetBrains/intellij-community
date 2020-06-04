@@ -149,13 +149,13 @@ internal class MutableStorageIndexes(
   }
 
   fun applyExternalIndexChanges(diff: WorkspaceEntityStorageBuilderImpl) {
-    val removed = externalIndices.keys.toMutableSet()
-    removed.removeAll(diff.indexes.externalIndices.keys)
-    removed.forEach { externalIndices.remove(it) }
+    externalIndices.keys.asSequence().filterNot { it in diff.indexes.externalIndices }.forEach {
+      externalIndices.remove(it)
+    }
 
-    val added = diff.indexes.externalIndices.keys.toMutableSet()
-    added.removeAll(externalIndices.keys)
-    added.forEach { externalIndices[it] = ExternalEntityIndexImpl.MutableExternalEntityIndexImpl.from(diff.indexes.externalIndices[it]!!) }
+    diff.indexes.externalIndices.keys.asSequence().filterNot { it in externalIndices.keys }.forEach {
+      externalIndices[it] = ExternalEntityIndexImpl.MutableExternalEntityIndexImpl.from(diff.indexes.externalIndices[it]!!)
+    }
 
     diff.indexes.externalIndices.forEach { (identifier, index) ->
       externalIndices[identifier]?.applyChanges(index)
