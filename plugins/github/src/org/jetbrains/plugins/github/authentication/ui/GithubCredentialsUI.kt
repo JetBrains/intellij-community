@@ -6,13 +6,10 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextField
-import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
 import git4idea.i18n.GitBundle
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
@@ -30,8 +27,7 @@ import java.net.UnknownHostException
 import java.util.function.Supplier
 import javax.swing.*
 
-sealed class GithubCredentialsUI {
-  abstract fun getPanel(): JPanel
+internal sealed class GithubCredentialsUI {
   abstract fun getPreferredFocus(): JComponent
   abstract fun getValidator(): Validator
   abstract fun createExecutor(): GithubApiRequestExecutor
@@ -41,6 +37,16 @@ sealed class GithubCredentialsUI {
 
   abstract fun handleAcquireError(error: Throwable): ValidationInfo
   abstract fun setBusy(busy: Boolean)
+
+  var header: LayoutBuilder.() -> Unit = { }
+
+  fun getPanel(): JPanel =
+    panel {
+      header()
+      centerPanel()
+    }.apply { border = JBEmptyBorder(UIUtil.getRegularPanelInsets()) }
+
+  protected abstract fun LayoutBuilder.centerPanel()
 
   protected val loginButton = JButton(GitBundle.message("login.dialog.button.login")).apply { isVisible = false }
   protected val cancelButton = JButton(Messages.getCancelButton()).apply { isVisible = false }
@@ -63,15 +69,15 @@ sealed class GithubCredentialsUI {
     cancelButton.isVisible = visible
   }
 
-  internal class PasswordUI(private val serverTextField: ExtendableTextField,
-                            private val clientName: String,
-                            switchUi: () -> Unit,
-                            private val executorFactory: GithubApiRequestExecutor.Factory,
-                            private val isAccountUnique: (login: String, server: GithubServerPath) -> Boolean,
-                            private val dialogMode: Boolean) : GithubCredentialsUI() {
+  internal class PasswordUI(
+    private val serverTextField: ExtendableTextField,
+    private val clientName: String,
+    private val executorFactory: GithubApiRequestExecutor.Factory,
+    private val isAccountUnique: (login: String, server: GithubServerPath) -> Boolean
+  ) : GithubCredentialsUI() {
+
     private val loginTextField = JBTextField()
     private val passwordField = JPasswordField()
-    private val switchUiLink = LinkLabel.create(GithubBundle.message("login.use.token"), switchUi)
 
     fun setLogin(login: String, editable: Boolean = true) {
       loginTextField.text = login
@@ -89,8 +95,7 @@ sealed class GithubCredentialsUI {
       serverTextField.setEnterPressedAction(actionListener)
     }
 
-    override fun getPanel(): JPanel = panel {
-      buildTitleAndLinkRow(this, dialogMode, switchUiLink)
+    override fun LayoutBuilder.centerPanel() {
       row(GithubBundle.message("credentials.server.field")) { serverTextField(pushX, growX) }
       row(GithubBundle.message("credentials.login.field")) { loginTextField(pushX, growX) }
       row(GithubBundle.message("credentials.password.field")) {
@@ -103,8 +108,6 @@ sealed class GithubCredentialsUI {
           cancelButton()
         }
       }
-    }.apply {
-      border = JBEmptyBorder(UIUtil.getRegularPanelInsets())
     }
 
     override fun getPreferredFocus() = if (loginTextField.isEditable && loginTextField.text.isEmpty()) loginTextField else passwordField
@@ -152,26 +155,23 @@ sealed class GithubCredentialsUI {
     override fun setBusy(busy: Boolean) {
       loginTextField.isEnabled = !busy
       passwordField.isEnabled = !busy
-      switchUiLink.isEnabled = !busy
     }
   }
 
-  internal class TokenUI(val factory: GithubApiRequestExecutor.Factory,
-                         val isAccountUnique: (name: String, server: GithubServerPath) -> Boolean,
-                         private val serverTextField: ExtendableTextField,
-                         switchUi: () -> Unit,
-                         private val dialogMode: Boolean) : GithubCredentialsUI() {
+  internal class TokenUI(
+    val factory: GithubApiRequestExecutor.Factory,
+    val isAccountUnique: (name: String, server: GithubServerPath) -> Boolean,
+    private val serverTextField: ExtendableTextField
+  ) : GithubCredentialsUI() {
 
     private val tokenTextField = JBTextField()
-    private val switchUiLink = LinkLabel.create(GithubBundle.message("login.use.credentials"), switchUi)
     private var fixedLogin: String? = null
 
     fun setToken(token: String) {
       tokenTextField.text = token
     }
 
-    override fun getPanel() = panel {
-      buildTitleAndLinkRow(this, dialogMode, switchUiLink)
+    override fun LayoutBuilder.centerPanel() {
       row(GithubBundle.message("credentials.server.field")) { serverTextField(pushX, growX) }
       row(GithubBundle.message("credentials.token.field")) {
         tokenTextField(
@@ -184,8 +184,6 @@ sealed class GithubCredentialsUI {
           cancelButton()
         }
       }
-    }.apply {
-      border = JBEmptyBorder(UIUtil.getRegularPanelInsets())
     }
 
     override fun getPreferredFocus() = tokenTextField
@@ -225,7 +223,6 @@ sealed class GithubCredentialsUI {
 
     override fun setBusy(busy: Boolean) {
       tokenTextField.isEnabled = !busy
-      switchUiLink.isEnabled = !busy
     }
 
     fun setFixedLogin(fixedLogin: String?) {
@@ -236,23 +233,6 @@ sealed class GithubCredentialsUI {
       super.setLoginAction(actionListener)
       tokenTextField.setEnterPressedAction(actionListener)
       serverTextField.setEnterPressedAction(actionListener)
-    }
-  }
-}
-
-private fun buildTitleAndLinkRow(layoutBuilder: LayoutBuilder,
-                                 dialogMode: Boolean,
-                                 linkLabel: LinkLabel<*>) {
-  layoutBuilder.row {
-    cell(isFullWidth = true) {
-      if (!dialogMode) {
-        val jbLabel = JBLabel(GithubBundle.message("login.to.github"), UIUtil.ComponentStyle.LARGE).apply {
-          font = JBFont.label().biggerOn(5.0f)
-        }
-        jbLabel()
-      }
-      JLabel(" ")(pushX, growX) // just to be able to align link to the right
-      linkLabel()
     }
   }
 }

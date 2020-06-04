@@ -6,9 +6,14 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
+import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.layout.*
+import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
@@ -20,6 +25,7 @@ import org.jetbrains.plugins.github.util.errorOnEdt
 import org.jetbrains.plugins.github.util.submitIOTask
 import java.awt.event.ActionListener
 import java.util.concurrent.CompletableFuture
+import javax.swing.JLabel
 import javax.swing.JTextField
 
 class GithubLoginPanel(executorFactory: GithubApiRequestExecutor.Factory,
@@ -30,23 +36,34 @@ class GithubLoginPanel(executorFactory: GithubApiRequestExecutor.Factory,
   private var tokenAcquisitionError: ValidationInfo? = null
 
   private lateinit var currentUi: GithubCredentialsUI
-  private var passwordUi = GithubCredentialsUI.PasswordUI(serverTextField, clientName, ::switchToTokenUI, executorFactory, isAccountUnique,
-                                                          isDialogMode)
-  private var tokenUi = GithubCredentialsUI.TokenUI(executorFactory, isAccountUnique, serverTextField, ::switchToPasswordUI, isDialogMode)
+  private var passwordUi = GithubCredentialsUI.PasswordUI(serverTextField, clientName, executorFactory, isAccountUnique)
+  private var tokenUi = GithubCredentialsUI.TokenUI(executorFactory, isAccountUnique, serverTextField)
+  private val switchToPasswordUiLink = LinkLabel.create(GithubBundle.message("login.use.credentials")) { applyUi(passwordUi) }
+  private val switchToTokenUiLink = LinkLabel.create(GithubBundle.message("login.use.token")) { applyUi(tokenUi) }
 
   private val progressIcon = AnimatedIcon.Default()
   private val progressExtension = ExtendableTextComponent.Extension { progressIcon }
 
   init {
+    passwordUi.header = { buildTitleAndLinkRow(isDialogMode, switchToTokenUiLink) }
+    tokenUi.header = { buildTitleAndLinkRow(isDialogMode, switchToPasswordUiLink) }
+
     applyUi(passwordUi)
   }
 
-  private fun switchToPasswordUI() {
-    applyUi(passwordUi)
-  }
-
-  private fun switchToTokenUI() {
-    applyUi(tokenUi)
+  private fun LayoutBuilder.buildTitleAndLinkRow(dialogMode: Boolean, linkLabel: LinkLabel<*>) {
+    row {
+      cell(isFullWidth = true) {
+        if (!dialogMode) {
+          val jbLabel = JBLabel(GithubBundle.message("login.to.github"), UIUtil.ComponentStyle.LARGE).apply {
+            font = JBFont.label().biggerOn(5.0f)
+          }
+          jbLabel()
+        }
+        JLabel(" ")(pushX, growX) // just to be able to align link to the right
+        linkLabel()
+      }
+    }
   }
 
   private fun applyUi(ui: GithubCredentialsUI) {
@@ -90,6 +107,9 @@ class GithubLoginPanel(executorFactory: GithubApiRequestExecutor.Factory,
       serverTextField.removeExtension(progressExtension)
     }
     serverTextField.isEnabled = !busy
+
+    switchToPasswordUiLink.isEnabled = !busy
+    switchToTokenUiLink.isEnabled = !busy
     currentUi.setBusy(busy)
   }
 
