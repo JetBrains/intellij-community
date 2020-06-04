@@ -114,10 +114,6 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     return myTextLayoutCache;
   }
   
-  EditorPainter getPainter() {
-    return myPainter;
-  }
-  
   TabFragment getTabFragment() {
     return myTabFragment;
   }
@@ -670,6 +666,15 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   }
 
   float getCodePointWidth(int codePoint, @JdkConstants.FontStyle int fontStyle) {
+    if (myEditor.getSettings().isShowingSpecialChars()) {
+      // This is a simplification - we don't account for special characters not rendered due to non-ASCII characters present nearby,
+      // so a premature wrapping can occur sometimes (as the representation using Unicode name is most certainly wider than the
+      // original character).
+      SpecialCharacterFragment specialCharacterFragment = SpecialCharacterFragment.create(this, codePoint);
+      if (specialCharacterFragment != null) {
+        return specialCharacterFragment.visualColumnToX(0, 1);
+      }
+    }
     return myCharWidthCache.getCodePointWidth(codePoint, fontStyle);
   }
 

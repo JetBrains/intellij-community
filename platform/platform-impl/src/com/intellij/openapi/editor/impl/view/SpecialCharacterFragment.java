@@ -52,7 +52,7 @@ class SpecialCharacterFragment implements LineFragment {
     return SPECIAL_CHAR_CODES.containsKey(c);
   }
 
-  static @Nullable SpecialCharacterFragment create(@NotNull EditorView view, char c) {
+  static @Nullable SpecialCharacterFragment create(@NotNull EditorView view, int c) {
     String code = SPECIAL_CHAR_CODES.get(c);
     return code == null ? null : new SpecialCharacterFragment(view, code);
   }

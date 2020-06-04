@@ -280,6 +280,7 @@ abstract class LineLayout {
         specialFragment = tabFragment;
       }
       else if (specialCharsEnabled) {
+        // only BMP special chars are supported currently, so there's no need to check for surrogate pairs
         specialFragment = SpecialCharacterFragment.create(view, c);
       }
       if (specialFragment != null) {
