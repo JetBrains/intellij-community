@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.storage.impl.indices
 
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.workspaceModel.storage.impl.EntityId
+import com.intellij.workspaceModel.storage.impl.containers.copy
 
 open class EntityStorageInternalIndex<T> private constructor(
   internal open val index: BidirectionalMap<EntityId, T>
@@ -50,11 +51,5 @@ open class EntityStorageInternalIndex<T> private constructor(
       }
     }
   }
-}
-
-internal fun <A, B> BidirectionalMap<A, B>.copy(): BidirectionalMap<A, B> {
-  val copy = BidirectionalMap<A, B>()
-  keys.forEach { key -> this[key]?.also { value -> copy[key] = value } }
-  return copy
 }
 

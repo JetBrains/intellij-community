@@ -5,10 +5,10 @@ import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.impl.containers.copy
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityIndexImpl
 import com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalIndex
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
-import com.intellij.workspaceModel.storage.impl.indices.copy
 
 internal open class StorageIndexes(
   // List of IDs of entities that use this particular persistent id

@@ -6,6 +6,7 @@ import com.intellij.workspaceModel.storage.VirtualFileUrl
 import com.intellij.workspaceModel.storage.impl.EntityId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.containers.copy
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
@@ -49,12 +50,6 @@ open class VirtualFileIndex private constructor(
       fun from(other: VirtualFileIndex): MutableVirtualFileIndex = MutableVirtualFileIndex(other.index)
     }
   }
-}
-
-internal fun <A, B> BidirectionalMultiMap<A, B>.copy():BidirectionalMultiMap<A, B> {
-  val copy = BidirectionalMultiMap<A, B>()
-  this.keys.forEach { key -> this.getValues(key).forEach { value -> copy.put(key, value) } }
-  return copy
 }
 
 //---------------------------------------------------------------------

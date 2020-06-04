@@ -3,8 +3,8 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.BidirectionalMultiMap
-import com.intellij.workspaceModel.storage.impl.indices.copy
 import com.intellij.workspaceModel.storage.impl.*
+import com.intellij.workspaceModel.storage.impl.containers.copy
 import junit.framework.TestCase.*
 import org.junit.Assert
 import java.io.ByteArrayInputStream
