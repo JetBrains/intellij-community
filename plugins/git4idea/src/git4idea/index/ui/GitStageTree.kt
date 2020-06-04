@@ -53,31 +53,28 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
 
   override fun rebuildTree() {
     val builder = MyTreeModelBuilder(myProject, groupingSupport.grouping)
-    val parentNodes: MutableMap<NodeKind, ChangesBrowserKindNode> = mutableMapOf()
+
+    builder.createKindNode(NodeKind.STAGED)
+    builder.createKindNode(NodeKind.UNSTAGED)
 
     state.rootStates.forEach { (root, rootState) ->
       rootState.statuses.forEach { (_, status) ->
         NodeKind.values().forEach { kind ->
           if (kind.`is`(status)) {
-            val parentNode = parentNodes.getOrPut(kind) { ChangesBrowserKindNode(project, kind) }
             val fileStatusInfo = GitFileStatusNode.Saved(root, status, kind)
-            builder.insertPath(fileStatusInfo, parentNode)
+            builder.insertPath(fileStatusInfo, kind)
           }
         }
       }
       rootState.unsavedIndex.forEach { file ->
-        val parentNode = parentNodes.getOrPut(NodeKind.STAGED) { ChangesBrowserKindNode(project, NodeKind.STAGED) }
         val fileStatusInfo = GitFileStatusNode.Unsaved(root, file)
-        builder.insertPath(fileStatusInfo, parentNode)
+        builder.insertPath(fileStatusInfo, NodeKind.STAGED)
       }
       rootState.unsavedWorkTree.forEach { file ->
-        val parentNode = parentNodes.getOrPut(NodeKind.UNSTAGED) { ChangesBrowserKindNode(project, NodeKind.UNSTAGED) }
         val fileStatusInfo = GitFileStatusNode.Unsaved(root, file)
-        builder.insertPath(fileStatusInfo, parentNode)
+        builder.insertPath(fileStatusInfo, NodeKind.UNSTAGED)
       }
     }
-
-    parentNodes.values.forEach { builder.insertIntoRootNode(it) }
 
     updateTreeModel(builder.build())
   }
@@ -99,15 +96,23 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
       .map { it as GitFileStatusNode }
   }
 
-  private inner class MyTreeModelBuilder internal constructor(project: Project, grouping: ChangesGroupingPolicyFactory) :
-    TreeModelBuilder(project, grouping) {
+  private inner class MyTreeModelBuilder internal constructor(project: Project, grouping: ChangesGroupingPolicyFactory)
+    : TreeModelBuilder(project, grouping) {
+    private val parentNodes: MutableMap<NodeKind, ChangesBrowserKindNode> = mutableMapOf()
 
-    fun insertPath(node: GitFileStatusNode, parentNode: ChangesBrowserNode<*>) {
-      insertChangeNode(node.filePath, parentNode, ChangesBrowserGitFileStatusNode(node))
+    fun insertPath(node: GitFileStatusNode, kind: NodeKind) {
+      val subtreeRoot = createKindNode(kind)
+      insertChangeNode(node.filePath, subtreeRoot, ChangesBrowserGitFileStatusNode(node))
     }
 
     fun insertIntoRootNode(node: ChangesBrowserNode<*>) {
       myModel.insertNodeInto(node, myRoot, myRoot.childCount)
+    }
+
+    fun createKindNode(kind: NodeKind): ChangesBrowserKindNode {
+      return parentNodes.getOrPut(kind) {
+        ChangesBrowserKindNode(project, kind).also { insertIntoRootNode(it) }
+      }
     }
   }
 
