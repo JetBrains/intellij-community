@@ -4,7 +4,7 @@ package org.jetbrains.idea.devkit.references;
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder;
 import com.intellij.icons.AllIcons;
-import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.psi.PsiElement;
@@ -18,8 +18,8 @@ import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.ActionOrGroup;
-import org.jetbrains.idea.devkit.inspections.DevKitPluginXmlInspectionBase;
 import org.jetbrains.idea.devkit.navigation.DevkitRelatedLineMarkerProviderBase;
+import org.jetbrains.idea.devkit.util.DescriptorI18nUtil;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -58,7 +58,7 @@ public class DevKitRelatedPropertiesProvider extends DevkitRelatedLineMarkerProv
     }
 
     if (id != null) {
-      PropertiesFileImpl file = DevKitPluginXmlInspectionBase.findBundlePropertiesFile(ag);
+      PropertiesFile file = DescriptorI18nUtil.findBundlePropertiesFile(ag);
 
       if (file == null) return;
 

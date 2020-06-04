@@ -41,6 +41,7 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.ActionOrGroup;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
+import org.jetbrains.idea.devkit.util.DescriptorI18nUtil;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -92,7 +93,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
 
     if (isInternal(action)) return;
 
-    PropertiesFile propertiesFile = findBundlePropertiesFile(action);
+    PropertiesFile propertiesFile = DescriptorI18nUtil.findBundlePropertiesFile(action);
 
     holder.createProblem(action, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                          DevKitBundle.message("inspections.plugin.xml.i18n.name"),
