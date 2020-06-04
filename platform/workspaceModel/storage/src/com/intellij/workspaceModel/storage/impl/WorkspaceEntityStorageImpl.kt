@@ -369,7 +369,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
           // TODO: 29.04.2020 Review and write tests
           if (parent == null) {
-            if (connectionId.canRemoveChild()) {
+            if (connectionId.canRemoveParent()) {
               this.refs.removeParentToChildRef(connectionId, parentId, unmatchedId)
             }
             else error("Cannot link old entity to the new one")
@@ -379,7 +379,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
           for (childId in childIds) {
             val child = this.entityDataById(childId)
             if (child == null) {
-              if (connectionId.canRemoveParent()) {
+              if (connectionId.canRemoveChild()) {
                 this.refs.removeParentToChildRef(connectionId, unmatchedId, childId)
               }
               else error("Cannot link old entity to the new one")

@@ -259,6 +259,18 @@ class ReplaceBySourceTest {
     builder.replaceBySource({ it is MySource }, replacement)
   }
 
+  @Test(expected = IllegalStateException::class)
+  fun `child and parent - trying to remove parent and leave child`() {
+    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val parentEntity = builder.addParentEntity("prop", AnotherSource)
+    builder.addChildEntity(parentEntity)
+    val replacement = WorkspaceEntityStorageBuilderImpl.from(builder)
+    replacement.removeEntity(parentEntity)
+
+    builder.replaceBySource({ it is AnotherSource }, replacement)
+    builder.assertConsistency()
+  }
+
   @Test
   fun `child and parent - different source for child`() {
     val builder = WorkspaceEntityStorageBuilderImpl.create()
