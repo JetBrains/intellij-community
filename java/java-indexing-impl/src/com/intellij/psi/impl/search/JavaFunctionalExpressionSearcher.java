@@ -35,6 +35,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
@@ -146,7 +147,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
 
   private static void processOffsets(@NotNull List<? extends SamDescriptor> descriptors,
                                      @NotNull Project project,
-                                     @NotNull PairProcessor<? super VirtualFile, ? super Set<FunExprOccurrence>> processor) {
+                                     @NotNull PairProcessor<? super VirtualFile, Map<FunExprOccurrence, Confidence>> processor) {
     if (descriptors.isEmpty()) return;
 
     List<PsiClass> samClasses = ContainerUtil.map(descriptors, d -> d.samClass);
@@ -156,7 +157,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     Set<VirtualFile> allFiles = allCandidates.keySet();
     Set<VirtualFile> filesFirst = getLikelyFiles(descriptors, allFiles, project);
     Processor<VirtualFile> vFileProcessor = vFile -> {
-      Set<FunExprOccurrence> toLoad = filterInapplicable(samClasses, vFile, allCandidates.get(vFile), project);
+      Map<FunExprOccurrence, Confidence> toLoad = filterInapplicable(samClasses, vFile, allCandidates.get(vFile), project);
       if (!toLoad.isEmpty()) {
         if (LOG.isTraceEnabled()) {
           LOG.trace("To load " + vFile.getPath() + " with values: " + toLoad);
@@ -173,17 +174,27 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   }
 
   @NotNull
-  private static Set<FunExprOccurrence> filterInapplicable(@NotNull List<? extends PsiClass> samClasses,
+  private static Map<FunExprOccurrence, Confidence> filterInapplicable(@NotNull List<? extends PsiClass> samClasses,
                                                            @NotNull VirtualFile vFile,
                                                            @NotNull Collection<? extends FunExprOccurrence> occurrences,
                                                            @NotNull Project project) {
-    return DumbService.getInstance(project).runReadActionInSmartMode(
-      () -> new HashSet<>(ContainerUtil.filter(occurrences, it -> it.canHaveType(samClasses, vFile))));
+    Map<FunExprOccurrence, Confidence> map = new HashMap<>();
+    DumbService.getInstance(project).runReadActionInSmartMode(() -> {
+      for (FunExprOccurrence occurrence : occurrences) {
+        ThreeState result = occurrence.checkHasTypeLight(samClasses, vFile);
+        if (result != ThreeState.NO) {
+          map.put(occurrence, result == ThreeState.YES ? Confidence.sure : Confidence.needsCheck);
+        }
+      }
+    });
+    return map;
   }
+
+  private enum Confidence { sure, needsCheck}
 
   private static boolean processFile(@NotNull List<? extends SamDescriptor> descriptors,
                                      @NotNull VirtualFile vFile,
-                                     @NotNull Set<? extends FunExprOccurrence> occurrences,
+                                     @NotNull Map<FunExprOccurrence, Confidence> occurrences,
                                      @NotNull Processor<? super PsiFunctionalExpression> consumer) {
     return descriptors.get(0).dumbService.runReadActionInSmartMode(() -> {
       PsiManager manager = descriptors.get(0).samClass.getManager();
@@ -197,7 +208,8 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
         FileBasedIndex.getInstance().getFileData(JavaFunctionalExpressionIndex.INDEX_ID, vFile, manager.getProject()).values();
       for (Map<Integer, FunExprOccurrence> map : data) {
         for (Map.Entry<Integer, FunExprOccurrence> entry : map.entrySet()) {
-          if (occurrences.contains(entry.getValue())) {
+          Confidence confidence = occurrences.get(entry.getValue());
+          if (confidence != null) {
             int offset = entry.getKey();
             PsiFunctionalExpression expression = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiFunctionalExpression.class, false);
             if (expression == null || expression.getTextRange().getStartOffset() != offset) {
@@ -205,7 +217,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
               continue;
             }
 
-            if (hasType(descriptors, expression) && !consumer.process(expression)) {
+            if ((confidence == Confidence.sure || hasType(descriptors, expression)) && !consumer.process(expression)) {
               return false;
             }
           }
@@ -216,13 +228,18 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   }
 
   private static boolean hasType(@NotNull List<? extends SamDescriptor> descriptors, @NotNull PsiFunctionalExpression expression) {
-    if (!canHaveType(expression, ContainerUtil.map(descriptors, d -> d.samClass))) return false;
+    ThreeState approximate = approximateHasType(expression, ContainerUtil.map(descriptors, d -> d.samClass));
+    if (approximate != ThreeState.UNSURE) return approximate == ThreeState.YES;
 
+    return hasType2(descriptors, expression);
+  }
+
+  private static boolean hasType2(@NotNull List<? extends SamDescriptor> descriptors, @NotNull PsiFunctionalExpression expression) {
     PsiClass actualClass = LambdaUtil.resolveFunctionalInterfaceClass(expression);
     return ContainerUtil.exists(descriptors, d -> InheritanceUtil.isInheritorOrSelf(actualClass, d.samClass, true));
   }
 
-  private static boolean canHaveType(@NotNull PsiFunctionalExpression expression, @NotNull List<? extends PsiClass> samClasses) {
+  private static ThreeState approximateHasType(@NotNull PsiFunctionalExpression expression, @NotNull List<? extends PsiClass> samClasses) {
     PsiElement parent = expression.getParent();
     if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiMethodCallExpression) {
       PsiExpression[] args = ((PsiExpressionList)parent).getExpressions();
@@ -234,11 +251,12 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
         Set<PsiClass> approximateTypes = ApproximateResolver.getPossibleTypes(qualifier, 10);
         List<PsiMethod> methods = approximateTypes == null ? null :
                                   ApproximateResolver.getPossibleMethods(approximateTypes, methodName, args.length);
-        return methods == null ||
-               ContainerUtil.exists(methods, m -> FunExprOccurrence.hasCompatibleParameter(m, argIndex, samClasses));
+        return methods == null ? ThreeState.UNSURE :
+               methods.isEmpty() ? ThreeState.NO :
+               ThreeState.merge(JBIterable.from(methods).map(m -> FunExprOccurrence.hasCompatibleParameter(m, argIndex, samClasses)));
       }
     }
-    return true;
+    return ThreeState.UNSURE;
   }
 
   private static boolean hasJava8Modules(@NotNull Project project) {
