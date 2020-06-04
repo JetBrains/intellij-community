@@ -5,8 +5,6 @@ PyFile:DecoratedAsyncDef.py
         PsiElement(Py:AT)('@')
         PyReferenceExpression: foo
           PsiElement(Py:IDENTIFIER)('foo')
-        PyArgumentList
-          <empty list>
     PsiWhiteSpace('\n')
     PsiElement(Py:ASYNC_KEYWORD)('async')
     PsiWhiteSpace(' ')
@@ -36,17 +34,18 @@ PyFile:DecoratedAsyncDef.py
     PyDecoratorList
       PyDecorator: @baz
         PsiElement(Py:AT)('@')
-        PyReferenceExpression: baz
-          PsiElement(Py:IDENTIFIER)('baz')
-        PyArgumentList
-          PsiElement(Py:LPAR)('(')
-          PyReferenceExpression: x
-            PsiElement(Py:IDENTIFIER)('x')
-          PsiElement(Py:COMMA)(',')
-          PsiWhiteSpace(' ')
-          PyReferenceExpression: y
-            PsiElement(Py:IDENTIFIER)('y')
-          PsiElement(Py:RPAR)(')')
+        PyCallExpression: baz
+          PyReferenceExpression: baz
+            PsiElement(Py:IDENTIFIER)('baz')
+          PyArgumentList
+            PsiElement(Py:LPAR)('(')
+            PyReferenceExpression: x
+              PsiElement(Py:IDENTIFIER)('x')
+            PsiElement(Py:COMMA)(',')
+            PsiWhiteSpace(' ')
+            PyReferenceExpression: y
+              PsiElement(Py:IDENTIFIER)('y')
+            PsiElement(Py:RPAR)(')')
     PsiWhiteSpace('\n')
     PsiElement(Py:ASYNC_KEYWORD)('async')
     PsiWhiteSpace(' ')
