@@ -133,10 +133,9 @@ public class HighlightDisplayLevel {
   }
 
   public static Icon createIconByKey(@NotNull TextAttributesKey key) {
-    String name = key.getExternalName();
-    return StringUtil.containsIgnoreCase(name, "error") ? new ColorizedIcon(key, AllIcons.General.InspectionsError) :
-           StringUtil.containsIgnoreCase(name, "warning") ? new ColorizedIcon(key, AllIcons.General.InspectionsWarning) :
-           new SingleColorIcon(key);
+    return StringUtil.containsIgnoreCase(key.getExternalName(), "error") ?
+           new ColorizedIcon(key, AllIcons.General.InspectionsError) :
+           new ColorizedIcon(key, AllIcons.General.InspectionsWarning);
   }
 
   @NotNull

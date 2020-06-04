@@ -423,6 +423,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon InlineVariablesHover = load("/general/inlineVariablesHover.svg");
     /** 16x16 */ public static final @NotNull Icon InspectionsError = load("/general/inspectionsError.svg");
     /** 16x16 */ public static final @NotNull Icon InspectionsEye = load("/general/inspectionsEye.svg");
+    /** 16x16 */ public static final @NotNull Icon InspectionsMixed = load("/general/inspectionsMixed.svg");
     /** 16x16 */ public static final @NotNull Icon InspectionsOK = load("/general/inspectionsOK.svg");
     /** 16x16 */ public static final @NotNull Icon InspectionsPause = load("/general/inspectionsPause.svg");
     /** 16x16 */ public static final @NotNull Icon InspectionsPowerSaveMode = load("/general/inspectionsPowerSaveMode.svg");
