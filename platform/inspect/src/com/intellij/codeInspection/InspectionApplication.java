@@ -117,14 +117,6 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     }
   }
 
-  public void enablePathProfiling() {
-    myPathProfiling = true;
-  }
-
-  public Map<Path, Long> getPathProfile() {
-    return myCompleteProfile;
-  }
-
   public void execute() throws Exception {
     final ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
     reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.starting.up",
