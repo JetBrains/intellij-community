@@ -85,8 +85,8 @@ static DWORD _ConnectIfNeededPipe(DWORD nParentPid, DWORD nDescriptor, FILE* str
 	return 0;
 }
 
-// PID Directory DescriptorFlags ProgramToRun Arguments
-#define _ARG_ENV_PATH 1
+// EnvVarPipeName PID Directory DescriptorFlags ProgramToRun Arguments
+#define _ARG_ENV_VAR_PIPE 1
 #define _ARG_PID 2
 #define _ARG_DIR 3
 #define _ARG_DESCRIPTORS 4
@@ -102,8 +102,6 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 		return ERR_BAD_COMMAND_LINE;
 	}
 
-	WCHAR* envFilePath = argv[_ARG_ENV_PATH];
-
 	if (!SetCurrentDirectory(argv[_ARG_DIR]))
 	{
 		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_SET_DIR, NULL, 0, 0, NULL, NULL);
@@ -117,6 +115,8 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 		fwprintf(stderr, L"Failed to get parent pid from %s", argv[_ARG_PID]);
 		return ERR_PARENT_ID;
 	}
+
+	WCHAR* sPipename = argv[_ARG_ENV_VAR_PIPE];
 
 	wchar_t* sDescriptorsStr = argv[_ARG_DESCRIPTORS];
 	size_t nDescriptorsLen = wcslen(sDescriptorsStr);
@@ -191,21 +191,24 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 	
 	PROCESS_INFORMATION processInfo;
 
-  // "-" is a special value that means "there's no env file"
-	if (envFilePath != L"-") {
-		FILE* f = NULL;
-		errno_t openStatus = _wfopen_s(&f, envFilePath, L"r");
-		if (openStatus != 0) {
-			ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_CANT_OPEN_ENV_FILE, NULL, 0, 0, NULL, NULL);
-			fwprintf(stderr, L"Error opening env file. Exit code '%ls'", envFilePath);
-			return ERR_CANT_OPEN_ENV_FILE;
+	// Get the environment vars from the launcher through the named pipe.
+	{
+		HANDLE pipe = CreateFile(sPipename, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+		if (pipe == INVALID_HANDLE_VALUE) {
+			ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_INVALID_HANDLE, NULL, 0, 0, NULL, NULL);
+			fwprintf(stderr, L"Error opening env vars pipe. Exit code %ld", GetLastError());
+			return ERR_INVALID_HANDLE;
 		}
-		const int maxEnvVarLenth = 32767;
-		char* buf = malloc(maxEnvVarLenth);
-		while (fgets(buf, maxEnvVarLenth, f) != NULL) {
-			_putenv(buf);
+		WCHAR* buf = malloc(_MAX_ENV);
+		while (TRUE) {
+			unsigned long ulBytesRead = 0;
+			BOOL bReadOk = ReadFile(pipe, buf, _MAX_ENV, &ulBytesRead, NULL);
+			if (!bReadOk || ulBytesRead == 0) {
+				break;
+			}
+			_wputenv(buf);
 		}
-		fclose(f);
+		free(buf);
 	}
 
 	if (!CreateProcess(NULL, sCommandLine, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &startupInfo, &processInfo))

@@ -16,6 +16,7 @@
 #include <Windows.h>
 #include <elevTools.h>
 #include <stdio.h>
+#include <assert.h>
 
 // Elevation "frontend". Launched by user it starts elevator, connects to it and reads data from it
 
@@ -28,6 +29,7 @@
 #define ERR_LAUNCH -4
 #define ERR_FAIL_WAIT -5
 #define ERR_CREATE_PIPE -6
+#define ERR_WRITE_PIPE -7
 
 // Pipe that should be connected to remote process
 typedef struct
@@ -54,13 +56,15 @@ static WCHAR* _GetCommandLineNoProgram()
 	WCHAR* sCommandLine = GetCommandLine();
 	int nNumberOfArgs;
 	WCHAR** args = CommandLineToArgvW(sCommandLine, &nNumberOfArgs);
-	WCHAR* sProgram = args[2];
-	const BOOL bIsQuoted = wcsstr(sCommandLine, L"\"") != NULL;
-	WCHAR* sCommandLineAfterProgram = wcsstr(sCommandLine, sProgram);
-	if (bIsQuoted) {
-		sCommandLineAfterProgram -= 1;
-	}
+	WCHAR* sProgram = args[0];
+	size_t nProgramLengthChars = wcslen(sProgram);
 	LocalFree(args);
+	if (sCommandLine[0] == L'"')
+	{
+		nProgramLengthChars += 2; //Program name is in quotes
+	}
+	WCHAR* sCommandLineAfterProgram = sCommandLine + nProgramLengthChars;
+	for (; sCommandLineAfterProgram[0] == L' '; sCommandLineAfterProgram++) {} // Remove spaces after program
 	return sCommandLineAfterProgram;
 }
 
@@ -201,7 +205,6 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 {
 	HANDLE eventSource = RegisterEventSourceW(NULL, L"JB-Launcher");
 
-	
 	DWORD nExitCode = 0;
 
 	// Get pids
@@ -213,8 +216,21 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 	_CONFIGURE_PIPE_INFO(g_stdErrPipe, ELEV_DESCR_STDERR, nPid, TRUE);
 	_CONFIGURE_PIPE_INFO(g_stdInPipe, ELEV_DESCR_STDIN, nPid, FALSE);
 
-
 	MemoryBarrier(); // To make sure threads has access to g_
+
+	WCHAR sEnvVarsPipename[100];
+	wsprintf(sEnvVarsPipename, L"\\\\.\\pipe\\EnvVarsPipe-%ls", sPid);
+	HANDLE envVarsPipe = CreateNamedPipe(
+		sEnvVarsPipename,
+		PIPE_ACCESS_INBOUND | PIPE_ACCESS_OUTBOUND,
+		PIPE_WAIT | PIPE_TYPE_MESSAGE,
+		1, _MAX_ENV, _MAX_ENV, 120 * 1000, NULL
+	);
+	if (sEnvVarsPipename == INVALID_HANDLE_VALUE) {
+		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_CREATE_PIPE, NULL, 0, 0, NULL, NULL);
+		fprintf(stderr, "Failed to open env vars pipe: %ld", GetLastError());
+		return ERR_CREATE_PIPE;
+	}
 
 	HANDLE arHandlesToWait[] = {NULL, NULL};
 	int nDescriptorFlags = 0;
@@ -231,7 +247,7 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 	size_t chCurrentSize = 1;
 	WCHAR* sNewCommandLine = calloc(1, sizeof(WCHAR));
 
-	_AddStringToCommandLine(&chCurrentSize, &sNewCommandLine, argv[1], TRUE);
+	_AddStringToCommandLine(&chCurrentSize, &sNewCommandLine, sEnvVarsPipename, TRUE);
 	_AddStringToCommandLine(&chCurrentSize, &sNewCommandLine, sPid, TRUE);
 	_AddStringToCommandLine(&chCurrentSize, &sNewCommandLine, sCurrentDirectory, TRUE);
 	WCHAR sDescriptorFlags[3];
@@ -276,6 +292,36 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_LAUNCH, NULL, 0, 0, NULL, NULL);
 		fprintf(stderr, "Failed to launch process: %ld", GetLastError());
 		return ERR_LAUNCH;
+	}
+
+	{
+		// Waiting for the client to connect.
+		ConnectNamedPipe(envVarsPipe, NULL);
+
+		// Getting the env vars block.
+		LPWCH lpEnvString = GetEnvironmentStringsW();
+		LPWSTR lpszVariable = (LPWSTR)lpEnvString;
+		while (*lpszVariable)
+		{
+			size_t len = (wcslen(lpszVariable) + 1) * sizeof(WCHAR);
+			DWORD numWritten;
+			BOOL bWriteOk = WriteFile(envVarsPipe, lpszVariable, (DWORD)len, &numWritten, NULL);
+			if (!bWriteOk)
+			{
+				ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_WRITE_PIPE, NULL, 0, 0, NULL, NULL);
+				fprintf(stderr, "Failed to write to env vars pipe: %ld", GetLastError());
+				return ERR_WRITE_PIPE;
+			}
+
+			// Waiting for the client to read the message.
+			FlushFileBuffers(envVarsPipe);
+
+			lpszVariable += wcslen(lpszVariable) + 1;
+		}
+		FreeEnvironmentStringsW(lpEnvString);
+
+		// Closing the pipe to signal the client to stop waiting for new msgs.
+		CloseHandle(envVarsPipe);
 	}
 		
 	// Wait for all threads

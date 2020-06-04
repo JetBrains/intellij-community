@@ -136,23 +136,8 @@ object ExecUtil {
 
     val sudoCommandLine = when {
       SystemInfo.isWinVistaOrNewer -> {
-        val env = commandLine.effectiveEnvironment
-        val fileName = if (env.isNotEmpty()) {
-          val file = FileUtil.createTempFile("sudoVars", ".env", true)
-          var writer = PrintWriter(file)
-          for ((name, value) in env) {
-            writer.write("$name=$value")
-          }
-          writer.close()
-          file.absolutePath
-        }
-        else {
-          // a special value that is interpreted by elevator.c as "there's no env file"
-          "-"
-        }
-
         val launcherExe = PathManager.findBinFileWithException("launcher.exe")
-        GeneralCommandLine(listOf(launcherExe.toString(), fileName, commandLine.exePath) + commandLine.parametersList.parameters)
+        GeneralCommandLine(listOf(launcherExe.toString(), commandLine.exePath) + commandLine.parametersList.parameters)
       }
       SystemInfo.isWindows -> {
         throw UnsupportedOperationException("Executing as Administrator is only available in Windows Vista or newer")
