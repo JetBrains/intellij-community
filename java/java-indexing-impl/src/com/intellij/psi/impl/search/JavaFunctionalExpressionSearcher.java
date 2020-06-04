@@ -39,9 +39,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
-import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
@@ -131,23 +129,19 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   @NotNull
   private static MultiMap<VirtualFile, FunExprOccurrence> getAllOccurrences(@NotNull List<? extends SamDescriptor> descriptors) {
     MultiMap<VirtualFile, FunExprOccurrence> result = MultiMap.createLinkedSet();
-    descriptors.get(0).dumbService.runReadActionInSmartMode(() -> processIndexValues(descriptors, null, (file, infos) -> {
-      result.putValues(file, infos.values());
-      return true;
-    }));
+    descriptors.get(0).dumbService.runReadActionInSmartMode(() -> {
+      for (SamDescriptor descriptor : descriptors) {
+        GlobalSearchScope scope = new JavaSourceFilterScope(descriptor.effectiveUseScope);
+        for (FunctionalExpressionKey key : descriptor.keys) {
+          FileBasedIndex.getInstance().processValues(JavaFunctionalExpressionIndex.INDEX_ID, key, null, (file, infos) -> {
+            result.putValues(file, infos.values());
+            return true;
+          }, scope);
+        }
+      }
+    });
     LOG.debug("Found " + result.values().size() + " fun-expressions in " + result.keySet().size() + " files");
     return result;
-  }
-
-  private static void processIndexValues(@NotNull List<? extends SamDescriptor> descriptors,
-                                         @Nullable VirtualFile inFile,
-                                         @NotNull FileBasedIndex.ValueProcessor<? super Map<Integer, FunExprOccurrence>> processor) {
-    for (SamDescriptor descriptor : descriptors) {
-      GlobalSearchScope scope = new JavaSourceFilterScope(descriptor.effectiveUseScope);
-      for (FunctionalExpressionKey key : descriptor.keys) {
-        FileBasedIndex.getInstance().processValues(JavaFunctionalExpressionIndex.INDEX_ID, key, inFile, processor, scope);
-      }
-    }
   }
 
   private static void processOffsets(@NotNull List<? extends SamDescriptor> descriptors,
@@ -192,45 +186,33 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
                                      @NotNull Set<? extends FunExprOccurrence> occurrences,
                                      @NotNull Processor<? super PsiFunctionalExpression> consumer) {
     return descriptors.get(0).dumbService.runReadActionInSmartMode(() -> {
-      PsiFile file = descriptors.get(0).samClass.getManager().findFile(vFile);
+      PsiManager manager = descriptors.get(0).samClass.getManager();
+      PsiFile file = manager.findFile(vFile);
       if (!(file instanceof PsiJavaFile)) {
         LOG.error("Non-java file " + file + "; " + vFile);
         return true;
       }
 
-      TIntArrayList offsets = getOccurrenceOffsets(descriptors, vFile, occurrences);
+      Collection<Map<Integer, FunExprOccurrence>> data =
+        FileBasedIndex.getInstance().getFileData(JavaFunctionalExpressionIndex.INDEX_ID, vFile, manager.getProject()).values();
+      for (Map<Integer, FunExprOccurrence> map : data) {
+        for (Map.Entry<Integer, FunExprOccurrence> entry : map.entrySet()) {
+          if (occurrences.contains(entry.getValue())) {
+            int offset = entry.getKey();
+            PsiFunctionalExpression expression = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiFunctionalExpression.class, false);
+            if (expression == null || expression.getTextRange().getStartOffset() != offset) {
+              LOG.error("Fun expression not found in " + file + " at " + offset);
+              continue;
+            }
 
-      for (int i = 0; i < offsets.size(); i++) {
-        int offset = offsets.get(i);
-        PsiFunctionalExpression expression = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiFunctionalExpression.class, false);
-        if (expression == null || expression.getTextRange().getStartOffset() != offset) {
-          LOG.error("Fun expression not found in " + file + " at " + offset);
-          continue;
-        }
-
-        if (hasType(descriptors, expression) && !consumer.process(expression)) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-  }
-
-  @NotNull
-  private static TIntArrayList getOccurrenceOffsets(@NotNull List<? extends SamDescriptor> descriptors,
-                                                    @NotNull VirtualFile vFile,
-                                                    @NotNull Set<? extends FunExprOccurrence> occurrences) {
-    TIntArrayList offsets = new TIntArrayList();
-    processIndexValues(descriptors, vFile, (__, infos) -> {
-      for (Map.Entry<Integer, FunExprOccurrence> entry : infos.entrySet()) {
-        if (occurrences.contains(entry.getValue())) {
-          offsets.add(entry.getKey());
+            if (hasType(descriptors, expression) && !consumer.process(expression)) {
+              return false;
+            }
+          }
         }
       }
       return true;
     });
-    return offsets;
   }
 
   private static boolean hasType(@NotNull List<? extends SamDescriptor> descriptors, @NotNull PsiFunctionalExpression expression) {
