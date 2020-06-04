@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index.ui
 
-import com.google.common.base.Objects
 import com.intellij.ide.DataManager
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -10,6 +9,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.changes.UnversionedViewDialog
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter
 import com.intellij.openapi.vfs.VirtualFile
@@ -22,11 +22,13 @@ import git4idea.i18n.GitBundle
 import git4idea.index.GitFileStatus
 import git4idea.index.GitStageTracker
 import git4idea.index.isRenamed
+import git4idea.index.ui.NodeKind.Companion.sortOrder
 import git4idea.index.vfs.GitIndexVirtualFile
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 import java.util.stream.Stream
+import javax.swing.tree.DefaultTreeModel
 import kotlin.streams.toList
 
 val GIT_FILE_STATUS_NODES_STREAM = DataKey.create<Stream<GitFileStatusNode>>("GitFileStatusNodesStream")
@@ -60,8 +62,7 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
       rootState.statuses.forEach { (_, status) ->
         NodeKind.values().forEach { kind ->
           if (kind.`is`(status)) {
-            val fileStatusInfo = GitFileStatusNode(root, status, kind)
-            builder.insertPath(fileStatusInfo, kind)
+            builder.insertStatus(root, status, kind)
           }
         }
       }
@@ -90,9 +91,18 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
   private inner class MyTreeModelBuilder internal constructor(project: Project, grouping: ChangesGroupingPolicyFactory)
     : TreeModelBuilder(project, grouping) {
     private val parentNodes: MutableMap<NodeKind, ChangesBrowserKindNode> = mutableMapOf()
+    private val untrackedFilesMap = mutableMapOf<VirtualFile, MutableCollection<GitFileStatus>>()
 
-    fun insertPath(node: GitFileStatusNode, kind: NodeKind) {
-      val subtreeRoot = createKindNode(kind)
+    fun insertStatus(root: VirtualFile, status: GitFileStatus, kind: NodeKind) {
+      if (kind == NodeKind.UNTRACKED) {
+        untrackedFilesMap.getOrPut(root) { mutableListOf() }.add(status)
+      }
+      else {
+        insertFileStatusNode(GitFileStatusNode(root, status, kind), createKindNode(kind))
+      }
+    }
+
+    private fun insertFileStatusNode(node: GitFileStatusNode, subtreeRoot: ChangesBrowserNode<*>) {
       insertChangeNode(node.filePath, subtreeRoot, ChangesBrowserGitFileStatusNode(node))
     }
 
@@ -104,6 +114,26 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
       return parentNodes.getOrPut(kind) {
         ChangesBrowserKindNode(project, kind).also { insertIntoRootNode(it) }
       }
+    }
+
+    private fun createUntrackedNode() {
+      val allUntrackedFiles = untrackedFilesMap.values.flatten()
+      if (allUntrackedFiles.isEmpty()) return
+
+      val untrackedRootNode = ChangesBrowserUntrackedNode(project, allUntrackedFiles.map { it.path }).also { insertIntoRootNode(it) }
+      if (!untrackedRootNode.isManyFiles) {
+        untrackedFilesMap.forEach { (root, untrackedInRoot) ->
+          untrackedInRoot.forEach {
+            insertFileStatusNode(GitFileStatusNode(root, it, NodeKind.UNTRACKED), untrackedRootNode)
+          }
+        }
+      }
+    }
+
+    override fun build(): DefaultTreeModel {
+      createUntrackedNode()
+
+      return super.build()
     }
   }
 
@@ -126,11 +156,7 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
     }
   }
 
-  private class ChangesBrowserKindNode(val project: Project, kind: NodeKind) : ChangesBrowserNode<NodeKind>(kind) {
-    private val sortOrder = listOf(NodeKind.CONFLICTED, NodeKind.STAGED,
-                                   NodeKind.UNSTAGED, NodeKind.UNTRACKED,
-                                   NodeKind.IGNORED).zip(NodeKind.values().indices).toMap()
-
+  private open class ChangesBrowserKindNode(val project: Project, kind: NodeKind) : ChangesBrowserNode<NodeKind>(kind) {
     internal val kind: NodeKind
       get() = userObject as NodeKind
 
@@ -158,6 +184,19 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
     override fun getTextPresentation(): String = GitBundle.message(kind.key)
     override fun compareUserObjects(o2: NodeKind?): Int {
       return Comparing.compare(sortOrder[kind], sortOrder[o2])
+    }
+  }
+
+  private class ChangesBrowserUntrackedNode(project: Project, files: List<FilePath>) :
+    ChangesBrowserSpecificFilePathsNode<NodeKind>(NodeKind.UNTRACKED, files, { UnversionedViewDialog(project, files).show() }) {
+    init {
+      markAsHelperNode()
+    }
+
+    @Nls
+    override fun getTextPresentation(): String = GitBundle.message(NodeKind.UNTRACKED.key)
+    override fun compareUserObjects(o2: NodeKind?): Int {
+      return Comparing.compare(sortOrder[NodeKind.UNTRACKED], sortOrder[o2])
     }
   }
 }
@@ -189,6 +228,10 @@ enum class NodeKind(@PropertyKey(resourceBundle = GitBundle.BUNDLE) @NonNls val 
   abstract fun `is`(status: GitFileStatus): Boolean
   abstract fun status(status: GitFileStatus): FileStatus
   open fun origPath(status: GitFileStatus): FilePath? = null
+
+  companion object {
+    internal val sortOrder = listOf(CONFLICTED, STAGED, UNSTAGED, UNTRACKED, IGNORED).zip(values().indices).toMap()
+  }
 }
 
 data class GitFileStatusNode(val root: VirtualFile, val status: GitFileStatus, val kind: NodeKind) {

@@ -182,6 +182,12 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
     }
   }
 
+  public boolean containsFile(@NotNull FilePath filePath) {
+    synchronized (LOCK) {
+      return myDefinitelyUntrackedFiles.contains(filePath);
+    }
+  }
+
   @NotNull
   public Collection<FilePath> retrieveUntrackedFilePaths() throws VcsException {
     synchronized (RESCAN_LOCK) {
