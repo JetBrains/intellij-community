@@ -68,6 +68,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @author Alexander Lobas
@@ -688,7 +689,14 @@ public class PluginManagerConfigurable
                   return;
                 }
 
-                List<PluginNode> plugins = MarketplaceRequests.getInstance().searchPlugins(parser.getUrlQuery(), 10000);
+                List<PluginNode> pluginsFromMarketplace = MarketplaceRequests.getInstance().searchPlugins(parser.getUrlQuery(), 10000);
+                List<IdeaPluginDescriptor> plugins = UpdateChecker.mergePluginsFromRepositories(
+                  pluginsFromMarketplace,
+                  customRepositoriesMap.values()
+                    .stream()
+                    .flatMap(list -> list.stream())
+                    .collect(Collectors.toList())
+                ); // compare plugin versions between marketplace & custom repositories
                 result.descriptors.addAll(plugins);
 
                 if (parser.searchQuery != null) {
