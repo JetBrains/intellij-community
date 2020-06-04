@@ -413,4 +413,9 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testParametrizedBuiltinCollectionsAndTheirTypingAliasesAreEquivalent() {
     doTest();
   }
+
+  // PY-42418
+  public void testParametrizedBuiltinTypeAndTypingTypeAreEquivalent() {
+    doTest();
+  }
 }

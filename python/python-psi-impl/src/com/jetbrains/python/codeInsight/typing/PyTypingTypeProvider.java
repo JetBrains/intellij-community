@@ -818,7 +818,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PySubscriptionExpression subsExpr = (PySubscriptionExpression)resolved;
       final PyExpression operand = subsExpr.getOperand();
       final Collection<String> operandNames = resolveToQualifiedNames(operand, context.getTypeContext());
-      if (operandNames.contains(TYPE)) {
+      if (operandNames.contains(TYPE) || operandNames.contains(PyNames.TYPE)) {
         final PyExpression indexExpr = subsExpr.getIndexExpression();
         if (indexExpr != null) {
           if (resolveToQualifiedNames(indexExpr, context.getTypeContext()).contains(ANY)) {
