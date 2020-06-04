@@ -249,17 +249,6 @@ open class MarketplaceRequests {
       }
   }
 
-  fun loadCompatiblePluginsByModules(module: String, buildNumber: BuildNumber? = null): List<PluginNode> {
-    val data = try {
-      getCompatibleUpdatesByModules(module, buildNumber)
-    }
-    catch (e: Exception) {
-      LOG.warn("Can not get compatible update from Marketplace", e)
-      emptyList()
-    }
-    return data.map { loadPluginDescriptor(it.pluginId, it) }
-  }
-
   fun getLastCompatiblePluginUpdate(ids: List<String>, buildNumber: BuildNumber? = null): List<IdeCompatibleUpdate> = try {
     val data = objectMapper.writeValueAsString(CompatibleUpdateRequest(PluginDownloader.getBuildNumberForDownload(buildNumber), ids))
     val url = Urls.newFromEncoded(COMPATIBLE_UPDATE_URL).toExternalForm()
