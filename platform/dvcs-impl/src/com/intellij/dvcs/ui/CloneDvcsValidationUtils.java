@@ -38,7 +38,7 @@ public class CloneDvcsValidationUtils {
       if (!directoryPath.toFile().exists()) {
         Files.createDirectories(directoryPath);
       }
-      else if (!directoryPath.toFile().isDirectory() || !Files.isWritable(directoryPath)) {
+      else if (!directoryPath.toFile().isDirectory()) {
         return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access")).withOKEnabled();
       }
       return null;
