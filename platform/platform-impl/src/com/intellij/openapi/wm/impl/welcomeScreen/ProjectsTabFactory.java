@@ -9,12 +9,11 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WelcomeScreenTab;
 import com.intellij.openapi.wm.WelcomeTabFactory;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.SearchTextField;
+import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -75,6 +74,7 @@ public class ProjectsTabFactory implements WelcomeTabFactory {
           @Override
           protected JBList<AnAction> createList(AnAction[] recentProjectActions, Dimension size) {
             JBList<AnAction> projectsList = super.createList(recentProjectActions, size);
+            projectsList.setEmptyText(UIBundle.message("message.nothingToShow"));
             SpeedSearch speedSearch = new SpeedSearch();
 
             NameFilteringListModel<AnAction> model = new NameFilteringListModel<>(
@@ -87,12 +87,16 @@ public class ProjectsTabFactory implements WelcomeTabFactory {
               protected void textChanged(@NotNull DocumentEvent e) {
                 speedSearch.updatePattern(projectSearch.getText());
                 model.refilter();
-                int closestMatchIndex = model.getClosestMatchIndex();
-                if (closestMatchIndex >= 0) {
-                  projectsList.setSelectedIndex(closestMatchIndex);
-                }
+                projectsList.setSelectedIndex(0);
               }
             });
+            ScrollingUtil.installActions(projectsList, projectSearch);
+            DumbAwareAction.create(event -> {
+              AnAction selectedProject = myList.getSelectedValue();
+              if (selectedProject != null) {
+                selectedProject.actionPerformed(event);
+              }
+            }).registerCustomShortcutSet(CommonShortcuts.ENTER, projectSearch, parentDisposable);
             return projectsList;
           }
         };
