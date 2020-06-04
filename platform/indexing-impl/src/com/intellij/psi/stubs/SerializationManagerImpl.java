@@ -225,7 +225,14 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     //noinspection SynchronizeOnThis
     synchronized (this) {
       IStubElementType.dropRegisteredTypes();
-      myStubSerializationHelper.dropRegisteredSerializers();
+      StubSerializationHelper helper = myStubSerializationHelper;
+      if (helper != null) {
+        helper.dropRegisteredSerializers();
+      }
+      else {
+        // has been corrupted previously
+        nameStorageCrashed();
+      }
       mySerializersLoaded = false;
     }
   }
