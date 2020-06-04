@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -738,6 +739,18 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON38) && registerForLanguageLevel(level),
                                      " not support 'continue' inside 'finally' clause",
                                      node);
+    }
+  }
+
+  @Override
+  public void visitPyDecoratorList(PyDecoratorList node) {
+    super.visitPyDecoratorList(node);
+
+    for (PyDecorator decorator : node.getDecorators()) {
+      if (PsiTreeUtil.getChildOfType(decorator, PsiErrorElement.class) == null && !decorator.hasPlainReferenceCallee()) {
+        registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON39) && registerForLanguageLevel(level),
+                                       " not support arbitrary expressions as a decorator", decorator);
+      }
     }
   }
 }

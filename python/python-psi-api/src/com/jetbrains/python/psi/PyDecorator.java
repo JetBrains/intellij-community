@@ -54,4 +54,8 @@ public interface PyDecorator extends PyCallExpression, StubBasedPsiElement<PyDec
   @Nullable
   QualifiedName getQualifiedName();
 
+  /**
+   * True if its callee name consists only of identifiers and dots, e.g. {@code x.y.z}
+   */
+  boolean hasPlainReferenceCallee();
 }
