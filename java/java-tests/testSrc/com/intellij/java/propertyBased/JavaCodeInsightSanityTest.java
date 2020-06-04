@@ -162,7 +162,7 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
         PsiElement expr = env.generateValue(Generator.sampledFrom(elementsToWrap).noShrink(), null);
         if (!(expr instanceof PsiExpression)) return;
         PsiType type = ((PsiExpression)expr).getType();
-        if (type == null || !PsiTypesUtil.isDenotableType(type, expr)) return; //accept cast in expression statement
+        if (type == null || type instanceof PsiDisjunctionType || !PsiTypesUtil.isDenotableType(type, expr)) return; //accept cast in expression statement
         env.logMessage("Inserting cast '" +
                        StringUtil.escapeStringCharacters("(" + type.getCanonicalText() + ")") +
                        "' at " +
