@@ -1,20 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl
 
-import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.refactoring.rename.inplace.*
+import com.intellij.refactoring.rename.inplace.InplaceRefactoring
+import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
 import com.intellij.ui.layout.*
-import java.util.concurrent.atomic.AtomicReference
 
 class InplaceMethodExtractor(val project: Project, val editor: Editor) : InplaceRefactoring(editor, null, project) {
 
@@ -34,17 +30,14 @@ class InplaceMethodExtractor(val project: Project, val editor: Editor) : Inplace
     }
   }
 
-  private val inlayReference = AtomicReference<Inlay<PresentationRenderer>>()
 
   override fun afterTemplateStart() {
     super.afterTemplateStart()
     val templateState = TemplateManagerImpl.getTemplateState(myEditor) ?: return
     val editor = templateState.editor as? EditorImpl ?: return
-    val presentation = TemplateInlayUtil.createSettingsPresentation(editor, inlayReference)
+    val presentation = TemplateInlayUtil.createSettingsPresentation(editor)
     val offset = templateState.currentVariableRange?.endOffset ?: return
-    val inlay = TemplateInlayUtil.createNavigatableButtonWithPopup(templateState, offset, presentation, popupPanel) ?: return
-    inlayReference.set(inlay)
-    Disposer.register(inlay, Disposable { inlayReference.set(null) })
+    TemplateInlayUtil.createNavigatableButtonWithPopup(templateState, offset, presentation, popupPanel) ?: return
   }
 
   override fun performRefactoring(): Boolean {
