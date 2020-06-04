@@ -44,7 +44,6 @@ internal class ModifiableSampleEntity : ModifiableWorkspaceEntityBase<SampleEnti
   var stringProperty: String by EntityDataDelegation()
   var stringListProperty: List<String> by EntityDataDelegation()
   var fileProperty: VirtualFileUrl by EntityDataDelegation()
-
 }
 
 internal fun WorkspaceEntityStorageBuilder.addSampleEntity(stringProperty: String,
