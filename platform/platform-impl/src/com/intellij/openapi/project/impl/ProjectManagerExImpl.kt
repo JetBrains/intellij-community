@@ -6,7 +6,7 @@ import com.intellij.conversion.ConversionResult
 import com.intellij.conversion.ConversionService
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.diagnostic.runActivity
+import com.intellij.diagnostic.runMainActivity
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.GeneralSettings
@@ -25,11 +25,8 @@ import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PlatformProjectOpenProcessor
@@ -66,7 +63,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
     }
 
     try {
-      val future = doLoadProject(project, ProgressManager.getInstance().progressIndicator)
+      val future = openProject(project, ProgressManager.getInstance().progressIndicator)
       if (app.isUnitTestMode) {
         waitInTestMode(future)
       }
@@ -98,61 +95,55 @@ private fun openExistingProject(projectStoreBaseDir: Path, options: OpenProjectT
           projectToClose = openProjects[openProjects.size - 1]
         }
       }
-      if (checkExistingProjectOnOpen(projectToClose, options.callback, projectStoreBaseDir)) {
+      if (checkExistingProjectOnOpen(projectToClose, options.callback, projectStoreBaseDir, projectManager)) {
         return null
       }
     }
   }
 
-  var result: PrepareProjectResult? = null
-  runInAutoSaveDisabledMode {
-    val frameAllocator = if (ApplicationManager.getApplication().isHeadlessEnvironment) ProjectFrameAllocator() else ProjectUiFrameAllocator(options, projectStoreBaseDir)
-    val isCompleted = frameAllocator.run {
+  val frameAllocator = if (ApplicationManager.getApplication().isHeadlessEnvironment) ProjectFrameAllocator() else ProjectUiFrameAllocator(options, projectStoreBaseDir)
+  val result = runInAutoSaveDisabledMode {
+    frameAllocator.run {
       activity.end()
+      val result: PrepareProjectResult?
       if (options.project == null) {
-        result = prepareProject(options, projectStoreBaseDir)
-        if (result?.project == null) {
-          frameAllocator.projectNotLoaded(error = null)
-          return@run
-        }
+        result = prepareProject(options, projectStoreBaseDir, projectManager) ?: return@run null
       }
       else {
         result = PrepareProjectResult(options.project, null)
       }
 
-      val project = result!!.project
+      val project = result.project
       frameAllocator.projectLoaded(project)
-      if (projectManager.doOpenProject(project)) {
+      if ((options.beforeProjectOpen == null || options.beforeProjectOpen.test(project, result.module)) && projectManager.doOpenProject(project)) {
         frameAllocator.projectOpened(project)
+        result
       }
       else {
-        frameAllocator.projectNotLoaded(error = null)
-        result = null
+        null
       }
-    }
-
-    if (!isCompleted) {
-      result = null
     }
   }
 
-  val project = result?.project
-  if (project == null) {
+  if (result == null) {
+    frameAllocator.projectNotLoaded(error = null)
     if (options.showWelcomeScreen) {
       WelcomeFrame.showIfNoProjectOpened()
     }
     return null
   }
+
+  val project = result.project
   if (options.callback != null) {
-    options.callback!!.projectOpened(project, result?.module ?: ModuleManager.getInstance(project).modules[0])
+    options.callback!!.projectOpened(project, result.module ?: ModuleManager.getInstance(project).modules[0])
   }
   return project
 }
 
-private fun prepareProject(options: OpenProjectTask, projectStoreBaseDir: Path): PrepareProjectResult? {
+private fun prepareProject(options: OpenProjectTask, projectStoreBaseDir: Path, projectManager: ProjectManagerExImpl): PrepareProjectResult? {
   val project: Project?
   if (options.isNewProject) {
-    project = ProjectManagerEx.getInstanceEx().newProject(projectStoreBaseDir, ProjectFrameAllocator.getPresentableName(options, projectStoreBaseDir), options)
+    project = projectManager.newProject(projectStoreBaseDir, options.copy(projectName = ProjectFrameAllocator.getPresentableName(options, projectStoreBaseDir)))
   }
   else {
     val indicator = ProgressManager.getInstance().progressIndicator
@@ -166,7 +157,7 @@ private fun prepareProject(options: OpenProjectTask, projectStoreBaseDir: Path):
   }
 
   if (options.isNewProject || (options.runConfiguratorsIfNoModules && ModuleManager.getInstance(project).modules.isEmpty())) {
-    val module = configureNewProject(project, projectStoreBaseDir, options)
+    val module = PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(projectStoreBaseDir, project, options.isNewProject)
     return PrepareProjectResult(project, module)
   }
   else {
@@ -174,27 +165,7 @@ private fun prepareProject(options: OpenProjectTask, projectStoreBaseDir: Path):
   }
 }
 
-private fun configureNewProject(project: Project, projectStoreBaseDir: Path, options: OpenProjectTask): Module? {
-  var module: Module? = null
-  ApplicationManager.getApplication().invokeAndWait {
-    module = PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(projectStoreBaseDir, project, options.isNewProject)
-  }
-
-  if (options.isDummyProject) {
-    // add content root for chosen (single) file
-    ModuleRootModificationUtil.updateModel(module!!) { model ->
-      val entries = model.contentEntries
-      // remove custom content entry created for temp directory
-      if (entries.size == 1) {
-        model.removeContentEntry(entries[0])
-      }
-      model.addContentEntry(VfsUtilCore.pathToUrl((options.contentRoot ?: projectStoreBaseDir).toString()))
-    }
-  }
-  return module
-}
-
-private fun checkExistingProjectOnOpen(projectToClose: Project, callback: ProjectOpenedCallback?, projectDir: Path?): Boolean {
+private fun checkExistingProjectOnOpen(projectToClose: Project, callback: ProjectOpenedCallback?, projectDir: Path?, projectManager: ProjectManagerExImpl): Boolean {
   val settings = GeneralSettings.getInstance()
   val isValidProject = projectDir != null && ProjectUtil.isValidProjectPath(projectDir)
   if (projectDir != null && ProjectAttachProcessor.canAttachToProject() &&
@@ -204,7 +175,7 @@ private fun checkExistingProjectOnOpen(projectToClose: Project, callback: Projec
       return true
     }
     else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
-      if (!ProjectManagerEx.getInstanceEx().closeAndDispose(projectToClose)) {
+      if (!projectManager.closeAndDispose(projectToClose)) {
         return true
       }
     }
@@ -220,7 +191,7 @@ private fun checkExistingProjectOnOpen(projectToClose: Project, callback: Projec
   else {
     val exitCode = ProjectUtil.confirmOpenNewProject(false)
     if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
-      if (!ProjectManagerEx.getInstanceEx().closeAndDispose(projectToClose)) {
+      if (!projectManager.closeAndDispose(projectToClose)) {
         return true
       }
     }
@@ -234,9 +205,8 @@ private fun checkExistingProjectOnOpen(projectToClose: Project, callback: Projec
 
 private fun convertAndLoadProject(path: Path, options: OpenProjectTask): Project? {
   var conversionResult: ConversionResult? = null
-
-  if (options.runConversionsBeforeOpen) {
-    conversionResult = runActivity("project conversion", category = ActivityCategory.MAIN) {
+  if (options.runConversionBeforeOpen) {
+    conversionResult = runMainActivity("project conversion") {
       ConversionService.getInstance().convert(path)
     }
     if (conversionResult.openingIsCanceled()) {
@@ -244,7 +214,7 @@ private fun convertAndLoadProject(path: Path, options: OpenProjectTask): Project
     }
   }
 
-  val project = ProjectManagerImpl.createProject(path, options.projectName)
+  val project = ProjectManagerImpl.instantiateProject(path, options.projectName)
   ProjectManagerImpl.initProject(path, project, options.isRefreshVfsNeeded, null, ProgressManager.getInstance().progressIndicator)
   if (conversionResult != null && !conversionResult.conversionNotNeeded()) {
     StartupManager.getInstance(project).registerPostStartupActivity {
@@ -254,7 +224,7 @@ private fun convertAndLoadProject(path: Path, options: OpenProjectTask): Project
   return project
 }
 
-private fun doLoadProject(project: Project, indicator: ProgressIndicator?): Future<*> {
+private fun openProject(project: Project, indicator: ProgressIndicator?): Future<*> {
   val waitEdtActivity = StartUpMeasurer.startMainActivity("placing calling projectOpened on event queue")
   if (indicator != null) {
     indicator.text = if (ApplicationManager.getApplication().isInternal) "Waiting on event queue..." else ProjectBundle.message("project.preparing.workspace")

@@ -172,8 +172,8 @@ private suspend fun saveAllProjects(forceSavingAllSettings: Boolean) {
   }
 }
 
-inline fun runInAutoSaveDisabledMode(task: () -> Unit) {
+inline fun <T> runInAutoSaveDisabledMode(task: () -> T): T {
   SaveAndSyncHandler.getInstance().disableAutoSave().use {
-    task()
+    return task()
   }
 }

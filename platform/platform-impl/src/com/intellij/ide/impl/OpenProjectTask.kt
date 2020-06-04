@@ -2,10 +2,13 @@
 package com.intellij.ide.impl
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.FrameInfo
 import com.intellij.projectImport.ProjectOpenedCallback
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
+import java.util.function.BiPredicate
 
 data class OpenProjectTask(@JvmField val forceOpenInNewFrame: Boolean = false,
                            @JvmField val projectToClose: Project? = null,
@@ -16,11 +19,14 @@ data class OpenProjectTask(@JvmField val forceOpenInNewFrame: Boolean = false,
                             */
                            val project: Project? = null,
                            val projectName: String? = null,
-                           val isDummyProject: Boolean = false,
                            val sendFrameBack: Boolean = false,
+                           /**
+                            * Whether to show welcome screen if failed to open project.
+                            */
                            val showWelcomeScreen: Boolean = true,
                            @set:Deprecated(message = "Pass to constructor", level = DeprecationLevel.ERROR)
                            var callback: ProjectOpenedCallback? = null,
+                           val beforeProjectOpen: BiPredicate<Project, Module?>? = null,
                            val frame: FrameInfo? = null,
                            val projectWorkspaceId: String? = null,
                            val line: Int = -1,
@@ -34,8 +40,14 @@ data class OpenProjectTask(@JvmField val forceOpenInNewFrame: Boolean = false,
                             * Ignored if isNewProject is set to true.
                             */
                            val runConfiguratorsIfNoModules: Boolean = !(ApplicationManager.getApplication()?.isUnitTestMode ?: false),
-                           val runConversionsBeforeOpen: Boolean = true) {
-  constructor(forceOpenInNewFrame: Boolean = false, projectToClose: Project?) : this(forceOpenInNewFrame = forceOpenInNewFrame, projectToClose = projectToClose, useDefaultProjectAsTemplate = true)
+                           val runConversionBeforeOpen: Boolean = true) {
+  constructor(forceOpenInNewFrame: Boolean, projectToClose: Project?) : this(forceOpenInNewFrame = forceOpenInNewFrame, projectToClose = projectToClose, useDefaultProjectAsTemplate = true)
+
+  @ApiStatus.Internal
+  fun withBeforeProjectCallback(callback: BiPredicate<Project, Module?>) = copy(beforeProjectOpen = callback)
+
+  @ApiStatus.Internal
+  fun withProjectName(value: String?) = copy(projectName = value)
 
   companion object {
     @JvmStatic

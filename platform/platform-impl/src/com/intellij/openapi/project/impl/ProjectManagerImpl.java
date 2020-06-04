@@ -165,11 +165,11 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
 
   @Override
   public @Nullable Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
-    return newProject(Paths.get(toCanonicalName(filePath)), projectName, OpenProjectTask.newProject(useDefaultProjectSettings));
+    return newProject(Paths.get(toCanonicalName(filePath)), OpenProjectTask.newProject(useDefaultProjectSettings).withProjectName(projectName));
   }
 
   @Override
-  public @Nullable Project newProject(@NotNull Path projectFile, @Nullable String projectName, @NotNull OpenProjectTask options) {
+  public @Nullable Project newProject(@NotNull Path projectFile, @NotNull OpenProjectTask options) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       TEST_PROJECTS_CREATED++;
@@ -194,7 +194,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
       }
     }
 
-    ProjectImpl project = createProject(projectFile, projectName);
+    ProjectImpl project = instantiateProject(projectFile, options.getProjectName());
     try {
       Project template = options.useDefaultProjectAsTemplate ? getDefaultProject() : null;
       initProject(projectFile, project, options.isRefreshVfsNeeded(), template, ProgressManager.getInstance().getProgressIndicator());
@@ -318,7 +318,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
   }
 
   @ApiStatus.Internal
-  public static @NotNull ProjectImpl createProject(@NotNull Path filePath, @Nullable String projectName) {
+  protected static @NotNull ProjectImpl instantiateProject(@NotNull Path filePath, @Nullable String projectName) {
     Activity activity = StartUpMeasurer.startMainActivity("project instantiation");
     ProjectImpl project = new ProjectImpl(filePath, projectName);
     activity.end();
@@ -333,7 +333,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
 
   @TestOnly
   public static Project loadProject(@NotNull Path file, @Nullable Consumer<Project> beforeInit) {
-    ProjectImpl project = createProject(file, null);
+    ProjectImpl project = instantiateProject(file, null);
     if (beforeInit != null) {
       beforeInit.accept(project);
     }

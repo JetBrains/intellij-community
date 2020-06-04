@@ -183,39 +183,42 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder<?>
         }
       }
 
+      ProjectUtil.updateLastProjectLocation(pathToOpen);
+
+      OpenProjectTask options = shouldOpenExisting ? new OpenProjectTask(forceOpenInNewFrame, projectToClose) : OpenProjectTask.newProject(true)
+        .withProjectName(wizardContext.getProjectName());
+      if (importToProject) {
+        options.withBeforeProjectCallback((project, module) -> importToProject(projectToClose, wizardContext, project));
+      }
+
       Project projectToOpen;
       if (shouldOpenExisting) {
         try {
-          projectToOpen = ProjectManagerEx.getInstanceEx().loadProject(pathToOpen);
+          projectToOpen = ProjectManagerEx.getInstanceEx().loadAndOpenProject(pathToOpen, options);
         }
         catch (Exception e) {
           return null;
         }
       }
       else {
-        projectToOpen = ProjectManagerEx.getInstanceEx().newProject(pathToOpen, wizardContext.getProjectName(), OpenProjectTask.newProject(true));
-      }
+        projectToOpen = ProjectManagerEx.getInstanceEx().newProject(pathToOpen, options);
+        if (projectToOpen == null || !importToProject(projectToClose, wizardContext, projectToOpen)) {
+          return null;
+        }
 
-      if (projectToOpen == null) {
-        return null;
-      }
-
-      if (importToProject && !importToProject(projectToClose, wizardContext, projectToOpen)) {
-        return null;
-      }
-
-      if (!forceOpenInNewFrame) {
-        Project[] openProjects = ProjectUtil.getOpenProjects();
-        if (openProjects.length > 0) {
-          int exitCode = ProjectUtil.confirmOpenNewProject(true);
-          if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
-            Project project = projectToClose != null ? projectToClose : openProjects[openProjects.length - 1];
-            ProjectManagerEx.getInstanceEx().closeAndDispose(project);
+        if (!forceOpenInNewFrame) {
+          Project[] openProjects = ProjectUtil.getOpenProjects();
+          if (openProjects.length > 0) {
+            int exitCode = ProjectUtil.confirmOpenNewProject(true);
+            if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
+              Project project = projectToClose != null ? projectToClose : openProjects[openProjects.length - 1];
+              ProjectManagerEx.getInstanceEx().closeAndDispose(project);
+            }
           }
         }
+
+        ProjectManagerEx.getInstanceEx().openProject(projectToOpen);
       }
-      ProjectUtil.updateLastProjectLocation(pathToOpen);
-      ProjectManagerEx.getInstanceEx().openProject(projectToOpen);
       return projectToOpen;
     }
     finally {

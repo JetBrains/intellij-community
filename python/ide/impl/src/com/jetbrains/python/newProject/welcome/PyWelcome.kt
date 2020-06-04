@@ -46,20 +46,21 @@ import java.awt.event.ItemEvent
 import java.util.concurrent.Callable
 import javax.swing.JPanel
 
+internal class PyWelcomeConfigurator : DirectoryProjectConfigurator {
+  override fun isEdtRequired() = false
 
-class PyWelcomeConfigurator : DirectoryProjectConfigurator {
+  override fun configureProject(project: Project, baseDir: VirtualFile, moduleRef: Ref<Module>, isNewProject: Boolean) {
+    if (isNewProject) {
+      return
+    }
 
-  override fun configureProject(project: Project, baseDir: VirtualFile, moduleRef: Ref<Module>, newProject: Boolean) {
-    if (newProject) return
-
-    StartupManager.getInstance(project).runWhenProjectIsInitialized(
-      DumbAwareRunnable { PyWelcome.welcomeUser(project, baseDir, false) }
-    )
+    StartupManager.getInstance(project).runAfterOpened {
+      PyWelcome.welcomeUser(project, baseDir, false)
+    }
   }
 }
 
-object PyWelcomeGenerator {
-
+internal object PyWelcomeGenerator {
   fun createWelcomeSettingsPanel(): JPanel {
     return CheckBoxWithDescription(
       JBCheckBox(PyWelcomeBundle.message("py.welcome.new.project.text"),
@@ -70,18 +71,21 @@ object PyWelcomeGenerator {
     )
   }
 
-  fun welcomeUser(project: Project, baseDir: VirtualFile): Unit = PyWelcome.welcomeUser(project, baseDir, true)
+  fun welcomeUser(project: Project, baseDir: VirtualFile) {
+    PyWelcome.welcomeUser(project, baseDir, true)
+  }
 }
 
 private object PyWelcome {
-
   private val LOG = Logger.getInstance(PyWelcome::class.java)
 
   @CalledInAny
-  internal fun welcomeUser(project: Project, baseDir: VirtualFile, newProject: Boolean) {
+  fun welcomeUser(project: Project, baseDir: VirtualFile, newProject: Boolean) {
     val enabled = PyWelcomeSettings.instance.createWelcomeScriptForEmptyProject
 
-    if (enabled) PyWelcomeCollector.logWelcomeProject(project, if (newProject) ProjectType.NEW else ProjectType.OPENED)
+    if (enabled) {
+      PyWelcomeCollector.logWelcomeProject(project, if (newProject) ProjectType.NEW else ProjectType.OPENED)
+    }
 
     if (enabled &&
         isEmptyProject(baseDir).also { if (!it) PyWelcomeCollector.logWelcomeScript(project, ScriptResult.NOT_EMPTY) }) {

@@ -2,9 +2,9 @@
 package com.intellij.openapi.project.impl
 
 import com.intellij.conversion.CannotConvertException
-import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.runActivity
+import com.intellij.diagnostic.runMainActivity
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.OpenProjectTask
@@ -43,9 +43,8 @@ internal open class ProjectFrameAllocator {
     }
   }
 
-  open fun run(task: () -> Unit): Boolean {
-    task()
-    return true
+  open fun <T : Any> run(task: () -> T?): T? {
+    return task()
   }
 
   /**
@@ -69,11 +68,10 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
   @Volatile
   private var cancelled = false
 
-  override fun run(task: () -> Unit): Boolean {
-    var completed = false
+  override fun <T : Any> run(task: () -> T?): T? {
+    var result: T? = null
     val progressTitle = IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name",
-                                                                        getPresentableName(
-                                                                          options, projectStoreBaseDir))
+                                                                        getPresentableName(options, projectStoreBaseDir))
     ApplicationManager.getApplication().invokeAndWait {
       val frame = createFrameIfNeeded()
       val progressTask = object : Task.Modal(null, progressTitle, true) {
@@ -90,7 +88,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
             }
           }
 
-          task()
+          result = task()
         }
 
         override fun onThrowable(error: Throwable) {
@@ -103,9 +101,12 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
           }
         }
       }
-      completed = (ProgressManager.getInstance() as CoreProgressManager).runProcessWithProgressSynchronously(progressTask, frame.rootPane)
+
+      if (!(ProgressManager.getInstance() as CoreProgressManager).runProcessWithProgressSynchronously(progressTask, frame.rootPane)) {
+        result = null
+      }
     }
-    return completed
+    return result
   }
 
   @CalledInAwt
@@ -175,7 +176,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
       return freeRootFrame.frame
     }
 
-    runActivity("create a frame", ActivityCategory.MAIN) {
+    runMainActivity("create a frame") {
       return SplashManager.getAndUnsetProjectFrame() as IdeFrameImpl?
              ?: createNewProjectFrame(
                forceDisableAutoRequestFocus = options.sendFrameBack)

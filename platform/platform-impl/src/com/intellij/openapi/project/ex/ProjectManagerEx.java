@@ -28,7 +28,15 @@ public abstract class ProjectManagerEx extends ProjectManager {
    */
   public abstract @Nullable Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy);
 
-  public abstract @Nullable Project newProject(@NotNull Path file, @Nullable String projectName, @NotNull OpenProjectTask options);
+  /**
+   * @deprecated Pass {@code projectName} using {@link OpenProjectTask#projectName}.
+   */
+  @Deprecated
+  public final @Nullable Project newProject(@NotNull Path file, @Nullable String projectName, @NotNull OpenProjectTask options) {
+    return newProject(file, projectName == null ? options : options.withProjectName(projectName));
+  }
+
+  public abstract @Nullable Project newProject(@NotNull Path file, @NotNull OpenProjectTask options);
 
   /**
    * @deprecated Use {@link #loadProject(Path)}

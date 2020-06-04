@@ -275,7 +275,7 @@ fun createTestOpenProjectOptions(): OpenProjectTask {
   // Also, cleanPersistedContents is called on start test application.
   return OpenProjectTask(forceOpenInNewFrame = true,
                          isRefreshVfsNeeded = false,
-                         runConversionsBeforeOpen = false,
+                         runConversionBeforeOpen = false,
                          runConfiguratorsIfNoModules = false,
                          showWelcomeScreen = false,
                          useDefaultProjectAsTemplate = false)
