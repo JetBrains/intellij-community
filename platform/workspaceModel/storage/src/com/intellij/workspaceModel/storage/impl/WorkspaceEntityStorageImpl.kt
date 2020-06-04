@@ -6,8 +6,8 @@ import com.google.common.collect.HashBiMap
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.impl.external.ExternalEntityIndex
-import com.intellij.workspaceModel.storage.impl.external.ExternalEntityIndex.MutableExternalEntityIndex
+import com.intellij.workspaceModel.storage.impl.external.ExternalEntityIndexImpl
+import com.intellij.workspaceModel.storage.impl.external.ExternalEntityIndexImpl.MutableExternalEntityIndexImpl
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -576,14 +576,14 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
   @Suppress("UNCHECKED_CAST")
   override fun <T> getOrCreateExternalIndex(identifier: String): MutableExternalEntityIndex<T> {
-    val index = indexes.externalIndices.computeIfAbsent(identifier) { MutableExternalEntityIndex<T>() } as MutableExternalEntityIndex<T>
+    val index = indexes.externalIndices.computeIfAbsent(identifier) { MutableExternalEntityIndexImpl<T>() } as MutableExternalEntityIndexImpl<T>
     index.setTypedEntityStorage(this)
     return index
   }
 
   @Suppress("UNCHECKED_CAST")
   override fun <T> getExternalIndex(identifier: String): MutableExternalEntityIndex<T>? {
-    val index = indexes.externalIndices[identifier] as? MutableExternalEntityIndex<T>
+    val index = indexes.externalIndices[identifier] as? MutableExternalEntityIndexImpl<T>
     index?.setTypedEntityStorage(this)
     return index
   }
@@ -769,7 +769,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
 
   @Suppress("UNCHECKED_CAST")
   override fun <T> getExternalIndex(identifier: String): ExternalEntityIndex<T>? {
-    val index = indexes.externalIndices[identifier] as? ExternalEntityIndex<T>
+    val index = indexes.externalIndices[identifier] as? ExternalEntityIndexImpl<T>
     index?.setTypedEntityStorage(this)
     return index
   }

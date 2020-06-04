@@ -2,22 +2,25 @@
 package com.intellij.workspaceModel.storage.impl.external
 
 import com.intellij.util.containers.BidirectionalMap
+import com.intellij.workspaceModel.storage.ExternalEntityIndex
+import com.intellij.workspaceModel.storage.MutableExternalEntityIndex
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.AbstractEntityStorage
 import com.intellij.workspaceModel.storage.impl.EntityId
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.external.ExternalEntityIndex.MutableExternalEntityIndex.IndexLogRecord.Add
-import com.intellij.workspaceModel.storage.impl.external.ExternalEntityIndex.MutableExternalEntityIndex.IndexLogRecord.Remove
+import com.intellij.workspaceModel.storage.impl.external.ExternalEntityIndexImpl.MutableExternalEntityIndexImpl.IndexLogRecord.Add
+import com.intellij.workspaceModel.storage.impl.external.ExternalEntityIndexImpl.MutableExternalEntityIndexImpl.IndexLogRecord.Remove
 import java.util.*
 
-open class ExternalEntityIndex<T> private constructor(internal val index: BidirectionalMap<EntityId, T>) {
+open class ExternalEntityIndexImpl<T> private constructor(internal val index: BidirectionalMap<EntityId, T>)
+  : ExternalEntityIndex<T> {
   private lateinit var entityStorage: AbstractEntityStorage
 
-  fun getEntities(data: T): List<WorkspaceEntity> = index.getKeysByValue(data)?.toMutableList()?.mapNotNull {
+  override fun getEntities(data: T): List<WorkspaceEntity> = index.getKeysByValue(data)?.toMutableList()?.mapNotNull {
     entityStorage.entityDataById(it)?.createEntity(entityStorage)
   } ?: emptyList()
 
-  fun getDataByEntity(entity: WorkspaceEntity): T? {
+  override fun getDataByEntity(entity: WorkspaceEntity): T? {
     entity as WorkspaceEntityBase
     return index[entity.id]
   }
@@ -32,13 +35,13 @@ open class ExternalEntityIndex<T> private constructor(internal val index: Bidire
     return copy
   }
 
-  class MutableExternalEntityIndex<T> private constructor(
+  class MutableExternalEntityIndexImpl<T> private constructor(
     index: BidirectionalMap<EntityId, T>,
     private val indexLog: MutableList<IndexLogRecord>
-  ) : ExternalEntityIndex<T>(index) {
+  ) : ExternalEntityIndexImpl<T>(index), MutableExternalEntityIndex<T> {
     constructor() : this(BidirectionalMap<EntityId, T>(), mutableListOf())
 
-    fun index(entity: WorkspaceEntity, data: T) {
+    override fun index(entity: WorkspaceEntity, data: T) {
       entity as WorkspaceEntityBase
       index(entity.id, data)
     }
@@ -48,7 +51,7 @@ open class ExternalEntityIndex<T> private constructor(internal val index: Bidire
       indexLog.add(Add(id, data))
     }
 
-    fun remove(entity: WorkspaceEntity) {
+    override fun remove(entity: WorkspaceEntity) {
       entity as WorkspaceEntityBase
       remove(entity.id)
     }
@@ -58,7 +61,7 @@ open class ExternalEntityIndex<T> private constructor(internal val index: Bidire
       indexLog.add(Remove(id))
     }
 
-    fun applyChanges(other: MutableExternalEntityIndex<*>) {
+    fun applyChanges(other: MutableExternalEntityIndexImpl<*>) {
       other.indexLog.forEach {
         when (it) {
           is Add<*> -> index(it.id, it.data as T)
@@ -67,7 +70,7 @@ open class ExternalEntityIndex<T> private constructor(internal val index: Bidire
       }
     }
 
-    private fun toImmutable(): ExternalEntityIndex<T> = ExternalEntityIndex(copyIndex())
+    private fun toImmutable(): ExternalEntityIndexImpl<T> = ExternalEntityIndexImpl(copyIndex())
 
     private sealed class IndexLogRecord {
       data class Add<T>(val id: EntityId, val data: T) : IndexLogRecord()
@@ -75,27 +78,27 @@ open class ExternalEntityIndex<T> private constructor(internal val index: Bidire
     }
 
     companion object {
-      fun from(other: MutableExternalEntityIndex<*>): MutableExternalEntityIndex<*> =
-        MutableExternalEntityIndex(other.copyIndex(), other.indexLog.toMutableList())
+      fun from(other: MutableExternalEntityIndexImpl<*>): MutableExternalEntityIndexImpl<*> =
+        MutableExternalEntityIndexImpl(other.copyIndex(), other.indexLog.toMutableList())
 
-      fun fromMap(other: Map<String, ExternalEntityIndex<*>>): MutableMap<String, MutableExternalEntityIndex<*>> {
-        val result = mutableMapOf<String, MutableExternalEntityIndex<*>>()
+      fun fromMap(other: Map<String, ExternalEntityIndexImpl<*>>): MutableMap<String, MutableExternalEntityIndexImpl<*>> {
+        val result = mutableMapOf<String, MutableExternalEntityIndexImpl<*>>()
         other.forEach { (identifier, index) ->
-          result[identifier] = MutableExternalEntityIndex(index.copyIndex(), mutableListOf())
+          result[identifier] = MutableExternalEntityIndexImpl(index.copyIndex(), mutableListOf())
         }
         return result
       }
 
-      fun fromMutableMap(other: MutableMap<String, MutableExternalEntityIndex<*>>): MutableMap<String, MutableExternalEntityIndex<*>> {
-        val result = mutableMapOf<String, MutableExternalEntityIndex<*>>()
+      fun fromMutableMap(other: MutableMap<String, MutableExternalEntityIndexImpl<*>>): MutableMap<String, MutableExternalEntityIndexImpl<*>> {
+        val result = mutableMapOf<String, MutableExternalEntityIndexImpl<*>>()
         other.forEach { (identifier, index) ->
-          result[identifier] = MutableExternalEntityIndex(index.copyIndex(), index.indexLog.toMutableList())
+          result[identifier] = MutableExternalEntityIndexImpl(index.copyIndex(), index.indexLog.toMutableList())
         }
         return result
       }
 
-      fun toImmutable(other: MutableMap<String, MutableExternalEntityIndex<*>>): Map<String, ExternalEntityIndex<*>> {
-        val result = mutableMapOf<String, ExternalEntityIndex<*>>()
+      fun toImmutable(other: MutableMap<String, MutableExternalEntityIndexImpl<*>>): Map<String, ExternalEntityIndexImpl<*>> {
+        val result = mutableMapOf<String, ExternalEntityIndexImpl<*>>()
         other.forEach { (identifier, index) ->
           result[identifier] = index.toImmutable()
         }

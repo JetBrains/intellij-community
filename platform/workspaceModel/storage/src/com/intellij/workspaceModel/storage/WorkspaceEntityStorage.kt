@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
-import com.intellij.workspaceModel.storage.impl.external.ExternalEntityIndex
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -163,8 +162,8 @@ interface WorkspaceEntityStorageDiffBuilder {
 
   // Returns an association between an entity in diff and an entity in the current builder
   fun addDiff(diff: WorkspaceEntityStorageDiffBuilder): Map<WorkspaceEntity, WorkspaceEntity>
-  fun <T> getExternalIndex(identifier: String): ExternalEntityIndex.MutableExternalEntityIndex<T>?
-  fun <T> getOrCreateExternalIndex(identifier: String): ExternalEntityIndex.MutableExternalEntityIndex<T>
+  fun <T> getExternalIndex(identifier: String): MutableExternalEntityIndex<T>?
+  fun <T> getOrCreateExternalIndex(identifier: String): MutableExternalEntityIndex<T>
 
   val modificationCount: Long
 

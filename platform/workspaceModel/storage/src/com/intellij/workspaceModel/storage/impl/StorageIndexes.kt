@@ -5,7 +5,7 @@ import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.impl.external.ExternalEntityIndex
+import com.intellij.workspaceModel.storage.impl.external.ExternalEntityIndexImpl
 import com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalIndex
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 import com.intellij.workspaceModel.storage.impl.indices.copy
@@ -16,7 +16,7 @@ internal open class StorageIndexes(
   internal open val virtualFileIndex: VirtualFileIndex,
   internal open val entitySourceIndex: EntityStorageInternalIndex<EntitySource>,
   internal open val persistentIdIndex: EntityStorageInternalIndex<PersistentEntityId<*>>,
-  internal open val externalIndices: Map<String, ExternalEntityIndex<*>>
+  internal open val externalIndices: Map<String, ExternalEntityIndexImpl<*>>
 ) {
 
   constructor(softLinks: BidirectionalMultiMap<PersistentEntityId<*>, EntityId>,
@@ -35,7 +35,7 @@ internal open class StorageIndexes(
     val copiedVirtualFileIndex = VirtualFileIndex.MutableVirtualFileIndex.from(virtualFileIndex)
     val copiedEntitySourceIndex = EntityStorageInternalIndex.MutableEntityStorageInternalIndex.from(entitySourceIndex)
     val copiedPersistentIdIndex = EntityStorageInternalIndex.MutableEntityStorageInternalIndex.from(persistentIdIndex)
-    val copiedExternalIndices = ExternalEntityIndex.MutableExternalEntityIndex.fromMap(externalIndices)
+    val copiedExternalIndices = ExternalEntityIndexImpl.MutableExternalEntityIndexImpl.fromMap(externalIndices)
     return MutableStorageIndexes(copiedSoftLinks, copiedVirtualFileIndex, copiedEntitySourceIndex, copiedPersistentIdIndex,
                                  copiedExternalIndices)
   }
@@ -87,7 +87,7 @@ internal class MutableStorageIndexes(
   override val virtualFileIndex: VirtualFileIndex.MutableVirtualFileIndex,
   override val entitySourceIndex: EntityStorageInternalIndex.MutableEntityStorageInternalIndex<EntitySource>,
   override val persistentIdIndex: EntityStorageInternalIndex.MutableEntityStorageInternalIndex<PersistentEntityId<*>>,
-  override val externalIndices: MutableMap<String, ExternalEntityIndex.MutableExternalEntityIndex<*>>
+  override val externalIndices: MutableMap<String, ExternalEntityIndexImpl.MutableExternalEntityIndexImpl<*>>
 ) : StorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex, externalIndices) {
 
   fun <T : WorkspaceEntity> entityAdded(entityData: WorkspaceEntityData<T>, builder: WorkspaceEntityStorageBuilderImpl) {
@@ -155,7 +155,7 @@ internal class MutableStorageIndexes(
 
     val added = diff.indexes.externalIndices.keys.toMutableSet()
     added.removeAll(externalIndices.keys)
-    added.forEach { externalIndices[it] = ExternalEntityIndex.MutableExternalEntityIndex.from(diff.indexes.externalIndices[it]!!) }
+    added.forEach { externalIndices[it] = ExternalEntityIndexImpl.MutableExternalEntityIndexImpl.from(diff.indexes.externalIndices[it]!!) }
 
     diff.indexes.externalIndices.forEach { (identifier, index) ->
       externalIndices[identifier]?.applyChanges(index)
@@ -167,7 +167,7 @@ internal class MutableStorageIndexes(
     val newVirtualFileIndex = virtualFileIndex.toImmutable()
     val newEntitySourceIndex = entitySourceIndex.toImmutable()
     val newPersistentIdIndex = persistentIdIndex.toImmutable()
-    val newExternalIndices = ExternalEntityIndex.MutableExternalEntityIndex.toImmutable(externalIndices)
+    val newExternalIndices = ExternalEntityIndexImpl.MutableExternalEntityIndexImpl.toImmutable(externalIndices)
     return StorageIndexes(copiedLinks, newVirtualFileIndex, newEntitySourceIndex, newPersistentIdIndex, newExternalIndices)
   }
 }
