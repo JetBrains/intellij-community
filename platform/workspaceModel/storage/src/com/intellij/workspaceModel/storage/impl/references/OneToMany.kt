@@ -1,13 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl.references
 
-import com.intellij.workspaceModel.storage.impl.ConnectionId
-import com.intellij.workspaceModel.storage.impl.ConnectionId.ConnectionType.ONE_TO_MANY
 import com.intellij.workspaceModel.storage.impl.*
-import com.intellij.workspaceModel.storage.impl.extractOneToManyChildren
-import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
-import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
-import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
+import com.intellij.workspaceModel.storage.impl.ConnectionId.ConnectionType.ONE_TO_MANY
 import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
@@ -49,7 +44,7 @@ class ManyToOne private constructor() {
   }
 }
 
-sealed class MutableOneToMany<T : WorkspaceEntityBase, SUBT : WorkspaceEntityBase, MODT : ModifiableWorkspaceEntityBase<T>>(
+class MutableOneToMany<T : WorkspaceEntityBase, SUBT : WorkspaceEntityBase, MODT : ModifiableWorkspaceEntityBase<T>>(
   private val parentClass: Class<T>,
   private val childClass: Class<SUBT>,
   private val isParentInChildNullable: Boolean

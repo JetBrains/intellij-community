@@ -97,7 +97,10 @@ private object ChildWithOptionalParentManipulation : EntityManipulation {
     return object : AddEntity(storage, "ChildWithOptionalDependency") {
       override fun makeEntity(source: EntitySource, someProperty: String, env: ImperativeCommand.Environment): WorkspaceEntity? {
         val classId = ParentEntity::class.java.toClassId()
-        val parentId = env.generateValue(EntityIdOfFamilyGenerator.create(storage, classId), "Select parent for child: %s")
+        val parentId = env.generateValue(Generator.anyOf(
+          Generator.constant(null),
+          EntityIdOfFamilyGenerator.create(storage, classId)
+        ), "Select parent for child: %s")
         val parentEntity = parentId?.let { storage.entityDataByIdOrDie(it).createEntity(storage) as ParentEntity }
         return storage.addChildWithOptionalParentEntity(parentEntity, someProperty, source)
       }
@@ -124,10 +127,8 @@ private object ChildEntityManipulation : EntityManipulation {
   override fun addManipulation(storage: WorkspaceEntityStorageBuilderImpl): AddEntity {
     return object : AddEntity(storage, "Child") {
       override fun makeEntity(source: EntitySource, someProperty: String, env: ImperativeCommand.Environment): WorkspaceEntity? {
-        val classId = ParentEntity::class.java.toClassId()
-        val parentId = env.generateValue(EntityIdOfFamilyGenerator.create(storage, classId), "Select parent for child: %s") ?: return null
-        return storage.addChildEntity(storage.entityDataByIdOrDie(parentId).createEntity(storage) as ParentEntity, someProperty, null,
-                                      source)
+        val parent = selectParent(storage, env) ?: return null
+        return storage.addChildEntity(parent, someProperty, null, source)
       }
     }
   }
@@ -135,15 +136,29 @@ private object ChildEntityManipulation : EntityManipulation {
   override fun modifyManipulation(storage: WorkspaceEntityStorageBuilderImpl): ModifyEntity<ChildEntity> {
     return object : ModifyEntity<ChildEntity>(storage, "Child", ChildEntity::class.java.toClassId()) {
       override fun modifyEntity(entity: ChildEntity, someProperty: String, env: ImperativeCommand.Environment): Boolean {
-        val selectedModification = env.generateValue(Generator.integers(0, 0), null)
-        val modification: ModifiableChildEntity.() -> Unit = when (selectedModification) {
-          0 -> { -> childProperty = env.generateValue(randomNames, "Change childProperty to %s") }
-          else -> error("Undefined modification")
-        }
+
+        val modification = env.generateValue(Generator.sampledFrom<ModifiableChildEntity.() -> Unit>(
+          // Change child property
+          { childProperty = env.generateValue(randomNames, "Change childProperty to %s") },
+
+          // Change parent of child
+          {
+            val newParent = selectParent(storage, env) ?: return@sampledFrom
+            parent = newParent
+            env.logMessage("Set new parent for child: $newParent")
+          }
+        ), null)
+
         storage.modifyEntity(ModifiableChildEntity::class.java, entity, modification)
         return true
       }
     }
+  }
+
+  private fun selectParent(storage: WorkspaceEntityStorageBuilderImpl, env: ImperativeCommand.Environment): ParentEntity? {
+    val classId = ParentEntity::class.java.toClassId()
+    val parentId = env.generateValue(EntityIdOfFamilyGenerator.create(storage, classId), "Select parent for child: %s") ?: return null
+    return storage.entityDataByIdOrDie(parentId).createEntity(storage) as ParentEntity
   }
 }
 
@@ -159,15 +174,51 @@ private object ParentEntityManipulation : EntityManipulation {
   override fun modifyManipulation(storage: WorkspaceEntityStorageBuilderImpl): ModifyEntity<ParentEntity> {
     return object : ModifyEntity<ParentEntity>(storage, "Parent", ParentEntity::class.java.toClassId()) {
       override fun modifyEntity(entity: ParentEntity, someProperty: String, env: ImperativeCommand.Environment): Boolean {
-        val selectedModification = env.generateValue(Generator.integers(0, 0), null)
-        val modification: ModifiableParentEntity.() -> Unit = when (selectedModification) {
-          0 -> { -> parentProperty = env.generateValue(randomNames, "Change parentProperty to %s") }
-          else -> error("Undefined modification")
-        }
+
+        val modification = env.generateValue(Generator.sampledFrom<ModifiableParentEntity.() -> Unit>(
+          // Change parent property
+          { parentProperty = env.generateValue(randomNames, "Change parentProperty to %s") },
+
+          // Swap children
+          {
+            val childrenList = children.toList()
+            if (childrenList.size > 2) {
+              val index1 = env.generateValue(Generator.integers(0, childrenList.lastIndex), null)
+              val index2 = env.generateValue(Generator.integers(0, childrenList.lastIndex), null)
+              env.logMessage(
+                "Change children. Swap 2 elements: idx1: $index1, idx2: $index2, value1: ${childrenList[index1]}, value2: ${childrenList[index2]}")
+              children = children.toMutableList().also { it.swap(index1, index2) }.asSequence()
+            }
+          },
+
+          // Modify nullable children
+          {
+            val removeValue = env.generateValue(Generator.booleans(), null)
+            if (removeValue) {
+              if (optionalChildren.any()) {
+                val childrenList = optionalChildren.toMutableList()
+                val i = env.generateValue(Generator.integers(0, childrenList.lastIndex), null)
+                env.logMessage("Remove item from optionalChildren. Index: $i, Element ${childrenList[i]}")
+                childrenList.removeAt(i)
+                optionalChildren = childrenList.asSequence()
+              }
+            }
+            else {
+              // TODO: 04.06.2020 Add children adding
+            }
+          }
+        ), null)
+
         storage.modifyEntity(ModifiableParentEntity::class.java, entity, modification)
         return true
       }
     }
+  }
+
+  private fun <A> MutableList<A>.swap(index1: Int, index2: Int) {
+    val tmp = this[index1]
+    this[index1] = this[index2]
+    this[index2] = tmp
   }
 }
 
@@ -183,12 +234,33 @@ private object SampleEntityManipulation : EntityManipulation {
   override fun modifyManipulation(storage: WorkspaceEntityStorageBuilderImpl): ModifyEntity<SampleEntity> {
     return object : ModifyEntity<SampleEntity>(storage, "Sample", SampleEntity::class.java.toClassId()) {
       override fun modifyEntity(entity: SampleEntity, someProperty: String, env: ImperativeCommand.Environment): Boolean {
-        val selectedModification = env.generateValue(Generator.integers(0, 1), null)
-        val modification: ModifiableSampleEntity.() -> Unit = when (selectedModification) {
-          0 -> { -> booleanProperty = env.generateValue(Generator.booleans(), "Change booleanProperty to %s") }
-          1 -> { -> stringProperty = env.generateValue(randomNames, "Change stringProperty to %s") }
-          else -> error("Undefined modification")
-        }
+
+        // Select modification
+        val modification = env.generateValue(Generator.sampledFrom<ModifiableSampleEntity.() -> Unit>(
+
+          // Change booleanProperty
+          { booleanProperty = env.generateValue(Generator.booleans(), "Change booleanProperty to %s") },
+
+          // Change stringProperty
+          { stringProperty = env.generateValue(randomNames, "Change stringProperty to %s") },
+
+          // Change stringListProperty
+          {
+            val removeValue = env.generateValue(Generator.booleans(), null)
+            if (removeValue) {
+              if (stringListProperty.isNotEmpty()) {
+                val i = env.generateValue(Generator.integers(0, stringListProperty.lastIndex), null)
+                env.logMessage("Remove item from stringListProperty. Index: $i, Element ${stringListProperty[i]}")
+                stringListProperty = stringListProperty.toMutableList().also { it.removeAt(i) }
+              }
+            }
+            else {
+              val newElement = env.generateValue(randomNames, "Adding new element to stringListProperty: %s")
+              stringListProperty = stringListProperty + newElement
+            }
+          }
+        ), null)
+
         storage.modifyEntity(ModifiableSampleEntity::class.java, entity, modification)
         return true
       }

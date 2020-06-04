@@ -11,6 +11,7 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.references.ManyToOne
 import com.intellij.workspaceModel.storage.impl.references.MutableManyToOne
+import com.intellij.workspaceModel.storage.impl.references.MutableOneToMany
 import com.intellij.workspaceModel.storage.impl.references.OneToMany
 
 // ------------------- Parent Entity --------------------------------
@@ -35,6 +36,8 @@ internal class ParentEntity(
 
 internal class ModifiableParentEntity : ModifiableWorkspaceEntityBase<ParentEntity>() {
   var parentProperty: String by EntityDataDelegation()
+  var children: Sequence<ChildEntity> by MutableOneToMany(ParentEntity::class.java, ChildEntity::class.java, false)
+  var optionalChildren: Sequence<ChildWithOptionalParentEntity> by MutableOneToMany(ParentEntity::class.java, ChildWithOptionalParentEntity::class.java, true)
 }
 
 internal fun WorkspaceEntityStorageBuilder.addParentEntity(parentProperty: String = "parent", source: EntitySource = MySource) =
