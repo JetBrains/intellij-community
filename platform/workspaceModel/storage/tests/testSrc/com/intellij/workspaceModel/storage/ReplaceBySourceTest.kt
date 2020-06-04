@@ -5,6 +5,7 @@ import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -249,7 +250,7 @@ class ReplaceBySourceTest {
     builder.assertConsistency()
   }
 
-  @Test(expected = IllegalStateException::class)
+  @Test(expected = ReplaceBySourceException::class)
   fun `fail - child and parent - different source for parent`() {
     val builder = WorkspaceEntityStorageBuilderImpl.create()
     val replacement = WorkspaceEntityStorageBuilderImpl.from(builder)
@@ -259,7 +260,7 @@ class ReplaceBySourceTest {
     builder.replaceBySource({ it is MySource }, replacement)
   }
 
-  @Test(expected = IllegalStateException::class)
+  @Test(expected = ReplaceBySourceException::class)
   fun `child and parent - trying to remove parent and leave child`() {
     val builder = WorkspaceEntityStorageBuilderImpl.create()
     val parentEntity = builder.addParentEntity("prop", AnotherSource)

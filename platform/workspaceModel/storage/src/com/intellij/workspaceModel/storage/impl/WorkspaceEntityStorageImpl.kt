@@ -6,8 +6,8 @@ import com.google.common.collect.HashBiMap
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.impl.exceptions.rbsFailed
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityIndexImpl
-import com.intellij.workspaceModel.storage.impl.external.ExternalEntityIndexImpl.MutableExternalEntityIndexImpl
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -309,7 +309,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
           if (localNode.hasPersistentId() && localNode != matchedEntityData) {
             // Entity exists in local store, but has changes. Generate replace operation
             val clonedEntity = matchedEntityData.clone()
-            val persistentIdBefore = matchedEntityData.persistentId(replaceWith) ?: error("PersistentId expected")
+            val persistentIdBefore = matchedEntityData.persistentId(replaceWith) ?: rbsFailed("PersistentId expected")
             clonedEntity.id = localNode.id
             this.entitiesByType.replaceById(clonedEntity as WorkspaceEntityData<WorkspaceEntity>, clonedEntity.createPid().clazz)
             val pid = clonedEntity.createPid()
@@ -372,7 +372,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
             if (connectionId.canRemoveParent()) {
               this.refs.removeParentToChildRef(connectionId, parentId, unmatchedId)
             }
-            else error("Cannot link old entity to the new one")
+            else rbsFailed("Cannot link old entity to the new one")
           }
         }
         for ((connectionId, childIds) in this.refs.getChildrenRefsOfParentBy(unmatchedId)) {
@@ -382,7 +382,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
               if (connectionId.canRemoveChild()) {
                 this.refs.removeParentToChildRef(connectionId, unmatchedId, childId)
               }
-              else error("Cannot link old entity to the new one")
+              else rbsFailed("Cannot link old entity to the new one")
             }
           }
         }
@@ -424,7 +424,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
           // replaceWith storage has a link to unmatched entity. We should check if we can "transfer" this link to the current storage
           if (!connectionId.isParentNullable) {
             val localParent = this.entityDataById(parentId)
-            if (localParent == null) error("Cannot link entities. Child entity doesn't have a parent after operation")
+            if (localParent == null) rbsFailed("Cannot link entities. Child entity doesn't have a parent after operation")
 
             val localChildId = replaceMap.inverse().getValue(nodeId)
 
@@ -576,14 +576,14 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
   @Suppress("UNCHECKED_CAST")
   override fun <T> getOrCreateExternalIndex(identifier: String): MutableExternalEntityIndex<T> {
-    val index = indexes.externalIndices.computeIfAbsent(identifier) { MutableExternalEntityIndexImpl<T>() } as MutableExternalEntityIndexImpl<T>
+    val index = indexes.externalIndices.computeIfAbsent(identifier) { ExternalEntityIndexImpl.MutableExternalEntityIndexImpl<T>() } as ExternalEntityIndexImpl.MutableExternalEntityIndexImpl<T>
     index.setTypedEntityStorage(this)
     return index
   }
 
   @Suppress("UNCHECKED_CAST")
   override fun <T> getExternalIndex(identifier: String): MutableExternalEntityIndex<T>? {
-    val index = indexes.externalIndices[identifier] as? MutableExternalEntityIndexImpl<T>
+    val index = indexes.externalIndices[identifier] as? ExternalEntityIndexImpl.MutableExternalEntityIndexImpl<T>
     index?.setTypedEntityStorage(this)
     return index
   }
