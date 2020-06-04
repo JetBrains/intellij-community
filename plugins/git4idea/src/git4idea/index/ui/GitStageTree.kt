@@ -90,7 +90,7 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
     }
   }
 
-  private fun selectedStatusNodes(): Stream<GitFileStatusNode> {
+  fun selectedStatusNodes(): Stream<GitFileStatusNode> {
     return VcsTreeModelData.selected(this).userObjectsStream()
       .filter { it is GitFileStatusNode }
       .map { it as GitFileStatusNode }
