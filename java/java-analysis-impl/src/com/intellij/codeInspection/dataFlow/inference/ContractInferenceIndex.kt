@@ -189,8 +189,8 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
   }
 }
 
-fun handleInconsistency(method: PsiMethodImpl, cachedData: MethodData, e: Throwable) {
-  if (e is ProcessCanceledException) throw e
+fun handleInconsistency(method: PsiMethodImpl, cachedData: MethodData, e: RuntimeException): RuntimeException {
+  if (e is ProcessCanceledException) return e
 
   val file = method.containingFile
   val gistMap = gist.getFileData(file)
@@ -200,17 +200,17 @@ fun handleInconsistency(method: PsiMethodImpl, cachedData: MethodData, e: Throwa
   if (gistMap != psiMap) {
     GistManager.getInstance().invalidateData(file.viewProvider.virtualFile)
 
-    throw RuntimeExceptionWithAttachments("Gist outdated", e,
-                                               Attachment("persisted.txt", gistMap.toString()),
-                                               Attachment("psi.txt", psiMap.toString()))
+    return RuntimeExceptionWithAttachments("Gist outdated", e,
+                                           Attachment("persisted.txt", gistMap.toString()),
+                                           Attachment("psi.txt", psiMap.toString()))
   }
 
   StubTextInconsistencyException.checkStubTextConsistency(file)
   val actualData = bindMethods(psiMap, file)[method]
   if (actualData != cachedData) {
-    throw RuntimeExceptionWithAttachments("Cache outdated",
-                                          Attachment("actual.txt", actualData.toString()),
-                                          Attachment("cached.txt", cachedData.toString()))
+    return RuntimeExceptionWithAttachments("Cache outdated",
+                                           Attachment("actual.txt", actualData.toString()),
+                                           Attachment("cached.txt", cachedData.toString()))
 
   }
 

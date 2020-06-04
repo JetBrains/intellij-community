@@ -122,8 +122,7 @@ public class JavaSourceInference {
       return mutability == null ? Mutability.UNKNOWN : mutability;
     }
     catch (ClassCastException e) {
-      ContractInferenceIndexKt.handleInconsistency(method, data, e);
-      return Mutability.UNKNOWN;
+      throw ContractInferenceIndexKt.handleInconsistency(method, data, e);
     }
   }
   
@@ -147,13 +146,13 @@ public class JavaSourceInference {
       return JavaMethodContractUtil.parseContracts(method, explicitContract);
     }
     List<PreContract> preContracts = data.getContracts();
-    List<StandardMethodContract> contracts = null;
+    List<StandardMethodContract> contracts;
     try {
       contracts = RecursionManager.doPreventingRecursion(
         method, true, () -> ContainerUtil.concat(preContracts, c -> c.toContracts(method, data.methodBody(method))));
     }
     catch (ClassCastException e) {
-      ContractInferenceIndexKt.handleInconsistency(method, data, e);
+      throw ContractInferenceIndexKt.handleInconsistency(method, data, e);
     }
     if (contracts == null || contracts.isEmpty()) return Collections.emptyList();
     if (contracts.size() == 2) {

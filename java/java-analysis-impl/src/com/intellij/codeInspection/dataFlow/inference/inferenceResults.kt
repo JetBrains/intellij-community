@@ -13,7 +13,6 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
-import com.intellij.util.gist.GistManager
 import com.siyeh.ig.psiutils.ClassUtils
 import java.util.*
 
@@ -181,9 +180,8 @@ data class MethodData(
       val bodyText = PsiDocumentManager.getInstance(method.project).getLastCommittedText(document).substring(bodyStart, bodyEnd)
       return JavaPsiFacade.getElementFactory(method.project).createCodeBlockFromText(bodyText, method)
     }
-    catch (e: Exception) {
-      handleInconsistency(method, this, e);
-      throw e
+    catch (e: RuntimeException) {
+      throw handleInconsistency(method, this, e)
     }
   }
 }
