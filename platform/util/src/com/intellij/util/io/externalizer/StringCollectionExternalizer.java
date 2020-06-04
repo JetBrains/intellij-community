@@ -3,7 +3,6 @@ package com.intellij.util.io.externalizer;
 
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IOUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -12,14 +11,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.function.IntFunction;
 
 public final class StringCollectionExternalizer<C extends Collection<String>> implements DataExternalizer<C> {
   @NotNull
   public static final StringCollectionExternalizer<List<String>> STRING_LIST_EXTERNALIZER = new StringCollectionExternalizer<>(ArrayList::new);
-  @NotNull
-  public static final StringCollectionExternalizer<Set<String>> STRING_SET_EXTERNALIZER = new StringCollectionExternalizer<>(THashSet::new);
 
   private final @NotNull IntFunction<? extends C> myGenerator;
 
