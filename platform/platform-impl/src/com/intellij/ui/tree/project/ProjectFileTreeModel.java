@@ -201,9 +201,17 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
       List<FileNode> newList = getChildren(oldList);
       oldList.forEach(node -> node.parent = null);
       newList.forEach(node -> node.parent = this);
+      // cleanup removed nodes recursively to facilitate garbage collection
+      oldList.stream().filter(node -> node.parent == null).forEach(Node::cleanup);
       children = newList;
       valid = true;
       return newList;
+    }
+
+    private void cleanup() {
+      children.forEach(Node::cleanup);
+      children = emptyList();
+      parent = null;
     }
 
     final void resetVisibility() {
