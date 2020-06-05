@@ -11,6 +11,7 @@ import com.jetbrains.python.newProject.PythonProjectGenerator;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -41,6 +42,7 @@ public final class PyCharmNewProjectStep extends AbstractNewProjectStep<PyNewPro
 
     @Override
     public AnAction[] getActions(@NotNull List<DirectoryProjectGenerator<?>> generators, @NotNull AbstractCallback<PyNewProjectSettings> callback) {
+      generators = new ArrayList<>(generators);
       generators.sort(Comparator.comparing(DirectoryProjectGenerator::getName));
       generators.sort(Comparator.comparingInt(value -> {
         if (value instanceof PyFrameworkProjectGenerator) {
