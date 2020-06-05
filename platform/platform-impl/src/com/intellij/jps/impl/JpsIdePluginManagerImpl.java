@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jps.impl;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -42,14 +44,15 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
   private final boolean myFullyLoaded;
 
   public JpsIdePluginManagerImpl() {
-    ExtensionsArea rootArea = Extensions.getRootArea();
-    myFullyLoaded = rootArea != null;
+    Application application = ApplicationManager.getApplication();
+    myFullyLoaded = application != null;
     if (!myFullyLoaded) {
       //this may happen e.g. in tests if some test is executed before Application is initialized; in that case the created instance won't be cached
       //and will be reinitialized next time
       return;
     }
 
+    ExtensionsArea rootArea = application.getExtensionArea();
     //todo[nik] get rid of this check: currently this class is used in intellij.platform.jps.build tests instead of JpsPluginManagerImpl because intellij.platform.ide.impl module is added to classpath via testFramework
     if (rootArea.hasExtensionPoint(JpsPluginBean.EP_NAME)) {
       final Ref<Boolean> initial = new Ref<>(Boolean.TRUE);
@@ -241,6 +244,9 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
 
   @Override
   public int getModificationStamp() {
+    if (!myFullyLoaded && myModificationStamp.get() == 0 && ApplicationManager.getApplication() != null) {
+      myModificationStamp.compareAndSet(0, 1);
+    }
     return myModificationStamp.get();
   }
 
