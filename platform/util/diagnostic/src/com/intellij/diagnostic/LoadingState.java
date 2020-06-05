@@ -1,13 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
-import com.intellij.openapi.diagnostic.Logger;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 @ApiStatus.Internal
 public enum LoadingState {
@@ -22,6 +23,7 @@ public enum LoadingState {
 
   final String displayName;
 
+  private static BiConsumer<String, Throwable> errorHandler;
   private static boolean CHECK_LOADING_PHASE;
   private static Set<Throwable> stackTraces;
 
@@ -29,9 +31,14 @@ public enum LoadingState {
     this.displayName = displayName;
   }
 
-  @NotNull
-  static Logger getLogger() {
-    return Logger.getInstance(LoadingState.class);
+  @Nullable
+  static BiConsumer<String, Throwable> getErrorHandler() {
+    return errorHandler;
+  }
+
+  @ApiStatus.Internal
+  public static void setErrorHandler(@NotNull BiConsumer<String, Throwable> errorHandler) {
+    LoadingState.errorHandler = errorHandler;
   }
 
   @ApiStatus.Internal
@@ -56,9 +63,9 @@ public enum LoadingState {
     Throwable t = new Throwable();
     if (stackTraces == null) {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
-      stackTraces = new THashSet<>(new TObjectHashingStrategy<Throwable>() {
+      stackTraces = new ObjectOpenCustomHashSet<>(new Hash.Strategy<Throwable>() {
         @Override
-        public int computeHashCode(Throwable throwable) {
+        public int hashCode(Throwable throwable) {
           return fingerprint(throwable).hashCode();
         }
 
@@ -81,9 +88,12 @@ public enum LoadingState {
       return;
     }
 
-    getLogger().error("Should be called at least in the state " + this + ", the current state is: " + currentState + "\n" +
-                      "Current violators count: " + stackTraces.size() + "\n\n",
-                      t);
+    BiConsumer<String, Throwable> errorHandler = getErrorHandler();
+    if (errorHandler != null) {
+      errorHandler.accept("Should be called at least in the state " + this + ", the current state is: " + currentState + "\n" +
+                          "Current violators count: " + stackTraces.size() + "\n\n",
+                          t);
+    }
   }
 
   private static boolean isKnownViolator() {

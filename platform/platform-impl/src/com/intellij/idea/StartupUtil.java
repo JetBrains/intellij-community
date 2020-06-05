@@ -164,6 +164,7 @@ public final class StartupUtil {
 
   public static void prepareApp(@NotNull String @NotNull [] args, @NotNull String mainClass) throws Exception {
     LoadingState.setStrictMode();
+    LoadingState.setErrorHandler((message, throwable) -> Logger.getInstance(LoadingState.class).error(message, throwable));
 
     Activity activity = StartUpMeasurer.startMainActivity("ForkJoin CommonPool configuration");
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));

@@ -9,6 +9,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public final class StartUpMeasurer {
@@ -152,8 +153,11 @@ public final class StartUpMeasurer {
 
   public static void setCurrentState(@NotNull LoadingState state) {
     LoadingState old = currentState.getAndSet(state);
-    if (old.compareTo(state)>0) {
-      LoadingState.getLogger().error("New state " + state + " cannot precede old " + old);
+    if (old.compareTo(state) > 0) {
+      BiConsumer<String, Throwable> errorHandler = LoadingState.getErrorHandler();
+      if (errorHandler != null) {
+        errorHandler.accept("New state " + state + " cannot precede old " + old, new Throwable());
+      }
     }
     stateSet(state);
   }
