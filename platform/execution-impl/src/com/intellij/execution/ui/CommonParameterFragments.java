@@ -27,10 +27,11 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
   private final List<SettingsEditorFragment<Settings, ?>> myFragments = new ArrayList<>();
 
   public CommonParameterFragments(@NotNull Project project, Computable<Boolean> hasModule) {
-    RawCommandLineEditor commandLineEditor = new RawCommandLineEditor();
-    commandLineEditor.getEditorField().getEmptyText().setText(ExecutionBundle.message("run.configuration.program.hint"));
-    MacrosDialog.addMacroSupport(commandLineEditor.getEditorField(), MacrosDialog.Filters.ALL, hasModule);
-    myFragments.add(new SettingsEditorFragment<>("commandLineParameters", null, null, commandLineEditor,
+    RawCommandLineEditor programArguments = new RawCommandLineEditor();
+    CommandLinePanel.setMinimumWidth(programArguments, 200);
+    programArguments.getEditorField().getEmptyText().setText(ExecutionBundle.message("run.configuration.program.hint"));
+    MacrosDialog.addMacroSupport(programArguments.getEditorField(), MacrosDialog.Filters.ALL, hasModule);
+    myFragments.add(new SettingsEditorFragment<>("commandLineParameters", null, null, programArguments,
                                                  100,
                                                  (settings, component) -> component.setText(settings.getProgramParameters()),
                                                  (settings, component) -> settings.setProgramParameters(component.getText()),

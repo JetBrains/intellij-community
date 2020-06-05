@@ -9,7 +9,6 @@ import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -80,14 +79,14 @@ public class CommonJavaFragments {
     };
   }
 
-  public static <S extends ModuleBasedConfiguration> SettingsEditorFragment<S, LabeledComponent<ModuleClasspathCombo>> moduleClasspath(
+  public static <S extends ModuleBasedConfiguration> SettingsEditorFragment<S, ModuleClasspathCombo> moduleClasspath(
     ModuleClasspathCombo.Item option, Predicate<S> getter, BiConsumer<S, Boolean> setter) {
     ModuleClasspathCombo comboBox = new ModuleClasspathCombo(option);
-    LabeledComponent<ModuleClasspathCombo> component = LabeledComponent.create(comboBox, ExecutionBundle.message("use.module.classpath"), BorderLayout.WEST);
+    CommandLinePanel.setMinimumWidth(comboBox, 400);
     return new SettingsEditorFragment<>("module.classpath",
                                         ExecutionBundle.message("application.configuration.use.classpath.and.jdk.of.module"),
                                         ExecutionBundle.message("group.java.options"),
-                                        component, 0,
+                                        comboBox, 10,
                                         (s, c) -> { comboBox.reset(s); option.myOptionValue = getter.test(s); },
                                         (s, c) -> { comboBox.applyTo(s); setter.accept(s, option.myOptionValue); },
                                         s -> s.getConfigurationModule() != null);

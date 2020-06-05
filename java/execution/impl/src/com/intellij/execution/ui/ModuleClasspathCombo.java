@@ -7,7 +7,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.containers.ContainerUtil;
@@ -19,7 +18,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
-public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> {
+public class ModuleClasspathCombo extends JComboBox<ModuleClasspathCombo.Item> {
 
   private final Item[] myOptionItems;
   private boolean myPreventPopupClosing;

@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
+import static com.intellij.execution.ui.CommandLinePanel.setMinimumWidth;
 
 public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEditor<ApplicationConfiguration> {
   private final Project myProject;
@@ -31,10 +32,10 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
     List<SettingsEditorFragment<ApplicationConfiguration, ?>> fragments = new ArrayList<>();
 
     ModuleClasspathCombo.Item item = new ModuleClasspathCombo.Item(ExecutionBundle.message("application.configuration.include.provided.scope"));
-    SettingsEditorFragment<ApplicationConfiguration, LabeledComponent<ModuleClasspathCombo>>
+    SettingsEditorFragment<ApplicationConfiguration, ModuleClasspathCombo>
       moduleClasspath = CommonJavaFragments.moduleClasspath(item, configuration -> configuration.isProvidedScopeIncluded(),
                                                             (configuration, value) -> configuration.setIncludeProvidedScope(value));
-    ModuleClasspathCombo classpathCombo = moduleClasspath.component().getComponent();
+    ModuleClasspathCombo classpathCombo = moduleClasspath.component();
     Computable<Boolean> hasModule = () -> classpathCombo.getSelectedModule() != null;
 
     fragments.add(CommonTags.parallelRun());
@@ -46,14 +47,19 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
     fragments.add(CommonJavaFragments.createEnvParameters());
 
     JrePathEditor jrePathEditor = new JrePathEditor();
+    setMinimumWidth(jrePathEditor, 100);
     jrePathEditor.getLabel().setVisible(false);
     jrePathEditor.setDefaultJreSelector(DefaultJreSelector.projectSdk(myProject));
 
-    RawCommandLineEditor commandLineEditor = new RawCommandLineEditor();
-    MacrosDialog.addMacroSupport(commandLineEditor.getEditorField(), MacrosDialog.Filters.ALL, hasModule);
-    LabeledComponent<RawCommandLineEditor> vmParams = LabeledComponent.create(commandLineEditor,
-                                                                              ExecutionBundle.message("run.configuration.java.vm.parameters.label"));
-    vmParams.setLabelLocation(BorderLayout.WEST);
+    RawCommandLineEditor vmOptions = new RawCommandLineEditor() {
+      @Override
+      public void setBounds(int x, int y, int width, int height) {
+        super.setBounds(x, y, width, height);
+      }
+    };
+    setMinimumWidth(vmOptions, 400);
+    vmOptions.getEditorField().getEmptyText().setText(ExecutionBundle.message("run.configuration.java.vm.parameters.empty.text"));
+    MacrosDialog.addMacroSupport(vmOptions.getEditorField(), MacrosDialog.Filters.ALL, hasModule);
     String group = ExecutionBundle.message("group.java.options");
     fragments.add(new SettingsEditorFragment<>("jrePath", null, null, jrePathEditor, 5,
                                                (configuration, editor) -> editor
@@ -64,13 +70,15 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
                                                  configuration.setAlternativeJrePathEnabled(editor.isAlternativeJreSelected());
                                                },
                                                configuration -> true));
-    fragments.add(new SettingsEditorFragment<>("mainClass", null, null, (EditorTextField)ClassEditorField.createClassField(myProject), 10,
+    EditorTextField mainClass = ClassEditorField.createClassField(myProject);
+    setMinimumWidth(mainClass, 300);
+    fragments.add(new SettingsEditorFragment<>("mainClass", null, null, mainClass, 20,
                                                (configuration, component) -> component.setText(configuration.getMainClassName()),
                                                (configuration, component) -> configuration.setMainClassName(component.getText()),
                                                configuration -> true));
-    fragments.add(new SettingsEditorFragment<>("vmParameters", ExecutionBundle.message("run.configuration.java.vm.parameters.name"), group, vmParams,
-                                               (configuration, component) -> component.getComponent().setText(configuration.getVMParameters()),
-                                               (configuration, component) -> configuration.setVMParameters(component.getComponent().getText()),
+    fragments.add(new SettingsEditorFragment<>("vmParameters", ExecutionBundle.message("run.configuration.java.vm.parameters.name"), group, vmOptions, 15,
+                                               (configuration, component) -> component.setText(configuration.getVMParameters()),
+                                               (configuration, component) -> configuration.setVMParameters(component.getText()),
                                                configuration -> isNotEmpty(configuration.getVMParameters())));
     fragments.add(moduleClasspath);
 
