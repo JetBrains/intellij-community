@@ -1470,10 +1470,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       ReferenceType result = null;
       List<ReferenceType> types = ContainerUtil.filter(getVirtualMachineProxy().classesByName(className), ReferenceType::isPrepared);
       // first try to quickly find the equal classloader only
-      result = types.stream().filter(refType -> Objects.equals(classLoader, refType.classLoader())).findFirst().orElse(null);
+      result = ContainerUtil.find(types, refType -> Objects.equals(classLoader, refType.classLoader()));
       // now do the full visibility check
       if (result == null && classLoader != null) {
-        result = types.stream().filter(refType -> isVisibleFromClassLoader(classLoader, refType)).findFirst().orElse(null);
+        result = ContainerUtil.find(types, refType -> isVisibleFromClassLoader(classLoader, refType));
       }
       if (result == null && evaluationContext != null) {
         EvaluationContextImpl evalContext = (EvaluationContextImpl)evaluationContext;
