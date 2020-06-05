@@ -10,7 +10,7 @@ object Launcher {
 
   fun launch(paths: PathsProvider,
              modules: ModulesProvider,
-             options: LauncherOptions) : Process {
+             options: LauncherOptions): Process {
 
     val classPathBuilder = ClassPathBuilder(paths, modules)
     val classPathFile = classPathBuilder.build()
@@ -27,7 +27,6 @@ object Launcher {
       "-classpath", classPathFile.canonicalPath,
       "-Dapple.laf.useScreenMenuBar=true",
       "-Dfus.internal.test.mode=true",
-      "-Didea.platform.prefix=${options.platformPrefix}",
       "-Didea.config.path=${paths.configFolder.canonicalPath}",
       "-Didea.system.path=${paths.systemFolder.canonicalPath}",
       "-Didea.log.path=${paths.logFolder.canonicalPath}",
@@ -51,6 +50,10 @@ object Launcher {
       "-XX:ReservedCodeCacheSize=240m",
       "-XX:SoftRefLRUPolicyMSPerMB=50"
     )
+
+    if (options.platformPrefix != null) {
+      cmd.add("-Didea.platform.prefix=${options.platformPrefix}")
+    }
 
     if (!TeamCityHelper.isUnderTeamCity) {
       val suspendOnStart = if (options.debugSuspendOnStart) "y" else "n"
