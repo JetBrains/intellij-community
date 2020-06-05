@@ -382,4 +382,13 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     assertNotNull(jarRoot.findFileByRelativePath("META-INF/MANIFEST.MF"));
     assertNotNull(jarRoot.findFileByRelativePath("META-INF/RETLD-00.00015.xml"));
   }
+
+  @Test
+  public void testJarNameCouldBePrependedWithDotDot() {
+    File jar = IoTestUtil.createTestJar(tempDir.newFile("..p.jar"));
+    VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar);
+    VirtualFile jarRoot = JarFileSystem.getInstance().getRootByLocal(vf);
+    assertNotNull(jarRoot);
+    assertNotNull(jarRoot.findFileByRelativePath(JarFile.MANIFEST_NAME));
+  }
 }

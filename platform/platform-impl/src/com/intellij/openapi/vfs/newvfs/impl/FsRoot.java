@@ -63,8 +63,10 @@ public class FsRoot extends VirtualDirectoryImpl {
     while (true) {
       int i = pathBeforeSlash.indexOf("..", start);
       if (i == -1) break;
-      if (i != 0 && pathBeforeSlash.charAt(i-1) == '/') return false; // /..
-      if (i < pathBeforeSlash.length() - 2 && pathBeforeSlash.charAt(i+2) == '/') return false; // ../
+      if ((i == 0 || pathBeforeSlash.charAt(i-1) == '/') // /..
+          && (i == pathBeforeSlash.length() - 2 || pathBeforeSlash.charAt(i+2) == '/')) { // ../
+        return false;
+      }
       start = i+1;
     }
     return true;
