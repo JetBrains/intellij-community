@@ -766,16 +766,13 @@ class PySuggestedRefactoringTest : PyTestCase() {
 
     myFixture.copyFileToProject("$testDataPathPrefix/$source", source)
 
-    doChangeSignatureTest(
+    doNoIntentionTest(
       """
         def foo(p1<caret>):
           print(p1)
       """.trimIndent(),
-      """
-        def foo(p12):
-          print(p12)
-      """.trimIndent(),
-      { myFixture.type("2") }
+      { myFixture.type("2") },
+      intention = changeSignatureIntention()
     )
   }
 
