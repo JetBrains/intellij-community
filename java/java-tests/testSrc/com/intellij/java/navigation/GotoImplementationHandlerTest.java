@@ -22,7 +22,7 @@ import java.util.List;
 
 public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCase {
   public void testMultipleImplsFromAbstractCall() {
-    @Language("JAVA")
+    @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "public abstract class Hello {\n" +
                   "    abstract void foo();\n" +
                   "\n" +
@@ -46,7 +46,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testFromIncompleteCode() {
-    @Language("JAVA")
+    @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "public abstract class Hello {\n" +
                       "    abstract void foo();\n" +
                       "\n" +
@@ -70,7 +70,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testToStringOnUnqualifiedPerformance() {
-    @Language("JAVA")
+    @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "public class Fix {\n" +
                   "    {\n" +
                   "        <caret>toString();\n" +
@@ -98,7 +98,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testToStringOnQualifiedPerformance() {
-    @Language("JAVA")
+    @SuppressWarnings("ALL") @Language("JAVA")
     String fileText = "public class Fix {\n" +
                   "    {\n" +
                   "        Fix ff = getFix();\n" +
@@ -130,7 +130,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
 
   public void testShowSelfNonAbstract() {
     //fails if groovy plugin is enabled: org.jetbrains.plugins.groovy.codeInsight.JavaClsMethodElementEvaluator
-    @Language("JAVA")
+    @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "public class Hello {\n" +
                       "    void foo(){}\n" +
                       "\n" +
@@ -154,7 +154,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testMultipleImplsFromStaticCall() {
-    @Language("JAVA")
+    @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "public abstract class Hello {\n" +
                       "    static void bar (){}\n" +
                       "    class Hello1 extends Hello {\n" +
@@ -174,7 +174,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testFilterOutImpossibleVariants() {
-    @Language("JAVA")
+    @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "interface A {\n" +
                       "    void save();\n" +
                       "}\n" +
@@ -207,7 +207,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testImplicitInheritance() {
-    @Language("JAVA")
+    @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "interface PackContainer {\n" +
                       "    void foo();\n" +
                       "}\n" +
@@ -237,7 +237,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testMethodReferences() {
-    @Language("JAVA")
+    @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "interface I {void f();}\n" +
                   "class A implements I { public void f(){}}\n" +
                   "class B implements I { public void f(){}}\n" +
@@ -263,7 +263,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testMethodImplementationsOnTypeVariable() {
-    @Language("JAVA")
+    @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "interface I {}\n" +
                       "interface Im {\n" +
                       "    void m();\n" +
@@ -286,7 +286,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testStaticMethodReference() {
-    @Language("JAVA")
+    @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "class C {\n" +
                   "  static void a(){}\n" +
                   "  {a<caret>();}" +
@@ -325,7 +325,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testScopeForPrivateMethod() {
-    @Language("JAVA")
+    @Language("JAVA") @SuppressWarnings("ALL")
     String text = "class Foo {" +
                   " {f<caret>oo();}" +
                   " private void foo() {}" +
