@@ -52,6 +52,7 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.util.PopupState;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
@@ -1460,12 +1461,21 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
       return new StatusButton(this, presentation, new EditorToolbarButtonLook(),
                               place, myEditor.getColorsScheme(),
+                              myPopupManager,
                               () -> showNavigation);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myPopupManager.showPopup(e.getInputEvent());
+      if (Experiments.getInstance().isFeatureEnabled("problems.view.enabled")) {
+        myPopupManager.hidePopup();
+        if (analyzerStatus != null) {
+          analyzerStatus.getController().openProblemsView();
+        }
+      }
+      else {
+        myPopupManager.showPopup(e.getInputEvent());
+      }
     }
 
     @Override
@@ -1513,6 +1523,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     private StatusButton(@NotNull AnAction action, @NotNull Presentation presentation,
                          @NotNull ActionButtonLook buttonLook, @NotNull String place,
                          @NotNull EditorColorsScheme colorsScheme,
+                         @NotNull InspectionPopupManager popupManager,
                          @NotNull BooleanSupplier hasNavButtons) {
       setLayout(new GridBagLayout());
       setOpaque(false);
@@ -1577,12 +1588,18 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         @Override
         public void mouseEntered(MouseEvent me) {
           mouseHover = true;
+          if (Experiments.getInstance().isFeatureEnabled("problems.view.enabled")) {
+            popupManager.scheduleShow(me);
+          }
           repaint();
         }
 
         @Override
         public void mouseExited(MouseEvent me) {
           mouseHover = false;
+          if (Experiments.getInstance().isFeatureEnabled("problems.view.enabled")) {
+            popupManager.scheduleHide();
+          }
           repaint();
         }
       };
@@ -1847,8 +1864,10 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     private final AncestorListener myAncestorListener;
     private final JBPopupListener myPopupListener;
     private final PopupState myPopupState = new PopupState();
+    private final Alarm popupAlarm = new Alarm();
 
     private JBPopup myPopup;
+    private boolean insidePopup;
 
     private InspectionPopupManager() {
       myContent.setOpaque(true);
@@ -1874,10 +1893,39 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
           myEditor.getComponent().removeAncestorListener(myAncestorListener);
         }
       };
+
+      myContent.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseEntered(MouseEvent event) {
+          insidePopup = true;
+        }
+
+        @Override
+        public void mouseExited(MouseEvent event) {
+          if (!myContent.getBounds().contains(event.getPoint())) {
+            insidePopup = false;
+            hidePopup();
+          }
+        }
+      });
     }
 
     private void updateUI() {
       IJSwingUtilities.updateComponentTreeUI(myContent);
+    }
+
+    private void scheduleShow(@NotNull InputEvent event) {
+      popupAlarm.cancelAllRequests();
+      popupAlarm.addRequest(() -> showPopup(event), Registry.intValue("ide.tooltip.initialReshowDelay"));
+    }
+
+    private void scheduleHide() {
+      popupAlarm.cancelAllRequests();
+      popupAlarm.addRequest(() -> {
+        if (!insidePopup) {
+          hidePopup();
+        }
+      }, Registry.intValue("ide.tooltip.initialDelay.highlighter"));
     }
 
     private void showPopup(@NotNull InputEvent event) {
@@ -1981,7 +2029,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         }
       }
 
-      if (Experiments.getInstance().isFeatureEnabled("problems.view.enabled")) {
+      if (!Experiments.getInstance().isFeatureEnabled("problems.view.enabled")) {
         JLabel openProblemsViewLabel = new TrackableLinkLabel(EditorBundle.message("iw.open.problems.view"), () -> {
           hidePopup();
           controller.openProblemsView();
