@@ -271,6 +271,35 @@ public class ForCanBeForEach {
     }
   }
 
+    void insideTryBlockPositive1() {
+      try {
+        <warning descr="'for' loop replaceable with enhanced 'for'">for</warning> (Iterator<String> string = Arrays.asList("1", "2").iterator(); string.hasNext();) {
+          System.out.println(string.next());
+        }
+      } catch (Exception e) {
+      }
+    }
+
+    void insideTryBlockPositive2() {
+      <warning descr="'for' loop replaceable with enhanced 'for'">for</warning> (Iterator<String> string = Arrays.asList("1", "2").iterator(); string.hasNext();) {
+        try {
+          System.out.println("Some string");
+        } catch (Exception e) {
+        }
+        System.out.println(string.next());
+      }
+    }
+
+    void insideTryBlockNegative() {
+      for (Iterator<String> string = Arrays.asList("1", "2").iterator(); string.hasNext();) {
+        try {
+          System.out.println(string.next());
+        } catch (Exception e) {
+
+        }
+      }
+    }
+
     void b(List<String> list) {
         for (final Iterator<String> iterator = list.iterator(); iterator.hasNext(); ) {
             System.out.println(iterator.next());

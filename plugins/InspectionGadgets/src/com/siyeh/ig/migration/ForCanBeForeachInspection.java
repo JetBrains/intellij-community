@@ -263,7 +263,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
 
   static boolean hasSimpleNextCall(PsiVariable iterator, PsiElement context) {
     if (context == null) return false;
-    final IteratorNextVisitor visitor = new IteratorNextVisitor(iterator);
+    final IteratorNextVisitor visitor = new IteratorNextVisitor(iterator, context);
     context.accept(visitor);
     return visitor.hasSimpleNextCall();
   }
@@ -616,9 +616,11 @@ public class ForCanBeForeachInspection extends BaseInspection {
     private int numCallsToIteratorNext = 0;
     private boolean iteratorUsed = false;
     private final PsiVariable iterator;
+    private final PsiElement context;
 
-    private IteratorNextVisitor(PsiVariable iterator) {
+    private IteratorNextVisitor(PsiVariable iterator, PsiElement context) {
       this.iterator = iterator;
+      this.context = context;
     }
 
     @Override
@@ -629,7 +631,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
         @NonNls final String methodName = methodExpression.getReferenceName();
         if (HardcodedMethodConstants.NEXT.equals(methodName)) {
           final PsiExpression qualifier = methodExpression.getQualifierExpression();
-          if (ExpressionUtils.isReferenceTo(qualifier, iterator)) {
+          if (ExpressionUtils.isReferenceTo(qualifier, iterator) && isNotInsideTryBlock(methodExpression)) {
             numCallsToIteratorNext++;
             return;
           }
@@ -650,6 +652,17 @@ public class ForCanBeForeachInspection extends BaseInspection {
 
     boolean hasSimpleNextCall() {
       return numCallsToIteratorNext == 1 && !iteratorUsed;
+    }
+
+    private boolean isNotInsideTryBlock(@NotNull PsiExpression methodExpression) {
+      PsiElement parent = methodExpression.getParent();
+      while (parent != null) {
+        if (parent.isEquivalentTo(context)) return true;
+        if (parent instanceof PsiTryStatement) return false;
+        if (parent instanceof PsiFile) return true;
+        parent = parent.getParent();
+      }
+      return true;
     }
   }
 
