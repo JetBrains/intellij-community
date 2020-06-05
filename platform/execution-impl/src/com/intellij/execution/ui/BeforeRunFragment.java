@@ -18,7 +18,6 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
 
   public static <S extends RunConfigurationBase<?>> List<SettingsEditorFragment<S, ?>> createGroup() {
     ArrayList<SettingsEditorFragment<S, ?>> list = new ArrayList<>();
-    list.add(new BeforeRunFragment<>(new BeforeRunComponent()));
     list.add(RunConfigurationEditorFragment.createSettingsTag("before.launch.openToolWindow",
                                                               ExecutionBundle.message("run.configuration.before.run.open.tool.window"),
                                                               ExecutionBundle.message("run.configuration.before.run.group"),
@@ -30,6 +29,10 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
                                                               settings -> settings.isEditBeforeRun(),
                                                               (settings, value) -> settings.setEditBeforeRun(value), 100));
     return list;
+  }
+
+  public static <S extends RunConfigurationBase<?>> BeforeRunFragment<S> createComponent(BeforeRunComponent component) {
+    return new BeforeRunFragment<>(component);
   }
 
   private BeforeRunFragment(BeforeRunComponent component) {

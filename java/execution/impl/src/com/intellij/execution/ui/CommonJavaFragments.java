@@ -30,15 +30,15 @@ public class CommonJavaFragments {
                                          ExecutionBundle.message("group.java.options"), env);
   }
 
-  public static <S extends RunConfigurationBase<?>> SettingsEditorFragment<S, JLabel> createBuildBeforeRun() {
+  public static <S extends RunConfigurationBase<?>> SettingsEditorFragment<S, JLabel> createBuildBeforeRun(BeforeRunComponent beforeRunComponent) {
     String buildAndRun = ExecutionBundle.message("application.configuration.title.build.and.run");
     String run = ExecutionBundle.message("application.configuration.title.run");
     JLabel jLabel = new JLabel(buildAndRun);
     jLabel.setFont(JBUI.Fonts.label().deriveFont(Font.BOLD));
-    return new RunConfigurationEditorFragment<S, JLabel>("doNotBuildBeforeRun",
-                                                 ExecutionBundle.message("do.not.build.before.run"),
-                                                 ExecutionBundle.message("group.java.options"),
-                                                 jLabel, -1) {
+    RunConfigurationEditorFragment<S, JLabel> fragment = new RunConfigurationEditorFragment<S, JLabel>("doNotBuildBeforeRun",
+                                                                                                       ExecutionBundle.message("do.not.build.before.run"),
+                                                                                                       ExecutionBundle.message("group.java.options"),
+                                                                                                       jLabel, -1) {
       @Override
       public void resetEditorFrom(@NotNull RunnerAndConfigurationSettingsImpl s) {
         jLabel.setText(hasTask(s) ? buildAndRun : run);
@@ -69,6 +69,7 @@ public class CommonJavaFragments {
       @Override
       public void setSelected(boolean selected) {
         jLabel.setText(selected ? run : buildAndRun);
+        beforeRunComponent.addOrRemove(CompileStepBeforeRun.ID, !selected);
         fireEditorStateChanged();
       }
 
@@ -82,6 +83,12 @@ public class CommonJavaFragments {
         return myComponent;
       }
     };
+    beforeRunComponent.setTagListener((key, added) -> {
+      if (CompileStepBeforeRun.ID == key) {
+        jLabel.setText(added ? buildAndRun : run);
+      }
+    });
+    return fragment;
   }
 
   public static <S extends ModuleBasedConfiguration> SettingsEditorFragment<S, ModuleClasspathCombo> moduleClasspath(

@@ -16,8 +16,8 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
 import static com.intellij.execution.ui.CommandLinePanel.setMinimumWidth;
+import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
 
 public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEditor<ApplicationConfiguration> {
   private final Project myProject;
@@ -30,6 +30,9 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
   @Override
   protected List<SettingsEditorFragment<ApplicationConfiguration, ?>> createRunFragments() {
     List<SettingsEditorFragment<ApplicationConfiguration, ?>> fragments = new ArrayList<>();
+    BeforeRunComponent beforeRunComponent = new BeforeRunComponent();
+    fragments.add(BeforeRunFragment.createComponent(beforeRunComponent));
+    fragments.addAll(BeforeRunFragment.createGroup());
 
     ModuleClasspathCombo.Item item = new ModuleClasspathCombo.Item(ExecutionBundle.message("application.configuration.include.provided.scope"));
     SettingsEditorFragment<ApplicationConfiguration, ModuleClasspathCombo>
@@ -43,7 +46,7 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
 
     CommonParameterFragments<ApplicationConfiguration> commonParameterFragments = new CommonParameterFragments<>(myProject, hasModule);
     fragments.addAll(commonParameterFragments.getFragments());
-    fragments.add(CommonJavaFragments.createBuildBeforeRun());
+    fragments.add(CommonJavaFragments.createBuildBeforeRun(beforeRunComponent));
     fragments.add(CommonJavaFragments.createEnvParameters());
 
     JrePathEditor jrePathEditor = new JrePathEditor();
@@ -95,7 +98,6 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
                                                    (configuration, enabled) -> configuration.setSwingInspectorEnabled(enabled)));
 
     fragments.add(new LogsFragment<>());
-    fragments.addAll(BeforeRunFragment.createGroup());
     return fragments;
   }
 }
