@@ -17,6 +17,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.bugs.NullArgumentToVariableArgMethodInspection;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import org.jetbrains.annotations.NotNull;
@@ -281,7 +282,7 @@ public class RedundantCastUtil {
           PsiType newReturnType = newCall.getType();
           PsiType oldReturnType = ((PsiMethodCallExpression)parent).getType();
 
-          if (Comparing.equal(newReturnType == null ? null : createTypeMapper().mapType(newReturnType), oldReturnType) &&
+          if (Comparing.equal(newReturnType == null ? null : new RedundantCastRecaptureMapper().mapType(newReturnType), oldReturnType) &&
               (Comparing.equal(newTargetMethod, targetMethod) ||
                !(newTargetMethod.isDeprecated() && !targetMethod.isDeprecated()) &&
                MethodSignatureUtil.isSuperMethod(newTargetMethod, targetMethod) &&
@@ -390,7 +391,7 @@ public class RedundantCastUtil {
       return oldMethod.equals(newResult.getElement()) &&
              newResult.isValidResult() &&
              !(newResult instanceof MethodCandidateInfo && ((MethodCandidateInfo)newResult).getInferenceErrorMessage() != null) &&
-             recapture(newResult.getSubstitutor()).equals(oldResult.getSubstitutor());
+             new RedundantCastRecaptureMapper().recapture(newResult.getSubstitutor()).equals(oldResult.getSubstitutor());
     }
 
     private static boolean castForBoxing(PsiExpression operand, PsiType oppositeType, PsiType conditionalType) {
@@ -535,50 +536,6 @@ public class RedundantCastUtil {
         newArgType = TypeConversionUtil.erasure(newArgType);
       }
       return newArgType;
-    }
-
-    private static PsiSubstitutor recapture(PsiSubstitutor substitutor) {
-      PsiTypeMapper typeMapper = createTypeMapper();
-      PsiSubstitutor result = PsiSubstitutor.EMPTY;
-      for (Map.Entry<PsiTypeParameter, PsiType> entry : substitutor.getSubstitutionMap().entrySet()) {
-        PsiType value = entry.getValue();
-        result = result.put(entry.getKey(), value == null ? null : typeMapper.mapType(value));
-      }
-      return result;
-    }
-
-    @NotNull
-    private static PsiTypeMapper createTypeMapper() {
-      return new PsiTypeMapper() {
-        @Override
-        public PsiType visitType(@NotNull PsiType type) {
-          return type;
-        }
-
-        @Override
-        public PsiType visitClassType(@NotNull PsiClassType classType) {
-          final PsiClassType.ClassResolveResult classResolveResult = classType.resolveGenerics();
-          final PsiClass psiClass = classResolveResult.getElement();
-          final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
-          if (psiClass == null) return classType;
-          return new PsiImmediateClassType(psiClass, recapture(substitutor));
-        }
-
-        @Override
-        public PsiType visitCapturedWildcardType(@NotNull PsiCapturedWildcardType capturedWildcardType) {
-          PsiElement context = capturedWildcardType.getContext();
-          @Nullable PsiElement original = context.getCopyableUserData(SELF_REFERENCE);
-          if (original != null) {
-            context = original;
-          }
-          PsiCapturedWildcardType mapped =
-            PsiCapturedWildcardType.create(capturedWildcardType.getWildcard(), context, capturedWildcardType.getTypeParameter());
-
-          mapped.setUpperBound(capturedWildcardType.getUpperBound(false).accept(this));
-
-          return mapped;
-        }
-      };
     }
 
     @NotNull
@@ -1008,6 +965,49 @@ public class RedundantCastUtil {
         }
       }
       super.visitArrayAccessExpression(expression);
+    }
+
+    private static class RedundantCastRecaptureMapper extends PsiTypeMapper {
+      private final Set<PsiClassType> myVisited = ContainerUtil.newIdentityTroveSet();
+
+      @Override
+      public PsiType visitType(@NotNull PsiType type) {
+        return type;
+      }
+
+      @Override
+      public PsiType visitClassType(@NotNull PsiClassType classType) {
+        if (!myVisited.add(classType)) return classType;
+        final PsiClassType.ClassResolveResult classResolveResult = classType.resolveGenerics();
+        final PsiClass psiClass = classResolveResult.getElement();
+        final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
+        if (psiClass == null) return classType;
+        return new PsiImmediateClassType(psiClass, recapture(substitutor));
+      }
+
+      PsiSubstitutor recapture(PsiSubstitutor substitutor) {
+        PsiSubstitutor result = PsiSubstitutor.EMPTY;
+        for (Map.Entry<PsiTypeParameter, PsiType> entry : substitutor.getSubstitutionMap().entrySet()) {
+          PsiType value = entry.getValue();
+          result = result.put(entry.getKey(), value == null ? null : mapType(value));
+        }
+        return result;
+      }
+
+      @Override
+      public PsiType visitCapturedWildcardType(@NotNull PsiCapturedWildcardType capturedWildcardType) {
+        PsiElement context = capturedWildcardType.getContext();
+        @Nullable PsiElement original = context.getCopyableUserData(SELF_REFERENCE);
+        if (original != null) {
+          context = original;
+        }
+        PsiCapturedWildcardType mapped =
+          PsiCapturedWildcardType.create(capturedWildcardType.getWildcard(), context, capturedWildcardType.getTypeParameter());
+
+        mapped.setUpperBound(capturedWildcardType.getUpperBound(false).accept(this));
+
+        return mapped;
+      }
     }
   }
   
