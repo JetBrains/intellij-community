@@ -12,12 +12,6 @@ class DebuggerTitleInfoProvider(var project: Project) : SimpleTitleInfoProvider(
   private var subscriptionDisposable: Disposable? = null
 
   private var debuggerSessionStarted = false
-    set(value) {
-      if (field == value) return
-
-      field = value
-      updateValue()
-    }
 
   override fun updateSubscriptions() {
     checkState()
@@ -67,9 +61,11 @@ class DebuggerTitleInfoProvider(var project: Project) : SimpleTitleInfoProvider(
 
   private fun checkState() {
     debuggerSessionStarted = isEnabled() && XDebuggerManager.getInstance(project).debugSessions.isNotEmpty()
+    updateValue()
   }
 
   override val isActive: Boolean
     get() = super.isActive && debuggerSessionStarted
-  override val value: String = "[Debugger]"
+  override val value: String
+    get() = if(debuggerSessionStarted) "[Debugger]" else ""
 }

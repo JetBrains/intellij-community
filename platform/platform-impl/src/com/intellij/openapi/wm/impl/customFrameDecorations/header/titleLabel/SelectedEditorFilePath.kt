@@ -278,10 +278,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
 
   protected fun updateProjectName() {
     project?.let {
-      val short = it.name
-      val long = FrameTitleBuilder.getInstance().getProjectTitle(it) ?: short
-
-      projectTitle.setProject(long, short)
+      projectTitle.setProject(it)
       update()
     }
   }
@@ -326,7 +323,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     label.text = titleString
     HelpTooltip.dispose(label)
 
-    if (isClipped) {
+    if (isClipped || components.firstOrNull{!it.active} != null) {
       HelpTooltip().setTitle(components.joinToString(separator = "", transform = { it.toolTipPart })).installOn(label)
     }
 
