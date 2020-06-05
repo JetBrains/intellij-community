@@ -120,7 +120,8 @@ private object ChildWithOptionalParentManipulation : EntityManipulation {
       ChildWithOptionalParentEntity::class, storage) {
       override fun modifyEntity(env: ImperativeCommand.Environment): List<ModifiableChildWithOptionalParentEntity.() -> Unit> {
         return listOf(
-          modifyStringProperty(ModifiableChildWithOptionalParentEntity::childProperty, env)
+          modifyStringProperty(ModifiableChildWithOptionalParentEntity::childProperty, env),
+          modifyNullableProperty(ModifiableChildWithOptionalParentEntity::optionalParent, parentGetter(storage), env)
         )
       }
     }
@@ -145,14 +146,6 @@ private object ChildEntityManipulation : EntityManipulation {
           modifyNotNullProperty(ModifiableChildEntity::parent, parentGetter(storage), env)
         )
       }
-    }
-  }
-
-  private inline fun <reified T : WorkspaceEntity> parentGetter(storage: WorkspaceEntityStorageBuilderImpl): Generator<T?> {
-    return Generator.from {
-      val classId = T::class.java.toClassId()
-      val parentId = it.generate(EntityIdOfFamilyGenerator.create(storage, classId)) ?: return@from null
-      storage.entityDataByIdOrDie(parentId).createEntity(storage) as T
     }
   }
 
@@ -200,7 +193,7 @@ private object SampleEntityManipulation : EntityManipulation {
         return listOf(
           modifyBooleanProperty(ModifiableSampleEntity::booleanProperty, env),
           modifyStringProperty(ModifiableSampleEntity::stringProperty, env),
-          addRemoveInList(ModifiableSampleEntity::stringListProperty, randomNames, env)
+          addOrRemoveInList(ModifiableSampleEntity::stringListProperty, randomNames, env)
         )
       }
     }
@@ -219,6 +212,16 @@ private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> modifyNot
   }
 }
 
+private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> modifyNullableProperty(property: KMutableProperty1<A, T?>,
+                                                                                              takeFrom: Generator<T?>,
+                                                                                              env: ImperativeCommand.Environment): A.() -> Unit {
+  return {
+    val value = env.generateValue(takeFrom, null)
+    env.logMessage("Change ${property.name} to %s")
+    property.set(this, value)
+  }
+}
+
 private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>> modifyStringProperty(property: KMutableProperty1<A, String>,
                                                                                          env: ImperativeCommand.Environment): A.() -> Unit {
   return modifyNotNullProperty(property, randomNames, env)
@@ -229,9 +232,9 @@ private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>> modifyBoolea
   return modifyNotNullProperty(property, Generator.booleans(), env)
 }
 
-private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> addRemoveInList(property: KMutableProperty1<A, List<T>>,
-                                                                                       takeFrom: Generator<T>,
-                                                                                       env: ImperativeCommand.Environment): A.() -> Unit {
+private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> addOrRemoveInList(property: KMutableProperty1<A, List<T>>,
+                                                                                         takeFrom: Generator<T>,
+                                                                                         env: ImperativeCommand.Environment): A.() -> Unit {
   return {
     val removeValue = env.generateValue(Generator.booleans(), null)
     val value = property.getter.call(this)
@@ -277,6 +280,15 @@ private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> removeInS
     }
   }
 }
+
+private inline fun <reified T : WorkspaceEntity> parentGetter(storage: WorkspaceEntityStorageBuilderImpl): Generator<T?> {
+  return Generator.from {
+    val classId = T::class.java.toClassId()
+    val parentId = it.generate(EntityIdOfFamilyGenerator.create(storage, classId)) ?: return@from null
+    storage.entityDataByIdOrDie(parentId).createEntity(storage) as T
+  }
+}
+
 
 private fun <A> MutableList<A>.swap(index1: Int, index2: Int) {
   val tmp = this[index1]
