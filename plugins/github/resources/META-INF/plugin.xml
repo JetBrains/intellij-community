@@ -140,6 +140,16 @@
       <add-to-group group-id="EditorTabPopupMenu"/>
       <add-to-group group-id="ConsoleEditorPopupMenu"/>
     </action>
+    <group id="GitHub.MainMenu" popup="true" text="GitHub">
+      <reference ref="Github.Share"/>
+      <reference ref="Github.Create.Pull.Request"/>
+      <reference ref="Github.View.Pull.Request"/>
+      <reference ref="Github.Rebase"/>
+      <reference ref="Github.Create.Gist"/>
+      <reference ref="Github.Open.In.Browser"/>
+
+      <add-to-group group-id="Git.MainMenu" relative-to-action="Git.Configure.Remotes" anchor="before"/>
+    </group>
     <group id="Github.PullRequest.ToolWindow.List.Popup">
       <action id="Github.PullRequest.Show"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPROpenPullRequestAction"/>

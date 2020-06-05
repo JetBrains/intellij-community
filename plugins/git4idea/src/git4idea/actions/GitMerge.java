@@ -15,8 +15,11 @@
  */
 package git4idea.actions;
 
+import com.intellij.dvcs.repo.Repository;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
@@ -80,5 +83,14 @@ public class GitMerge extends GitMergeAction {
 
       return h;
     };
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    Project project = e.getProject();
+    if (project != null && !GitUtil.getRepositoriesInState(project, Repository.State.MERGING).isEmpty()) {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
   }
 }

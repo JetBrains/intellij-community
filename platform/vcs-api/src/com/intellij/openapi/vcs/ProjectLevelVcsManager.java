@@ -107,6 +107,8 @@ public abstract class ProjectLevelVcsManager {
    */
   public abstract AbstractVcs @NotNull [] getAllActiveVcss();
 
+  public abstract @Nullable AbstractVcs getSingleVCS();
+
   public abstract boolean hasActiveVcss();
 
   public abstract boolean hasAnyMappings();
@@ -176,6 +178,8 @@ public abstract class ProjectLevelVcsManager {
   public abstract VirtualFile[] getAllVersionedRoots();
 
   public abstract VcsRoot @NotNull [] getAllVcsRoots();
+
+  public abstract String getConsolidatedVcsName();
 
   /**
    * @deprecated Use just {@link #setDirectoryMappings(List)}.

@@ -33,7 +33,7 @@ public class GitRebase extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     Project project = e.getProject();
-    if (project == null || !hasGitRepositories(project)) {
+    if (project == null || !hasGitRepositories(project) || !getRebasingRepositories(project).isEmpty()) {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {

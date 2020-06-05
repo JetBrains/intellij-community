@@ -58,49 +58,103 @@
       <keyboard-shortcut first-keystroke="control alt K" keymap="$default"/>
     </action>
 
-    <group id="GitFileActions">
+    <group id="Git.FileActions">
       <reference ref="CheckinFiles"/>
       <action id="Git.Add" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionWithIgnoredFilesConfirmationAction"
               icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned"/>
-      <action id="Git.OpenExcludeFile" class="git4idea.ignore.actions.OpenGitExcludeAction"/>
       <separator/>
       <reference ref="Annotate"/>
-      <reference ref="Show.Current.Revision"/>
       <reference ref="Compare.SameVersion"/>
       <reference ref="Compare.Selected"/>
       <action id="Git.CompareWithBranch" class="git4idea.actions.GitCompareWithBranchAction"/>
       <reference ref="Vcs.ShowTabbedFileHistory"/>
       <reference id="Vcs.ShowHistoryForBlock"/>
-      <separator/>
-      <reference id="ChangesView.Revert" />
-      <action id="Git.ResolveConflicts" class="git4idea.actions.GitResolveConflictsAction"/>
     </group>
 
-    <group id="GitRepositoryActions">
+    <group id="Git.MainMenu.FileActions" class="git4idea.actions.GitFileActionGroup" popup="true">
+      <reference ref="Git.FileActions"/>
+    </group>
+
+    <group id="Git.MainMenu.RebaseActions" class="git4idea.actions.GitRepositoryStateActionGroup$Rebase" popup="true">
+      <action id="Git.ResolveConflicts" class="git4idea.actions.GitResolveConflictsAction"/>
+      <action id="Git.Rebase.Abort" class="git4idea.actions.GitRebaseAbort"/>
+      <action id="Git.Rebase.Continue" class="git4idea.actions.GitRebaseContinue"/>
+      <action id="Git.Rebase.Skip" class="git4idea.actions.GitRebaseSkip"/>
+    </group>
+
+    <group id="Git.MainMenu.MergeActions" class="git4idea.actions.GitRepositoryStateActionGroup$Merge" popup="true">
+      <reference ref="Git.ResolveConflicts"/>
+      <action id="Git.Merge.Abort" class="git4idea.actions.GitAbortOperationAction$Merge"/>
+    </group>
+
+    <group id="Git.MainMenu.LocalChanges" popup="true">
+      <reference ref="ChangesView.Shelve"/>
+      <reference ref="Vcs.Show.Shelf"/>
+      <action id="Git.Stash" class="git4idea.actions.GitStash"/>
+      <action id="Git.Unstash" class="git4idea.actions.GitUnstash"/>
+      <reference ref="ChangesView.Revert" />
+      <reference ref="UML.ShowChanges" />
+    </group>
+
+    <group id="Git.MainMenu" class="git4idea.actions.GitMainMenuActionGroup">
+
+      <reference ref="CheckinProject"/>
+      <reference ref="Vcs.Push"/>
+      <reference ref="Vcs.UpdateProject"/>
+      <action id="Git.Pull" class="git4idea.actions.GitPull"/>
+      <action id="Git.Fetch" class="git4idea.actions.GitFetch"/>
+      <separator/>
+      <action id="Git.Merge" class="git4idea.actions.GitMerge" icon="AllIcons.Vcs.Merge"/>
+      <reference ref="Git.MainMenu.MergeActions"/>
+      <action id="Git.Rebase" class="git4idea.actions.GitRebase"/>
+      <reference ref="Git.MainMenu.RebaseActions"/>
+      <separator/>
       <action id="Git.Branches" class="git4idea.ui.branch.GitBranchesAction" icon="AllIcons.Vcs.Branch">
         <keyboard-shortcut first-keystroke="control shift BACK_QUOTE" keymap="$default" />
         <keyboard-shortcut first-keystroke="meta shift BACK_QUOTE" keymap="Mac OS X" remove="true" />
         <keyboard-shortcut first-keystroke="meta shift BACK_QUOTE" keymap="Mac OS X 10.5+" remove="true" />
       </action>
+      <reference ref="Git.CreateNewBranch"/>
       <action id="Git.Tag" class="git4idea.actions.GitTag"/>
-      <action id="Git.Merge" class="git4idea.actions.GitMerge" icon="AllIcons.Actions.ShowAsTree"/>
-      <action id="Git.Stash" class="git4idea.actions.GitStash"/>
-      <action id="Git.Unstash" class="git4idea.actions.GitUnstash"/>
       <action id="Git.Reset" class="git4idea.actions.GitResetHead" icon="AllIcons.Actions.Rollback"/>
+      <separator/>
+      <reference ref="Vcs.Show.Log"/>
+      <reference id="Patch.MainMenu"/>
+      <reference id="Git.MainMenu.LocalChanges"/>
+      <reference id="Git.MainMenu.FileActions"/>
       <separator/>
       <action id="Git.Configure.Remotes" class="git4idea.remote.GitConfigureRemotesAction"/>
       <action id="Git.Clone" class="git4idea.actions.GitCloneAction"/>
-      <action id="Git.Fetch" class="git4idea.actions.GitFetch"/>
-      <action id="Git.Pull" class="git4idea.actions.GitPull" icon="AllIcons.Actions.CheckOut"/>
-      <reference ref="Vcs.Push"/>
       <separator/>
-      <action id="Git.Rebase" class="git4idea.actions.GitRebase"/>
-      <action id="Git.Rebase.Abort" class="git4idea.actions.GitRebaseAbort"/>
-      <action id="Git.Merge.Abort" class="git4idea.actions.GitAbortOperationAction$Merge"/>
-      <action id="Git.CherryPick.Abort" class="git4idea.actions.GitAbortOperationAction$CherryPick"/>
       <action id="Git.Revert.Abort" class="git4idea.actions.GitAbortOperationAction$Revert"/>
-      <action id="Git.Rebase.Continue" class="git4idea.actions.GitRebaseContinue"/>
-      <action id="Git.Rebase.Skip" class="git4idea.actions.GitRebaseSkip"/>
+      <action id="Git.CherryPick.Abort" class="git4idea.actions.GitAbortOperationAction$CherryPick"/>
+
+      <add-to-group group-id="VcsGroups" relative-to-action="Vcs.MainMenu" anchor="after"/>
+    </group>
+
+    <group id="GitRepositoryActions">
+      <reference ref="Vcs.Push"/>
+      <reference ref="Git.Pull"/>
+      <reference ref="Git.Fetch"/>
+      <separator/>
+      <reference ref="Git.Merge"/>
+      <reference ref="Git.MainMenu.MergeActions"/>
+      <reference ref="Git.Rebase"/>
+      <reference ref="Git.MainMenu.RebaseActions"/>
+      <separator/>
+      <reference ref="Git.Branches"/>
+      <reference ref="Git.CreateNewBranch"/>
+      <reference ref="Git.Tag"/>
+      <reference ref="Git.Reset"/>
+      <separator/>
+      <reference ref="Git.Stash"/>
+      <reference ref="Git.Unstash"/>
+      <separator/>
+      <reference ref="Git.Configure.Remotes"/>
+      <reference ref="Git.Clone"/>
+      <separator/>
+      <reference ref="Git.Revert.Abort"/>
+      <reference ref="Git.CherryPick.Abort"/>
     </group>
 
     <group id="Git.Ongoing.Rebase.Actions" popup="false">
@@ -114,19 +168,22 @@
     </group>
 
     <group id="Git.Menu" class="git4idea.actions.GitMenu" popup="true">
-      <reference ref="GitFileActions"/>
+      <reference ref="Git.FileActions"/>
+      <separator/>
+      <reference ref="ChangesView.Revert" />
       <separator/>
       <reference ref="GitRepositoryActions"/>
-
       <add-to-group group-id="VcsGlobalGroup" anchor="after" relative-to-action="Vcs.Specific"/>
     </group>
 
     <group id="Git.ContextMenu" class="git4idea.actions.GitMenu" popup="true">
-      <reference ref="GitFileActions"/>
+      <reference ref="Git.FileActions"/>
+      <reference ref="Show.Current.Revision"/>
+      <reference ref="ChangesView.Revert" />
       <separator/>
-      <group id="Git.RepositoryContextMenu" popup="true">
-        <reference ref="GitRepositoryActions"/>
-      </group>
+      <reference ref="Git.ResolveConflicts" />
+      <separator/>
+      <reference ref="GitRepositoryActions"/>
       <add-to-group group-id="VcsGroup" anchor="last"/>
     </group>
 
@@ -174,7 +231,7 @@
 
     <group id="Git.Ignore.File" class="git4idea.ignore.actions.GitIgnoreFileActionGroup">
       <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="ChangesView.AddUnversioned"/>
-      <add-to-group group-id="GitFileActions" anchor="after" relative-to-action="Git.Add"/>
+      <add-to-group group-id="Git.FileActions" anchor="after" relative-to-action="Git.Add"/>
       <add-to-group group-id="Unversioned.Files.Dialog.Popup" anchor="after" relative-to-action="$Delete"/>
     </group>
 

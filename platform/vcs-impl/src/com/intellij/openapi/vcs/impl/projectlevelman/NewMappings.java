@@ -25,6 +25,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.util.Alarm;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Functions;
@@ -214,6 +216,20 @@ public class NewMappings implements Disposable {
     }
 
     if (fireMappingsChangedEvent && mappedRootsChanged) mappingsChanged();
+  }
+
+  private void refreshMainMenu() {
+
+    WindowManagerEx windowManager = WindowManagerEx.getInstanceEx();
+    ProjectFrameHelper frame = windowManager.getFrameHelper(myProject);
+    if (frame != null) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (!Disposer.isDisposed(frame)) {
+          frame.updateView();
+        }
+      });
+    }
+
   }
 
   @NotNull
@@ -527,6 +543,8 @@ public class NewMappings implements Disposable {
 
     List<AbstractVcs> oldVcses = myActiveVcses;
     myActiveVcses = unmodifiableList(new ArrayList<>(newVcses));
+
+    refreshMainMenu();
 
     Collection<AbstractVcs> toAdd = subtract(myActiveVcses, oldVcses);
     Collection<AbstractVcs> toRemove = subtract(oldVcses, myActiveVcses);

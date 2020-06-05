@@ -96,6 +96,10 @@ public abstract class AbstractVcs extends StartedActivated {
     return getDisplayName();
   }
 
+  public boolean isWithCustomMenu() {
+    return false;
+  }
+
   public abstract Configurable getConfigurable();
 
   @Nullable

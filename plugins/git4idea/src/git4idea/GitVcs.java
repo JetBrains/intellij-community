@@ -364,4 +364,9 @@ public final class GitVcs extends AbstractVcs {
   public boolean needsCaseSensitiveDirtyScope() {
     return true;
   }
+
+  @Override
+  public boolean isWithCustomMenu() {
+    return true;
+  }
 }

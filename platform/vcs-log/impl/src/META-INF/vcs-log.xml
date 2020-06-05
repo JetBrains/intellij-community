@@ -92,7 +92,7 @@
       <keyboard-shortcut first-keystroke="LEFT" keymap="$default"/>
     </action>
     <action class="com.intellij.vcs.log.ui.actions.IntelliSortChooserToggleAction" id="Vcs.Log.IntelliSortChooser"/>
-    <action class="com.intellij.vcs.log.ui.actions.VcsShowLogAction" id="Vcs.Show.Log">
+    <action class="com.intellij.vcs.log.ui.actions.VcsShowLogAction" id="Vcs.Show.Log" icon="AllIcons.Toolwindows.ToolWindowChanges">
       <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
     </action>
     <action class="com.intellij.vcs.log.ui.actions.CompactReferencesViewAction" id="Vcs.Log.CompactReferencesView"/>

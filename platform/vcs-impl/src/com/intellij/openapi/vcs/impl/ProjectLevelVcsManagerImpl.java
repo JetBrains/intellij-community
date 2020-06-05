@@ -60,6 +60,7 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @State(name = "ProjectLevelVcsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements PersistentStateComponent<Element> {
@@ -229,6 +230,17 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   @Override
   public AbstractVcs @NotNull [] getAllActiveVcss() {
     return myMappings.getActiveVcses();
+  }
+
+  @Override
+  public @Nullable AbstractVcs getSingleVCS() {
+    List<AbstractVcs> vcss = Arrays.stream(getAllActiveVcss()).distinct().collect(Collectors.toList());
+    if (vcss.size() == 1) {
+      return vcss.get(0);
+    }
+    else {
+      return null;
+    }
   }
 
   @Override
@@ -531,6 +543,16 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
       }
     }
     return vcsRoots.toArray(new VcsRoot[0]);
+  }
+
+  @Override
+  public String getConsolidatedVcsName() {
+    String name = "VCS";
+    List<String> ids = Arrays.stream(getAllActiveVcss()).map(vcs -> vcs.getShortName()).distinct().collect(Collectors.toList());
+      if (ids.size() == 1) {
+        name = ids.get(0);
+      }
+    return name;
   }
 
   @Override
