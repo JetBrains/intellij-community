@@ -30,7 +30,7 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
                            /**
                             * Ignored if project is explicitly set.
                             */
-                           internal val beforeProjectOpen: Predicate<Project>? = null,
+                           internal val beforeOpen: Predicate<Project>? = null,
                            internal val preparedToOpen: ((Module) -> Unit)? = null,
                            val frame: FrameInfo? = null,
                            val projectWorkspaceId: String? = null,
@@ -43,13 +43,13 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
                            val runConfigurators: Boolean = false,
                            val runConversionBeforeOpen: Boolean = true) {
   @ApiStatus.Internal
-  fun withBeforeProjectCallback(callback: Predicate<Project>) = copy(beforeProjectOpen = callback)
+  fun withBeforeOpenCallback(callback: Predicate<Project>) = copy(beforeOpen = callback)
 
   @ApiStatus.Internal
   fun withProjectName(value: String?) = copy(projectName = value)
 
   @ApiStatus.Internal
-  fun withNewProject(value: Boolean) = copy(isNewProject = value)
+  fun asNewProjectAndRunConfigurators() = copy(isNewProject = true, runConfigurators = true)
 
   companion object {
     @JvmStatic

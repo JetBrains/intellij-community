@@ -25,7 +25,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
@@ -39,10 +39,12 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.FocusUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import java.awt.*;
@@ -131,9 +133,11 @@ public final class ProjectUtil {
   }
 
   public static @Nullable Project openOrImport(@NotNull Path file, @NotNull OpenProjectTask options) {
-    Project existing = findAndFocusExistingProjectForPath(file);
-    if (existing != null) {
-      return existing;
+    if (!options.getForceOpenInNewFrame()) {
+      Project existing = findAndFocusExistingProjectForPath(file);
+      if (existing != null) {
+        return existing;
+      }
     }
 
     NullableLazyValue<VirtualFile> lazyVirtualFile = NullableLazyValue.createValue(() -> getFileAndRefresh(file));
@@ -150,7 +154,7 @@ public final class ProjectUtil {
       }
 
       if (provider.canOpenProject(virtualFile)) {
-        return chooseProcessorAndOpen(Collections.singletonList(provider), lazyVirtualFile, file, options);
+        return chooseProcessorAndOpen(Collections.singletonList(provider), virtualFile, options);
       }
     }
 
@@ -173,7 +177,7 @@ public final class ProjectUtil {
 
     List<ProjectOpenProcessor> processors = new SmartList<>();
     ProjectOpenProcessor.EXTENSION_POINT_NAME.forEachExtensionSafe(processor -> {
-      if (processor instanceof PlatformProjectOpenProcessor) {
+      if (!(processor instanceof PlatformProjectOpenProcessor)) {
         if (Files.isDirectory(file)) {
           processors.add(processor);
         }
@@ -185,11 +189,27 @@ public final class ProjectUtil {
         }
       }
     });
+
     if (processors.isEmpty()) {
       return null;
     }
 
-    Project project = chooseProcessorAndOpen(processors, lazyVirtualFile, file, options);
+    Project project;
+    if (processors.size() == 1 && processors.get(0) instanceof PlatformProjectOpenProcessor) {
+      project = ProjectManagerEx.getInstanceEx().openProject(file, options.asNewProjectAndRunConfigurators().withBeforeOpenCallback(p -> {
+        p.putUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR, Boolean.TRUE);
+        return true;
+      }));
+    }
+    else {
+      VirtualFile virtualFile = lazyVirtualFile.getValue();
+      if (virtualFile == null) {
+        return null;
+      }
+
+      project = chooseProcessorAndOpen(processors, virtualFile, options);
+    }
+
     if (project == null) {
       return null;
     }
@@ -206,48 +226,34 @@ public final class ProjectUtil {
   }
 
   private static @Nullable Project chooseProcessorAndOpen(@NotNull List<ProjectOpenProcessor> processors,
-                                                          @NotNull NullableLazyValue<VirtualFile> virtualFileRef,
-                                                          @NotNull Path file,
+                                                          @NotNull VirtualFile virtualFile,
                                                           @NotNull OpenProjectTask options) {
-    if (processors.size() == 1 && processors.get(0) instanceof PlatformProjectOpenProcessor) {
-      Project project = PlatformProjectOpenProcessor.doOpenProject(file, options.withNewProject(!isValidProjectPath(file)));
-      if (project != null) {
-        project.putUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR, Boolean.TRUE);
-      }
-      return project;
+    ProjectOpenProcessor processor;
+    if (processors.size() == 1) {
+      processor = processors.get(0);
     }
-
-    VirtualFile virtualFile = virtualFileRef.getValue();
-    if (virtualFile == null) {
-      return null;
+    else {
+      processors.removeIf(it -> it instanceof PlatformProjectOpenProcessor);
+      if (processors.size() == 1) {
+        processor = processors.get(0);
+      }
+      else {
+        Ref<ProjectOpenProcessor> ref = new Ref<>();
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          ref.set(new SelectProjectOpenProcessorDialog(processors, virtualFile).showAndGetChoice());
+        });
+        processor = ref.get();
+        if (processor == null) {
+          return null;
+        }
+      }
     }
 
     Ref<Project> result = new Ref<>();
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      ProjectOpenProcessor processor = selectOpenProcessor(processors, virtualFile);
-      if (processor != null) {
-        Project project = processor.doOpenProject(virtualFile, options.getProjectToClose(), options.getForceOpenInNewFrame());
-        if (project != null && processor instanceof PlatformProjectOpenProcessor) {
-          project.putUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR, Boolean.TRUE);
-        }
-
-        result.set(project);
-      }
+      result.set(processor.doOpenProject(virtualFile, options.getProjectToClose(), options.getForceOpenInNewFrame()));
     });
     return result.get();
-  }
-
-  @CalledInAwt
-  private static @Nullable ProjectOpenProcessor selectOpenProcessor(@NotNull List<ProjectOpenProcessor> processors, @NotNull VirtualFile file) {
-    if (processors.size() == 1) {
-      return processors.get(0);
-    }
-
-    List<ProjectOpenProcessor> notDefaultProcessors = ContainerUtil.filter(processors, p -> !(p instanceof PlatformProjectOpenProcessor));
-    if (notDefaultProcessors.size() == 1) {
-      return notDefaultProcessors.get(0);
-    }
-    return new SelectProjectOpenProcessorDialog(notDefaultProcessors, file).showAndGetChoice();
   }
 
   @ApiStatus.Internal
@@ -416,7 +422,9 @@ public final class ProjectUtil {
   }
 
   public static boolean isSameProject(@Nullable String projectFilePath, @NotNull Project project) {
-    if (projectFilePath == null) return false;
+    if (projectFilePath == null) {
+      return false;
+    }
 
     IProjectStore projectStore = ProjectKt.getStateStore(project);
     String existingBaseDirPath = projectStore.getProjectBasePath();
@@ -474,7 +482,7 @@ public final class ProjectUtil {
 
   public static String getBaseDir() {
     String defaultDirectory = GeneralSettings.getInstance().getDefaultProjectDirectory();
-    if (StringUtil.isNotEmpty(defaultDirectory)) {
+    if (Strings.isNotEmpty(defaultDirectory)) {
       return defaultDirectory.replace('/', File.separatorChar);
     }
     final String lastProjectLocation = RecentProjectsManager.getInstance().getLastProjectCreationLocation();
@@ -514,10 +522,9 @@ public final class ProjectUtil {
       else {
         CommandLineProjectOpenProcessor processor = CommandLineProjectOpenProcessor.getInstanceIfExists();
         if (processor != null) {
-          VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-          if (virtualFile != null && virtualFile.isValid()) {
-              Project opened = processor.openProjectAndFile(virtualFile, -1, -1, false);
-            if (opened != null && result == null) result = opened;
+          Project opened = processor.openProjectAndFile(file.toPath(), -1, -1, false);
+          if (opened != null && result == null) {
+            result = opened;
           }
         }
       }
@@ -528,6 +535,6 @@ public final class ProjectUtil {
 
   public static boolean isValidProjectPath(@NotNull Path file) {
     return Files.isDirectory(file.resolve(Project.DIRECTORY_STORE_FOLDER)) ||
-           (StringUtil.endsWith(file.toString(), ProjectFileType.DOT_DEFAULT_EXTENSION) && Files.isRegularFile(file));
+           (Strings.endsWith(file.toString(), ProjectFileType.DOT_DEFAULT_EXTENSION) && Files.isRegularFile(file));
   }
 }

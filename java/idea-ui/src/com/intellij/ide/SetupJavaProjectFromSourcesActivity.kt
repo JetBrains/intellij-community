@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.openapi.roots.ui.configuration.SdkLookup
@@ -43,8 +42,7 @@ private const val SCAN_DEPTH_LIMIT = 5
 private const val MAX_ROOTS_IN_TRIVIAL_PROJECT_STRUCTURE = 3
 private val LOG = logger<SetupJavaProjectFromSourcesActivity>()
 
-class SetupJavaProjectFromSourcesActivity : StartupActivity {
-
+internal class SetupJavaProjectFromSourcesActivity : StartupActivity {
   override fun runActivity(project: Project) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       return
@@ -70,8 +68,9 @@ class SetupJavaProjectFromSourcesActivity : StartupActivity {
     })
   }
 
-  private fun Project.hasBeenOpenedBySpecificProcessor(): Boolean =
-    true != getUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR)
+  private fun Project.hasBeenOpenedBySpecificProcessor(): Boolean {
+    return getUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR) != true
+  }
 
   private fun searchImporters(projectDirectory: VirtualFile): ArrayListMultimap<ProjectOpenProcessor, VirtualFile> {
     val providersAndFiles = ArrayListMultimap.create<ProjectOpenProcessor, VirtualFile>()

@@ -187,7 +187,7 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder<?>
 
       OpenProjectTask options = shouldOpenExisting ? OpenProjectTask.withProjectToClose(projectToClose, forceOpenInNewFrame) : OpenProjectTask.newProject();
       if (importToProject) {
-        options.withBeforeProjectCallback(project -> importToProject(projectToClose, wizardContext, project));
+        options.withBeforeOpenCallback(project -> importToProject(projectToClose, wizardContext, project));
       }
       options.withProjectName(wizardContext.getProjectName());
 

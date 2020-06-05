@@ -158,7 +158,7 @@ private fun prepareProject(options: OpenProjectTask, projectStoreBaseDir: Path, 
     indicator?.text = ""
   }
 
-  if (project == null || (options.beforeProjectOpen != null && !options.beforeProjectOpen.test(project))) {
+  if (project == null || (options.beforeOpen != null && !options.beforeOpen.test(project))) {
     return null
   }
 

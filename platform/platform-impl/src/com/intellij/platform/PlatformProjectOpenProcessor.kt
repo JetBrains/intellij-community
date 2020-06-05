@@ -202,9 +202,8 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
                                                   useDefaultProjectAsTemplate = !ApplicationManager.getApplication().isUnitTestMode))
   }
 
-  override fun openProjectAndFile(virtualFile: VirtualFile, line: Int, column: Int, tempProject: Boolean): Project? {
+  override fun openProjectAndFile(file: Path, line: Int, column: Int, tempProject: Boolean): Project? {
     // force open in a new frame if temp project
-    val file = Paths.get(virtualFile.path)
     if (tempProject) {
       return createTempProjectAndOpenFile(file, OpenProjectTask(forceOpenInNewFrame = true, line = line, column = column))
     }
