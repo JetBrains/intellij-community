@@ -71,7 +71,7 @@ public class Java15FormInspection extends BaseFormInspection {
                              final IProperty prop,
                              @NonNls final String api) {
     collector.addError(getID(), component, prop, JavaBundle.message("inspection.1.5.problem.descriptor", api),
-                       (EditorQuickFixProvider)(editor, component1) -> new RemovePropertyFix(editor, component1, (Property)prop));
+                       (editor, component1) -> new RemovePropertyFix(editor, component1, (Property)prop));
   }
 
   private static class RemovePropertyFix extends QuickFix {

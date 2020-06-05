@@ -122,7 +122,7 @@ public final class DomResolveConverter<T extends DomElement> extends ResolvingCo
   @Override
   public LocalQuickFix[] getQuickFixes(final ConvertContext context) {
     final DomElement element = context.getInvocationElement();
-    final GenericDomValue value = ((GenericDomValue)element).createStableCopy();
+    final GenericDomValue value = element.createStableCopy();
     final String newName = value.getStringValue();
     if (newName == null) return LocalQuickFix.EMPTY_ARRAY;
     final DomElement scope = value.getManager().getResolvingScope(value);

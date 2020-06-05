@@ -71,7 +71,7 @@ public class Base85x {
     if (c < ASCII_LEFT_SHIFT || c > ASCII_RIGHT_SHIFT) {
       throw new Base85FormatException("Illegal char " + (int)c);
     }
-    int result = INDEX_OF[(int)c];
+    int result = INDEX_OF[c];
     if (result == -1) {
       throw new Base85FormatException("Illegal char " + (int)c);
     }

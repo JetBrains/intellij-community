@@ -48,7 +48,7 @@ public class WavePainter2D extends WavePainter {
    */
   @Override
   public void paint(Graphics2D g, int xStart, int xEnd, int y) {
-    paint(g, (double)xStart, (double)xEnd, (double)y);
+    paint(g, xStart, xEnd, (double)y);
   }
 
   /**

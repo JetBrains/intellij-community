@@ -125,7 +125,7 @@ public class ProgramParametersConfigurator {
 
   private static @Nullable String previewOrExpandMacro(Macro macro, DataContext dataContext) {
     try {
-      return macro instanceof PromptingMacro ? ((PromptingMacro)macro).expand(dataContext) : macro.preview();
+      return macro instanceof PromptingMacro ? macro.expand(dataContext) : macro.preview();
     }
     catch (Macro.ExecutionCancelledException e) {
       return null;

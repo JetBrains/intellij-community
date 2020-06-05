@@ -17,7 +17,10 @@ import com.intellij.psi.filters.types.AssignableToFilter;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.proximity.ReferenceListWeigher;
-import com.intellij.util.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.ProcessingContext;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -73,7 +76,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     if (psiElement().afterLeaf(psiElement().withText(".")).withSuperParent(2, psiElement(PsiNewExpression.class)).accepts(element)) {
       if (((PsiNewExpression)element.getParent().getParent()).getClassReference() == element.getParent()) {
         PsiType[] types = ExpectedTypesGetter.getExpectedTypes(element, false);
-        return new OrFilter(ContainerUtil.map2Array(types, ElementFilter.class, (Function<PsiType, ElementFilter>)type -> new AssignableFromFilter(type)));
+        return new OrFilter(ContainerUtil.map2Array(types, ElementFilter.class, type -> new AssignableFromFilter(type)));
       }
     }
 

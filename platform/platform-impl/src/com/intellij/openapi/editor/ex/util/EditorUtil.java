@@ -814,7 +814,7 @@ public final class EditorUtil {
 
   @NotNull
   public static String displayCharInEditor(char c, @NotNull TextAttributesKey textAttributesKey, @NotNull String fallback) {
-    int codePoint = (int)c;
+    int codePoint = c;
     if (!Character.isValidCodePoint(codePoint)) {
       return fallback;
     }
@@ -822,7 +822,7 @@ public final class EditorUtil {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     TextAttributes textAttributes = scheme.getAttributes(textAttributesKey);
     int style = textAttributes != null ? textAttributes.getFontType() : Font.PLAIN;
-    FontInfo fallbackFont = ComplementaryFontsRegistry.getFontAbleToDisplay((int)c, style, scheme.getFontPreferences(), null);
+    FontInfo fallbackFont = ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, scheme.getFontPreferences(), null);
     return fallbackFont.canDisplay(codePoint) ? String.valueOf(c) : fallback;
   }
 

@@ -44,7 +44,7 @@ public abstract class Client extends UserDataHolderBase {
       return null;
     }
 
-    AsyncPromise<T> promise = (AsyncPromise<T>)new AsyncPromise<T>().onError(error -> messageCallbackMap.remove(messageId));
+    AsyncPromise<T> promise = new AsyncPromise<T>().onError(error -> messageCallbackMap.remove(messageId));
 
     channelFuture.addListener(future -> {
       if (!future.isSuccess()) {

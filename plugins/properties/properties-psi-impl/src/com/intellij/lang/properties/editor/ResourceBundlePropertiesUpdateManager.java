@@ -4,7 +4,6 @@ package com.intellij.lang.properties.editor;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.xml.XmlProperty;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -87,7 +86,7 @@ public final class ResourceBundlePropertiesUpdateManager {
       }
       final Pair<IProperty, Integer> propertyAndPosition = findExistedPrevSiblingProperty(key, propertiesFile);
       myCodeStyleManager.reformat(
-        propertiesFile.addPropertyAfter(key, value, propertyAndPosition == null ? null : (Property)propertyAndPosition.getFirst())
+        propertiesFile.addPropertyAfter(key, value, propertyAndPosition == null ? null : propertyAndPosition.getFirst())
           .getPsiElement());
     }
     else {

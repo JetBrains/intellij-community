@@ -45,7 +45,7 @@ public final class TitlePanel extends JPanel {
     RoundRectangle2D rect = new RoundRectangle2D.Double(0, 0, width - 1, height - 1, 0, 0);
     g2.fill(rect);
     g2.setPaint(new JBColor(Color.GRAY, Gray._100));
-    LinePainter2D.paint((Graphics2D)g2, 0, height - 1, width - 1, height - 1);
+    LinePainter2D.paint(g2, 0, height - 1, width - 1, height - 1);
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAntialiasing);
   }
 }

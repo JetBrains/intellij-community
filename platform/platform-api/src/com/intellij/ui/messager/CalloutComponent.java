@@ -367,7 +367,7 @@ public class CalloutComponent {
           break;
       }
 
-      LinePainter2D.paint((Graphics2D)g2, (int)line.getX1(), (int)line.getY1(), (int)line.getX2(), (int)line.getY2());
+      LinePainter2D.paint(g2, (int)line.getX1(), (int)line.getY1(), (int)line.getX2(), (int)line.getY2());
 
       final Shape arrow = LineEndDecorator.getArrowShape(line, line.getP2());
       g2.fill(arrow);

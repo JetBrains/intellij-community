@@ -845,7 +845,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @NotNull
   protected List<? extends DocumentContent> getContents() {
     //noinspection unchecked
-    return (List<? extends DocumentContent>)(List)myRequest.getContents();
+    return (List)myRequest.getContents();
   }
 
   @NotNull

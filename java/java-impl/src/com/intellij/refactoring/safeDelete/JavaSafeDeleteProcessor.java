@@ -305,7 +305,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         final PsiMethod method = (PsiMethod)scope;
         final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
         collectMethodConflicts(conflicts, method, (PsiParameter)element);
-        return (Collection<String>)conflicts.values();
+        return conflicts.values();
       }
     }
     return null;

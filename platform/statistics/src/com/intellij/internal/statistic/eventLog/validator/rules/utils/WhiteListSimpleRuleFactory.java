@@ -151,7 +151,7 @@ public class WhiteListSimpleRuleFactory {
 
         FUSRule simpleRule = createRule(unwrapRuleNode(string));
         if (simpleRule instanceof CustomWhiteListRule) {
-          fusRule = (CustomWhiteListRule)simpleRule;
+          fusRule = simpleRule;
         }
         else {
           return UNPARSED_EXPRESSION;

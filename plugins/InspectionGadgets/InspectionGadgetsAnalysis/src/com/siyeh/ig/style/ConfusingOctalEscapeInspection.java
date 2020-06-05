@@ -52,7 +52,7 @@ public class ConfusingOctalEscapeInspection extends BaseInspection {
       final String text = expression.getText();
       int escapeStart = -1;
       while (true) {
-        escapeStart = text.indexOf((int)'\\', escapeStart + 1);
+        escapeStart = text.indexOf('\\', escapeStart + 1);
         if (escapeStart < 0) {
           return;
         }

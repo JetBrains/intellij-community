@@ -64,7 +64,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
 
   @Override
   public GrCodeReferenceElement getImportReference() {
-    return (GrCodeReferenceElement)findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
+    return findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
   }
 
   @Nullable

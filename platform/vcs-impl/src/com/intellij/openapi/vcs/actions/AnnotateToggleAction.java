@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.DumbAware;
@@ -238,7 +237,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
 
   @NotNull
   static List<ActiveAnnotationGutter> getVcsAnnotations(@NotNull Editor editor) {
-    List<TextAnnotationGutterProvider> annotations = ((EditorGutterComponentEx)editor.getGutter()).getTextAnnotations();
+    List<TextAnnotationGutterProvider> annotations = editor.getGutter().getTextAnnotations();
     return ContainerUtil.filterIsInstance(annotations, ActiveAnnotationGutter.class);
   }
 
@@ -248,7 +247,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
 
   static void closeVcsAnnotations(@NotNull Editor editor) {
     List<ActiveAnnotationGutter> vcsAnnotations = getVcsAnnotations(editor);
-    ((EditorGutterComponentEx)editor.getGutter()).closeTextAnnotations(vcsAnnotations);
+    editor.getGutter().closeTextAnnotations(vcsAnnotations);
   }
 
   @Nullable

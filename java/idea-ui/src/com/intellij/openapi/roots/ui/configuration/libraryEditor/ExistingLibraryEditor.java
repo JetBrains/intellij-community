@@ -58,7 +58,7 @@ public class ExistingLibraryEditor extends LibraryEditorBase implements Disposab
 
   @Override
   public LibraryType<?> getType() {
-    final LibraryKind kind = ((LibraryEx)myLibrary).getKind();
+    final LibraryKind kind = myLibrary.getKind();
     if (kind != null) {
       return LibraryType.findByKind(kind);
     }

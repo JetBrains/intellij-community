@@ -34,7 +34,7 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
 
   @Override
   public PyExpression getOperand() {
-    return (PyExpression)childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
+    return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
   }
 
   @Nullable

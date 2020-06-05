@@ -40,7 +40,7 @@ public class DarculaTableHeaderUI extends BasicTableHeaderUI {
     g.fillRect(0, 0, w, h);
     JBColor bottomSeparatorColor = JBColor.namedColor("TableHeader.bottomSeparatorColor", ColorUtil.shift(bg, 0.75));
     g.setPaint(bottomSeparatorColor);
-    LinePainter2D.paint((Graphics2D)g, 0, h - 1, w, h - 1);
+    LinePainter2D.paint(g, 0, h - 1, w, h - 1);
 
     final Enumeration<TableColumn> columns = model.getColumns();
 
@@ -51,7 +51,7 @@ public class DarculaTableHeaderUI extends BasicTableHeaderUI {
       if (columns.hasMoreElements() && column.getWidth() > 0) {
         offset += column.getWidth();
         g.setColor(lineColor);
-        LinePainter2D.paint((Graphics2D)g, offset - 1, 1, offset - 1, h - 3);
+        LinePainter2D.paint(g, offset - 1, 1, offset - 1, h - 3);
       }
     }
 

@@ -55,7 +55,7 @@ public class NameFilteringListModel<T> extends FilteringListModel<T> {
     super(model);
     myPattern = pattern;
     myNamer = namer;
-    setFilter(namer != null ? (Condition<T>)t -> filter.value(namer.fun(t)) : null);
+    setFilter(namer != null ? t -> filter.value(namer.fun(t)) : null);
   }
 
   @Override

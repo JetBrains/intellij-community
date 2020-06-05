@@ -6,8 +6,6 @@ import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskType;
 import com.intellij.tasks.mantis.model.IssueData;
 import com.intellij.tasks.mantis.model.IssueHeaderData;
-import com.intellij.tasks.mantis.model.IssueNoteData;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import icons.TasksCoreIcons;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +39,7 @@ public class MantisTask extends Task {
       myComments = Comment.EMPTY_ARRAY;
     }
     else {
-      myComments = ContainerUtil.map2Array(data.getNotes(), Comment.class, (Function<IssueNoteData, Comment>)data1 -> new Comment() {
+      myComments = ContainerUtil.map2Array(data.getNotes(), Comment.class, data1 -> new Comment() {
         @Override
         public String getText() {
           return data1.getText();
