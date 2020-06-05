@@ -161,7 +161,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
     AnAction nextErrorAction = createAction("GotoNextError", AllIcons.Actions.FindAndShowNextMatchesSmall);
     AnAction prevErrorAction = createAction("GotoPreviousError", AllIcons.Actions.FindAndShowPrevMatchesSmall);
-    DefaultActionGroup navigateGroup = new DefaultActionGroup(nextErrorAction, prevErrorAction) {
+    DefaultActionGroup navigateGroup = new DefaultActionGroup(prevErrorAction, nextErrorAction) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabledAndVisible(showNavigation);
