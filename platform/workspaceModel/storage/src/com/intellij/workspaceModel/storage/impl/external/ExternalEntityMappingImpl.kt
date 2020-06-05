@@ -41,11 +41,10 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   constructor() : this(BidirectionalMap<EntityId, T>(), mutableListOf())
 
   override fun addMapping(entity: WorkspaceEntity, data: T) {
-    entity as WorkspaceEntityBase
-    index(entity.id, data)
+    add((entity as WorkspaceEntityBase).id, data)
   }
 
-  private fun index(id: EntityId, data: T) {
+  private fun add(id: EntityId, data: T) {
     index[id] = data
     indexLog.add(IndexLogRecord.Add(id, data))
   }
@@ -63,7 +62,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   fun applyChanges(other: MutableExternalEntityMappingImpl<*>) {
     other.indexLog.forEach {
       when (it) {
-        is IndexLogRecord.Add<*> -> index(it.id, it.data as T)
+        is IndexLogRecord.Add<*> -> add(it.id, it.data as T)
         is IndexLogRecord.Remove -> remove(it.id)
       }
     }
