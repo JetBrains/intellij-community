@@ -46,13 +46,12 @@ internal class ModifiableSampleEntity : ModifiableWorkspaceEntityBase<SampleEnti
   var fileProperty: VirtualFileUrl by EntityDataDelegation()
 }
 
-internal fun WorkspaceEntityStorageBuilder.addSampleEntity(stringProperty: String,
-                                                           source: EntitySource = SampleEntitySource("test"),
-                                                           booleanProperty: Boolean = false,
-                                                           stringListProperty: MutableList<String> = ArrayList(),
-                                                           virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl(),
-                                                           fileProperty: VirtualFileUrl = virtualFileManager.fromUrl(
-                                                          "file:///tmp")): SampleEntity {
+internal fun WorkspaceEntityStorageDiffBuilder.addSampleEntity(stringProperty: String,
+                                                               source: EntitySource = SampleEntitySource("test"),
+                                                               booleanProperty: Boolean = false,
+                                                               stringListProperty: MutableList<String> = ArrayList(),
+                                                               virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl(),
+                                                               fileProperty: VirtualFileUrl = virtualFileManager.fromUrl("file:///tmp")): SampleEntity {
   return addEntity(ModifiableSampleEntity::class.java, source) {
     this.booleanProperty = booleanProperty
     this.stringProperty = stringProperty

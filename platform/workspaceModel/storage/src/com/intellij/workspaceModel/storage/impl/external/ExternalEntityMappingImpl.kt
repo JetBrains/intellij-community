@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl.external
 
+import com.google.common.collect.HashBiMap
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.workspaceModel.storage.ExternalEntityMapping
 import com.intellij.workspaceModel.storage.MutableExternalEntityMapping
@@ -54,16 +55,16 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     remove(entity.id)
   }
 
-  private fun remove(id: EntityId) {
+  internal fun remove(id: EntityId) {
     index.remove(id)
     indexLog.add(IndexLogRecord.Remove(id))
   }
 
-  fun applyChanges(other: MutableExternalEntityMappingImpl<*>) {
+  fun applyChanges(other: MutableExternalEntityMappingImpl<*>, replaceMap: HashBiMap<EntityId, EntityId>) {
     other.indexLog.forEach {
       when (it) {
-        is IndexLogRecord.Add<*> -> add(it.id, it.data as T)
-        is IndexLogRecord.Remove -> remove(it.id)
+        is IndexLogRecord.Add<*> -> add(replaceMap.getOrDefault(it.id, it.id), it.data as T)
+        is IndexLogRecord.Remove -> remove(replaceMap.getOrDefault(it.id, it.id))
       }
     }
   }

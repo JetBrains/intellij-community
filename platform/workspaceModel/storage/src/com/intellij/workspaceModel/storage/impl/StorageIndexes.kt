@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl
 
+import com.google.common.collect.HashBiMap
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.PersistentEntityId
@@ -134,6 +135,7 @@ internal class MutableStorageIndexes(
     virtualFileIndex.index(entityId)
     entitySourceIndex.index(entityId)
     persistentIdIndex.index(entityId)
+    externalMappings.values.forEach { it.remove(entityId) }
   }
 
   fun <T : WorkspaceEntity> simpleUpdateSoftReferences(copiedData: WorkspaceEntityData<T>) {
@@ -148,7 +150,8 @@ internal class MutableStorageIndexes(
     }
   }
 
-  fun applyExternalMappingChanges(diff: WorkspaceEntityStorageBuilderImpl) {
+  fun applyExternalMappingChanges(diff: WorkspaceEntityStorageBuilderImpl,
+                                  replaceMap: HashBiMap<EntityId, EntityId>) {
     externalMappings.keys.asSequence().filterNot { it in diff.indexes.externalMappings }.forEach {
       externalMappings.remove(it)
     }
@@ -158,7 +161,7 @@ internal class MutableStorageIndexes(
     }
 
     diff.indexes.externalMappings.forEach { (identifier, index) ->
-      externalMappings[identifier]?.applyChanges(index)
+      externalMappings[identifier]?.applyChanges(index, replaceMap)
     }
   }
 

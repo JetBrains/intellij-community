@@ -600,7 +600,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
         }
       }
     }
-    indexes.applyExternalMappingChanges(diff)
+    indexes.applyExternalMappingChanges(diff, replaceMap)
     val res = HashMap<WorkspaceEntity, WorkspaceEntity>()
     replaceMap.forEach { (oldId, newId) ->
       if (oldId != newId) {
@@ -732,8 +732,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
     private val LOG = logger<WorkspaceEntityStorageBuilderImpl>()
 
-    fun create() = from(
-      WorkspaceEntityStorageImpl.EMPTY)
+    fun create(): WorkspaceEntityStorageBuilderImpl = from(WorkspaceEntityStorageImpl.EMPTY)
 
     fun from(storage: WorkspaceEntityStorage): WorkspaceEntityStorageBuilderImpl {
       storage as AbstractEntityStorage
