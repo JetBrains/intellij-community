@@ -46,6 +46,7 @@ import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -87,6 +88,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
   private static final ColorKey ICON_TEXT_COLOR = ColorKey.createColorKey("ActionButton.iconTextForeground",
                                                                           UIUtil.getContextHelpForeground());
+
+  private static final int QUICK_ANALYSIS_TIMEOUT = 3000; // mS
 
   private static final Logger LOG = Logger.getInstance(EditorMarkupModelImpl.class);
 
@@ -148,6 +151,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private boolean reportErrorStripeInconsistency = true;
   private InspectionPopupManager myPopupManager;
   private final Disposable resourcesDisposable = Disposer.newDisposable();
+  private final Alarm statusTimer = new Alarm(resourcesDisposable);
 
   EditorMarkupModelImpl(@NotNull EditorImpl editor) {
     super(editor.getDocument());
@@ -443,6 +447,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   private void changeStatus(AnalyzerStatus newStatus) {
+    statusTimer.cancelAllRequests();
+
     boolean resetAnalyzingStatus = analyzerStatus != null &&
                             analyzerStatus.isTextStatus() && analyzerStatus.getAnalyzingType() == AnalyzingType.COMPLETE;
     analyzerStatus = newStatus;
@@ -460,6 +466,12 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
     if (analyzerStatus.getAnalyzingType() != AnalyzingType.EMPTY) {
       showNavigation = analyzerStatus.getShowNavigation();
+    }
+    else {
+      statusTimer.addRequest(() -> {
+        hasAnalyzed = false;
+        ActivityTracker.getInstance().inc();
+      }, QUICK_ANALYSIS_TIMEOUT);
     }
 
     myPopupManager.updateVisiblePopup();
