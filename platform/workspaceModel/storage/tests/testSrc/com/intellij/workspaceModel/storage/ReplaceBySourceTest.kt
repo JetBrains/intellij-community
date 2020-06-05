@@ -6,7 +6,6 @@ import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -49,11 +48,6 @@ class ReplaceBySourceTest {
     builder = WorkspaceEntityStorageBuilderImpl.create()
   }
 
-  @After
-  fun tearDown() {
-    builder.assertConsistency()
-  }
-
   @Test
   fun `add entity`() {
     builder.addSampleEntity("hello2", SampleEntitySource("2"))
@@ -61,6 +55,7 @@ class ReplaceBySourceTest {
     replacement.addSampleEntity("hello1", SampleEntitySource("1"))
     builder.replaceBySource({ it == SampleEntitySource("1") }, replacement)
     assertEquals(setOf("hello1", "hello2"), builder.entities(SampleEntity::class.java).mapTo(HashSet()) { it.stringProperty })
+    builder.assertConsistency()
   }
 
   @Test
@@ -70,6 +65,7 @@ class ReplaceBySourceTest {
     builder.addSampleEntity("hello2", SampleEntitySource("2"))
     builder.replaceBySource({ it == source1 }, WorkspaceEntityStorageBuilderImpl.create())
     assertEquals("hello2", builder.singleSampleEntity().stringProperty)
+    builder.assertConsistency()
   }
 
   @Test
@@ -81,6 +77,7 @@ class ReplaceBySourceTest {
     replacement.addSampleEntity("updated", source1)
     builder.replaceBySource({ it == source1 }, replacement)
     assertEquals(setOf("hello2", "updated"), builder.entities(SampleEntity::class.java).mapTo(HashSet()) { it.stringProperty })
+    builder.assertConsistency()
   }
 
   @Test
@@ -94,6 +91,7 @@ class ReplaceBySourceTest {
     replacement.addSampleEntity("new", sourceA2)
     builder.replaceBySource({ it is SampleEntitySource && it.name.startsWith("a") }, replacement)
     assertEquals(setOf("b", "new"), builder.entities(SampleEntity::class.java).mapTo(HashSet()) { it.stringProperty })
+    builder.assertConsistency()
   }
 
   @Test
@@ -106,6 +104,7 @@ class ReplaceBySourceTest {
     builder.replaceBySource({ it == sourceA2 }, replacement)
     assertEquals(1, builder.toStorage().entities(ParentEntity::class.java).toList().size)
     assertEquals(1, builder.toStorage().entities(ChildEntity::class.java).toList().size)
+    builder.assertConsistency()
   }
 
   @Test
@@ -115,6 +114,7 @@ class ReplaceBySourceTest {
     builder.replaceBySource({ true }, builder2)
     assertTrue(builder.collectChanges(
       WorkspaceEntityStorageBuilderImpl.create()).isEmpty())
+    builder.assertConsistency()
   }
 
   @Test
@@ -129,6 +129,7 @@ class ReplaceBySourceTest {
     assertEquals(1, collectChanges.size)
     assertEquals(2, collectChanges.values.single().size)
     assertTrue(collectChanges.values.single().all { it is EntityChange.Removed<*> })
+    builder.assertConsistency()
     assertTrue(builder.entities(SampleEntity::class.java).toList().isEmpty())
   }
 
@@ -142,6 +143,7 @@ class ReplaceBySourceTest {
     assertEquals(setOf("hello2"), builder.entities(SampleEntity::class.java).mapTo(HashSet()) { it.stringProperty })
     assertTrue(builder.collectChanges(
       WorkspaceEntityStorageBuilderImpl.create()).isEmpty())
+    builder.assertConsistency()
   }
 
   @Test
@@ -153,6 +155,7 @@ class ReplaceBySourceTest {
     }
     builder.replaceBySource({ true }, replacement)
     assertEquals(setOf("Hello Alex"), builder.entities(SampleEntity::class.java).mapTo(HashSet()) { it.stringProperty })
+    builder.assertConsistency()
   }
 
   @Test
@@ -161,6 +164,7 @@ class ReplaceBySourceTest {
     replacement.addSampleEntity("myEntity")
     builder.replaceBySource({ true }, replacement)
     assertEquals(setOf("myEntity"), builder.entities(SampleEntity::class.java).mapTo(HashSet()) { it.stringProperty })
+    builder.assertConsistency()
   }
 
   @Test
@@ -170,6 +174,7 @@ class ReplaceBySourceTest {
     replacement.removeEntity(entity)
     builder.replaceBySource({ true }, replacement)
     assertTrue(builder.entities(SampleEntity::class.java).toList().isEmpty())
+    builder.assertConsistency()
   }
 
   @Test
@@ -187,6 +192,7 @@ class ReplaceBySourceTest {
     val child = assertOneElement(builder.entities(ChildEntity::class.java).toList())
     assertEquals("newProperty", child.parent.parentProperty)
     assertOneElement(builder.entities(ParentEntity::class.java).toList())
+    builder.assertConsistency()
   }
 
   @Test
@@ -204,6 +210,7 @@ class ReplaceBySourceTest {
     val updatedChild = assertOneElement(builder.entities(ChildEntity::class.java).toList())
     assertEquals("newProperty", updatedChild.childProperty)
     assertEquals(updatedChild, assertOneElement(builder.entities(ParentEntity::class.java).toList()).children.single())
+    builder.assertConsistency()
   }
 
   @Test
@@ -218,6 +225,7 @@ class ReplaceBySourceTest {
 
     assertEmpty(builder.entities(ChildEntity::class.java).toList())
     assertEmpty(builder.entities(ParentEntity::class.java).toList())
+    builder.assertConsistency()
   }
 
   @Test
@@ -233,6 +241,7 @@ class ReplaceBySourceTest {
 
     builder.replaceBySource({ true }, replacement)
 
+    builder.assertConsistency()
     val parents = builder.entities(ParentEntity::class.java).toList()
     assertTrue(parents.single { it.parentProperty == "myProperty" }.children.none())
     assertEquals(child, parents.single { it.parentProperty == "anotherProperty" }.children.single())
@@ -266,6 +275,7 @@ class ReplaceBySourceTest {
 
     builder.replaceBySource({ it is MySource }, replacement)
 
+    builder.assertConsistency()
     val parents = builder.entities(ParentEntity::class.java).toList()
     assertTrue(parents.single { it.parentProperty == "anotherProperty" }.children.none())
     assertEquals(child, parents.single { it.parentProperty == "myProperty" }.children.single())
@@ -284,6 +294,7 @@ class ReplaceBySourceTest {
     assertEmpty(builder.entities(ChildEntity::class.java).toList())
     assertOneElement(builder.entities(ParentEntity::class.java).toList())
     assertEmpty(builder.entities(ParentEntity::class.java).single().children.toList())
+    builder.assertConsistency()
   }
 
   @Test(expected = ReplaceBySourceException::class)
@@ -304,6 +315,7 @@ class ReplaceBySourceTest {
 
     builder.replaceBySource({ it is MySource }, replacement)
 
+    builder.assertConsistency()
     assertOneElement(builder.entities(ParentEntity::class.java).toList())
     val child = assertOneElement(builder.entities(ChildEntity::class.java).toList())
     assertEquals("MySourceChild", child.childProperty)
@@ -317,6 +329,7 @@ class ReplaceBySourceTest {
     replacement.removeEntity(parentEntity)
 
     builder.replaceBySource({ it is AnotherSource }, replacement)
+    builder.assertConsistency()
   }
 
   @Test
@@ -330,6 +343,7 @@ class ReplaceBySourceTest {
     assertEmpty(builder.entities(ChildEntity::class.java).toList())
     assertOneElement(builder.entities(ParentEntity::class.java).toList())
     assertEmpty(builder.entities(ParentEntity::class.java).single().children.toList())
+    builder.assertConsistency()
   }
 
   @Test
@@ -360,6 +374,8 @@ class ReplaceBySourceTest {
     builder.replaceBySource({ true }, replacement)
     assertEquals("NewName", assertOneElement(builder.entities(NamedEntity::class.java).toList()).name)
     assertEquals("NewName", assertOneElement(builder.entities(WithSoftLinkEntity::class.java).toList()).link.presentableName)
+
+    builder.assertConsistency()
   }
 
   @Test
@@ -377,6 +393,8 @@ class ReplaceBySourceTest {
     replacement.assertConsistency()
 
     builder.replaceBySource({ true }, replacement)
+
+    builder.assertConsistency()
   }
 
   @Test
@@ -388,6 +406,7 @@ class ReplaceBySourceTest {
 
     replacement.assertConsistency()
     builder.replaceBySource({ true }, replacement)
+    builder.assertConsistency()
 
     assertOneElement(builder.entities(NamedEntity::class.java).toList())
     assertOneElement(builder.entities(ComposedIdSoftRefEntity::class.java).toList())
