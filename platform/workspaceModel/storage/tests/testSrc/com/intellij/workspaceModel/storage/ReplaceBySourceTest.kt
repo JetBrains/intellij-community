@@ -234,6 +234,62 @@ class ReplaceBySourceTest {
   }
 
   @Test
+  fun `child and parent - change parent for child`() {
+    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val parent = builder.addParentEntity("myProperty")
+    val parent2 = builder.addParentEntity("anotherProperty")
+    val child = builder.addChildEntity(parent, "myChild")
+
+    val replacement = WorkspaceEntityStorageBuilderImpl.from(builder)
+    replacement.modifyEntity(ModifiableChildEntity::class.java, child) {
+      this.parent = parent2
+    }
+
+    builder.replaceBySource({ true }, replacement)
+
+    builder.assertConsistency()
+    val parents = builder.entities(ParentEntity::class.java).toList()
+    assertTrue(parents.single { it.parentProperty == "myProperty" }.children.none())
+    assertEquals(child, parents.single { it.parentProperty == "anotherProperty" }.children.single())
+  }
+
+  @Test(expected = ReplaceBySourceException::class)
+  fun `child and parent - change parent for child - 2`() {
+    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val parent = builder.addParentEntity("myProperty", source = AnotherSource)
+    val parent2 = builder.addParentEntity("anotherProperty", source = MySource)
+    val child = builder.addChildEntity(parent2, "myChild", source = AnotherSource)
+
+    val replacement = WorkspaceEntityStorageBuilderImpl.from(builder)
+    replacement.modifyEntity(ModifiableChildEntity::class.java, child) {
+      this.parent = parent
+    }
+
+    builder.replaceBySource({ it is MySource }, replacement)
+  }
+
+  @Test
+  fun `child and parent - change parent for child - 3`() {
+    // Difference with the test above: different initial parent
+    val builder = WorkspaceEntityStorageBuilderImpl.create()
+    val parent = builder.addParentEntity("myProperty", source = AnotherSource)
+    val parent2 = builder.addParentEntity("anotherProperty", source = MySource)
+    val child = builder.addChildEntity(parent, "myChild", source = AnotherSource)
+
+    val replacement = WorkspaceEntityStorageBuilderImpl.from(builder)
+    replacement.modifyEntity(ModifiableChildEntity::class.java, child) {
+      this.parent = parent2
+    }
+
+    builder.replaceBySource({ it is MySource }, replacement)
+
+    builder.assertConsistency()
+    val parents = builder.entities(ParentEntity::class.java).toList()
+    assertTrue(parents.single { it.parentProperty == "anotherProperty" }.children.none())
+    assertEquals(child, parents.single { it.parentProperty == "myProperty" }.children.single())
+  }
+
+  @Test
   fun `child and parent - remove child`() {
     val builder = WorkspaceEntityStorageBuilderImpl.create()
     val parent = builder.addParentEntity("myProperty")

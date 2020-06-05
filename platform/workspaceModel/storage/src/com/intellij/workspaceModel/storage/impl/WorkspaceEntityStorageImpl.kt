@@ -149,7 +149,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     indexes.simpleUpdateSoftReferences(copiedData)
   }
 
-  private fun updateComposedIds(beforePersistentId: PersistentEntityId<*>, newPersistentId: PersistentEntityId<*> ) {
+  private fun updateComposedIds(beforePersistentId: PersistentEntityId<*>, newPersistentId: PersistentEntityId<*>) {
     val idsWithSoftRef = HashSet(indexes.softLinks.getValues(beforePersistentId))
     for (entityId in idsWithSoftRef) {
       val entity = this.entitiesByType.getEntityDataForModification(entityId)
@@ -390,17 +390,32 @@ internal class WorkspaceEntityStorageBuilderImpl(
         }
       }
       else {
+        // ----------------- Update parent references ---------------
+
+        val removedConnections = ArrayList<Pair<ConnectionId, EntityId>>()
+        // Remove parents in local store
         for ((connectionId, parentId) in this.refs.getParentRefsOfChild(unmatchedId)) {
           val parentData = this.entityDataById(parentId)
           if (parentData != null && !sourceFilter(parentData.entitySource)) continue
           this.refs.removeParentToChildRef(connectionId, parentId, unmatchedId)
+          removedConnections.add(connectionId to parentId)
         }
 
+        // Transfer parents from replaceWith storage
         for ((connectionId, parentId) in replaceWith.refs.getParentRefsOfChild(unmatchedId)) {
           if (!sourceFilter(replaceWith.entityDataByIdOrDie(parentId).entitySource)) continue
           val localParentId = replaceMap.inverse().getValue(parentId)
           this.refs.updateParentOfChild(connectionId, unmatchedId, localParentId)
+          removedConnections.remove(connectionId to parentId)
         }
+
+        // TODO: 05.06.2020 The similar logic should exist for children references
+        // Check not restored connections
+        for ((connectionId, parentId) in removedConnections) {
+          if (!connectionId.canRemoveParent()) rbsFailed("Cannot restore connection to $parentId")
+        }
+
+        // ----------------- Update children references -----------------------
 
         for ((connectionId, childrenId) in this.refs.getChildrenRefsOfParentBy(unmatchedId)) {
           for (childId in childrenId) {
