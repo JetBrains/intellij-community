@@ -216,18 +216,18 @@ public class PsiDiamondTypeUtil {
           }
         }
       }
+      final PsiCallExpression exprCopy = PsiTreeUtil.getParentOfType(copy, PsiCallExpression.class, false);
       if (context instanceof PsiMethodReferenceExpression) {
         PsiMethodReferenceExpression methodRefCopy = PsiTreeUtil.getParentOfType(copy, PsiMethodReferenceExpression.class, false);
         if (methodRefCopy != null && !isInferenceEquivalent(typeArguments, typeParameters, method, methodRefCopy)) {
           return false;
         }
-        return true;
       }
-      final PsiCallExpression exprCopy = PsiTreeUtil.getParentOfType(copy, PsiCallExpression.class, false);
-      if (exprCopy != null) {
+      else if (exprCopy != null) {
         final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(exprCopy.getProject());
         if (constructorRef) {
-          if (!(exprCopy instanceof PsiNewExpression) || !isInferenceEquivalent(typeArguments, elementFactory, (PsiNewExpression)exprCopy)) {
+          if (!(exprCopy instanceof PsiNewExpression) ||
+              !isInferenceEquivalent(typeArguments, elementFactory, (PsiNewExpression)exprCopy)) {
             return false;
           }
         }
@@ -237,6 +237,13 @@ public class PsiDiamondTypeUtil {
             return false;
           }
         }
+      }
+      
+      PsiCallExpression newParentCall = exprCopy != null ? PsiTreeUtil.getParentOfType(exprCopy, PsiCallExpression.class) : null;
+      PsiCallExpression oldParentCall = PsiTreeUtil.getParentOfType(context, PsiCallExpression.class);
+      if (newParentCall != null && oldParentCall != null && 
+          !newParentCall.resolveMethodGenerics().equals(oldParentCall.resolveMethodGenerics())) {
+        return false;
       }
     }
     catch (IncorrectOperationException e) {
