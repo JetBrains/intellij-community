@@ -35,8 +35,8 @@ public class CommonJavaFragments {
     String run = ExecutionBundle.message("application.configuration.title.run");
     JLabel jLabel = new JLabel(buildAndRun);
     jLabel.setFont(JBUI.Fonts.label().deriveFont(Font.BOLD));
-    return new RunConfigurationEditorFragment<S, JLabel>("buildBeforeRun",
-                                                 ExecutionBundle.message("build.before.run"),
+    return new RunConfigurationEditorFragment<S, JLabel>("doNotBuildBeforeRun",
+                                                 ExecutionBundle.message("do.not.build.before.run"),
                                                  ExecutionBundle.message("group.java.options"),
                                                  jLabel, -1) {
       @Override
@@ -52,7 +52,7 @@ public class CommonJavaFragments {
       @Override
       public void applyEditorTo(@NotNull RunnerAndConfigurationSettingsImpl s) {
         ArrayList<BeforeRunTask<?>> tasks = new ArrayList<>(s.getManager().getBeforeRunTasks(s.getConfiguration()));
-        if (isSelected()) {
+        if (!isSelected()) {
           if (!hasTask(s)) {
             CompileStepBeforeRun.MakeBeforeRunTask task =
               new CompileStepBeforeRun.MakeBeforeRunTask();
@@ -68,13 +68,18 @@ public class CommonJavaFragments {
 
       @Override
       public void setSelected(boolean selected) {
-        jLabel.setText(selected ? buildAndRun : run);
+        jLabel.setText(selected ? run : buildAndRun);
         fireEditorStateChanged();
       }
 
       @Override
       public boolean isSelected() {
-        return buildAndRun.equals(jLabel.getText());
+        return run.equals(jLabel.getText());
+      }
+
+      @Override
+      protected @NotNull JComponent createEditor() {
+        return myComponent;
       }
     };
   }
