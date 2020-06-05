@@ -25,6 +25,12 @@ public class CommandLinePanel extends JPanel {
     super.doLayout();
   }
 
+  @Override
+  public void invalidate() {
+    myLastWidth = -1;
+    super.invalidate();
+  }
+
   private void buildRows() {
     int parentWidth = Math.max(getWidth(), getMinimumSize().width);
     if (myLastWidth == parentWidth) return;

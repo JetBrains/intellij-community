@@ -154,6 +154,9 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     if (list.isEmpty()) return;
     fragments.removeAll(list);
     CommandLinePanel panel = new CommandLinePanel(ContainerUtil.map(list, fragment -> fragment.createEditor()));
+    for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
+      fragment.addSettingsEditorListener(editor -> panel.invalidate());
+    }
     addLine(panel);
   }
 
