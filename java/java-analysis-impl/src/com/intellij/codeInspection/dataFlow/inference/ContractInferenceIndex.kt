@@ -214,7 +214,7 @@ fun handleInconsistency(method: PsiMethodImpl, cachedData: MethodData, e: Runtim
 
   }
 
-  throw e
+  return e
 }
 
 fun getIndexedData(method: PsiMethodImpl): MethodData? {
