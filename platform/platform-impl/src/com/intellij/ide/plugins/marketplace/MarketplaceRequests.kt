@@ -276,7 +276,8 @@ open class MarketplaceRequests {
     return data?.let { loadPluginDescriptor(id, it, indicator) }
   }
 
-  private fun getCompatibleUpdatesByModules(module: String, buildNumber: BuildNumber?): List<IdeCompatibleUpdate> = try {
+  @JvmOverloads
+  fun getCompatibleUpdatesByModule(module: String, buildNumber: BuildNumber? = null): List<IdeCompatibleUpdate> = try {
     val data = objectMapper.writeValueAsString(
       CompatibleUpdateForModuleRequest(PluginDownloader.getBuildNumberForDownload(buildNumber), module)
     )
@@ -295,7 +296,7 @@ open class MarketplaceRequests {
       }
   }
   catch (e: Exception) {
-    LOG.error("Can not get compatible update by module from Marketplace", e)
+    logWarnOrPrintIfDebug("Can not get compatible update by module from Marketplace", e)
     emptyList()
   }
 

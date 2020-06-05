@@ -3,6 +3,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
+import com.intellij.ide.plugins.marketplace.PluginModulesUtils;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
@@ -169,7 +170,13 @@ public class PluginInstallOperation {
       final List<PluginNode> optionalDeps = new ArrayList<>();
       for (int i = 0; i < pluginNode.getDepends().size(); i++) {
         PluginId depPluginId = pluginNode.getDepends().get(i);
-        if (PluginManagerCore.isPluginInstalled(depPluginId) || PluginManagerCore.isModuleDependency(depPluginId) ||
+
+        if (PluginManagerCore.isModuleDependency(depPluginId)) {
+          PluginId pluginIdByModule = PluginModulesUtils.getInstance().getMarketplacePluginIdByModule(depPluginId);
+          if (pluginIdByModule == null) continue;
+          depPluginId = pluginIdByModule;
+        }
+        if (PluginManagerCore.isPluginInstalled(depPluginId) ||
             InstalledPluginsState.getInstance().wasInstalled(depPluginId) ||
             InstalledPluginsState.getInstance().wasInstalledWithoutRestart(depPluginId) ||
             pluginIds != null && pluginIds.contains(depPluginId)) {
