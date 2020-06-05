@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.concurrency.JobLauncher;
@@ -31,8 +32,6 @@ import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.ThreeState;
@@ -41,7 +40,6 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -52,49 +50,19 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
 
   @Override
   public void processQuery(@NotNull SearchParameters p, @NotNull Processor<? super PsiFunctionalExpression> consumer) {
-    List<SamDescriptor> descriptors = calcDescriptors(p);
-    Project project = PsiUtilCore.getProjectInReadAction(p.getElementToSearch());
-    SearchScope searchScope = ReadAction.compute(() -> p.getEffectiveSearchScope());
-    if (searchScope instanceof GlobalSearchScope && !performSearchUsingCompilerIndices(descriptors,
-                                                                                       (GlobalSearchScope)searchScope,
-                                                                                       project,
-                                                                                       consumer)) {
-      return;
+    Session session = ReadAction.compute(() -> new Session(p, consumer));
+    session.processResults();
+    if (session.filesWithASTLoaded.size() > 0 && LOG.isDebugEnabled()) {
+      LOG.debug(session.toString());
     }
-
-    AtomicInteger exprCount = new AtomicInteger();
-    AtomicInteger fileCount = new AtomicInteger();
-
-    PsiManager manager = ReadAction.compute(() -> p.getElementToSearch().getManager());
-    manager.startBatchFilesProcessingMode();
-    try {
-      processOffsets(descriptors, project, (file, occurrences) -> {
-        fileCount.incrementAndGet();
-        exprCount.addAndGet(occurrences.size());
-        return processFile(descriptors, file, occurrences, consumer);
-      });
-    }
-    finally {
-      manager.finishBatchFilesProcessingMode();
-    }
-    if (exprCount.get() > 0 && LOG.isDebugEnabled()) {
-      LOG.debug("Loaded " + exprCount.get() + " fun-expressions in " + fileCount.get() + " files");
-    }
-  }
-
-  @TestOnly
-  public static Set<VirtualFile> getFilesToSearchInPsi(@NotNull PsiClass samClass) {
-    Set<VirtualFile> result = new HashSet<>();
-    processOffsets(calcDescriptors(new SearchParameters(samClass, samClass.getUseScope())), samClass.getProject(), (file, offsets) -> result.add(file));
-    return result;
   }
 
   @NotNull
-  private static List<SamDescriptor> calcDescriptors(@NotNull SearchParameters queryParameters) {
+  private static List<SamDescriptor> calcDescriptors(@NotNull Session session) {
     List<SamDescriptor> descriptors = new ArrayList<>();
 
     ReadAction.run(() -> {
-      PsiClass aClass = queryParameters.getElementToSearch();
+      PsiClass aClass = session.elementToSearch;
       if (!aClass.isValid() || !aClass.isInterface()) {
         return;
       }
@@ -111,7 +79,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
           PsiType samType = saMethod.getReturnType();
           if (samType == null) continue;
 
-          SearchScope scope = samClass.getUseScope().intersectWith(queryParameters.getEffectiveSearchScope());
+          SearchScope scope = samClass.getUseScope().intersectWith(session.scope);
           descriptors.add(new SamDescriptor(samClass, saMethod, samType, GlobalSearchScopeUtil.toGlobalSearchScope(scope, project)));
         }
       }
@@ -145,9 +113,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     return result;
   }
 
-  private static void processOffsets(@NotNull List<? extends SamDescriptor> descriptors,
-                                     @NotNull Project project,
-                                     @NotNull PairProcessor<? super VirtualFile, Map<FunExprOccurrence, Confidence>> processor) {
+  private static void processOffsets(@NotNull List<? extends SamDescriptor> descriptors, @NotNull Session session) {
     if (descriptors.isEmpty()) return;
 
     List<PsiClass> samClasses = ContainerUtil.map(descriptors, d -> d.samClass);
@@ -155,14 +121,19 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     if (allCandidates.isEmpty()) return;
 
     Set<VirtualFile> allFiles = allCandidates.keySet();
-    Set<VirtualFile> filesFirst = getLikelyFiles(descriptors, allFiles, project);
+    session.filesConsidered.addAndGet(allFiles.size());
+
+    Set<VirtualFile> filesFirst = getLikelyFiles(descriptors, allFiles, session.project);
     Processor<VirtualFile> vFileProcessor = vFile -> {
-      Map<FunExprOccurrence, Confidence> toLoad = filterInapplicable(samClasses, vFile, allCandidates.get(vFile), project);
+      Collection<FunExprOccurrence> occurrences = allCandidates.get(vFile);
+      session.contextsConsidered.addAndGet(occurrences.size());
+      Map<FunExprOccurrence, Confidence> toLoad = filterInapplicable(samClasses, vFile, occurrences, session.project);
       if (!toLoad.isEmpty()) {
         if (LOG.isTraceEnabled()) {
           LOG.trace("To load " + vFile.getPath() + " with values: " + toLoad);
         }
-        return processor.process(vFile, toLoad);
+        session.filesWithASTLoaded.add(vFile);
+        return processFile(descriptors, vFile, toLoad, session);
       }
       return true;
     };
@@ -195,7 +166,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   private static boolean processFile(@NotNull List<? extends SamDescriptor> descriptors,
                                      @NotNull VirtualFile vFile,
                                      @NotNull Map<FunExprOccurrence, Confidence> occurrences,
-                                     @NotNull Processor<? super PsiFunctionalExpression> consumer) {
+                                     @NotNull Session session) {
     return descriptors.get(0).dumbService.runReadActionInSmartMode(() -> {
       PsiManager manager = descriptors.get(0).samClass.getManager();
       PsiFile file = manager.findFile(vFile);
@@ -210,6 +181,8 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
         for (Map.Entry<Integer, FunExprOccurrence> entry : map.entrySet()) {
           Confidence confidence = occurrences.get(entry.getValue());
           if (confidence != null) {
+            (confidence == Confidence.sure ? session.sureExprsAfterLightCheck : session.exprsToHeavyCheck).incrementAndGet();
+
             int offset = entry.getKey();
             PsiFunctionalExpression expression = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiFunctionalExpression.class, false);
             if (expression == null || expression.getTextRange().getStartOffset() != offset) {
@@ -217,7 +190,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
               continue;
             }
 
-            if ((confidence == Confidence.sure || hasType(descriptors, expression)) && !consumer.process(expression)) {
+            if ((confidence == Confidence.sure || hasType(descriptors, expression)) && !session.consumer.process(expression)) {
               return false;
             }
           }
@@ -376,6 +349,61 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     GlobalSearchScope dirtyScope = funExprInfo.getDirtyScope();
     descriptor.effectiveUseScope = descriptor.effectiveUseScope.intersectWith(dirtyScope);
     return true;
+  }
+
+  @VisibleForTesting
+  public static class Session {
+    private final Processor<? super PsiFunctionalExpression> consumer;
+    private final Project project;
+    private final SearchScope scope;
+    private final PsiManager psiManager;
+    private final PsiClass elementToSearch;
+
+    // statistics
+    private final AtomicInteger filesConsidered = new AtomicInteger();
+    private final AtomicInteger contextsConsidered = new AtomicInteger();
+    private final AtomicInteger sureExprsAfterLightCheck = new AtomicInteger();
+    private final AtomicInteger exprsToHeavyCheck = new AtomicInteger();
+    private final Set<VirtualFile> filesWithASTLoaded = ContainerUtil.newConcurrentSet();
+
+    public Session(@NotNull SearchParameters parameters, @NotNull Processor<? super PsiFunctionalExpression> consumer) {
+      this.consumer = consumer;
+      elementToSearch = parameters.getElementToSearch();
+      project = elementToSearch.getProject();
+      psiManager = PsiManager.getInstance(project);
+      scope = parameters.getEffectiveSearchScope();
+    }
+
+    public Set<VirtualFile> getFilesWithASTLoaded() {
+      return filesWithASTLoaded;
+    }
+
+    public void processResults() {
+      List<SamDescriptor> descriptors = calcDescriptors(this);
+
+      if (scope instanceof GlobalSearchScope && !performSearchUsingCompilerIndices(descriptors,
+                                                                                   (GlobalSearchScope)scope,
+                                                                                   project,
+                                                                                   consumer)) {
+        return;
+      }
+
+      psiManager.startBatchFilesProcessingMode();
+      try {
+        processOffsets(descriptors, this);
+      }
+      finally {
+        psiManager.finishBatchFilesProcessingMode();
+      }
+    }
+
+    public String getStatistics() {
+      return "filesConsidered=" + filesConsidered +
+             ", contextsConsidered=" + contextsConsidered +
+             ", sureExprsAfterLightCheck=" + sureExprsAfterLightCheck +
+             ", exprsToHeavyCheck=" + exprsToHeavyCheck +
+             ", filesWithASTLoaded=" + filesWithASTLoaded.size();
+    }
   }
 
 }
