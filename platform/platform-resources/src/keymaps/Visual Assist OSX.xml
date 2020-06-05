@@ -25,4 +25,5 @@
     <keyboard-shortcut first-keystroke="meta alt LEFT"/>
     <keyboard-shortcut first-keystroke="alt open_bracket" />
   </action>
+  <action id="EditorAddCaretPerSelectedLine"/>
 </keymap>

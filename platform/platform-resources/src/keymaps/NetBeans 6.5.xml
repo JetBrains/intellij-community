@@ -89,7 +89,6 @@
   <action id="Debugger.ResumeThread">
     <keyboard-shortcut first-keystroke="F5"/>
   </action>
-  <action id="EditorAddCaretPerSelectedLine"/>
   <action id="EditorCompleteStatement">
     <keyboard-shortcut first-keystroke="shift control ENTER"/>
     <keyboard-shortcut first-keystroke="control SEMICOLON"/>
