@@ -195,6 +195,10 @@
                      key="suspicious.comparator.compare.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.SuspiciousComparatorCompareInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SuspiciousInvocationHandlerImplementation" bundle="messages.JavaAnalysisBundle"
+                     key="suspicious.invocation.handler.implementation.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.bugs.SuspiciousInvocationHandlerImplementationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CompareToUsesNonFinalVariable" bundle="messages.InspectionGadgetsBundle"
                      key="non.final.field.compareto.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
