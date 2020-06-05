@@ -104,7 +104,6 @@ internal class MutableStorageIndexes(
     entitySourceIndex.index(pid, entityData.entitySource)
 
     entityData.persistentId(builder)?.let { persistentId ->
-      if (persistentIdIndex.getIdsByEntry(persistentId) != null) error("Entity with persistentId: $persistentId already exist")
       persistentIdIndex.index(pid, persistentId)
     }
   }

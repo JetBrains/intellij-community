@@ -6,6 +6,7 @@ import com.google.common.collect.HashBiMap
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
 import com.intellij.workspaceModel.storage.impl.exceptions.rbsFailed
 import com.intellij.workspaceModel.storage.impl.external.EmptyExternalEntityMapping
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
@@ -96,6 +97,14 @@ internal class WorkspaceEntityStorageBuilderImpl(
     val modifiableEntity = pEntityData.wrapAsModifiable(this) as M // create modifiable after adding entity data to set
     (modifiableEntity as ModifiableWorkspaceEntityBase<*>).allowModifications {
       modifiableEntity.initializer()
+    }
+
+    // Check for persistent id uniqueness
+    pEntityData.persistentId(this)?.let { persistentId ->
+      if (indexes.persistentIdIndex.getIdsByEntry(persistentId) != null) {
+        entitiesByType.remove(pEntityData.id, unmodifiableEntityClassId)
+        throw PersistentIdAlreadyExistsException(persistentId)
+      }
     }
 
     // Add the change to changelog

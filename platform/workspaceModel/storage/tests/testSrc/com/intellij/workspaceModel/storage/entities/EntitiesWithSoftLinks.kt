@@ -39,14 +39,13 @@ internal data class ComposedId(internal val name: String, internal val link: Nam
 // ------------------------------ Entity With Persistent Id ------------------
 
 internal class NamedEntityData : WorkspaceEntityData.WithCalculablePersistentId<NamedEntity>() {
-
   lateinit var name: String
+
   override fun createEntity(snapshot: WorkspaceEntityStorage): NamedEntity {
     return NamedEntity(name).also { addMetaData(it, snapshot) }
   }
 
   override fun persistentId(): PersistentEntityId<*> = NameId(name)
-
 }
 
 internal class NamedEntity(val name: String) : WorkspaceEntityBase(), WorkspaceEntityWithPersistentId {
@@ -124,7 +123,9 @@ internal class ModifiableWithListSoftLinksEntity : ModifiableWorkspaceEntityBase
   var links: List<NameId> by EntityDataDelegation()
 }
 
-internal fun WorkspaceEntityStorageBuilderImpl.addWithListSoftLinksEntity(name: String, links: List<NameId>, source: EntitySource = MySource) =
+internal fun WorkspaceEntityStorageBuilderImpl.addWithListSoftLinksEntity(name: String,
+                                                                          links: List<NameId>,
+                                                                          source: EntitySource = MySource) =
   addEntity(ModifiableWithListSoftLinksEntity::class.java, source) {
     this.name = name
     this.links = links
@@ -132,7 +133,7 @@ internal fun WorkspaceEntityStorageBuilderImpl.addWithListSoftLinksEntity(name: 
 
 // --------------------------- Entity with composed persistent id via soft reference ------------------
 
-internal class ComposedIdSoftRefEntityData: WorkspaceEntityData.WithCalculablePersistentId<ComposedIdSoftRefEntity>(), SoftLinkable {
+internal class ComposedIdSoftRefEntityData : WorkspaceEntityData.WithCalculablePersistentId<ComposedIdSoftRefEntity>(), SoftLinkable {
   lateinit var name: String
   lateinit var link: NameId
 
@@ -161,7 +162,9 @@ internal class ModifiableComposedIdSoftRefEntity : ModifiableWorkspaceEntityBase
   var link: NameId by EntityDataDelegation()
 }
 
-internal fun WorkspaceEntityStorageBuilderImpl.addComposedIdSoftRefEntity(name: String, link: NameId, source: EntitySource = MySource): ComposedIdSoftRefEntity {
+internal fun WorkspaceEntityStorageBuilderImpl.addComposedIdSoftRefEntity(name: String,
+                                                                          link: NameId,
+                                                                          source: EntitySource = MySource): ComposedIdSoftRefEntity {
   return addEntity(ModifiableComposedIdSoftRefEntity::class.java, source) {
     this.name = name
     this.link = link
