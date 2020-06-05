@@ -759,6 +759,26 @@ class PySuggestedRefactoringTest : PyTestCase() {
     )
   }
 
+  // PY-42285
+  fun testRenameParameterOfFunctionWithStub() {
+    val testDataPathPrefix = "refactoring/suggested/${getTestName(true)}"
+    val source = "aaa.pyi"
+
+    myFixture.copyFileToProject("$testDataPathPrefix/$source", source)
+
+    doChangeSignatureTest(
+      """
+        def foo(p1<caret>):
+          print(p1)
+      """.trimIndent(),
+      """
+        def foo(p12):
+          print(p12)
+      """.trimIndent(),
+      { myFixture.type("2") }
+    )
+  }
+
   private fun doRenameTest(before: String, after: String, oldName: String, newName: String, type: String, intention: String? = null) {
     myFixture.configureByText(PythonFileType.INSTANCE, before)
     myFixture.checkHighlighting()
