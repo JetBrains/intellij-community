@@ -1,11 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.ui
 
+import com.intellij.ide.BrowserUtil.browse
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.layout.*
@@ -16,6 +18,7 @@ import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.util.GHAccessTokenCreator
 import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
 import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil.DEFAULT_CLIENT_NAME
+import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil.buildNewTokenUrl
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.exceptions.GithubParseException
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -26,6 +29,8 @@ import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JPasswordField
+import javax.swing.JTextField
+import javax.swing.event.DocumentEvent
 
 internal sealed class GithubCredentialsUI {
   abstract fun getPreferredFocus(): JComponent
@@ -141,11 +146,18 @@ internal sealed class GithubCredentialsUI {
     override fun LayoutBuilder.centerPanel() {
       row(GithubBundle.message("credentials.server.field")) { serverTextField(pushX, growX) }
       row(GithubBundle.message("credentials.token.field")) {
-        tokenTextField(
-          comment = GithubBundle.message("login.insufficient.scopes", GHSecurityUtil.MASTER_SCOPES),
-          constraints = *arrayOf(pushX, growX))
+        cell {
+          tokenTextField(
+            comment = GithubBundle.message("login.insufficient.scopes", GHSecurityUtil.MASTER_SCOPES),
+            constraints = *arrayOf(pushX, growX)
+          )
+          button(GithubBundle.message("credentials.button.generate")) { browseNewTokenUrl() }
+            .enableIf(serverTextField.serverValid)
+        }
       }
     }
+
+    private fun browseNewTokenUrl() = browse(buildNewTokenUrl(serverTextField.tryParseServer()!!))
 
     override fun getPreferredFocus() = tokenTextField
 
@@ -191,3 +203,21 @@ internal sealed class GithubCredentialsUI {
     }
   }
 }
+
+private val JTextField.serverValid: ComponentPredicate
+  get() = object : ComponentPredicate() {
+    override fun invoke(): Boolean = tryParseServer() != null
+
+    override fun addListener(listener: (Boolean) -> Unit) =
+      document.addDocumentListener(object : DocumentAdapter() {
+        override fun textChanged(e: DocumentEvent) = listener(tryParseServer() != null)
+      })
+  }
+
+private fun JTextField.tryParseServer(): GithubServerPath? =
+  try {
+    GithubServerPath.from(text.trim())
+  }
+  catch (e: GithubParseException) {
+    null
+  }
