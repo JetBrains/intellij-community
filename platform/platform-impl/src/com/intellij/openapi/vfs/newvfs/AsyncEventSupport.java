@@ -105,7 +105,7 @@ public final class AsyncEventSupport {
     }
   }
 
-  private static void afterVfsChange(List<? extends AsyncFileListener.ChangeApplier> appliers) {
+  private static void afterVfsChange(@NotNull List<? extends AsyncFileListener.ChangeApplier> appliers) {
     for (AsyncFileListener.ChangeApplier applier : appliers) {
       PingProgress.interactWithEdtProgress();
       try {
@@ -117,7 +117,8 @@ public final class AsyncEventSupport {
     }
   }
 
-  static void processEvents(List<? extends VFileEvent> events, @Nullable List<? extends AsyncFileListener.ChangeApplier> appliers) {
+  static void processEventsFromRefresh(@NotNull List<? extends VFileEvent> events,
+                                       @Nullable List<? extends AsyncFileListener.ChangeApplier> appliers) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (appliers != null) {
       beforeVfsChange(appliers);
