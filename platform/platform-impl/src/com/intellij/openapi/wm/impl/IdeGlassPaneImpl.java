@@ -72,6 +72,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     myRootPane = rootPane;
     setOpaque(false);
     setVisible(false);
+    setEnabled(false);//Workaround to fix cursor when some semi-transparent 'highlighting area' overrides it to default
     setLayout(null);
     if (installPainters) {
       IdeBackgroundUtil.initFramePainters(this);
