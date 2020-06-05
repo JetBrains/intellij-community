@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl
 
+import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
 
 internal open class ImmutableEntitiesBarrel internal constructor(
   override val entities: List<ImmutableEntityFamily<out WorkspaceEntity>?>
@@ -87,15 +89,26 @@ internal sealed class EntitiesBarrel {
   fun size() = entities.size
 
   fun assertConsistency() {
+    val persistentIds = HashSet<PersistentEntityId<*>>()
     entities.forEachIndexed { i, family ->
       val clazz = i.findEntityClass<WorkspaceEntity>()
+      val hasPersistentId = WorkspaceEntityWithPersistentId::class.java.isAssignableFrom(clazz)
       family?.assertConsistency { entityData ->
+        // Assert correctness of the class
         val immutableClass = ClassConversion.entityDataToEntity(entityData.javaClass)
         assert(clazz == immutableClass) {
           """EntityFamily contains entity data of wrong type:
             | - EntityFamily class:   $clazz
             | - entityData class:     $immutableClass
           """.trimMargin()
+        }
+
+        // Assert unique of persistent id
+        if (hasPersistentId) {
+          val persistentId = entityData.persistentId(WorkspaceEntityStorageImpl.EMPTY)
+          assert(persistentId != null) { "Persistent id expected for $clazz" }
+          assert(persistentId !in persistentIds) { "Duplicated persistent ids: $persistentId" }
+          persistentIds.add(persistentId!!)
         }
       }
     }
