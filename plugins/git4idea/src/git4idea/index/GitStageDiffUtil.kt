@@ -102,7 +102,7 @@ class ThreeSidesProducer(private val project: Project,
                          statusNode: GitFileStatusNode) : GitFileStatusNodeProducerBase(statusNode) {
   @Throws(VcsException::class, IOException::class)
   override fun processImpl(): DiffRequest {
-    val title = if (statusNode is GitFileStatusNode.Saved) getTitle(statusNode.status) else getTitle(statusNode)
+    val title = getTitle(statusNode.status)
     return StagedDiffRequest(headContent(project, statusNode), stagedContent(project, statusNode), localContent(project, statusNode),
                              GitUtil.HEAD, GitBundle.message("stage.content.staged"), GitBundle.message("stage.content.local"),
                              title).apply { putUserData(DiffUserDataKeys.THREESIDE_DIFF_WITH_RESULT, true) }
@@ -199,19 +199,8 @@ abstract class GitFileStatusNodeProducerBase(val statusNode: GitFileStatusNode) 
   }
 }
 
-private fun GitFileStatusNode.has(contentVersion: ContentVersion): Boolean {
-  return when (this) {
-    is GitFileStatusNode.Saved -> status.has(contentVersion)
-    is GitFileStatusNode.Unsaved -> true
-  }
-}
-
-private fun GitFileStatusNode.path(contentVersion: ContentVersion): FilePath {
-  return when (this) {
-    is GitFileStatusNode.Saved -> status.path(contentVersion)
-    is GitFileStatusNode.Unsaved -> filePath
-  }
-}
+private fun GitFileStatusNode.has(contentVersion: ContentVersion): Boolean = status.has(contentVersion)
+private fun GitFileStatusNode.path(contentVersion: ContentVersion): FilePath = status.path(contentVersion)
 
 private fun getTitle(statusNode: GitFileStatusNode): String {
   return DiffRequestFactoryImpl.getTitle(statusNode.filePath, statusNode.origPath, DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR)

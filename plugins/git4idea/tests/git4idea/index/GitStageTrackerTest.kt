@@ -53,9 +53,8 @@ class GitStageTrackerTest : GitSingleRepoTest() {
       invokeAndWaitIfNeeded { runWriteAction { document.setText(RandomStringUtils.randomAlphanumeric(100)) } }
     }
     trackerState().let { state ->
-      assertTrue(state.statuses.isEmpty())
-      assertTrue(state.unsavedWorkTree.contains(file))
-      assertTrue(state.unsavedIndex.isEmpty())
+      TestCase.assertEquals(GitFileStatus(' ', 'M', VcsUtil.getFilePath(file)),
+                            state.statuses.getValue(VcsUtil.getFilePath(file)))
     }
 
     runWithTrackerUpdate("saveDocument") {
@@ -64,8 +63,6 @@ class GitStageTrackerTest : GitSingleRepoTest() {
     trackerState().let { state ->
       TestCase.assertEquals(GitFileStatus(' ', 'M', VcsUtil.getFilePath(file)),
                             state.statuses.getValue(VcsUtil.getFilePath(file)))
-      assertTrue(state.unsavedWorkTree.isEmpty())
-      assertTrue(state.unsavedIndex.isEmpty())
     }
   }
 
@@ -88,9 +85,8 @@ class GitStageTrackerTest : GitSingleRepoTest() {
       invokeAndWaitIfNeeded { runWriteAction { document.setText(RandomStringUtils.randomAlphanumeric(100)) } }
     }
     trackerState().let { state ->
-      assertTrue(state.statuses.isEmpty())
-      assertTrue(state.unsavedWorkTree.isEmpty())
-      assertTrue(state.unsavedIndex.contains(indexFile))
+      TestCase.assertEquals(GitFileStatus('M', ' ', VcsUtil.getFilePath(file)),
+                            state.statuses.getValue(VcsUtil.getFilePath(file)))
     }
 
     runWithTrackerUpdate("saveDocument") {
@@ -99,8 +95,6 @@ class GitStageTrackerTest : GitSingleRepoTest() {
     trackerState().let { state ->
       TestCase.assertEquals(GitFileStatus('M', 'M', VcsUtil.getFilePath(file)),
                             state.statuses.getValue(VcsUtil.getFilePath(file)))
-      assertTrue(state.unsavedWorkTree.isEmpty())
-      assertTrue(state.unsavedIndex.isEmpty())
     }
   }
 
@@ -120,8 +114,6 @@ class GitStageTrackerTest : GitSingleRepoTest() {
     trackerState().let { state ->
       TestCase.assertEquals(GitFileStatus('?', '?', VcsUtil.getFilePath(file)),
                             state.statuses.getValue(VcsUtil.getFilePath(file)))
-      assertTrue(state.unsavedWorkTree.isEmpty())
-      assertTrue(state.unsavedIndex.isEmpty())
     }
 
     runWithTrackerUpdate("saveDocument") {
@@ -130,8 +122,6 @@ class GitStageTrackerTest : GitSingleRepoTest() {
     trackerState().let { state ->
       TestCase.assertEquals(GitFileStatus('?', '?', VcsUtil.getFilePath(file)),
                             state.statuses.getValue(VcsUtil.getFilePath(file)))
-      assertTrue(state.unsavedWorkTree.isEmpty())
-      assertTrue(state.unsavedIndex.isEmpty())
     }
   }
 

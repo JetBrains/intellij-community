@@ -126,29 +126,28 @@ class GitStageTracker(val project: Project) : Disposable {
     LOG.debug("Updating ${repository.root}")
 
     val untracked = repository.untrackedFilesHolder.untrackedFilePaths.map { GitFileStatus('?', '?', it, null) }
-    val status = repository.stagingAreaHolder.allRecords.union(untracked).associateBy { it.path }
+    val status = repository.stagingAreaHolder.allRecords.union(untracked).associateBy { it.path }.toMutableMap()
 
-    val unsavedIndex = mutableListOf<GitIndexVirtualFile>()
-    val unsavedWorkTree = mutableListOf<VirtualFile>()
     for (document in FileDocumentManager.getInstance().unsavedDocuments) {
       val file = FileDocumentManager.getInstance().getFile(document) ?: continue
       if (!file.isValid || !FileDocumentManager.getInstance().isFileModified(file)) continue
       val root = getRoot(project, file) ?: continue
       if (root != repository.root) continue
 
-      if (repository.ignoredFilesHolder.containsFile(file.filePath())) continue
-      val fileStatus: GitFileStatus? = status[file.filePath()]
+      val filePath = file.filePath()
+      if (repository.ignoredFilesHolder.containsFile(filePath)) continue
+      val fileStatus: GitFileStatus? = status[filePath]
       if (fileStatus?.isTracked() == false) continue
 
       if (file is GitIndexVirtualFile && fileStatus?.getStagedStatus() == null) {
-        unsavedIndex.add(file)
+        status[filePath] = GitFileStatus('M', fileStatus?.workTree ?: ' ', filePath, fileStatus?.origPath)
       }
       else if (file.isInLocalFileSystem && fileStatus?.getUnStagedStatus() == null) {
-        unsavedWorkTree.add(file)
+        status[filePath] = GitFileStatus(fileStatus?.index ?: ' ', 'M', filePath, fileStatus?.origPath)
       }
     }
 
-    val newRootState = RootState(repository.root, status, unsavedIndex, unsavedWorkTree)
+    val newRootState = RootState(repository.root, status)
 
     runInEdt(this) {
       update { it.updatedWith(repository.root, newRootState) }
@@ -181,25 +180,21 @@ class GitStageTracker(val project: Project) : Disposable {
   }
 
   data class RootState(val root: VirtualFile,
-                       val statuses: Map<FilePath, GitFileStatus>,
-                       val unsavedIndex: List<GitIndexVirtualFile>,
-                       val unsavedWorkTree: List<VirtualFile>) {
+                       val statuses: Map<FilePath, GitFileStatus>) {
     fun hasStagedFiles(): Boolean {
-      return statuses.values.any { line -> line.getStagedStatus() != null } || unsavedIndex.isNotEmpty()
+      return statuses.values.any { line -> line.getStagedStatus() != null }
     }
 
     fun isEmpty(): Boolean {
-      return statuses.isEmpty() && unsavedIndex.isEmpty() && unsavedWorkTree.isEmpty()
+      return statuses.isEmpty()
     }
 
     override fun toString(): String {
-      return "RootState(root=${root.name}, statuses=${statuses.toShortenedString(",\n")},\n " +
-             "unsavedIndex=${unsavedIndex.toShortenedString(",\n")},\n " +
-             "unsavedWorkTree=${unsavedWorkTree.toShortenedString(",\n")})"
+      return "RootState(root=${root.name}, statuses=${statuses.toShortenedString(",\n")})"
     }
 
     companion object {
-      fun empty(root: VirtualFile) = RootState(root, emptyMap(), emptyList(), emptyList())
+      fun empty(root: VirtualFile) = RootState(root, emptyMap())
     }
   }
 
