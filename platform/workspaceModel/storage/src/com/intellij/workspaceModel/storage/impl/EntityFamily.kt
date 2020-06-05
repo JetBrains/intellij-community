@@ -90,6 +90,11 @@ internal class MutableEntityFamily<E : WorkspaceEntity>(
     return clonedEntity
   }
 
+  fun set(position: Int, value: WorkspaceEntityData<E>) {
+    startWrite()
+    entities[position] = value
+  }
+
   fun toImmutable(): ImmutableEntityFamily<E> {
     freezed = true
     copiedToModify.clear()

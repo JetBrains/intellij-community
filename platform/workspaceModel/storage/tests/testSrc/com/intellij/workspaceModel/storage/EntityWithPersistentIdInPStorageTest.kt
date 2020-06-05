@@ -92,4 +92,28 @@ class EntityWithPersistentIdInPStorageTest {
       assertOneElement(builder.entities(NamedEntity::class.java).toList())
     }
   }
+
+  @Test(expected = PersistentIdAlreadyExistsException::class)
+  fun `modify entity to repeat persistent id`() {
+    builder.addNamedEntity("MyName")
+    val namedEntity = builder.addNamedEntity("AnotherId")
+    builder.modifyEntity(ModifiableNamedEntity::class.java, namedEntity) {
+      this.name = "MyName"
+    }
+  }
+
+  @Test
+  fun `modify entity to repeat persistent id - restoring after exception`() {
+    try {
+      builder.addNamedEntity("MyName")
+      val namedEntity = builder.addNamedEntity("AnotherId")
+      builder.modifyEntity(ModifiableNamedEntity::class.java, namedEntity) {
+        this.name = "MyName"
+      }
+    }
+    catch (e: PersistentIdAlreadyExistsException) {
+      assertOneElement(builder.entities(NamedEntity::class.java).toList().filter { it.name == "MyName" })
+      assertOneElement(builder.entities(NamedEntity::class.java).toList().filter { it.name == "AnotherId" })
+    }
+  }
 }

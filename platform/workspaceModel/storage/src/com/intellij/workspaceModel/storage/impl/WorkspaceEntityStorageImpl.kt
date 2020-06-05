@@ -122,6 +122,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
   override fun <M : ModifiableWorkspaceEntity<T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T {
     // Get entity data that will be modified
     val copiedData = entitiesByType.getEntityDataForModification((e as WorkspaceEntityBase).id) as WorkspaceEntityData<T>
+    val backup = copiedData.clone()
     val modifiableEntity = copiedData.wrapAsModifiable(this) as M
 
     val beforePersistentId = if (e is WorkspaceEntityWithPersistentId) e.persistentId() else null
@@ -129,6 +130,15 @@ internal class WorkspaceEntityStorageBuilderImpl(
     // Execute modification code
     (modifiableEntity as ModifiableWorkspaceEntityBase<*>).allowModifications {
       modifiableEntity.change()
+    }
+
+    // Check for persistent id uniqueness
+    copiedData.persistentId(this)?.let { persistentId ->
+      if (indexes.persistentIdIndex.getIdsByEntry(persistentId) != null) {
+        // Restore previous value
+        (entitiesByType.entities[e.id.clazz] as MutableEntityFamily<T>).set(e.id.arrayId, backup)
+        throw PersistentIdAlreadyExistsException(persistentId)
+      }
     }
 
     // Add an entry to changelog
