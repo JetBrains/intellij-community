@@ -256,12 +256,11 @@ public class Patch {
       if (action instanceof DeleteAction) {
         deletedPaths.add(mapPath(action.getPath()));
       }
-      else if (action instanceof CreateAction &&
-               result != null &&
+      else if (result != null &&
+               action instanceof CreateAction &&
                ValidationResult.ALREADY_EXISTS_MESSAGE.equals(result.message) &&
                deletedPaths.contains(mapPath(action.getPath()))) {
-        // do not warn about files going to be deleted
-        result = null;
+        result = null;  // do not warn about files going to be deleted
       }
 
       if (result != null) results.add(result);
@@ -271,7 +270,13 @@ public class Patch {
   }
 
   private static String mapPath(String path) {
-    return Runner.isCaseSensitiveFs() ? path : path.toLowerCase(Locale.getDefault());
+    if (!Runner.isCaseSensitiveFs()) {
+      path = path.toLowerCase(Locale.getDefault());
+    }
+    if (path.endsWith("/")) {
+      path = path.substring(0, path.length() - 1);
+    }
+    return path;
   }
 
   public PatchFileCreator.ApplicationResult apply(ZipFile patchFile,
