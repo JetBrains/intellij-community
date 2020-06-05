@@ -722,14 +722,31 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private void processEvent(@NotNull VFileEvent event) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    // optimisation: skip all groupings
-    if (event.isValid()) {
-      List<VFileEvent> events = Collections.singletonList(event);
-      getPublisher().before(events);
+    if (!event.isValid()) {
+      return;
+    }
+    List<VFileEvent> outValidatedEvents = new ArrayList<>();
+    outValidatedEvents.add(event);
+    List<Runnable> outApplyActions = new ArrayList<>();
+    List<VFileDeleteEvent> jarDeleteEvents = VfsImplUtil.getJarInvalidationEvents(event, outApplyActions);
+    BulkFileListener publisher = getPublisher();
+    if (jarDeleteEvents.isEmpty() && outApplyActions.isEmpty()) {
+      // optimisation: skip all groupings
+      publisher.before(outValidatedEvents);
 
       applyEvent(event);
 
-      getPublisher().after(events);
+      publisher.after(outValidatedEvents);
+    }
+    else {
+      outApplyActions.add(() -> applyEvent(event));
+      // there are a number of additional jar events generated
+      for (VFileDeleteEvent jarDeleteEvent : jarDeleteEvents) {
+        outApplyActions.add(() -> applyEvent(jarDeleteEvent));
+        outValidatedEvents.add(jarDeleteEvent);
+      }
+
+      applyMultipleEvents(publisher, outApplyActions, outValidatedEvents);
     }
   }
 
@@ -874,6 +891,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     groupDeletions(events, startIndex, endIndex, outValidatedEvents, outApplyActions, toIgnore);
     groupOthers(events, startIndex, endIndex, outValidatedEvents, outApplyActions);
 
+    for (int i = startIndex; i < endIndex; i++) {
+      VFileEvent event = events.get(i);
+      List<VFileDeleteEvent> jarDeleteEvents = VfsImplUtil.getJarInvalidationEvents(event, outApplyActions);
+      for (VFileDeleteEvent jarDeleteEvent : jarDeleteEvents) {
+        outApplyActions.add((Runnable)() -> applyEvent(jarDeleteEvent));
+        outValidatedEvents.add(jarDeleteEvent);
+      }
+    }
+
     return endIndex;
   }
 
@@ -989,18 +1015,24 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       startIndex = groupAndValidate(events, startIndex, applyActions, validated, files, middleDirs);
 
       if (!validated.isEmpty()) {
-        PingProgress.interactWithEdtProgress();
-        // do defensive copy to cope with ill-written listeners that save passed list for later processing
-        List<VFileEvent> toSend = ContainerUtil.immutableList(validated.toArray(new VFileEvent[0]));
-        publisher.before(toSend);
-
-        PingProgress.interactWithEdtProgress();
-        applyActions.forEach(Runnable::run);
-
-        PingProgress.interactWithEdtProgress();
-        publisher.after(toSend);
+        applyMultipleEvents(publisher, applyActions, validated);
       }
     }
+  }
+
+  private static void applyMultipleEvents(@NotNull BulkFileListener publisher,
+                                          @NotNull List<? extends Runnable> applyActions,
+                                          @NotNull List<? extends VFileEvent> applyEvents) {
+    PingProgress.interactWithEdtProgress();
+    // do defensive copy to cope with ill-written listeners that save passed list for later processing
+    List<VFileEvent> toSend = ContainerUtil.immutableList(applyEvents.toArray(new VFileEvent[0]));
+    publisher.before(toSend);
+
+    PingProgress.interactWithEdtProgress();
+    applyActions.forEach(Runnable::run);
+
+    PingProgress.interactWithEdtProgress();
+    publisher.after(toSend);
   }
 
   // remove children from specified directories using VirtualDirectoryImpl.removeChildren() optimised for bulk removals
