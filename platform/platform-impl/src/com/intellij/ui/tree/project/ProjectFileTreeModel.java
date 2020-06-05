@@ -126,13 +126,12 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
 
   private boolean isVisible(@NotNull FileNode node, @Nullable VirtualFileFilter filter) {
     if (!node.file.isValid() || root.project.isDisposed()) return false;
-    if (!root.showExcludedFiles && ProjectFileIndex.getInstance(root.project).isExcluded(node.file)) return false;
-    if (filter == null) return true;
+    if (filter == null) return !root.isExcluded(node.file);
     ThreeState visibility = node.visibility;
     if (visibility == ThreeState.NO) return false;
     if (visibility == ThreeState.YES) return true;
     checkCanceled(); // ProcessCanceledException if current task is interrupted
-    boolean visible = node.isVisible(filter, root.project);
+    boolean visible = node.isVisible(filter, root);
     node.visibility = ThreeState.fromBoolean(visible);
     return visible;
   }
@@ -239,6 +238,10 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
 
     ProjectNode(@NotNull Project project) {
       this.project = project;
+    }
+
+    boolean isExcluded(@NotNull VirtualFile file) {
+      return !showExcludedFiles && ProjectFileIndex.getInstance(project).isExcluded(file);
     }
 
     @Override
@@ -350,8 +353,10 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
       }
     }
 
-    boolean isVisible(@NotNull VirtualFileFilter filter, @NotNull Project project) {
-      return !VfsUtilCore.iterateChildrenRecursively(file, file -> isValidChild(file, project), file -> !filter.accept(file));
+    boolean isVisible(@NotNull VirtualFileFilter filter, @NotNull ProjectNode root) {
+      return !VfsUtilCore.iterateChildrenRecursively(file,
+                                                     child -> !root.isExcluded(child) && isValidChild(child, root.project),
+                                                     child -> !filter.accept(child));
     }
 
     private boolean isValidChild(@NotNull VirtualFile file, @NotNull Project project) {
