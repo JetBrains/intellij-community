@@ -74,6 +74,7 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
                                                },
                                                configuration -> true));
     EditorTextField mainClass = ClassEditorField.createClassField(myProject);
+    mainClass.setPlaceholder(ExecutionBundle.message("application.configuration.main.class.placeholder"));
     setMinimumWidth(mainClass, 300);
     fragments.add(new SettingsEditorFragment<>("mainClass", null, null, mainClass, 20,
                                                (configuration, component) -> component.setText(configuration.getMainClassName()),

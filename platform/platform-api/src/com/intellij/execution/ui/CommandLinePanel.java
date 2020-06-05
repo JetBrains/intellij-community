@@ -25,10 +25,9 @@ public class CommandLinePanel extends JPanel {
     super.doLayout();
   }
 
-  @Override
-  public void invalidate() {
+  public void markForRebuild() {
     myLastWidth = -1;
-    super.invalidate();
+    invalidate();
   }
 
   private void buildRows() {
