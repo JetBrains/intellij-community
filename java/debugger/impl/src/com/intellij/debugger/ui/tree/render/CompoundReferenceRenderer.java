@@ -37,7 +37,7 @@ import javax.swing.*;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Do not extend, use {@link RendererBuilder}
+ * Do not extend, use {@link CompoundRendererProvider}
  */
 public class CompoundReferenceRenderer extends NodeRendererImpl implements FullValueEvaluatorProvider {
   protected static final Logger LOG = Logger.getInstance(CompoundReferenceRenderer.class);

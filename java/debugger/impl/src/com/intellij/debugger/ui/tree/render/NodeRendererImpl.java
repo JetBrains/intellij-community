@@ -25,10 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-/**
- * Do not extend, use {@link RendererBuilder}
- */
-  public abstract class NodeRendererImpl implements NodeRenderer {
+public abstract class NodeRendererImpl implements NodeRenderer {
   public static final String DEFAULT_NAME = "unnamed";
 
   protected BasicRendererProperties myProperties;
