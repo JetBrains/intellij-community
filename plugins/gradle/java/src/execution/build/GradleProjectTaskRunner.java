@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.task.*;
 import com.intellij.task.impl.JpsProjectTaskRunner;
@@ -47,8 +48,11 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration.PROGRESS_LISTENER_KEY;
@@ -76,22 +80,9 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
                                                                          "  } \n" +
                                                                          "}\n";
   @Language("Groovy")
-  private static final String COLLECT_OUTPUT_PATHS_INIT_SCRIPT_TEMPLATE = "def outputFile = new File(\"%s\")\n" +
-                                                                          "def effectiveTasks = []\n" +
-                                                                          "gradle.taskGraph.addTaskExecutionListener(new TaskExecutionAdapter() {\n" +
-                                                                          "    void afterExecute(Task task, TaskState state) {\n" +
-                                                                          "        if (state.didWork && task.outputs.hasOutput) {\n" +
-                                                                          "            effectiveTasks.add(task)\n" +
-                                                                          "        }\n" +
-                                                                          "    }\n" +
-                                                                          "})\n" +
-                                                                          "gradle.addBuildListener(new BuildAdapter() {\n" +
-                                                                          "    void buildFinished(BuildResult result) {\n" +
-                                                                          "        effectiveTasks.each { Task task ->\n" +
-                                                                          "            task.outputs.files.files.each { outputFile.append(it.path + '\\n') }\n" +
-                                                                          "        }\n" +
-                                                                          "    }\n" +
-                                                                          "})\n";
+  private static final String COLLECT_OUTPUT_PATHS_INIT_SCRIPT_TEMPLATE = "def initScriptOutputFile = new File(\"%s\")\n";
+  private static final String COLLECT_OUTPUT_PATHS_INIT_SCRIPT_SEPARATOR = "[////]";
+  private static final Pattern COLLECT_PUTPUT_PATHS_INIT_SCRIPT_SEPARATOR_REGEX = Pattern.compile(Pattern.quote(COLLECT_OUTPUT_PATHS_INIT_SCRIPT_SEPARATOR));
 
   @Override
   public Promise<Result> run(@NotNull Project project,
@@ -184,7 +175,8 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
 
       Collection<String> scripts = initScripts.getModifiable(rootProjectPath);
       if (outputPathsFile != null && context.isCollectionOfGeneratedFilesEnabled()) {
-        scripts.add(String.format(COLLECT_OUTPUT_PATHS_INIT_SCRIPT_TEMPLATE, FileUtil.toCanonicalPath(outputPathsFile.getAbsolutePath())));
+        scripts.add(String.format(COLLECT_OUTPUT_PATHS_INIT_SCRIPT_TEMPLATE, FileUtil.getCanonicalPath(outputPathsFile.getAbsolutePath())));
+        scripts.add(loadCollectOutputPathsInitScriptDefinition());
       }
       userData.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, join(scripts, SystemProperties.getLineSeparator()));
       userData.putUserData(GradleTaskManager.INIT_SCRIPT_PREFIX_KEY, executionName);
@@ -193,6 +185,16 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
                                  taskCallback, ProgressExecutionMode.IN_BACKGROUND_ASYNC, false, userData);
     }
     return resultPromise;
+  }
+
+  private static String loadCollectOutputPathsInitScriptDefinition() {
+    try (InputStream stream = GradleProjectTaskRunner.class.getResourceAsStream("/org/jetbrains/plugins/gradle/IJGeneratedOutputs.groovy")) {
+      return StreamUtil.readText(stream, StandardCharsets.UTF_8);
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
+    return "";
   }
 
   @Nullable
@@ -229,8 +231,26 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
     if (affectedRoots == null) {
       final List<Module> affectedModules = ContainerUtil.concat(modulesToBuild, modulesOfResourcesToBuild, modulesOfFiles);
       affectedRoots = ContainerUtil.newHashSet(CompilerPaths.getOutputPaths(affectedModules.toArray(Module.EMPTY_ARRAY)));
+    } else {
+      parseGeneratedClassFileLines(context, affectedRoots);
+      affectedRoots = Collections.emptySet();
     }
     return affectedRoots;
+  }
+
+  private static void parseGeneratedClassFileLines(@NotNull ProjectTaskContext context, Set<String> generatedClassFileLines) {
+    generatedClassFileLines.forEach(classFileLine -> {
+      String[] parts = COLLECT_PUTPUT_PATHS_INIT_SCRIPT_SEPARATOR_REGEX.split(classFileLine);
+      if (parts.length == 2) {
+        String root = parts[0];
+        String relativeClassPath = parts[1];
+        context.fileGenerated(root, relativeClassPath);
+      } else {
+        LOG.warn(String.format("Expected Gradle tasks output like '%s' to be separated by '%s'",
+                               classFileLine,
+                               COLLECT_OUTPUT_PATHS_INIT_SCRIPT_SEPARATOR));
+      }
+    });
   }
 
   @Override
