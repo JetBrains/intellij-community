@@ -189,7 +189,7 @@ public class FindFunctionalInterfaceTest extends LightJavaCodeInsightFixtureTest
     );
     session.processResults();
     assertSize(1, result.getResults());
-    for (VirtualFile file : session.getFilesWithASTLoaded()) {
+    for (VirtualFile file : session.getFilesLookedInside()) {
       assertFalse(file.getName(), file.getName().startsWith("_"));
     }
   }
@@ -207,6 +207,16 @@ public class FindFunctionalInterfaceTest extends LightJavaCodeInsightFixtureTest
     for (PsiFunctionalExpression expression : all) {
       LeakHunter.checkLeak(expression, ASTNode.class);
     }
+  }
+
+  public void testNoAstLoadingInObviousCases() {
+    PsiClass sam = myFixture.addClass("interface I { void foo(); }");
+    PsiFile usages = myFixture.addFileToProject("Some.java", "class Some { " +
+                                                              "void bar(I i) {}" +
+                                                             "{ bar(() -> {}); }; }" +
+                                                              "}");
+    assertOneElement(FunctionalExpressionSearch.search(sam).findAll());
+    assertFalse(((PsiFileImpl) usages).isContentsLoaded());
   }
 
   private PsiClass findClass(String fqName) {

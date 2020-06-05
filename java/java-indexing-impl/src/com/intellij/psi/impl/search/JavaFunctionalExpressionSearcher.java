@@ -12,23 +12,30 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.java.FunExprOccurrence;
 import com.intellij.psi.impl.java.JavaFunctionalExpressionIndex;
 import com.intellij.psi.impl.java.stubs.FunctionalExpressionKey;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.index.JavaMethodParameterTypesIndex;
+import com.intellij.psi.impl.source.PsiFileWithStubSupport;
+import com.intellij.psi.impl.source.StubbedSpine;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch.SearchParameters;
 import com.intellij.psi.stubs.StubIndex;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -40,6 +47,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -52,7 +60,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   public void processQuery(@NotNull SearchParameters p, @NotNull Processor<? super PsiFunctionalExpression> consumer) {
     Session session = ReadAction.compute(() -> new Session(p, consumer));
     session.processResults();
-    if (session.filesWithASTLoaded.size() > 0 && LOG.isDebugEnabled()) {
+    if (session.filesLookedInside.size() > 0 && LOG.isDebugEnabled()) {
       LOG.debug(session.toString());
     }
   }
@@ -103,7 +111,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
         GlobalSearchScope scope = new JavaSourceFilterScope(descriptor.effectiveUseScope);
         for (FunctionalExpressionKey key : descriptor.keys) {
           FileBasedIndex.getInstance().processValues(JavaFunctionalExpressionIndex.INDEX_ID, key, null, (file, infos) -> {
-            result.putValues(file, infos.values());
+            result.putValues(file, ContainerUtil.map(infos, entry -> entry.occurrence));
             return true;
           }, scope);
         }
@@ -132,7 +140,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
         if (LOG.isTraceEnabled()) {
           LOG.trace("To load " + vFile.getPath() + " with values: " + toLoad);
         }
-        session.filesWithASTLoaded.add(vFile);
+        session.filesLookedInside.add(vFile);
         return processFile(descriptors, vFile, toLoad, session);
       }
       return true;
@@ -175,29 +183,91 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
         return true;
       }
 
-      Collection<Map<Integer, FunExprOccurrence>> data =
-        FileBasedIndex.getInstance().getFileData(JavaFunctionalExpressionIndex.INDEX_ID, vFile, manager.getProject()).values();
-      for (Map<Integer, FunExprOccurrence> map : data) {
-        for (Map.Entry<Integer, FunExprOccurrence> entry : map.entrySet()) {
-          Confidence confidence = occurrences.get(entry.getValue());
-          if (confidence != null) {
-            (confidence == Confidence.sure ? session.sureExprsAfterLightCheck : session.exprsToHeavyCheck).incrementAndGet();
+      Map<TextRange, PsiFile> fragmentCache = new HashMap<>();
 
-            int offset = entry.getKey();
-            PsiFunctionalExpression expression = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiFunctionalExpression.class, false);
-            if (expression == null || expression.getTextRange().getStartOffset() != offset) {
-              LOG.error("Fun expression not found in " + file + " at " + offset);
+      @NotNull List<JavaFunctionalExpressionIndex.IndexEntry> data = ContainerUtil.flatten(
+        FileBasedIndex.getInstance().getFileData(JavaFunctionalExpressionIndex.INDEX_ID, vFile, manager.getProject()).values());
+      for (JavaFunctionalExpressionIndex.IndexEntry entry : data) {
+        Confidence confidence = occurrences.get(entry.occurrence);
+        if (confidence != null) {
+          (confidence == Confidence.sure ? session.sureExprsAfterLightCheck : session.exprsToHeavyCheck).incrementAndGet();
+
+          int offset = entry.exprStart;
+          boolean useAST = ((PsiFileEx)file).isContentsLoaded();
+          PsiFunctionalExpression expression = useAST ? findPsiByAST(file, offset) : findPsiByStubs(file, entry.exprIndex);
+          if (expression == null) {
+            LOG.error("Fun expression not found in " + file + " at " + offset);
+            continue;
+          }
+
+          if (confidence == Confidence.needsCheck) {
+            PsiFunctionalExpression toCheck = useAST ? expression : getNonPhysicalCopy(fragmentCache, entry, expression);
+            if (!hasType(descriptors, toCheck)) {
               continue;
             }
+          }
 
-            if ((confidence == Confidence.sure || hasType(descriptors, expression)) && !session.consumer.process(expression)) {
-              return false;
-            }
+          if (!session.consumer.process(expression)) {
+            return false;
           }
         }
       }
       return true;
     });
+  }
+
+  @Nullable
+  private static PsiFunctionalExpression findPsiByAST(PsiFile file, int offset) {
+    PsiFunctionalExpression expression =
+      PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiFunctionalExpression.class, false);
+    if (expression == null || expression.getTextRange().getStartOffset() != offset) {
+      return null;
+    }
+    return expression;
+  }
+
+  private static PsiFunctionalExpression findPsiByStubs(PsiFile file, int index) {
+    StubbedSpine spine = ((PsiFileWithStubSupport)file).getStubbedSpine();
+    int funExprIndex = 0;
+    for (int i = 0; i < spine.getStubCount(); i++) {
+      IElementType type = spine.getStubType(i);
+      if (type == JavaStubElementTypes.LAMBDA_EXPRESSION || type == JavaStubElementTypes.METHOD_REF_EXPRESSION) {
+        if (funExprIndex == index) {
+          return (PsiFunctionalExpression)spine.getStubPsi(i);
+        }
+        funExprIndex++;
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  private static PsiFunctionalExpression getNonPhysicalCopy(Map<TextRange, PsiFile> fragmentCache,
+                                                            JavaFunctionalExpressionIndex.IndexEntry entry,
+                                                            PsiFunctionalExpression expression) {
+    try {
+      PsiMember member = Objects.requireNonNull(PsiTreeUtil.getStubOrPsiParentOfType(expression, PsiMember.class));
+      PsiFile fragment = fragmentCache.computeIfAbsent(TextRange.create(entry.contextStart, entry.contextEnd),
+                                                       range -> createMemberCopyFromText(member, range));
+      return Objects.requireNonNull(findPsiByAST(fragment, entry.exprStart - entry.contextStart));
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      FileBasedIndex.getInstance().requestReindex(expression.getContainingFile().getViewProvider().getVirtualFile());
+      LOG.error(e);
+      return expression;
+    }
+  }
+
+  private static PsiFile createMemberCopyFromText(@NotNull PsiMember member, @NotNull TextRange memberRange) {
+    PsiFile file = member.getContainingFile();
+    String contextText = memberRange.subSequence(file.getViewProvider().getContents()).toString();
+    Project project = file.getProject();
+    return member instanceof PsiEnumConstant
+           ? PsiElementFactory.getInstance(project).createEnumConstantFromText(contextText, member).getContainingFile()
+           : JavaCodeFragmentFactory.getInstance(project).createMemberCodeFragment(contextText, member, false);
   }
 
   private static boolean hasType(@NotNull List<? extends SamDescriptor> descriptors, @NotNull PsiFunctionalExpression expression) {
@@ -364,7 +434,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     private final AtomicInteger contextsConsidered = new AtomicInteger();
     private final AtomicInteger sureExprsAfterLightCheck = new AtomicInteger();
     private final AtomicInteger exprsToHeavyCheck = new AtomicInteger();
-    private final Set<VirtualFile> filesWithASTLoaded = ContainerUtil.newConcurrentSet();
+    private final Set<VirtualFile> filesLookedInside = ContainerUtil.newConcurrentSet();
 
     public Session(@NotNull SearchParameters parameters, @NotNull Processor<? super PsiFunctionalExpression> consumer) {
       this.consumer = consumer;
@@ -374,8 +444,8 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
       scope = parameters.getEffectiveSearchScope();
     }
 
-    public Set<VirtualFile> getFilesWithASTLoaded() {
-      return filesWithASTLoaded;
+    public Set<VirtualFile> getFilesLookedInside() {
+      return filesLookedInside;
     }
 
     public void processResults() {
@@ -402,7 +472,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
              ", contextsConsidered=" + contextsConsidered +
              ", sureExprsAfterLightCheck=" + sureExprsAfterLightCheck +
              ", exprsToHeavyCheck=" + exprsToHeavyCheck +
-             ", filesWithASTLoaded=" + filesWithASTLoaded.size();
+             ", filesLookedInside=" + filesLookedInside.size();
     }
   }
 

@@ -19,7 +19,10 @@ package com.intellij.psi.impl.java;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.LighterASTTokenNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaTokenType;
@@ -50,11 +53,13 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
 
 import static com.intellij.psi.impl.source.tree.JavaElementType.*;
 
-public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<FunctionalExpressionKey, Map<Integer, FunExprOccurrence>> {
-  public static final ID<FunctionalExpressionKey, Map<Integer, FunExprOccurrence>> INDEX_ID = ID.create("java.fun.expression");
+public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<FunctionalExpressionKey, List<JavaFunctionalExpressionIndex.IndexEntry>> {
+  private static final Logger LOG = Logger.getInstance(JavaFunctionalExpressionIndex.class);
+  public static final ID<FunctionalExpressionKey, List<IndexEntry>> INDEX_ID = ID.create("java.fun.expression");
   private static final KeyDescriptor<FunctionalExpressionKey> KEY_DESCRIPTOR = new KeyDescriptor<FunctionalExpressionKey>() {
     @Override
     public int getHashCode(FunctionalExpressionKey value) {
@@ -353,12 +358,12 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
 
   @Override
   public int getVersion() {
-    return 4;
+    return 5;
   }
 
   @NotNull
   @Override
-  public ID<FunctionalExpressionKey, Map<Integer, FunExprOccurrence>> getName() {
+  public ID<FunctionalExpressionKey, List<IndexEntry>> getName() {
     return INDEX_ID;
   }
 
@@ -369,7 +374,7 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
 
   @NotNull
   @Override
-  public DataIndexer<FunctionalExpressionKey, Map<Integer, FunExprOccurrence>, FileContent> getIndexer() {
+  public DataIndexer<FunctionalExpressionKey, List<IndexEntry>, FileContent> getIndexer() {
     return inputData -> {
       CharSequence text = inputData.getContentAsText();
       int[] offsets = ArrayUtil.mergeArrays(
@@ -377,20 +382,33 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
         new StringSearcher("::", true, true).findAllOccurrences(text));
       if (offsets.length == 0) return Collections.emptyMap();
 
-      Map<FunctionalExpressionKey, Map<Integer, FunExprOccurrence>> result = new HashMap<>();
+      Map<FunctionalExpressionKey, List<IndexEntry>> result = new HashMap<>();
       LighterAST tree = ((PsiDependentFileContent)inputData).getLighterAST();
       FileLocalResolver resolver = new FileLocalResolver(tree);
 
-      LightTreeUtil.processLeavesAtOffsets(offsets, tree, (leaf, offset) -> {
-        LighterASTNode element = tree.getParent(leaf);
-        if (element == null) return;
+      LightTreeUtil.processLeavesAtOffsets(offsets, tree, new BiConsumer<LighterASTTokenNode, Integer>() {
+        int index = 0;
+        @Override
+        public void accept(LighterASTTokenNode leaf, Integer offset) {
+          LighterASTNode element = tree.getParent(leaf);
+          if (element == null) return;
 
-        if (element.getTokenType() == METHOD_REF_EXPRESSION || element.getTokenType() == LAMBDA_EXPRESSION) {
-          FunctionalExpressionKey key = new FunctionalExpressionKey(getFunExprParameterCount(tree, element),
-                                                                    calcReturnType(tree, element),
-                                                                    calcExprType(element, resolver));
-          Map<Integer, FunExprOccurrence> map = result.computeIfAbsent(key, __ -> new LinkedHashMap<>());
-          map.put(element.getStartOffset(), createOccurrence(element, resolver));
+          if (element.getTokenType() == METHOD_REF_EXPRESSION || element.getTokenType() == LAMBDA_EXPRESSION) {
+            FunctionalExpressionKey key = new FunctionalExpressionKey(getFunExprParameterCount(tree, element),
+                                                                      calcReturnType(tree, element),
+                                                                      calcExprType(element, resolver));
+
+            LighterASTNode context = LightTreeUtil.getParentOfType(tree, element, ElementType.MEMBER_BIT_SET, TokenSet.EMPTY);
+            if (context != null) {
+              List<IndexEntry> list = result.computeIfAbsent(key, __ -> new ArrayList<>());
+              list.add(new IndexEntry(element.getStartOffset(), index,
+                                      context.getStartOffset(), context.getEndOffset(),
+                                      createOccurrence(element, resolver)));
+            } else {
+              LOG.error("Functional expression outside of a member in " + inputData.getFile());
+            }
+            index++;
+          }
         }
       });
 
@@ -418,26 +436,16 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
 
   @NotNull
   @Override
-  public DataExternalizer<Map<Integer, FunExprOccurrence>> getValueExternalizer() {
-    return new DataExternalizer<Map<Integer, FunExprOccurrence>>() {
+  public DataExternalizer<List<IndexEntry>> getValueExternalizer() {
+    return new DataExternalizer<List<IndexEntry>>() {
       @Override
-      public void save(@NotNull DataOutput out, Map<Integer, FunExprOccurrence> value) throws IOException {
-        DataInputOutputUtil.writeINT(out, value.size());
-        for (Map.Entry<Integer, FunExprOccurrence> entry : value.entrySet()) {
-          DataInputOutputUtil.writeINT(out, entry.getKey());
-          entry.getValue().serialize(out);
-        }
+      public void save(@NotNull DataOutput out, List<IndexEntry> value) throws IOException {
+        DataInputOutputUtilRt.writeSeq(out, value, entry -> entry.serialize(out));
       }
 
       @Override
-      public Map<Integer, FunExprOccurrence> read(@NotNull DataInput in) throws IOException {
-        int length = DataInputOutputUtil.readINT(in);
-        Map<Integer, FunExprOccurrence> map = new LinkedHashMap<>();
-        for (int i = 0; i < length; i++) {
-          int offset = DataInputOutputUtil.readINT(in);
-          map.put(offset, FunExprOccurrence.deserialize(in));
-        }
-        return map;
+      public List<IndexEntry> read(@NotNull DataInput in) throws IOException {
+        return DataInputOutputUtilRt.readSeq(in, () -> IndexEntry.deserialize(in));
       }
     };
   }
@@ -461,5 +469,55 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
   @Override
   public boolean dependsOnFileContent() {
     return true;
+  }
+
+  public static class IndexEntry {
+    public final int exprStart;
+    public final int exprIndex;
+    public final int contextStart;
+    public final int contextEnd;
+    public final FunExprOccurrence occurrence;
+
+    IndexEntry(int exprStart, int exprIndex, int contextStart, int contextEnd, FunExprOccurrence occurrence) {
+      this.exprStart = exprStart;
+      this.exprIndex = exprIndex;
+      this.contextStart = contextStart;
+      this.contextEnd = contextEnd;
+      this.occurrence = occurrence;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof IndexEntry)) return false;
+      IndexEntry entry = (IndexEntry)o;
+      return exprStart == entry.exprStart &&
+             exprIndex == entry.exprIndex &&
+             contextStart == entry.contextStart &&
+             contextEnd == entry.contextEnd &&
+             occurrence.equals(entry.occurrence);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(exprStart, exprIndex, contextStart, contextEnd, occurrence);
+    }
+
+    void serialize(DataOutput out) throws IOException {
+      DataInputOutputUtil.writeINT(out, exprStart);
+      DataInputOutputUtil.writeINT(out, exprIndex);
+      DataInputOutputUtil.writeINT(out, contextStart);
+      DataInputOutputUtil.writeINT(out, contextEnd);
+      occurrence.serialize(out);
+    }
+
+    static IndexEntry deserialize(DataInput in) throws IOException {
+      return new IndexEntry(DataInputOutputUtil.readINT(in),
+                            DataInputOutputUtil.readINT(in),
+                            DataInputOutputUtil.readINT(in),
+                            DataInputOutputUtil.readINT(in),
+                            FunExprOccurrence.deserialize(in));
+    }
+
   }
 }
