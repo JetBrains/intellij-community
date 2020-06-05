@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.application.options.PathMacrosCollector;
@@ -9,16 +9,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
-import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class DirectoryStorageUtil {
+public final class DirectoryStorageUtil {
   private static final Logger LOG = Logger.getInstance(DirectoryStorageUtil.class);
 
   @NotNull
@@ -27,7 +27,7 @@ public class DirectoryStorageUtil {
       return Collections.emptyMap();
     }
 
-    Map<String, Element> fileToState = new THashMap<>();
+    Map<String, Element> fileToState = new HashMap<>();
     for (VirtualFile file : dir.getChildren()) {
       // ignore system files like .DS_Store on Mac
       if (!StringUtilRt.endsWithIgnoreCase(file.getNameSequence(), FileStorageCoreUtil.DEFAULT_EXT)) {

@@ -13,7 +13,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
-public class PathUtilRt {
+public final class PathUtilRt {
   @NotNull
   public static String getFileName(@Nullable String path) {
     if (StringUtilRt.isEmpty(path)) {

@@ -40,9 +40,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.graph.*;
 import com.intellij.util.messages.MessageBus;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrays;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +77,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
   protected volatile ModuleModelImpl myModuleModel = new ModuleModelImpl(this);
 
   private Set<ModulePath> myModulePathsToLoad;
-  private final Set<ModulePath> myFailedModulePaths = new THashSet<>();
+  private final Set<ModulePath> myFailedModulePaths = new HashSet<>();
   private final Map<String, UnloadedModuleDescriptionImpl> myUnloadedModules = new LinkedHashMap<>();
   private boolean myModulesLoaded;
 
@@ -127,17 +129,8 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
 
   private static final class ModuleGroupInterner {
     private final Interner<String> groups = Interner.createStringInterner();
-    private final Map<String[], String[]> paths = new THashMap<>(new TObjectHashingStrategy<String[]>() {
-      @Override
-      public int computeHashCode(String[] object) {
-        return Arrays.hashCode(object);
-      }
-
-      @Override
-      public boolean equals(String[] o1, String[] o2) {
-        return Arrays.equals(o1, o2);
-      }
-    });
+    @SuppressWarnings("unchecked")
+    private final Map<String[], String[]> paths = new Object2ObjectOpenCustomHashMap<>((Hash.Strategy<? super String[]>)ObjectArrays.HASH_STRATEGY);
 
     private void setModuleGroupPath(@NotNull ModifiableModuleModel model, @NotNull Module module, String @Nullable [] group) {
       String[] cached = group == null ? null : paths.get(group);
@@ -203,7 +196,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     Module[] existingModules = model.getModules();
     ModuleGroupInterner groupInterner = new ModuleGroupInterner();
 
-    Map<String, ModulePath> modulePathMap = new THashMap<>(myModulePathsToLoad.size());
+    Map<String, ModulePath> modulePathMap = new Object2ObjectOpenHashMap<>(myModulePathsToLoad.size());
     for (ModulePath modulePath : myModulePathsToLoad) {
       modulePathMap.put(modulePath.getPath(), modulePath);
     }
@@ -276,7 +269,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     ExecutorService service = isParallel ? AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", Math.min(2, Runtime.getRuntime().availableProcessors()))
                                          : ConcurrencyUtil.newSameThreadExecutorService();
     List<Pair<Future<Module>, ModulePath>> tasks = new ArrayList<>();
-    Set<String> paths = new THashSet<>();
+    Set<String> paths = new ObjectOpenHashSet<>(myModulePathsToLoad.size());
     for (ModulePath modulePath : myModulePathsToLoad) {
       if (progressIndicator.isCanceled()) {
         break;
@@ -344,7 +337,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
 
     Application app = ApplicationManager.getApplication();
     if (app.isInternal() || app.isEAP() || ApplicationInfo.getInstance().getBuild().isSnapshot()) {
-      Map<String, Module> track = new THashMap<>();
+      Map<String, Module> track = new Object2ObjectOpenHashMap<>();
       for (Module module : moduleModel.getModules()) {
         for (String url : ModuleRootManager.getInstance(module).getContentRootUrls()) {
           Module oldModule = track.put(url, module);
@@ -700,7 +693,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
   @NotNull
   protected abstract ModuleEx createAndLoadModule(@NotNull String filePath) throws IOException;
 
-  static class ModuleModelImpl implements ModifiableModuleModel {
+  final static class ModuleModelImpl implements ModifiableModuleModel {
     final Map<String, Module> myModules = Collections.synchronizedMap(new LinkedHashMap<>());
     private volatile Module[] myModulesCache;
 
@@ -723,7 +716,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       myModules.putAll(that.myModules);
       final Map<Module, String[]> groupPath = that.myModuleGroupPath;
       if (groupPath != null){
-        myModuleGroupPath = new THashMap<>();
+        myModuleGroupPath = new Object2ObjectOpenHashMap<>();
         myModuleGroupPath.putAll(that.myModuleGroupPath);
       }
       myIsWritable = true;
@@ -997,7 +990,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     @Override
     public void setModuleGroupPath(@NotNull Module module, String @Nullable("null means remove") [] groupPath) {
       if (myModuleGroupPath == null) {
-        myModuleGroupPath = new THashMap<>();
+        myModuleGroupPath = new Object2ObjectOpenHashMap<>();
       }
       if (groupPath == null) {
         myModuleGroupPath.remove(module);
@@ -1028,10 +1021,10 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       removedModules = Collections.emptyList();
     }
     else {
-      addedModules = new THashSet<>(newModules);
+      addedModules = new ObjectOpenHashSet<>(newModules);
       addedModules.removeAll(oldModules);
 
-      removedModules = new THashSet<>(oldModules);
+      removedModules = new ObjectOpenHashSet<>(oldModules);
       removedModules.removeAll(newModules);
     }
 

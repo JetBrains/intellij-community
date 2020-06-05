@@ -1,25 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ThrowableRunnable;
 import com.sun.management.OperatingSystemMXBean;
-import gnu.trove.TLongLongHashMap;
-import gnu.trove.TObjectLongHashMap;
+import it.unimi.dsi.fastutil.longs.Long2LongMap;
+import it.unimi.dsi.fastutil.longs.Long2LongMaps;
+import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMaps;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class CpuUsageData {
+public final class CpuUsageData {
   private static final ThreadMXBean ourThreadMXBean = ManagementFactory.getThreadMXBean();
   private static final List<GarbageCollectorMXBean> ourGcBeans = ManagementFactory.getGarbageCollectorMXBeans();
   private static final CompilationMXBean ourCompilationMXBean = ManagementFactory.getCompilationMXBean();
@@ -43,8 +33,8 @@ public class CpuUsageData {
   private final List<Pair<Long, String>> myThreadTimes = new ArrayList<>();
 
   private CpuUsageData(long durationMs,
-                       TObjectLongHashMap<GarbageCollectorMXBean> gcTimes,
-                       TLongLongHashMap threadTimes,
+                       Object2LongMap<GarbageCollectorMXBean> gcTimes,
+                       Long2LongMap threadTimes,
                        long compilationTime,
                        long processTime,
                        FreeMemorySnapshot memStart,
@@ -54,14 +44,12 @@ public class CpuUsageData {
     myMemEnd = memEnd;
     myCompilationTime = compilationTime;
     myProcessTime = processTime;
-    gcTimes.forEachEntry((bean, gcTime) -> {
-      myGcTimes.add(Pair.create(gcTime, bean.getName()));
-      return true;
+    Object2LongMaps.fastForEach(gcTimes, entry -> {
+      myGcTimes.add(Pair.create(entry.getLongValue(), entry.getKey().getName()));
     });
-    threadTimes.forEachEntry((id, time) -> {
-      ThreadInfo info = ourThreadMXBean.getThreadInfo(id);
-      myThreadTimes.add(Pair.create(toMillis(time), info == null ? "<unknown>" : info.getThreadName()));
-      return true;
+    Long2LongMaps.fastForEach(threadTimes, entry -> {
+      ThreadInfo info = ourThreadMXBean.getThreadInfo(entry.getLongKey());
+      myThreadTimes.add(Pair.create(toMillis(entry.getLongValue()), info == null ? "<unknown>" : info.getThreadName()));
     });
   }
 
@@ -109,12 +97,12 @@ public class CpuUsageData {
   public static <E extends Throwable> CpuUsageData measureCpuUsage(ThrowableRunnable<E> runnable) throws E {
     FreeMemorySnapshot memStart = new FreeMemorySnapshot();
 
-    TObjectLongHashMap<GarbageCollectorMXBean> gcTimes = new TObjectLongHashMap<>();
+    Object2LongOpenHashMap<GarbageCollectorMXBean> gcTimes = new Object2LongOpenHashMap<>();
     for (GarbageCollectorMXBean bean : ourGcBeans) {
       gcTimes.put(bean, bean.getCollectionTime());
     }
 
-    TLongLongHashMap threadTimes = new TLongLongHashMap();
+    Long2LongOpenHashMap threadTimes = new Long2LongOpenHashMap();
     for (long id : ourThreadMXBean.getAllThreadIds()) {
       threadTimes.put(id, ourThreadMXBean.getThreadUserTime(id));
     }
@@ -136,7 +124,7 @@ public class CpuUsageData {
     }
 
     for (GarbageCollectorMXBean bean : ourGcBeans) {
-      gcTimes.put(bean, bean.getCollectionTime() - gcTimes.get(bean));
+      gcTimes.put(bean, bean.getCollectionTime() - gcTimes.getLong(bean));
     }
 
     return new CpuUsageData(duration, gcTimes, threadTimes, compTime, processTime, memStart, memEnd);

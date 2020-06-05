@@ -1120,4 +1120,9 @@ public final class PlatformTestUtil {
     Disposer.register(parentDisposable, () -> forceCloseProjectWithoutSaving(project));
     return project;
   }
+
+  public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull Project projectToClose) {
+    ProjectManagerEx.getInstanceEx().forceCloseProject(projectToClose);
+    ProjectRule.checkThatNoOpenProjects();
+  }
 }

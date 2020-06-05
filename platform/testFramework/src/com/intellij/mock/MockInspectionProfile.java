@@ -6,7 +6,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -15,7 +15,7 @@ import java.util.Set;
 
 public final class MockInspectionProfile extends InspectionProfileImpl {
   private List<InspectionToolWrapper<?, ?>> myInspectionTools = Collections.emptyList();
-  private final Set<InspectionToolWrapper<?, ?>> myDisabledTools = new THashSet<>();
+  private final Set<InspectionToolWrapper<?, ?>> myDisabledTools = new ObjectOpenHashSet<>();
 
   public MockInspectionProfile() {
     super("a");

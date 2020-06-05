@@ -799,7 +799,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     }
   }
 
-  private class DelayedExceptions {
+  private final class DelayedExceptions {
     Throwable myException;
 
     void register(Throwable e) {

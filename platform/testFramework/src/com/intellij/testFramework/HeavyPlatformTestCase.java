@@ -495,7 +495,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       },
       () -> {
         if (myProject != null) {
-          closeAndDisposeProjectAndCheckThatNoOpenProjects(myProject);
+          PlatformTestUtil.closeAndDisposeProjectAndCheckThatNoOpenProjects(myProject);
           myProject = null;
         }
       },
@@ -551,11 +551,6 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
         ourTestCase = null;
       }
     );
-  }
-
-  public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull Project projectToClose) {
-    ProjectManagerEx.getInstanceEx().forceCloseProject(projectToClose);
-    ProjectRule.checkThatNoOpenProjects();
   }
 
   protected void resetAllFields() {

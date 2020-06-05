@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization
 
 import com.amazon.ion.IonType
@@ -76,7 +76,7 @@ internal class CollectionBinding(type: ParameterizedType, context: BindingInitia
     }
 
     @Suppress("UNCHECKED_CAST")
-    var result = property.readUnsafe(hostObject) as MutableCollection<Any?>?
+    var result = property.readUnsafe(hostObject) as? MutableCollection<Any?>?
     if (result != null && ClassUtil.isMutableCollection(result)) {
       result.clear()
       if (emptyResult != null) {
@@ -97,16 +97,16 @@ internal class CollectionBinding(type: ParameterizedType, context: BindingInitia
   private fun createCollection(propertyForDebugPurposes: MutableAccessor? = null): MutableCollection<Any?> {
     if (collectionClass.isInterface) {
       when (collectionClass) {
-        Set::class.java -> return THashSet()
+        Set::class.java -> return HashSet()
         List::class.java, Collection::class.java -> return ArrayList()
         else -> LOG.warn("Unknown collection type interface: ${collectionClass} (property: $propertyForDebugPurposes)")
       }
     }
     else {
       return when (collectionClass) {
-        THashSet::class.java -> THashSet()
         HashSet::class.java -> HashSet()
         ArrayList::class.java -> ArrayList()
+        THashSet::class.java -> THashSet()
         SmartList::class.java -> SmartList()
         else -> {
           @Suppress("UNCHECKED_CAST")
