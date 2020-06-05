@@ -106,7 +106,10 @@ public class ModuleClasspathCombo extends JComboBox<ModuleClasspathCombo.Item> {
                                                   boolean isSelected,
                                                   boolean cellHasFocus) {
       myCheckBox.setOpaque(false);
-      if (value.myModule != null) {
+      if (value == null) {
+        return myDefaultRenderer.getListCellRendererComponent(list, null, index, isSelected, cellHasFocus);
+      }
+      else if (value.myModule != null) {
         return myDefaultRenderer.getListCellRendererComponent(list, value.myModule.getName(), index, isSelected, cellHasFocus);
       }
       else if (value.myOptionName == null) {
