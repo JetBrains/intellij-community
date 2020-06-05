@@ -98,10 +98,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, Boolean.TRUE);
   }
 
-  public Presentation getPresentation() {
-    return myPresentation;
-  }
-
   public void setNoIconsInPopup(boolean noIconsInPopup) {
     myNoIconsInPopup = noIconsInPopup;
   }
