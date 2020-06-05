@@ -6,8 +6,10 @@ import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 
 /**
@@ -39,31 +41,39 @@ import org.junit.Test
  * persistent id
  */
 class ReplaceBySourceTest {
+
+  private lateinit var builder: WorkspaceEntityStorageBuilderImpl
+
+  @Before
+  fun setUp() {
+    builder = WorkspaceEntityStorageBuilderImpl.create()
+  }
+
+  @After
+  fun tearDown() {
+    builder.assertConsistency()
+  }
+
   @Test
   fun `add entity`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     builder.addSampleEntity("hello2", SampleEntitySource("2"))
     val replacement = WorkspaceEntityStorageBuilderImpl.create()
     replacement.addSampleEntity("hello1", SampleEntitySource("1"))
     builder.replaceBySource({ it == SampleEntitySource("1") }, replacement)
     assertEquals(setOf("hello1", "hello2"), builder.entities(SampleEntity::class.java).mapTo(HashSet()) { it.stringProperty })
-    builder.assertConsistency()
   }
 
   @Test
   fun `remove entity`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     val source1 = SampleEntitySource("1")
     builder.addSampleEntity("hello1", source1)
     builder.addSampleEntity("hello2", SampleEntitySource("2"))
     builder.replaceBySource({ it == source1 }, WorkspaceEntityStorageBuilderImpl.create())
     assertEquals("hello2", builder.singleSampleEntity().stringProperty)
-    builder.assertConsistency()
   }
 
   @Test
   fun `remove and add entity`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     val source1 = SampleEntitySource("1")
     builder.addSampleEntity("hello1", source1)
     builder.addSampleEntity("hello2", SampleEntitySource("2"))
@@ -71,12 +81,10 @@ class ReplaceBySourceTest {
     replacement.addSampleEntity("updated", source1)
     builder.replaceBySource({ it == source1 }, replacement)
     assertEquals(setOf("hello2", "updated"), builder.entities(SampleEntity::class.java).mapTo(HashSet()) { it.stringProperty })
-    builder.assertConsistency()
   }
 
   @Test
   fun `multiple sources`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     val sourceA1 = SampleEntitySource("a1")
     val sourceA2 = SampleEntitySource("a2")
     val sourceB = SampleEntitySource("b")
@@ -86,12 +94,10 @@ class ReplaceBySourceTest {
     replacement.addSampleEntity("new", sourceA2)
     builder.replaceBySource({ it is SampleEntitySource && it.name.startsWith("a") }, replacement)
     assertEquals(setOf("b", "new"), builder.entities(SampleEntity::class.java).mapTo(HashSet()) { it.stringProperty })
-    builder.assertConsistency()
   }
 
   @Test
   fun `work with different entity sources`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     val sourceA1 = SampleEntitySource("a1")
     val sourceA2 = SampleEntitySource("a2")
     val parentEntity = builder.addParentEntity(source = sourceA1)
@@ -100,23 +106,19 @@ class ReplaceBySourceTest {
     builder.replaceBySource({ it == sourceA2 }, replacement)
     assertEquals(1, builder.toStorage().entities(ParentEntity::class.java).toList().size)
     assertEquals(1, builder.toStorage().entities(ChildEntity::class.java).toList().size)
-    builder.assertConsistency()
   }
 
   @Test
   fun `empty storages`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     val builder2 = WorkspaceEntityStorageBuilderImpl.create()
 
     builder.replaceBySource({ true }, builder2)
     assertTrue(builder.collectChanges(
       WorkspaceEntityStorageBuilderImpl.create()).isEmpty())
-    builder.assertConsistency()
   }
 
   @Test
   fun `replace with empty storage`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     builder.addSampleEntity("data1")
     builder.addSampleEntity("data2")
     builder.resetChanges()
@@ -127,13 +129,11 @@ class ReplaceBySourceTest {
     assertEquals(1, collectChanges.size)
     assertEquals(2, collectChanges.values.single().size)
     assertTrue(collectChanges.values.single().all { it is EntityChange.Removed<*> })
-    builder.assertConsistency()
     assertTrue(builder.entities(SampleEntity::class.java).toList().isEmpty())
   }
 
   @Test
   fun `add entity with false source`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     builder.addSampleEntity("hello2", SampleEntitySource("2"))
     builder.resetChanges()
     val replacement = WorkspaceEntityStorageBuilderImpl.create()
@@ -142,12 +142,10 @@ class ReplaceBySourceTest {
     assertEquals(setOf("hello2"), builder.entities(SampleEntity::class.java).mapTo(HashSet()) { it.stringProperty })
     assertTrue(builder.collectChanges(
       WorkspaceEntityStorageBuilderImpl.create()).isEmpty())
-    builder.assertConsistency()
   }
 
   @Test
   fun `entity modification`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     val entity = builder.addSampleEntity("hello2")
     val replacement = WorkspaceEntityStorageBuilderImpl.from(builder)
     replacement.modifyEntity(ModifiableSampleEntity::class.java, entity) {
@@ -155,33 +153,27 @@ class ReplaceBySourceTest {
     }
     builder.replaceBySource({ true }, replacement)
     assertEquals(setOf("Hello Alex"), builder.entities(SampleEntity::class.java).mapTo(HashSet()) { it.stringProperty })
-    builder.assertConsistency()
   }
 
   @Test
   fun `adding entity in builder`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     val replacement = WorkspaceEntityStorageBuilderImpl.from(builder)
     replacement.addSampleEntity("myEntity")
     builder.replaceBySource({ true }, replacement)
     assertEquals(setOf("myEntity"), builder.entities(SampleEntity::class.java).mapTo(HashSet()) { it.stringProperty })
-    builder.assertConsistency()
   }
 
   @Test
   fun `removing entity in builder`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     val entity = builder.addSampleEntity("myEntity")
     val replacement = WorkspaceEntityStorageBuilderImpl.from(builder)
     replacement.removeEntity(entity)
     builder.replaceBySource({ true }, replacement)
     assertTrue(builder.entities(SampleEntity::class.java).toList().isEmpty())
-    builder.assertConsistency()
   }
 
   @Test
   fun `child and parent - modify parent`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     val parent = builder.addParentEntity("myProperty")
     builder.addChildEntity(parent, "myChild")
 
@@ -195,12 +187,10 @@ class ReplaceBySourceTest {
     val child = assertOneElement(builder.entities(ChildEntity::class.java).toList())
     assertEquals("newProperty", child.parent.parentProperty)
     assertOneElement(builder.entities(ParentEntity::class.java).toList())
-    builder.assertConsistency()
   }
 
   @Test
   fun `child and parent - modify child`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     val parent = builder.addParentEntity("myProperty")
     val child = builder.addChildEntity(parent, "myChild")
 
@@ -214,12 +204,10 @@ class ReplaceBySourceTest {
     val updatedChild = assertOneElement(builder.entities(ChildEntity::class.java).toList())
     assertEquals("newProperty", updatedChild.childProperty)
     assertEquals(updatedChild, assertOneElement(builder.entities(ParentEntity::class.java).toList()).children.single())
-    builder.assertConsistency()
   }
 
   @Test
   fun `child and parent - remove parent`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     val parent = builder.addParentEntity("myProperty")
     val child = builder.addChildEntity(parent, "myChild")
 
@@ -230,12 +218,10 @@ class ReplaceBySourceTest {
 
     assertEmpty(builder.entities(ChildEntity::class.java).toList())
     assertEmpty(builder.entities(ParentEntity::class.java).toList())
-    builder.assertConsistency()
   }
 
   @Test
   fun `child and parent - change parent for child`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     val parent = builder.addParentEntity("myProperty")
     val parent2 = builder.addParentEntity("anotherProperty")
     val child = builder.addChildEntity(parent, "myChild")
@@ -247,7 +233,6 @@ class ReplaceBySourceTest {
 
     builder.replaceBySource({ true }, replacement)
 
-    builder.assertConsistency()
     val parents = builder.entities(ParentEntity::class.java).toList()
     assertTrue(parents.single { it.parentProperty == "myProperty" }.children.none())
     assertEquals(child, parents.single { it.parentProperty == "anotherProperty" }.children.single())
@@ -255,7 +240,6 @@ class ReplaceBySourceTest {
 
   @Test(expected = ReplaceBySourceException::class)
   fun `child and parent - change parent for child - 2`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     val parent = builder.addParentEntity("myProperty", source = AnotherSource)
     val parent2 = builder.addParentEntity("anotherProperty", source = MySource)
     val child = builder.addChildEntity(parent2, "myChild", source = AnotherSource)
@@ -271,7 +255,6 @@ class ReplaceBySourceTest {
   @Test
   fun `child and parent - change parent for child - 3`() {
     // Difference with the test above: different initial parent
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     val parent = builder.addParentEntity("myProperty", source = AnotherSource)
     val parent2 = builder.addParentEntity("anotherProperty", source = MySource)
     val child = builder.addChildEntity(parent, "myChild", source = AnotherSource)
@@ -283,7 +266,6 @@ class ReplaceBySourceTest {
 
     builder.replaceBySource({ it is MySource }, replacement)
 
-    builder.assertConsistency()
     val parents = builder.entities(ParentEntity::class.java).toList()
     assertTrue(parents.single { it.parentProperty == "anotherProperty" }.children.none())
     assertEquals(child, parents.single { it.parentProperty == "myProperty" }.children.single())
@@ -291,7 +273,6 @@ class ReplaceBySourceTest {
 
   @Test
   fun `child and parent - remove child`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     val parent = builder.addParentEntity("myProperty")
     val child = builder.addChildEntity(parent, "myChild")
 
@@ -303,12 +284,10 @@ class ReplaceBySourceTest {
     assertEmpty(builder.entities(ChildEntity::class.java).toList())
     assertOneElement(builder.entities(ParentEntity::class.java).toList())
     assertEmpty(builder.entities(ParentEntity::class.java).single().children.toList())
-    builder.assertConsistency()
   }
 
   @Test(expected = ReplaceBySourceException::class)
   fun `fail - child and parent - different source for parent`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     val replacement = WorkspaceEntityStorageBuilderImpl.from(builder)
     val parent = replacement.addParentEntity("myProperty", source = AnotherSource)
     val child = replacement.addChildEntity(parent, "myChild")
@@ -318,7 +297,6 @@ class ReplaceBySourceTest {
 
   @Test
   fun `child and parent - two children of different sources`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     val parent = builder.addParentEntity(source = AnotherSource)
     builder.addChildEntity(parent, "MySourceChild", source = MySource)
     val replacement = WorkspaceEntityStorageBuilderImpl.from(builder)
@@ -326,7 +304,6 @@ class ReplaceBySourceTest {
 
     builder.replaceBySource({ it is MySource }, replacement)
 
-    builder.assertConsistency()
     assertOneElement(builder.entities(ParentEntity::class.java).toList())
     val child = assertOneElement(builder.entities(ChildEntity::class.java).toList())
     assertEquals("MySourceChild", child.childProperty)
@@ -334,19 +311,16 @@ class ReplaceBySourceTest {
 
   @Test(expected = ReplaceBySourceException::class)
   fun `child and parent - trying to remove parent and leave child`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     val parentEntity = builder.addParentEntity("prop", AnotherSource)
     builder.addChildEntity(parentEntity)
     val replacement = WorkspaceEntityStorageBuilderImpl.from(builder)
     replacement.removeEntity(parentEntity)
 
     builder.replaceBySource({ it is AnotherSource }, replacement)
-    builder.assertConsistency()
   }
 
   @Test
   fun `child and parent - different source for child`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     val replacement = WorkspaceEntityStorageBuilderImpl.from(builder)
     val parent = replacement.addParentEntity("myProperty")
     val child = replacement.addChildEntity(parent, "myChild", source = AnotherSource)
@@ -356,12 +330,10 @@ class ReplaceBySourceTest {
     assertEmpty(builder.entities(ChildEntity::class.java).toList())
     assertOneElement(builder.entities(ParentEntity::class.java).toList())
     assertEmpty(builder.entities(ParentEntity::class.java).single().children.toList())
-    builder.assertConsistency()
   }
 
   @Test
   fun `remove child of different source`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     val parent = builder.addParentEntity(source = AnotherSource)
     val child = builder.addChildEntity(parent, source = MySource)
 
@@ -373,7 +345,6 @@ class ReplaceBySourceTest {
 
   @Test
   fun `entity with soft reference`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     val named = builder.addNamedEntity("MyName")
     val linked = builder.addWithSoftLinkEntity(named.persistentId())
     builder.resetChanges()
@@ -389,13 +360,10 @@ class ReplaceBySourceTest {
     builder.replaceBySource({ true }, replacement)
     assertEquals("NewName", assertOneElement(builder.entities(NamedEntity::class.java).toList()).name)
     assertEquals("NewName", assertOneElement(builder.entities(WithSoftLinkEntity::class.java).toList()).link.presentableName)
-
-    builder.assertConsistency()
   }
 
   @Test
   fun `entity with soft reference remove reference`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     val named = builder.addNamedEntity("MyName")
     val linked = builder.addWithListSoftLinksEntity("name", listOf(named.persistentId()))
     builder.resetChanges()
@@ -409,13 +377,10 @@ class ReplaceBySourceTest {
     replacement.assertConsistency()
 
     builder.replaceBySource({ true }, replacement)
-
-    builder.assertConsistency()
   }
 
   @Test
   fun `replace by source with composite id`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     val replacement = WorkspaceEntityStorageBuilderImpl.create()
     val namedEntity = replacement.addNamedEntity("MyName")
     val composedEntity = replacement.addComposedIdSoftRefEntity("AnotherName", namedEntity.persistentId())
@@ -423,7 +388,6 @@ class ReplaceBySourceTest {
 
     replacement.assertConsistency()
     builder.replaceBySource({ true }, replacement)
-    builder.assertConsistency()
 
     assertOneElement(builder.entities(NamedEntity::class.java).toList())
     assertOneElement(builder.entities(ComposedIdSoftRefEntity::class.java).toList())
