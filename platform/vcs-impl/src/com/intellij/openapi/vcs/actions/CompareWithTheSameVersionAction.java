@@ -5,8 +5,8 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -27,8 +27,14 @@ public class CompareWithTheSameVersionAction extends AbstractShowDiffAction {
     super.update(vcsContext, presentation);
     Project project = vcsContext.getProject();
     presentation.setText(ActionsBundle.message("action.Compare.SameVersion.text"));
-    if (project != null && ProjectLevelVcsManager.getInstance(project).getConsolidatedVcsName() == "Git") {
-      presentation.setText(VcsBundle.message("action.GitSpecific.Diff.name"));
+    if (project != null) {
+      AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getSingleVCS();
+      if (vcs != null) {
+        String customDiffName = vcs.getCustomDiffActionName();
+        if (customDiffName != null) {
+          presentation.setText(customDiffName);
+        }
+      }
     }
   }
 }

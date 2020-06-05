@@ -228,7 +228,7 @@ public class VcsProjectLog implements Disposable {
   }
 
   @NotNull
-  static Map<VirtualFile, VcsLogProvider> getLogProviders(@NotNull Project project) {
+  public static Map<VirtualFile, VcsLogProvider> getLogProviders(@NotNull Project project) {
     return VcsLogManager.findLogProviders(Arrays.asList(ProjectLevelVcsManager.getInstance(project).getAllVcsRoots()), project);
   }
 

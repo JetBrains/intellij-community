@@ -100,6 +100,11 @@ public abstract class AbstractVcs extends StartedActivated {
     return false;
   }
 
+  @Nullable
+  public String getCustomDiffActionName() {
+    return null;
+  }
+
   public abstract Configurable getConfigurable();
 
   @Nullable
