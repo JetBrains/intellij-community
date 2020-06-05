@@ -121,8 +121,9 @@ public class StartupManagerImpl extends StartupManagerEx {
     return postStartupActivitiesPassed == ALL_PASSED;
   }
 
-  public final @NotNull Future<?> projectOpened(@Nullable ProgressIndicator indicator) {
-    if (indicator != null && ApplicationManager.getApplication().isInternal()) {
+  public final @Nullable Future<?> projectOpened(@Nullable ProgressIndicator indicator) {
+    Application app = ApplicationManager.getApplication();
+    if (indicator != null && app.isInternal()) {
       indicator.setText(IdeBundle.message("startup.indicator.text.running.startup.activities"));
     }
 
@@ -132,17 +133,20 @@ public class StartupManagerImpl extends StartupManagerEx {
       indicator.checkCanceled();
     }
 
-    Future<?> future = AppExecutorUtil.getAppExecutorService().submit(() -> {
-      if (myProject.isDisposed()) {
-        return;
-      }
-
-      BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, this::runPostStartupActivities);
-    });
-
     LoadingState phase = DumbService.isDumb(myProject) ? LoadingState.PROJECT_OPENED : LoadingState.INDEXING_FINISHED;
     StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, phase);
-    return future;
+
+    if (app.isUnitTestMode() && !app.isDispatchThread()) {
+      BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, this::runPostStartupActivities);
+      return null;
+    }
+    else {
+      return AppExecutorUtil.getAppExecutorService().submit(() -> {
+        if (!myProject.isDisposed()) {
+          BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, this::runPostStartupActivities);
+        }
+      });
+    }
   }
 
   private void runStartUpActivities(@Nullable ProgressIndicator indicator) {
@@ -417,25 +421,16 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   @Override
   public void runWhenProjectIsInitialized(@NotNull Runnable action) {
-    checkNonDefaultProject();
-
-    GuiUtils.invokeLaterIfNeeded(() -> {
-      // in tests that simulate project opening, post-startup activities could have been run already
-      // then we should act as if the project was initialized
-      if (myStartupActivitiesPassed && (myProject.isOpen() || myProject.isDefault() || (postStartupActivityPassed() && ApplicationManager.getApplication().isUnitTestMode()))) {
-        action.run();
-        return;
-      }
-
+    if (DumbService.isDumbAware(action)) {
       runAfterOpened(() -> {
-        if (DumbService.isDumbAware(action)) {
-          runActivity(action);
-        }
-        else {
-          DumbService.getInstance(myProject).unsafeRunWhenSmart(action);
-        }
+        GuiUtils.invokeLaterIfNeeded(action, ModalityState.NON_MODAL, myProject.getDisposed());
       });
-    }, ModalityState.NON_MODAL, myProject.getDisposed());
+    }
+    else {
+      runAfterOpened(() -> {
+        DumbService.getInstance(myProject).unsafeRunWhenSmart(action);
+      });
+    }
   }
 
   @Override

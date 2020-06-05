@@ -37,7 +37,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.ExecutionException
-import java.util.concurrent.Future
 
 @ApiStatus.Internal
 open class ProjectManagerExImpl : ProjectManagerImpl() {
@@ -69,10 +68,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
     }
 
     try {
-      val future = openProject(project, ProgressManager.getInstance().progressIndicator)
-      if (app.isUnitTestMode) {
-        waitInTestMode(future)
-      }
+      openProject(project, ProgressManager.getInstance().progressIndicator)
     }
     catch (e: ProcessCanceledException) {
       app.invokeAndWait { closeProject(project, /* saveProject = */false, /* dispose = */true, /* checkCanClose = */false) }
@@ -235,7 +231,7 @@ private fun checkExistingProjectOnOpen(projectToClose: Project,
   return false
 }
 
-private fun openProject(project: Project, indicator: ProgressIndicator?): Future<*> {
+private fun openProject(project: Project, indicator: ProgressIndicator?) {
   val waitEdtActivity = StartUpMeasurer.startMainActivity("placing calling projectOpened on event queue")
   if (indicator != null) {
     indicator.text = if (ApplicationManager.getApplication().isInternal) "Waiting on event queue..." else ProjectBundle.message("project.preparing.workspace")
@@ -266,7 +262,21 @@ private fun openProject(project: Project, indicator: ProgressIndicator?): Future
     activity.end()
     ProjectImpl.ourClassesAreLoaded = true
   }
-  return (StartupManager.getInstance(project) as StartupManagerImpl).projectOpened(indicator)
+
+  val future = (StartupManager.getInstance(project) as StartupManagerImpl).projectOpened(indicator)
+  if (future != null && ApplicationManager.getApplication().isUnitTestMode) {
+    // process event queue during waiting
+    // tasks is run as backgroundable to allow `invokeAndWait` inside startup activities
+    // note that this is still a blocking call in tests
+    runBackgroundableTask("wait in tests") {
+      try {
+        future.get()
+      }
+      catch (e: ExecutionException) {
+        throw e.cause ?: e
+      }
+    }
+  }
 }
 
 private fun notifyProjectOpenFailed() {
@@ -274,31 +284,6 @@ private fun notifyProjectOpenFailed() {
   app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed()
   if (!app.isUnitTestMode) {
     WelcomeFrame.showIfNoProjectOpened()
-  }
-}
-
-@Suppress("HardCodedStringLiteral")
-private fun waitInTestMode(future: Future<*>) {
-  val app = ApplicationManager.getApplication()
-  fun wait() {
-    try {
-      future.get()
-    }
-    catch (e: ExecutionException) {
-      throw e.cause ?: e
-    }
-  }
-
-  if (app.isDispatchThread) {
-    // process event queue during waiting
-    // tasks is run as backgroundable to allow `invokeAndWait` inside startup activities
-    // note that this is still a blocking call in tests
-    runBackgroundableTask("wait in tests") {
-      wait()
-    }
-  }
-  else {
-    wait()
   }
 }
 

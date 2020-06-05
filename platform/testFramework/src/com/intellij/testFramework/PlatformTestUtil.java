@@ -630,7 +630,9 @@ public final class PlatformTestUtil {
   }
 
   public static void forceCloseProjectWithoutSaving(@NotNull Project project) {
-    ProjectManagerEx.getInstanceEx().forceCloseProject(project);
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      ProjectManagerEx.getInstanceEx().forceCloseProject(project);
+    });
   }
 
   public static void saveProject(@NotNull Project project) {

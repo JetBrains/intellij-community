@@ -47,6 +47,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -134,11 +135,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       ourPsiManager = PsiManager.getInstance(getProject());
     }
     return ourPsiManager;
-  }
-
-  @NotNull
-  public static TestApplicationManager initApplication() {
-    return TestApplicationManager.getInstance();
   }
 
   public static TestApplicationManager getApplication() {
@@ -235,7 +231,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       Timings.getStatistics();
     }
 
-    TestApplicationManager testAppManager = initApplication();
+    TestApplicationManager testAppManager = TestApplicationManager.getInstance();
 
     EdtTestUtil.runInEdtAndWait(() -> {
       super.setUp();
@@ -261,23 +257,25 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return new SimpleLightProjectDescriptor(getModuleTypeId(), getProjectJDK());
   }
 
-  @NotNull
-  public static Pair.NonNull<Project, Module> doSetup(@NotNull LightProjectDescriptor descriptor,
-                                                      LocalInspectionTool @NotNull [] localInspectionTools,
-                                                      @NotNull Disposable parentDisposable) {
-    assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.", ourTestCase);
-    IdeaLogger.ourErrorsOccurred = null;
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  public static @NotNull Pair.NonNull<Project, Module> doSetup(@NotNull LightProjectDescriptor descriptor,
+                                                               LocalInspectionTool @NotNull [] localInspectionTools,
+                                                               @NotNull Disposable parentDisposable) {
+    Application app = ApplicationManager.getApplication();
+    Ref<Boolean> reusedProject = new Ref<>(true);
+    app.invokeAndWait(() -> {
+      assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.", ourTestCase);
+      IdeaLogger.ourErrorsOccurred = null;
+      app.assertIsDispatchThread();
 
-    myOldSdks = new SdkLeakTracker();
+      myOldSdks = new SdkLeakTracker();
 
-    boolean reusedProject = true;
-    if (ourProject == null || ourProjectDescriptor == null || !ourProjectDescriptor.equals(descriptor)) {
-      initProject(descriptor);
-      reusedProject = false;
-    }
+      if (ourProject == null || ourProjectDescriptor == null || !ourProjectDescriptor.equals(descriptor)) {
+        initProject(descriptor);
+        reusedProject.set(false);
+      }
 
-    descriptor.registerSdk(parentDisposable);
+      descriptor.registerSdk(parentDisposable);
+    });
 
     Project project = ourProject;
     try {
@@ -287,50 +285,57 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       setProject(null);
       throw e;
     }
-    if (reusedProject) {
-      // clear all caches, reindex
-      WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), false, true));
-    }
 
-    MessageBusConnection connection = project.getMessageBus().connect(parentDisposable);
-    connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
-      @Override
-      public void moduleAdded(@NotNull Project project, @NotNull Module module) {
-        fail("Adding modules is not permitted in light tests.");
+    Ref<Pair.NonNull<Project, Module>> result = new Ref<>();
+    app.invokeAndWait(() -> {
+      if (reusedProject.get()) {
+        // clear all caches, reindex
+        WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), false, true));
       }
+
+      MessageBusConnection connection = project.getMessageBus().connect(parentDisposable);
+      connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
+        @Override
+        public void moduleAdded(@NotNull Project project, @NotNull Module module) {
+          fail("Adding modules is not permitted in light tests.");
+        }
+      });
+
+      clearUncommittedDocuments(project);
+
+      InspectionsKt.configureInspections(localInspectionTools, project, parentDisposable);
+
+      assertFalse(PsiManager.getInstance(project).isDisposed());
+      Boolean passed = null;
+      try {
+        passed = StartupManagerEx.getInstanceEx(project).startupActivityPassed();
+      }
+      catch (Exception ignored) {
+      }
+
+      assertTrue("open: " + project.isOpen() +
+                 "; disposed:" + project.isDisposed() +
+                 "; startup passed:" + passed +
+                 "; all open projects: " + Arrays.asList(ProjectManager.getInstance().getOpenProjects()), project.isInitialized());
+
+      CodeStyle.setTemporarySettings(project, CodeStyle.createTestSettings());
+
+      FileDocumentManager manager = FileDocumentManager.getInstance();
+      if (manager instanceof FileDocumentManagerImpl) {
+        Document[] unsavedDocuments = manager.getUnsavedDocuments();
+        manager.saveAllDocuments();
+        app.runWriteAction(((FileDocumentManagerImpl)manager)::dropAllUnsavedDocuments);
+
+        assertEmpty("There are unsaved documents", Arrays.asList(unsavedDocuments));
+      }
+
+      // startup activities
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+
+      ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
+      result.set(Pair.createNonNull(project, ourModule));
     });
-
-    clearUncommittedDocuments(project);
-
-    InspectionsKt.configureInspections(localInspectionTools, project, parentDisposable);
-
-    assertFalse(PsiManager.getInstance(project).isDisposed());
-    Boolean passed = null;
-    try {
-      passed = StartupManagerEx.getInstanceEx(project).startupActivityPassed();
-    }
-    catch (Exception ignored) {
-
-    }
-    assertTrue("open: " + project.isOpen() +
-               "; disposed:" + project.isDisposed() +
-               "; startup passed:" + passed +
-               "; all open projects: " + Arrays.asList(ProjectManager.getInstance().getOpenProjects()), project.isInitialized());
-
-    CodeStyle.setTemporarySettings(project, CodeStyle.createTestSettings());
-
-    final FileDocumentManager manager = FileDocumentManager.getInstance();
-    if (manager instanceof FileDocumentManagerImpl) {
-      Document[] unsavedDocuments = manager.getUnsavedDocuments();
-      manager.saveAllDocuments();
-      ApplicationManager.getApplication().runWriteAction(((FileDocumentManagerImpl)manager)::dropAllUnsavedDocuments);
-
-      assertEmpty("There are unsaved documents", Arrays.asList(unsavedDocuments));
-    }
-    UIUtil.dispatchAllInvocationEvents(); // startup activities
-
-    ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
-    return Pair.createNonNull(project, ourModule);
+    return result.get();
   }
 
   protected void enableInspectionTools(InspectionProfileEntry @NotNull ... tools) {
