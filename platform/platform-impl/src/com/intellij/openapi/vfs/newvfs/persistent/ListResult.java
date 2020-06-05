@@ -75,7 +75,7 @@ class ListResult {
 
   @Contract(pure=true)
   @NotNull
-  ListResult merge(@NotNull List<? extends ChildInfo> newList, @NotNull TObjectHashingStrategy<CharSequence> hashingStrategy) {
+  ListResult merge(@NotNull List<? extends ChildInfo> newList, @NotNull TObjectHashingStrategy<? super CharSequence> hashingStrategy) {
     // assume list is sorted
     ListResult newChildren = FSRecords.mergeByName(this, new ListResult(newList), hashingStrategy);
     return new ListResult(modStamp, newChildren.children);

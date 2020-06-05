@@ -1059,7 +1059,7 @@ public final class FSRecords {
   @NotNull
   static ListResult mergeByName(@NotNull ListResult existingList,
                                 @NotNull ListResult newList,
-                                @NotNull TObjectHashingStrategy<CharSequence> hashingStrategy) {
+                                @NotNull TObjectHashingStrategy<? super CharSequence> hashingStrategy) {
     List<? extends ChildInfo> newChildren = newList.children;
     List<? extends ChildInfo> oldChildren = existingList.children;
     if (oldChildren.isEmpty()) return newList;
