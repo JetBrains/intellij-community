@@ -20,6 +20,7 @@ open class EntityStorageInternalIndex<T> private constructor(
   }
 
   class MutableEntityStorageInternalIndex<T> private constructor(
+    // Do not write to [index] directly! Create a method in this index and call [startWrite] before write.
     override var index: BidirectionalMap<EntityId, T>
   ) : EntityStorageInternalIndex<T>(index) {
 
@@ -30,6 +31,16 @@ open class EntityStorageInternalIndex<T> private constructor(
       index.remove(id)
       if (entitySource == null) return
       index[id] = entitySource
+    }
+
+    internal fun clear() {
+      startWrite()
+      index.clear()
+    }
+
+    internal fun copyFrom(another: EntityStorageInternalIndex<T>) {
+      startWrite()
+      this.index.putAll(another.index)
     }
 
     private fun startWrite() {

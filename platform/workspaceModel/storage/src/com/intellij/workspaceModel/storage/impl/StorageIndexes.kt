@@ -47,7 +47,7 @@ internal open class StorageIndexes(
     storage.entitiesByType.entities.filterNotNull().forEach { family ->
       family.entities.asSequence().filterNotNull().forEach { data ->
         val removed = entitySourceIndexCopy.remove(data.createPid(), data.entitySource)
-        assert(removed) { "Entity $data isn't found in entity source index" }
+        assert(removed) { "Entity $data isn't found in entity source index. Entity source: ${data.entitySource}, Id: ${data.createPid()}" }
       }
     }
     assert(entitySourceIndexCopy.isEmpty()) { "Entity source index has garbage: $entitySourceIndexCopy" }

@@ -71,7 +71,7 @@ private class ReplaceBySource(private val storage: WorkspaceEntityStorageBuilder
       storage.replaceBySource(filter.first, another)
     }
     catch (e: ReplaceBySourceException) {
-      env.logMessage("Cannot perform replace by source: $e. Fallback to previous state")
+      env.logMessage("Cannot perform replace by source: ${e.message}. Fallback to previous state")
       (storage as WorkspaceEntityStorageBuilderImpl).restoreFromBackup(backup)
     }
   }
@@ -95,15 +95,15 @@ private class ReplaceBySource(private val storage: WorkspaceEntityStorageBuilder
 
 
     indexes.softLinks.clear()
-    indexes.virtualFileIndex.index.clear()
-    indexes.entitySourceIndex.index.clear()
-    indexes.persistentIdIndex.index.clear()
+    indexes.virtualFileIndex.clear()
+    indexes.entitySourceIndex.clear()
+    indexes.persistentIdIndex.clear()
     indexes.externalMappings.clear()
 
     indexes.softLinks.putAll(backupBuilder.indexes.softLinks)
-    indexes.virtualFileIndex.index.putAll(backupBuilder.indexes.virtualFileIndex.index)
-    indexes.entitySourceIndex.index.putAll(backupBuilder.indexes.entitySourceIndex.index)
-    indexes.persistentIdIndex.index.putAll(backupBuilder.indexes.persistentIdIndex.index)
+    indexes.virtualFileIndex.copyFrom(backupBuilder.indexes.virtualFileIndex)
+    indexes.entitySourceIndex.copyFrom(backupBuilder.indexes.entitySourceIndex)
+    indexes.persistentIdIndex.copyFrom(backupBuilder.indexes.persistentIdIndex)
     indexes.externalMappings.putAll(indexes.externalMappings)
     // Just checking that all properties have been asserted
     TestCase.assertEquals(5, StorageIndexes::class.memberProperties.size)

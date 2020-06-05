@@ -7,6 +7,7 @@ import com.intellij.workspaceModel.storage.impl.EntityId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.containers.copy
+import com.intellij.workspaceModel.storage.impl.containers.putAll
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
@@ -21,6 +22,7 @@ open class VirtualFileIndex private constructor(
     index.getKeys(id)
 
   class MutableVirtualFileIndex private constructor(
+    // Do not write to [index] directly! Create a method in this index and call [startWrite] before write.
     override var index: BidirectionalMultiMap<VirtualFileUrl, EntityId>
   ) : VirtualFileIndex(index) {
 
@@ -31,6 +33,16 @@ open class VirtualFileIndex private constructor(
       index.removeValue(id)
       if (virtualFileUrls == null) return
       virtualFileUrls.forEach { index.put(it, id) }
+    }
+
+    internal fun clear() {
+      startWrite()
+      index.clear()
+    }
+
+    internal fun copyFrom(another: VirtualFileIndex) {
+      startWrite()
+      index.putAll(another.index)
     }
 
     private fun startWrite() {
