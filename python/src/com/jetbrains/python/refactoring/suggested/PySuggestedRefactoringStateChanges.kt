@@ -38,8 +38,11 @@ internal class PySuggestedRefactoringStateChanges(support: PySuggestedRefactorin
   }
 
   override fun guessParameterIdByMarkers(markerRange: TextRange, prevState: SuggestedRefactoringState): Any? {
-    return super.guessParameterIdByMarkers(markerRange, prevState)
-           ?: findStateChanges(prevState.declaration).guessParameterIdByMarker(markerRange, prevState)
+    return super.guessParameterIdByMarkers(markerRange, prevState) ?:
+           // findStateChanges(prevState.declaration) can't be used here since !prevState.declaration.isValid
+           sequenceOf(ChangeSignatureStateChanges(this), RenameStateChanges)
+             .mapNotNull { it.guessParameterIdByMarker(markerRange, prevState) }
+             .firstOrNull()
   }
 
   private fun findStateChanges(declaration: PsiElement): StateChangesInternal {
