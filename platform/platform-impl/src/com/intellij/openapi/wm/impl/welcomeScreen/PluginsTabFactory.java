@@ -3,24 +3,44 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.wm.WelcomeScreenTab;
 import com.intellij.openapi.wm.WelcomeTabFactory;
+import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.AncestorEvent;
 
 public class PluginsTabFactory implements WelcomeTabFactory {
+  private static final Logger LOG = Logger.getInstance(PluginsTabFactory.class);
+
   @Override
   public @NotNull WelcomeScreenTab createWelcomeTab(@NotNull Disposable parentDisposable) {
     return new TabbedWelcomeScreen.DefaultWelcomeScreenTab("Plugins") {
       @Override
       protected JComponent buildComponent() {
         PluginManagerConfigurable configurable = new PluginManagerConfigurable();
-        return UI.Panels.simplePanel(configurable.createComponent()).addToTop(configurable.getTopComponent())
+        BorderLayoutPanel pluginsPanel = UI.Panels.simplePanel(configurable.createComponent()).addToTop(configurable.getTopComponent())
           .withBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 0, 0));
+        pluginsPanel.addAncestorListener(new AncestorListenerAdapter() {
+          @Override
+          public void ancestorRemoved(AncestorEvent event) {
+            if (!configurable.isModified()) return;
+            try {
+              configurable.apply();
+            }
+            catch (ConfigurationException exception) {
+              LOG.error(exception);
+            }
+          }
+        });
+        return pluginsPanel;
       }
     };
   }
