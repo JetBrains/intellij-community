@@ -1288,7 +1288,7 @@
 
     <applicationService serviceImplementation="com.intellij.util.indexing.IndexableSetContributorModificationTracker"/>
 
-    <toolWindow id="Problems View" anchor="bottom" icon="AllIcons.Toolwindows.ProblemsEmpty" canCloseContents="true"
+    <toolWindow id="Problems View" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowProblemsEmpty" canCloseContents="true"
                 factoryClass="com.intellij.analysis.problemsView.toolWindow.ProblemsView"/>
     <experimentalFeature id="problems.view.enabled" percentOfUsers="0" internalFeature="true">
       <description>Allows to use the Problems View toolwindow.</description>
