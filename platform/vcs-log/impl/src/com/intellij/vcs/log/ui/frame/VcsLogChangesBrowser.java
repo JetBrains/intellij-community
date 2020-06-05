@@ -21,8 +21,7 @@ import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
 import com.intellij.openapi.vcs.changes.ui.browser.ChangesFilterer;
 import com.intellij.openapi.vcs.changes.ui.browser.FilterableChangesBrowser;
-import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.GuiUtils;
@@ -37,7 +36,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.index.IndexedDetails;
-import com.intellij.vcs.log.history.FileHistoryKt;
 import com.intellij.vcs.log.history.FileHistoryUtil;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.MergedChange;
@@ -46,7 +44,6 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
-import com.intellij.vcsUtil.VcsFileUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -59,6 +56,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import static com.intellij.diff.util.DiffUserDataKeysEx.*;
+import static com.intellij.openapi.vcs.history.VcsDiffUtil.getRevisionTitle;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES;
@@ -377,7 +375,7 @@ public class VcsLogChangesBrowser extends FilterableChangesBrowser {
     }
 
     if (forDiffPreview) {
-      putFilePathsIntoChangeContext(change, context);
+      VcsDiffUtil.putFilePathsIntoChangeContext(change, context);
     }
 
     return ChangeDiffRequestProducer.create(project, change, context);
@@ -408,41 +406,6 @@ public class VcsLogChangesBrowser extends FilterableChangesBrowser {
     context.put(VCS_DIFF_CENTER_CONTENT_TITLE, getRevisionTitle(centerRevision, centerFile, null));
     context.put(VCS_DIFF_RIGHT_CONTENT_TITLE, getRevisionTitle(rightRevision, rightFile, centerFile));
     context.put(VCS_DIFF_LEFT_CONTENT_TITLE, getRevisionTitle(leftRevision, leftFile, centerFile == null ? rightFile : centerFile));
-  }
-
-  private static void putFilePathsIntoChangeContext(@NotNull Change change, @NotNull Map<Key, Object> context) {
-    ContentRevision afterRevision = change.getAfterRevision();
-    ContentRevision beforeRevision = change.getBeforeRevision();
-    FilePath aFile = afterRevision == null ? null : afterRevision.getFile();
-    FilePath bFile = beforeRevision == null ? null : beforeRevision.getFile();
-    context.put(VCS_DIFF_RIGHT_CONTENT_TITLE, getRevisionTitle(afterRevision, aFile, null));
-    context.put(VCS_DIFF_LEFT_CONTENT_TITLE, getRevisionTitle(beforeRevision, bFile, aFile));
-  }
-
-  @NotNull
-  private static String getRevisionTitle(@Nullable ContentRevision revision,
-                                         @Nullable FilePath file,
-                                         @Nullable FilePath baseFile) {
-    return getShortHash(revision) +
-           (file == null || FileHistoryKt.FILE_PATH_HASHING_STRATEGY.equals(baseFile, file)
-            ? ""
-            : " (" + getRelativeFileName(baseFile, file) + ")");
-  }
-
-  @NotNull
-  private static String getShortHash(@Nullable ContentRevision revision) {
-    if (revision == null) return "";
-    VcsRevisionNumber revisionNumber = revision.getRevisionNumber();
-    if (revisionNumber instanceof ShortVcsRevisionNumber) return ((ShortVcsRevisionNumber)revisionNumber).toShortString();
-    return revisionNumber.asString();
-  }
-
-  @NotNull
-  private static String getRelativeFileName(@Nullable FilePath baseFile, @NotNull FilePath file) {
-    if (baseFile == null || !baseFile.getName().equals(file.getName())) return file.getName();
-    FilePath aParentPath = baseFile.getParentPath();
-    if (aParentPath == null) return file.getName();
-    return VcsFileUtil.relativePath(aParentPath.getIOFile(), file.getIOFile());
   }
 
   private class ChangesBrowserParentNode extends ChangesBrowserNode<String> {
