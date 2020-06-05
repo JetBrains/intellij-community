@@ -177,7 +177,7 @@ public final class ProjectUtil {
 
     List<ProjectOpenProcessor> processors = new SmartList<>();
     ProjectOpenProcessor.EXTENSION_POINT_NAME.forEachExtensionSafe(processor -> {
-      if (!(processor instanceof PlatformProjectOpenProcessor)) {
+      if (processor instanceof PlatformProjectOpenProcessor) {
         if (Files.isDirectory(file)) {
           processors.add(processor);
         }
