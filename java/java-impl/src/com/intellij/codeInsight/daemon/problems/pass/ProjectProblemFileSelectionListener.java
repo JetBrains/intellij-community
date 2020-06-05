@@ -12,6 +12,7 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiFile;
@@ -38,10 +39,15 @@ final class ProjectProblemFileSelectionListener implements FileEditorManagerList
     VirtualFile oldFile = event.getOldFile();
     VirtualFile newFile = event.getNewFile();
     TextEditor oldEditor = tryCast(event.getOldEditor(), TextEditor.class);
-    if (oldFile == null || oldEditor == null || oldFile instanceof VirtualFileWindow || !oldFile.isValid() || oldFile.equals(newFile)) return;
-    PsiJavaFile psiJavaFile = tryCast(PsiManager.getInstance(myProject).findFile(oldFile), PsiJavaFile.class);
+    if (oldFile == null || oldEditor == null || oldFile.equals(newFile)) return;
+    setPreviousState(oldFile, oldEditor);
+  }
+
+  private void setPreviousState(@NotNull VirtualFile file, @NotNull TextEditor textEditor) {
+    if (file instanceof VirtualFileWindow || !file.isValid()) return;
+    PsiJavaFile psiJavaFile = tryCast(PsiManager.getInstance(myProject).findFile(file), PsiJavaFile.class);
     if (psiJavaFile == null) return;
-    ProjectProblemPassUtils.removeInfos(oldEditor.getEditor());
+    ProjectProblemPassUtils.removeInfos(textEditor.getEditor());
     FileStateUpdater.setPreviousState(psiJavaFile);
   }
 
@@ -50,12 +56,21 @@ final class ProjectProblemFileSelectionListener implements FileEditorManagerList
     PsiManager psiManager = PsiManager.getInstance(myProject);
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     for (VFileEvent e : events) {
-      if (!(e instanceof VFileDeleteEvent)) continue;
-      VirtualFile virtualFile = ((VFileDeleteEvent)e).getFile();
-      if (!fileIndex.isInContent(virtualFile)) continue;
-      PsiFile psiFile = psiManager.findFile(virtualFile);
-      if (psiFile == null) continue;
-      FileStateUpdater.removeState(psiFile);
+      VirtualFile changedFile = e.getFile();
+      if (changedFile == null) continue;
+      if (e instanceof VFileDeleteEvent) {
+        if (!fileIndex.isInContent(changedFile)) continue;
+        PsiFile psiFile = psiManager.findFile(changedFile);
+        if (psiFile == null) continue;
+        FileStateUpdater.removeState(psiFile);
+      }
+      if (e instanceof VFileContentChangeEvent || e instanceof VFileDeleteEvent) {
+        TextEditor editor = tryCast(FileEditorManager.getInstance(myProject).getSelectedEditor(), TextEditor.class);
+        if (editor == null) continue;
+        VirtualFile selectedFile = editor.getFile();
+        if (selectedFile == null || changedFile.equals(selectedFile)) continue;
+        setPreviousState(selectedFile, editor);
+      }
     }
   }
 
