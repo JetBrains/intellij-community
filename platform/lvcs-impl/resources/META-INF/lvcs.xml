@@ -8,6 +8,13 @@
       <add-to-group group-id="VersionControlsGroup" anchor="first"/>
     </group>
 
+    <group id="LocalHistory.MainMenuGroup">
+      <separator/>
+      <reference ref="LocalHistory"/>
+      <separator/>
+      <add-to-group group-id="FileMenu" relative-to-action="SaveAll" anchor="before"/>
+    </group>
+
     <action id="RecentChanges" class="com.intellij.history.integration.ui.actions.RecentChangesAction">
       <keyboard-shortcut first-keystroke="alt shift C" keymap="$default"/>
       <add-to-group group-id="ViewRecentActions" anchor="last"/>

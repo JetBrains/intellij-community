@@ -60,7 +60,6 @@
     <!-- Main menu | Version Control -->
     <group id="VcsGroups" class="com.intellij.openapi.vcs.actions.VcsGroupsActionGroup" popup="true">
       <group id="Vcs.MainMenu" class="com.intellij.openapi.vcs.actions.VcsMainMenuActionGroup">
-        <reference ref="LocalHistory"/>
         <action id="Start.Use.Vcs" class="com.intellij.ide.actions.StartUseVcsAction"/>
         <separator/>
         <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGlobalGroup">
