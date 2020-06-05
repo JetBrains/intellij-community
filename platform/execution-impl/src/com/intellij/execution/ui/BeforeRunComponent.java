@@ -44,10 +44,8 @@ public class BeforeRunComponent extends JPanel implements DnDTarget, Disposable 
 
   public BeforeRunComponent() {
     super(new WrapLayout(FlowLayout.LEADING, 0, 0));
-    JLabel label = new JLabel(ExecutionBundle.message("run.configuration.before.run.label"));
-    JBEmptyBorder border = JBUI.Borders.empty(3, 0, 0, 5);
-    label.setBorder(border);
-    add(label);
+    add(Box.createVerticalStrut(35));
+    JBEmptyBorder border = JBUI.Borders.empty(5, 0, 0, 5);
     myAddButton = new InplaceButton(ExecutionBundle.message("run.configuration.before.run.add.task"), AllIcons.General.Add, e -> showPopup());
     myAddPanel = new JPanel();
     myAddPanel.setBorder(border);
