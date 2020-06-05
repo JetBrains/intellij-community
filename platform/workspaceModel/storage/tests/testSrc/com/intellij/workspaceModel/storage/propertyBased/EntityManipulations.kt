@@ -121,7 +121,7 @@ private object ChildWithOptionalParentManipulation : EntityManipulation {
       override fun modifyEntity(env: ImperativeCommand.Environment): List<ModifiableChildWithOptionalParentEntity.() -> Unit> {
         return listOf(
           modifyStringProperty(ModifiableChildWithOptionalParentEntity::childProperty, env),
-          modifyNullableProperty(ModifiableChildWithOptionalParentEntity::optionalParent, parentGetter(storage), env)
+          modifyNullableProperty(ModifiableChildWithOptionalParentEntity::optionalParent, parentGenerator(storage), env)
         )
       }
     }
@@ -143,7 +143,7 @@ private object ChildEntityManipulation : EntityManipulation {
       override fun modifyEntity(env: ImperativeCommand.Environment): List<ModifiableChildEntity.() -> Unit> {
         return listOf(
           modifyStringProperty(ModifiableChildEntity::childProperty, env),
-          modifyNotNullProperty(ModifiableChildEntity::parent, parentGetter(storage), env)
+          modifyNotNullProperty(ModifiableChildEntity::parent, parentGenerator(storage), env)
         )
       }
     }
@@ -200,9 +200,11 @@ private object SampleEntityManipulation : EntityManipulation {
   }
 }
 
-private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> modifyNotNullProperty(property: KMutableProperty1<A, T>,
-                                                                                             takeFrom: Generator<T?>,
-                                                                                             env: ImperativeCommand.Environment): A.() -> Unit {
+private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> modifyNotNullProperty(
+  property: KMutableProperty1<A, T>,
+  takeFrom: Generator<T?>,
+  env: ImperativeCommand.Environment
+): A.() -> Unit {
   return {
     val value = env.generateValue(takeFrom, null)
     if (value != null) {
@@ -212,9 +214,11 @@ private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> modifyNot
   }
 }
 
-private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> modifyNullableProperty(property: KMutableProperty1<A, T?>,
-                                                                                              takeFrom: Generator<T?>,
-                                                                                              env: ImperativeCommand.Environment): A.() -> Unit {
+private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> modifyNullableProperty(
+  property: KMutableProperty1<A, T?>,
+  takeFrom: Generator<T?>,
+  env: ImperativeCommand.Environment
+): A.() -> Unit {
   return {
     val value = env.generateValue(takeFrom, null)
     env.logMessage("Change ${property.name} to %s")
@@ -280,15 +284,6 @@ private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> removeInS
     }
   }
 }
-
-private inline fun <reified T : WorkspaceEntity> parentGetter(storage: WorkspaceEntityStorageBuilderImpl): Generator<T?> {
-  return Generator.from {
-    val classId = T::class.java.toClassId()
-    val parentId = it.generate(EntityIdOfFamilyGenerator.create(storage, classId)) ?: return@from null
-    storage.entityDataByIdOrDie(parentId).createEntity(storage) as T
-  }
-}
-
 
 private fun <A> MutableList<A>.swap(index1: Int, index2: Int) {
   val tmp = this[index1]
