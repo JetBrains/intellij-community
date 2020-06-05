@@ -15,7 +15,6 @@
  */
 package org.jetbrains.jps.cmdline;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTargetIndex;
@@ -26,8 +25,6 @@ import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
-import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
-import org.jetbrains.jps.incremental.storage.BuildTargetSourcesState;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
@@ -47,12 +44,6 @@ public final class ProjectDescriptor {
   private final JpsProject myProject;
   private final JpsModel myModel;
   public final BuildFSState fsState;
-  /**
-   * @deprecated use {@link #getProjectStamps()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public final ProjectTimestamps timestamps;
   private final ProjectStamps myProjectStamps;
   public final BuildDataManager dataManager;
   private final BuildLoggingManager myLoggingManager;
@@ -68,7 +59,7 @@ public final class ProjectDescriptor {
 
   public ProjectDescriptor(JpsModel model,
                            BuildFSState fsState,
-                           ProjectTimestamps timestamps,
+                           ProjectStamps projectStamps,
                            BuildDataManager dataManager,
                            BuildLoggingManager loggingManager,
                            final ModuleExcludeIndex moduleExcludeIndex,
@@ -78,8 +69,7 @@ public final class ProjectDescriptor {
     myIgnoredFileIndex = ignoredFileIndex;
     myProject = model.getProject();
     this.fsState = fsState;
-    this.timestamps = timestamps;
-    myProjectStamps = timestamps;
+    myProjectStamps = projectStamps;
     this.dataManager = dataManager;
     myBuildTargetIndex = buildTargetIndex;
     myBuildRootIndex = buildRootIndex;

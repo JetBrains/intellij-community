@@ -19,7 +19,7 @@ import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.Timesta
 /**
  * @author Eugene Zhuravlev
  */
-public class FileTimestampStorage extends AbstractStateStorage<File, TimestampPerTarget[]> implements TimestampStorage<Timestamp> {
+public class FileTimestampStorage extends AbstractStateStorage<File, TimestampPerTarget[]> implements StampsStorage<Timestamp> {
   private final BuildTargetsState myTargetsState;
   private final File myTimestampsRoot;
 
