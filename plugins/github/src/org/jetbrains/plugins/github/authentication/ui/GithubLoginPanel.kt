@@ -94,7 +94,7 @@ internal class GithubLoginPanel(executorFactory: GithubApiRequestExecutor.Factor
       null
     }
     catch (e: Exception) {
-      ValidationInfo(message("credentials.server.path.invalid", field.text, e.message.orEmpty()), field)
+      ValidationInfo(message("credentials.server.path.invalid"), field)
     }
 
   private fun setBusy(busy: Boolean) {
