@@ -96,6 +96,6 @@ public class CoverageFragment<T extends RunConfigurationBase<?>> extends NestedG
     return new SettingsEditorFragment<>("coverage.runner", JavaCoverageBundle.message("coverage.settings.runner"), null, component,
                                         (t, component1) -> comboBox.setItem(configuration.getCoverageRunner()),
                                         (t, component1) -> configuration.setCoverageRunner(comboBox.getItem()),
-                                        t -> configuration.getCoverageRunner() != null);
+                                        t -> false);
   }
 }
