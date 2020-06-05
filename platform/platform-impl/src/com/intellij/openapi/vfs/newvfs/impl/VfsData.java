@@ -74,7 +74,6 @@ public class VfsData {
   private final ConcurrentBitSet myInvalidatedIds = new ConcurrentBitSet();
   private TIntHashSet myDyingIds = new TIntHashSet();
 
-  private boolean myHasChangedParents; // synchronized by read-write lock; clients outside read-action deserve to get outdated result
   private final IntObjectMap<VirtualDirectoryImpl> myChangedParents = ContainerUtil.createConcurrentIntObjectMap();
 
   public VfsData() {
@@ -192,13 +191,12 @@ public class VfsData {
   }
 
   @Nullable
-  VirtualDirectoryImpl getChangedParent(int id) {
-    return myHasChangedParents ? myChangedParents.get(id): null;
+  private VirtualDirectoryImpl getChangedParent(int id) {
+    return myChangedParents.get(id);
   }
 
-  void changeParent(int id, @NotNull VirtualDirectoryImpl parent) {
+  private void changeParent(int id, @NotNull VirtualDirectoryImpl parent) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    myHasChangedParents = true;
     myChangedParents.put(id, parent);
   }
 
@@ -218,6 +216,9 @@ public class VfsData {
 
     @NotNull
     final VfsData vfsData;
+
+    // the reference is synchronized by read-write lock; clients outside read-action deserve to get outdated result
+    ConcurrentBitSet changedParents;
 
     Segment(@NotNull VfsData vfsData) {
       this.vfsData = vfsData;
@@ -282,6 +283,19 @@ public class VfsData {
           return;
         }
       }
+    }
+
+    void changeParent(int fileId, VirtualDirectoryImpl directory) {
+      vfsData.changeParent(fileId, directory);
+      if (changedParents == null) {
+        changedParents = new ConcurrentBitSet();
+      }
+      changedParents.set(getOffset(fileId));
+    }
+
+    @Nullable VirtualDirectoryImpl getChangedParent(int fileId) {
+      ConcurrentBitSet bits = changedParents;
+      return bits == null || !bits.get(getOffset(fileId)) ? null : vfsData.getChangedParent(fileId);
     }
   }
 

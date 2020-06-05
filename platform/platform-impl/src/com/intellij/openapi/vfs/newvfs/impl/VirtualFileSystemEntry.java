@@ -103,7 +103,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public VirtualDirectoryImpl getParent() {
-    VirtualDirectoryImpl changedParent = mySegment.vfsData.getChangedParent(myId);
+    VirtualDirectoryImpl changedParent = mySegment.getChangedParent(myId);
     return changedParent != null ? changedParent : myParent;
   }
 
@@ -336,7 +336,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     parent.removeChild(this);
 
     VirtualDirectoryImpl directory = (VirtualDirectoryImpl)newParent;
-    mySegment.vfsData.changeParent(myId, directory);
+    mySegment.changeParent(myId, directory);
     directory.addChild(this);
     updateLinkStatus();
     ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
