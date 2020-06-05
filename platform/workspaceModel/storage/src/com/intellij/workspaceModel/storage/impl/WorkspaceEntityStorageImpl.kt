@@ -133,12 +133,13 @@ internal class WorkspaceEntityStorageBuilderImpl(
     }
 
     // Check for persistent id uniqueness
-    copiedData.persistentId(this)?.let { persistentId ->
-      if (indexes.persistentIdIndex.getIdsByEntry(persistentId) != null) {
-        // Restore previous value
-        (entitiesByType.entities[e.id.clazz] as MutableEntityFamily<T>).set(e.id.arrayId, backup)
-        throw PersistentIdAlreadyExistsException(persistentId)
-      }
+    if (beforePersistentId != null) {
+      val newPersistentId = copiedData.persistentId(this) ?: error("Persistent id expected")
+      if (beforePersistentId != newPersistentId && indexes.persistentIdIndex.getIdsByEntry(newPersistentId) != null ) {
+          // Restore previous value
+          (entitiesByType.entities[e.id.clazz] as MutableEntityFamily<T>).set(e.id.arrayId, backup)
+          throw PersistentIdAlreadyExistsException(newPersistentId)
+        }
     }
 
     // Add an entry to changelog
