@@ -161,7 +161,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
         PsiElement parent = params.getPosition().getParent();
         if (parent instanceof PsiReferenceExpression) {
-          CollectConversion.addCollectConversion((PsiReferenceExpression)parent, mergedInfos, noTypeCheck);
+          StreamConversion.addCollectConversion((PsiReferenceExpression)parent, mergedInfos, noTypeCheck);
         }
 
         for (final ExpectedTypeInfo info : mergedInfos) {

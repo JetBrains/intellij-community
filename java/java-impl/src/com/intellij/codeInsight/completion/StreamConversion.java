@@ -26,7 +26,7 @@ import static com.intellij.psi.CommonClassNames.*;
 /**
  * @author peter
  */
-class CollectConversion {
+class StreamConversion {
  
   static void addCollectConversion(PsiReferenceExpression ref, Collection<? extends ExpectedTypeInfo> expectedTypes, Consumer<? super LookupElement> consumer) {
     PsiClass collectors = JavaPsiFacade.getInstance(ref.getProject()).findClass(JAVA_UTIL_STREAM_COLLECTORS, ref.getResolveScope());
@@ -69,7 +69,7 @@ class CollectConversion {
                                                     @NotNull PsiClass collectors) {
     for (Pair<String, PsiType> pair : suggestCollectors(expectedTypes, qualifier)) {
       if (collectors.findMethodsByName(pair.first, true).length == 0) continue;
-      consumer.consume(new MyLookupElement(pair.first, pair.second, ref));
+      consumer.consume(new CollectLookupElement(pair.first, pair.second, ref));
     }
   }
   
@@ -137,14 +137,14 @@ class CollectConversion {
     return result;
   }
 
-  private static class MyLookupElement extends LookupElement implements TypedLookupItem {
+  private static class CollectLookupElement extends LookupElement implements TypedLookupItem {
     private final String myLookupString;
     private final String myTypeText;
     private final String myMethodName;
     @NotNull private final PsiType myExpectedType;
     private final boolean myHasImport;
 
-    MyLookupElement(String methodName, @NotNull PsiType expectedType, @NotNull PsiElement context) {
+    CollectLookupElement(String methodName, @NotNull PsiType expectedType, @NotNull PsiElement context) {
       myMethodName = methodName;
       myExpectedType = expectedType;
       myTypeText = myExpectedType.getPresentableText();

@@ -365,7 +365,7 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     if (parent instanceof PsiReferenceExpression) {
       final List<ExpectedTypeInfo> expected = Arrays.asList(ExpectedTypesProvider.getExpectedTypes((PsiExpression)parent, true));
-      CollectConversion.addCollectConversion((PsiReferenceExpression)parent, expected,
+      StreamConversion.addCollectConversion((PsiReferenceExpression)parent, expected,
                                              lookupElement -> items.add(JavaSmartCompletionContributor.decorate(lookupElement, expected)));
     }
 
