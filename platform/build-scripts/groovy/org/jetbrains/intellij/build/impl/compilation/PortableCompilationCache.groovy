@@ -70,6 +70,8 @@ class PortableCompilationCache {
       // For more details see {@link JavaBackwardReferenceIndexWriter#initialize}
       context.options.incrementalCompilation = !forceRebuild
       CompilationTasks.create(context).resolveProjectDependenciesAndCompileAll()
+    } else if (downloader.availableForHeadCommit) {
+      CompilationTasks.create(context).resolveProjectDependencies()
     }
     context.options.incrementalCompilation = false
     context.options.useCompiledClassesFromProjectOutput = true
