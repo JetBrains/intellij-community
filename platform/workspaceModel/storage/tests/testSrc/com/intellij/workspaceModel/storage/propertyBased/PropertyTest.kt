@@ -98,13 +98,13 @@ private class ReplaceBySource(private val storage: WorkspaceEntityStorageBuilder
     indexes.virtualFileIndex.index.clear()
     indexes.entitySourceIndex.index.clear()
     indexes.persistentIdIndex.index.clear()
-    indexes.externalIndices.clear()
+    indexes.externalMappings.clear()
 
     indexes.softLinks.putAll(backupBuilder.indexes.softLinks)
     indexes.virtualFileIndex.index.putAll(backupBuilder.indexes.virtualFileIndex.index)
     indexes.entitySourceIndex.index.putAll(backupBuilder.indexes.entitySourceIndex.index)
     indexes.persistentIdIndex.index.putAll(backupBuilder.indexes.persistentIdIndex.index)
-    indexes.externalIndices.putAll(indexes.externalIndices)
+    indexes.externalMappings.putAll(indexes.externalMappings)
     // Just checking that all properties have been asserted
     TestCase.assertEquals(5, StorageIndexes::class.memberProperties.size)
   }

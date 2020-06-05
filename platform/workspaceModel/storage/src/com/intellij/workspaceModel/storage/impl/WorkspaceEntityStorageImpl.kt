@@ -7,9 +7,9 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.exceptions.rbsFailed
-import com.intellij.workspaceModel.storage.impl.external.EmptyExternalEntityIndex
-import com.intellij.workspaceModel.storage.impl.external.ExternalEntityIndexImpl
-import com.intellij.workspaceModel.storage.impl.external.ExternalEntityIndexImpl.MutableExternalEntityIndexImpl
+import com.intellij.workspaceModel.storage.impl.external.EmptyExternalEntityMapping
+import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
+import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -565,7 +565,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
         }
       }
     }
-    indexes.applyExternalIndexChanges(diff)
+    indexes.applyExternalMappingChanges(diff)
     val res = HashMap<WorkspaceEntity, WorkspaceEntity>()
     replaceMap.forEach { (oldId, newId) ->
       if (oldId != newId) {
@@ -579,14 +579,14 @@ internal class WorkspaceEntityStorageBuilderImpl(
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T> getMutableExternalIndex(identifier: String): MutableExternalEntityIndex<T> {
-    val index = indexes.externalIndices.computeIfAbsent(identifier) { MutableExternalEntityIndexImpl<T>() } as MutableExternalEntityIndexImpl<T>
-    index.setTypedEntityStorage(this)
-    return index
+  override fun <T> getMutableExternalMapping(identifier: String): MutableExternalEntityMapping<T> {
+    val mapping = indexes.externalMappings.computeIfAbsent(identifier) { MutableExternalEntityMappingImpl<T>() } as MutableExternalEntityMappingImpl<T>
+    mapping.setTypedEntityStorage(this)
+    return mapping
   }
 
-  fun removeExternalIndex(identifier: String) {
-    indexes.externalIndices.remove(identifier)
+  fun removeExternalMapping(identifier: String) {
+    indexes.externalMappings.remove(identifier)
   }
 
   // modificationCount is not incremented
@@ -765,9 +765,9 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T> getExternalIndex(identifier: String): ExternalEntityIndex<T> {
-    val index = indexes.externalIndices[identifier] as? ExternalEntityIndexImpl<T>
-    if (index == null) return EmptyExternalEntityIndex as ExternalEntityIndex<T>
+  override fun <T> getExternalMapping(identifier: String): ExternalEntityMapping<T> {
+    val index = indexes.externalMappings[identifier] as? ExternalEntityMappingImpl<T>
+    if (index == null) return EmptyExternalEntityMapping as ExternalEntityMapping<T>
     index.setTypedEntityStorage(this)
     return index
   }

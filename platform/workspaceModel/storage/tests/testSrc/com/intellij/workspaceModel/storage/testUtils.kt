@@ -76,7 +76,7 @@ object SerializationRoundTripChecker {
     assertBiMap(expected.indexes.entitySourceIndex.index, actual.indexes.entitySourceIndex.index)
     assertBiMap(expected.indexes.persistentIdIndex.index, actual.indexes.persistentIdIndex.index)
     // External index should not be persisted
-    assertTrue(actual.indexes.externalIndices.isEmpty())
+    assertTrue(actual.indexes.externalMappings.isEmpty())
     // Just checking that all properties have been asserted
     assertEquals(5, StorageIndexes::class.memberProperties.size)
   }
