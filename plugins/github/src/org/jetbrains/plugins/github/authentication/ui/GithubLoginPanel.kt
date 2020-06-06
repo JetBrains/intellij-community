@@ -23,6 +23,8 @@ import javax.swing.JTextField
 
 internal typealias UniqueLoginPredicate = (login: String, server: GithubServerPath) -> Boolean
 
+internal fun GithubLoginPanel.setTokenUi() = setToken(null)
+
 internal class GithubLoginPanel(
   executorFactory: GithubApiRequestExecutor.Factory,
   isAccountUnique: UniqueLoginPredicate
@@ -125,7 +127,7 @@ internal class GithubLoginPanel(
     applyUi(passwordUi)
   }
 
-  fun setToken(token: String? = null) {
+  fun setToken(token: String?) {
     if (token != null) tokenUi.setToken(token)
     applyUi(tokenUi)
   }

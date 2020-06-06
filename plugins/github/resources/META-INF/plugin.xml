@@ -160,5 +160,11 @@
 
     <action id="Github.Break.Api.Requests" internal="true"
             class="org.jetbrains.plugins.github.api.GHRequestExecutorBreaker$Action"/>
+
+    <group id="Github.Accounts.AddAccount">
+      <action id="Github.Accounts.AddGHAccount" class="org.jetbrains.plugins.github.authentication.ui.AddGHAccountAction"/>
+      <separator/>
+      <action id="Github.Accounts.AddGHEAccount" class="org.jetbrains.plugins.github.authentication.ui.AddGHEAccountAction"/>
+    </group>
   </actions>
 </idea-plugin>
