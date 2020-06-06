@@ -29,6 +29,7 @@ import com.intellij.openapi.util.text.StringUtil;
   private boolean isQuoteOpen;
   private String heredocMarker;
   private boolean heredocWithWhiteSpaceIgnore;
+  private int herestringStart = -1;
   private int regexStart = -1;
   private int regexGroups = 0;
   private final IntStack stateStack = new IntStack(1_000);
@@ -321,9 +322,9 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedChar}
 
 <HERE_STRING> {
   ">"  | ";" | "|" | "(" | ")"  |
-  "&"  | "`"                    { popState(); yypushback(1);}
-  {LineTerminator}              { popState(); return LINEFEED; }
-  {WhiteSpace}+                 { popState(); return WHITESPACE; }
+  "&"  | "`"                    { herestringStart=-1; popState(); yypushback(1);}
+  {LineTerminator}              { herestringStart=-1; popState(); return LINEFEED; }
+  {WhiteSpace}+                 { if (herestringStart != getTokenStart()) { herestringStart=-1; popState(); } return WHITESPACE; }
   {HereString}+                 { return WORD; }
 }
 
@@ -435,7 +436,7 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedChar}
     ">("                          { return OUTPUT_PROCESS_SUBSTITUTION; }
     "<("                          { return INPUT_PROCESS_SUBSTITUTION; }
 
-    "<<<" {WhiteSpace}*           { pushState(HERE_STRING); return REDIRECT_HERE_STRING; }
+    "<<<"                         { herestringStart = getTokenEnd(); pushState(HERE_STRING); return REDIRECT_HERE_STRING; }
     "<<-"                         { if (yystate() != HERE_DOC_PIPELINE)
                                     { pushState(HERE_DOC_START_MARKER); heredocWithWhiteSpaceIgnore = true; return HEREDOC_MARKER_TAG; }
                                     else return SHIFT_LEFT; }
