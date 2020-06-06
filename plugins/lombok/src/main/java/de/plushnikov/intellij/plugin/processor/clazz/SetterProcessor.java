@@ -1,13 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiType;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor;
@@ -31,11 +25,12 @@ import java.util.List;
  */
 public class SetterProcessor extends AbstractClassProcessor {
 
-  private final SetterFieldProcessor fieldProcessor;
-
-  public SetterProcessor(@NotNull SetterFieldProcessor setterFieldProcessor) {
+  public SetterProcessor() {
     super(PsiMethod.class, Setter.class);
-    this.fieldProcessor = setterFieldProcessor;
+  }
+
+  private SetterFieldProcessor getSetterFieldProcessor() {
+    return ServiceManager.getService(SetterFieldProcessor.class);
   }
 
   @Override
@@ -69,6 +64,7 @@ public class SetterProcessor extends AbstractClassProcessor {
 
     final Collection<PsiField> setterFields = filterSetterFields(psiClass);
 
+    SetterFieldProcessor fieldProcessor = getSetterFieldProcessor();
     for (PsiField setterField : setterFields) {
       result.add(fieldProcessor.createSetterMethod(setterField, psiClass, methodModifier));
     }
@@ -80,6 +76,7 @@ public class SetterProcessor extends AbstractClassProcessor {
     final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
     filterToleratedElements(classMethods);
 
+    SetterFieldProcessor fieldProcessor = getSetterFieldProcessor();
     final Collection<PsiField> setterFields = new ArrayList<>();
     for (PsiField psiField : psiClass.getFields()) {
       boolean createSetter = true;

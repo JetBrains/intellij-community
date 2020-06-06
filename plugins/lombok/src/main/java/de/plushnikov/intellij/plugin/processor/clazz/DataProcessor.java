@@ -1,11 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
@@ -14,15 +10,7 @@ import de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsCon
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,42 +23,49 @@ import java.util.List;
  */
 public class DataProcessor extends AbstractClassProcessor {
 
-  private final GetterProcessor getterProcessor;
-  private final SetterProcessor setterProcessor;
-  private final EqualsAndHashCodeProcessor equalsAndHashCodeProcessor;
-  private final ToStringProcessor toStringProcessor;
-  private final RequiredArgsConstructorProcessor requiredArgsConstructorProcessor;
-  private final NoArgsConstructorProcessor noArgsConstructorProcessor;
-
-  public DataProcessor(@NotNull GetterProcessor getterProcessor,
-                       @NotNull SetterProcessor setterProcessor,
-                       @NotNull EqualsAndHashCodeProcessor equalsAndHashCodeProcessor,
-                       @NotNull ToStringProcessor toStringProcessor,
-                       @NotNull RequiredArgsConstructorProcessor requiredArgsConstructorProcessor,
-                       @NotNull NoArgsConstructorProcessor noArgsConstructorProcessor) {
+  public DataProcessor() {
     super(PsiMethod.class, Data.class);
-    this.getterProcessor = getterProcessor;
-    this.setterProcessor = setterProcessor;
-    this.equalsAndHashCodeProcessor = equalsAndHashCodeProcessor;
-    this.toStringProcessor = toStringProcessor;
-    this.requiredArgsConstructorProcessor = requiredArgsConstructorProcessor;
-    this.noArgsConstructorProcessor = noArgsConstructorProcessor;
+  }
+
+  private ToStringProcessor getToStringProcessor() {
+    return ServiceManager.getService(ToStringProcessor.class);
+  }
+
+  private NoArgsConstructorProcessor getNoArgsConstructorProcessor() {
+    return ServiceManager.getService(NoArgsConstructorProcessor.class);
+  }
+
+  private GetterProcessor getGetterProcessor() {
+    return ServiceManager.getService(GetterProcessor.class);
+  }
+
+  private SetterProcessor getSetterProcessor() {
+    return ServiceManager.getService(SetterProcessor.class);
+  }
+
+  private EqualsAndHashCodeProcessor getEqualsAndHashCodeProcessor() {
+    return ServiceManager.getService(EqualsAndHashCodeProcessor.class);
+  }
+
+  private RequiredArgsConstructorProcessor getRequiredArgsConstructorProcessor() {
+    return ServiceManager.getService(RequiredArgsConstructorProcessor.class);
   }
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     final PsiAnnotation equalsAndHashCodeAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, EqualsAndHashCode.class);
     if (null == equalsAndHashCodeAnnotation) {
-      equalsAndHashCodeProcessor.validateCallSuperParamExtern(psiAnnotation, psiClass, builder);
+      getEqualsAndHashCodeProcessor().validateCallSuperParamExtern(psiAnnotation, psiClass, builder);
     }
 
     final String staticName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticConstructor");
     if (shouldGenerateRequiredArgsConstructor(psiClass, staticName)) {
-      requiredArgsConstructorProcessor.validateBaseClassConstructor(psiClass, builder);
+      getRequiredArgsConstructorProcessor().validateBaseClassConstructor(psiClass, builder);
     }
 
     return validateAnnotationOnRightType(psiClass, builder);
   }
+
 
   private boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
@@ -83,30 +78,30 @@ public class DataProcessor extends AbstractClassProcessor {
 
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, Getter.class)) {
-      target.addAll(getterProcessor.createFieldGetters(psiClass, PsiModifier.PUBLIC));
+      target.addAll(getGetterProcessor().createFieldGetters(psiClass, PsiModifier.PUBLIC));
     }
     if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, Setter.class)) {
-      target.addAll(setterProcessor.createFieldSetters(psiClass, PsiModifier.PUBLIC));
+      target.addAll(getSetterProcessor().createFieldSetters(psiClass, PsiModifier.PUBLIC));
     }
     if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, EqualsAndHashCode.class)) {
-      target.addAll(equalsAndHashCodeProcessor.createEqualAndHashCode(psiClass, psiAnnotation));
+      target.addAll(getEqualsAndHashCodeProcessor().createEqualAndHashCode(psiClass, psiAnnotation));
     }
     if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, ToString.class)) {
-      target.addAll(toStringProcessor.createToStringMethod(psiClass, psiAnnotation));
+      target.addAll(getToStringProcessor().createToStringMethod(psiClass, psiAnnotation));
     }
 
     final boolean hasConstructorWithoutParamaters;
     final String staticName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticConstructor");
     if (shouldGenerateRequiredArgsConstructor(psiClass, staticName)) {
-      target.addAll(requiredArgsConstructorProcessor.createRequiredArgsConstructor(psiClass, PsiModifier.PUBLIC, psiAnnotation, staticName));
+      target.addAll(getRequiredArgsConstructorProcessor().createRequiredArgsConstructor(psiClass, PsiModifier.PUBLIC, psiAnnotation, staticName));
       // if there are no required field, it will already have a default constructor without parameters
-      hasConstructorWithoutParamaters = requiredArgsConstructorProcessor.getRequiredFields(psiClass).isEmpty();
+      hasConstructorWithoutParamaters = getRequiredArgsConstructorProcessor().getRequiredFields(psiClass).isEmpty();
     } else {
       hasConstructorWithoutParamaters = false;
     }
 
-    if (!hasConstructorWithoutParamaters && shouldGenerateNoArgsConstructor(psiClass, requiredArgsConstructorProcessor)) {
-      target.addAll(noArgsConstructorProcessor.createNoArgsConstructor(psiClass, PsiModifier.PRIVATE, psiAnnotation, true));
+    if (!hasConstructorWithoutParamaters && shouldGenerateNoArgsConstructor(psiClass, getRequiredArgsConstructorProcessor())) {
+      target.addAll(getNoArgsConstructorProcessor().createNoArgsConstructor(psiClass, PsiModifier.PRIVATE, psiAnnotation, true));
     }
   }
 
@@ -119,9 +114,9 @@ public class DataProcessor extends AbstractClassProcessor {
       final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
       filterToleratedElements(definedConstructors);
 
-      final Collection<PsiField> requiredFields = requiredArgsConstructorProcessor.getRequiredFields(psiClass);
+      final Collection<PsiField> requiredFields = getRequiredArgsConstructorProcessor().getRequiredFields(psiClass);
 
-      result = requiredArgsConstructorProcessor.validateIsConstructorNotDefined(
+      result = getRequiredArgsConstructorProcessor().validateIsConstructorNotDefined(
         psiClass, staticName, requiredFields, ProblemEmptyBuilder.getInstance());
     }
     return result;

@@ -1,12 +1,8 @@
 package de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants;
 
 
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierList;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
@@ -32,11 +28,12 @@ import java.util.List;
  */
 public class FieldNameConstantsOldProcessor extends AbstractClassProcessor {
 
-  private final FieldNameConstantsFieldProcessor fieldProcessor;
-
-  public FieldNameConstantsOldProcessor(@NotNull FieldNameConstantsFieldProcessor fieldNameConstantsFieldProcessor) {
+  public FieldNameConstantsOldProcessor() {
     super(PsiField.class, FieldNameConstants.class);
-    this.fieldProcessor = fieldNameConstantsFieldProcessor;
+  }
+
+  private FieldNameConstantsFieldProcessor getFieldNameConstantsFieldProcessor() {
+    return ServiceManager.getService(FieldNameConstantsFieldProcessor.class);
   }
 
   @Override
@@ -50,6 +47,7 @@ public class FieldNameConstantsOldProcessor extends AbstractClassProcessor {
     final boolean result = validateAnnotationOnRightType(psiClass, builder) && LombokProcessorUtil.isLevelVisible(psiAnnotation);
     if (result) {
       final Collection<PsiField> psiFields = filterFields(psiClass);
+      FieldNameConstantsFieldProcessor fieldProcessor = getFieldNameConstantsFieldProcessor();
       for (PsiField psiField : psiFields) {
         fieldProcessor.checkIfFieldNameIsValidAndWarn(psiAnnotation, psiField, builder);
       }
@@ -68,6 +66,7 @@ public class FieldNameConstantsOldProcessor extends AbstractClassProcessor {
 
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final Collection<PsiField> psiFields = filterFields(psiClass);
+    FieldNameConstantsFieldProcessor fieldProcessor = getFieldNameConstantsFieldProcessor();
     for (PsiField psiField : psiFields) {
       if (fieldProcessor.checkIfFieldNameIsValidAndWarn(psiAnnotation, psiField, ProblemEmptyBuilder.getInstance())) {
         target.add(fieldProcessor.createFieldNameConstant(psiField, psiClass, psiAnnotation));
@@ -79,6 +78,7 @@ public class FieldNameConstantsOldProcessor extends AbstractClassProcessor {
   private Collection<PsiField> filterFields(@NotNull PsiClass psiClass) {
     final Collection<PsiField> psiFields = new ArrayList<PsiField>();
 
+    FieldNameConstantsFieldProcessor fieldProcessor = getFieldNameConstantsFieldProcessor();
     for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
       boolean useField = true;
       PsiModifierList modifierList = psiField.getModifierList();

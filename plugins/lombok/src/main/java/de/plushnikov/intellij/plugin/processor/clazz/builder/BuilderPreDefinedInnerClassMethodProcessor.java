@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -26,8 +27,12 @@ import java.util.stream.Collectors;
  */
 public class BuilderPreDefinedInnerClassMethodProcessor extends AbstractBuilderPreDefinedInnerClassProcessor {
 
-  public BuilderPreDefinedInnerClassMethodProcessor(@NotNull BuilderHandler builderHandler) {
-    super(builderHandler, PsiMethod.class, Builder.class);
+  public BuilderPreDefinedInnerClassMethodProcessor() {
+    super(PsiMethod.class, Builder.class);
+  }
+
+  protected BuilderHandler getBuilderHandler() {
+    return ServiceManager.getService(BuilderHandler.class);
   }
 
   protected Collection<? extends PsiElement> generatePsiElements(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiParentMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiBuilderClass) {
@@ -37,6 +42,7 @@ public class BuilderPreDefinedInnerClassMethodProcessor extends AbstractBuilderP
       .filter(psiMethod -> PsiAnnotationSearchUtil.isNotAnnotatedWith(psiMethod, Tolerate.class))
       .map(PsiMethod::getName).collect(Collectors.toSet());
 
+    BuilderHandler builderHandler = getBuilderHandler();
     final List<BuilderInfo> builderInfos = builderHandler.createBuilderInfos(psiAnnotation, psiParentClass, psiParentMethod, psiBuilderClass);
 
     //create constructor

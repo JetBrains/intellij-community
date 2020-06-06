@@ -13,22 +13,16 @@ import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public abstract class AbstractSuperBuilderPreDefinedInnerClassProcessor extends AbstractClassProcessor {
 
-  final SuperBuilderHandler builderHandler;
-
-  AbstractSuperBuilderPreDefinedInnerClassProcessor(@NotNull SuperBuilderHandler builderHandler,
-                                                    @NotNull Class<? extends PsiElement> supportedClass,
+  AbstractSuperBuilderPreDefinedInnerClassProcessor(@NotNull Class<? extends PsiElement> supportedClass,
                                                     @NotNull Class<? extends Annotation> supportedAnnotationClass) {
     super(supportedClass, supportedAnnotationClass);
-    this.builderHandler = builderHandler;
   }
+
+  protected abstract SuperBuilderHandler getBuilderHandler();
 
   @Override
   public boolean isEnabled(@NotNull PropertiesComponent propertiesComponent) {
@@ -52,6 +46,7 @@ public abstract class AbstractSuperBuilderPreDefinedInnerClassProcessor extends 
   }
 
   private List<? super PsiElement> processAnnotation(@NotNull PsiClass psiParentClass, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass) {
+    SuperBuilderHandler builderHandler = getBuilderHandler();
     // use parent class as source!
     final String builderBaseClassName = builderHandler.getBuilderClassName(psiParentClass);
 
@@ -83,7 +78,7 @@ public abstract class AbstractSuperBuilderPreDefinedInnerClassProcessor extends 
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    return builderHandler.validate(psiClass, psiAnnotation, builder);
+    return getBuilderHandler().validate(psiClass, psiAnnotation, builder);
   }
 
   @Override

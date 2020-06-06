@@ -1,13 +1,8 @@
 package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
@@ -27,11 +22,12 @@ import java.util.List;
  */
 public class SuperBuilderProcessor extends AbstractClassProcessor {
 
-  private final SuperBuilderHandler builderHandler;
-
-  public SuperBuilderProcessor(@NotNull SuperBuilderHandler superBuilderHandler) {
+  public SuperBuilderProcessor() {
     super(PsiMethod.class, SuperBuilder.class);
-    this.builderHandler = superBuilderHandler;
+  }
+
+  protected SuperBuilderHandler getBuilderHandler() {
+    return ServiceManager.getService(SuperBuilderHandler.class);
   }
 
   @Override
@@ -54,6 +50,7 @@ public class SuperBuilderProcessor extends AbstractClassProcessor {
   }
 
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+    SuperBuilderHandler builderHandler = getBuilderHandler();
     final String builderClassName = builderHandler.getBuilderClassName(psiClass);
     final PsiClass builderBaseClass = psiClass.findInnerClassByName(builderClassName, false);
     if (null != builderBaseClass) {

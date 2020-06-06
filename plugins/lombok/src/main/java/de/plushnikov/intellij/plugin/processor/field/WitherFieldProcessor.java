@@ -1,14 +1,8 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiType;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor;
@@ -20,12 +14,7 @@ import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-import lombok.Value;
-import lombok.With;
+import lombok.*;
 import lombok.experimental.Wither;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,11 +25,12 @@ import java.util.List;
 
 public class WitherFieldProcessor extends AbstractFieldProcessor {
 
-  private final RequiredArgsConstructorProcessor requiredArgsConstructorProcessor;
-
-  public WitherFieldProcessor(@NotNull RequiredArgsConstructorProcessor requiredArgsConstructorProcessor) {
+  public WitherFieldProcessor() {
     super(PsiMethod.class, Wither.class, With.class);
-    this.requiredArgsConstructorProcessor = requiredArgsConstructorProcessor;
+  }
+
+  private RequiredArgsConstructorProcessor getRequiredArgsConstructorProcessor() {
+    return ServiceManager.getService(RequiredArgsConstructorProcessor.class);
   }
 
   @Override
@@ -127,7 +117,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
     final Collection<PsiField> constructorParameters = filterFields(psiClass);
 
     if (PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, RequiredArgsConstructor.class, Data.class)) {
-      final Collection<PsiField> requiredConstructorParameters = requiredArgsConstructorProcessor.getRequiredFields(psiClass);
+      final Collection<PsiField> requiredConstructorParameters = getRequiredArgsConstructorProcessor().getRequiredFields(psiClass);
       if (constructorParameters.size() == requiredConstructorParameters.size()) {
         return true;
       }
