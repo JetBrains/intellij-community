@@ -264,6 +264,7 @@ class TestingTasksImpl extends TestingTasks {
     FileUtilRt.createParentDirs(classpathFile)
     classpathFile.text = testsClasspath.findAll({ new File(it).exists() }).join('\n')
 
+    def allSystemProperties = new HashMap<String, String>(systemProperties)
     [
       "classpath.file"                         : classpathFile.absolutePath,
       "intellij.build.test.patterns"           : testPatterns,
@@ -271,25 +272,27 @@ class TestingTasksImpl extends TestingTasks {
       "intellij.build.test.sorter"             : System.getProperty("intellij.build.test.sorter"),
       "bootstrap.testcases"                    : "com.intellij.AllTests",
       "idea.performance.tests"                 : System.getProperty("idea.performance.tests"),
-    ].each { k, v -> systemProperties.putIfAbsent(k, v) }
+    ].each { k, v -> allSystemProperties.putIfAbsent(k, v) }
 
-    prepareEnvForTestRun(jvmArgs, systemProperties, bootstrapClasspath, remoteDebugging)
+    def allJvmArgs = new ArrayList<String>(jvmArgs)
+
+    prepareEnvForTestRun(allJvmArgs, allSystemProperties, bootstrapClasspath, remoteDebugging)
 
     context.messages.info("Starting ${testGroups != null ? "test from groups '${testGroups}'" : "all tests"}")
     if (options.customJrePath != null) {
       context.messages.info("JVM: $options.customJrePath")
     }
-    context.messages.info("JVM options: $jvmArgs")
-    context.messages.info("System properties: $systemProperties")
+    context.messages.info("JVM options: $allJvmArgs")
+    context.messages.info("System properties: $allSystemProperties")
     context.messages.info("Bootstrap classpath: $bootstrapClasspath")
     context.messages.info("Tests classpath: $testsClasspath")
     if (!envVariables.isEmpty()) {
       context.messages.info("Environment variables: $envVariables")
     }
 
-    runJUnitTask(jvmArgs, systemProperties, envVariables, isBootstrapSuiteDefault() ? bootstrapClasspath : testsClasspath)
+    runJUnitTask(allJvmArgs, allSystemProperties, envVariables, isBootstrapSuiteDefault() ? bootstrapClasspath : testsClasspath)
 
-    notifySnapshotBuilt(jvmArgs)
+    notifySnapshotBuilt(allJvmArgs)
   }
 
   private void notifySnapshotBuilt(List<String> jvmArgs) {
