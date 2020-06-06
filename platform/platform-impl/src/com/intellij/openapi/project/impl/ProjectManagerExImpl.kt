@@ -21,7 +21,6 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.ProjectManager
@@ -34,18 +33,22 @@ import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.serviceContainer.processProjectComponents
 import com.intellij.ui.IdeUICustomization
 import org.jetbrains.annotations.ApiStatus
+import java.awt.event.InvocationEvent
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.concurrent.ExecutionException
+import java.util.concurrent.Future
 
 @ApiStatus.Internal
 open class ProjectManagerExImpl : ProjectManagerImpl() {
   final override fun createProject(name: String?, path: String): Project? {
-    return newProject(Paths.get(toCanonicalName(path)), OpenProjectTask(isNewProject = true, runConfigurators = false).withProjectName(name))
+    return newProject(Paths.get(toCanonicalName(path)),
+                      OpenProjectTask(isNewProject = true, runConfigurators = false).withProjectName(name))
   }
 
   final override fun newProject(projectName: String?, path: String, useDefaultProjectAsTemplate: Boolean, isDummy: Boolean): Project? {
-    return newProject(Paths.get(toCanonicalName(path)), OpenProjectTask(isNewProject = true, useDefaultProjectAsTemplate = useDefaultProjectAsTemplate, projectName = projectName))
+    return newProject(Paths.get(toCanonicalName(path)), OpenProjectTask(isNewProject = true,
+                                                                        useDefaultProjectAsTemplate = useDefaultProjectAsTemplate,
+                                                                        projectName = projectName))
   }
 
   final override fun loadAndOpenProject(originalFilePath: String): Project? {
@@ -103,7 +106,8 @@ private fun doOpenProject(projectStoreBaseDir: Path, options: OpenProjectTask, p
     }
   }
 
-  val frameAllocator = if (ApplicationManager.getApplication().isHeadlessEnvironment) ProjectFrameAllocator() else ProjectUiFrameAllocator(options, projectStoreBaseDir)
+  val frameAllocator = if (ApplicationManager.getApplication().isHeadlessEnvironment) ProjectFrameAllocator() else ProjectUiFrameAllocator(
+    options, projectStoreBaseDir)
   val result = runInAutoSaveDisabledMode {
     frameAllocator.run {
       activity.end()
@@ -145,7 +149,8 @@ private fun doOpenProject(projectStoreBaseDir: Path, options: OpenProjectTask, p
 private fun prepareProject(options: OpenProjectTask, projectStoreBaseDir: Path, projectManager: ProjectManagerExImpl): PrepareProjectResult? {
   val project: Project?
   if (options.isNewProject) {
-    project = projectManager.newProject(projectStoreBaseDir, options.copy(projectName = ProjectFrameAllocator.getPresentableName(options, projectStoreBaseDir)))
+    project = projectManager.newProject(projectStoreBaseDir, options.copy(projectName = ProjectFrameAllocator.getPresentableName(options,
+                                                                                                                                 projectStoreBaseDir)))
   }
   else {
     val indicator = ProgressManager.getInstance().progressIndicator
@@ -234,7 +239,8 @@ private fun checkExistingProjectOnOpen(projectToClose: Project,
 private fun openProject(project: Project, indicator: ProgressIndicator?) {
   val waitEdtActivity = StartUpMeasurer.startMainActivity("placing calling projectOpened on event queue")
   if (indicator != null) {
-    indicator.text = if (ApplicationManager.getApplication().isInternal) "Waiting on event queue..." else ProjectBundle.message("project.preparing.workspace")
+    indicator.text = if (ApplicationManager.getApplication().isInternal) "Waiting on event queue..." else ProjectBundle.message(
+      "project.preparing.workspace")
     indicator.isIndeterminate = true
   }
   ApplicationManager.getApplication().invokeAndWait {
@@ -254,7 +260,8 @@ private fun openProject(project: Project, indicator: ProgressIndicator?) {
     // (and, so, should be called after project initialization)
     processProjectComponents(project.picoContainer) { component, pluginDescriptor ->
       StartupManagerImpl.runActivity {
-        val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER, pluginDescriptor.pluginId.idString)
+        val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER,
+                                                              pluginDescriptor.pluginId.idString)
         component.projectOpened()
         componentActivity.end()
       }
@@ -265,16 +272,23 @@ private fun openProject(project: Project, indicator: ProgressIndicator?) {
 
   val future = (StartupManager.getInstance(project) as StartupManagerImpl).projectOpened(indicator)
   if (future != null && ApplicationManager.getApplication().isUnitTestMode) {
-    // process event queue during waiting
-    // tasks is run as backgroundable to allow `invokeAndWait` inside startup activities
-    // note that this is still a blocking call in tests
-    runBackgroundableTask("wait in tests") {
-      try {
-        future.get()
-      }
-      catch (e: ExecutionException) {
-        throw e.cause ?: e
-      }
+    waitAndProcessInvocationEventsInIdeEventQueue(future)
+  }
+}
+
+// allow `invokeAndWait` inside startup activities
+private fun waitAndProcessInvocationEventsInIdeEventQueue(future: Future<*>) {
+  val eventQueue = IdeEventQueue.getInstance()
+  while (!future.isDone) {
+    // getNextEvent() will block until an event has been posted by another thread, so,
+    // peekEvent() is used to check that there is already some event in the queue
+    if (eventQueue.peekEvent() == null) {
+      continue
+    }
+
+    val event = eventQueue.nextEvent
+    if (event is InvocationEvent) {
+      eventQueue.dispatchEvent(event)
     }
   }
 }
