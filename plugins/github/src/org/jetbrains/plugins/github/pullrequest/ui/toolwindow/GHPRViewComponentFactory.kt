@@ -38,7 +38,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelper
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelperImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModelImpl
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.handleOnEdt
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import javax.swing.JComponent
@@ -52,7 +51,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                         disposable: Disposable) {
   private val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, disposable)
 
-  private val diffHelper = GHPRChangesDiffHelperImpl(dataProvider.reviewData,
+  private val diffHelper = GHPRChangesDiffHelperImpl(project, dataProvider,
                                                      dataContext.avatarIconsProviderFactory,
                                                      dataContext.securityService.currentUser)
 
@@ -69,9 +68,6 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     }
     dataProvider.changesData.loadChanges(disposable) {
       changesLoadingModel.future = it
-      it.handleOnEdt(disposable) { changes, _ ->
-        if (changes != null) diffHelper.setUp(changes) else diffHelper.reset()
-      }
     }
   }
 

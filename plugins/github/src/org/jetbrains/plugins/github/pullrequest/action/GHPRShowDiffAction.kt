@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vcs.VcsDataKeys
-import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelper
 
 class GHPRShowDiffAction : DumbAwareAction() {
@@ -15,7 +14,8 @@ class GHPRShowDiffAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val project = e.project
     val selection = e.getData(VcsDataKeys.CHANGES)
-    e.presentation.isEnabled = project != null && selection?.isNotEmpty() == true
+    val diffHelper = e.getData(GHPRChangesDiffHelper.DATA_KEY)
+    e.presentation.isEnabled = project != null && selection?.isNotEmpty() == true && diffHelper != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -23,13 +23,8 @@ class GHPRShowDiffAction : DumbAwareAction() {
     val selection = e.getRequiredData(VcsDataKeys.CHANGES)
     if (selection.isEmpty()) return
 
-    val diffHelper = e.getData(GHPRChangesDiffHelper.DATA_KEY)
-    val dataProvider = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
-    val producers = selection.mapNotNull {
-      GHPRChangesDiffHelper.getDiffRequestProducer(project, it, dataProvider, diffHelper)
-    }
-    if (producers.isEmpty()) return
-
-    DiffManager.getInstance().showDiff(project, ChangeDiffRequestChain(producers, 0), DiffDialogHints.DEFAULT)
+    val diffHelper = e.getRequiredData(GHPRChangesDiffHelper.DATA_KEY)
+    val requestChain = diffHelper.getRequestChain(selection.toList())
+    DiffManager.getInstance().showDiff(project, requestChain, DiffDialogHints.DEFAULT)
   }
 }
