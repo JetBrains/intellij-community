@@ -554,7 +554,7 @@ public class VcsFileUtil {
       if (path1.isDirectory() != path2.isDirectory()) return false;
       String canonical1 = FileUtil.toCanonicalPath(path1.getPath());
       String canonical2 = FileUtil.toCanonicalPath(path2.getPath());
-      return canonical1 == canonical2;
+      return canonical1.equals(canonical2);
     }
 
     @Override
