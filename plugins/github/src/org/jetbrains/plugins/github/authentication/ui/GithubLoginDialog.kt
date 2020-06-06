@@ -8,23 +8,30 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.DialogWrapper.IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.components.panels.Wrapper
+import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.UIUtil.getRegularPanelInsets
 import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
+import org.jetbrains.plugins.github.util.completionOnEdt
 import org.jetbrains.plugins.github.util.errorOnEdt
 import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JTextArea
+
+private fun JComponent.setPaddingCompensated(): JComponent =
+  apply { putClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY, false) }
 
 class GithubLoginDialog @JvmOverloads constructor(executorFactory: GithubApiRequestExecutor.Factory,
                                                   project: Project?,
@@ -34,9 +41,9 @@ class GithubLoginDialog @JvmOverloads constructor(executorFactory: GithubApiRequ
                                                     GithubBundle.message("login.to.github"),
                                                   @Nls(capitalization = Nls.Capitalization.Sentence) private val message: String? = null)
   : DialogWrapper(project, parent, false, IdeModalityType.PROJECT) {
-  private var githubLoginPanel = GithubLoginPanel(executorFactory, isAccountUnique).apply {
-    putClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY, false)
-  }
+
+  private val githubLoginPanel = GithubLoginPanel(executorFactory, isAccountUnique)
+  private val switchLoginUiLink = githubLoginPanel.createSwitchUiLink()
 
   internal lateinit var login: String
   internal lateinit var token: String
@@ -81,7 +88,10 @@ class GithubLoginDialog @JvmOverloads constructor(executorFactory: GithubApiRequ
     val modalityState = ModalityState.stateForComponent(githubLoginPanel)
     val emptyProgressIndicator = EmptyProgressIndicator(modalityState)
     Disposer.register(disposable, Disposable { emptyProgressIndicator.cancel() })
+
+    switchLoginUiLink.isEnabled = false
     githubLoginPanel.acquireLoginAndToken(emptyProgressIndicator)
+      .completionOnEdt(modalityState) { switchLoginUiLink.isEnabled = true }
       .successOnEdt(modalityState) { (login, token) ->
         this.login = login
         this.token = token
@@ -106,11 +116,21 @@ class GithubLoginDialog @JvmOverloads constructor(executorFactory: GithubApiRequ
     }
   }
 
-  override fun createSouthAdditionalPanel() = JBUI.Panels.simplePanel()
+  override fun createSouthAdditionalPanel() = simplePanel()
     .addToCenter(LinkLabel.create(GithubBundle.message("login.sign.up"), Runnable { BrowserUtil.browse("https://github.com") }))
     .addToRight(JBLabel(AllIcons.Ide.External_link_arrow))
 
-  override fun createCenterPanel(): Wrapper = githubLoginPanel
+  override fun createCenterPanel(): JComponent =
+    simplePanel()
+      .addToTop(
+        simplePanel().apply {
+          border = JBEmptyBorder(getRegularPanelInsets().apply { bottom = 0 })
+
+          addToRight(switchLoginUiLink)
+        }
+      )
+      .addToCenter(githubLoginPanel)
+      .setPaddingCompensated()
 
   override fun getPreferredFocusedComponent(): JComponent = githubLoginPanel.getPreferredFocus()
 

@@ -12,7 +12,7 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.UIUtil.getRegularPanelInsets
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.util.GHAccessTokenCreator
@@ -43,15 +43,17 @@ internal sealed class GithubCredentialsUI {
   abstract fun handleAcquireError(error: Throwable): ValidationInfo
   abstract fun setBusy(busy: Boolean)
 
-  var header: LayoutBuilder.() -> Unit = { }
   var footer: LayoutBuilder.() -> Unit = { }
 
   fun getPanel(): JPanel =
     panel {
-      header()
       centerPanel()
       footer()
-    }.apply { border = JBEmptyBorder(UIUtil.getRegularPanelInsets()) }
+    }.apply {
+      // Border is required to have more space - otherwise there could be issues with focus ring.
+      // `getRegularPanelInsets()` is used to simplify border calculation for dialogs where this panel is used.
+      border = JBEmptyBorder(getRegularPanelInsets())
+    }
 
   protected abstract fun LayoutBuilder.centerPanel()
 
