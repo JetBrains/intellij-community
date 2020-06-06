@@ -129,8 +129,7 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
     return node.incrementUsageCount(delta);
   }
 
-  @Override
-  public boolean isRecursive() {
+  boolean isRecursive() {
     return recursive;
   }
 }

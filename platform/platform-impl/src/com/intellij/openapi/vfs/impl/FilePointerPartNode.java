@@ -227,7 +227,7 @@ class FilePointerPartNode {
   private boolean hasRecursiveDirectoryPointer() {
     if (leaves == null) return false;
     if (leaves instanceof VirtualFilePointer) {
-      return ((VirtualFilePointer)leaves).isRecursive();
+      return ((VirtualFilePointerImpl)leaves).isRecursive();
     }
     VirtualFilePointerImpl[] leaves = (VirtualFilePointerImpl[])this.leaves;
     for (VirtualFilePointerImpl leaf : leaves) {
