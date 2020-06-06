@@ -125,7 +125,7 @@ class GitStageTracker(val project: Project) : Disposable {
   private fun doUpdateState(repository: GitRepository) {
     LOG.debug("Updating ${repository.root}")
 
-    val untracked = repository.untrackedFilesHolder.untrackedFilePaths.map { GitFileStatus('?', '?', it, null) }
+    val untracked = repository.untrackedFilesHolder.untrackedFilePaths.map { untrackedStatus(it) }
     val status = repository.stagingAreaHolder.allRecords.union(untracked).associateBy { it.path }.toMutableMap()
 
     for (document in FileDocumentManager.getInstance().unsavedDocuments) {
@@ -158,9 +158,7 @@ class GitStageTracker(val project: Project) : Disposable {
     eventDispatcher.addListener(listener, disposable)
   }
 
-  private fun gitRoots(): List<VirtualFile> {
-    return ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(GitVcs.getInstance(project)).toList()
-  }
+  private fun gitRoots(): List<VirtualFile> = gitRoots(project)
 
   private fun update(updater: (State) -> State) {
     state = updater(state)
@@ -231,6 +229,10 @@ private fun getRoot(project: Project, file: VirtualFile): VirtualFile? {
     file.isInLocalFileSystem -> ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file)
     else -> null
   }
+}
+
+private fun gitRoots(project: Project): List<VirtualFile> {
+  return ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(GitVcs.getInstance(project)).toList()
 }
 
 fun GitStageTracker.status(file: VirtualFile): GitFileStatus? {
