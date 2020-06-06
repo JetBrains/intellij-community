@@ -43,7 +43,7 @@ import javax.swing.border.Border
 class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.message("pull.request.review.submit.action.description")) {
 
   override fun update(e: AnActionEvent) {
-    val dataProvider = e.getData(GHPRActionKeys.ACTION_DATA_CONTEXT)?.pullRequestDataProvider
+    val dataProvider = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
     val reviewData = dataProvider?.reviewData
     val details = dataProvider?.detailsData?.loadedDetails
     e.presentation.isVisible = true
@@ -79,8 +79,7 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val dataContext = e.getRequiredData(GHPRActionKeys.ACTION_DATA_CONTEXT)
-    val dataProvider = dataContext.pullRequestDataProvider
+    val dataProvider = e.getRequiredData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
     val details = dataProvider.detailsData.loadedDetails ?: return
     val reviewDataProvider = dataProvider.reviewData
     val pendingReviewFuture = reviewDataProvider.loadPendingReview()
@@ -98,7 +97,8 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
       cancelRunnable?.invoke()
     }
 
-    val container = createPopupComponent(reviewDataProvider, dataContext.submitReviewCommentDocument, cancelActionListener, pendingReview,
+    val container = createPopupComponent(reviewDataProvider, reviewDataProvider.submitReviewCommentDocument,
+                                         cancelActionListener, pendingReview,
                                          details.viewerDidAuthor)
     val popup = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(container.component, container.preferredFocusableComponent)

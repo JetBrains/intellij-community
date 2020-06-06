@@ -24,9 +24,9 @@ class GHPRShowDiffAction : DumbAwareAction() {
     if (selection.isEmpty()) return
 
     val diffHelper = e.getData(GHPRChangesDiffHelper.DATA_KEY)
-    val actionDataContext = e.getData(GHPRActionKeys.ACTION_DATA_CONTEXT)
+    val dataProvider = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
     val producers = selection.mapNotNull {
-      GHPRChangesDiffHelper.getDiffRequestProducer(project, it, diffHelper, actionDataContext)
+      GHPRChangesDiffHelper.getDiffRequestProducer(project, it, dataProvider, diffHelper)
     }
     if (producers.isEmpty()) return
 

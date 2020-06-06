@@ -25,7 +25,6 @@ import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
-import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContext
 import org.jetbrains.plugins.github.pullrequest.action.GHPRReviewSubmitAction
 import org.jetbrains.plugins.github.pullrequest.action.GHPRShowDiffAction
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
@@ -53,7 +52,6 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                         disposable: Disposable) {
   private val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, disposable)
 
-  private val actionDataContext = GHPRFixedActionDataContext(dataContext, pullRequest, dataProvider)
   private val diffHelper = GHPRChangesDiffHelperImpl(dataProvider.reviewData,
                                                      dataContext.avatarIconsProviderFactory,
                                                      dataContext.securityService.currentUser)
@@ -119,7 +117,8 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     }.apply {
       setDataProvider { dataId ->
         when {
-          GHPRActionKeys.ACTION_DATA_CONTEXT.`is`(dataId) -> actionDataContext
+          GHPRActionKeys.GIT_REPOSITORY.`is`(dataId) -> dataContext.gitRepositoryCoordinates.repository
+          GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER.`is`(dataId) -> this@GHPRViewComponentFactory.dataProvider
           GHPRChangesDiffHelper.DATA_KEY.`is`(dataId) -> diffHelper
           else -> null
         }

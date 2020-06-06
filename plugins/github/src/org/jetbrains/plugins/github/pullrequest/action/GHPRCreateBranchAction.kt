@@ -22,22 +22,21 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
 
   override fun update(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
-    val selection = e.getData(GHPRActionKeys.ACTION_DATA_CONTEXT)?.pullRequestDataProvider
-    e.presentation.isEnabled = project != null && !project.isDefault && selection != null
+    val repository = e.getData(GHPRActionKeys.GIT_REPOSITORY)
+    val selection = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
+    e.presentation.isEnabled = project != null && !project.isDefault && selection != null && repository != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
-    val context = e.getRequiredData(GHPRActionKeys.ACTION_DATA_CONTEXT)
-    val repository = context.gitRepositoryCoordinates.repository
-    val repositoryList = listOf(repository)
-    val pullRequest = context.pullRequest
-    val dataProvider = context.pullRequestDataProvider
+    val repository = e.getRequiredData(GHPRActionKeys.GIT_REPOSITORY)
+    val dataProvider = e.getRequiredData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
 
+    val pullRequestNumber = dataProvider.id.number
     val options = GitBranchUtil.getNewBranchNameFromUser(project, listOf(repository),
                                                          GithubBundle.message("pull.request.branch.checkout.create.dialog.title",
-                                                                              pullRequest.number),
-                                                         "pull/${pullRequest.number}") ?: return
+                                                                              pullRequestNumber),
+                                                         "pull/${pullRequestNumber}") ?: return
 
     if (!options.checkout) {
       object : Task.Backgroundable(project, GithubBundle.message("pull.request.branch.checkout.create.task.title"), true) {
@@ -73,7 +72,7 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
 
           indicator.text = GithubBundle.message("pull.request.branch.checkout.task.indicator")
           GitBranchWorker(project, git, GitBranchUiHandlerImpl(project, git, indicator))
-            .checkoutNewBranchStartingFrom(options.name, sha, repositoryList)
+            .checkoutNewBranchStartingFrom(options.name, sha, listOf(repository))
         }
 
         override fun onSuccess() {

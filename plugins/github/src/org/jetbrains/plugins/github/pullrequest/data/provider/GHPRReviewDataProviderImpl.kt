@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.messages.MessageBus
@@ -22,6 +23,8 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
                                  private val pullRequestId: GHPRIdentifier,
                                  private val messageBus: MessageBus)
   : GHPRReviewDataProvider, Disposable {
+
+  override val submitReviewCommentDocument by lazy(LazyThreadSafetyMode.NONE) { EditorFactory.getInstance().createDocument("") }
 
   private val pendingReviewRequestValue = LazyCancellableBackgroundProcessValue.create {
     reviewService.loadPendingReview(it, pullRequestId)

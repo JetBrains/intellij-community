@@ -5,8 +5,10 @@ import com.intellij.openapi.Disposable
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 
 interface GHPRDataProvider {
+  val id: GHPRIdentifier
   val detailsData: GHPRDetailsDataProvider
   val stateData: GHPRStateDataProvider
   val changesData: GHPRChangesDataProvider

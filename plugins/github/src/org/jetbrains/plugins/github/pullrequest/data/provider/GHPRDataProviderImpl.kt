@@ -4,9 +4,11 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 import com.intellij.openapi.Disposable
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.util.DisposalCountingHolder
 
-internal class GHPRDataProviderImpl(override val detailsData: GHPRDetailsDataProvider,
+internal class GHPRDataProviderImpl(override val id: GHPRIdentifier,
+                                    override val detailsData: GHPRDetailsDataProvider,
                                     override val stateData: GHPRStateDataProvider,
                                     override val changesData: GHPRChangesDataProvider,
                                     override val commentsData: GHPRCommentsDataProvider,

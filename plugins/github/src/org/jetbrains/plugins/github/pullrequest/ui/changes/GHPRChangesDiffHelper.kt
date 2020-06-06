@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.history.VcsDiffUtil
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.action.GHPRActionDataContext
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRReviewSubmitAction
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupport
@@ -21,6 +20,7 @@ import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewRes
 import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThreadsReloadAction
 import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThreadsToggleAction
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.util.GHToolbarLabelAction
 
 interface GHPRChangesDiffHelper {
@@ -33,9 +33,8 @@ interface GHPRChangesDiffHelper {
   companion object {
     val DATA_KEY = DataKey.create<GHPRChangesDiffHelper>("Github.PullRequest.Diff.Helper")
 
-    fun getDiffRequestProducer(project: Project, change: Change,
-                               diffHelper: GHPRChangesDiffHelper?,
-                               actionDataContext: GHPRActionDataContext?): ChangeDiffRequestProducer? {
+    fun getDiffRequestProducer(project: Project, change: Change, dataProvider: GHPRDataProvider?, diffHelper: GHPRChangesDiffHelper?)
+      : ChangeDiffRequestProducer? {
 
       val dataKeys: MutableMap<Key<out Any>, Any?> = mutableMapOf()
 
@@ -50,7 +49,7 @@ interface GHPRChangesDiffHelper {
       if (reviewSupport != null) {
         dataKeys[GHPRDiffReviewSupport.KEY] = reviewSupport
         dataKeys[DiffUserDataKeys.DATA_PROVIDER] = GenericDataProvider().apply {
-          putData(GHPRActionKeys.ACTION_DATA_CONTEXT, actionDataContext)
+          putData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER, dataProvider)
           putData(GHPRDiffReviewSupport.DATA_KEY, reviewSupport)
         }
         val viewOptionsGroup = NonEmptyActionGroup().apply {

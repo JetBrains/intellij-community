@@ -91,7 +91,7 @@ internal class GHPRDataProviderRepositoryImpl(private val detailsService: GHPRDe
       Disposer.register(parentDisposable, it)
     }
 
-    return GHPRDataProviderImpl(detailsData, stateData, changesData, commentsData, reviewData, timelineLoaderHolder)
+    return GHPRDataProviderImpl(id, detailsData, stateData, changesData, commentsData, reviewData, timelineLoaderHolder)
   }
 
   override fun addDetailsLoadedListener(disposable: Disposable, listener: (GHPullRequest) -> Unit) {

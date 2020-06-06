@@ -11,7 +11,6 @@ import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
-import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRFileEditorComponentFactory
@@ -52,10 +51,9 @@ internal class GHPRFileEditor(private val project: Project,
         background = EditorColorsManager.getInstance().globalScheme.defaultBackground
       }
 
-      val actionDataContext = GHPRFixedActionDataContext(dataContext, pullRequest, dataProvider)
       DataManager.registerDataProvider(it) { dataId ->
         when {
-          GHPRActionKeys.ACTION_DATA_CONTEXT.`is`(dataId) -> actionDataContext
+          GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER.`is`(dataId) -> dataProvider
           else -> null
         }
       }
