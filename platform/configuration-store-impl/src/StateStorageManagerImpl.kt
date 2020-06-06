@@ -367,6 +367,11 @@ fun removeMacroIfStartsWith(path: String, macro: String): String {
   return path.removePrefix("$macro/")
 }
 
+fun getStoragePathSpec(storage: Storage) : String {
+  val pathSpec = storage.path
+  return if (storage.roamingType == RoamingType.PER_OS) getOsDependentStorage(pathSpec) else pathSpec
+}
+
 @Suppress("DEPRECATION")
 internal val Storage.path: String
   get() = if (value.isEmpty()) file else value
