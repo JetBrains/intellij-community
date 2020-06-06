@@ -29,6 +29,7 @@ public class ShParserTest extends ParsingTestCase {
   public void testHereEof()       { doTest(true); }
   public void testIf()            { doTest(true); }
   public void testConditional()   { doTest(true); }
+  public void testConditional2()  { doTest(true); }
   public void testBacktick()      { doTest(true); }
   public void testFunction()      { doTest(true); }
   public void testTrap()          { doTest(true); }

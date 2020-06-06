@@ -228,8 +228,8 @@ private function_definition_inner ::= word argument_list newlines block
 private argument_list ::= '(' ')' {recoverWhile = argument_list_recover}
 private argument_list_recover ::= !('\n'| '{')
 
-conditional_command ::=  '[[' condition* (']]'|']'  <<differentBracketsWarning>>)
-                       | '['  condition* ( ']'|']]' <<differentBracketsWarning>>) {pin(".*")=1}
+conditional_command ::=  '[[' compound_condition (']]'|']'  <<differentBracketsWarning>>)
+                       | '['  test_condition? ( ']'|']]' <<differentBracketsWarning>>) {pin(".*")=1}
 
 private any_block ::= block | do_block
 do_block ::= do  block_compound_list done {
@@ -368,24 +368,36 @@ parentheses_expression ::= '(' expression ')' {pin=1}
 
 literal_expression ::= w+ { methods=[getReferences] }
 
+// test expressions: https://pubs.opengroup.org/onlinepubs/9699919799/utilities/test.html
+private test_condition ::= condition redirection?
+private compound_condition ::= condition
+
 condition ::=
-    assignment_condition
-  | logical_or_condition
+    logical_or_condition
   | logical_and_condition
+  | logical_negation_condition
   | equality_condition
   | regex_condition
   | comparison_condition
-  | logical_bitwise_condition
+  | arithmetic_condition
+  | binary_condition
+  | unary_condition
   | literal_condition
   | parentheses_condition
 
-assignment_condition ::= condition '=' condition
-logical_or_condition ::= condition newlines '||' newlines condition
-logical_and_condition ::= condition newlines '&&' newlines condition
-equality_condition ::= condition ('==' | '!=') condition
+logical_or_condition ::= condition newlines ('||' | '-o') newlines condition
+logical_and_condition ::= condition newlines ('&&' | '-a') newlines condition
+logical_negation_condition ::= '!' <<space>> condition
+parentheses_condition ::= '(' condition ')'
+equality_condition ::= condition ('=' | '==' | '!=') condition
+arithmetic_condition ::= expression ('-eq' | '-ne' | '-lt' | '-le' | '-gt' | '-ge') expression
+binary_condition ::= <<parseUntilSpace w>> ('-ef' | '-nt' | '-ot' | '-eq' | '-ne' | '-lt' | '-le' | '-gt' | '-ge') <<parseUntilSpace w>>
+unary_condition ::= unary_op <<parseUntilSpace w>>
+private unary_op ::= '-a' | '-b' | '-c'| '-d' | '-e' | '-f' | '-g' | '-h'
+                   | '-k' | '-n' | '-o' | '-p'| '-r' | '-s' | '-t' | '-u'
+                   | '-v' | '-w' | '-x' | '-z'
+                   | '-G' | '-L' | '-N' | '-O' | '-R' | '-S' {name="conditional operator"}
 regex_condition ::= condition '=~' regex_pattern
 comparison_condition ::= condition ('<' | '>') condition
-logical_bitwise_condition ::= '!' simple_command
-parentheses_condition ::= '(' condition ')'
-literal_condition ::= (w newlines | newlines w)
+literal_condition ::= (<<parseUntilSpace w>> newlines | newlines <<parseUntilSpace w>>)
 regex_pattern ::= w+

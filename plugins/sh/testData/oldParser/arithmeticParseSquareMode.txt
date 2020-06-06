@@ -1,21 +1,23 @@
 SHELL_SCRIPT
   COMMANDS_LIST
-    CONDITIONAL_COMMAND
-      PsiElement([)('[')
-      LITERAL_CONDITION
-        NUMBER
-          PsiElement(int)('1')
-      PsiElement(])(']')
+    GENERIC_COMMAND_DIRECTIVE
+      OLD_ARITHMETIC_EXPANSION
+        PsiElement(ARITH_SQUARE_LEFT)('$[')
+        LITERAL_EXPRESSION
+          NUMBER
+            PsiElement(int)('1')
+        PsiElement(ARITH_SQUARE_RIGHT)(']')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    CONDITIONAL_COMMAND
-      PsiElement([)('[')
-      LITERAL_CONDITION
-        PsiElement(word)('a')
-      PsiWhiteSpace(' ')
-      LITERAL_CONDITION
-        PsiElement(word)('+')
-      PsiWhiteSpace(' ')
-      LITERAL_CONDITION
-        PsiElement(word)('b')
-      PsiElement(])(']')
+    GENERIC_COMMAND_DIRECTIVE
+      OLD_ARITHMETIC_EXPANSION
+        PsiElement(ARITH_SQUARE_LEFT)('$[')
+        ADD_EXPRESSION
+          LITERAL_EXPRESSION
+            PsiElement(word)('a')
+          PsiWhiteSpace(' ')
+          PsiElement(+)('+')
+          PsiWhiteSpace(' ')
+          LITERAL_EXPRESSION
+            PsiElement(word)('b')
+        PsiElement(ARITH_SQUARE_RIGHT)(']')

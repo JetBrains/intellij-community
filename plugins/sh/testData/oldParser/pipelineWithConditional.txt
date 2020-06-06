@@ -9,10 +9,9 @@ SHELL_SCRIPT
     CONDITIONAL_COMMAND
       PsiElement([)('[')
       PsiWhiteSpace(' ')
-      LITERAL_CONDITION
+      UNARY_CONDITION
         PsiElement(word)('-z')
-      PsiWhiteSpace(' ')
-      LITERAL_CONDITION
+        PsiWhiteSpace(' ')
         STRING
           PsiElement(OPEN_QUOTE)('"')
           PsiElement(STRING_CONTENT)('hi')
@@ -46,10 +45,9 @@ SHELL_SCRIPT
           CONDITIONAL_COMMAND
             PsiElement([)('[')
             PsiWhiteSpace(' ')
-            LITERAL_CONDITION
+            UNARY_CONDITION
               PsiElement(word)('-z')
-            PsiWhiteSpace(' ')
-            LITERAL_CONDITION
+              PsiWhiteSpace(' ')
               STRING
                 PsiElement(OPEN_QUOTE)('"')
                 PsiElement(STRING_CONTENT)('hi')

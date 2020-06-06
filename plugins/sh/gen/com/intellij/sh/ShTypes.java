@@ -13,13 +13,14 @@ import com.intellij.sh.psi.impl.*;
 public interface ShTypes {
 
   IElementType ADD_EXPRESSION = new ShCompositeElementType("ADD_EXPRESSION");
+  IElementType ARITHMETIC_CONDITION = new ShCompositeElementType("ARITHMETIC_CONDITION");
   IElementType ARITHMETIC_EXPANSION = new ShCompositeElementType("ARITHMETIC_EXPANSION");
   IElementType ARRAY_ASSIGNMENT = new ShCompositeElementType("ARRAY_ASSIGNMENT");
   IElementType ARRAY_EXPRESSION = new ShCompositeElementType("ARRAY_EXPRESSION");
   IElementType ASSIGNMENT_COMMAND = new ShCompositeElementType("ASSIGNMENT_COMMAND");
-  IElementType ASSIGNMENT_CONDITION = new ShCompositeElementType("ASSIGNMENT_CONDITION");
   IElementType ASSIGNMENT_EXPRESSION = new ShCompositeElementType("ASSIGNMENT_EXPRESSION");
   IElementType ASSIGNMENT_LIST = new ShCompositeElementType("ASSIGNMENT_LIST");
+  IElementType BINARY_CONDITION = new ShCompositeElementType("BINARY_CONDITION");
   IElementType BITWISE_AND_EXPRESSION = new ShCompositeElementType("BITWISE_AND_EXPRESSION");
   IElementType BITWISE_EXCLUSIVE_OR_EXPRESSION = new ShCompositeElementType("BITWISE_EXCLUSIVE_OR_EXPRESSION");
   IElementType BITWISE_OR_EXPRESSION = new ShCompositeElementType("BITWISE_OR_EXPRESSION");
@@ -62,8 +63,8 @@ public interface ShTypes {
   IElementType LITERAL_EXPRESSION = new ShCompositeElementType("LITERAL_EXPRESSION");
   IElementType LOGICAL_AND_CONDITION = new ShCompositeElementType("LOGICAL_AND_CONDITION");
   IElementType LOGICAL_AND_EXPRESSION = new ShCompositeElementType("LOGICAL_AND_EXPRESSION");
-  IElementType LOGICAL_BITWISE_CONDITION = new ShCompositeElementType("LOGICAL_BITWISE_CONDITION");
   IElementType LOGICAL_BITWISE_NEGATION_EXPRESSION = new ShCompositeElementType("LOGICAL_BITWISE_NEGATION_EXPRESSION");
+  IElementType LOGICAL_NEGATION_CONDITION = new ShCompositeElementType("LOGICAL_NEGATION_CONDITION");
   IElementType LOGICAL_OR_CONDITION = new ShCompositeElementType("LOGICAL_OR_CONDITION");
   IElementType LOGICAL_OR_EXPRESSION = new ShCompositeElementType("LOGICAL_OR_EXPRESSION");
   IElementType MUL_EXPRESSION = new ShCompositeElementType("MUL_EXPRESSION");
@@ -88,6 +89,7 @@ public interface ShTypes {
   IElementType SUBSHELL_COMMAND = new ShCompositeElementType("SUBSHELL_COMMAND");
   IElementType TEST_COMMAND = new ShCompositeElementType("TEST_COMMAND");
   IElementType THEN_CLAUSE = new ShCompositeElementType("THEN_CLAUSE");
+  IElementType UNARY_CONDITION = new ShCompositeElementType("UNARY_CONDITION");
   IElementType UNARY_EXPRESSION = new ShCompositeElementType("UNARY_EXPRESSION");
   IElementType UNTIL_COMMAND = new ShCompositeElementType("UNTIL_COMMAND");
   IElementType VARIABLE = new ShCompositeElementType("VARIABLE");
@@ -204,6 +206,9 @@ public interface ShTypes {
       if (type == ADD_EXPRESSION) {
         return new ShAddExpressionImpl(node);
       }
+      else if (type == ARITHMETIC_CONDITION) {
+        return new ShArithmeticConditionImpl(node);
+      }
       else if (type == ARITHMETIC_EXPANSION) {
         return new ShArithmeticExpansionImpl(node);
       }
@@ -216,14 +221,14 @@ public interface ShTypes {
       else if (type == ASSIGNMENT_COMMAND) {
         return new ShAssignmentCommandImpl(node);
       }
-      else if (type == ASSIGNMENT_CONDITION) {
-        return new ShAssignmentConditionImpl(node);
-      }
       else if (type == ASSIGNMENT_EXPRESSION) {
         return new ShAssignmentExpressionImpl(node);
       }
       else if (type == ASSIGNMENT_LIST) {
         return new ShAssignmentListImpl(node);
+      }
+      else if (type == BINARY_CONDITION) {
+        return new ShBinaryConditionImpl(node);
       }
       else if (type == BITWISE_AND_EXPRESSION) {
         return new ShBitwiseAndExpressionImpl(node);
@@ -345,11 +350,11 @@ public interface ShTypes {
       else if (type == LOGICAL_AND_EXPRESSION) {
         return new ShLogicalAndExpressionImpl(node);
       }
-      else if (type == LOGICAL_BITWISE_CONDITION) {
-        return new ShLogicalBitwiseConditionImpl(node);
-      }
       else if (type == LOGICAL_BITWISE_NEGATION_EXPRESSION) {
         return new ShLogicalBitwiseNegationExpressionImpl(node);
+      }
+      else if (type == LOGICAL_NEGATION_CONDITION) {
+        return new ShLogicalNegationConditionImpl(node);
       }
       else if (type == LOGICAL_OR_CONDITION) {
         return new ShLogicalOrConditionImpl(node);
@@ -422,6 +427,9 @@ public interface ShTypes {
       }
       else if (type == THEN_CLAUSE) {
         return new ShThenClauseImpl(node);
+      }
+      else if (type == UNARY_CONDITION) {
+        return new ShUnaryConditionImpl(node);
       }
       else if (type == UNARY_EXPRESSION) {
         return new ShUnaryExpressionImpl(node);

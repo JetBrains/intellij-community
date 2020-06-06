@@ -26,9 +26,15 @@ public class ShConditionalCommandImpl extends ShCommandImpl implements ShConditi
   }
 
   @Override
-  @NotNull
-  public List<ShCondition> getConditionList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, ShCondition.class);
+  @Nullable
+  public ShCondition getCondition() {
+    return findChildByClass(ShCondition.class);
+  }
+
+  @Override
+  @Nullable
+  public ShRedirection getRedirection() {
+    return findChildByClass(ShRedirection.class);
   }
 
   @Override

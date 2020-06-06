@@ -13,6 +13,9 @@ values[indx]=1
 
 echo [ "foo" = "foo" ]
 
+# fixme, this is not an arithmetic expansion, but two nested parenthesis expressions
+#[[ ((a)) ]]
+
 #========== FROM OLD PARSER ===========
 `cat <<EOF
  X

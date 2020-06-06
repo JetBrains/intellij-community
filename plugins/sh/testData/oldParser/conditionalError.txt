@@ -21,16 +21,17 @@ SHELL_SCRIPT
       PsiElement(fi)('fi')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    CONDITIONAL_COMMAND
-      PsiElement([)('[')
+    SIMPLE_COMMAND
+      CONDITIONAL_COMMAND
+        PsiElement([)('[')
+        PsiWhiteSpace(' ')
+        LITERAL_CONDITION
+          PsiElement(word)('if')
+        PsiErrorElement:<redirection>, '\n', ']', ']]' or word expected, got 'a'
+          <empty list>
       PsiWhiteSpace(' ')
-      LITERAL_CONDITION
-        PsiElement(word)('if')
-      PsiWhiteSpace(' ')
-      LITERAL_CONDITION
+      LITERAL
         PsiElement(word)('a')
-      PsiErrorElement:'&&', <condition>, '\n', ']', ']]' or '||' expected, got ';'
-        <empty list>
     PsiElement(;)(';')
     PsiWhiteSpace(' ')
     SIMPLE_COMMAND

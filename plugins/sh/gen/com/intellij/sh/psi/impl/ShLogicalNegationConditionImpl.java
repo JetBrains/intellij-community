@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.sh.ShTypes.*;
 import com.intellij.sh.psi.*;
 
-public class ShLogicalBitwiseConditionImpl extends ShConditionImpl implements ShLogicalBitwiseCondition {
+public class ShLogicalNegationConditionImpl extends ShConditionImpl implements ShLogicalNegationCondition {
 
-  public ShLogicalBitwiseConditionImpl(ASTNode node) {
+  public ShLogicalNegationConditionImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull ShVisitor visitor) {
-    visitor.visitLogicalBitwiseCondition(this);
+    visitor.visitLogicalNegationCondition(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -26,9 +26,9 @@ public class ShLogicalBitwiseConditionImpl extends ShConditionImpl implements Sh
   }
 
   @Override
-  @NotNull
-  public ShCommand getCommand() {
-    return findNotNullChildByClass(ShCommand.class);
+  @Nullable
+  public ShCondition getCondition() {
+    return findChildByClass(ShCondition.class);
   }
 
   @Override

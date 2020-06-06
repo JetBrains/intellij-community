@@ -2,6 +2,10 @@ if [ !a == $a ]; then
     echo 1
 fi;
 
+if [ ! a == $a ]; then
+    echo 1
+fi;
+
 if [ 1 == 1 ] ;then
  echo
 fi;

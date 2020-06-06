@@ -11,6 +11,9 @@ public interface ShEqualityCondition extends ShCondition {
   List<ShCondition> getConditionList();
 
   @Nullable
+  PsiElement getAssign();
+
+  @Nullable
   PsiElement getEq();
 
   @Nullable

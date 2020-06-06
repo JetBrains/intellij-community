@@ -12,6 +12,10 @@ public class ShVisitor extends PsiElementVisitor {
     visitBinaryExpression(o);
   }
 
+  public void visitArithmeticCondition(@NotNull ShArithmeticCondition o) {
+    visitCondition(o);
+  }
+
   public void visitArithmeticExpansion(@NotNull ShArithmeticExpansion o) {
     visitCompositeElement(o);
   }
@@ -29,10 +33,6 @@ public class ShVisitor extends PsiElementVisitor {
     // visitPsiNameIdentifierOwner(o);
   }
 
-  public void visitAssignmentCondition(@NotNull ShAssignmentCondition o) {
-    visitCondition(o);
-  }
-
   public void visitAssignmentExpression(@NotNull ShAssignmentExpression o) {
     visitBinaryExpression(o);
     // visitPsiNameIdentifierOwner(o);
@@ -40,6 +40,10 @@ public class ShVisitor extends PsiElementVisitor {
 
   public void visitAssignmentList(@NotNull ShAssignmentList o) {
     visitCompositeElement(o);
+  }
+
+  public void visitBinaryCondition(@NotNull ShBinaryCondition o) {
+    visitCondition(o);
   }
 
   public void visitBinaryExpression(@NotNull ShBinaryExpression o) {
@@ -217,12 +221,12 @@ public class ShVisitor extends PsiElementVisitor {
     visitBinaryExpression(o);
   }
 
-  public void visitLogicalBitwiseCondition(@NotNull ShLogicalBitwiseCondition o) {
-    visitCondition(o);
-  }
-
   public void visitLogicalBitwiseNegationExpression(@NotNull ShLogicalBitwiseNegationExpression o) {
     visitExpression(o);
+  }
+
+  public void visitLogicalNegationCondition(@NotNull ShLogicalNegationCondition o) {
+    visitCondition(o);
   }
 
   public void visitLogicalOrCondition(@NotNull ShLogicalOrCondition o) {
@@ -319,6 +323,10 @@ public class ShVisitor extends PsiElementVisitor {
 
   public void visitThenClause(@NotNull ShThenClause o) {
     visitCompositeElement(o);
+  }
+
+  public void visitUnaryCondition(@NotNull ShUnaryCondition o) {
+    visitCondition(o);
   }
 
   public void visitUnaryExpression(@NotNull ShUnaryExpression o) {

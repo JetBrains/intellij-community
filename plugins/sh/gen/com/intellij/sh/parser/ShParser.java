@@ -49,9 +49,9 @@ public class ShParser implements PsiParser, LightPsiParser {
     create_token_set_(ARITHMETIC_EXPANSION, OLD_ARITHMETIC_EXPANSION),
     create_token_set_(LITERAL, NUMBER, SIMPLE_COMMAND_ELEMENT, STRING,
       VARIABLE),
-    create_token_set_(ASSIGNMENT_CONDITION, COMPARISON_CONDITION, CONDITION, EQUALITY_CONDITION,
-      LITERAL_CONDITION, LOGICAL_AND_CONDITION, LOGICAL_BITWISE_CONDITION, LOGICAL_OR_CONDITION,
-      PARENTHESES_CONDITION, REGEX_CONDITION),
+    create_token_set_(ARITHMETIC_CONDITION, BINARY_CONDITION, COMPARISON_CONDITION, CONDITION,
+      EQUALITY_CONDITION, LITERAL_CONDITION, LOGICAL_AND_CONDITION, LOGICAL_NEGATION_CONDITION,
+      LOGICAL_OR_CONDITION, PARENTHESES_CONDITION, REGEX_CONDITION, UNARY_CONDITION),
     create_token_set_(ASSIGNMENT_COMMAND, CASE_COMMAND, COMMAND, COMMAND_SUBSTITUTION_COMMAND,
       CONDITIONAL_COMMAND, EVAL_COMMAND, FOR_COMMAND, FUNCTION_DEFINITION,
       GENERIC_COMMAND_DIRECTIVE, IF_COMMAND, INCLUDE_COMMAND, INCLUDE_DIRECTIVE,
@@ -845,6 +845,12 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // condition
+  static boolean compound_condition(PsiBuilder b, int l) {
+    return condition(b, l + 1, -1);
+  }
+
+  /* ********************************************************** */
   // newlines pipeline_command_list end_of_list newlines
   public static boolean compound_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "compound_list")) return false;
@@ -882,8 +888,8 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '[[' condition* (']]'|']'  <<differentBracketsWarning>>)
-  //                        | '['  condition* ( ']'|']]' <<differentBracketsWarning>>)
+  // '[[' compound_condition (']]'|']'  <<differentBracketsWarning>>)
+  //                        | '['  test_condition? ( ']'|']]' <<differentBracketsWarning>>)
   public static boolean conditional_command(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_command")) return false;
     if (!nextTokenIs(b, "<conditional command>", LEFT_DOUBLE_BRACKET, LEFT_SQUARE)) return false;
@@ -895,28 +901,17 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // '[[' condition* (']]'|']'  <<differentBracketsWarning>>)
+  // '[[' compound_condition (']]'|']'  <<differentBracketsWarning>>)
   private static boolean conditional_command_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_command_0")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
     r = consumeToken(b, LEFT_DOUBLE_BRACKET);
     p = r; // pin = 1
-    r = r && report_error_(b, conditional_command_0_1(b, l + 1));
+    r = r && report_error_(b, compound_condition(b, l + 1));
     r = p && conditional_command_0_2(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
-  }
-
-  // condition*
-  private static boolean conditional_command_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "conditional_command_0_1")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!condition(b, l + 1, -1)) break;
-      if (!empty_element_parsed_guard_(b, "conditional_command_0_1", c)) break;
-    }
-    return true;
   }
 
   // ']]'|']'  <<differentBracketsWarning>>
@@ -942,7 +937,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // '['  condition* ( ']'|']]' <<differentBracketsWarning>>)
+  // '['  test_condition? ( ']'|']]' <<differentBracketsWarning>>)
   private static boolean conditional_command_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_command_1")) return false;
     boolean r, p;
@@ -955,14 +950,10 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // condition*
+  // test_condition?
   private static boolean conditional_command_1_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "conditional_command_1_1")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!condition(b, l + 1, -1)) break;
-      if (!empty_element_parsed_guard_(b, "conditional_command_1_1", c)) break;
-    }
+    test_condition(b, l + 1);
     return true;
   }
 
@@ -2440,6 +2431,25 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // condition redirection?
+  static boolean test_condition(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "test_condition")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = condition(b, l + 1, -1);
+    r = r && test_condition_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // redirection?
+  private static boolean test_condition_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "test_condition_1")) return false;
+    redirection(b, l + 1);
+    return true;
+  }
+
+  /* ********************************************************** */
   // then compound_list
   public static boolean then_clause(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "then_clause")) return false;
@@ -2451,6 +2461,45 @@ public class ShParser implements PsiParser, LightPsiParser {
     r = r && compound_list(b, l + 1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  /* ********************************************************** */
+  // '-a' | '-b' | '-c'| '-d' | '-e' | '-f' | '-g' | '-h'
+  //                    | '-k' | '-n' | '-o' | '-p'| '-r' | '-s' | '-t' | '-u'
+  //                    | '-v' | '-w' | '-x' | '-z'
+  //                    | '-G' | '-L' | '-N' | '-O' | '-R' | '-S'
+  static boolean unary_op(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unary_op")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, null, "<conditional operator>");
+    r = consumeToken(b, "-a");
+    if (!r) r = consumeToken(b, "-b");
+    if (!r) r = consumeToken(b, "-c");
+    if (!r) r = consumeToken(b, "-d");
+    if (!r) r = consumeToken(b, "-e");
+    if (!r) r = consumeToken(b, "-f");
+    if (!r) r = consumeToken(b, "-g");
+    if (!r) r = consumeToken(b, "-h");
+    if (!r) r = consumeToken(b, "-k");
+    if (!r) r = consumeToken(b, "-n");
+    if (!r) r = consumeToken(b, "-o");
+    if (!r) r = consumeToken(b, "-p");
+    if (!r) r = consumeToken(b, "-r");
+    if (!r) r = consumeToken(b, "-s");
+    if (!r) r = consumeToken(b, "-t");
+    if (!r) r = consumeToken(b, "-u");
+    if (!r) r = consumeToken(b, "-v");
+    if (!r) r = consumeToken(b, "-w");
+    if (!r) r = consumeToken(b, "-x");
+    if (!r) r = consumeToken(b, "-z");
+    if (!r) r = consumeToken(b, "-G");
+    if (!r) r = consumeToken(b, "-L");
+    if (!r) r = consumeToken(b, "-N");
+    if (!r) r = consumeToken(b, "-O");
+    if (!r) r = consumeToken(b, "-R");
+    if (!r) r = consumeToken(b, "-S");
+    exit_section_(b, l, m, r, false, null);
+    return r;
   }
 
   /* ********************************************************** */
@@ -2522,21 +2571,26 @@ public class ShParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // Expression root: condition
   // Operator priority table:
-  // 0: BINARY(assignment_condition)
-  // 1: BINARY(logical_or_condition)
-  // 2: BINARY(logical_and_condition)
+  // 0: BINARY(logical_or_condition)
+  // 1: BINARY(logical_and_condition)
+  // 2: PREFIX(logical_negation_condition)
   // 3: BINARY(equality_condition)
   // 4: POSTFIX(regex_condition)
   // 5: BINARY(comparison_condition)
-  // 6: ATOM(logical_bitwise_condition)
-  // 7: ATOM(literal_condition)
-  // 8: PREFIX(parentheses_condition)
+  // 6: ATOM(arithmetic_condition)
+  // 7: ATOM(binary_condition)
+  // 8: ATOM(unary_condition)
+  // 9: ATOM(literal_condition)
+  // 10: PREFIX(parentheses_condition)
   public static boolean condition(PsiBuilder b, int l, int g) {
     if (!recursion_guard_(b, l, "condition")) return false;
     addVariant(b, "<condition>");
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, "<condition>");
-    r = logical_bitwise_condition(b, l + 1);
+    r = logical_negation_condition(b, l + 1);
+    if (!r) r = arithmetic_condition(b, l + 1);
+    if (!r) r = binary_condition(b, l + 1);
+    if (!r) r = unary_condition(b, l + 1);
     if (!r) r = literal_condition(b, l + 1);
     if (!r) r = parentheses_condition(b, l + 1);
     p = r;
@@ -2550,16 +2604,12 @@ public class ShParser implements PsiParser, LightPsiParser {
     boolean r = true;
     while (true) {
       Marker m = enter_section_(b, l, _LEFT_, null);
-      if (g < 0 && consumeTokenSmart(b, ASSIGN)) {
+      if (g < 0 && logical_or_condition_0(b, l + 1)) {
         r = condition(b, l, 0);
-        exit_section_(b, l, m, ASSIGNMENT_CONDITION, r, true, null);
-      }
-      else if (g < 1 && logical_or_condition_0(b, l + 1)) {
-        r = condition(b, l, 1);
         exit_section_(b, l, m, LOGICAL_OR_CONDITION, r, true, null);
       }
-      else if (g < 2 && logical_and_condition_0(b, l + 1)) {
-        r = condition(b, l, 2);
+      else if (g < 1 && logical_and_condition_0(b, l + 1)) {
+        r = condition(b, l, 1);
         exit_section_(b, l, m, LOGICAL_AND_CONDITION, r, true, null);
       }
       else if (g < 3 && equality_condition_0(b, l + 1)) {
@@ -2582,35 +2632,77 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // newlines '||' newlines
+  // newlines ('||' | '-o') newlines
   private static boolean logical_or_condition_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "logical_or_condition_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = newlines(b, l + 1);
-    r = r && consumeToken(b, OR_OR);
+    r = r && logical_or_condition_0_1(b, l + 1);
     r = r && newlines(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // newlines '&&' newlines
+  // '||' | '-o'
+  private static boolean logical_or_condition_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "logical_or_condition_0_1")) return false;
+    boolean r;
+    r = consumeTokenSmart(b, OR_OR);
+    if (!r) r = consumeTokenSmart(b, "-o");
+    return r;
+  }
+
+  // newlines ('&&' | '-a') newlines
   private static boolean logical_and_condition_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "logical_and_condition_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = newlines(b, l + 1);
-    r = r && consumeToken(b, AND_AND);
+    r = r && logical_and_condition_0_1(b, l + 1);
     r = r && newlines(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // '==' | '!='
+  // '&&' | '-a'
+  private static boolean logical_and_condition_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "logical_and_condition_0_1")) return false;
+    boolean r;
+    r = consumeTokenSmart(b, AND_AND);
+    if (!r) r = consumeTokenSmart(b, "-a");
+    return r;
+  }
+
+  public static boolean logical_negation_condition(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "logical_negation_condition")) return false;
+    if (!nextTokenIsSmart(b, BANG)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
+    r = logical_negation_condition_0(b, l + 1);
+    p = r;
+    r = p && condition(b, l, 2);
+    exit_section_(b, l, m, LOGICAL_NEGATION_CONDITION, r, p, null);
+    return r || p;
+  }
+
+  // '!' <<space>>
+  private static boolean logical_negation_condition_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "logical_negation_condition_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, BANG);
+    r = r && space(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // '=' | '==' | '!='
   private static boolean equality_condition_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "equality_condition_0")) return false;
     boolean r;
-    r = consumeTokenSmart(b, EQ);
+    r = consumeTokenSmart(b, ASSIGN);
+    if (!r) r = consumeTokenSmart(b, EQ);
     if (!r) r = consumeTokenSmart(b, NE);
     return r;
   }
@@ -2635,47 +2727,99 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // '!' simple_command
-  public static boolean logical_bitwise_condition(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "logical_bitwise_condition")) return false;
-    if (!nextTokenIsSmart(b, BANG)) return false;
+  // expression ('-eq' | '-ne' | '-lt' | '-le' | '-gt' | '-ge') expression
+  public static boolean arithmetic_condition(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arithmetic_condition")) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, BANG);
-    r = r && simple_command(b, l + 1);
-    exit_section_(b, m, LOGICAL_BITWISE_CONDITION, r);
+    Marker m = enter_section_(b, l, _NONE_, ARITHMETIC_CONDITION, "<arithmetic condition>");
+    r = expression(b, l + 1, -1);
+    r = r && arithmetic_condition_1(b, l + 1);
+    r = r && expression(b, l + 1, -1);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // w newlines | newlines w
+  // '-eq' | '-ne' | '-lt' | '-le' | '-gt' | '-ge'
+  private static boolean arithmetic_condition_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arithmetic_condition_1")) return false;
+    boolean r;
+    r = consumeTokenSmart(b, "-eq");
+    if (!r) r = consumeTokenSmart(b, "-ne");
+    if (!r) r = consumeTokenSmart(b, "-lt");
+    if (!r) r = consumeTokenSmart(b, "-le");
+    if (!r) r = consumeTokenSmart(b, "-gt");
+    if (!r) r = consumeTokenSmart(b, "-ge");
+    return r;
+  }
+
+  // <<parseUntilSpace w>> ('-ef' | '-nt' | '-ot' | '-eq' | '-ne' | '-lt' | '-le' | '-gt' | '-ge') <<parseUntilSpace w>>
+  public static boolean binary_condition(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "binary_condition")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _COLLAPSE_, BINARY_CONDITION, "<binary condition>");
+    r = parseUntilSpace(b, l + 1, ShParser::w);
+    r = r && binary_condition_1(b, l + 1);
+    r = r && parseUntilSpace(b, l + 1, ShParser::w);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // '-ef' | '-nt' | '-ot' | '-eq' | '-ne' | '-lt' | '-le' | '-gt' | '-ge'
+  private static boolean binary_condition_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "binary_condition_1")) return false;
+    boolean r;
+    r = consumeTokenSmart(b, "-ef");
+    if (!r) r = consumeTokenSmart(b, "-nt");
+    if (!r) r = consumeTokenSmart(b, "-ot");
+    if (!r) r = consumeTokenSmart(b, "-eq");
+    if (!r) r = consumeTokenSmart(b, "-ne");
+    if (!r) r = consumeTokenSmart(b, "-lt");
+    if (!r) r = consumeTokenSmart(b, "-le");
+    if (!r) r = consumeTokenSmart(b, "-gt");
+    if (!r) r = consumeTokenSmart(b, "-ge");
+    return r;
+  }
+
+  // unary_op <<parseUntilSpace w>>
+  public static boolean unary_condition(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unary_condition")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _COLLAPSE_, UNARY_CONDITION, "<unary condition>");
+    r = unary_op(b, l + 1);
+    r = r && parseUntilSpace(b, l + 1, ShParser::w);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // <<parseUntilSpace w>> newlines | newlines <<parseUntilSpace w>>
   public static boolean literal_condition(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "literal_condition")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, LITERAL_CONDITION, "<literal condition>");
+    Marker m = enter_section_(b, l, _COLLAPSE_, LITERAL_CONDITION, "<literal condition>");
     r = literal_condition_0(b, l + 1);
     if (!r) r = literal_condition_1(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // w newlines
+  // <<parseUntilSpace w>> newlines
   private static boolean literal_condition_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "literal_condition_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = w(b, l + 1);
+    r = parseUntilSpace(b, l + 1, ShParser::w);
     r = r && newlines(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // newlines w
+  // newlines <<parseUntilSpace w>>
   private static boolean literal_condition_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "literal_condition_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = newlines(b, l + 1);
-    r = r && w(b, l + 1);
+    r = r && parseUntilSpace(b, l + 1, ShParser::w);
     exit_section_(b, m, null, r);
     return r;
   }

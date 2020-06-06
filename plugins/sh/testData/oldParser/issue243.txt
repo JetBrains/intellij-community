@@ -32,14 +32,12 @@ SHELL_SCRIPT
               CONDITIONAL_COMMAND
                 PsiElement([)('[')
                 PsiWhiteSpace(' ')
-                LITERAL_CONDITION
+                BINARY_CONDITION
                   VARIABLE
                     PsiElement(var)('$#')
-                PsiWhiteSpace(' ')
-                LITERAL_CONDITION
+                  PsiWhiteSpace(' ')
                   PsiElement(word)('-gt')
-                PsiWhiteSpace(' ')
-                LITERAL_CONDITION
+                  PsiWhiteSpace(' ')
                   NUMBER
                     PsiElement(int)('0')
                 PsiWhiteSpace(' ')

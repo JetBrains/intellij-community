@@ -10,7 +10,7 @@ public interface ShLogicalOrCondition extends ShCondition {
   @NotNull
   List<ShCondition> getConditionList();
 
-  @NotNull
+  @Nullable
   PsiElement getOrOr();
 
 }

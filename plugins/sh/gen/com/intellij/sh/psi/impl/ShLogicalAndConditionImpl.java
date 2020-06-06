@@ -32,9 +32,9 @@ public class ShLogicalAndConditionImpl extends ShConditionImpl implements ShLogi
   }
 
   @Override
-  @NotNull
+  @Nullable
   public PsiElement getAndAnd() {
-    return findNotNullChildByType(AND_AND);
+    return findChildByType(AND_AND);
   }
 
 }

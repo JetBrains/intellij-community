@@ -7,7 +7,7 @@ SHELL_SCRIPT
         CONDITIONAL_COMMAND
           PsiElement([)('[')
           PsiWhiteSpace(' ')
-          ASSIGNMENT_CONDITION
+          EQUALITY_CONDITION
             LITERAL_CONDITION
               PsiElement(word)('startpar')
             PsiWhiteSpace(' ')

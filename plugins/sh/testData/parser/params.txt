@@ -487,10 +487,9 @@ SHELL_SCRIPT
         CONDITIONAL_COMMAND
           PsiElement([[)('[[')
           PsiWhiteSpace(' ')
-          LITERAL_CONDITION
+          UNARY_CONDITION
             PsiElement(word)('-z')
-          PsiWhiteSpace(' ')
-          LITERAL_CONDITION
+            PsiWhiteSpace(' ')
             STRING
               PsiElement(OPEN_QUOTE)('"')
               PsiElement($)('$')
@@ -1336,40 +1335,40 @@ SHELL_SCRIPT
               CONDITIONAL_COMMAND
                 PsiElement([)('[')
                 PsiWhiteSpace(' ')
-                ASSIGNMENT_CONDITION
-                  LITERAL_CONDITION
-                    STRING
-                      PsiElement(OPEN_QUOTE)('"')
-                      VARIABLE
-                        PsiElement(var)('$type')
-                      PsiElement(CLOSE_QUOTE)('"')
+                LOGICAL_OR_CONDITION
+                  EQUALITY_CONDITION
+                    LITERAL_CONDITION
+                      STRING
+                        PsiElement(OPEN_QUOTE)('"')
+                        VARIABLE
+                          PsiElement(var)('$type')
+                        PsiElement(CLOSE_QUOTE)('"')
+                    PsiWhiteSpace(' ')
+                    PsiElement(=)('=')
+                    PsiWhiteSpace(' ')
+                    LITERAL_CONDITION
+                      STRING
+                        PsiElement(OPEN_QUOTE)('"')
+                        PsiElement(STRING_CONTENT)('host')
+                        PsiElement(CLOSE_QUOTE)('"')
                   PsiWhiteSpace(' ')
-                  PsiElement(=)('=')
-                  PsiWhiteSpace(' ')
-                  LITERAL_CONDITION
-                    STRING
-                      PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(STRING_CONTENT)('host')
-                      PsiElement(CLOSE_QUOTE)('"')
-                PsiWhiteSpace(' ')
-                LITERAL_CONDITION
                   PsiElement(word)('-o')
-                PsiWhiteSpace(' ')
-                ASSIGNMENT_CONDITION
-                  LITERAL_CONDITION
-                    STRING
-                      PsiElement(OPEN_QUOTE)('"')
-                      VARIABLE
-                        PsiElement(var)('$type')
-                      PsiElement(CLOSE_QUOTE)('"')
                   PsiWhiteSpace(' ')
-                  PsiElement(=)('=')
-                  PsiWhiteSpace(' ')
-                  LITERAL_CONDITION
-                    STRING
-                      PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(STRING_CONTENT)('guest')
-                      PsiElement(CLOSE_QUOTE)('"')
+                  EQUALITY_CONDITION
+                    LITERAL_CONDITION
+                      STRING
+                        PsiElement(OPEN_QUOTE)('"')
+                        VARIABLE
+                          PsiElement(var)('$type')
+                        PsiElement(CLOSE_QUOTE)('"')
+                    PsiWhiteSpace(' ')
+                    PsiElement(=)('=')
+                    PsiWhiteSpace(' ')
+                    LITERAL_CONDITION
+                      STRING
+                        PsiElement(OPEN_QUOTE)('"')
+                        PsiElement(STRING_CONTENT)('guest')
+                        PsiElement(CLOSE_QUOTE)('"')
                 PsiWhiteSpace(' ')
                 PsiElement(])(']')
               PsiElement(;)(';')

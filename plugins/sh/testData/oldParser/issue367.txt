@@ -86,10 +86,9 @@ SHELL_SCRIPT
         CONDITIONAL_COMMAND
           PsiElement([)('[')
           PsiWhiteSpace(' ')
-          LITERAL_CONDITION
+          UNARY_CONDITION
             PsiElement(word)('-n')
-          PsiWhiteSpace(' ')
-          LITERAL_CONDITION
+            PsiWhiteSpace(' ')
             PsiElement($)('$')
             SHELL_PARAMETER_EXPANSION
               PsiElement({)('{')

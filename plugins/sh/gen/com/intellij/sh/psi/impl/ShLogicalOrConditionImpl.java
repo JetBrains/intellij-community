@@ -32,9 +32,9 @@ public class ShLogicalOrConditionImpl extends ShConditionImpl implements ShLogic
   }
 
   @Override
-  @NotNull
+  @Nullable
   public PsiElement getOrOr() {
-    return findNotNullChildByType(OR_OR);
+    return findChildByType(OR_OR);
   }
 
 }

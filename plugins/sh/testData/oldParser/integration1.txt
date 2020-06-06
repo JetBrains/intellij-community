@@ -7,10 +7,9 @@ SHELL_SCRIPT
         CONDITIONAL_COMMAND
           PsiElement([)('[')
           PsiWhiteSpace(' ')
-          LITERAL_CONDITION
+          UNARY_CONDITION
             PsiElement(word)('-e')
-          PsiWhiteSpace(' ')
-          LITERAL_CONDITION
+            PsiWhiteSpace(' ')
             PsiElement(word)('/lib/init/splash-functions-base')
           PsiWhiteSpace(' ')
           PsiElement(])(']')

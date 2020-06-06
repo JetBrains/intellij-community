@@ -75,11 +75,9 @@ SHELL_SCRIPT
           PsiElement([)('[')
           PsiWhiteSpace(' ')
           EQUALITY_CONDITION
-            LOGICAL_BITWISE_CONDITION
+            LITERAL_CONDITION
               PsiElement(!)('!')
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('a')
+              PsiElement(word)('a')
             PsiWhiteSpace(' ')
             PsiElement(==)('==')
             PsiWhiteSpace(' ')
@@ -232,7 +230,7 @@ SHELL_SCRIPT
         CONDITIONAL_COMMAND
           PsiElement([)('[')
           PsiWhiteSpace(' ')
-          ASSIGNMENT_CONDITION
+          EQUALITY_CONDITION
             LITERAL_CONDITION
               STRING
                 PsiElement(OPEN_QUOTE)('"')
@@ -275,7 +273,7 @@ SHELL_SCRIPT
         CONDITIONAL_COMMAND
           PsiElement([)('[')
           PsiWhiteSpace(' ')
-          ASSIGNMENT_CONDITION
+          EQUALITY_CONDITION
             LITERAL_CONDITION
               STRING
                 PsiElement(OPEN_QUOTE)('"')
@@ -666,25 +664,25 @@ SHELL_SCRIPT
     CONDITIONAL_COMMAND
       PsiElement([)('[')
       PsiWhiteSpace(' ')
-      EQUALITY_CONDITION
-        LOGICAL_BITWISE_CONDITION
+      LOGICAL_NEGATION_CONDITION
+        PsiElement(!)('!')
+        PsiWhiteSpace(' ')
+        LOGICAL_NEGATION_CONDITION
           PsiElement(!)('!')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              PsiElement(!)('!')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(!)('!')
+          LOGICAL_NEGATION_CONDITION
+            PsiElement(!)('!')
             PsiWhiteSpace('  ')
-            NUMBER
-              PsiElement(int)('1')
-        PsiWhiteSpace(' ')
-        PsiElement(==)('==')
-        PsiWhiteSpace(' ')
-        LITERAL_CONDITION
-          NUMBER
-            PsiElement(int)('1')
+            EQUALITY_CONDITION
+              LITERAL_CONDITION
+                NUMBER
+                  PsiElement(int)('1')
+              PsiWhiteSpace(' ')
+              PsiElement(==)('==')
+              PsiWhiteSpace(' ')
+              LITERAL_CONDITION
+                NUMBER
+                  PsiElement(int)('1')
       PsiWhiteSpace(' ')
       PsiElement(])(']')
   PsiElement(\n)('\n')
@@ -693,13 +691,11 @@ SHELL_SCRIPT
     CONDITIONAL_COMMAND
       PsiElement([)('[')
       PsiWhiteSpace(' ')
-      LOGICAL_BITWISE_CONDITION
+      LOGICAL_NEGATION_CONDITION
         PsiElement(!)('!')
         PsiWhiteSpace(' ')
-        SIMPLE_COMMAND
-          GENERIC_COMMAND_DIRECTIVE
-            LITERAL
-              PsiElement(word)('-d')
+        UNARY_CONDITION
+          PsiElement(word)('-d')
           PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
@@ -714,7 +710,7 @@ SHELL_SCRIPT
     CONDITIONAL_COMMAND
       PsiElement([[)('[[')
       PsiWhiteSpace(' ')
-      ASSIGNMENT_CONDITION
+      EQUALITY_CONDITION
         LITERAL_CONDITION
           STRING
             PsiElement(OPEN_QUOTE)('"')
@@ -737,7 +733,7 @@ SHELL_SCRIPT
     CONDITIONAL_COMMAND
       PsiElement([)('[')
       PsiWhiteSpace(' ')
-      ASSIGNMENT_CONDITION
+      EQUALITY_CONDITION
         LITERAL_CONDITION
           STRING
             PsiElement(OPEN_QUOTE)('"')
@@ -761,17 +757,15 @@ SHELL_SCRIPT
     CONDITIONAL_COMMAND
       PsiElement([[)('[[')
       PsiWhiteSpace(' ')
-      LITERAL_CONDITION
+      BINARY_CONDITION
         PsiElement($)('$')
         SHELL_PARAMETER_EXPANSION
           PsiElement({)('{')
           PsiElement(word)('osvers')
           PsiElement(})('}')
-      PsiWhiteSpace(' ')
-      LITERAL_CONDITION
+        PsiWhiteSpace(' ')
         PsiElement(word)('-ge')
-      PsiWhiteSpace(' ')
-      LITERAL_CONDITION
+        PsiWhiteSpace(' ')
         NUMBER
           PsiElement(int)('7')
       PsiWhiteSpace(' ')
@@ -793,17 +787,15 @@ SHELL_SCRIPT
     CONDITIONAL_COMMAND
       PsiElement([[)('[[')
       PsiWhiteSpace(' ')
-      LITERAL_CONDITION
+      BINARY_CONDITION
         PsiElement($)('$')
         SHELL_PARAMETER_EXPANSION
           PsiElement({)('{')
           PsiElement(word)('sss')
           PsiElement(})('}')
-      PsiWhiteSpace(' ')
-      LITERAL_CONDITION
+        PsiWhiteSpace(' ')
         PsiElement(word)('-ge')
-      PsiWhiteSpace(' ')
-      LITERAL_CONDITION
+        PsiWhiteSpace(' ')
         NUMBER
           PsiElement(int)('7')
       PsiWhiteSpace(' ')

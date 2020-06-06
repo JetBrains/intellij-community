@@ -32,7 +32,7 @@ SHELL_SCRIPT
                 CONDITIONAL_COMMAND
                   PsiElement([)('[')
                   PsiWhiteSpace(' ')
-                  ASSIGNMENT_CONDITION
+                  EQUALITY_CONDITION
                     LITERAL_CONDITION
                       NUMBER
                         PsiElement(int)('1')

@@ -21,10 +21,9 @@ SHELL_SCRIPT
     CONDITIONAL_COMMAND
       PsiElement([)('[')
       PsiWhiteSpace(' ')
-      LITERAL_CONDITION
+      UNARY_CONDITION
         PsiElement(word)('-f')
-      PsiWhiteSpace(' ')
-      LITERAL_CONDITION
+        PsiWhiteSpace(' ')
         PsiElement(word)('x')
       PsiWhiteSpace(' ')
       PsiElement(])(']')

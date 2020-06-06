@@ -5,12 +5,6 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface ShLogicalAndCondition extends ShCondition {
-
-  @NotNull
-  List<ShCondition> getConditionList();
-
-  @Nullable
-  PsiElement getAndAnd();
+public interface ShUnaryCondition extends ShCondition {
 
 }

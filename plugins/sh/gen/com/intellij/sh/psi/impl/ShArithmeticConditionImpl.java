@@ -1,3 +1,5 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 // This is a generated file. Not intended for manual editing.
 package com.intellij.sh.psi.impl;
 
@@ -10,14 +12,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.sh.ShTypes.*;
 import com.intellij.sh.psi.*;
 
-public class ShAssignmentConditionImpl extends ShConditionImpl implements ShAssignmentCondition {
+public class ShArithmeticConditionImpl extends ShConditionImpl implements ShArithmeticCondition {
 
-  public ShAssignmentConditionImpl(ASTNode node) {
+  public ShArithmeticConditionImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull ShVisitor visitor) {
-    visitor.visitAssignmentCondition(this);
+    visitor.visitArithmeticCondition(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -27,14 +29,8 @@ public class ShAssignmentConditionImpl extends ShConditionImpl implements ShAssi
 
   @Override
   @NotNull
-  public List<ShCondition> getConditionList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, ShCondition.class);
-  }
-
-  @Override
-  @NotNull
-  public PsiElement getAssign() {
-    return findNotNullChildByType(ASSIGN);
+  public List<ShExpression> getExpressionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, ShExpression.class);
   }
 
 }

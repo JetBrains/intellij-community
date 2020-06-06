@@ -247,18 +247,15 @@ SHELL_SCRIPT
         CONDITIONAL_COMMAND
           PsiElement([)('[')
           PsiWhiteSpace(' ')
-          LOGICAL_BITWISE_CONDITION
+          LOGICAL_NEGATION_CONDITION
             PsiElement(!)('!')
             PsiWhiteSpace(' ')
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('ed')
-              PsiWhiteSpace(' ')
-              SIMPLE_COMMAND_ELEMENT
-                REDIRECTION
-                  PsiElement(<<<)('<<<')
-                  PsiElement(word)('Q')
+            LITERAL_CONDITION
+              PsiElement(word)('ed')
+          PsiWhiteSpace(' ')
+          REDIRECTION
+            PsiElement(<<<)('<<<')
+            PsiElement(word)('Q')
           PsiWhiteSpace(' ')
           PsiElement(])(']')
         PsiElement(;)(';')

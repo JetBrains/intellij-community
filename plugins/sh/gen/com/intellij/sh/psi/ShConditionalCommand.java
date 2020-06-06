@@ -7,8 +7,11 @@ import com.intellij.psi.PsiElement;
 
 public interface ShConditionalCommand extends ShCommand {
 
-  @NotNull
-  List<ShCondition> getConditionList();
+  @Nullable
+  ShCondition getCondition();
+
+  @Nullable
+  ShRedirection getRedirection();
 
   @Nullable
   PsiElement getLeftDoubleBracket();

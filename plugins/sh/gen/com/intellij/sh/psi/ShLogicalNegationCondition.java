@@ -5,10 +5,10 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface ShLogicalBitwiseCondition extends ShCondition {
+public interface ShLogicalNegationCondition extends ShCondition {
 
-  @NotNull
-  ShCommand getCommand();
+  @Nullable
+  ShCondition getCondition();
 
   @NotNull
   PsiElement getBang();

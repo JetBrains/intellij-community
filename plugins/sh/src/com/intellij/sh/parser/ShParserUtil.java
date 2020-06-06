@@ -84,4 +84,8 @@ public class ShParserUtil extends GeneratedParserUtilBase {
     }
     return false;
   }
+
+  static boolean space(PsiBuilder b, @SuppressWarnings("UnusedParameters") int level) {
+    return ShTokenTypes.whitespaceTokens.contains(b.rawLookup(0));
+  }
 }

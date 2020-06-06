@@ -422,7 +422,6 @@ SHELL_SCRIPT
       PsiWhiteSpace(' ')
       LITERAL_CONDITION
         PsiElement(word)('\$')
-      LITERAL_CONDITION
         BRACE_EXPANSION
           PsiElement({)('{')
           PsiElement(word)('a')

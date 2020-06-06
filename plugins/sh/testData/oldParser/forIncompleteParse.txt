@@ -74,7 +74,7 @@ SHELL_SCRIPT
         CONDITIONAL_COMMAND
           PsiElement([)('[')
           PsiWhiteSpace(' ')
-          ASSIGNMENT_CONDITION
+          EQUALITY_CONDITION
             LITERAL_CONDITION
               STRING
                 PsiElement(OPEN_QUOTE)('"')

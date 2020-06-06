@@ -3,7 +3,7 @@ SHELL_SCRIPT
     CONDITIONAL_COMMAND
       PsiElement([)('[')
       PsiWhiteSpace(' ')
-      ASSIGNMENT_CONDITION
+      EQUALITY_CONDITION
         LITERAL_CONDITION
           COMMAND_SUBSTITUTION_COMMAND
             PsiElement(OPEN_BACKQUOTE)('`')
@@ -31,7 +31,7 @@ SHELL_SCRIPT
     CONDITIONAL_COMMAND
       PsiElement([)('[')
       PsiWhiteSpace(' ')
-      ASSIGNMENT_CONDITION
+      EQUALITY_CONDITION
         LITERAL_CONDITION
           PsiElement($)('$')
           SUBSHELL_COMMAND

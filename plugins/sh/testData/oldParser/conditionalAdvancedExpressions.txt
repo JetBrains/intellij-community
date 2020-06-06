@@ -3,10 +3,9 @@ SHELL_SCRIPT
     CONDITIONAL_COMMAND
       PsiElement([)('[')
       PsiWhiteSpace(' ')
-      LITERAL_CONDITION
+      UNARY_CONDITION
         PsiElement(word)('-z')
-      PsiWhiteSpace(' ')
-      LITERAL_CONDITION
+        PsiWhiteSpace(' ')
         PsiElement(word)('a')
       PsiWhiteSpace(' ')
       PsiElement(])(']')
@@ -34,7 +33,7 @@ SHELL_SCRIPT
     CONDITIONAL_COMMAND
       PsiElement([)('[')
       PsiWhiteSpace(' ')
-      ASSIGNMENT_CONDITION
+      EQUALITY_CONDITION
         LITERAL_CONDITION
           PsiElement($)('$')
           SUBSHELL_COMMAND
@@ -77,7 +76,6 @@ SHELL_SCRIPT
       PsiWhiteSpace(' ')
       LITERAL_CONDITION
         PsiElement(word)('\$')
-      LITERAL_CONDITION
         BRACE_EXPANSION
           PsiElement({)('{')
           PsiElement(word)('a')
