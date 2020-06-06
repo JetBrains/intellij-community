@@ -148,6 +148,11 @@ object GithubApiRequests {
     }
 
     object Commits : Entity("/commits") {
+
+      @JvmStatic
+      fun compare(repository: GHRepositoryCoordinates, refA: String, refB: String) =
+        Get.json<GHCommitsCompareResult>(getUrl(repository, "/compare/$refA...$refB")).withOperationName("compare refs")
+
       @JvmStatic
       fun getDiff(repository: GHRepositoryCoordinates, ref: String) =
         object : Get<String>(getUrl(repository, urlSuffix, "/$ref"),

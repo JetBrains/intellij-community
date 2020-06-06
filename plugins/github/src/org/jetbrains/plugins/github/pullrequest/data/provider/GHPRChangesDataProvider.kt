@@ -41,5 +41,8 @@ interface GHPRChangesDataProvider {
   }
 
   @CalledInAwt
+  fun fetchBaseBranch(): CompletableFuture<Unit>
+
+  @CalledInAwt
   fun fetchHeadBranch(): CompletableFuture<Unit>
 }

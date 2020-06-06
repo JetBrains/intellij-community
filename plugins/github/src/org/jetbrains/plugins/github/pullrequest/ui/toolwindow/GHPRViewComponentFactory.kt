@@ -69,6 +69,9 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     dataProvider.changesData.loadChanges(disposable) {
       changesLoadingModel.future = it
     }
+    // pre-fetch to show diff quicker
+    dataProvider.changesData.fetchBaseBranch()
+    dataProvider.changesData.fetchHeadBranch()
   }
 
   private val reloadDetailsAction = actionManager.getAction("Github.PullRequest.Details.Reload")

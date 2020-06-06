@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import git4idea.fetch.GitFetchSupport
-import git4idea.history.GitHistoryUtils
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
@@ -62,8 +61,8 @@ class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
 
   override fun loadMergeBaseOid(progressIndicator: ProgressIndicator, baseRefOid: String, headRefOid: String) =
     progressManager.submitIOTask(progressIndicator) {
-      GitHistoryUtils.getMergeBase(project, gitRemote.repository.root, baseRefOid, headRefOid)?.rev
-      ?: error("Could not calculate merge base for PR branch")
+      requestExecutor.execute(it,
+                              GithubApiRequests.Repos.Commits.compare(ghRepository, baseRefOid, headRefOid)).mergeBaseCommit.sha
     }.logError(LOG, "Error occurred while calculating merge base for $baseRefOid and $headRefOid")
 
   override fun createChangesProvider(progressIndicator: ProgressIndicator, mergeBaseOid: String, commits: List<GHCommit>) =
