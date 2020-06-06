@@ -9,6 +9,9 @@ import org.junit.Test;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -135,5 +138,26 @@ public class PathUtilTest {
 
     assertThat(PathUtil.getParent("/tmp/a/.")).isEqualTo("/tmp/a");
     assertThat(PathUtil.getParent("/tmp/a/../b")).isEqualTo("/tmp/a/..");
+  }
+
+  @Test
+  public void comparator() {
+    assertThat(PathUtil.COMPARATOR.compare("", "")).isEqualTo(0);
+    assertThat(PathUtil.COMPARATOR.compare("/", Character.toString('/'))).isEqualTo(0);
+    assertThat(PathUtil.COMPARATOR.compare("//", "\\\\")).isEqualTo(0);
+    assertThat(PathUtil.COMPARATOR.compare("/a/b", "\\a\\b")).isEqualTo(0);
+
+    assertThat(PathUtil.COMPARATOR.compare("a", "b")).isNegative();
+    assertThat(PathUtil.COMPARATOR.compare("b", "a")).isPositive();
+    assertThat(PathUtil.COMPARATOR.compare("/a/b", "\\a\\b\\")).isNegative();
+
+    assertThat(PathUtil.COMPARATOR.compare("/a/b", "/a/b/c")).isNegative();
+    assertThat(PathUtil.COMPARATOR.compare("/a/b", "/a/bc")).isNegative();
+    assertThat(PathUtil.COMPARATOR.compare("/a/b", "/a/b.c")).isNegative();
+
+    List<String> paths = Arrays.asList("/a/bC", "/a/b-c", "/a/b", "/a/b/c", null);
+    Collections.shuffle(paths);
+    Collections.sort(paths, PathUtil.COMPARATOR);
+    assertThat(paths).containsExactly(null, "/a/b", "/a/b/c", "/a/b-c", "/a/bC");
   }
 }

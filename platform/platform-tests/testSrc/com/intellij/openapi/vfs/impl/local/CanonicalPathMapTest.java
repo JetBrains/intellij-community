@@ -16,6 +16,9 @@ import java.util.Collection;
 import java.util.NavigableSet;
 
 import static com.intellij.openapi.util.Pair.pair;
+import static com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported;
+import static java.io.File.separatorChar;
+import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,8 +26,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class CanonicalPathMapTest {
   private static final String DIR_ROOT = SystemInfo.isWindows ? "c:\\parent\\root" : "/parent/root";
   private static final String FILE_ROOT = SystemInfo.isWindows ? "c:\\parent\\root.txt" : "/parent/root.txt";
-  private static final String CHILD_DIR = File.separator + "child_dir";
-  private static final String CHILD_FILE = File.separator + "child.txt";
+  private static final String CHILD_DIR = separatorChar + "child_dir";
+  private static final String CHILD_FILE = separatorChar + "child.txt";
 
   @Rule public TempDirectory myTempDir = new TempDirectory();
 
@@ -130,7 +133,7 @@ public class CanonicalPathMapTest {
 
   @Test
   public void remappedSymLinkReportsOriginalWatchedPath() throws IOException {
-    IoTestUtil.assumeSymLinkCreationIsSupported();
+    assumeSymLinkCreationIsSupported();
 
     // Tests the situation where the watch root is a symlink AND REMAPPED by the native file watcher.
     File realDir = myTempDir.newFolder("real");
@@ -138,14 +141,23 @@ public class CanonicalPathMapTest {
     File mappedDir = new File(myTempDir.getRoot(), "mapped");
 
     // Initial symlink map: .../root/link -> .../root/real
-    CanonicalPathMap pathMap = createCanonicalPathMap(singletonList(symLink.getPath()), emptyList());
+    CanonicalPathMap map = createCanonicalPathMap(singletonList(symLink.getPath()), emptyList());
 
     // REMAP from native file watcher: .../root/mapped -> .../root/real
-    pathMap.addMapping(singletonList(pair(mappedDir.getPath(), realDir.getPath())));
+    map.addMapping(singletonList(pair(mappedDir.getPath(), realDir.getPath())));
 
     // expected: .../root/mapped/file.txt -> .../root/link/file.txt
-    Collection<String> watchedPaths = pathMap.mapToOriginalWatchRoots(new File(mappedDir, "file.txt").getPath(), true);
+    Collection<String> watchedPaths = map.mapToOriginalWatchRoots(new File(mappedDir, "file.txt").getPath(), true);
     assertThat(watchedPaths).containsExactly(new File(symLink, "file.txt").getPath());
+  }
+
+  @Test
+  public void partialMatchCollision() {
+    String root = DIR_ROOT + separatorChar + "sub", collidingRoot = root + "-dir", otherRoot = root + "XXX";
+    String probe = root + separatorChar + "file";
+    CanonicalPathMap map = createCanonicalPathMap(asList(root, collidingRoot, otherRoot), emptyList());
+    Collection<String> watched = map.mapToOriginalWatchRoots(probe, true);
+    assertThat(watched).containsExactly(probe);
   }
 
   private static CanonicalPathMap createCanonicalPathMap(Collection<String> recursive, Collection<String> flat) {

@@ -1,8 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Comparator;
 
 /**
  * <p>Utility methods for operations with file path strings. Unlike {@link java.io IO}, {@link java.nio.file NIO2} and {@link FileUtil},
@@ -14,6 +18,35 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PathUtil {
   private PathUtil() { }
+
+  /**
+   * Compares paths by elements and without taking separators into account. The key difference from {@link String#compareTo} is
+   * that "a/b" is less than "a.b": instead of character-vs-character matching, the paths are compared as ["a", "b"] vs. ["a.b"].
+   */
+  public static final Comparator<String> COMPARATOR = (@Nullable String path1, @Nullable String path2) -> {
+    if (path1 == path2) return 0;
+    if (path1 == null) return -1;
+    if (path2 == null) return 1;
+
+    int start = 0;
+    while (true) {
+      int next1 = separatorIndex(path1, start), next2 = separatorIndex(path2, start);
+
+      if (next1 != start || next2 != start) {
+        int end1 = next1 >= 0 ? next1 : path1.length(), end2 = next2 >= 0 ? next2 : path2.length(), minEnd = Math.min(end1, end2);
+        for (int i = start; i < minEnd; i++) {
+          int diff = StringUtil.compare(path1.charAt(i), path2.charAt(i), !SystemInfo.isFileSystemCaseSensitive);
+          if (diff != 0) return diff;
+        }
+        if (next1 != next2 || next1 < 0) {
+          int diff = end1 - end2;
+          return diff != 0 ? diff : path1.length() - path2.length();
+        }
+      }
+
+      start = next1 + 1;
+    }
+  };
 
   /**
    * Returns {@code true} absolute UNC (even incomplete), DOS and Unix paths; {@code false} otherwise.
@@ -68,7 +101,18 @@ public class PathUtil {
     return 'A' <= c && c <= 'Z' || 'a' <= c && c <= 'z';
   }
 
+
+  private static int separatorIndex(String s, int from) {
+    for (int i = from, l = s.length(); i < l; i++) {
+      if (isSlash(s.charAt(i))) return i;
+    }
+    return -1;
+  }
+
   private static int lastSeparatorIndex(String s, int from) {
-    return Math.max(s.lastIndexOf('/', from), s.lastIndexOf('\\', from));
+    for (int i = Math.min(from, s.length() - 1); i >= 0; i--) {
+      if (isSlash(s.charAt(i))) return i;
+    }
+    return -1;
   }
 }
