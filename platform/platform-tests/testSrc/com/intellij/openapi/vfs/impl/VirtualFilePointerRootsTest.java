@@ -12,11 +12,15 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -28,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @RunFirst
@@ -111,15 +116,50 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
         String name = "xxx" + (i%20);
         events.add(new VFileCreateEvent(this, temp, name, true, null, null, true, null));
       }
-      PlatformTestUtil.startPerformanceTest("vfp update", 7_500, () -> {
+      PlatformTestUtil.startPerformanceTest("vfp update", 3_000, () -> {
         for (int i = 0; i < 100; i++) {
           // simulate VFS refresh events since launching the actual refresh is too slow
           AsyncFileListener.ChangeApplier applier = myVirtualFilePointerManager.prepareChange(events);
           applier.beforeVfsChange();
           applier.afterVfsChange();
+          myVirtualFilePointerManager.after(events);
         }
       }).assertTiming();
     });
+  }
+
+  public void testUpdatePerformanceOfFewLongPointers() throws IOException {
+    VirtualFile root = TempFileSystem.getInstance().findFileByPath("/");
+    VirtualFile d = root;
+    for (int i=0;i <20; i++) {
+      d = VfsTestUtil.createDir(d, "directory" + i);
+    }
+    VirtualFile dir = d;
+    VirtualFile f = WriteAction.compute(() -> dir.createChildData(this, "file.txt"));
+
+    VirtualFilePointer pointer = myVirtualFilePointerManager.create(dir.getUrl()+"/file.txt", disposable, new VirtualFilePointerListener() {});
+    FileAttributes attributes = new FileAttributes(false, false, false, false, 0, 1, true);
+    List<VFileEvent> createEvents = Collections.singletonList(new VFileCreateEvent(this, dir, "file.txt", false, attributes, null, true, null));
+    List<VFileEvent> deleteEvents = Collections.singletonList(new VFileDeleteEvent(this, f, true));
+
+
+    PersistentFSImpl persistentFS = (PersistentFSImpl)ManagingFS.getInstance();
+
+    PlatformTestUtil.startPerformanceTest("update()", 5000, () -> {
+      for (int i=0; i<500_000; i++) {
+        persistentFS.incStructuralModificationCount();
+        AsyncFileListener.ChangeApplier applier = myVirtualFilePointerManager.prepareChange(createEvents);
+        applier.beforeVfsChange();
+        applier.afterVfsChange();
+        myVirtualFilePointerManager.after(createEvents);
+
+        persistentFS.incStructuralModificationCount();
+        AsyncFileListener.ChangeApplier applier2 = myVirtualFilePointerManager.prepareChange(deleteEvents);
+        applier2.beforeVfsChange();
+        applier2.afterVfsChange();
+        myVirtualFilePointerManager.after(deleteEvents);
+      }
+    }).assertTiming();
   }
 
   public void testCidrCrazyAddCreateRenames() throws IOException {

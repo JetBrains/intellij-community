@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.*;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.*;
 import com.intellij.util.containers.*;
 import com.intellij.util.io.ReplicatorInputStream;
@@ -673,7 +674,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
         VFileContentChangeEvent event = new VFileContentChangeEvent(requestor, file, file.getModificationStamp(), modStamp, false);
         List<VFileContentChangeEvent> events = Collections.singletonList(event);
-        getPublisher().before(events);
+        fireBeforeEvents(getPublisher(), events);
 
         NewVirtualFileSystem delegate = getDelegate(file);
         // FSRecords.ContentOutputStream already buffered, no need to wrap in BufferedStream
@@ -692,7 +693,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                          attributes != null ? attributes.length : DEFAULT_LENGTH,
                          // due to fs rounding timestamp of written file can be significantly different from current time
                          attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP);
-            getPublisher().after(events);
+            fireAfterEvents(getPublisher(), events);
           }
         }
       }
@@ -732,11 +733,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     BulkFileListener publisher = getPublisher();
     if (jarDeleteEvents.isEmpty() && outApplyActions.isEmpty()) {
       // optimisation: skip all groupings
-      publisher.before(outValidatedEvents);
+      fireBeforeEvents(publisher, outValidatedEvents);
 
       applyEvent(event);
 
-      publisher.after(outValidatedEvents);
+      fireAfterEvents(publisher, outValidatedEvents);
     }
     else {
       outApplyActions.add(() -> applyEvent(event));
@@ -1026,12 +1027,22 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     PingProgress.interactWithEdtProgress();
     // do defensive copy to cope with ill-written listeners that save passed list for later processing
     List<VFileEvent> toSend = ContainerUtil.immutableList(applyEvents.toArray(new VFileEvent[0]));
-    publisher.before(toSend);
+    fireBeforeEvents(publisher, toSend);
 
     PingProgress.interactWithEdtProgress();
     applyActions.forEach(Runnable::run);
 
     PingProgress.interactWithEdtProgress();
+    fireAfterEvents(publisher, toSend);
+  }
+
+  private static void fireBeforeEvents(@NotNull BulkFileListener publisher, @NotNull List<? extends VFileEvent> toSend) {
+    publisher.before(toSend);
+    ((BulkFileListener)VirtualFilePointerManager.getInstance()).before(toSend);
+  }
+
+  private static void fireAfterEvents(@NotNull BulkFileListener publisher, @NotNull List<? extends VFileEvent> toSend) {
+    ((BulkFileListener)VirtualFilePointerManager.getInstance()).after(toSend);
     publisher.after(toSend);
   }
 

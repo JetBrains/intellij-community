@@ -12,8 +12,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
+import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -66,9 +68,11 @@ public final class AsyncEventSupport {
     }
 
     List<AsyncFileListener.ChangeApplier> appliers = new ArrayList<>();
-    List<AsyncFileListener> allListeners = ContainerUtil.concat(
-      EP_NAME.getExtensionList(),
-      ((VirtualFileManagerImpl)VirtualFileManager.getInstance()).getAsyncFileListeners());
+    List<AsyncFileListener> allListeners = new ArrayList<>();
+    // must be the first
+    ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).addAsyncFileListenerTo(allListeners);
+    allListeners.addAll(EP_NAME.getExtensionList());
+    ((VirtualFileManagerImpl)VirtualFileManager.getInstance()).addAsyncFileListenersTo(allListeners);
     for (AsyncFileListener listener : allListeners) {
       ProgressManager.checkCanceled();
       long startNs = System.nanoTime();
