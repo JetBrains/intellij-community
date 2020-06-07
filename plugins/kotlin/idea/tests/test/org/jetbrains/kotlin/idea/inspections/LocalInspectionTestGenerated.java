@@ -6460,6 +6460,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public void testTypeParameter() throws Exception {
             runTest("testData/inspectionsLocal/moveLambdaOutsideParentheses/typeParameter.kt");
         }
+
+        @TestMetadata("typeParameter2.kt")
+        public void testTypeParameter2() throws Exception {
+            runTest("idea/testData/inspectionsLocal/moveLambdaOutsideParentheses/typeParameter2.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
