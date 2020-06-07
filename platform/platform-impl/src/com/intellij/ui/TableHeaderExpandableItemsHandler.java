@@ -29,8 +29,10 @@ public class TableHeaderExpandableItemsHandler extends AbstractExpandableItemsHa
                                                             column.getHeaderValue(),
                                                             false, hasFocus,
                                                             -1, column.getModelIndex());
+    AppUIUtil.targetToDevice(comp, myComponent);
 
     Rectangle rect = myComponent.getHeaderRect(column.getModelIndex());
+    rect.width = comp.getPreferredSize().width;
     return Pair.create(comp, rect);
   }
 
