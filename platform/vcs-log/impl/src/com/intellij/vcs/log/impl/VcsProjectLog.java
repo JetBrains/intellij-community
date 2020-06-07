@@ -410,7 +410,6 @@ public class VcsProjectLog implements Disposable {
     void logCreated(@NotNull VcsLogManager manager);
 
     @CalledInAwt
-    default void logDisposed(@NotNull VcsLogManager manager) {
-    }
+    void logDisposed(@NotNull VcsLogManager manager);
   }
 }
