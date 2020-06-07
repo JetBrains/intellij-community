@@ -21,9 +21,11 @@ import org.jetbrains.plugins.github.util.submitIOTask
 import java.util.concurrent.CompletableFuture
 import javax.swing.JTextField
 
+internal typealias UniqueLoginPredicate = (login: String, server: GithubServerPath) -> Boolean
+
 internal class GithubLoginPanel(
   executorFactory: GithubApiRequestExecutor.Factory,
-  isAccountUnique: (name: String, server: GithubServerPath) -> Boolean
+  isAccountUnique: UniqueLoginPredicate
 ) : Wrapper() {
 
   private val serverTextField = ExtendableTextField(GithubServerPath.DEFAULT_HOST, 0)

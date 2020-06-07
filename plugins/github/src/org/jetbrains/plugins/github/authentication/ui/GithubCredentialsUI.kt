@@ -60,7 +60,7 @@ internal sealed class GithubCredentialsUI {
   internal class PasswordUI(
     private val serverTextField: ExtendableTextField,
     private val executorFactory: GithubApiRequestExecutor.Factory,
-    private val isAccountUnique: (login: String, server: GithubServerPath) -> Boolean
+    private val isAccountUnique: UniqueLoginPredicate
   ) : GithubCredentialsUI() {
 
     private val loginTextField = JBTextField()
@@ -135,7 +135,7 @@ internal sealed class GithubCredentialsUI {
   internal class TokenUI(
     private val serverTextField: ExtendableTextField,
     val factory: GithubApiRequestExecutor.Factory,
-    val isAccountUnique: (name: String, server: GithubServerPath) -> Boolean
+    val isAccountUnique: UniqueLoginPredicate
   ) : GithubCredentialsUI() {
 
     private val tokenTextField = JBTextField()

@@ -36,7 +36,7 @@ private fun JComponent.setPaddingCompensated(): JComponent =
 class GithubLoginDialog @JvmOverloads constructor(executorFactory: GithubApiRequestExecutor.Factory,
                                                   project: Project?,
                                                   parent: Component? = null,
-                                                  isAccountUnique: (name: String, server: GithubServerPath) -> Boolean = { _, _ -> true },
+                                                  isAccountUnique: UniqueLoginPredicate = { _, _ -> true },
                                                   @Nls(capitalization = Nls.Capitalization.Title) title: String =
                                                     GithubBundle.message("login.to.github"),
                                                   @Nls(capitalization = Nls.Capitalization.Sentence) private val message: String? = null)
