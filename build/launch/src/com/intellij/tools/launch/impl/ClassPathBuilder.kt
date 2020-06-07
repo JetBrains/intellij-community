@@ -2,7 +2,6 @@ package com.intellij.tools.launch.impl
 
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.tools.launch.ModulesProvider
 import com.intellij.tools.launch.PathsProvider
 import org.jetbrains.jps.model.JpsElementFactory
@@ -49,7 +48,7 @@ internal class ClassPathBuilder(private val paths: PathsProvider, private val mo
     }
 
     JpsJavaExtensionService.getInstance().getProjectExtension(model.project)!!.outputUrl =
-      VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(paths.outputRootFolder.path))
+      "file://${FileUtil.toSystemIndependentName(paths.outputRootFolder.path)}"
 
     val modulesList = arrayListOf<String>()
     modulesList.add("intellij.platform.boot")
