@@ -93,8 +93,8 @@ internal class GHAccountsPanel(private val project: Project,
   private fun addAccount() {
     val dialog = GithubLoginDialog(executorFactory, project, this, ::isAccountUnique)
     if (dialog.showAndGet()) {
-      val githubAccount = GithubAccountManager.createAccount(dialog.getLogin(), dialog.getServer())
-      newTokensMap[githubAccount] = dialog.getToken()
+      val githubAccount = GithubAccountManager.createAccount(dialog.login, dialog.server)
+      newTokensMap[githubAccount] = dialog.token
 
       val accountData = GithubAccountDecorator(githubAccount, false)
       accountListModel.add(accountData)
@@ -108,8 +108,8 @@ internal class GHAccountsPanel(private val project: Project,
       withCredentials(decorator.account.name)
     }
     if (dialog.showAndGet()) {
-      decorator.account.name = dialog.getLogin()
-      newTokensMap[decorator.account] = dialog.getToken()
+      decorator.account.name = dialog.login
+      newTokensMap[decorator.account] = dialog.token
       loadAccountDetails(decorator)
     }
   }

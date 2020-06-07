@@ -111,7 +111,7 @@ internal class GithubLoginPanel(
 
   fun getServer(): GithubServerPath = GithubServerPath.from(serverTextField.text.trim())
 
-  fun setServer(path: String, editable: Boolean = true) {
+  fun setServer(path: String, editable: Boolean) {
     serverTextField.text = path
     serverTextField.isEditable = editable
   }

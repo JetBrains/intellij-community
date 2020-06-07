@@ -110,7 +110,7 @@ class GithubAccountsMigrationHelper {
   private fun registerFromDialog(dialog: GithubLoginDialog): Boolean {
     DialogManager.show(dialog)
     return if (dialog.isOK) {
-      registerAccount(GithubAccountManager.createAccount(dialog.getLogin(), dialog.getServer()), dialog.getToken())
+      registerAccount(GithubAccountManager.createAccount(dialog.login, dialog.server), dialog.token)
       true
     }
     else false
