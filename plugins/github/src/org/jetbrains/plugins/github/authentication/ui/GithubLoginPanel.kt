@@ -67,7 +67,9 @@ internal class GithubLoginPanel(
     }
   }
 
-  fun getPreferredFocus() = currentUi.getPreferredFocus()
+  fun getPreferredFocus() =
+    serverTextField.takeIf { it.isEditable && it.text.isBlank() }
+    ?: currentUi.getPreferredFocus()
 
   fun doValidateAll(): List<ValidationInfo> {
     val uiError =
