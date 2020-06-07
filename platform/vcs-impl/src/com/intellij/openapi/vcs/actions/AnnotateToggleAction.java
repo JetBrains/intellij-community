@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -110,6 +111,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
                                  @NotNull final AbstractVcs vcs,
                                  @NotNull final UpToDateLineNumberProvider upToDateLineNumbers,
                                  final boolean warnAboutSuspiciousAnnotations) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (project.isDisposed() || editor.isDisposed()) return;
 
     if (warnAboutSuspiciousAnnotations) {
