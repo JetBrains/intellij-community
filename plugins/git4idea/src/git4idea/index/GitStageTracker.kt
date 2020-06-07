@@ -53,7 +53,7 @@ class GitStageTracker(val project: Project) : Disposable {
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsListener {
       runInEdt(this) {
         val roots = gitRoots()
-        update { oldState -> State(oldState.rootStates.filterKeys { roots.contains(it) }) }
+        update { oldState -> State(roots.associateWith { oldState.rootStates[it] ?: RootState.empty(it) }) }
       }
     })
     connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, object : FileDocumentManagerListener {
