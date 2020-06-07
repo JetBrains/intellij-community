@@ -8,15 +8,18 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.SimpleColoredComponent
-import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.SimpleTextAttributes.ERROR_ATTRIBUTES
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Panels.simplePanel
+import com.intellij.util.ui.JBUI.emptyInsets
 import com.intellij.util.ui.UIUtil.ComponentStyle
 import com.intellij.util.ui.UIUtil.getRegularPanelInsets
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
@@ -28,6 +31,7 @@ import org.jetbrains.plugins.github.util.completionOnEdt
 import org.jetbrains.plugins.github.util.errorOnEdt
 import org.jetbrains.plugins.github.util.successOnEdt
 import javax.swing.JButton
+import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal class GHCloneDialogLoginPanel(private val account: GithubAccount?) :
@@ -69,7 +73,7 @@ internal class GHCloneDialogLoginPanel(private val account: GithubAccount?) :
       addToRight(switchLoginUiLink)
     })
     add(loginPanel)
-    add(errorPanel)
+    add(errorPanel.apply { border = JBEmptyBorder(getRegularPanelInsets().apply { top = 0 }) })
   }
 
   private fun LayoutBuilder.buttonPanel() =
@@ -90,12 +94,9 @@ internal class GHCloneDialogLoginPanel(private val account: GithubAccount?) :
         errorPanel.removeAll()
       }
       .errorOnEdt(modalityState) {
-        for (validationInfo in loginPanel.doValidateAll()) {
-          val component = SimpleColoredComponent()
-          component.append(validationInfo.message, SimpleTextAttributes.ERROR_ATTRIBUTES)
-          errorPanel.add(component)
-          errorPanel.revalidate()
-        }
+        loginPanel.doValidateAll().forEach { errorPanel.add(toErrorComponent(it)) }
+
+        errorPanel.revalidate()
         errorPanel.repaint()
       }
       .successOnEdt(modalityState) { (login, token) ->
@@ -107,6 +108,14 @@ internal class GHCloneDialogLoginPanel(private val account: GithubAccount?) :
         }
       }
   }
+
+  private fun toErrorComponent(info: ValidationInfo): JComponent =
+    SimpleColoredComponent().apply {
+      myBorder = empty()
+      ipad = emptyInsets()
+
+      append(info.message, ERROR_ATTRIBUTES)
+    }
 
   private inner class LoginAction : DumbAwareAction() {
     override fun update(e: AnActionEvent) {
