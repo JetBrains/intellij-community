@@ -163,6 +163,8 @@
 
     <group id="Github.Accounts.AddAccount">
       <action id="Github.Accounts.AddGHAccount" class="org.jetbrains.plugins.github.authentication.ui.AddGHAccountAction"/>
+      <action id="Github.Accounts.AddGHAccountWithToken"
+              class="org.jetbrains.plugins.github.authentication.ui.AddGHAccountWithTokenAction"/>
       <separator/>
       <action id="Github.Accounts.AddGHEAccount" class="org.jetbrains.plugins.github.authentication.ui.AddGHEAccountAction"/>
     </group>

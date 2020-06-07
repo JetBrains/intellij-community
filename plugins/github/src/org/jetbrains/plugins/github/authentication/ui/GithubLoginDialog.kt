@@ -18,6 +18,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import java.awt.Component
 import javax.swing.JComponent
+import javax.swing.JPanel
 import javax.swing.JTextArea
 
 private fun JComponent.setPaddingCompensated(): JComponent =
@@ -78,9 +79,7 @@ internal class GithubLoginDialog @JvmOverloads constructor(
     }
   }
 
-  override fun createSouthAdditionalPanel() = simplePanel()
-    .addToCenter(LinkLabel.create(GithubBundle.message("login.sign.up"), Runnable { BrowserUtil.browse("https://github.com") }))
-    .addToRight(JBLabel(AllIcons.Ide.External_link_arrow))
+  override fun createSouthAdditionalPanel(): JPanel = createSignUpLink()
 
   override fun createCenterPanel(): JComponent =
     simplePanel()
@@ -93,4 +92,10 @@ internal class GithubLoginDialog @JvmOverloads constructor(
       )
       .addToCenter(loginPanel)
       .setPaddingCompensated()
+
+  companion object {
+    fun createSignUpLink(): JPanel = simplePanel()
+      .addToCenter(LinkLabel.create(GithubBundle.message("login.sign.up")) { BrowserUtil.browse("https://github.com") })
+      .addToRight(JBLabel(AllIcons.Ide.External_link_arrow))
+  }
 }
