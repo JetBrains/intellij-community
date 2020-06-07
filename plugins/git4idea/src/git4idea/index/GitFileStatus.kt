@@ -27,6 +27,7 @@ data class GitFileStatus(val index: StatusCode,
 
 fun untrackedStatus(filePath: FilePath) = GitFileStatus('?', '?', filePath, null)
 fun ignoredStatus(filePath: FilePath) = GitFileStatus('!', '!', filePath, null)
+fun notChangedStatus(filePath: FilePath) = GitFileStatus(' ', ' ', filePath, null)
 
 fun GitFileStatus.has(contentVersion: ContentVersion): Boolean {
   return when (contentVersion) {

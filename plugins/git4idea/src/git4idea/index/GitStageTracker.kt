@@ -237,9 +237,11 @@ private fun gitRoots(project: Project): List<VirtualFile> {
 
 fun GitStageTracker.status(file: VirtualFile): GitFileStatus? {
   val root = getRoot(project, file) ?: return null
-  if (GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(root)?.ignoredFilesHolder?.containsFile(file.filePath()) == true) {
-    return ignoredStatus(file.filePath())
+  val filePath = file.filePath()
+
+  if (GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(root)?.ignoredFilesHolder?.containsFile(filePath) == true) {
+    return ignoredStatus(filePath)
   }
   val rootState = state.rootStates[root] ?: return null
-  return rootState.statuses[file.filePath()]
+  return rootState.statuses[filePath] ?: return notChangedStatus(filePath)
 }
