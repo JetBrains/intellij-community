@@ -71,6 +71,14 @@ object Launcher {
       cmd.add(arg.trim('"'))
     }
 
+/*
+    println("Starting cmd:")
+    for (arg in cmd) {
+      println("  $arg")
+    }
+    println("-- END")
+*/
+
     val processBuilder = ProcessBuilder(cmd).inheritIO()
     processBuilder.environment().putAll(options.environment)
     options.beforeProcessStart.invoke(processBuilder)
