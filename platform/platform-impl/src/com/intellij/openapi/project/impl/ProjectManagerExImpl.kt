@@ -36,7 +36,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.event.InvocationEvent
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.concurrent.Future
 
 @ApiStatus.Internal
 open class ProjectManagerExImpl : ProjectManagerImpl() {
@@ -270,20 +269,22 @@ private fun openProject(project: Project, indicator: ProgressIndicator?) {
     ProjectImpl.ourClassesAreLoaded = true
   }
 
-  val future = (StartupManager.getInstance(project) as StartupManagerImpl).projectOpened(indicator)
-  if (future != null && ApplicationManager.getApplication().isUnitTestMode) {
-    waitAndProcessInvocationEventsInIdeEventQueue(future)
-  }
+  (StartupManager.getInstance(project) as StartupManagerImpl).projectOpened(indicator)
 }
 
 // allow `invokeAndWait` inside startup activities
-private fun waitAndProcessInvocationEventsInIdeEventQueue(future: Future<*>) {
+internal fun waitAndProcessInvocationEventsInIdeEventQueue(startupManager: StartupManagerImpl) {
   val eventQueue = IdeEventQueue.getInstance()
-  while (!future.isDone) {
+  while (true) {
     // getNextEvent() will block until an event has been posted by another thread, so,
     // peekEvent() is used to check that there is already some event in the queue
     if (eventQueue.peekEvent() == null) {
-      continue
+      if (startupManager.postStartupActivityPassed()) {
+        break
+      }
+      else {
+        continue
+      }
     }
 
     val event = eventQueue.nextEvent

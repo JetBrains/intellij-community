@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.impl.ProjectManagerExImplKt;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -40,7 +41,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -121,7 +121,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     return postStartupActivitiesPassed == ALL_PASSED;
   }
 
-  public final @Nullable Future<?> projectOpened(@Nullable ProgressIndicator indicator) {
+  public final void projectOpened(@Nullable ProgressIndicator indicator) {
     Application app = ApplicationManager.getApplication();
     if (indicator != null && app.isInternal()) {
       indicator.setText(IdeBundle.message("startup.indicator.text.running.startup.activities"));
@@ -138,14 +138,18 @@ public class StartupManagerImpl extends StartupManagerEx {
 
     if (app.isUnitTestMode() && !app.isDispatchThread()) {
       BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, this::runPostStartupActivities);
-      return null;
     }
     else {
-      return AppExecutorUtil.getAppExecutorService().submit(() -> {
+      AppExecutorUtil.getAppExecutorService().execute(() -> {
         if (!myProject.isDisposed()) {
           BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, this::runPostStartupActivities);
         }
       });
+
+      if (app.isUnitTestMode()) {
+        LOG.assertTrue(app.isDispatchThread());
+        ProjectManagerExImplKt.waitAndProcessInvocationEventsInIdeEventQueue(this);
+      }
     }
   }
 
