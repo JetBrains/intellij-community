@@ -196,9 +196,11 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
   override fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     val baseDir = virtualFile.toNioPath()
     // doesn't make sense to use default project in tests for heavy projects
+    val validProjectPath = ProjectUtil.isValidProjectPath(baseDir)
     return doOpenProject(baseDir, OpenProjectTask(forceOpenInNewFrame = forceOpenInNewFrame,
                                                   projectToClose = projectToClose,
-                                                  isNewProject = !ProjectUtil.isValidProjectPath(baseDir),
+                                                  runConfigurators = !validProjectPath,
+                                                  isNewProject = !validProjectPath,
                                                   useDefaultProjectAsTemplate = !ApplicationManager.getApplication().isUnitTestMode))
   }
 
