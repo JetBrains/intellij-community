@@ -105,9 +105,9 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
         Object path = background.get("image");
         if (path instanceof String) {
           File tmpImage = FileUtil.createTempFile("ijBackgroundImage", path.toString().substring(((String)path).lastIndexOf(".")), true);
-          URL resource = myTheme.getProviderClassLoader().getResource((String)path);
+          URL resource = myTheme.getResource((String)path);
           if (resource != null) {
-            try (InputStream input = myTheme.getProviderClassLoader().getResourceAsStream((String)path)) {
+            try (InputStream input = myTheme.getResourceAsStream((String)path)) {
               try (FileOutputStream output = new FileOutputStream(tmpImage)) {
                 FileUtil.copy(input, output);
               }

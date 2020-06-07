@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.Map;
 import java.util.function.Function;
 
 /**
@@ -74,14 +75,13 @@ public class ApplyThemeAction extends DumbAwareAction {
       String pathToScheme = theme.getEditorScheme();
       VirtualFile editorScheme = null;
       if (pathToScheme != null) {
-        Module module = ModuleUtilCore.findModuleForFile(json, project);
-        if (module != null) {
-          for (VirtualFile root : ModuleRootManager.getInstance(module).getSourceRoots(false)) {
-            Path path = Paths.get(root.getPath(), pathToScheme);
-            if (path.toFile().exists()) {
-              editorScheme = VfsUtil.findFile(path, true);
-            }
-          }
+        editorScheme = findThemeFile(json, project, pathToScheme);
+      }
+      Map<String, Object> background = theme.getBackground();
+      if (background != null) {
+        VirtualFile pathToBg = findThemeFile(json, project, background.get("image").toString());
+        if (pathToBg != null) {
+          background.put("image", pathToBg.getPath());
         }
       }
 
@@ -92,6 +92,20 @@ public class ApplyThemeAction extends DumbAwareAction {
     }
     catch (IOException ignore) {}
     return false;
+  }
+
+  @Nullable
+  private static VirtualFile findThemeFile(@NotNull VirtualFile json, Project project, String pathToFile) {
+    Module module = ModuleUtilCore.findModuleForFile(json, project);
+    if (module != null) {
+      for (VirtualFile root : ModuleRootManager.getInstance(module).getSourceRoots(false)) {
+        Path path = Paths.get(root.getPath(), pathToFile);
+        if (path.toFile().exists()) {
+          return VfsUtil.findFile(path, true);
+        }
+      }
+    }
+    return null;
   }
 
   private static Function<String, String> createIconsMapper(VirtualFile json, Project project) {
