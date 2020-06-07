@@ -77,13 +77,9 @@ public class ApplyThemeAction extends DumbAwareAction {
       if (pathToScheme != null) {
         editorScheme = findThemeFile(json, project, pathToScheme);
       }
-      Map<String, Object> background = theme.getBackground();
-      if (background != null) {
-        VirtualFile pathToBg = findThemeFile(json, project, background.get("image").toString());
-        if (pathToBg != null) {
-          background.put("image", pathToBg.getPath());
-        }
-      }
+
+      patchBackgroundImagePath(json, project, theme.getBackground());
+      patchBackgroundImagePath(json, project, theme.getEmptyFrameBackground());
 
       LafManager.getInstance().setCurrentLookAndFeel(new TempUIThemeBasedLookAndFeelInfo(theme, editorScheme));
       IconLoader.clearCache();
@@ -92,6 +88,15 @@ public class ApplyThemeAction extends DumbAwareAction {
     }
     catch (IOException ignore) {}
     return false;
+  }
+
+  private static void patchBackgroundImagePath(@NotNull VirtualFile json, Project project, Map<String, Object> background) {
+    if (background != null) {
+      VirtualFile pathToBg = findThemeFile(json, project, background.get("image").toString());
+      if (pathToBg != null) {
+        background.put("image", pathToBg.getPath());
+      }
+    }
   }
 
   @Nullable

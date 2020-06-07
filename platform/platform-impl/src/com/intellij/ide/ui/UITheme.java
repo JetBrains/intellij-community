@@ -63,6 +63,7 @@ public class UITheme {
   private Map<String, Object> icons;
   private IconPathPatcher patcher;
   private Map<String, Object> background;
+  private Map<String, Object> emptyFrameBackground;
   private Map<String, Object> colors;
   private ClassLoader providerClassLoader = getClass().getClassLoader();
   private String editorSchemeName;
@@ -321,6 +322,10 @@ public class UITheme {
 
   public Map<String, Object> getBackground() {
     return background;
+  }
+
+  public Map<String, Object> getEmptyFrameBackground() {
+    return emptyFrameBackground;
   }
 
   public void applyProperties(UIDefaults defaults) {
@@ -600,10 +605,7 @@ public class UITheme {
     }
   }
 
-  //
-  //json deserialization methods
-  //
-
+  //<editor-fold desc="JSON deserialization methods">
   @SuppressWarnings("unused")
   private void setName(String name) {
     this.name = name;
@@ -638,6 +640,10 @@ public class UITheme {
     this.background = background;
   }
 
+  public void setEmptyFrameBackground(Map<String, Object> emptyFrameBackground) {
+    this.emptyFrameBackground = emptyFrameBackground;
+  }
+
   public Map<String, Object> getColors() {
     return colors;
   }
@@ -645,4 +651,5 @@ public class UITheme {
   public void setColors(Map<String, Object> colors) {
     this.colors = colors;
   }
+  //</editor-fold>
 }
