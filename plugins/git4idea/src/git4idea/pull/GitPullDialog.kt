@@ -124,7 +124,12 @@ class GitPullDialog(private val project: Project,
     val model = branchField.model as MutableCollectionComboBoxModel
 
     model.update(branches)
-    model.selectedItem = branches.getOrElse(0) { "" }
+
+    val matchingBranch = repository.currentBranch?.findTrackedBranch(repository)?.nameForRemoteOperations
+                         ?: branches.find { branch -> branch == repository.currentBranchName }
+                         ?: ""
+
+    model.selectedItem = matchingBranch
   }
 
   private fun getRemoteBranches(repository: GitRepository, remote: GitRemote): List<String> {
