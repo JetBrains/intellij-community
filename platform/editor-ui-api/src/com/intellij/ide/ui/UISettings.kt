@@ -49,11 +49,8 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       notRoamableOptions.state.editorAAType = value
     }
 
-  var allowMergeButtons: Boolean
-    get() = state.allowMergeButtons
-    set(value) {
-      state.allowMergeButtons = value
-    }
+  val allowMergeButtons: Boolean
+    get() = Registry.`is`("ide.allow.merge.buttons")
 
   var animateWindows: Boolean
     get() = state.animateWindows
@@ -86,11 +83,8 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.hideToolStripes = value
     }
 
-  var hideNavigationOnFocusLoss: Boolean
-    get() = state.hideNavigationOnFocusLoss
-    set(value) {
-      state.hideNavigationOnFocusLoss = value
-    }
+  val hideNavigationOnFocusLoss: Boolean
+    get() = Registry.`is`("ide.hide.navigation.on.focus.loss")
 
   var reuseNotModifiedTabs: Boolean
     get() = state.reuseNotModifiedTabs
@@ -140,11 +134,8 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
   val closeTabButtonOnTheRight: Boolean
     get() = state.closeTabButtonOnTheRight
 
-  var cycleScrolling: Boolean
-    get() = state.cycleScrolling
-    set(value) {
-      state.cycleScrolling = value
-    }
+  val cycleScrolling: Boolean
+    get() = Registry.`is`("ide.cycle.scrolling")
 
   var navigateToPreview: Boolean
     get() = state.navigateToPreview
@@ -197,11 +188,8 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.showMainMenu = value
     }
 
-  var showIconInQuickNavigation: Boolean
-    get() = state.showIconInQuickNavigation
-    set(value) {
-      state.showIconInQuickNavigation = value
-    }
+  val showIconInQuickNavigation: Boolean
+    get() = Registry.`is`("ide.show.icons.in.quick.navigation")
 
   var showTreeIndentGuides: Boolean
     get() = state.showTreeIndentGuides
@@ -229,11 +217,8 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.showMainToolbar = value
     }
 
-  var showIconsInMenus: Boolean
-    get() = state.showIconsInMenus
-    set(value) {
-      state.showIconsInMenus = value
-    }
+  val showIconsInMenus: Boolean
+    get() = Registry.`is`("ide.show.icons.in.menus")
 
   var sortLookupElementsLexicographically: Boolean
     get() = state.sortLookupElementsLexicographically
