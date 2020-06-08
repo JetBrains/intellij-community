@@ -37,6 +37,7 @@
         <li>2020.2 IDE versions support</li>
         <li>Spaces inside non-quoted .env values inspection + quick fix</li>
         <li>Case insensitive .env variables completions</li>
+        <li>Plugin icon!</li>
       </ul>
   ]]></change-notes>
 

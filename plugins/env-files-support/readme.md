@@ -23,7 +23,7 @@ Discussing code is now as easy as highlighting a block and typing a comment righ
   <img src="https://laravel-idea.com/img/big_logo.png" alt="Laravel Idea"></a>
 
 The most productive Laravel development environment.
-<a href="https://laravel-idea.com/?utm_source=idea&utm_campaign=env&utm_medium=banner" target="_blank">laravel-idea.com</a>
+<a href="https://laravel-idea.com/?utm_source=idea&utm_campaign=env&utm_medium=banner" target="_blank">Try it free!</a>
 
 ## Language packages
 
@@ -40,3 +40,7 @@ Go dotenv library: https://github.com/joho/godotenv
 ## Screenshots
 
 ![phpstorm dotenv support](https://plugins.jetbrains.com/files/9525/screenshot_16858.png)
+
+![](src/main/resources/META-INF/pluginIcon.svg) 
+
+<div>Plugin icon made by <a href="https://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
