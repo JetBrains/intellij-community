@@ -194,6 +194,10 @@ public class VMOptions {
       return null;
     }
 
+    // Android Studio: support for multiple paths in jb.vmOptionsFile. Pick the last entry.
+    String[] vmOptionsFiles = vmOptionsFile.split(",");
+    vmOptionsFile = vmOptionsFiles[vmOptionsFiles.length - 1];
+
     vmOptionsFile = new File(vmOptionsFile).getAbsolutePath();
     if (!PathManager.isUnderHomeDirectory(vmOptionsFile)) {
       // a file is located outside the IDE installation - meaning it is safe to overwrite

@@ -280,4 +280,18 @@ public class VMOptionsTest {
                  "junk",
                  StringUtil.convertLineSeparators(FileUtil.loadFile(myFile)));
   }
+
+  @Test
+  public void testMultipleVmOptionsPaths() throws IOException {
+    File file1 = myTempDir.newFile("file1.txt");
+    File file2 = myTempDir.newFile("file2.txt");
+
+    FileUtil.writeToFile(file1, "-Xmx512m");
+    FileUtil.writeToFile(file2, "-Xmx1024m");
+
+    System.setProperty("jb.vmOptionsFile", file1.getPath() + "," + file2.getPath());
+
+    // Expect the contents of the last entry in the list (file2.txt)
+    assertEquals(1024, VMOptions.readOption(VMOptions.MemoryKind.HEAP, false));
+  }
 }
