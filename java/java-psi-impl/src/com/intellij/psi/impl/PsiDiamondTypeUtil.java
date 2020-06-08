@@ -31,6 +31,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 public class PsiDiamondTypeUtil {
   private static final Logger LOG = Logger.getInstance(PsiDiamondTypeUtil.class);
@@ -180,13 +181,15 @@ public class PsiDiamondTypeUtil {
                                                   boolean constructorRef,
                                                   @Nullable PsiMethod method, 
                                                   PsiTypeParameter[] typeParameters) {
+    PsiElement encoded = null;
     try {
       final PsiElement copy;
       final PsiType typeByParent = PsiTypesUtil.getExpectedTypeByParent(context);
-      if (typeByParent != null) {
+      if (typeByParent != null && PsiTypesUtil.isDenotableType(typeByParent, context)) {
         if (isAugmented(context)) {
           return false;
         }
+        RecaptureTypeMapper.encode(encoded = context);
         copy = LambdaUtil.copyWithExpectedType(context, typeByParent);
       }
       else {
@@ -195,6 +198,7 @@ public class PsiDiamondTypeUtil {
         PsiTreeUtil.mark(argumentList != null ? argumentList : context, marker);
         final PsiCall call = LambdaUtil.treeWalkUp(context);
         if (call != null) {
+          RecaptureTypeMapper.encode(encoded = call);
           final PsiCall callCopy = LambdaUtil.copyTopLevelCall(call);
           copy = callCopy != null ? PsiTreeUtil.releaseMark(callCopy, marker) : null;
         }
@@ -245,14 +249,23 @@ public class PsiDiamondTypeUtil {
       
       PsiCallExpression newParentCall = exprCopy != null ? PsiTreeUtil.getParentOfType(exprCopy, PsiCallExpression.class) : null;
       PsiCallExpression oldParentCall = PsiTreeUtil.getParentOfType(context, PsiCallExpression.class);
-      if (newParentCall != null && oldParentCall != null && 
-          !newParentCall.resolveMethodGenerics().equals(oldParentCall.resolveMethodGenerics())) {
-        return false;
+      if (newParentCall != null && oldParentCall != null) {
+        JavaResolveResult newResult = newParentCall.resolveMethodGenerics();
+        JavaResolveResult oldResult = oldParentCall.resolveMethodGenerics();
+        if (!Objects.equals(newResult.getElement(), oldResult.getElement()) ||
+            !new RecaptureTypeMapper().recapture(newResult.getSubstitutor()).equals(oldResult.getSubstitutor())) {
+          return false;
+        }
       }
     }
     catch (IncorrectOperationException e) {
       LOG.info(e);
       return false;
+    }
+    finally {
+      if (encoded != null) {
+        RecaptureTypeMapper.clean(encoded);
+      }
     }
     return true;
   }
