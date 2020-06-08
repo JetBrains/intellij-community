@@ -437,7 +437,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   @ApiStatus.Internal
-  public @NotNull IdeFrameImpl getFrameOrNullIfDisposed() {
+  public @Nullable IdeFrameImpl getFrameOrNullIfDisposed() {
     return myFrame;
   }
 
