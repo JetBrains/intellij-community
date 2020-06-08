@@ -32,6 +32,12 @@ final class PsiSymbolReferenceServiceImpl implements PsiSymbolReferenceService {
     );
   }
 
+  @SuppressWarnings("unchecked")
+  @Override
+  public @NotNull <T extends PsiSymbolReference> Collection<T> getReferences(@NotNull PsiElement host, @NotNull Class<T> referenceClass) {
+    return (Collection<T>)getReferences(host, PsiSymbolReferenceHints.referenceClassHint(referenceClass));
+  }
+
   @Override
   public @NotNull List<PsiSymbolReference> getReferences(@NotNull PsiElement element, @NotNull PsiSymbolReferenceHints hints) {
     List<PsiSymbolReference> result = ContainerUtil.newArrayList(element.getOwnReferences());
@@ -39,13 +45,6 @@ final class PsiSymbolReferenceServiceImpl implements PsiSymbolReferenceService {
       result.addAll(doGetExternalReferences((PsiExternalReferenceHost)element, hints));
     }
     return applyHints(result, hints);
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public <@NotNull T extends PsiSymbolReference> @NotNull Iterable<T> getExternalReferences(@NotNull PsiExternalReferenceHost host,
-                                                                                            @NotNull Class<T> referenceClass) {
-    return (Iterable<T>)getExternalReferences(host, PsiSymbolReferenceHints.referenceClassHint(referenceClass));
   }
 
   @Override
