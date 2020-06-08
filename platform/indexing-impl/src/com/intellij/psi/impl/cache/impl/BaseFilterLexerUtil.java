@@ -10,6 +10,7 @@ import com.intellij.psi.impl.cache.impl.id.LexingIdIndexer;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexers;
 import com.intellij.psi.search.IndexPattern;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.indexing.FileContent;
 import gnu.trove.THashMap;
 
@@ -30,7 +31,7 @@ public final class BaseFilterLexerUtil {
       return data;
     }
 
-    final boolean needTodo = TodoIndexers.needsTodoIndex(content.getFile());
+    final boolean needTodo = TodoIndexers.needsTodoIndex(content.getFile()) || content.getFile() instanceof LightVirtualFile;
     final boolean needIdIndex = IdTableBuilding.getFileTypeIndexer(content.getFileType()) instanceof LexingIdIndexer;
 
     final IdDataConsumer consumer = needIdIndex ? new IdDataConsumer() : null;
