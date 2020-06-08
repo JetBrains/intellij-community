@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.cloneDialog
 
-import com.intellij.CommonBundle
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts.ENTER
 import com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT
@@ -13,6 +13,7 @@ import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes.ERROR_ATTRIBUTES
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
+import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBEmptyBorder
@@ -45,7 +46,7 @@ internal class GHCloneDialogLoginPanel(private val account: GithubAccount?) :
   }
   private val switchLoginUiLink = loginPanel.createSwitchUiLink()
   private val loginButton = JButton(message("button.login.mnemonic"))
-  private val cancelButton = JButton(CommonBundle.message("button.cancel.c"))
+  private val backLink = LinkLabel<Any?>(IdeBundle.message("button.back"), null)
 
   init {
     buildLayout()
@@ -55,12 +56,12 @@ internal class GHCloneDialogLoginPanel(private val account: GithubAccount?) :
       loginPanel.setServer(account.server.toUrl(), false)
     }
 
-    cancelButton.isVisible = authenticationManager.hasAccounts()
+    backLink.isVisible = authenticationManager.hasAccounts()
     loginButton.addActionListener { login() }
     LoginAction().registerCustomShortcutSet(ENTER, loginPanel)
   }
 
-  fun setCancelHandler(listener: () -> Unit) = cancelButton.addActionListener { listener() }
+  fun setCancelHandler(listener: () -> Unit) = backLink.setListener({ _, _ -> listener() }, null)
 
   private fun buildLayout() {
     loginPanel.footer = { buttonPanel() } // footer is used to put buttons in 2-nd column - align under text boxes
@@ -80,7 +81,7 @@ internal class GHCloneDialogLoginPanel(private val account: GithubAccount?) :
     row("") {
       cell {
         loginButton()
-        cancelButton()
+        backLink().withLargeLeftGap()
       }
     }
 
@@ -119,7 +120,7 @@ internal class GHCloneDialogLoginPanel(private val account: GithubAccount?) :
 
   private inner class LoginAction : DumbAwareAction() {
     override fun update(e: AnActionEvent) {
-      e.presentation.isEnabledAndVisible = e.getData(CONTEXT_COMPONENT) != cancelButton
+      e.presentation.isEnabledAndVisible = e.getData(CONTEXT_COMPONENT) != backLink
     }
 
     override fun actionPerformed(e: AnActionEvent) = login()
