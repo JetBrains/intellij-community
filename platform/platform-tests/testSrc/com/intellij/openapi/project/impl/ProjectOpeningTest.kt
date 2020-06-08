@@ -48,9 +48,7 @@ class ProjectOpeningTest {
       override fun run(indicator: ProgressIndicator) {
         val project = ProjectManagerEx.getInstanceEx().openProject(foo, createTestOpenProjectOptions())
         if (project != null) {
-          runInEdtAndWait {
-            PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-          }
+          PlatformTestUtil.forceCloseProjectWithoutSaving(project)
         }
         assertThat(project).isNull()
       }

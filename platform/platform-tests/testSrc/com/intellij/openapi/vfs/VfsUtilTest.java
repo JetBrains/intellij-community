@@ -316,7 +316,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
         finally {
           // this concoction is to ensure close() is called on the mock ProjectManagerImpl
           assertTrue(project.get().isOpen());
-          ApplicationManager.getApplication().invokeAndWait(() -> PlatformTestUtil.forceCloseProjectWithoutSaving(project.get()));
+          PlatformTestUtil.forceCloseProjectWithoutSaving(project.get());
         }
       }
     );

@@ -11,7 +11,6 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.util.ui.UIUtil
 import java.io.File
 import java.nio.file.Paths
 
@@ -37,9 +36,7 @@ fun openProjectWithSdk(projectPath: String,
     return Pair(project, sdk)
   }
   catch (e: Throwable) {
-    UIUtil.invokeAndWaitIfNeeded(Runnable {
-      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-    })
+    PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     throw e
   }
 }
