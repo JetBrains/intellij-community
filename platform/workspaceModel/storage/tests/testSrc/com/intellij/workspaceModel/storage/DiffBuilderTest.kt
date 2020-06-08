@@ -189,4 +189,19 @@ class DiffBuilderTest {
 
     source.applyDiff(target)
   }
+
+  @Test
+  fun `modify child and parent`() {
+    val source = WorkspaceEntityStorageBuilderImpl.create()
+    val parent = source.addParentEntity()
+    source.addChildEntity(parent)
+
+    val target = WorkspaceEntityStorageBuilderImpl.from(source)
+    target.modifyEntity(ModifiableParentEntity::class.java, parent) {
+      this.parentProperty = "anotherValue"
+    }
+    source.addChildEntity(parent)
+
+    source.applyDiff(target)
+  }
 }

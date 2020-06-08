@@ -100,6 +100,7 @@ internal abstract class ModifyEntity<E : WorkspaceEntity, M : ModifiableWorkspac
 
     try {
       storage.modifyEntity(modifiableClass, entity, modifications)
+      env.logMessage("$entity modified")
     }
     catch (e: PersistentIdAlreadyExistsException) {
       env.logMessage("Cannot modify entity. Persistent id ${e.id} already exists")
