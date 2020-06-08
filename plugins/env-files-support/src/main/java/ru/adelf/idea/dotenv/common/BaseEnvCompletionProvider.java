@@ -1,6 +1,8 @@
 package ru.adelf.idea.dotenv.common;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
 import com.intellij.openapi.project.Project;
@@ -14,7 +16,8 @@ abstract public class BaseEnvCompletionProvider extends CompletionContributor im
 
     protected void fillCompletionResultSet(@NotNull CompletionResultSet completionResultSet, @NotNull Project project) {
         for(Map.Entry<String, String> entry : EnvironmentVariablesApi.getAllKeyValues(project).entrySet()) {
-            LookupElementBuilder lockup = LookupElementBuilder.create(entry.getKey());
+            LookupElementBuilder lockup = LookupElementBuilder.create(entry.getKey())
+                    .withLookupString(entry.getKey().toLowerCase());
 
             if(StringUtils.isNotEmpty(entry.getValue())) {
                 lockup = lockup.withTailText(" = " + entry.getValue(), true);
