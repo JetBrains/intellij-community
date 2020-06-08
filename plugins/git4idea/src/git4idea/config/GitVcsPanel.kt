@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.EnumComboBoxModel
@@ -179,8 +180,10 @@ internal class GitVcsPanel(private val project: Project) :
           applicationSettings.setPathToGit(currentPath)
           projectSettings.pathToGit = null
         }
+
         validateExecutableOnceAfterClose()
         updateBranchUpdateInfoRow()
+        VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
       }
   }
 
