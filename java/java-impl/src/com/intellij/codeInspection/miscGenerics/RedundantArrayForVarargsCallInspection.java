@@ -47,9 +47,9 @@ public class RedundantArrayForVarargsCallInspection extends AbstractBaseJavaLoca
   private static class RedundantArrayForVarargVisitor extends JavaElementVisitor {
     private static final Logger LOG = Logger.getInstance(RedundantArrayForVarargVisitor.class);
 
-    private static final String[] METHOD_NAMES = new String[]{"debug", "error", "info", "trace", "warn"};
+    private static final String[] LOGGER_NAMES = new String[]{"debug", "error", "info", "trace", "warn"};
 
-    private static final CallMatcher LOGGER_MESSAGE_CALL = exactInstanceCall("org.slf4j.Logger", METHOD_NAMES)
+    private static final CallMatcher LOGGER_MESSAGE_CALL = exactInstanceCall("org.slf4j.Logger", LOGGER_NAMES)
       .parameterTypes(String.class.getName(), "java.lang.Object...");
 
     private static final LocalQuickFix myQuickFixAction = new MyQuickFix();
