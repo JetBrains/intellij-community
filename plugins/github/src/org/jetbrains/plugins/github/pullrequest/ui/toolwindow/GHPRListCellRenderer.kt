@@ -78,9 +78,9 @@ class GHPRListCellRenderer(private val avatarIconsProvider: CachingGithubAvatarI
                          .insets("0", "0", "0", "0")
                          .fillX())
 
-    add(infoPanel, CC())
-    add(assignees, CC().gapBefore("push"))
-    add(openButtonPanel, CC().growY())
+    add(infoPanel, CC().minWidth("0"))
+    add(assignees, CC().minWidth("0").gapBefore("push"))
+    add(openButtonPanel, CC().minWidth("pref").growY())
   }
 
   override fun getListCellRendererComponent(list: JList<out GHPullRequestShort>,
