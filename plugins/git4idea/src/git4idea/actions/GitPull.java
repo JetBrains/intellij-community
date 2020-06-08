@@ -59,7 +59,7 @@ public class GitPull extends GitMergeAction {
     GitRepository repository = repositoryManager.getRepositoryForRootQuick(dialog.gitRoot());
     assert repository != null : "Repository can't be null for root " + dialog.gitRoot();
 
-    return new DialogState(dialog.gitRoot(), GitBundle.message("pulling.title", dialog.getRemote()),
+    return new DialogState(dialog.gitRoot(), GitBundle.message("pulling.title", dialog.getRemote().getName()),
                            getHandlerProvider(project, dialog),
                            dialog.getSelectedBranches(), dialog.isCommitAfterMerge());
   }
@@ -79,7 +79,6 @@ public class GitPull extends GitMergeAction {
   @NotNull
   protected Supplier<GitLineHandler> getHandlerProvider(Project project, GitPullDialog dialog) {
     GitRemote remote = dialog.getRemote();
-    LOG.assertTrue(remote != null, "Selected remote can't be null here.");
     String remoteName = remote.getName();
 
     VirtualFile root = dialog.gitRoot();

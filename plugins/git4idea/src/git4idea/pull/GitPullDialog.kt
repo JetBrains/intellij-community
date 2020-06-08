@@ -87,7 +87,7 @@ class GitPullDialog(private val project: Project,
 
   fun gitRoot() = getRepository().root
 
-  fun getRemote(): GitRemote? = remoteField.item
+  fun getRemote(): GitRemote = remoteField.item
 
   fun getSelectedBranches() = listOf(branchField.item)
 
@@ -125,7 +125,7 @@ class GitPullDialog(private val project: Project,
     model.selectedItem = branches.getOrElse(0) { "" }
   }
 
-  private fun getRemoteBranches(repository: GitRepository, remote: GitRemote?): List<String> {
+  private fun getRemoteBranches(repository: GitRepository, remote: GitRemote): List<String> {
     return branches[repository]?.get(remote)?.map { it.nameForRemoteOperations  } ?: emptyList()
   }
 
