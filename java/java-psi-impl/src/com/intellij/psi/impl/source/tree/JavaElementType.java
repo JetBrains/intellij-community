@@ -173,6 +173,11 @@ public interface JavaElementType {
       Lexer lexer = JavaParserDefinition.createLexer(LanguageLevel.HIGHEST);
       return PsiBuilderUtil.hasProperBraceBalance(seq, lexer, JavaTokenType.LBRACE, JavaTokenType.RBRACE) ? NO_ERRORS : FATAL_ERROR;
     }
+
+    @Override
+    public boolean reuseCollapsedTokens() {
+      return true;
+    }
   }
   ILazyParseableElementType CODE_BLOCK = new ICodeBlockElementType();
 
