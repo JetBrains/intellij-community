@@ -92,9 +92,16 @@ class GitMergeDialog(private val project: Project,
 
   override fun createSouthPanel(): JComponent {
     val southPanel = super.createSouthPanel()
-    southPanel.add(createOptionsDropDown(), BorderLayout.WEST)
+    (southPanel.components[0] as JPanel).apply {
+      (layout as BorderLayout).hgap = JBUI.scale(5)
+      add(createOptionsDropDown(), BorderLayout.EAST)
+    }
     return southPanel
   }
+
+  override fun getHelpId() = "reference.VersionControl.Git.MergeBranches"
+
+  override fun getDimensionServiceKey(): String = GitMergeDialog::class.java.name
 
   override fun doOKAction() {
     try {
