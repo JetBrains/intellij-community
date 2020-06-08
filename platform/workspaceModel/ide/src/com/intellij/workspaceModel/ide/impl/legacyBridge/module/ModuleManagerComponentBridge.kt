@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.graph.*
@@ -569,6 +570,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     module.init {
       try {
         val moduleStore = module.stateStore as ModuleStoreBase
+        if (ApplicationManager.getApplication().isUnitTestMode) LocalFileSystem.getInstance().refreshAndFindFileByPath(modulePath)
         moduleStore.setPath(modulePath, null, isNew)
       }
       catch (t: Throwable) {
