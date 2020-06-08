@@ -5,7 +5,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
@@ -24,10 +23,11 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiConsumer;
-
-import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.getForeignVariableDescriptors;
 
 class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
@@ -189,19 +189,15 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     if (instruction.num() > lastInterestingInstructionIndex) {
       return;
     }
+    if (!myFlowInfo.getInterestingInstructions().contains(instruction)) {
+      return;
+    }
     GrFunctionalExpression block = Objects.requireNonNull((GrFunctionalExpression)instruction.getElement());
     if (PsiUtil.isCompileStatic(block)) {
       return;
     }
     GrControlFlowOwner blockFlowOwner = FunctionalExpressionFlowUtil.getControlFlowOwner(block);
     if (blockFlowOwner == null) {
-      return;
-    }
-    Set<? extends VariableDescriptor> foreignDescriptors =
-      getForeignVariableDescriptors(blockFlowOwner, ReadWriteVariableInstruction::isWrite);
-    Collection<VariableDescriptor> foreignInterestingDescriptors =
-      ContainerUtil.intersection(foreignDescriptors, myFlowInfo.getInterestingDescriptors());
-    if (foreignInterestingDescriptors.isEmpty()) {
       return;
     }
     InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
@@ -223,7 +219,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
         });
         break;
       case UNKNOWN:
-        for (VariableDescriptor descriptor : foreignInterestingDescriptors) {
+        for (VariableDescriptor descriptor : myFlowInfo.getInterestingDescriptors()) {
           PsiType upperBoundByWrites = TypeDfaInstanceUtilKt.getLeastUpperBoundByAllWrites(blockFlowOwner, descriptor);
           if (upperBoundByWrites != PsiType.NULL) {
             DFAType currentType = state.getVariableType(descriptor);
@@ -251,7 +247,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       }
       return null;
     };
-    if (!myCache.getFlowAcyclicInstructions().contains(instruction)) {
+    if (!myFlowInfo.getAcyclicInstructions().contains(instruction)) {
       // todo: IDEA-242437
       TypeInferenceHelper.doInference(initialTypesForNestedFlow, inference);
     }

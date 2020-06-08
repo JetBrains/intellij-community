@@ -4,19 +4,25 @@ package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectIntHashMap;
 import kotlin.Lazy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.FunctionalExpressionFlowUtil;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -30,7 +36,8 @@ import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt.findReadDepe
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt.getVarIndexes;
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper.getDefUseMaps;
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper.isSharedVariable;
-import static org.jetbrains.plugins.groovy.util.GraphKt.*;
+import static org.jetbrains.plugins.groovy.util.GraphKt.findNodesOutsideCycles;
+import static org.jetbrains.plugins.groovy.util.GraphKt.mapGraph;
 
 class InferenceCache {
 
@@ -40,7 +47,6 @@ class InferenceCache {
 
   private final Lazy<TObjectIntHashMap<VariableDescriptor>> myVarIndexes;
   private final Lazy<List<DefinitionMap>> myDefinitionMaps;
-  private final Lazy<Set<Instruction>> myFlowAcyclicInstructions;
 
   private final AtomicReference<List<TypeDfaState>> myVarTypes;
   private final SharedVariableInferenceCache mySharedVariableInferenceCache;
@@ -51,7 +57,6 @@ class InferenceCache {
     myFlow = scope.getControlFlow();
     myVarIndexes = lazyPub(() -> getVarIndexes(myScope));
     myDefinitionMaps = lazyPub(() -> getDefUseMaps(myFlow, myVarIndexes.getValue()));
-    myFlowAcyclicInstructions = lazyPub(() -> findNodesOutsideCycles(mapFlow(myFlow)));
     mySharedVariableInferenceCache = new SharedVariableInferenceCache(scope);
     myFromByElements = Arrays.stream(myFlow).filter(it -> it.getElement() != null).collect(Collectors.groupingBy(Instruction::getElement));
     List<TypeDfaState> noTypes = new ArrayList<>();
@@ -126,12 +131,28 @@ class InferenceCache {
     LinkedList<Pair<Instruction, VariableDescriptor>> queue = new LinkedList<>();
     queue.add(Pair.create(instruction, descriptor));
     Set<Instruction> dependentOnSharedVariables = new LinkedHashSet<>();
+
+    List<Pair<Instruction, Set<? extends VariableDescriptor>>> foreignDescriptors = new ArrayList<>();
+    if (!PsiUtil.isCompileStatic(myScope)) {
+      for (Instruction closureInstruction : myFlow) {
+        PsiElement closure = closureInstruction.getElement();
+        if (closure instanceof GrFunctionalExpression) {
+          GrControlFlowOwner owner =
+            Objects.requireNonNull(FunctionalExpressionFlowUtil.getControlFlowOwner((GrFunctionalExpression)closure));
+          Set<ResolvedVariableDescriptor> foreignVariables =
+            ControlFlowUtils.getForeignVariableDescriptors(owner, ReadWriteVariableInstruction::isWrite);
+          foreignDescriptors.add(Pair.create(closureInstruction, foreignVariables));
+        }
+      }
+    }
+
     while (!queue.isEmpty()) {
       Pair<Instruction, VariableDescriptor> pair = queue.removeFirst();
       if (!interesting.containsKey(pair)) {
-        Set<Pair<Instruction, VariableDescriptor>> dependencies = findDependencies(definitionMaps, pair.first, pair.second);
+        Set<Pair<Instruction, VariableDescriptor>> dependencies =
+          findDependencies(definitionMaps, foreignDescriptors, pair.first, pair.second);
         interesting.put(pair, dependencies);
-        if (dependencies.stream().anyMatch(it -> isSharedVariable(it.second))) {
+        if (dependencies.stream().anyMatch(it -> !it.second.equals(descriptor) && isSharedVariable(it.second))) {
           dependentOnSharedVariables.add(pair.first);
         }
         dependencies.forEach(queue::addLast);
@@ -154,20 +175,27 @@ class InferenceCache {
                            dependentOnSharedVariables);
   }
 
-  public Set<Instruction> getFlowAcyclicInstructions() {
-    return myFlowAcyclicInstructions.getValue();
-  }
-
   @NotNull
   private Set<Pair<Instruction, VariableDescriptor>> findDependencies(@NotNull List<DefinitionMap> definitionMaps,
+                                                                      @NotNull List<Pair<Instruction, Set<? extends VariableDescriptor>>> foreignDescriptors,
                                                                       @NotNull Instruction instruction,
                                                                       @NotNull VariableDescriptor descriptor) {
     DefinitionMap definitionMap = definitionMaps.get(instruction.num());
     int varIndex = myVarIndexes.getValue().get(descriptor);
     int[] definitions = definitionMap.getDefinitions(varIndex);
-    if (definitions == null) return Collections.emptySet();
 
     LinkedHashSet<Pair<Instruction, VariableDescriptor>> pairs = new LinkedHashSet<>();
+
+    int latestDefinition = Math.max(instruction.num(), definitions == null ? 0 : ArrayUtil.max(definitions));
+    for (Pair<Instruction, Set<? extends VariableDescriptor>> foreignVariables : foreignDescriptors) {
+      if (foreignVariables.first.num() > latestDefinition) break;
+      if (foreignVariables.second.contains(descriptor)) {
+        pairs.add(Pair.create(foreignVariables.first, descriptor));
+      }
+    }
+
+    if (definitions == null) return pairs;
+
     for (int defIndex : definitions) {
       Instruction write = myFlow[defIndex];
       if (write != instruction) {

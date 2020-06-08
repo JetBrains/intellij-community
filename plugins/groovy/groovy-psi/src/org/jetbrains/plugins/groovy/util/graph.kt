@@ -4,16 +4,10 @@ package org.jetbrains.plugins.groovy.util
 import com.intellij.util.graph.DFSTBuilder
 import com.intellij.util.graph.OutboundSemiGraph
 import gnu.trove.THashSet
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction
 
 fun <T> mapGraph(map: Map<T, Collection<T>>): OutboundSemiGraph<T> = object : OutboundSemiGraph<T> {
   override fun getNodes(): Collection<T> = map.keys
   override fun getOut(n: T): Iterator<T> = map.getOrDefault(n, emptyList()).iterator()
-}
-
-fun mapFlow(flow: Array<Instruction>) = object : OutboundSemiGraph<Instruction> {
-  override fun getNodes(): Collection<Instruction> = flow.toList()
-  override fun getOut(instruction: Instruction): Iterator<Instruction> = instruction.allSuccessors().iterator()
 }
 
 /**
