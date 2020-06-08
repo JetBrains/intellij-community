@@ -30,6 +30,7 @@ object GithubUtil {
   @JvmField
   val LOG: Logger = Logger.getInstance("github")
   const val SERVICE_DISPLAY_NAME: String = "GitHub"
+  const val ENTERPRISE_SERVICE_DISPLAY_NAME: String = "GitHub Enterprise"
   const val GIT_AUTH_PASSWORD_SUBSTITUTE: String = "x-oauth-basic"
 
   @JvmStatic
