@@ -52,11 +52,8 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
   val allowMergeButtons: Boolean
     get() = Registry.`is`("ide.allow.merge.buttons")
 
-  var animateWindows: Boolean
-    get() = state.animateWindows
-    set(value) {
-      state.animateWindows = value
-    }
+  val animateWindows: Boolean
+    get() = Registry.`is`("ide.animate.toolwindows")
 
   @Deprecated("use StatusBarWidgetSettings#isEnabled(MemoryUsagePanel.WIDGET_ID)")
   var showMemoryIndicator: Boolean

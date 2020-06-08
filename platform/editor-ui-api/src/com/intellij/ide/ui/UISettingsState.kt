@@ -56,8 +56,6 @@ class UISettingsState : BaseState() {
 
   @get:OptionTag("REUSE_NOT_MODIFIED_TABS")
   var reuseNotModifiedTabs by property(false)
-  @get:OptionTag("ANIMATE_WINDOWS")
-  var animateWindows by property(true)
   @get:OptionTag("SHOW_TOOL_WINDOW_NUMBERS")
   var showToolWindowsNumbers by property(true)
 

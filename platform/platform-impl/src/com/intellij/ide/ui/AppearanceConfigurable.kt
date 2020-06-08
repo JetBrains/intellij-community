@@ -48,7 +48,6 @@ private val settings get() = UISettings.instance
 private val generalSettings get() = GeneralSettings.getInstance()
 private val lafManager get() = LafManager.getInstance()
 
-private val cdAnimateWindows                          get() = CheckboxDescriptor(message("checkbox.animate.windows"), settings::animateWindows, groupName = windowOptionGroupName)
 private val cdShowToolWindowBars                      get() = CheckboxDescriptor(message("checkbox.show.tool.window.bars"), PropertyBinding({ !settings.hideToolStripes }, { settings.hideToolStripes = !it }), groupName = windowOptionGroupName)
 private val cdShowToolWindowNumbers                   get() = CheckboxDescriptor(message("checkbox.show.tool.window.numbers"), settings::showToolWindowsNumbers, groupName = windowOptionGroupName)
 private val cdDisableMenuMnemonics                    get() = CheckboxDescriptor(KeyMapBundle.message("disable.mnemonic.in.menu.check.box"), settings::disableMnemonics, groupName = windowOptionGroupName)
@@ -69,7 +68,6 @@ private val cdFullPathsInTitleBar                     get() = CheckboxDescriptor
 
 internal val appearanceOptionDescriptors: List<OptionDescription>
   get() = listOf(
-    cdAnimateWindows,
     cdShowToolWindowBars,
     cdShowToolWindowNumbers,
     cdDisableMenuMnemonics,
@@ -257,17 +255,16 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       }
       titledRow(message("group.window.options")) {
         twoColumnRow(
-          { checkBox(cdAnimateWindows) },
-          { checkBox(cdShowToolWindowBars) }
-        )
-        twoColumnRow(
-          { checkBox(cdShowToolWindowNumbers) },
-          { checkBox(cdWidescreenToolWindowLayout) }
+          { checkBox(cdShowToolWindowBars) },
+          { checkBox(cdShowToolWindowNumbers) }
         )
         twoColumnRow(
           { checkBox(cdLeftToolWindowLayout) },
           { checkBox(cdRightToolWindowLayout) }
         )
+        row {
+          checkBox(cdWidescreenToolWindowLayout)
+        }
       }
       titledRow(message("group.presentation.mode")) {
         fullRow {
