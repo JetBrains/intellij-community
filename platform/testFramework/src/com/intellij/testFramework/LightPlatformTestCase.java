@@ -48,7 +48,6 @@ import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
@@ -69,6 +68,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.PathKt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeProjectLifecycleListener;
@@ -78,12 +78,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
 import java.io.IOException;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 import static com.intellij.testFramework.RunAll.runAll;
@@ -651,14 +651,14 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       assertEquals(project, ourModule.getProject());
 
       @SuppressWarnings("ConstantConditions")
-      File ioFile = new File(project.getProjectFilePath());
-      if (ioFile.exists()) {
-        File dir = ioFile.getParentFile();
-        if (dir.getName().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
-          FileUtil.delete(dir);
+      Path ioFile = Paths.get(project.getProjectFilePath());
+      if (Files.exists(ioFile)) {
+        Path dir = ioFile.getParent();
+        if (dir.getFileName().toString().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
+          PathKt.delete(dir);
         }
         else {
-          FileUtil.delete(ioFile);
+          PathKt.delete(ioFile);
         }
       }
     }

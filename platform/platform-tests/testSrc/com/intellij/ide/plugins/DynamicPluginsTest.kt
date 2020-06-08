@@ -9,6 +9,7 @@ import com.intellij.codeInspection.GlobalInspectionTool
 import com.intellij.codeInspection.InspectionEP
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
@@ -17,10 +18,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.PluginId
@@ -358,12 +356,13 @@ class DynamicPluginsTest {
   @Test
   fun testExtensionOnServiceDependency() {
     val project = projectRule.project
+    StartupManagerImpl.addActivityEpListener(project)
     val disposable = loadExtensionWithText("""
       <postStartupActivity implementation="${MyStartupActivity::class.java.name}"/>
       <projectService serviceImplementation="${MyProjectService::class.java.name}"/>
     """.trimIndent(), DynamicPluginsTest::class.java.classLoader)
     try {
-      assertThat(ServiceManager.getService(project, MyProjectService::class.java).executed).isTrue()
+      assertThat(project.service<MyProjectService>().executed).isTrue()
     }
     finally {
       Disposer.dispose(disposable)
@@ -464,7 +463,9 @@ class DynamicPluginsTest {
     Disposer.dispose(disposable)
   }
 
-  private fun loadPluginWithOptionalDependency(pluginDescriptor: PluginBuilder, optionalDependencyDescriptor: PluginBuilder, dependsOn: PluginBuilder): Disposable {
+  private fun loadPluginWithOptionalDependency(pluginDescriptor: PluginBuilder,
+                                               optionalDependencyDescriptor: PluginBuilder,
+                                               dependsOn: PluginBuilder): Disposable {
     val directory = Files.createTempDirectory(inMemoryFs.fs.getPath("/"), null).resolve("plugin/META-INF")
     val plugin = directory.resolve("plugin.xml")
     pluginDescriptor.depends(dependsOn.id, "bar.xml")

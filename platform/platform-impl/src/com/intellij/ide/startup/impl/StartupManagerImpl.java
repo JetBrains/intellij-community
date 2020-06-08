@@ -242,21 +242,27 @@ public class StartupManagerImpl extends StartupManagerEx {
 
     if (!myProject.isDisposed() && !ApplicationManager.getApplication().isUnitTestMode()) {
       scheduleBackgroundPostStartupActivities();
+      //noinspection TestOnlyProblems
+      addActivityEpListener(myProject);
     }
+  }
 
+  @TestOnly
+  public static void addActivityEpListener(@NotNull Project project) {
     StartupActivity.POST_STARTUP_ACTIVITY.addExtensionPointListener(new ExtensionPointListener<StartupActivity>() {
       @Override
       public void extensionAdded(@NotNull StartupActivity extension, @NotNull PluginDescriptor pluginDescriptor) {
+        StartupManagerImpl startupManager = ((StartupManagerImpl)getInstance(project));
         if (DumbService.isDumbAware(extension)) {
-          runActivity(new AtomicBoolean(), extension, pluginDescriptor, ProgressIndicatorProvider.getGlobalProgressIndicator());
+          startupManager.runActivity(new AtomicBoolean(), extension, pluginDescriptor, ProgressIndicatorProvider.getGlobalProgressIndicator());
         }
         else {
-          DumbService.getInstance(myProject).unsafeRunWhenSmart(() -> {
-            runActivity(null, extension, pluginDescriptor, ProgressIndicatorProvider.getGlobalProgressIndicator());
+          DumbService.getInstance(project).unsafeRunWhenSmart(() -> {
+            startupManager.runActivity(null, extension, pluginDescriptor, ProgressIndicatorProvider.getGlobalProgressIndicator());
           });
         }
       }
-    }, myProject);
+    }, project);
   }
 
   private static void dumbUnawarePostActivitiesPassed(@NotNull AtomicReference<Activity> edtActivity, int count) {
