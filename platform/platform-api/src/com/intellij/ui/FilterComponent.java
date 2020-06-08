@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ModalityState;
@@ -16,7 +16,7 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 
 public abstract class FilterComponent extends JPanel {
-  private final SearchTextFieldWithStoredHistory myFilter;
+  private final SearchTextField myFilter;
   private final Alarm myUpdateAlarm = new Alarm();
   private final boolean myOnTheFly;
 
@@ -27,7 +27,7 @@ public abstract class FilterComponent extends JPanel {
   public FilterComponent(@NonNls String propertyName, int historySize, boolean onTheFlyUpdate) {
     super(new BorderLayout());
     myOnTheFly = onTheFlyUpdate;
-    myFilter = new SearchTextFieldWithStoredHistory(propertyName) {
+    myFilter = new SearchTextField(propertyName) {
       @Override
       protected Runnable createItemChosenCallback(JList list) {
         final Runnable callback = super.createItemChosenCallback(list);
@@ -40,12 +40,6 @@ public abstract class FilterComponent extends JPanel {
       @Override
       protected Component getPopupLocationComponent() {
         return FilterComponent.this.getPopupLocationComponent();
-      }
-
-      @Override
-      protected void onFocusLost() {
-        addCurrentTextToHistory();
-        super.onFocusLost();
       }
     };
     myFilter.getTextEditor().addKeyListener(new KeyAdapter() {
