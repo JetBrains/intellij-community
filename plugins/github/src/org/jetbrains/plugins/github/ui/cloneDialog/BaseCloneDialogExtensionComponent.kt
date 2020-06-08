@@ -198,8 +198,10 @@ internal abstract class BaseCloneDialogExtensionComponent(
   }
 
   private fun switchToLogin(account: GithubAccount? = null) {
-    val loginPanel = GHCloneDialogLoginPanel(account)
-    loginPanel.setCancelHandler { switchToRepositories() }
+    val loginPanel = GHCloneDialogLoginPanel(account).apply {
+      isCancelVisible = getAccounts().isNotEmpty()
+      setCancelHandler { switchToRepositories() }
+    }
 
     wrapper.setContent(loginPanel)
     wrapper.repaint()

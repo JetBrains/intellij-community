@@ -48,6 +48,12 @@ internal class GHCloneDialogLoginPanel(private val account: GithubAccount?) :
   private val loginButton = JButton(message("button.login.mnemonic"))
   private val backLink = LinkLabel<Any?>(IdeBundle.message("button.back"), null)
 
+  var isCancelVisible: Boolean
+    get() = backLink.isVisible
+    set(value) {
+      backLink.isVisible = value
+    }
+
   init {
     buildLayout()
 
@@ -56,7 +62,6 @@ internal class GHCloneDialogLoginPanel(private val account: GithubAccount?) :
       loginPanel.setServer(account.server.toUrl(), false)
     }
 
-    backLink.isVisible = authenticationManager.hasAccounts()
     loginButton.addActionListener { login() }
     LoginAction().registerCustomShortcutSet(ENTER, loginPanel)
   }
