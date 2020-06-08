@@ -41,7 +41,8 @@ public class JavaCompletionStatistician extends CompletionStatistician{
     if (o instanceof PsiLocalVariable || o instanceof PsiParameter || 
         o instanceof PsiThisExpression || o instanceof PsiKeyword || 
         element.getUserData(JavaCompletionUtil.SUPER_METHOD_PARAMETERS) != null ||
-        FunctionalExpressionCompletionProvider.isFunExprItem(element)) {
+        FunctionalExpressionCompletionProvider.isFunExprItem(element) ||
+        element.as(StreamConversion.StreamMethodInvocation.class) != null) {
       return StatisticsInfo.EMPTY;
     }
 

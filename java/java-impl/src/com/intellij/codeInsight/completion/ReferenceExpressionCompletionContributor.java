@@ -83,7 +83,7 @@ public class ReferenceExpressionCompletionContributor {
         filter = new AndFilter(filter, new CheckInitialized(element));
       }
 
-      for (final LookupElement item : completeFinalReference(element, reference, filter, parameters)) {
+      for (LookupElement item : completeFinalReference(element, reference, filter, parameters.getExpectedType(), parameters.getParameters())) {
         result.consume(item);
       }
 
@@ -109,9 +109,12 @@ public class ReferenceExpressionCompletionContributor {
     return null;
   }
 
-  static Set<LookupElement> completeFinalReference(final PsiElement element, PsiJavaCodeReferenceElement reference, ElementFilter filter,
-                                                           final JavaSmartCompletionParameters parameters) {
-    final Set<PsiField> used = parameters.getParameters().getInvocationCount() < 2 ? findConstantsUsedInSwitch(element) : Collections.emptySet();
+  static Set<LookupElement> completeFinalReference(PsiElement element,
+                                                   PsiJavaCodeReferenceElement reference,
+                                                   ElementFilter filter,
+                                                   PsiType expectedType,
+                                                   CompletionParameters parameters) {
+    final Set<PsiField> used = parameters.getInvocationCount() < 2 ? findConstantsUsedInSwitch(element) : Collections.emptySet();
 
     final Set<LookupElement> elements =
       JavaSmartCompletionContributor.completeReference(element, reference, new AndFilter(filter, new ElementFilter() {
@@ -121,12 +124,10 @@ public class ReferenceExpressionCompletionContributor {
             final CandidateInfo info = (CandidateInfo)o;
             final PsiElement member = info.getElement();
 
-            final PsiType expectedType = parameters.getExpectedType();
             if (expectedType.equals(PsiType.VOID)) {
               return member instanceof PsiMethod;
             }
 
-            //noinspection SuspiciousMethodCalls
             if (member instanceof PsiEnumConstant && used.contains(CompletionUtil.getOriginalOrSelf(member))) {
               return false;
             }
@@ -140,12 +141,12 @@ public class ReferenceExpressionCompletionContributor {
         public boolean isClassAcceptable(Class hintClass) {
           return true;
         }
-      }), false, true, parameters.getParameters(), PrefixMatcher.ALWAYS_TRUE);
+      }), false, true, parameters, PrefixMatcher.ALWAYS_TRUE);
     for (LookupElement lookupElement : elements) {
       if (lookupElement.getObject() instanceof PsiMethod) {
         final JavaMethodCallElement item = lookupElement.as(JavaMethodCallElement.CLASS_CONDITION_KEY);
         if (item != null) {
-          item.setInferenceSubstitutorFromExpectedType(element, parameters.getExpectedType());
+          item.setInferenceSubstitutorFromExpectedType(element, expectedType);
           if (JavaCompletionSorting.isTooGeneric(lookupElement, item.getObject())) {
             item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
           }

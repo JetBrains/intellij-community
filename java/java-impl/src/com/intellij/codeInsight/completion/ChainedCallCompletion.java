@@ -49,7 +49,7 @@ class ChainedCallCompletion {
     }
 
     final ElementFilter filter = ReferenceExpressionCompletionContributor.getReferenceFilter(place, true);
-    for (final LookupElement item : ReferenceExpressionCompletionContributor.completeFinalReference(place, mockRef, filter, parameters)) {
+    for (LookupElement item : ReferenceExpressionCompletionContributor.completeFinalReference(place, mockRef, filter, expectedType, parameters.getParameters())) {
       if (shouldChain(place, qualifierType, expectedType, item)) {
         result.consume(new JavaChainLookupElement(qualifierItem, item) {
           @Override

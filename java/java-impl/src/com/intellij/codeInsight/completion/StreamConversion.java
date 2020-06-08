@@ -1,15 +1,16 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.codeInsight.lookup.TypedLookupItem;
+import com.intellij.codeInsight.lookup.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.Consumer;
@@ -21,13 +22,80 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.stream.Collector;
 
+import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.getSpace;
 import static com.intellij.psi.CommonClassNames.*;
 
 /**
  * @author peter
  */
 class StreamConversion {
- 
+
+  static List<LookupElement> addToStreamConversion(PsiReferenceExpression ref, CompletionParameters parameters) {
+    PsiExpression qualifier = ref.getQualifierExpression();
+    if (qualifier == null) return Collections.emptyList();
+
+    PsiType type = qualifier.getType();
+    if (type instanceof PsiClassType) {
+      PsiClass qualifierClass = ((PsiClassType)type).resolve();
+      if (qualifierClass == null) return Collections.emptyList();
+
+      PsiMethod streamMethod = ContainerUtil.find(qualifierClass.findMethodsByName("stream", true), m ->
+        !m.hasParameters() &&
+        InheritanceUtil.isInheritor(m.getReturnType(), JAVA_UTIL_STREAM_BASE_STREAM));
+      if (streamMethod == null) return Collections.emptyList();
+
+      return generateStreamSuggestions(parameters, qualifier, qualifier.getText() + ".stream()", context -> {
+        String space = getSpace(CodeStyle.getLanguageSettings(context.getFile()).SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES);
+        context.getDocument().insertString(context.getStartOffset(), "stream(" + space + ").");
+      });
+    }
+    else if (type instanceof PsiArrayType) {
+      String arraysStream = JAVA_UTIL_ARRAYS + ".stream";
+      return generateStreamSuggestions(parameters, qualifier, arraysStream + "(" + qualifier.getText() + ")",
+                                       context -> wrapQualifiedIntoMethodCall(context, arraysStream));
+    }
+
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  private static List<LookupElement> generateStreamSuggestions(CompletionParameters parameters,
+                                                               PsiExpression qualifier,
+                                                               String changedQualifier,
+                                                               Consumer<InsertionContext> beforeInsertion) {
+    PsiReferenceExpression asStream = (PsiReferenceExpression)PsiElementFactory.getInstance(qualifier.getProject())
+      .createExpressionFromText(changedQualifier + ".x", qualifier);
+
+    Set<LookupElement> streamSuggestions = ReferenceExpressionCompletionContributor
+      .completeFinalReference(qualifier, asStream, TrueFilter.INSTANCE,
+                              PsiType.getJavaLangObject(qualifier.getManager(), qualifier.getResolveScope()),
+                              parameters);
+    return ContainerUtil.map(streamSuggestions, e -> new StreamMethodInvocation(e, beforeInsertion));
+  }
+
+  private static void wrapQualifiedIntoMethodCall(@NotNull InsertionContext context, @NotNull String methodQualifiedName) {
+    PsiFile file = context.getFile();
+    PsiReferenceExpression ref =
+      PsiTreeUtil.findElementOfClassAtOffset(file, context.getStartOffset(), PsiReferenceExpression.class, false);
+    if (ref != null) {
+      PsiElement qualifier = ref.getQualifier();
+      if (qualifier != null) {
+        TextRange range = qualifier.getTextRange();
+        int startOffset = range.getStartOffset();
+
+        String callSpace = getSpace(CodeStyle.getLanguageSettings(file).SPACE_WITHIN_METHOD_CALL_PARENTHESES);
+        context.getDocument().insertString(range.getEndOffset(), callSpace + ")");
+        context.getDocument().insertString(startOffset, methodQualifiedName + "(" + callSpace);
+
+        context.commitDocument();
+        Project project = context.getProject();
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(
+          file, startOffset, startOffset + methodQualifiedName.length());
+        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(context.getDocument());
+      }
+    }
+  }
+
   static void addCollectConversion(PsiReferenceExpression ref, Collection<? extends ExpectedTypeInfo> expectedTypes, Consumer<? super LookupElement> consumer) {
     PsiClass collectors = JavaPsiFacade.getInstance(ref.getProject()).findClass(JAVA_UTIL_STREAM_COLLECTORS, ref.getResolveScope());
     if (collectors == null) return;
@@ -207,6 +275,27 @@ class StreamConversion {
     @Override
     public PsiType getType() {
       return myExpectedType;
+    }
+  }
+
+  static class StreamMethodInvocation extends LookupElementDecorator<LookupElement> {
+    private final Consumer<? super InsertionContext> myBeforeInsertion;
+
+    StreamMethodInvocation(LookupElement e, Consumer<? super InsertionContext> beforeInsertion) {
+      super(e);
+      myBeforeInsertion = beforeInsertion;
+    }
+
+    @Override
+    public void renderElement(LookupElementPresentation presentation) {
+      super.renderElement(presentation);
+      presentation.setItemText("stream()." + presentation.getItemText());
+    }
+
+    @Override
+    public void handleInsert(@NotNull InsertionContext context) {
+      myBeforeInsertion.consume(context);
+      super.handleInsert(context);
     }
   }
 }

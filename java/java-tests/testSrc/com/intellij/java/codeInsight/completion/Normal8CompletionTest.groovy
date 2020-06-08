@@ -414,4 +414,28 @@ class Test88 {
     myFixture.completeBasic()
     assert myFixture.lookupElementStrings == ['wait']
   }
+
+  void testStreamMethodsOnCollection() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'filter'
+    assert LookupElementPresentation.renderElement(myFixture.lookupElements[0]).itemText == 'filter'
+
+    myFixture.type('ma')
+    myFixture.assertPreferredCompletionItems 0, 'map', 'mapToDouble'
+    assert LookupElementPresentation.renderElement(myFixture.lookupElements[0]).itemText == 'stream().map'
+
+    myFixture.type('\n')
+    checkResultByFileName()
+  }
+
+  void testStreamMethodsOnArray() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'length', 'clone'
+
+    myFixture.type('ma')
+    myFixture.assertPreferredCompletionItems 0, 'map', 'mapToDouble'
+
+    myFixture.type('\n')
+    checkResultByFileName()
+  }
 }

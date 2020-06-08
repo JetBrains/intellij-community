@@ -367,6 +367,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       final List<ExpectedTypeInfo> expected = Arrays.asList(ExpectedTypesProvider.getExpectedTypes((PsiExpression)parent, true));
       StreamConversion.addCollectConversion((PsiReferenceExpression)parent, expected,
                                              lookupElement -> items.add(JavaSmartCompletionContributor.decorate(lookupElement, expected)));
+      items.addAll(StreamConversion.addToStreamConversion((PsiReferenceExpression)parent, parameters));
     }
 
     if (IMPORT_REFERENCE.accepts(position)) {
