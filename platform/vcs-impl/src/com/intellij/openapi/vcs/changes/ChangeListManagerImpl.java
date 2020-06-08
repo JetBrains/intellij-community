@@ -69,7 +69,7 @@ import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 import static java.util.stream.Collectors.toSet;
 
 @State(name = "ChangeListManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class ChangeListManagerImpl extends ChangeListManagerEx implements ChangeListOwner, PersistentStateComponent<Element> {
+public class ChangeListManagerImpl extends ChangeListManagerEx implements ChangeListOwner, PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(ChangeListManagerImpl.class);
 
   @Topic.ProjectLevel
@@ -156,20 +156,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     }
   }
 
-  static final class ShutDownProjectListener implements ProjectManagerListener {
-    @Override
-    public void projectClosing(@NotNull Project project) {
-      ChangeListManagerImpl manager = (ChangeListManagerImpl)project.getServiceIfCreated(ChangeListManager.class);
-      if (manager == null) {
-        return;
-      }
-
-      synchronized (manager.myDataLock) {
-        manager.myUpdateChangesProgressIndicator.cancel();
-      }
-
-      manager.myUpdater.stop();
+  @Override
+  public void dispose() {
+    synchronized (myDataLock) {
+      myUpdateChangesProgressIndicator.cancel();
     }
+
+    myUpdater.stop();
   }
 
   @Override
