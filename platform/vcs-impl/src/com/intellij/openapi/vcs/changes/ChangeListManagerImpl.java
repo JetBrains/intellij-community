@@ -678,8 +678,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     catch (VcsException e) {
       handleUpdateException(e);
     }
-    catch (ProcessCanceledException e) {
-      throw e;
+    catch (ProcessCanceledException ignore) {
     }
     catch (Throwable t) {
       LOG.debug(t);
