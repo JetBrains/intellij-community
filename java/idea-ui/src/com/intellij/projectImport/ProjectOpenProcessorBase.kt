@@ -159,7 +159,7 @@ abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> : ProjectOp
       }
 
       if (importToProject) {
-        options = options.copy(beforeOpen = { project -> importToProject(projectToClose, wizardContext, project) })
+        options = options.copy(beforeOpen = { project -> importToProject(project, projectToClose, wizardContext) })
       }
 
       try {
@@ -178,7 +178,7 @@ abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> : ProjectOp
     return null
   }
 
-  private fun importToProject(projectToClose: Project?, wizardContext: WizardContext, projectToOpen: Project): Boolean {
+  private fun importToProject(projectToOpen: Project, projectToClose: Project?, wizardContext: WizardContext): Boolean {
     if (!builder.validate(projectToClose, projectToOpen)) {
       return false
     }

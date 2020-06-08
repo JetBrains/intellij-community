@@ -164,7 +164,7 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
   }
 
   @Override
-  public boolean validate(final Project currentProject, final Project dstProject) {
+  public boolean validate(@Nullable Project currentProject, @NotNull Project project) {
     final Ref<Exception> refEx = new Ref<>();
     final Set<String> variables = new HashSet<>();
     final Map<String, String> naturesNames = new HashMap<>();
@@ -187,11 +187,11 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
     }, EclipseBundle.message("eclipse.import.converting"), false, currentProject);
 
     if (!refEx.isNull()) {
-      Messages.showErrorDialog(dstProject, refEx.get().getMessage(), getTitle());
+      Messages.showErrorDialog(project, refEx.get().getMessage(), getTitle());
       return false;
     }
 
-    if (!ProjectMacrosUtil.checkNonIgnoredMacros(dstProject, variables)) {
+    if (!ProjectMacrosUtil.checkNonIgnoredMacros(project, variables)) {
       return false;
     }
 

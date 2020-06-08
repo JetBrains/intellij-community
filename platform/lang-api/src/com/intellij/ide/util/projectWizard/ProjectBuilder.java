@@ -25,7 +25,7 @@ public abstract class ProjectBuilder {
     return commit(project, null, DefaultModulesProvider.createForProject(project));
   }
 
-  public boolean validate(Project current, Project dest) {
+  public boolean validate(@Nullable Project currentProject, @NotNull Project project) {
     return true;
   }
 
