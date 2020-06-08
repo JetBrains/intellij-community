@@ -18,11 +18,7 @@ import org.jdom.Element
 
 const val DEFAULT_PROFILE_NAME: String = "Default"
 
-val BASE_PROFILE: InspectionProfileImpl by lazy {
-  object : InspectionProfileImpl(DEFAULT_PROFILE_NAME) {
-    override fun isAppLevel(): Boolean = true
-  }
-}
+val BASE_PROFILE: InspectionProfileImpl by lazy { InspectionProfileImpl(DEFAULT_PROFILE_NAME) }
 
 abstract class NewInspectionProfile(name: String, private var profileManager: BaseInspectionProfileManager) : ProfileEx(name), InspectionProfile, SerializableScheme {
   @Volatile
