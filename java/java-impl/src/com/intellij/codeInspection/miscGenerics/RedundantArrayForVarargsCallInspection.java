@@ -18,58 +18,17 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import static com.siyeh.ig.callMatcher.CallMatcher.exactInstanceCall;
 
 /**
  * @author ven
  */
-public class RedundantArrayForVarargsCallInspection extends GenericsInspectionToolBase {
-  private static final Logger LOG = Logger.getInstance(RedundantArrayForVarargsCallInspection.class);
-  private static final LocalQuickFix myQuickFixAction = new MyQuickFix();
-
-  private static class MyQuickFix implements LocalQuickFix {
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiNewExpression arrayCreation = (PsiNewExpression)descriptor.getPsiElement();
-      if (arrayCreation == null) return;
-      InlineUtil.inlineArrayCreationForVarargs(arrayCreation);
-    }
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return JavaBundle.message("inspection.redundant.array.creation.quickfix");
-    }
-  }
-
+public class RedundantArrayForVarargsCallInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
-  public ProblemDescriptor[] getDescriptions(@NotNull PsiElement place,
-                                             @NotNull final InspectionManager manager,
-                                             final boolean isOnTheFly) {
-    final List<ProblemDescriptor> problems = new ArrayList<>();
-    place.accept(new RedundantArrayForVarargVisitor(manager, isOnTheFly, problems));
-    if (problems.isEmpty()) return null;
-    return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
-  }
-
-  private static PsiExpression @Nullable [] getInitializers(final PsiNewExpression newExpression) {
-    PsiArrayInitializerExpression initializer = newExpression.getArrayInitializer();
-    if (initializer != null) {
-      return initializer.getInitializers();
-    }
-    PsiExpression[] dims = newExpression.getArrayDimensions();
-    if (dims.length > 0) {
-      PsiExpression firstDimension = dims[0];
-      Object value =
-        JavaPsiFacade.getInstance(newExpression.getProject()).getConstantEvaluationHelper().computeConstantExpression(firstDimension);
-      if (value instanceof Integer && ((Integer)value).intValue() == 0) return PsiExpression.EMPTY_ARRAY;
-    }
-
-    return null;
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+    return new RedundantArrayForVarargVisitor(holder);
   }
 
   @Override
@@ -85,20 +44,20 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
     return "RedundantArrayCreation";
   }
 
-  private static final class RedundantArrayForVarargVisitor extends JavaRecursiveElementWalkingVisitor {
-    private @NotNull final InspectionManager myManager;
-    private final boolean myIsOnTheFly;
-    private final List<ProblemDescriptor> myProblems;
+  private static class RedundantArrayForVarargVisitor extends JavaElementVisitor {
+    private static final Logger LOG = Logger.getInstance(RedundantArrayForVarargVisitor.class);
 
     private static final String[] METHOD_NAMES = new String[]{"debug", "error", "info", "trace", "warn"};
 
     private static final CallMatcher LOGGER_MESSAGE_CALL = exactInstanceCall("org.slf4j.Logger", METHOD_NAMES)
       .parameterTypes(String.class.getName(), "java.lang.Object...");
 
-    private RedundantArrayForVarargVisitor(@NotNull InspectionManager manager, boolean isOnTheFly, List<ProblemDescriptor> problems) {
-      myManager = manager;
-      myIsOnTheFly = isOnTheFly;
-      myProblems = problems;
+    private static final LocalQuickFix myQuickFixAction = new MyQuickFix();
+
+    private @NotNull final ProblemsHolder myHolder;
+
+    private RedundantArrayForVarargVisitor(@NotNull final ProblemsHolder holder) {
+      myHolder = holder;
     }
 
     @Override
@@ -108,14 +67,9 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
     }
 
     @Override
-    public void visitEnumConstant(PsiEnumConstant enumConstant) {
-      super.visitEnumConstant(enumConstant);
-      checkCall(enumConstant);
-    }
-
-    @Override
-    public void visitClass(PsiClass aClass) {
-      //do not go inside to prevent multiple signals of the same problem
+    public void visitEnumConstant(PsiEnumConstant expression) {
+      super.visitEnumConstant(expression);
+      checkCall(expression);
     }
 
     private void checkCall(PsiCall expression) {
@@ -165,10 +119,8 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
       if (!isSafeToFlatten(expression, method, initializers)) {
         return;
       }
-      String message = JavaBundle.message("inspection.redundant.array.creation.for.varargs.call.descriptor");
-      ProblemDescriptor descriptor = myManager.createProblemDescriptor(lastArg, message, myQuickFixAction,
-                                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly);
-      myProblems.add(descriptor);
+      final String message = JavaBundle.message("inspection.redundant.array.creation.for.varargs.call.descriptor");
+      myHolder.registerProblem(lastArg, message, myQuickFixAction);
     }
 
     private static boolean isSafeToFlatten(@NotNull final PsiCall callExpression,
@@ -222,6 +174,37 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
       }
       catch (IncorrectOperationException e) {
         return false;
+      }
+    }
+
+    private static PsiExpression @Nullable [] getInitializers(@NotNull final PsiNewExpression newExpression) {
+      PsiArrayInitializerExpression initializer = newExpression.getArrayInitializer();
+      if (initializer != null) {
+        return initializer.getInitializers();
+      }
+      PsiExpression[] dims = newExpression.getArrayDimensions();
+      if (dims.length > 0) {
+        PsiExpression firstDimension = dims[0];
+        Object value =
+          JavaPsiFacade.getInstance(newExpression.getProject()).getConstantEvaluationHelper().computeConstantExpression(firstDimension);
+        if (value instanceof Integer && ((Integer)value).intValue() == 0) return PsiExpression.EMPTY_ARRAY;
+      }
+
+      return null;
+    }
+
+    private static final class MyQuickFix implements LocalQuickFix {
+      @Override
+      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+        PsiNewExpression arrayCreation = (PsiNewExpression)descriptor.getPsiElement();
+        if (arrayCreation == null) return;
+        InlineUtil.inlineArrayCreationForVarargs(arrayCreation);
+      }
+
+      @Override
+      @NotNull
+      public String getFamilyName() {
+        return JavaBundle.message("inspection.redundant.array.creation.quickfix");
       }
     }
   }
