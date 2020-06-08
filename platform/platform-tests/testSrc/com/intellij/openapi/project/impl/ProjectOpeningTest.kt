@@ -25,13 +25,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 @Suppress("UsePropertyAccessSyntax")
 class ProjectOpeningTest {
   companion object {
-    @JvmStatic
-    internal fun closeProject(project: Project?) {
-      if (project != null && !project.isDisposed) {
-        ProjectManagerEx.getInstanceEx().forceCloseProject(project)
-      }
-    }
-
     @ClassRule
     @JvmField
     val appRule = ApplicationRule()
@@ -72,9 +65,7 @@ class ProjectOpeningTest {
     var project = createHeavyProject(foo)
     try {
       StoreUtil.saveSettings(project, false)
-      runInEdtAndWait {
-        closeProject(project)
-      }
+      closeProject(project)
       ApplicationManager.getApplication().messageBus.connect(disposableRule.disposable).subscribe(ProjectLifecycleListener.TOPIC,
         object : ProjectLifecycleListener {
           override fun projectComponentsInitialized(project: Project) {
@@ -91,9 +82,7 @@ class ProjectOpeningTest {
       assertThat(project.isDisposed).isTrue()
     }
     finally {
-      runInEdtAndWait {
-        closeProject(project)
-      }
+      closeProject(project)
     }
   }
 
@@ -104,7 +93,7 @@ class ProjectOpeningTest {
 
     val dirBasedProject = createHeavyProject(projectDir)
     Disposer.register(disposableRule.disposable, Disposable {
-      runInEdtAndWait { closeProject(dirBasedProject) }
+      closeProject(dirBasedProject)
     })
 
     assertThat(ProjectUtil.isSameProject(projectDir.toAbsolutePath().toString(), dirBasedProject)).isTrue()
@@ -125,7 +114,7 @@ class ProjectOpeningTest {
     val iprFilePath = projectDir.resolve("project.ipr")
     val fileBasedProject = PlatformTestUtil.loadAndOpenProject(iprFilePath)
     Disposer.register(disposableRule.disposable, Disposable {
-      runInEdtAndWait { closeProject(fileBasedProject) }
+      closeProject(fileBasedProject)
     })
     assertThat(ProjectUtil.isSameProject(projectDir.toAbsolutePath().toString(), fileBasedProject)).isTrue()
     assertThat(ProjectUtil.isSameProject(tempDir.newPath("project2").toAbsolutePath().toString(), fileBasedProject)).isFalse()
@@ -141,5 +130,11 @@ private class MyStartupActivity : StartupActivity.DumbAware {
     passed.set(true)
 
     ProgressManager.getInstance().progressIndicator!!.cancel()
+  }
+}
+
+private fun closeProject(project: Project?) {
+  if (project != null && !project.isDisposed) {
+    PlatformTestUtil.forceCloseProjectWithoutSaving(project)
   }
 }

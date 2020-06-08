@@ -3,9 +3,11 @@ package com.intellij.openapi.project.impl
 
 import com.intellij.ide.*
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.EdtRule
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.PathUtil
 import com.intellij.util.containers.ContainerUtil
@@ -15,9 +17,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExternalResource
 import java.nio.file.Path
-import java.nio.file.Paths
 
-@RunsInEdt
 class RecentProjectsTest {
   companion object {
     @ClassRule
@@ -76,11 +76,10 @@ class RecentProjectsTest {
 
   @Test
   fun testTimestampForOpenProjectUpdatesWhenGetStateCalled() {
-    var project: Project? = null
+    val path = tempDir.newPath("z1")
+    var project = PlatformTestUtil.loadAndOpenProject(path)
     try {
-      val path = tempDir.newPath("z1")
-      project = PlatformTestUtil.loadAndOpenProject(path)
-      ProjectOpeningTest.closeProject(project)
+      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
       project = PlatformTestUtil.loadAndOpenProject(path)
       val timestamp = getProjectOpenTimestamp("z1")
       RecentProjectsManagerBase.instanceEx.updateLastProjectPath()
@@ -88,7 +87,7 @@ class RecentProjectsTest {
       assertThat(getProjectOpenTimestamp("z1")).isGreaterThan(timestamp)
     }
     finally {
-      ProjectOpeningTest.closeProject(project)
+      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     }
   }
 
@@ -104,13 +103,13 @@ class RecentProjectsTest {
 
   private fun doReopenCloseAndCheck(projectPath: Path, vararg results: String) {
     val project = PlatformTestUtil.loadAndOpenProject(projectPath)
-    ProjectOpeningTest.closeProject(project)
+    PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     checkRecents(*results)
   }
 
   private fun doReopenCloseAndCheckGroups(projectPath: Path, results: List<String>) {
     val project = PlatformTestUtil.loadAndOpenProject(projectPath)
-    ProjectOpeningTest.closeProject(project)
+    PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     checkGroups(results)
   }
 
@@ -133,17 +132,16 @@ class RecentProjectsTest {
   }
 
   private fun createAndOpenProject(name: String): Path {
-    var project: Project? = null
+    val path = tempDir.newPath(name)
+    var project = PlatformTestUtil.loadAndOpenProject(path)
     try {
-      val path = tempDir.newPath(name)
-      project = PlatformTestUtil.loadAndOpenProject(path)
       PlatformTestUtil.saveProject(project)
-      ProjectOpeningTest.closeProject(project)
+      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
       project = PlatformTestUtil.loadAndOpenProject(path)
-      return Paths.get(project.basePath!!)
+      return path
     }
     finally {
-      ProjectOpeningTest.closeProject(project)
+      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     }
   }
 }
