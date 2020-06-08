@@ -1,244 +1,206 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.projectImport;
+package com.intellij.projectImport
 
-import com.intellij.CommonBundle;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.JavaUiBundle;
-import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.ide.impl.NewProjectUtil;
-import com.intellij.ide.impl.OpenProjectTask;
-import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.StorageScheme;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.CompilerProjectExtension;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.CommonBundle
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.ide.impl.NewProjectUtil
+import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.StorageScheme
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.roots.CompilerProjectExtension
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import java.io.IOException
+import java.nio.file.Files
+import javax.swing.Icon
 
-import javax.swing.*;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
-public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder<?>> extends ProjectOpenProcessor {
-  @Nullable
-  private final T myBuilder;
-
-  /**
-   * @deprecated Override {@link #doGetBuilder()} and use {@code ProjectImportBuilder.EXTENSIONS_POINT_NAME.findExtensionOrFail(yourClass.class)}.
-   */
-  @Deprecated
-  protected ProjectOpenProcessorBase(@NotNull final T builder) {
-    myBuilder = builder;
-  }
-
-  protected ProjectOpenProcessorBase() {
-    myBuilder = null;
-  }
-
-  @NotNull
-  protected T doGetBuilder() {
-    assert myBuilder != null;
-    return myBuilder;
-  }
-
-  @Override
-  @NotNull
-  public String getName() {
-    return getBuilder().getName();
-  }
-
-  @Override
-  @Nullable
-  public Icon getIcon() {
-    return getBuilder().getIcon();
-  }
-
-  @Override
-  public boolean canOpenProject(@NotNull  VirtualFile file) {
-    String[] supported = getSupportedExtensions();
-    if (file.isDirectory()) {
-      for (VirtualFile child : getFileChildren(file)) {
-        if (canOpenFile(child, supported)) {
-          return true;
-        }
-      }
-      return false;
+abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> : ProjectOpenProcessor {
+  companion object {
+    @JvmStatic
+    protected fun canOpenFile(file: VirtualFile, supported: Array<String>): Boolean {
+      return supported.contains(file.name)
     }
-    return canOpenFile(file, supported);
-  }
 
-  private static VirtualFile @NotNull [] getFileChildren(@NotNull VirtualFile file) {
-    return ObjectUtils.chooseNotNull(file.getChildren(), VirtualFile.EMPTY_ARRAY);
-  }
-
-  protected static boolean canOpenFile(@NotNull VirtualFile file, String @NotNull [] supported) {
-    final String fileName = file.getName();
-    for (String name : supported) {
-      if (fileName.equals(name)) {
-        return true;
+    @JvmStatic
+    fun getUrl(path: String): String {
+      var resolvedPath: String
+      try {
+        resolvedPath = FileUtil.resolveShortWindowsName(path)
       }
+      catch (ignored: IOException) {
+        resolvedPath = path
+      }
+      return VfsUtilCore.pathToUrl(resolvedPath)
     }
-    return false;
   }
 
-  protected boolean doQuickImport(@NotNull VirtualFile file, @NotNull WizardContext wizardContext) {
-    return false;
+  private val myBuilder: T?
+
+  @Deprecated("Override {@link #doGetBuilder()} and use {@code ProjectImportBuilder.EXTENSIONS_POINT_NAME.findExtensionOrFail(yourClass.class)}.")
+  protected constructor(builder: T) {
+    myBuilder = builder
   }
 
-  @NotNull
-  public T getBuilder() {
-    return doGetBuilder();
+  protected constructor() {
+    myBuilder = null
   }
 
-  public abstract String @NotNull [] getSupportedExtensions();
+  open val builder: T
+    get() = doGetBuilder()
 
-  @Override
-  @Nullable
-  public Project doOpenProject(@NotNull VirtualFile virtualFile, Project projectToClose, boolean forceOpenInNewFrame) {
+  protected open fun doGetBuilder(): T = myBuilder!!
+
+  override fun getName(): String = builder.name
+
+  override fun getIcon(): Icon? = builder.icon
+
+  override fun canOpenProject(file: VirtualFile): Boolean {
+    val supported = supportedExtensions
+    if (file.isDirectory) {
+      return getFileChildren(file).any { canOpenFile(it, supported) }
+    }
+    else {
+      return canOpenFile(file, supported)
+    }
+  }
+
+  protected open fun doQuickImport(file: VirtualFile, wizardContext: WizardContext): Boolean = false
+
+  abstract val supportedExtensions: Array<String>
+
+  override fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     try {
-      getBuilder().setUpdate(false);
-      WizardContext wizardContext = new WizardContext(null, null);
-      if (virtualFile.isDirectory()) {
-        String[] supported = getSupportedExtensions();
-        for (VirtualFile file : getFileChildren(virtualFile)) {
+      val wizardContext = WizardContext(null, null)
+      builder.isUpdate = false
+
+      var resolvedVirtualFile = virtualFile
+      if (virtualFile.isDirectory) {
+        val supported = supportedExtensions
+        for (file in getFileChildren(virtualFile)) {
           if (canOpenFile(file, supported)) {
-            virtualFile = file;
-            break;
+            resolvedVirtualFile = file
+            break
           }
         }
       }
+      wizardContext.setProjectFileDirectory(resolvedVirtualFile.parent.toNioPath(), false)
 
-      wizardContext.setProjectFileDirectory(virtualFile.getParent().getPath());
-
-      if (!doQuickImport(virtualFile, wizardContext)) {
-        return null;
+      if (!doQuickImport(resolvedVirtualFile, wizardContext)) {
+        return null
       }
 
-      if (wizardContext.getProjectName() == null) {
-        if (wizardContext.getProjectStorageFormat() == StorageScheme.DEFAULT) {
-          wizardContext.setProjectName(JavaUiBundle.message("project.import.default.name", getName()) + ProjectFileType.DOT_DEFAULT_EXTENSION);
+      if (wizardContext.projectName == null) {
+        if (wizardContext.projectStorageFormat == StorageScheme.DEFAULT) {
+          wizardContext.projectName = JavaUiBundle.message("project.import.default.name", name) + ProjectFileType.DOT_DEFAULT_EXTENSION
         }
         else {
-          wizardContext.setProjectName(JavaUiBundle.message("project.import.default.name.dotIdea", getName()));
+          wizardContext.projectName = JavaUiBundle.message("project.import.default.name.dotIdea", name)
         }
       }
 
-      Project defaultProject = ProjectManager.getInstance().getDefaultProject();
-      Sdk jdk = ProjectRootManager.getInstance(defaultProject).getProjectSdk();
-      if (jdk == null) {
-        jdk = ProjectJdkTable.getInstance().findMostRecentSdkOfType(JavaSdk.getInstance());
-      }
-      wizardContext.setProjectJdk(jdk);
+      wizardContext.projectJdk = ProjectRootManager.getInstance(ProjectManager.getInstance().defaultProject).projectSdk
+                                 ?: ProjectJdkTable.getInstance().findMostRecentSdkOfType(JavaSdk.getInstance())
 
-      Path dotIdeaFile = wizardContext.getProjectDirectory().resolve(Project.DIRECTORY_STORE_FOLDER);
-      Path projectFile = wizardContext.getProjectDirectory().resolve(wizardContext.getProjectName() + ProjectFileType.DOT_DEFAULT_EXTENSION).normalize();
-
-      Path pathToOpen = wizardContext.getProjectStorageFormat() == StorageScheme.DEFAULT ? projectFile.toAbsolutePath() : dotIdeaFile.getParent();
-
-      boolean shouldOpenExisting = false;
-      boolean importToProject = true;
+      val dotIdeaFile = wizardContext.projectDirectory.resolve(Project.DIRECTORY_STORE_FOLDER)
+      val projectFile = wizardContext.projectDirectory.resolve(wizardContext.projectName + ProjectFileType.DOT_DEFAULT_EXTENSION).normalize()
+      var pathToOpen = if (wizardContext.projectStorageFormat == StorageScheme.DEFAULT) projectFile.toAbsolutePath() else dotIdeaFile.parent
+      var shouldOpenExisting = false
+      var importToProject = true
       if (Files.exists(projectFile) || Files.exists(dotIdeaFile)) {
-        if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-          shouldOpenExisting = true;
-          importToProject = true;
+        if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+          shouldOpenExisting = true
+          importToProject = true
         }
         else {
-          String existingName;
+          val existingName: String
           if (Files.exists(dotIdeaFile)) {
-            existingName = "an existing project";
-            pathToOpen = dotIdeaFile.getParent();
+            existingName = "an existing project"
+            pathToOpen = dotIdeaFile.parent
           }
           else {
-            existingName = "'" + projectFile.getFileName() + "'";
-            pathToOpen = projectFile;
+            existingName = "'${projectFile.fileName}'"
+            pathToOpen = projectFile
           }
-          int result = Messages.showYesNoCancelDialog(
+
+          val result = Messages.showYesNoCancelDialog(
             projectToClose,
-            JavaUiBundle.message("project.import.open.existing", existingName, projectFile.getParent(), virtualFile.getName()),
+            JavaUiBundle.message("project.import.open.existing", existingName, projectFile.parent, virtualFile.name),
             IdeBundle.message("title.open.project"),
             JavaUiBundle.message("project.import.open.existing.openExisting"),
             JavaUiBundle.message("project.import.open.existing.reimport"),
             CommonBundle.getCancelButtonText(),
-            Messages.getQuestionIcon());
+            Messages.getQuestionIcon())
           if (result == Messages.CANCEL) {
-            return null;
+            return null
           }
-          shouldOpenExisting = result == Messages.YES;
-          importToProject = !shouldOpenExisting;
+
+          shouldOpenExisting = result == Messages.YES
+          importToProject = !shouldOpenExisting
         }
       }
 
-      OpenProjectTask options = shouldOpenExisting ? OpenProjectTask.withProjectToClose(projectToClose, forceOpenInNewFrame) : OpenProjectTask.newProject();
-      if (importToProject) {
-        options.withBeforeOpenCallback(project -> importToProject(projectToClose, wizardContext, project));
+      var options = OpenProjectTask(projectToClose = projectToClose, forceOpenInNewFrame = forceOpenInNewFrame, projectName = wizardContext.projectName)
+      if (!shouldOpenExisting) {
+        options = options.copy(isNewProject = true)
       }
-      options.withProjectName(wizardContext.getProjectName());
+
+      if (importToProject) {
+        options = options.copy(beforeOpen = { project -> importToProject(projectToClose, wizardContext, project) })
+      }
 
       try {
-        Project project = ProjectManagerEx.getInstanceEx().openProject(pathToOpen, options);
-        ProjectUtil.updateLastProjectLocation(pathToOpen);
-        return project;
+        val project = ProjectManagerEx.getInstanceEx().openProject(pathToOpen, options)
+        ProjectUtil.updateLastProjectLocation(pathToOpen)
+        return project
       }
-      catch (Exception e) {
-        Logger.getInstance(ProjectOpenProcessorBase.class).warn(e);
-        return null;
+      catch (e: Exception) {
+        logger<ProjectOpenProcessorBase<*>>().warn(e)
       }
     }
     finally {
-      getBuilder().cleanup();
+      builder.cleanup()
     }
+
+    return null
   }
 
-  private boolean importToProject(Project projectToClose, WizardContext wizardContext, Project projectToOpen) {
-    if (!getBuilder().validate(projectToClose, projectToOpen)) {
-      return false;
+  private fun importToProject(projectToClose: Project?, wizardContext: WizardContext, projectToOpen: Project): Boolean {
+    if (!builder.validate(projectToClose, projectToOpen)) {
+      return false
     }
 
-    projectToOpen.save();
+    projectToOpen.save()
 
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        Sdk jdk1 = wizardContext.getProjectJdk();
-        if (jdk1 != null) {
-          NewProjectUtil.applyJdkToProject(projectToOpen, jdk1);
+    ApplicationManager.getApplication().invokeAndWait {
+      ApplicationManager.getApplication().runWriteAction {
+        wizardContext.projectJdk?.let {
+          NewProjectUtil.applyJdkToProject(projectToOpen, it)
         }
 
-        String projectDirPath = wizardContext.getProjectFileDirectory();
-        String path = projectDirPath + (StringUtil.endsWithChar(projectDirPath, '/') ? "classes" : "/classes");
-        CompilerProjectExtension extension = CompilerProjectExtension.getInstance(projectToOpen);
-        if (extension != null) {
-          extension.setCompilerOutputUrl(getUrl(path));
+        val projectDirPath = wizardContext.projectFileDirectory
+        val path = projectDirPath + if (projectDirPath.endsWith('/')) "classes" else "/classes"
+        CompilerProjectExtension.getInstance(projectToOpen)?.let {
+          it.compilerOutputUrl = getUrl(path)
         }
-      });
-
-      getBuilder().commit(projectToOpen, null, ModulesProvider.EMPTY_MODULES_PROVIDER);
-    });
-    return true;
-  }
-
-  @NotNull
-  public static String getUrl(@NonNls @NotNull String path) {
-    try {
-      path = FileUtil.resolveShortWindowsName(path);
+      }
+      builder.commit(projectToOpen, null, ModulesProvider.EMPTY_MODULES_PROVIDER)
     }
-    catch (IOException ignored) { }
-    return VfsUtilCore.pathToUrl(path);
+    return true
   }
 }
+
+private fun getFileChildren(file: VirtualFile) = file.children ?: VirtualFile.EMPTY_ARRAY

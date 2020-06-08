@@ -107,10 +107,6 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
   }
 
   @Override
-  public void setList(List<DataNode<ProjectData>> externalSystemProjects) {
-  }
-
-  @Override
   public void setOpenProjectSettingsAfter(boolean on) {
   }
 

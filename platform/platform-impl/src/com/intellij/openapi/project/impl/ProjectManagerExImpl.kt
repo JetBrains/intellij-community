@@ -158,7 +158,8 @@ private fun prepareProject(options: OpenProjectTask, projectStoreBaseDir: Path, 
     indicator?.text = ""
   }
 
-  if (project == null || (options.beforeOpen != null && !options.beforeOpen.test(project))) {
+  @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
+  if (project == null || (options.beforeOpen != null && !options.beforeOpen!!(project))) {
     return null
   }
 

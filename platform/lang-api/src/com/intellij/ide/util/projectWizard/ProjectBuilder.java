@@ -19,8 +19,7 @@ public abstract class ProjectBuilder {
     return false;
   }
 
-  @Nullable
-  public abstract List<Module> commit(final @NotNull Project project, @Nullable final ModifiableModuleModel model, final ModulesProvider modulesProvider);
+  public abstract @Nullable List<Module> commit(@NotNull Project project, @Nullable ModifiableModuleModel model, ModulesProvider modulesProvider);
 
   public List<Module> commit(@NotNull Project project) {
     return commit(project, null, DefaultModulesProvider.createForProject(project));
