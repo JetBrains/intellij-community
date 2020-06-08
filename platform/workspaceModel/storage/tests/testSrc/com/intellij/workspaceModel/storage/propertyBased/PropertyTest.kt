@@ -10,6 +10,7 @@ import com.intellij.workspaceModel.storage.impl.RefsTable
 import com.intellij.workspaceModel.storage.impl.StorageIndexes
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.containers.putAll
+import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
 import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
 import junit.framework.TestCase
 import org.jetbrains.jetCheck.Generator
@@ -67,11 +68,21 @@ class PropertyTest {
 private class AddDiff(private val storage: WorkspaceEntityStorageBuilder) : ImperativeCommand {
   override fun performCommand(env: ImperativeCommand.Environment) {
     env.logMessage("Trying to perform addDiff")
-    val another = WorkspaceEntityStorageBuilderImpl.from(storage.toStorage())
-    env.logMessage("Modify original storage:")
+    val backup = storage.toStorage()
+    val another = WorkspaceEntityStorageBuilderImpl.from(backup)
+    env.logMessage("Modify diff:")
     env.executeCommands(getEntityManipulation(another))
 
-    storage.addDiff(another)
+    env.logMessage("Modify original storage:")
+    env.executeCommands(getEntityManipulation(storage as WorkspaceEntityStorageBuilderImpl))
+
+    try {
+      storage.addDiff(another)
+    }
+    catch (e: AddDiffException) {
+      env.logMessage("Cannot perform addDiff: ${e.message}. Fallback to previous state")
+      storage.restoreFromBackup(backup)
+    }
   }
 
   companion object {
@@ -99,39 +110,6 @@ private class ReplaceBySource(private val storage: WorkspaceEntityStorageBuilder
     }
   }
 
-  private fun WorkspaceEntityStorageBuilderImpl.restoreFromBackup(backup: WorkspaceEntityStorage) {
-    val backupBuilder = WorkspaceEntityStorageBuilderImpl.from(backup)
-    entitiesByType.entities.clear()
-    entitiesByType.entities.addAll(backupBuilder.entitiesByType.entities)
-
-    refs.oneToManyContainer.clear()
-    refs.oneToOneContainer.clear()
-    refs.oneToAbstractManyContainer.clear()
-    refs.abstractOneToOneContainer.clear()
-
-    refs.oneToManyContainer.putAll(backupBuilder.refs.oneToManyContainer)
-    refs.oneToOneContainer.putAll(backupBuilder.refs.oneToOneContainer)
-    refs.oneToAbstractManyContainer.putAll(backupBuilder.refs.oneToAbstractManyContainer)
-    refs.abstractOneToOneContainer.putAll(backupBuilder.refs.abstractOneToOneContainer)
-    // Just checking that all properties have been asserted
-    TestCase.assertEquals(4, RefsTable::class.memberProperties.size)
-
-
-    indexes.softLinks.clear()
-    indexes.virtualFileIndex.clear()
-    indexes.entitySourceIndex.clear()
-    indexes.persistentIdIndex.clear()
-    indexes.externalMappings.clear()
-
-    indexes.softLinks.putAll(backupBuilder.indexes.softLinks)
-    indexes.virtualFileIndex.copyFrom(backupBuilder.indexes.virtualFileIndex)
-    indexes.entitySourceIndex.copyFrom(backupBuilder.indexes.entitySourceIndex)
-    indexes.persistentIdIndex.copyFrom(backupBuilder.indexes.persistentIdIndex)
-    indexes.externalMappings.putAll(indexes.externalMappings)
-    // Just checking that all properties have been asserted
-    TestCase.assertEquals(5, StorageIndexes::class.memberProperties.size)
-  }
-
   companion object {
     val filter: Generator<Pair<(EntitySource) -> Boolean, String>> = Generator.sampledFrom(
       { _: EntitySource -> true } to "Always true",
@@ -142,4 +120,37 @@ private class ReplaceBySource(private val storage: WorkspaceEntityStorageBuilder
 
     fun create(workspace: WorkspaceEntityStorageBuilder): Generator<ReplaceBySource> = Generator.constant(ReplaceBySource(workspace))
   }
+}
+
+private fun WorkspaceEntityStorageBuilderImpl.restoreFromBackup(backup: WorkspaceEntityStorage) {
+  val backupBuilder = WorkspaceEntityStorageBuilderImpl.from(backup)
+  entitiesByType.entities.clear()
+  entitiesByType.entities.addAll(backupBuilder.entitiesByType.entities)
+
+  refs.oneToManyContainer.clear()
+  refs.oneToOneContainer.clear()
+  refs.oneToAbstractManyContainer.clear()
+  refs.abstractOneToOneContainer.clear()
+
+  refs.oneToManyContainer.putAll(backupBuilder.refs.oneToManyContainer)
+  refs.oneToOneContainer.putAll(backupBuilder.refs.oneToOneContainer)
+  refs.oneToAbstractManyContainer.putAll(backupBuilder.refs.oneToAbstractManyContainer)
+  refs.abstractOneToOneContainer.putAll(backupBuilder.refs.abstractOneToOneContainer)
+  // Just checking that all properties have been asserted
+  TestCase.assertEquals(4, RefsTable::class.memberProperties.size)
+
+
+  indexes.softLinks.clear()
+  indexes.virtualFileIndex.clear()
+  indexes.entitySourceIndex.clear()
+  indexes.persistentIdIndex.clear()
+  indexes.externalMappings.clear()
+
+  indexes.softLinks.putAll(backupBuilder.indexes.softLinks)
+  indexes.virtualFileIndex.copyFrom(backupBuilder.indexes.virtualFileIndex)
+  indexes.entitySourceIndex.copyFrom(backupBuilder.indexes.entitySourceIndex)
+  indexes.persistentIdIndex.copyFrom(backupBuilder.indexes.persistentIdIndex)
+  indexes.externalMappings.putAll(indexes.externalMappings)
+  // Just checking that all properties have been asserted
+  TestCase.assertEquals(5, StorageIndexes::class.memberProperties.size)
 }

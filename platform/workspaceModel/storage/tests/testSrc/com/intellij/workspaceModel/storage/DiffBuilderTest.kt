@@ -2,12 +2,8 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.entities.*
-import com.intellij.workspaceModel.storage.entities.ModifiableChildSampleEntity
-import com.intellij.workspaceModel.storage.entities.ModifiableSampleEntity
-import com.intellij.workspaceModel.storage.entities.ChildSampleEntity
-import com.intellij.workspaceModel.storage.entities.SampleEntity
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageImpl
 import org.junit.Assert.*
 import org.junit.Test
@@ -180,5 +176,17 @@ class DiffBuilderTest {
     assertEquals(1, resultingStorage.entities(ChildSampleEntity::class.java).toList().size)
 
     assertEquals(resultingStorage.entities(SampleEntity::class.java).single(), resultingStorage.entities(ChildSampleEntity::class.java).single().parent)
+  }
+
+  @Test
+  fun `dependency to removed parent`() {
+    val source = WorkspaceEntityStorageBuilderImpl.create()
+    val parent = source.addParentEntity()
+
+    val target = WorkspaceEntityStorageBuilderImpl.from(source)
+    target.addChildWithOptionalParentEntity(parent)
+    source.removeEntity(parent)
+
+    source.applyDiff(target)
   }
 }

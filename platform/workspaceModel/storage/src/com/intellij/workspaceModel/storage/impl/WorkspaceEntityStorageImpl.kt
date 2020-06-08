@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
+import com.intellij.workspaceModel.storage.impl.exceptions.adFailed
 import com.intellij.workspaceModel.storage.impl.exceptions.rbsFailed
 import com.intellij.workspaceModel.storage.impl.external.EmptyExternalEntityMapping
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
@@ -679,14 +680,16 @@ internal class WorkspaceEntityStorageBuilderImpl(
     // Restore children references of the entity
     for ((connectionId, children) in updatedChildren) {
       val (missingChildren, existingChildren) = children.partition { this.entityDataById(it) == null }
-      if (missingChildren.isNotEmpty() && !connectionId.canRemoveChild()) error("Cannot restore some dependencies")
+      if (missingChildren.isNotEmpty() && !connectionId.canRemoveChild()) adFailed("Cannot restore some dependencies")
       refs.updateChildrenOfParent(connectionId, entityId, existingChildren)
     }
 
     // Restore parent references of the entity
     for ((connection, parent) in updatedParents) {
-      if (this.entityDataById(parent) == null && !connection.canRemoveParent()) error("Cannot restore some dependencies")
-      refs.updateParentOfChild(connection, entityId, parent)
+      if (this.entityDataById(parent) != null) {
+        refs.updateParentOfChild(connection, entityId, parent)
+      }
+      else if (!connection.canRemoveParent()) adFailed("Cannot restore some dependencies")
     }
   }
 
