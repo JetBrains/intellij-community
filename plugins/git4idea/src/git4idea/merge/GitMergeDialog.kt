@@ -2,6 +2,7 @@
 package git4idea.merge
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
@@ -17,10 +18,9 @@ import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import git4idea.GitUtil
+import git4idea.config.GitMergeSettings
 import git4idea.i18n.GitBundle
 import git4idea.merge.dialog.*
-import git4idea.merge.dialog.FlatComboBoxUI
-import git4idea.merge.dialog.OptionButton
 import git4idea.repo.GitRepository
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
@@ -60,10 +60,14 @@ class GitMergeDialog(private val project: Project,
 
   private val repositoryManager = GitUtil.getRepositoryManager(project)
 
+  private val mergeSettings = project.service<GitMergeSettings>()
+
   init {
     title = GitBundle.message("merge.branch.title")
     setOKButtonText(GitBundle.message("merge.action.name"))
     updateBranches()
+    loadSettings()
+    updateUi()
     init()
   }
 
@@ -88,6 +92,15 @@ class GitMergeDialog(private val project: Project,
     return southPanel
   }
 
+  override fun doOKAction() {
+    try {
+      saveSettings()
+    }
+    finally {
+      super.doOKAction()
+    }
+  }
+
   fun getCommitMessage(): String = commitMsgField.text
 
   fun getSelectedRoot(): VirtualFile = rootsByNames[rootField.item] ?: defaultRoot
@@ -95,6 +108,12 @@ class GitMergeDialog(private val project: Project,
   fun getSelectedBranches() = listOf(branchField.item)
 
   fun shouldCommitAfterMerge() = MergeOption.NO_COMMIT !in selectedOptions
+
+  private fun saveSettings() {
+    mergeSettings.options = selectedOptions
+  }
+
+  private fun loadSettings() = mergeSettings.options.forEach { option -> selectedOptions += option }
 
   private fun validateBranchField(): ValidationInfo? {
     if (branchField.item == null) {
@@ -263,12 +282,14 @@ class GitMergeDialog(private val project: Project,
     OptionInfo(option, option.option, GitBundle.message(option.descriptionKey))
   }
 
-  private fun createOptionPopupStep() = object : BaseListPopupStep<MergeOption>(GitBundle.message("merge.options.modify"),
-                                                                                mutableListOf(*MergeOption.values())) {
+  private fun createOptionPopupStep() = object : BaseListPopupStep<MergeOption>(GitBundle.message("merge.options.modify"), getOptions()) {
+
     override fun isSelectable(value: MergeOption?) = isOptionEnabled(value!!)
 
     override fun onChosen(selectedValue: MergeOption?, finalChoice: Boolean) = doFinalStep(Runnable { optionChosen(selectedValue) })
   }
+
+  private fun getOptions() = MergeOption.values().toMutableList()
 
   private fun isOptionEnabled(option: MergeOption) = selectedOptions.all { it.isOptionSuitable(option) }
 
