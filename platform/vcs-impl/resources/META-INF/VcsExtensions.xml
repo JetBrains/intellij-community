@@ -103,7 +103,17 @@
 
     <referenceProviderType key="commentsReferenceProvider"
                            implementationClass="com.intellij.psi.impl.source.resolve.reference.ArbitraryPlaceUrlReferenceProvider"/>
+    <psi.symbolReferenceProvider hostLanguage=""
+                                 hostElementClass="com.intellij.model.psi.UrlReferenceHost"
+                                 referenceClass="com.intellij.openapi.paths.UrlReference"
+                                 targetClass="com.intellij.openapi.paths.UrlSymbol"
+                                 implementationClass="com.intellij.psi.impl.source.resolve.reference.UrlReferenceProvider"/>
     <psi.referenceContributor implementation="com.intellij.psi.impl.source.resolve.reference.UrlReferenceContributor"/>
+    <psi.symbolReferenceProvider hostLanguage=""
+                                 hostElementClass="com.intellij.psi.PsiLiteralValue"
+                                 referenceClass="com.intellij.openapi.paths.UrlReference"
+                                 targetClass="com.intellij.openapi.paths.UrlSymbol"
+                                 implementationClass="com.intellij.psi.impl.source.resolve.reference.LiteralUrlReferenceProvider"/>
 
     <selectInTarget implementation="com.intellij.openapi.vcs.changes.SelectInChangesViewTarget"/>
 

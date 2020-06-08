@@ -301,6 +301,7 @@ array_assignment ::= newlines '='? expression newlines
 
 literal ::= word | string | number | variable {
   extends=simple_command_element
+  implements="com.intellij.model.psi.UrlReferenceHost"
   mixin="com.intellij.sh.psi.impl.ShLiteralMixin"
   methods=[getReferences]
 }

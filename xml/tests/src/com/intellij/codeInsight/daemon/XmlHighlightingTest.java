@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.application.options.XmlSettings;
@@ -32,7 +32,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.paths.WebReference;
+import com.intellij.openapi.paths.UrlReference;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.TextRange;
@@ -66,6 +66,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Method;
 import java.util.*;
+
+import static com.intellij.model.psi.PsiSymbolReference.getReferenceText;
 
 @SuppressWarnings({"HardCodedStringLiteral", "ConstantConditions"})
 public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
@@ -2048,18 +2050,18 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testLinksInAttrValuesAndComments() throws Exception {
-    configureByFile(BASE_PATH +getTestName(false) + ".xml");
+    configureByFile(BASE_PATH + getTestName(false) + ".xml");
     doDoTest(true, false);
 
-    List<WebReference> list = PlatformTestUtil.collectWebReferences(myFile);
+    List<UrlReference> list = PlatformTestUtil.collectUrlReferences(myFile);
     assertEquals(2, list.size());
 
-    Collections.sort(list, Comparator.comparingInt(o -> o.getCanonicalText().length()));
+    Collections.sort(list, Comparator.comparingInt(o -> o.getRangeInElement().getLength()));
 
-    assertEquals("https://www.jetbrains.com/ruby/download", list.get(0).getCanonicalText());
-    assertTrue(list.get(0).getElement() instanceof  XmlAttributeValue);
-    assertEquals("http://blog.jetbrains.com/ruby/2012/04/rubymine-4-0-3-update-is-available/", list.get(1).getCanonicalText());
-    assertTrue(list.get(1).getElement() instanceof  XmlComment);
+    assertEquals("https://www.jetbrains.com/ruby/download", getReferenceText(list.get(0)));
+    assertTrue(list.get(0).getElement() instanceof XmlAttributeValue);
+    assertEquals("http://blog.jetbrains.com/ruby/2012/04/rubymine-4-0-3-update-is-available/", getReferenceText(list.get(1)));
+    assertTrue(list.get(1).getElement() instanceof XmlComment);
   }
 
   public void testBillionLaughs() {

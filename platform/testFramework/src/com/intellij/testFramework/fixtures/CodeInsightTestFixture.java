@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.completion.CompletionType;
@@ -14,6 +14,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -298,6 +299,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @NotNull
   List<HighlightInfo> doHighlighting(@NotNull HighlightSeverity minimalSeverity);
 
+  @NotNull PsiSymbolReference findSingleReference();
+
   /**
    * Finds the reference in position marked by {@link #CARET_MARKER}.
    *
@@ -577,7 +580,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @apiNote if the handler suggest some substitutions for the element with a dialog
    * you can use {@link Messages#setTestDialog(TestDialog)} to provide YES/NO answer.
    * Also makes sure that your rename handler properly processing name from {@link PsiElementRenameHandler#DEFAULT_NAME}
-   * @see CodeInsightTestUtil#doInlineRename for more sophisticated in-place refactorings 
+   * @see CodeInsightTestUtil#doInlineRename for more sophisticated in-place refactorings
    */
   void renameElementAtCaretUsingHandler(@NotNull String newName);
 

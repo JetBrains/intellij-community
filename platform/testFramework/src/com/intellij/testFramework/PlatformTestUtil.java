@@ -27,6 +27,7 @@ import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
+import com.intellij.model.psi.PsiSymbolReferenceService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
@@ -43,6 +44,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.paths.UrlReference;
 import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -867,20 +869,16 @@ public final class PlatformTestUtil {
     }
   }
 
-  public static @NotNull List<WebReference> collectWebReferences(@NotNull PsiElement element) {
-    List<WebReference> refs = new ArrayList<>();
+  public static @NotNull List<UrlReference> collectUrlReferences(@NotNull PsiElement element) {
+    List<UrlReference> result = new SmartList<>();
     element.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        for (PsiReference ref : element.getReferences()) {
-          if (ref instanceof WebReference) {
-            refs.add((WebReference)ref);
-          }
-        }
+        result.addAll(PsiSymbolReferenceService.getService().getReferences(element, UrlReference.class));
         super.visitElement(element);
       }
     });
-    return refs;
+    return result;
   }
 
   @SuppressWarnings("unchecked")

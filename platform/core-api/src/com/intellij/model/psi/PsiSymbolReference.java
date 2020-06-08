@@ -36,4 +36,11 @@ public interface PsiSymbolReference extends SymbolReference {
   default TextRange getAbsoluteRange() {
     return getRangeInElement().shiftRight(getElement().getTextRange().getStartOffset());
   }
+
+  /**
+   * @return text covered by the reference
+   */
+  static @NotNull String getReferenceText(@NotNull PsiSymbolReference reference) {
+    return reference.getRangeInElement().substring(reference.getElement().getText());
+  }
 }
