@@ -807,7 +807,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       public void doCheck() {
         //noinspection unchecked
         final List<Trinity<String, String, String>> variants = Arrays.asList(
-          (Trinity<String, String, String>[])new Trinity[]{Trinity.create("yes", "barkling", "dog"),
+          new Trinity[]{Trinity.create("yes", "barkling", "dog"),
             Trinity.create("yes", "meowing", "cat"), Trinity.create("yes", "crowling", "mouse"),
             Trinity.create("not", "apparel", "schrank"), Trinity.create("not", "dinner", "tisch"),
             Trinity.create("not", "rest", "sessel")});

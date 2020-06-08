@@ -68,6 +68,7 @@ public class UnnecessaryBoxingFixTest extends IGQuickFixesTestCase {
   }
 
   public void testHexDouble() {
+    //noinspection RedundantCast
     doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
                  "double f = Double./**/valueOf(0x123);",
                  "double f = (double) 0x123;");
@@ -82,6 +83,7 @@ public class UnnecessaryBoxingFixTest extends IGQuickFixesTestCase {
 
   @SuppressWarnings("OctalInteger")
   public void testOctalDouble() {
+    //noinspection RedundantCast
     doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
                  "double f = Double.valueOf/**/(0123);",
                  "double f = (double) 0123;");

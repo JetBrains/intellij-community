@@ -96,11 +96,11 @@ public class ComplexUndoTest extends EditorUndoTestCase {
       WriteCommandAction.runWriteCommandAction(getProject(), () -> editor.getDocument().deleteString(0, editor.getDocument().getTextLength()));
       undo(editor);
       UIUtil.dispatchAllInvocationEvents();
-      assertEquals((int)utf8character, (int)editor.getDocument().getText().charAt(0));
+      assertEquals(utf8character, (int)editor.getDocument().getText().charAt(0));
       WriteCommandAction.runWriteCommandAction(getProject(), () -> editor2.getDocument().deleteString(0, editor2.getDocument().getTextLength()));
       undo(editor2);
       UIUtil.dispatchAllInvocationEvents();
-      assertEquals((int)utf8character, (int)editor2.getDocument().getText().charAt(0));
+      assertEquals(utf8character, (int)editor2.getDocument().getText().charAt(0));
     }));
   }
 
