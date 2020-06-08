@@ -56,7 +56,7 @@ public final class PythonBaseProjectGenerator extends PythonProjectGenerator<PyN
     // Super should be called according to its contract unless we sync project explicitly (we do not, so we call super)
     super.configureProject(project, baseDir, settings, module, synchronizer);
     PySdkExtKt.setPythonSdk(module, settings.getSdk());
-    PyWelcomeGenerator.INSTANCE.welcomeUser(project, baseDir);
+    PyWelcomeGenerator.INSTANCE.welcomeUser(project, baseDir, module);
   }
 
   @NotNull
