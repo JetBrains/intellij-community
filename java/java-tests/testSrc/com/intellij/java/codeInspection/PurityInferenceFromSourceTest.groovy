@@ -463,6 +463,32 @@ class Super {
     assert !JavaMethodContractUtil.isPure(clazz.methods[0])
     assert JavaMethodContractUtil.isPure(clazz.superClass.methods[0])
   }
+  
+  void "test enum method"() {
+    def clazz = myFixture.addClass """
+enum X {
+  A;
+  
+  Iterable<?> onXyz() {
+    return java.util.Collections.emptyList();
+  }
+}
+"""
+    assert JavaMethodContractUtil.isPure(clazz.methods[0])
+  }
+  
+  void "test enum method with subclass"() {
+    def clazz = myFixture.addClass """
+enum X {
+  A, B {};
+  
+  Iterable<?> onXyz() {
+    return java.util.Collections.emptyList();
+  }
+}
+"""
+    assert !JavaMethodContractUtil.isPure(clazz.methods[0])
+  }
 
   private void assertPure(String classBody) {
     assertMutationSignature(classBody, MutationSignature.pure())
