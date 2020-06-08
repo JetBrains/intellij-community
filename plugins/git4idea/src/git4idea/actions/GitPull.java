@@ -104,19 +104,9 @@ public class GitPull extends GitMergeAction {
 
       h.addParameters(remoteName);
       for (String branch : selectedBranches) {
-        h.addParameters(removeRemotePrefix(branch, remoteName));
+        h.addParameters(branch);
       }
       return h;
     };
-  }
-
-  @NotNull
-  private static String removeRemotePrefix(@NotNull String branch, @NotNull String remote) {
-    String prefix = remote + "/";
-    if (branch.startsWith(prefix)) {
-      return branch.substring(prefix.length());
-    }
-    LOG.error(String.format("Remote branch name seems to be invalid. Branch: %s, remote: %s", branch, remote));
-    return branch;
   }
 }
