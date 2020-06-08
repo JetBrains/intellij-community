@@ -65,7 +65,7 @@ public final class JavacMain {
     final JpsJavacFileManager fileManager = new JpsJavacFileManager(
       new ContextImpl(compiler, diagnosticConsumer, outputSink, modulePath, canceledStatus), javacBefore9, JavaSourceTransformer.getTransformers()
     );
-    if (!platformClasspath.isEmpty()) {
+    if (javacBefore9 && !platformClasspath.isEmpty()) {
       // for javac6 this will prevent lazy initialization of Paths.bootClassPathRtJar
       // and thus usage of symbol file for resolution, when this file is not expected to be used
       fileManager.handleOption("-bootclasspath", Collections.singleton("").iterator());
