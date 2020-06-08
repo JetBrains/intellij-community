@@ -20,18 +20,20 @@ import com.intellij.ui.EditorTextField
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.HorizontalBox
-import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JButtonAction
-import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.util.ui.*
 import icons.GithubIcons
+import net.miginfocom.layout.CC
+import net.miginfocom.layout.LC
+import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
+import org.jetbrains.plugins.github.ui.GHHtmlErrorPanel
+import org.jetbrains.plugins.github.ui.GHSimpleErrorPanelModel
 import org.jetbrains.plugins.github.ui.InlineIconButton
 import org.jetbrains.plugins.github.util.GithubUIUtil
+import org.jetbrains.plugins.github.util.errorOnEdt
 import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.Component
 import java.awt.FlowLayout
@@ -120,6 +122,7 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
     return object : ComponentContainer {
 
       private val editor = createEditor(document)
+      private val errorModel = GHSimpleErrorPanelModel(GithubBundle.message("pull.request.review.submit.error"))
 
       private val approveButton = if (!viewerIsAuthor) JButton(GithubBundle.message("pull.request.review.submit.approve.button")).apply {
         addActionListener(createSubmitButtonActionListener(GHPullRequestReviewEvent.APPROVE))
@@ -152,6 +155,13 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
         }.successOnEdt {
           cancelActionListener.actionPerformed(e)
           runWriteAction { document.setText("") }
+        }.errorOnEdt {
+          errorModel.error = it
+          editor.isEnabled = true
+          approveButton?.isEnabled = true
+          rejectButton?.isEnabled = true
+          commentButton.isEnabled = true
+          discardButton?.isEnabled = true
         }
       }
 
@@ -173,13 +183,13 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
       }
 
       override fun getComponent(): JComponent {
-        val title = JLabel(GithubBundle.message("pull.request.review.submit.review")).apply {
+        val titleLabel = JLabel(GithubBundle.message("pull.request.review.submit.review")).apply {
           font = font.deriveFont(font.style or Font.BOLD)
         }
         val titlePanel = HorizontalBox().apply {
           border = JBUI.Borders.empty(4, 4, 4, 4)
 
-          add(title)
+          add(titleLabel)
           if (pendingReview != null) {
             val commentsCount = pendingReview.comments.totalCount!!
             add(Box.createRigidArea(JBDimension(5, 0)))
@@ -194,6 +204,10 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
           })
         }
 
+        val errorPanel = GHHtmlErrorPanel.create(errorModel, SwingConstants.LEFT).apply {
+          border = JBUI.Borders.empty(4)
+        }
+
         val buttonsPanel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)).apply {
           border = JBUI.Borders.empty(4)
 
@@ -202,10 +216,19 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
           add(commentButton)
         }
 
-        return BorderLayoutPanel().andTransparent().withPreferredSize(300, 130)
-          .addToCenter(editor)
-          .addToTop(titlePanel)
-          .addToBottom(buttonsPanel)
+        return JPanel(MigLayout(LC().gridGap("0", "0")
+                                  .insets("0", "0", "0", "0")
+                                  .fill().flowY().noGrid())).apply {
+          isOpaque = false
+          preferredSize = JBDimension(450, 165)
+
+          add(titlePanel, CC().growX())
+          add(editor, CC().growX().growY()
+            .gap("0", "0", "0", "0"))
+          add(errorPanel, CC().minHeight("${UI.scale(32)}").growY().growPrioY(0).hideMode(3)
+            .gap("0", "0", "0", "0"))
+          add(buttonsPanel, CC().alignX("right"))
+        }
       }
 
       private fun createEditor(document: Document) = EditorTextField(document, null, FileTypes.PLAIN_TEXT).apply {
