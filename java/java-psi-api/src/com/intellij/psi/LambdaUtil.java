@@ -157,7 +157,7 @@ public class LambdaUtil {
   @Contract("null -> null")
   public static @Nullable MethodSignature getFunction(final PsiClass psiClass) {
     if (isPlainInterface(psiClass)) {
-      return CachedValuesManager.getProjectPsiDependentCache(psiClass, () -> calcFunction(psiClass));
+      return CachedValuesManager.getProjectPsiDependentCache(psiClass, LambdaUtil::calcFunction);
     }
     return null;
   }
