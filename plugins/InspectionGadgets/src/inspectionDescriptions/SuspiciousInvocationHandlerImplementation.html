@@ -1,8 +1,8 @@
 <html>
 <body>
-Reports poorly implemented <code>InvocationHandler.invoke</code> methods. These methods must correctly proxy
-standard <code>Object</code> methods like <code>hashCode()</code>, <code>equals()</code> and <code>toString()</code>.
-Failing to handle them might cause unexpected problems if these methods are called.
+Reports the implementations of <code>InvocationHandler.invoke</code> that do not proxy standard
+<code>Object</code> methods like <code>hashCode()</code>, <code>equals()</code>, and <code>toString().
+Failing to handle these methods might cause unexpected problems upon calling them on a proxy instance.
 <p>
   Example:
 </p>
@@ -14,9 +14,9 @@ Failing to handle them might cause unexpected problems if these methods are call
       });
 </pre>
 <p>
-  Here the code author assumed that only <code>Runnable.run()</code> method is proxied. However, <code>myProxy.equals()</code>, 
-  <code>myProxy.hashCode()</code> and <code>myProxy.toString()</code> are also proxied. So, for example, adding the <code>myProxy</code>
-  object to <code>HashSet</code> will cause <code>NullPointerException</code> immediately.
+  The code snippet above is designed to only proxy the <code>Runnable.run()</code> method. However, the calls to Object’s 
+  virtual methods are dispatched as well, which may lead to problems like <code>NullPointerException</code> on trying 
+  to add <code>myProxy</code> to a <code>HashSet</code>.
 </p>
 <!-- tooltip end -->
 <p><small>New in 2020.2</small>
