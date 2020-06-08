@@ -5,7 +5,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.containers.ConcurrentFactoryMap;
@@ -20,6 +19,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Supplier;
 
 /**
  * This class checks the contract described in {@link com.intellij.psi.util.CachedValue} documentation, that its
@@ -171,7 +171,7 @@ final class CachedValueStabilityChecker {
     Class<?> superclass = clazz.getSuperclass();
     if (superclass == null) return false;
 
-    if ((o instanceof Computable || o instanceof Function || o instanceof java.util.function.Function) &&
+    if ((o instanceof Supplier || o instanceof Function || o instanceof java.util.function.Function) &&
         Object.class.equals(clazz.getSuperclass())) {
       return true;
     }

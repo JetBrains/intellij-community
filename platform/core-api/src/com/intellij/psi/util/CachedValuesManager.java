@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Supplier;
 
 /**
  * A service used to create and store {@link CachedValue} objects.<p/>
@@ -117,6 +118,16 @@ public abstract class CachedValuesManager {
    */
   public static <T> T getCachedValue(final @NotNull PsiElement psi, final @NotNull CachedValueProvider<T> provider) {
     return getCachedValue(psi, getKeyForClass(provider.getClass(), globalKeyForProvider), provider);
+  }
+
+  /**
+   * @return a cached value computed via the given provider,
+   * associated with the given PSI element,
+   * recalculated after any PSI change in the project.
+   */
+  public static <T> T getProjectPsiDependentCache(@NotNull PsiElement psi, @NotNull Supplier<T> provider) {
+    return getCachedValue(psi, getKeyForClass(provider.getClass(), globalKeyForProvider), () ->
+      CachedValueProvider.Result.create(provider.get(), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   /**
