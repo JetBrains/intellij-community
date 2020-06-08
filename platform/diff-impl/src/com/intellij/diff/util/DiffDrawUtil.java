@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util;
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
@@ -33,7 +33,7 @@ import java.util.*;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
-public class DiffDrawUtil {
+public final class DiffDrawUtil {
   private static final Logger LOG = Logger.getInstance(DiffDrawUtil.class);
 
   public static final int STRIPE_LAYER = HighlighterLayer.ERROR - 1;

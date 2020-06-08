@@ -176,7 +176,7 @@ public class RequestsMerger {
     }
   }
 
-  private static class MyTransitionAction {
+  private static final class MyTransitionAction {
     private static final Map<Couple<MyState>, MyExitAction[]> myMap = new HashMap<>();
 
     static {

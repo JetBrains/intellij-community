@@ -10,7 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public class GlobalInspectionContextUtil {
+public final class GlobalInspectionContextUtil {
   public static RefElement retrieveRefElement(@NotNull PsiElement element, @NotNull GlobalInspectionContext globalContext) {
     PsiFile elementFile = element.getContainingFile();
     RefElement refElement = globalContext.getRefManager().getReference(elementFile);

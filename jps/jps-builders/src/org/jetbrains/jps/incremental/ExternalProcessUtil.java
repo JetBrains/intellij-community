@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.execution.CommandLineWrapperUtil;
@@ -6,7 +6,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,10 +18,10 @@ import java.util.jar.Manifest;
 /**
  * @author Eugene Zhuravlev
  */
-public class ExternalProcessUtil {
+public final class ExternalProcessUtil {
   private static final Logger LOG = Logger.getInstance(ExternalProcessUtil.class);
 
-  private static class CommandLineWrapperClassHolder {
+  private static final class CommandLineWrapperClassHolder {
     static final Class<?> ourWrapperClass;
     static {
       Class<?> aClass = null;

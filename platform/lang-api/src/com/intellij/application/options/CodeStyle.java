@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.cache.CodeStyleCachingService;
@@ -24,7 +24,7 @@ import java.util.function.Consumer;
  * Utility class for miscellaneous code style settings retrieving methods.
  */
 @SuppressWarnings("unused") // Contains API methods which may be used externally
-public class CodeStyle {
+public final class CodeStyle {
 
   private CodeStyle() {
   }

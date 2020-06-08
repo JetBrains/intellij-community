@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
@@ -45,7 +45,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 
-public class PsiTestUtil {
+public final class PsiTestUtil {
   @NotNull
   public static VirtualFile createTestProjectStructure(@NotNull Project project,
                                                        @NotNull Module module,
@@ -613,7 +613,7 @@ public class PsiTestUtil {
       checker.accept(manager.getPsiFile(document));
     }
   }
-  
+
   public static class LibraryBuilder {
     private final String myName;
     private final List<VirtualFile> myClassesRoots = new ArrayList<>();
@@ -626,7 +626,7 @@ public class PsiTestUtil {
     }
 
     /**
-     * Add a classes root for the future library. 
+     * Add a classes root for the future library.
      * @param root root to add
      * @return this builder
      */
@@ -637,7 +637,7 @@ public class PsiTestUtil {
     }
 
     /**
-     * Add a classes root for the future library. 
+     * Add a classes root for the future library.
      * @param rootPath root to add
      * @return this builder
      */
@@ -648,7 +648,7 @@ public class PsiTestUtil {
     }
 
     /**
-     * Add a source root for the future library. 
+     * Add a source root for the future library.
      * @param root root to add
      * @return this builder
      */
@@ -659,7 +659,7 @@ public class PsiTestUtil {
     }
 
     /**
-     * Add a source root for the future library. 
+     * Add a source root for the future library.
      * @param rootPath root to add
      * @return this builder
      */
@@ -670,7 +670,7 @@ public class PsiTestUtil {
     }
 
     /**
-     * Add a javadoc root for the future library. 
+     * Add a javadoc root for the future library.
      * @param root root to add
      * @return this builder
      */
@@ -681,7 +681,7 @@ public class PsiTestUtil {
     }
 
     /**
-     * Add a javadoc root for the future library. 
+     * Add a javadoc root for the future library.
      * @param rootPath root to add
      * @return this builder
      */
@@ -705,7 +705,7 @@ public class PsiTestUtil {
     /**
      * Creates the actual library and registers it within given {@link ModifiableRootModel}. Presumably this method
      * is called inside {@link ModuleRootModificationUtil#updateModel(Module, com.intellij.util.Consumer)}.
-     * 
+     *
      * @param model a model to register the library in.
      * @return a library
      */
@@ -715,10 +715,10 @@ public class PsiTestUtil {
     }
 
     /**
-     * Creates the actual library and registers it within given {@link Module}. Do not call this inside 
-     * {@link LightProjectDescriptor#configureModule(Module, ModifiableRootModel, ContentEntry)}; 
+     * Creates the actual library and registers it within given {@link Module}. Do not call this inside
+     * {@link LightProjectDescriptor#configureModule(Module, ModifiableRootModel, ContentEntry)};
      * use {@link #addTo(ModifiableRootModel)} instead.
-     * 
+     *
      * @param module a module to register the library in.
      * @return a library
      */
@@ -728,6 +728,6 @@ public class PsiTestUtil {
       ModuleRootModificationUtil.updateModel(module, model -> result.set(addTo(model)));
       return result.get();
     }
-    
+
   }
 }

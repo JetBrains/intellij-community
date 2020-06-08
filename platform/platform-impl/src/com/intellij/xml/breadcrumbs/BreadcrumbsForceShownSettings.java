@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.openapi.editor.Editor;
@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class BreadcrumbsForceShownSettings {
+public final class BreadcrumbsForceShownSettings {
   private BreadcrumbsForceShownSettings() { }
 
   private static final Key<Boolean> FORCED_BREADCRUMBS = new Key<>("FORCED_BREADCRUMBS");

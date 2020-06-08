@@ -18,7 +18,7 @@ import java.awt.font.FontRenderContext;
 import java.util.List;
 import java.util.*;
 
-public class ComplementaryFontsRegistry {
+public final class ComplementaryFontsRegistry {
   private static final Logger LOG = Logger.getInstance(ComplementaryFontsRegistry.class);
   private static final String DEFAULT_FALLBACK_FONT = Font.MONOSPACED;
   private static final Object lock = new Object();

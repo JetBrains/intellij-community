@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 
-public class GoToChangePopupBuilder {
+public final class GoToChangePopupBuilder {
   private static final Key<JBPopup> POPUP_KEY = Key.create("Diff.RequestChainGoToPopup");
 
   public interface Chain extends DiffRequestChain {

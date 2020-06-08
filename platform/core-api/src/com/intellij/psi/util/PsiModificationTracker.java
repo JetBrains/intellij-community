@@ -30,7 +30,7 @@ public interface PsiModificationTracker extends ModificationTracker {
    * Provides a way to get the instance of {@link PsiModificationTracker} corresponding to a given project.
    * @see #getInstance(Project)
    */
-  class SERVICE {
+  final class SERVICE {
     private SERVICE() {
     }
 

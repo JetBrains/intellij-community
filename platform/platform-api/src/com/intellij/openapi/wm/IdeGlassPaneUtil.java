@@ -15,7 +15,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-public class IdeGlassPaneUtil {
+public final class IdeGlassPaneUtil {
 
   private IdeGlassPaneUtil() {
   }

@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-public class EventLogUploaderCliParser {
+public final class EventLogUploaderCliParser {
 
   @NotNull
   public static Map<String, String> parseOptions(String[] args) {

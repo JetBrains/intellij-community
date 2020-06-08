@@ -53,7 +53,7 @@ import java.util.function.BooleanSupplier;
 /**
  * @author Roman Chernyatchik
  */
-public class ExecutionHelper {
+public final class ExecutionHelper {
   private static final Logger LOG = Logger.getInstance(ExecutionHelper.class);
 
   private ExecutionHelper() {

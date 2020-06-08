@@ -42,7 +42,7 @@ import java.util.concurrent.locks.Lock;
  *
  * @author gregsh
  */
-public class ProgressIndicatorUtils {
+public final class ProgressIndicatorUtils {
   private static final Logger LOG = Logger.getInstance(ProgressIndicatorUtils.class);
 
   @NotNull

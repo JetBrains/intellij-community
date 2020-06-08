@@ -45,7 +45,7 @@ import java.util.regex.Pattern;
 /**
  * Compiles the handlers for usability
  */
-public class PatternCompiler {
+public final class PatternCompiler {
 
   private static final Logger LOG = Logger.getInstance(PatternCompiler.class);
   private static String ourLastSearchPlan;

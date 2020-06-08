@@ -14,7 +14,7 @@ import java.awt.*;
 /**
  * @author Bas Leijdekkers
  */
-public class InspectionProfileUtil {
+public final class InspectionProfileUtil {
 
   private InspectionProfileUtil() {}
 

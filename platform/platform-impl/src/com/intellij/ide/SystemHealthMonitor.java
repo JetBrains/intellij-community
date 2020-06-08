@@ -266,7 +266,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
     }, 1, TimeUnit.SECONDS);
   }
 
-  private static class LibC {
+  private static final class LibC {
     static {
       Native.register(LibC.class, NativeLibrary.getInstance("c"));
     }

@@ -44,7 +44,7 @@ import static com.intellij.internal.statistic.StatisticsStringUtil.isEmptyOrSpac
  * }</pre>
  * </ol>
  */
-public class StatisticsWhitelistLoader {
+public final class StatisticsWhitelistLoader {
 
   /**
    * @return empty whitelist if error happened during groups fetching or parsing

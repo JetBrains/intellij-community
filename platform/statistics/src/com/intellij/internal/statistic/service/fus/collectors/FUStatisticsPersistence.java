@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.nio.file.Paths;
 
-public class FUStatisticsPersistence {
+public final class FUStatisticsPersistence {
   private static final Logger LOG = Logger.getInstance(FUStatisticsPersistence.class);
 
   private static final String LEGACY_PERSISTENCE_STATE_FILE = "fus-previous-state.data";

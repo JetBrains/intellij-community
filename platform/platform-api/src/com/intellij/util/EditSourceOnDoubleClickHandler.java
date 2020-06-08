@@ -17,7 +17,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-public class EditSourceOnDoubleClickHandler {
+public final class EditSourceOnDoubleClickHandler {
   private EditSourceOnDoubleClickHandler() { }
 
   public static void install(final JTree tree, @Nullable final Runnable whenPerformed) {

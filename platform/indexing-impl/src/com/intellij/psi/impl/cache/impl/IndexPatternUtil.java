@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.cache.impl;
 
 import com.intellij.psi.search.IndexPattern;
@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class IndexPatternUtil {
+public final class IndexPatternUtil {
   @NotNull
   public static List<IndexPatternProvider> getIndexPatternProviders() {
     return IndexPatternProvider.EP_NAME.getExtensionList();

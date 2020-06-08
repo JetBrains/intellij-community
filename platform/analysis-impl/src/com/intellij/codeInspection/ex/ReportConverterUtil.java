@@ -15,7 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class ReportConverterUtil {
+public final class ReportConverterUtil {
   public static @Nullable InspectionsReportConverter getReportConverter(@Nullable String outputFormat) {
     return InspectionsReportConverter.EP_NAME.getExtensionList().stream()
       .filter(converter -> converter.getFormatName().equals(outputFormat))

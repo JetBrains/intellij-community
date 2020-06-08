@@ -35,7 +35,7 @@ import static com.intellij.diff.util.DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TI
 import static com.intellij.diff.util.DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE;
 import static com.intellij.vcsUtil.VcsUtil.getShortRevisionString;
 
-public class VcsDiffUtil {
+public final class VcsDiffUtil {
 
   @CalledInAwt
   public static void showDiffFor(@NotNull Project project,

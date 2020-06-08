@@ -22,7 +22,10 @@ import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
-import java.nio.file.*;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -189,7 +192,7 @@ class JBCefFileSchemeHandler extends CefResourceHandlerAdapter implements Dispos
   }
 
   // from com.intellij.util.UriUtil
-  private static class MyUriUtil {
+  private static final class MyUriUtil {
     public static final CharMatcher PARAM_CHAR_MATCHER = CharMatcher.anyOf("?#;");
 
     public static String trimParameters(@NotNull String url) {

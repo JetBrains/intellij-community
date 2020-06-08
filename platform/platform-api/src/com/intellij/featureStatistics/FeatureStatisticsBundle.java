@@ -14,7 +14,7 @@ import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
-public class FeatureStatisticsBundle {
+public final class FeatureStatisticsBundle {
 
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return AbstractBundle.message(getBundle(key), key, params);

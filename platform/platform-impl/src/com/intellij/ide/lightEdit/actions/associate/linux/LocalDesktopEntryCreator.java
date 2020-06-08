@@ -13,7 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class LocalDesktopEntryCreator {
+public final class LocalDesktopEntryCreator {
   private static final String DESKTOP_ENTRY_PATH = ".local/share/applications";
 
   private LocalDesktopEntryCreator() {

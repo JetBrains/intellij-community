@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.application.Application;
@@ -57,7 +57,7 @@ import java.util.concurrent.ConcurrentMap;
  * user data, you're still prone to the very same issues with capturing unstable values from the context,
  * but no checks can catch that for you, you're on your own.
  */
-class CachedValueStabilityChecker {
+final class CachedValueStabilityChecker {
   private static final Logger LOG = Logger.getInstance(CachedValueStabilityChecker.class);
   private static final Set<String> ourReportedKeys = ContainerUtil.newConcurrentSet();
   private static final ConcurrentMap<Class<?>, List<Field>> ourFieldCache = ConcurrentFactoryMap.createMap(ReflectionUtil::collectFields);

@@ -27,6 +27,7 @@ import java.util.List;
  * <a href="https://www.freedesktop.org/wiki/Specifications/shared-mime-info-spec">FreeDesktop Mime Info</a>
  */
 @SuppressWarnings("SameParameterValue")
+final
 class LinuxMimeTypeUpdater {
   private static final String LOCAL_MIME_DIR = ".local/share/mime";
   private static final String LOCAL_APP_DIR = ".local/share/applications";

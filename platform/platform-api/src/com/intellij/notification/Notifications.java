@@ -42,6 +42,7 @@ public interface Notifications {
   }
 
   @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
+  final
   class Bus {
     /**
      * Registration is OPTIONAL: BALLOON display type will be used by default.

@@ -5,10 +5,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.*;
 import com.intellij.util.Consumer;
-import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.util.ui.Html;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
@@ -27,7 +27,7 @@ import java.awt.event.MouseListener;
 import static com.intellij.openapi.editor.colors.EditorColorsUtil.getGlobalOrDefaultColor;
 import static com.intellij.util.ObjectUtils.notNull;
 
-public class HintUtil {
+public final class HintUtil {
   /** @deprecated use getInformationColor() */
   @Deprecated
   public static final Color INFORMATION_COLOR = new JBColor(0xF7F7F7, 0x4B4D4D);

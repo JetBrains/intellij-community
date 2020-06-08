@@ -5,7 +5,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
 
-public class ConvertIndentsUtil {
+public final class ConvertIndentsUtil {
   private static final IndentBuilder tabIndentBuilder = new IndentBuilder() {
     @Override
     public String buildIndent(int length, int tabSize) {

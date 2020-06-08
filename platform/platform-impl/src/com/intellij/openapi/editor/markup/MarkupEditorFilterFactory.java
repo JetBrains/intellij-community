@@ -3,7 +3,7 @@ package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.diff.DiffManager;
 
-public class MarkupEditorFilterFactory {
+public final class MarkupEditorFilterFactory {
   private static final MarkupEditorFilter IS_DIFF_FILTER = DiffManager.getInstance().getDiffEditorFilter();
   private static final MarkupEditorFilter NOT_DIFF_FILTER = createNotFilter(IS_DIFF_FILTER);
 

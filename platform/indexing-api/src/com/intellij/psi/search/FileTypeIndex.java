@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * @author Dmitry Avdeev
  */
-public class FileTypeIndex {
+public final class FileTypeIndex {
   /**
    * Use {@link #getFiles(FileType, GlobalSearchScope)},
    * {@link #containsFileOfType(FileType, GlobalSearchScope)} or

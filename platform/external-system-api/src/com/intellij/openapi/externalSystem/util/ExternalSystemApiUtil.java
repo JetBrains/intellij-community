@@ -53,7 +53,7 @@ import java.util.function.Consumer;
 /**
  * @author Denis Zhdanov
  */
-public class ExternalSystemApiUtil {
+public final class ExternalSystemApiUtil {
 
   @NotNull public static final String PATH_SEPARATOR = "/";
 

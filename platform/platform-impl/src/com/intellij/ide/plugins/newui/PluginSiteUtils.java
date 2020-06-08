@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import org.jetbrains.annotations.NotNull;
@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 /**
  * @author Alexander Lobas
  */
-public class PluginSiteUtils {
+public final class PluginSiteUtils {
   private static final Pattern TAG_PATTERN =
     Pattern.compile("</?\\w+((\\s+\\w+(\\s*=\\s*(?:\".*?\"|'.*?'|[\\^'\">\\s]+))?)+\\s*|\\s*)/?>");
   private static final int SHORT_DESC_SIZE = 170;

@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 import java.awt.event.KeyEvent;
 
 @SuppressWarnings("unused")
+final
 class X11KeyCodes {
   // This list hast been created with the following bash command:
   // (echo -e -n "// This file hast been created with the following bash command:\n// $CMD\n\npackage com.sun.jna.examples.unix;\n\npublic class X11KeyCodes {\n"; cat /usr/include/X11/keysymdef.h | sed -r -e 's/^#(ifdef|endif)/\/\/#\1/g' -e 's/^#define\s\s*([a-zA-Z0-9_]+\s+)([0-9a-zA-Z]+)/public static final int \1 = \2;/g' | sed -e 's/^/\t/'; echo "}") > X11KeySymDef.java

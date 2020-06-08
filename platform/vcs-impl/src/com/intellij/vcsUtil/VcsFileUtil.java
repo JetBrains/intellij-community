@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * @author Kirill Likhodedov
  */
-public class VcsFileUtil {
+public final class VcsFileUtil {
   /**
    * If multiple paths are specified on the command line, this limit is used to split paths into chunks.
    * The limit is less than OS limit to leave space to quoting, spaces, charset conversion, and commands arguments.

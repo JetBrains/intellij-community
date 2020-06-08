@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.help.impl;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dennis.Ushakov
  */
-public class MacHelpUtil {
+public final class MacHelpUtil {
   static boolean invokeHelp(@NonNls @Nullable String id) {
     if (id == null || "top".equals(id)) id = "startpage";
 

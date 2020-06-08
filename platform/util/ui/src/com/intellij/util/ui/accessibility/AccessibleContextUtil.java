@@ -24,7 +24,7 @@ import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 
-public class AccessibleContextUtil {
+public final class AccessibleContextUtil {
   //@VisibleForTesting
   static final String PUNCTUATION_CHARACTER = ".";
   //@VisibleForTesting

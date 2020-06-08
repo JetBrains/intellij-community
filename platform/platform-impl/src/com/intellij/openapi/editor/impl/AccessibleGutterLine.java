@@ -50,7 +50,7 @@ class AccessibleGutterLine extends JPanel {
 
   private static boolean actionHandlerInstalled;
 
-  private static class MyShortcuts {
+  private static final class MyShortcuts {
     static final CustomShortcutSet MOVE_RIGHT = new CustomShortcutSet(
       new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), null),
       new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), null));

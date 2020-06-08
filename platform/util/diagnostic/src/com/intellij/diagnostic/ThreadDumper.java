@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class ThreadDumper {
+public final class ThreadDumper {
   private static final Comparator<ThreadInfo> THREAD_INFO_COMPARATOR =
     Comparator.comparing((ThreadInfo o1) -> isEDT(o1.getThreadName()))
       .thenComparing(o -> o.getThreadState() == Thread.State.RUNNABLE)
@@ -34,7 +34,7 @@ public class ThreadDumper {
     dumpThreadInfos(getThreadInfos(ManagementFactory.getThreadMXBean(), true), writer);
     return writer.toString();
   }
-  
+
   @NotNull
   public static String dumpEdtStackTrace(ThreadInfo[] threadInfos) {
     StringWriter writer = new StringWriter();

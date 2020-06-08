@@ -89,7 +89,7 @@ public final class MultiResolutionImageProvider {
   /**
    * A converter from {@link JBHiDPIScaledImage} to {@code MultiResolutionImage}.
    */
-  private static class Converter {
+  private static final class Converter {
     private static final Constructor<?> BMRI_CLASS_CTOR;
 
     static {

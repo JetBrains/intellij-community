@@ -31,7 +31,7 @@ import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static java.util.Arrays.asList;
 
-public class PathManagerEx {
+public final class PathManagerEx {
   /**
    * All IDEA project files may be logically divided by the following criteria:
    * <ul>

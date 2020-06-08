@@ -34,7 +34,7 @@ import static com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer.
 import static com.intellij.openapi.vcs.ui.FontUtil.getCommitMessageFont;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
-public class CommitPresentationUtil {
+public final class CommitPresentationUtil {
   @NotNull private static final Pattern HASH_PATTERN = Pattern.compile("[0-9a-f]{7,40}", Pattern.CASE_INSENSITIVE);
 
   @NotNull private static final String GO_TO_HASH = "go-to-hash:"; // NON-NLS

@@ -112,14 +112,14 @@ import java.util.*;
 
 import static com.intellij.diff.util.DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER;
 
-public class DiffUtil {
+public final class DiffUtil {
   private static final Logger LOG = Logger.getInstance(DiffUtil.class);
 
   public static final Key<Boolean> TEMP_FILE_KEY = Key.create("Diff.TempFile");
   @NotNull @NonNls public static final String DIFF_CONFIG = "diff.xml";
   public static final int TITLE_GAP = JBUIScale.scale(2);
 
-  public static class Lazy {
+  public static final class Lazy {
     public static final List<Image> DIFF_FRAME_ICONS = loadDiffFrameImages();
   }
 

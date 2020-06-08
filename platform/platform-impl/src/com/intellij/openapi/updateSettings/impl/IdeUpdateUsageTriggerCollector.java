@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogg
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class IdeUpdateUsageTriggerCollector {
+public final class IdeUpdateUsageTriggerCollector {
 
   public static void triggerUpdateDialog(@Nullable UpdateChain patches, boolean isRestartCapable) {
     final FeatureUsageData data = new FeatureUsageData();

@@ -4,7 +4,7 @@ package com.intellij.ide.scratch;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
-public class ScratchFileHelper {
+public final class ScratchFileHelper {
   public static boolean isScratchFile(@Nullable VirtualFile virtualFile) {
     if (virtualFile == null) {
       return false;

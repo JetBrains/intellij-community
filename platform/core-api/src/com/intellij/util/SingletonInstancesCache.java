@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @author Sergey Evdokimov
  */
-public class SingletonInstancesCache {
+public final class SingletonInstancesCache {
 
   private static final ConcurrentMap<String, Object> CACHE = new ConcurrentHashMap<>();
 

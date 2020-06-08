@@ -10,7 +10,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Conditions {
+public final class Conditions {
   private Conditions() { }
   /**
    * @deprecated use {@link #alwaysTrue()} instead

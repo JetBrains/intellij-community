@@ -34,7 +34,7 @@ import java.util.zip.ZipOutputStream;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class IoTestUtil {
+public final class IoTestUtil {
   public static final boolean isSymLinkCreationSupported = SystemInfo.isUnix || SystemInfo.isWinVistaOrNewer && canCreateSymlinks();
 
   private IoTestUtil() { }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -30,7 +30,7 @@ import java.awt.event.KeyEvent;
  *
  * @author Konstantin Bulenkov
  */
-public class ScrollingUtil {
+public final class ScrollingUtil {
   private static final Logger LOG = Logger.getInstance(ScrollingUtil.class);
   @NonNls
   private static final String SCROLL_UP_ACTION_ID = "scrollUp";

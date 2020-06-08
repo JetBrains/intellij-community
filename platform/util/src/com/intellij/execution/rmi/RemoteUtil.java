@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @author Gregory.Shrago
  */
-public class RemoteUtil {
+public final class RemoteUtil {
   RemoteUtil() {
   }
 

@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.time.Duration;
 
-public class Formats {
+public final class Formats {
   /** Formats given file size in metric (1 kB = 1000 B) units (example: {@code formatFileSize(1234) = "1.23 KB"}). */
   @Contract(pure = true)
   public static @NotNull String formatFileSize(long fileSize) {

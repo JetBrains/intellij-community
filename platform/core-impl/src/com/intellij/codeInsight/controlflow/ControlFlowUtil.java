@@ -15,7 +15,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-public class ControlFlowUtil {
+public final class ControlFlowUtil {
   private static final Logger LOG = Logger.getInstance(ControlFlowUtil.class.getName());
 
   private ControlFlowUtil() {

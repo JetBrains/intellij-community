@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
 import com.intellij.util.BooleanFunction;
@@ -20,7 +20,7 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class JavacMain {
+public final class JavacMain {
   private static final String JAVA_VERSION = System.getProperty("java.version", "");
 
   //private static final boolean ECLIPSE_COMPILER_SINGLE_THREADED_MODE = Boolean.parseBoolean(System.getProperty("jdt.compiler.useSingleThread", "false"));
@@ -630,7 +630,7 @@ public class JavacMain {
     }
   }
 
-  private static class ZipFileIndexCleanupDataHolder {
+  private static final class ZipFileIndexCleanupDataHolder {
     @Nullable
     static final Method cacheInstanceGetter;
     @Nullable

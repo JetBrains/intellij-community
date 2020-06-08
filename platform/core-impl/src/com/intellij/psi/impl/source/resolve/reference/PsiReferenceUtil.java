@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 @ApiStatus.Experimental
-public class PsiReferenceUtil {
+public final class PsiReferenceUtil {
 
   private PsiReferenceUtil() {
   }

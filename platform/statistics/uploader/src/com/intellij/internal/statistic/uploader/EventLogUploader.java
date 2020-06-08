@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.internal.statistic.StatisticsStringUtil.split;
 
-public class EventLogUploader {
+public final class EventLogUploader {
   private static final int WAIT_FOR_IDE_MS = 2000;
 
   public static void main(String[] args) {

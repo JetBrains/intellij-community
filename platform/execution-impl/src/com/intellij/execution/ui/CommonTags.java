@@ -4,7 +4,7 @@ package com.intellij.execution.ui;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 
-public class CommonTags {
+public final class CommonTags {
 
   public static <S extends RunConfiguration> SettingsEditorFragment<S, ?> parallelRun() {
     return SettingsEditorFragment.createTag("runParallel",

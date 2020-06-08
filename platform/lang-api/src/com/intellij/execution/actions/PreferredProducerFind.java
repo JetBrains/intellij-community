@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-class PreferredProducerFind {
+final class PreferredProducerFind {
   private static final Logger LOG = Logger.getInstance(PreferredProducerFind.class);
 
   private PreferredProducerFind() {}

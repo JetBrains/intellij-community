@@ -15,7 +15,7 @@ import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Objects;
 
-public class PatchCreator {
+public final class PatchCreator {
   public static void create(Project p, List<? extends Change> changes, String filePath, boolean isReverse, CommitContext commitContext)
     throws IOException, VcsException {
     String basePath = Objects.requireNonNull(p.getBasePath());
