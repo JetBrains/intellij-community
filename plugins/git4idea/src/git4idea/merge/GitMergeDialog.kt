@@ -18,7 +18,9 @@ import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import git4idea.GitUtil
+import git4idea.config.GitExecutableManager
 import git4idea.config.GitMergeSettings
+import git4idea.config.GitVersionSpecialty.NO_VERIFY_SUPPORTED
 import git4idea.i18n.GitBundle
 import git4idea.merge.dialog.*
 import git4idea.repo.GitRepository
@@ -61,6 +63,8 @@ class GitMergeDialog(private val project: Project,
   private val repositoryManager = GitUtil.getRepositoryManager(project)
 
   private val mergeSettings = project.service<GitMergeSettings>()
+
+  private val isNoVerifySupported = NO_VERIFY_SUPPORTED.existsIn(GitExecutableManager.getInstance().getVersion(project))
 
   init {
     title = GitBundle.message("merge.branch.title")
@@ -113,7 +117,9 @@ class GitMergeDialog(private val project: Project,
     mergeSettings.options = selectedOptions
   }
 
-  private fun loadSettings() = mergeSettings.options.forEach { option -> selectedOptions += option }
+  private fun loadSettings() = mergeSettings.options
+    .filter { option -> option != MergeOption.NO_VERIFY || isNoVerifySupported }
+    .forEach { option -> selectedOptions += option }
 
   private fun validateBranchField(): ValidationInfo? {
     if (branchField.item == null) {
@@ -289,7 +295,11 @@ class GitMergeDialog(private val project: Project,
     override fun onChosen(selectedValue: MergeOption?, finalChoice: Boolean) = doFinalStep(Runnable { optionChosen(selectedValue) })
   }
 
-  private fun getOptions() = MergeOption.values().toMutableList()
+  private fun getOptions() = MergeOption.values().toMutableList().apply {
+    if (!isNoVerifySupported) {
+      remove(MergeOption.NO_VERIFY)
+    }
+  }
 
   private fun isOptionEnabled(option: MergeOption) = selectedOptions.all { it.isOptionSuitable(option) }
 
