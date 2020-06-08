@@ -4,12 +4,12 @@ package com.intellij.ide.plugins.marketplace
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.extensions.PluginId
 
-open class PluginModulesUtils {
+open class PluginModulesHelper {
   companion object {
-    private val INSTANCE = PluginModulesUtils()
+    private val INSTANCE = PluginModulesHelper()
 
     @JvmStatic
-    fun getInstance(): PluginModulesUtils = INSTANCE
+    fun getInstance(): PluginModulesHelper = INSTANCE
   }
 
   fun getMarketplacePluginIdByModule(depPluginId: PluginId): PluginId? {
