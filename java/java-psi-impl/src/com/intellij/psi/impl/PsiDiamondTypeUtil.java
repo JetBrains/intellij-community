@@ -239,6 +239,10 @@ public class PsiDiamondTypeUtil {
         }
       }
       
+      if (typeByParent != null) {
+        return true;
+      }
+      
       PsiCallExpression newParentCall = exprCopy != null ? PsiTreeUtil.getParentOfType(exprCopy, PsiCallExpression.class) : null;
       PsiCallExpression oldParentCall = PsiTreeUtil.getParentOfType(context, PsiCallExpression.class);
       if (newParentCall != null && oldParentCall != null && 
