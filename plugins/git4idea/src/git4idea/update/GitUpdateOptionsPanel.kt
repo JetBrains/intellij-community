@@ -26,8 +26,8 @@ internal class GitUpdateOptionsPanel(private val settings: GitVcsSettings) {
   private fun createPanel(): DialogPanel = panel {
     row {
       updateMethodButtonGroup(
-        get = { settings.updateMethod == it },
-        set = { selected, method -> if (selected) settings.updateMethod = method }
+        get = { settings.updateMethod },
+        set = { settings.updateMethod = it }
       )
     }
   }.withBorder(JBUI.Borders.empty(16, 5, 0, 5))

@@ -4,15 +4,11 @@ package git4idea.update
 import com.intellij.ui.layout.*
 import git4idea.config.UpdateMethod
 
-fun LayoutBuilder.updateMethodButtonGroup(get: (UpdateMethod) -> Boolean, set: (Boolean, UpdateMethod) -> Unit) =
-  buttonGroup {
+fun LayoutBuilder.updateMethodButtonGroup(get: () -> UpdateMethod, set: (UpdateMethod) -> Unit) =
+  buttonGroup(get, set) {
     getUpdateMethods().forEach { method ->
       row {
-        radioButton(method.presentation)
-          .withSelectedBinding(PropertyBinding(
-            get = { get(method) },
-            set = { selected -> set(selected, method) }
-          ))
+        radioButton(method.presentation).bindValue(method)
       }
     }
   }
