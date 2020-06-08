@@ -21,9 +21,9 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-internal class GHPRFileEditor(private val project: Project,
-                              private val dataContext: GHPRDataContext,
-                              private val pullRequest: GHPRIdentifier)
+internal class GHPRTimelineFileEditor(private val project: Project,
+                                      private val dataContext: GHPRDataContext,
+                                      private val pullRequest: GHPRIdentifier)
   : FileEditorBase() {
 
   val securityService = dataContext.securityService

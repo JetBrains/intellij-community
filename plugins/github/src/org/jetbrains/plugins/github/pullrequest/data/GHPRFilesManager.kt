@@ -3,14 +3,19 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
-import org.jetbrains.plugins.github.pullrequest.GHPRVirtualFile
+import org.jetbrains.plugins.github.pullrequest.GHPRDiffVirtualFile
+import org.jetbrains.plugins.github.pullrequest.GHPRTimelineVirtualFile
 
 internal interface GHPRFilesManager : Disposable {
-  fun createAndOpenFile(pullRequest: GHPRIdentifier, requestFocus: Boolean)
+  fun createAndOpenTimelineFile(pullRequest: GHPRIdentifier, requestFocus: Boolean)
 
-  fun findFile(pullRequest: GHPRIdentifier): GHPRVirtualFile?
+  fun createAndOpenDiffFile(pullRequest: GHPRIdentifier, requestFocus: Boolean)
 
-  fun updateFilePresentation(details: GHPullRequestShort)
+  fun findTimelineFile(pullRequest: GHPRIdentifier): GHPRTimelineVirtualFile?
 
-  fun addBeforeFileOpenedListener(disposable: Disposable, listener: (file: GHPRVirtualFile) -> Unit)
+  fun findDiffFile(pullRequest: GHPRIdentifier): GHPRDiffVirtualFile?
+
+  fun updateTimelineFilePresentation(details: GHPullRequestShort)
+
+  fun addBeforeTimelineFileOpenedListener(disposable: Disposable, listener: (file: GHPRTimelineVirtualFile) -> Unit)
 }

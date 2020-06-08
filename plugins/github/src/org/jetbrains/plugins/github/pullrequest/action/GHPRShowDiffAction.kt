@@ -13,18 +13,18 @@ class GHPRShowDiffAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    val selection = e.getData(VcsDataKeys.CHANGES)
+    val selection = e.getData(VcsDataKeys.CHANGES_SELECTION)
     val diffHelper = e.getData(GHPRChangesDiffHelper.DATA_KEY)
-    e.presentation.isEnabled = project != null && selection?.isNotEmpty() == true && diffHelper != null
+    e.presentation.isEnabled = project != null && selection?.isEmpty == false && diffHelper != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
-    val selection = e.getRequiredData(VcsDataKeys.CHANGES)
-    if (selection.isEmpty()) return
+    val selection = e.getRequiredData(VcsDataKeys.CHANGES_SELECTION)
+    if (selection.isEmpty) return
 
     val diffHelper = e.getRequiredData(GHPRChangesDiffHelper.DATA_KEY)
-    val requestChain = diffHelper.getRequestChain(selection.toList())
+    val requestChain = diffHelper.getRequestChain(selection)
     DiffManager.getInstance().showDiff(project, requestChain, DiffDialogHints.DEFAULT)
   }
 }

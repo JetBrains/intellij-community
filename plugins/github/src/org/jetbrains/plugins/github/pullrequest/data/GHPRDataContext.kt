@@ -35,12 +35,12 @@ internal class GHPRDataContext(val gitRepositoryCoordinates: GitRemoteUrlCoordin
     })
     dataProviderRepository.addDetailsLoadedListener(listenersDisposable) { details: GHPullRequest ->
       listLoader.updateData(details)
-      filesManager.updateFilePresentation(details)
+      filesManager.updateTimelineFilePresentation(details)
     }
-    filesManager.addBeforeFileOpenedListener(listenersDisposable) { file ->
+    filesManager.addBeforeTimelineFileOpenedListener(listenersDisposable) { file ->
       val details = listLoader.loadedData.find { it.id == file.pullRequest.id }
                     ?: dataProviderRepository.findDataProvider(file.pullRequest)?.detailsData?.loadedDetails
-      if (details != null) filesManager.updateFilePresentation(details)
+      if (details != null) filesManager.updateTimelineFilePresentation(details)
     }
   }
 

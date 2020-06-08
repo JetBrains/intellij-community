@@ -65,8 +65,10 @@ internal class GHPRComponentFactory(private val project: Project) {
       GithubUIUtil.focusPanel(wrapper)
     }
 
-    override fun openPullRequestTimeline(id: GHPRIdentifier, requestFocus: Boolean) {
-      dataContext.filesManager.createAndOpenFile(id, requestFocus)
-    }
+    override fun openPullRequestTimeline(id: GHPRIdentifier, requestFocus: Boolean) =
+      dataContext.filesManager.createAndOpenTimelineFile(id, requestFocus)
+
+    override fun openPullRequestDiff(id: GHPRIdentifier, requestFocus: Boolean) =
+      dataContext.filesManager.createAndOpenDiffFile(id, requestFocus)
   }
 }

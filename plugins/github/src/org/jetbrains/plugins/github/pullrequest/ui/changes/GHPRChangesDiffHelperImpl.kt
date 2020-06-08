@@ -43,7 +43,7 @@ class GHPRChangesDiffHelperImpl(private val project: Project,
                                 private val currentUser: GHUser)
   : GHPRChangesDiffHelper {
 
-  override fun getRequestChain(changes: List<Change>): DiffRequestChain {
+  override fun getRequestChain(changes: ListSelection<Change>): DiffRequestChain {
     val changesData = dataProvider.changesData
     val changesProviderFuture = changesData.loadChanges()
     //TODO: check if revisions are already fetched or load via API (could be much quicker in some cases)
@@ -51,11 +51,11 @@ class GHPRChangesDiffHelperImpl(private val project: Project,
 
     return object : AsyncDiffRequestChain() {
       override fun loadRequestProducers(): ListSelection<out DiffRequestProducer> {
-        return ListSelection.createAt(changes.mapNotNull { change ->
+        return changes.map { change ->
           val changeDataKeys = loadRequestDataKeys(ProgressManager.getInstance().progressIndicator, change,
                                                    changesProviderFuture, fetchFuture)
           ChangeDiffRequestProducer.create(project, change, changeDataKeys)
-        }, 0)
+        }
       }
     }
   }

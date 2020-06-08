@@ -26,10 +26,16 @@ class GHLoadingPanelFactory<T>(private val model: GHSimpleLoadingModel<T>,
                                  GithubBundle.message("cannot.load.data"),
                                private val errorHandler: GHLoadingErrorHandler? = null) {
 
+  private val contentListeners = mutableListOf<(JComponent) -> Unit>()
+
+  fun withContentListener(listener: (JComponent) -> Unit): GHLoadingPanelFactory<T> {
+    contentListeners.add(listener)
+    return this
+  }
 
   fun createWithUpdatesStripe(parentDisposable: Disposable, contentFactory: (JPanel, SingleValueModel<T>) -> JComponent): JComponent {
     val panel = NonOpaquePanel()
-    object : ContentController<T>(model, panel, notLoadingText, errorPrefix, errorHandler) {
+    object : ContentController<T>(model, panel, notLoadingText, errorPrefix, errorHandler, contentListeners.toList()) {
       override fun createContent(parentPanel: JPanel, valueModel: SingleValueModel<T>): JComponent {
         val stripe = ProgressStripe(contentFactory(parentPanel, valueModel), parentDisposable,
                                     ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
@@ -55,7 +61,7 @@ class GHLoadingPanelFactory<T>(private val model: GHSimpleLoadingModel<T>,
 
   fun create(contentFactory: (JPanel, T) -> JComponent): JComponent {
     val panel = NonOpaquePanel()
-    object : ContentController<T>(model, panel, notLoadingText, errorPrefix, errorHandler) {
+    object : ContentController<T>(model, panel, notLoadingText, errorPrefix, errorHandler, contentListeners.toList()) {
       override fun createContent(parentPanel: JPanel, valueModel: SingleValueModel<T>) =
         contentFactory(parentPanel, valueModel.value)
     }
@@ -64,7 +70,7 @@ class GHLoadingPanelFactory<T>(private val model: GHSimpleLoadingModel<T>,
 
   fun createWithModel(contentFactory: (JPanel, SingleValueModel<T>) -> JComponent): JComponent {
     val panel = NonOpaquePanel()
-    object : ContentController<T>(model, panel, notLoadingText, errorPrefix, errorHandler) {
+    object : ContentController<T>(model, panel, notLoadingText, errorPrefix, errorHandler, contentListeners.toList()) {
       override fun createContent(parentPanel: JPanel, valueModel: SingleValueModel<T>) = contentFactory(parentPanel, valueModel)
     }
     return panel
@@ -74,7 +80,8 @@ class GHLoadingPanelFactory<T>(private val model: GHSimpleLoadingModel<T>,
     private abstract class ContentController<T>(private val model: GHSimpleLoadingModel<T>, private val panel: Wrapper,
                                                 private val notLoadingText: String?,
                                                 private val errorPrefix: String,
-                                                private val errorHandler: GHLoadingErrorHandler?) {
+                                                private val errorHandler: GHLoadingErrorHandler?,
+                                                private val contentListeners: List<(JComponent) -> Unit>) {
 
       private var valueModel: SingleValueModel<T>? = null
       private var content: JComponent? = null
@@ -94,6 +101,7 @@ class GHLoadingPanelFactory<T>(private val model: GHSimpleLoadingModel<T>,
           val content = getContent(model)
           if (panel.targetComponent !== content) {
             panel.setContent(content)
+            contentListeners.forEach { it(panel.targetComponent) }
             panel.repaint()
           }
         }
@@ -104,6 +112,7 @@ class GHLoadingPanelFactory<T>(private val model: GHSimpleLoadingModel<T>,
             else -> createEmptyContent()
           }
           panel.setContent(content)
+          contentListeners.forEach { it(panel.targetComponent) }
           panel.repaint()
         }
       }

@@ -22,7 +22,7 @@ import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.GHPRFileEditor
+import org.jetbrains.plugins.github.pullrequest.GHPRTimelineFileEditor
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRSubmittableTextField
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
@@ -43,7 +43,7 @@ import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 
 internal class GHPRFileEditorComponentFactory(private val project: Project,
-                                              private val editor: GHPRFileEditor,
+                                              private val editor: GHPRTimelineFileEditor,
                                               currentDetails: GHPullRequestShort) {
 
   private val uiDisposable = Disposer.newDisposable().also {
