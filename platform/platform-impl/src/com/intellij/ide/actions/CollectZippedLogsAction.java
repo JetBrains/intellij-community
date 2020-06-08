@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.troubleshooting.TroubleInfoCollector;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.Compressor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.function.Consumer;
 
 public class CollectZippedLogsAction extends AnAction implements DumbAware {
   private static final String CONFIRMATION_DIALOG = "zipped.logs.action.show.confirmation.dialog";
@@ -58,10 +60,7 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
     }
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       try {
-        PerformanceWatcher.getInstance().dumpThreads("", false);
-
-        final StringBuilder troubleshooting = collectInfoFromExtensions(project);
-        final File zippedLogsFile = createZip(troubleshooting);
+        final File zippedLogsFile = createZip(project, compressor -> {});
         if (RevealFileAction.isSupported()) {
           RevealFileAction.openFile(zippedLogsFile);
         }
@@ -86,13 +85,22 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  private static File createZip(@Nullable StringBuilder troubleshooting) throws IOException {
+  @ApiStatus.Internal
+  public static File createZip(@Nullable Project project,
+                               @NotNull Consumer<@NotNull Compressor> additionalFiles) throws IOException {
+    PerformanceWatcher.getInstance().dumpThreads("", false);
+
     String productName = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getLowercaseProductName());
     File zippedLogsFile = FileUtil.createTempFile(productName + "-logs-" + getDate(), ".zip");
 
     try (Compressor zip = new Compressor.Zip(zippedLogsFile)) {
+      // Add additional files before logs folder to collect any logging
+      // happened in additionalFiles.accept
+      additionalFiles.accept(zip);
+
       zip.addDirectory(new File(PathManager.getLogPath()));
 
+      StringBuilder troubleshooting = collectInfoFromExtensions(project);
       if (troubleshooting != null) {
         zip.addFile("troubleshooting.txt", troubleshooting.toString().getBytes(StandardCharsets.UTF_8));
       }
