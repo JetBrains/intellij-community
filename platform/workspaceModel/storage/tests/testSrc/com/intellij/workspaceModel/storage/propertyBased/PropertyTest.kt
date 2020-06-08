@@ -43,6 +43,17 @@ class PropertyTest {
     }
   }
 
+  @Test
+  fun testAddDiff() {
+    PropertyChecker.checkScenarios {
+      ImperativeCommand { env ->
+        val workspace = env.generateValue(newEmptyWorkspace, "Generate empty workspace")
+        env.executeCommands(AddDiff.create(workspace))
+        workspace.assertConsistency()
+      }
+    }
+  }
+
   // Keep this test ignored and empty.
   // This function is created for interactive debug sessions only.
   @Ignore
@@ -50,6 +61,21 @@ class PropertyTest {
   fun recheck() {
     //PropertyChecker.customized()
     //  .rechecking("7tzWpx7qpL2LCh8DAQEBCgAAAQECPAEAAwEAAAED")
+  }
+}
+
+private class AddDiff(private val storage: WorkspaceEntityStorageBuilder) : ImperativeCommand {
+  override fun performCommand(env: ImperativeCommand.Environment) {
+    env.logMessage("Trying to perform addDiff")
+    val another = WorkspaceEntityStorageBuilderImpl.from(storage.toStorage())
+    env.logMessage("Modify original storage:")
+    env.executeCommands(getEntityManipulation(another))
+
+    storage.addDiff(another)
+  }
+
+  companion object {
+    fun create(workspace: WorkspaceEntityStorageBuilder): Generator<AddDiff> = Generator.constant(AddDiff(workspace))
   }
 }
 
