@@ -41,7 +41,7 @@ class GitStageTracker(val project: Project) : Disposable {
     get() = VcsDirtyScopeManager.getInstance(project)
 
   @Volatile
-  var state: State = State.EMPTY
+  var state: State = State(gitRoots().associateWith { RootState.empty(it) })
 
   init {
     val connection: MessageBusConnection = project.messageBus.connect(this)
