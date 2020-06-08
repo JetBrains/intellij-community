@@ -183,8 +183,6 @@ abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> : ProjectOp
       return false
     }
 
-    projectToOpen.save()
-
     ApplicationManager.getApplication().invokeAndWait {
       ApplicationManager.getApplication().runWriteAction {
         wizardContext.projectJdk?.let {
