@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import git4idea.config.GitVcsSettings
+import git4idea.config.UpdateMethod
 
 internal class GitUpdateOptionsPanel(private val settings: GitVcsSettings) {
   val panel = createPanel()
@@ -38,3 +39,14 @@ internal class GitUpdateOptionsPanel(private val settings: GitVcsSettings) {
 
   fun updateFrom() = panel.reset()
 }
+
+private fun LayoutBuilder.updateMethodButtonGroup(get: () -> UpdateMethod, set: (UpdateMethod) -> Unit) =
+  buttonGroup(get, set) {
+    getUpdateMethods().forEach { method ->
+      row {
+        radioButton(method.presentation).bindValue(method)
+      }
+    }
+  }
+
+internal fun getUpdateMethods(): List<UpdateMethod> = listOf(UpdateMethod.MERGE, UpdateMethod.REBASE)
