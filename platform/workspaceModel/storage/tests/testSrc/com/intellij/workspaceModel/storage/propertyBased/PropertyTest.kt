@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.propertyBased
 
+import com.intellij.idea.Bombed
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
@@ -17,6 +18,7 @@ import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
 import org.junit.Test
+import java.util.*
 import kotlin.reflect.full.memberProperties
 
 class PropertyTest {
@@ -43,6 +45,7 @@ class PropertyTest {
     }
   }
 
+  @Bombed(year = 2020, month = Calendar.JUNE, day = 14, user = "Alex Plate")
   @Test
   fun testAddDiff() {
     PropertyChecker.checkScenarios {
