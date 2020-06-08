@@ -13,38 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options;
+package com.intellij.application.options
 
-import com.intellij.application.options.editor.AutoImportOptionsProvider;
-import com.intellij.openapi.options.ConfigurationException;
-
-import javax.swing.*;
+import com.intellij.application.options.editor.AutoImportOptionsProvider
+import com.intellij.openapi.options.ConfigurableBuilder
+import com.intellij.openapi.options.ConfigurationException
+import com.intellij.xml.XmlBundle
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JPanel
 
 /**
  * @author Dmitry Avdeev
  */
-public class XmlAutoImportOptionsProvider implements AutoImportOptionsProvider {
-
-  private JPanel myPanel;
-  private JCheckBox myShowAutoImportPopups;
-
-  @Override
-  public JComponent createComponent() {
-    return myPanel;
-  }
-
-  @Override
-  public boolean isModified() {
-    return XmlSettings.getInstance().SHOW_XML_ADD_IMPORT_HINTS != myShowAutoImportPopups.isSelected();
-  }
-
-  @Override
-  public void apply() throws ConfigurationException {
-    XmlSettings.getInstance().SHOW_XML_ADD_IMPORT_HINTS = myShowAutoImportPopups.isSelected();
-  }
-
-  @Override
-  public void reset() {
-    myShowAutoImportPopups.setSelected(XmlSettings.getInstance().SHOW_XML_ADD_IMPORT_HINTS);    
+class XmlAutoImportOptionsProvider : ConfigurableBuilder("XML"), AutoImportOptionsProvider {
+  init {
+    checkBox(XmlBundle.message("auto.import.show.popup"), XmlSettings.getInstance()::SHOW_XML_ADD_IMPORT_HINTS)
   }
 }
