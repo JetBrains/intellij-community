@@ -45,7 +45,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.unwrapClassT
 /**
  * @author Max Medvedev
  */
-public class GdkMethodUtil {
+public final class GdkMethodUtil {
 
   public static final Set<String> COLLECTION_METHOD_NAMES = ContainerUtil.newHashSet(
     "each", "eachWithIndex", "any", "every", "reverseEach", "collect", "collectAll", "find", "findAll", "retainAll", "removeAll", "split",

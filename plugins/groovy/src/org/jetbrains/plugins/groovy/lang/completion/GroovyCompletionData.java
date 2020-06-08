@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.TailType;
@@ -59,7 +59,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 /**
  * @author ilyas
  */
-public class GroovyCompletionData {
+public final class GroovyCompletionData {
   public static final String[] BUILT_IN_TYPES = {"boolean", "byte", "char", "short", "int", "float", "long", "double", "void"};
   public static final String[] MODIFIERS = new String[]{"private", "public", "protected", "transient", "abstract", "native", "volatile", "strictfp", "static"};
   public static final ElementPattern<PsiElement> IN_CAST_TYPE_ELEMENT = StandardPatterns.or(

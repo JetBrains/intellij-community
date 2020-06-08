@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrAnnotationCollector;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-public class AnnotationChecker {
+public final class AnnotationChecker {
 
   public static void checkApplicability(@NotNull GrAnnotation annotation,
                                         @Nullable PsiAnnotationOwner owner,

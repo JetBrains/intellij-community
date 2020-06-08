@@ -79,7 +79,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.impl.ConstructorsKt.getA
 /**
  * @author ilyas
  */
-public class GroovyCompletionUtil {
+public final class GroovyCompletionUtil {
 
   private GroovyCompletionUtil() {
   }

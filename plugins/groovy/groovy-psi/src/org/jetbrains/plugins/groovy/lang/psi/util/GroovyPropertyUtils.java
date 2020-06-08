@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.codeInsight.NullableNotNullManager;
@@ -39,7 +39,7 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public class GroovyPropertyUtils {
+public final class GroovyPropertyUtils {
   private static final Logger LOG = Logger.getInstance(GroovyPropertyUtils.class);
 
   public static final String IS_PREFIX = "is";

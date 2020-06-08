@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs;
 
 import com.intellij.psi.PsiElement;
@@ -19,9 +19,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
@@ -37,7 +37,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.OrderUtil.revers
 /**
  * @author ven
  */
-public class ReachingDefinitionsCollector {
+public final class ReachingDefinitionsCollector {
   private ReachingDefinitionsCollector() {
   }
 

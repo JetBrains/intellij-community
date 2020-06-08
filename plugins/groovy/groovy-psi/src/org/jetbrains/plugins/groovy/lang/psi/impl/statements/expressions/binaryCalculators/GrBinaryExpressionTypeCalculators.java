@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators;
 
 import com.intellij.psi.PsiType;
@@ -17,7 +17,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_ID;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_NID;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isFake;
 
-public class GrBinaryExpressionTypeCalculators {
+public final class GrBinaryExpressionTypeCalculators {
   private static final Map<IElementType, Function<GrOperatorExpression, PsiType>> MAP = new LinkedHashMap<>();
 
   static {

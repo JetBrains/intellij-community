@@ -18,17 +18,17 @@ package org.jetbrains.plugins.groovy.codeInspection.utils;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ComparisonUtils;
-import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ComparisonUtils;
+import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-public class BoolUtils {
+public final class BoolUtils {
 
   public static boolean isNegation(@NotNull GrExpression exp) {
     if (!(exp instanceof GrUnaryExpression)) {

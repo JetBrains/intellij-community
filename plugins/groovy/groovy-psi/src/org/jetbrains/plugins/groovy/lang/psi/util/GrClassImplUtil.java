@@ -48,7 +48,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProc
 /**
  * @author Maxim.Medvedev
  */
-public class GrClassImplUtil {
+public final class GrClassImplUtil {
   private static final Logger LOG = Logger.getInstance(GrClassImplUtil.class);
 
   private GrClassImplUtil() {

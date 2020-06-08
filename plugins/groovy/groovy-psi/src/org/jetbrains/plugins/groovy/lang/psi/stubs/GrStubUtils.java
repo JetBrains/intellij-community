@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,7 +30,7 @@ import static com.intellij.openapi.util.io.DataInputOutputUtilRt.readSeq;
 import static com.intellij.openapi.util.io.DataInputOutputUtilRt.writeSeq;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListUtil.hasMaskModifier;
 
-public class GrStubUtils {
+public final class GrStubUtils {
 
   public static void writeStringArray(@NotNull StubOutputStream dataStream, String @NotNull [] array) throws IOException {
     writeSeq(dataStream, ContainerUtil.newArrayList(array), dataStream::writeName);

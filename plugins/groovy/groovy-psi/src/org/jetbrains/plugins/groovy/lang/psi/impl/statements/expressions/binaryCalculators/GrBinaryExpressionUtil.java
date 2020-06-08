@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators;
 
 import com.intellij.psi.CommonClassNames;
@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.*;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createTypeByFQClassName;
 
-public class GrBinaryExpressionUtil {
+public final class GrBinaryExpressionUtil {
 
   private static final int[] RANKS = new int[]{
     INTEGER_RANK, LONG_RANK, BIG_INTEGER_RANK, BIG_DECIMAL_RANK, DOUBLE_RANK

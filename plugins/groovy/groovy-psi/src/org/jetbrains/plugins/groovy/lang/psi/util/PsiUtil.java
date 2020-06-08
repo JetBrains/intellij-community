@@ -94,7 +94,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.
 /**
  * @author ven
  */
-public class PsiUtil {
+public final class PsiUtil {
   private static final Logger LOG = Logger.getInstance(PsiUtil.class);
 
   public static final Key<JavaIdentifier> NAME_IDENTIFIER = new Key<>("Java Identifier");
