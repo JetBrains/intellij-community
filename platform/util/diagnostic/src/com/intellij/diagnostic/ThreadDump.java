@@ -24,18 +24,18 @@ public class ThreadDump {
    * @return full thread dump as a string
    */
   @NotNull
-  String getRawDump() {
+  public String getRawDump() {
     return myRawDump;
   }
 
   /**
    * @return state of the AWT thread from the dump
    */
-  StackTraceElement @Nullable [] getEDTStackTrace() {
+  public StackTraceElement @Nullable [] getEDTStackTrace() {
     return myEdtStack;
   }
 
-  ThreadInfo @NotNull [] getThreadInfos() {
+  public ThreadInfo @NotNull [] getThreadInfos() {
     return myThreadInfos;
   }
 }
