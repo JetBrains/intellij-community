@@ -10,7 +10,8 @@ enum class PullOption(@NonNls val option: String,
   FF_ONLY("--ff-only", "pull.option.ff.only"),
   NO_FF("--no-ff", "pull.option.no.ff"),
   SQUASH_COMMIT("--squash-commit", "pull.option.squash.commit"),
-  NO_COMMIT("--no-commit", "pull.option.no.commit");
+  NO_COMMIT("--no-commit", "pull.option.no.commit"),
+  NO_VERIFY("--no-verify", "merge.option.no.verify");
 
   fun isOptionSuitable(option: PullOption): Boolean {
     if (this != REBASE && option == REBASE) return false

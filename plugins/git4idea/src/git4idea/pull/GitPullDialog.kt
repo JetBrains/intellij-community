@@ -18,6 +18,8 @@ import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import git4idea.GitUtil
+import git4idea.config.GitExecutableManager
+import git4idea.config.GitVersionSpecialty.NO_VERIFY_SUPPORTED
 import git4idea.i18n.GitBundle
 import git4idea.merge.dialog.*
 import git4idea.repo.GitRemote
@@ -55,6 +57,8 @@ class GitPullDialog(private val project: Project,
   private val optionsPanel = createOptionsPanel()
 
   private val panel = createPanel()
+
+  private val isNoVerifySupported = NO_VERIFY_SUPPORTED.existsIn(GitExecutableManager.getInstance().getVersion(project))
 
   init {
     title = GitBundle.message("pull.dialog.title")
@@ -165,7 +169,11 @@ class GitPullDialog(private val project: Project,
     override fun onChosen(selectedValue: PullOption, finalChoice: Boolean) = doFinalStep(Runnable { optionChosen(selectedValue) })
   }
 
-  private fun getOptions() = mutableListOf(*PullOption.values())
+  private fun getOptions() = PullOption.values().toMutableList().apply {
+    if (!isNoVerifySupported) {
+      remove(PullOption.NO_VERIFY)
+    }
+  }
 
   private fun updateUi() {
     updateOptionsPanel()
