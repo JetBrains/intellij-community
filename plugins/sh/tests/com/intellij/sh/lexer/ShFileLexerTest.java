@@ -45,6 +45,8 @@ public class ShFileLexerTest extends LexerTestCase {
   public void testRegex1() { doFileTest("sh"); }
   public void testRegex2() { doFileTest("sh"); }
 
+  public void testStrings() { doFileTest("sh"); }
+
   /**
    * IDEA-219928
    */
