@@ -22,6 +22,7 @@ import com.intellij.lang.LighterLazyParseableNode;
 import com.intellij.lang.impl.TokenSequence;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
+import com.intellij.lexer.TokenizedText;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
@@ -69,7 +70,7 @@ public class JavaLightStubBuilder extends LightStubBuilder {
     CodeBlockVisitor visitor = new CodeBlockVisitor();
     if (TreeUtil.isCollapsedChameleon(node)) {
       Lexer lexer = JavaParserDefinition.createLexer(PsiUtil.getLanguageLevel(node.getPsi()));
-      TokenSequence tokens = TokenSequence.performLexing(node.getChars(), lexer);
+      TokenizedText tokens = TokenSequence.performLexing(node.getChars(), lexer);
       for (int i = 0; i < tokens.getTokenCount(); i++) {
         visitor.visit(tokens.getTokenType(i));
       }
