@@ -82,6 +82,10 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
 }
 
 private fun doOpenProject(projectStoreBaseDir: Path, options: OpenProjectTask, projectManager: ProjectManagerExImpl): Project? {
+  if (ProjectManagerImpl.LOG.isDebugEnabled && !ApplicationManager.getApplication().isUnitTestMode) {
+    ProjectManagerImpl.LOG.debug("open project: ${options}", RuntimeException())
+  }
+
   if (options.project != null && projectManager.isProjectOpened(options.project)) {
     return null
   }
