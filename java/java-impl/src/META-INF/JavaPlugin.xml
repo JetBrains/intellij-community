@@ -256,7 +256,7 @@
     <!--<extensionPoint qualifiedName="com.intellij.expectedTypesProvider" interface="com.intellij.codeInsight.ExpectedTypesProviderExtension"/>-->
 
     <extensionPoint qualifiedName="com.intellij.library.javaSourceRootDetector" interface="com.intellij.openapi.roots.libraries.ui.RootDetector" dynamic="true"/>
-    
+
     <!-- See com.intellij.execution.filters.ExceptionFilter -->
     <extensionPoint qualifiedName="com.intellij.jvm.exceptionFilter" interface="com.intellij.execution.filters.JvmExceptionOccurrenceFilter" dynamic="true"/>
 
@@ -392,7 +392,7 @@
 
     <applicationService serviceInterface="com.intellij.openapi.projectRoots.DefaultJdkConfigurator"
                         serviceImplementation="com.intellij.openapi.projectRoots.impl.DefaultJdkConfiguratorImpl"/>
-    
+
     <applicationService serviceInterface="com.intellij.facet.ui.FacetEditorsFactory"
                         serviceImplementation="com.intellij.facet.impl.ui.FacetEditorsFactoryImpl"/>
 
@@ -731,10 +731,10 @@
     <postStartupActivity implementation="com.intellij.execution.RunConfigurationsUnknownJdkContributorRefresher" />
     <registryKey key="jdk.auto.runConfigurations" defaultValue="false" restartRequired="true"
                  description="Check missing JDK references in shared run configurations"/>
-    <registryKey key="java.refactoring.extractMethod.newImplementation" 
+    <registryKey key="java.refactoring.extractMethod.newImplementation"
                  defaultValue="true"
                  description="Enable experimental extract method implementation"/>
-    <registryKey key="java.refactoring.extractMethod.inplace" 
+    <registryKey key="java.refactoring.extractMethod.inplace"
                  defaultValue="false"
                  description="Enable experimental extract method inplace mode"/>
     <debugger.asyncStackTraceProvider
