@@ -24,6 +24,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -38,8 +39,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 
 import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.LightEditOpenAction;
@@ -95,8 +96,8 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
   }
 
   private static void doOpenFile(@Nullable Project project, @NotNull VirtualFile file) {
-    if (file.isDirectory()) {
-      Path filePath = Paths.get(file.getPath());
+    Path filePath = file.toNioPath();
+    if (Files.isDirectory(filePath)) {
       boolean canAttach = ProjectAttachProcessor.canAttachToProject();
       boolean preferAttach = PlatformUtils.isDataGrip() && project != null && canAttach && !ProjectUtil.isValidProjectPath(filePath);
       Project openedProject;
@@ -104,10 +105,10 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
         return;
       }
       else if (canAttach) {
-        openedProject = PlatformProjectOpenProcessor.doOpenProject(filePath, OpenProjectTask.withProjectToClose(project));
+        openedProject = ProjectManagerEx.getInstanceEx().openProject(filePath, PlatformProjectOpenProcessor.createOptionsToOpenDotIdeaOrCreateNewIfNotExists(filePath, project));
       }
       else {
-        openedProject = ProjectUtil.openOrImport(file.getPath(), project, false);
+        openedProject = ProjectUtil.openOrImport(filePath, OpenProjectTask.withProjectToClose(project));
       }
       FileChooserUtil.setLastOpenedFile(openedProject, file);
       return;
@@ -115,13 +116,12 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
 
     // try to open as a project - unless the file is an .ipr of the current one
     if ((project == null || !file.equals(project.getProjectFile())) && OpenProjectFileChooserDescriptor.isProjectFile(file)) {
-      final int answer;
-      answer = shouldOpenNewProject(project, file);
-
-      if (answer == Messages.CANCEL) return;
-
-      if (answer == Messages.YES) {
-        Project openedProject = ProjectUtil.openOrImport(file.getPath(), project, false);
+      int answer = shouldOpenNewProject(project, file);
+      if (answer == Messages.CANCEL) {
+        return;
+      }
+      else if (answer == Messages.YES) {
+        Project openedProject = ProjectUtil.openOrImport(filePath, OpenProjectTask.withProjectToClose(project));
         if (openedProject != null) {
           FileChooserUtil.setLastOpenedFile(openedProject, file);
         }
@@ -131,18 +131,18 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
     LightEditUtil.markUnknownFileTypeAsPlainTextIfNeeded(project, file);
 
     FileType type = FileTypeChooser.getKnownFileTypeOrAssociate(file, project);
-    if (type == null) return;
+    if (type == null) {
+      return;
+    }
 
     if (project != null && !project.isDefault()) {
       openFile(file, project);
     }
+    else if (LightEdit.openFile(file)) {
+      LightEditFeatureUsagesUtil.logFileOpen(WelcomeScreenOpenAction);
+    }
     else {
-      if (LightEdit.openFile(file)) {
-        LightEditFeatureUsagesUtil.logFileOpen(WelcomeScreenOpenAction);
-      }
-      else {
-        PlatformProjectOpenProcessor.createTempProjectAndOpenFile(Paths.get(file.getPath()), new OpenProjectTask());
-      }
+      PlatformProjectOpenProcessor.createTempProjectAndOpenFile(filePath, OpenProjectTask.withProjectToClose(project));
     }
   }
 

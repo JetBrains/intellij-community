@@ -112,36 +112,39 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @JvmStatic
     fun doOpenProject(file: Path, originalOptions: OpenProjectTask): Project? {
       LOG.info("Opening $file")
-      var baseDir = file
+
+      if (Files.isDirectory(file)) {
+        return ProjectManagerEx.getInstanceEx().openProject(file, createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null))
+      }
+
       var options = originalOptions
-      if (!Files.isDirectory(file)) {
-        if (LightEditUtil.openFile(file)) {
-          return LightEditUtil.getProject()
+      if (LightEditUtil.openFile(file)) {
+        return LightEditUtil.getProject()
+      }
+
+      var baseDirCandidate = file.parent
+      while (baseDirCandidate != null && !Files.exists(baseDirCandidate.resolve(Project.DIRECTORY_STORE_FOLDER))) {
+        baseDirCandidate = baseDirCandidate.parent
+      }
+
+      val baseDir: Path
+      // no reasonable directory -> create new temp one or use parent
+      if (baseDirCandidate == null) {
+        LOG.info("No project directory found")
+        if (Registry.`is`("ide.open.file.in.temp.project.dir")) {
+          return createTempProjectAndOpenFile(file, options)
         }
 
-        var baseDirCandidate = file.parent
-        while (baseDirCandidate != null && !Files.exists(baseDirCandidate.resolve(Project.DIRECTORY_STORE_FOLDER))) {
-          baseDirCandidate = baseDirCandidate.parent
-        }
-
-        // no reasonable directory -> create new temp one or use parent
-        if (baseDirCandidate == null) {
-          LOG.info("No project directory found")
-          if (Registry.`is`("ide.open.file.in.temp.project.dir")) {
-            return createTempProjectAndOpenFile(file, options)
-          }
-
-          baseDir = file.parent
-          options = options.copy(isNewProject = !Files.isDirectory(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER)))
-        }
-        else {
-          baseDir = baseDirCandidate
-          LOG.info("Project directory found: $baseDir")
-        }
+        baseDir = file.parent
+        options = options.copy(isNewProject = !Files.isDirectory(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER)))
+      }
+      else {
+        baseDir = baseDirCandidate
+        LOG.info("Project directory found: $baseDir")
       }
 
       val project = ProjectManagerEx.getInstanceEx().openProject(baseDir, if (baseDir == file) options else options.copy(projectName = file.fileName.toString()))
-      if (project != null && file != baseDir && !Files.isDirectory(file)) {
+      if (project != null && file != baseDir) {
         openFileFromCommandLine(project, file, options.line, options.column)
       }
       return project
@@ -185,6 +188,22 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         processor.attachToProject(project, projectDir, callback)
       } != null
     }
+
+    /**
+     * If project file in IDEA format (.idea directory or .ipr file) exists, just open it.
+     * If doesn't exists, create a new project using default project template and run configurators (something that creates module).
+     * (at the moment of creation project file in IDEA format will be removed if any).
+     */
+    @ApiStatus.Internal
+    @JvmStatic
+    fun createOptionsToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?): OpenProjectTask {
+      val validProjectPath = ProjectUtil.isValidProjectPath(projectDir)
+      // doesn't make sense to use default project as template in tests
+      return OpenProjectTask(runConfigurators = !validProjectPath,
+                             isNewProject = !validProjectPath,
+                             projectToClose = projectToClose,
+                             useDefaultProjectAsTemplate = !ApplicationManager.getApplication().isUnitTestMode)
+    }
   }
 
   override fun canOpenProject(file: VirtualFile) = file.isDirectory
@@ -195,13 +214,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
   override fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     val baseDir = virtualFile.toNioPath()
-    // doesn't make sense to use default project in tests for heavy projects
-    val validProjectPath = ProjectUtil.isValidProjectPath(baseDir)
-    return doOpenProject(baseDir, OpenProjectTask(forceOpenInNewFrame = forceOpenInNewFrame,
-                                                  projectToClose = projectToClose,
-                                                  runConfigurators = !validProjectPath,
-                                                  isNewProject = !validProjectPath,
-                                                  useDefaultProjectAsTemplate = !ApplicationManager.getApplication().isUnitTestMode))
+    return doOpenProject(baseDir, createOptionsToOpenDotIdeaOrCreateNewIfNotExists(baseDir, projectToClose).copy(forceOpenInNewFrame = forceOpenInNewFrame))
   }
 
   override fun openProjectAndFile(file: Path, line: Int, column: Int, tempProject: Boolean): Project? {
