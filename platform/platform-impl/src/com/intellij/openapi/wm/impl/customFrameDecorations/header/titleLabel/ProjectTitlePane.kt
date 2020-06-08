@@ -23,18 +23,26 @@ class ProjectTitlePane : ShrinkingTitlePart {
       projectTitle.active = value
     }
 
-  fun setProject(project: Project) {
-    val name = project.name
-    val path = FileUtil.toSystemDependentName(FileUtil.getLocationRelativeToUserHome(project.basePath))
+  var project: Project? = null
+    set(value) {
+      field = value
+      updatePath()
+    }
 
-    projectTitle.project = name
-    projectTitle.path = path
+  fun updatePath() {
+    project?.let {
+      val name = it.name
+      val path = FileUtil.toSystemDependentName(FileUtil.getLocationRelativeToUserHome(it.basePath))
 
-    unparsed.shortText = name
-    unparsed.longText = "$name$openChat$path$closeChar"
+      projectTitle.project = name
+      projectTitle.path = path
 
-    projectTitle.openChar = openChat
-    projectTitle.closeChar = closeChar
+      unparsed.shortText = name
+      unparsed.longText = "$name$openChat$path$closeChar"
+
+      projectTitle.openChar = openChat
+      projectTitle.closeChar = closeChar
+    }
   }
 
   override val longWidth: Int

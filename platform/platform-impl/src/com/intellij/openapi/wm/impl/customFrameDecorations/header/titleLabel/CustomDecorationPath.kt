@@ -36,7 +36,7 @@ class CustomDecorationPath(val frame: JFrame, onBoundsChanged: () -> Unit) : Sel
   }
 
   private val titleChangeListener = PropertyChangeListener{
-    updateProjectName()
+    updateProject()
   }
 
   fun setActive(value: Boolean) {
@@ -46,7 +46,7 @@ class CustomDecorationPath(val frame: JFrame, onBoundsChanged: () -> Unit) : Sel
   }
 
   fun getListenerBounds(): List<RelativeRectangle> {
-    return if (!isClipped) {
+    return if (!toolTipNeeded) {
       emptyList()
     }
     else {

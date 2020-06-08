@@ -12,17 +12,12 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryValue
-import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.openapi.wm.impl.FrameTitleBuilder
 import com.intellij.openapi.wm.impl.TitleInfoProvider
 import com.intellij.openapi.wm.impl.TitleInfoProvider.Companion.getProviders
 import com.intellij.ui.AncestorListenerAdapter
@@ -45,7 +40,7 @@ import kotlin.math.min
 
 open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = null) {
   private val projectTitle = ProjectTitlePane()
-  private val classTitle = ClippingTitle()
+  private val classTitle = ClassTitlePane()
 
   private var simplePaths: List<TitlePart>? = null
   private var basePaths: List<TitlePart> = listOf(projectTitle, classTitle)
@@ -54,15 +49,9 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
   private val updater = Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication())
   private val UPDATER_TIMEOUT = 70
 
-  private val registryListener = object : RegistryValueListener {
-    override fun afterValueChanged(value: RegistryValue) {
-      updatePaths()
-    }
-  }
-
   private fun updateProjectPath() {
     updateTitlePaths()
-    updateProjectName()
+    updateProject()
   }
 
   private fun updatePaths() {
@@ -118,7 +107,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
 
   private fun updateTitlePaths() {
     projectTitle.active = instance.fullPathsInWindowHeader || multipleSameNamed
-    classTitle.active = Registry.get("ide.borderless.title.classpath").asBoolean() || classPathNeeded
+    classTitle.active = instance.fullPathsInWindowHeader || classPathNeeded
   }
 
   open fun getView(): JComponent {
@@ -173,8 +162,6 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
                                             UISettingsListener {
                                               updateProjectPath()
                                             })
-      Registry.get("ide.borderless.title.classpath").addListener(registryListener, disp)
-
       simpleExtensions = getProviders(it)
       simplePaths = simpleExtensions?.map { ex ->
         val partTitle = DefaultPartTitle(ex.borderlessPrefix, ex.borderlessSuffix)
@@ -213,7 +200,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
       })
     }
 
-    updateProjectName()
+    updateProject()
     updatePath()
 
     getView().addComponentListener(resizedListener)
@@ -257,31 +244,20 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
   }
 
   private fun updatePath() {
-    classTitle.longText = project?.let {
-      val fileEditorManager = FileEditorManager.getInstance(it)
-
-      val file = if (fileEditorManager is FileEditorManagerEx) {
-        val splittersFor = fileEditorManager.getSplittersFor(getView())
-        splittersFor.currentFile
-      }
-      else {
-        fileEditorManager?.selectedEditor?.file
-      }
-
-      file?.let { fl ->
-        FrameTitleBuilder.getInstance().getFileTitle(it, fl)
-      } ?: ""
-    } ?: ""
-
+    classTitle.updatePath(getView())
     update()
   }
 
-  protected fun updateProjectName() {
+  protected fun updateProject() {
     project?.let {
-      projectTitle.setProject(it)
+      projectTitle.project = it
+      classTitle.project = it
       update()
     }
   }
+
+  val toolTipNeeded: Boolean
+    get() = basePaths.firstOrNull{!it.active} != null || isClipped
 
   protected var isClipped = false
   var titleString = ""
@@ -323,8 +299,16 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     label.text = titleString
     HelpTooltip.dispose(label)
 
-    if (isClipped || components.firstOrNull{!it.active} != null) {
-      HelpTooltip().setTitle(components.joinToString(separator = "", transform = { it.toolTipPart })).installOn(label)
+    when {
+      isClipped -> {
+        components.joinToString(separator = "", transform = { it.toolTipPart })
+      }
+      basePaths.firstOrNull{!it.active} != null -> {
+        components.filter { it.active || basePaths.contains(it) }.joinToString(separator = "", transform = { it.toolTipPart })
+      }
+      else -> null
+    }?.let {
+      HelpTooltip().setTitle(it).installOn(label)
     }
 
     label.revalidate()
