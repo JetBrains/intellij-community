@@ -656,7 +656,7 @@ update_context_menu:
 download_jbr_x86:
   ClearErrors
   ${ConfigRead} "$R1" "jre32=" $R3
-  IfErrors associations:
+  IfErrors associations
   ${LogText} "  download x86 runtime: $R3"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "Type" "checkbox"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "State" $R3
