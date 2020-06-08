@@ -8,6 +8,7 @@ import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -147,11 +148,19 @@ public final class Main {
     boolean isFirstArgRegularFile;
     try {
       isFirstArgRegularFile = args.length > 0 && Files.isRegularFile(Paths.get(args[0]));
-    } catch (Throwable t) {
+    }
+    catch (Throwable t) {
       isFirstArgRegularFile = false;
     }
 
     isLightEdit = "LightEdit".equals(System.getProperty(PLATFORM_PREFIX_PROPERTY)) || isFirstArgRegularFile;
+  }
+
+  @TestOnly
+  public static void setHeadlessInTestMode(boolean isHeadless) {
+    Main.isHeadless = isHeadless;
+    isCommandLine = true;
+    isLightEdit = false;
   }
 
   public static boolean isHeadless(String @NotNull [] args) {
