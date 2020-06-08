@@ -3,7 +3,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
-import com.intellij.ide.plugins.marketplace.PluginModulesUtils;
+import com.intellij.ide.plugins.marketplace.PluginModulesHelper;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
@@ -172,7 +172,7 @@ public class PluginInstallOperation {
         PluginId depPluginId = pluginNode.getDepends().get(i);
 
         if (PluginManagerCore.isModuleDependency(depPluginId)) {
-          PluginId pluginIdByModule = PluginModulesUtils.getInstance().getMarketplacePluginIdByModule(depPluginId);
+          PluginId pluginIdByModule = PluginModulesHelper.getInstance().getMarketplacePluginIdByModule(depPluginId);
           if (pluginIdByModule == null) continue;
           depPluginId = pluginIdByModule;
         }

@@ -5,7 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
-import com.intellij.ide.plugins.marketplace.PluginModulesUtils;
+import com.intellij.ide.plugins.marketplace.PluginModulesHelper;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.notification.Notification;
@@ -263,7 +263,7 @@ public abstract class PluginManagerMain {
           }
 
           if (PluginManagerCore.isModuleDependency(dependantId)) {
-            PluginId pluginIdByModule = PluginModulesUtils.getInstance().getInstalledPluginIdByModule(dependantId);
+            PluginId pluginIdByModule = PluginModulesHelper.getInstance().getInstalledPluginIdByModule(dependantId);
             // If there is no installed plugin implementing module then it can only be platform module which can not be disabled
             if (pluginIdByModule == null) continue;
           }
