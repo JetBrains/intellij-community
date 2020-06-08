@@ -16,7 +16,6 @@ import junit.framework.TestCase
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
-import org.junit.Ignore
 import org.junit.Test
 import kotlin.reflect.full.memberProperties
 
@@ -53,15 +52,6 @@ class PropertyTest {
         workspace.assertConsistency()
       }
     }
-  }
-
-  // Keep this test ignored and empty.
-  // This function is created for interactive debug sessions only.
-  @Ignore
-  @Test
-  fun recheck() {
-    //PropertyChecker.customized()
-    //  .rechecking("7tzWpx7qpL2LCh8DAQEBCgAAAQECPAEAAwEAAAED")
   }
 }
 
