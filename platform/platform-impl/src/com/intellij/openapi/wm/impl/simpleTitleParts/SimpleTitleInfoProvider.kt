@@ -2,15 +2,12 @@
 package com.intellij.openapi.wm.impl.simpleTitleParts
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.TitleInfoProvider
 
-abstract class SimpleTitleInfoProvider(defaultOption: TitleInfoOption,
-                                       borderlessOption: TitleInfoOption) : TitleInfoProvider {
-  private var myOption: TitleInfoOption = if (IdeFrameDecorator.isCustomDecorationActive()) borderlessOption else defaultOption
+abstract class SimpleTitleInfoProvider(val option: TitleInfoOption) : TitleInfoProvider {
 
   init {
-    myOption.listener = { updateSubscriptions() }
+    option.listener = { updateSubscriptions() }
   }
 
   private var updateListener: HashSet<((provider: TitleInfoProvider) -> Unit)> = HashSet()
@@ -30,7 +27,7 @@ abstract class SimpleTitleInfoProvider(defaultOption: TitleInfoOption,
   }
 
   protected open fun isEnabled(): Boolean {
-    return myOption.isActive && updateListener.isNotEmpty()
+    return option.isActive && updateListener.isNotEmpty()
   }
 
   private fun updateNotify() {
