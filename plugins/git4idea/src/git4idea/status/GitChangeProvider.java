@@ -4,7 +4,6 @@ package git4idea.status;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
@@ -105,14 +104,7 @@ public final class GitChangeProvider implements ChangeProvider {
 
       VcsDirtyScopeManager.getInstance(project).filePathsDirty(newDirtyPaths, null);
     }
-    catch (ProcessCanceledException pce) {
-      if(pce.getCause() != null) throw new VcsException(pce.getCause().getMessage(), pce.getCause());
-      else throw new VcsException("Cannot get changes from Git", pce);
-    }
-    catch (VcsException e) {
-      LOG.info(e);
-      throw e;
-    } finally {
+    finally {
       isRefreshInProgress = false;
       BackgroundTaskUtil.syncPublisher(project, TOPIC).progressStopped();
     }
