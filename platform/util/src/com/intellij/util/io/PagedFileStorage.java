@@ -168,17 +168,21 @@ public class PagedFileStorage implements Forceable {
 
       int page_len = Math.min(l, myPageSize - page_offset);
       final ByteBuffer buffer = getReadOnlyBuffer(page);
-      try {
-        buffer.position(page_offset);
+      // TODO do a proper synchronization
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (buffer) {
+        try {
+          buffer.position(page_offset);
+        }
+        catch (IllegalArgumentException iae) {
+          throw new IllegalArgumentException("can't position buffer to offset " + page_offset + ", " +
+                                             "buffer.limit=" + buffer.limit() + ", " +
+                                             "page=" + page + ", " +
+                                             "file=" + myFile.getFileName() + ", "+
+                                             "file.length=" + length());
+        }
+        buffer.get(dst, o, page_len);
       }
-      catch (IllegalArgumentException iae) {
-        throw new IllegalArgumentException("can't position buffer to offset " + page_offset + ", " +
-                                           "buffer.limit=" + buffer.limit() + ", " +
-                                           "page=" + page + ", " +
-                                           "file=" + myFile.getFileName() + ", "+
-                                           "file.length=" + length());
-      }
-      buffer.get(dst, o, page_len);
 
       l -= page_len;
       o += page_len;
@@ -197,14 +201,17 @@ public class PagedFileStorage implements Forceable {
 
       int page_len = Math.min(l, myPageSize - page_offset);
       final ByteBuffer buffer = getBuffer(page);
-      try {
-        buffer.position(page_offset);
+      // TODO do a proper synchronization
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (buffer) {
+        try {
+          buffer.position(page_offset);
+        }
+        catch (IllegalArgumentException iae) {
+          throw new IllegalArgumentException("can't position buffer to offset " + page_offset);
+        }
+        buffer.put(src, o, page_len);
       }
-      catch (IllegalArgumentException iae) {
-        throw new IllegalArgumentException("can't position buffer to offset " + page_offset);
-      }
-      buffer.put(src, o, page_len);
-
       l -= page_len;
       o += page_len;
       i += page_len;
