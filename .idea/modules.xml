@@ -381,7 +381,7 @@
       <module fileurl="file://$PROJECT_DIR$/../base/flags/android.sdktools.flags.iml" filepath="$PROJECT_DIR$/../base/flags/android.sdktools.flags.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/layoutinspector/android.sdktools.layoutinspector.iml" filepath="$PROJECT_DIR$/../base/layoutinspector/android.sdktools.layoutinspector.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/layoutlib-api/android.sdktools.layoutlib-api.iml" filepath="$PROJECT_DIR$/../base/layoutlib-api/android.sdktools.layoutlib-api.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../base/layoutlib-coroutines/android.sdktools.layoutlib-coroutines.iml" filepath="$PROJECT_DIR$/../base/layoutlib-coroutines/android.sdktools.layoutlib-coroutines.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../base/layoutlib-extensions/android.sdktools.layoutlib-extensions.iml" filepath="$PROJECT_DIR$/../base/layoutlib-extensions/android.sdktools.layoutlib-extensions.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/lint/libs/lint-api/android.sdktools.lint-api.iml" filepath="$PROJECT_DIR$/../base/lint/libs/lint-api/android.sdktools.lint-api.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/lint/libs/lint-checks/android.sdktools.lint-checks.iml" filepath="$PROJECT_DIR$/../base/lint/libs/lint-checks/android.sdktools.lint-checks.iml" />
       <module fileurl="file://$PROJECT_DIR$/../base/lint/libs/lint-model/android.sdktools.lint-model.iml" filepath="$PROJECT_DIR$/../base/lint/libs/lint-model/android.sdktools.lint-model.iml" />

@@ -303,7 +303,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       fileset(dir: "$root/prebuilts/studio/layoutlib") {
         include(name: "build.prop")
         include(name: "data/framework_res.jar")
-        include(name: "data/layoutlib-coroutines.jar")
+        include(name: "data/layoutlib-extensions.jar")
         include(name: "data/fonts/*")
         include(name: "data/fonts/native/fonts.xml")
         include(name: "data/fonts/standard/fonts.xml")

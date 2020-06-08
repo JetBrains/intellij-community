@@ -223,7 +223,7 @@ iml_project(
         "//tools/base/flags:studio.android.sdktools.flags",
         "//tools/base/layoutinspector:studio.android.sdktools.layoutinspector",
         "//tools/base/layoutlib-api:studio.android.sdktools.layoutlib-api",
-        "//tools/base/layoutlib-coroutines:studio.android.sdktools.layoutlib-coroutines",
+        "//tools/base/layoutlib-extensions:studio.android.sdktools.layoutlib-extensions",
         "//tools/base/lint:studio.android.sdktools.lint-api",
         "//tools/base/lint:studio.android.sdktools.lint-checks",
         "//tools/base/lint:studio.android.sdktools.lint-model",
