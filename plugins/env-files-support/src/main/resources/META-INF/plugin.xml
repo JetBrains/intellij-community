@@ -19,7 +19,7 @@
     <a href="https://laravel-idea.com/?utm_source=idea&utm_campaign=env&utm_medium=banner" title="Laravel Idea" target="_blank">
       <img src="https://laravel-idea.com/img/big_logo.png" alt="Laravel Idea"></a>
     <br/>
-    The most productive Laravel development environment.
+    The most productive Laravel development environment. <a href="https://laravel-idea.com/?utm_source=idea&utm_campaign=env&utm_medium=banner" target="_blank">Try it free!</a>
 
     <br/>
     <br/>
@@ -32,14 +32,13 @@
     ]]></description>
 
     <change-notes><![CDATA[
-      2020.1
+      2020.2
       <ul>
-        <li>2020.1 IDE versions support</li>
-        <li>Multi line .env strings support</li>
+        <li>2020.2 IDE versions support</li>
+        <li>Spaces inside non-quoted .env values inspection + quick fix</li>
+        <li>Case insensitive .env variables completions</li>
       </ul>
   ]]></change-notes>
-
-    <idea-version since-build="192" until-build="201.*"/>
 
     <extensionPoints>
         <extensionPoint interface="ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider"
