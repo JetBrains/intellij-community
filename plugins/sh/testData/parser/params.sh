@@ -159,3 +159,10 @@ ${parameter:-abc}
 line="${line%'\r'}"
 line="${line%$'\r'}"
 line="${line%"\r"}"
+
+# error on first arg: empty expansion
+echo ${} ${line}
+echo ${a/}
+echo ${a//}
+echo ${a%}
+echo ${a%%}

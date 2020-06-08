@@ -1697,3 +1697,83 @@ SHELL_SCRIPT
             PsiElement(CLOSE_QUOTE)('"')
           PsiElement(})('}')
         PsiElement(CLOSE_QUOTE)('"')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  PsiComment(Comment)('# error on first arg: empty expansion')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('echo')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        PsiElement($)('$')
+        SHELL_PARAMETER_EXPANSION
+          PsiElement({)('{')
+          PsiErrorElement:<parameter expansion> expected, got '}'
+            <empty list>
+          PsiElement(})('}')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        PsiElement($)('$')
+        SHELL_PARAMETER_EXPANSION
+          PsiElement({)('{')
+          PsiElement(word)('line')
+          PsiElement(})('}')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('echo')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        PsiElement($)('$')
+        SHELL_PARAMETER_EXPANSION
+          PsiElement({)('{')
+          PsiElement(word)('a')
+          PsiElement(param_separator)('/')
+          PsiElement(})('}')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('echo')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        PsiElement($)('$')
+        SHELL_PARAMETER_EXPANSION
+          PsiElement({)('{')
+          PsiElement(word)('a')
+          PsiElement(param_separator)('//')
+          PsiElement(})('}')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('echo')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        PsiElement($)('$')
+        SHELL_PARAMETER_EXPANSION
+          PsiElement({)('{')
+          PsiElement(word)('a')
+          PsiElement(param_separator)('%')
+          PsiElement(})('}')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('echo')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        PsiElement($)('$')
+        SHELL_PARAMETER_EXPANSION
+          PsiElement({)('{')
+          PsiElement(word)('a')
+          PsiElement(param_separator)('%%')
+          PsiElement(})('}')
