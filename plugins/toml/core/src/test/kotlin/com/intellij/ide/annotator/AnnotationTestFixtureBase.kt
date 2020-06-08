@@ -162,6 +162,8 @@ abstract class AnnotationTestFixtureBase(
 
     fun registerSeverities(severities: List<HighlightSeverity>) {
         val testSeverityProvider = TestSeverityProvider(severities)
+        // BACKCOMPAT: 2020.1
+        @Suppress("DEPRECATION")
         SeveritiesProvider.EP_NAME.getPoint(null).registerExtension(testSeverityProvider, testRootDisposable)
     }
 }
