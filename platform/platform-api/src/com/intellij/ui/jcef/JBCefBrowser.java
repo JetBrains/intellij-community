@@ -237,7 +237,7 @@ public class JBCefBrowser implements JBCefDisposable {
   }
 
   private static void loadString(CefBrowser cefBrowser, String html, String url) {
-    url = JBCefFileSchemeHandler.registerLoadHTMLRequest(cefBrowser, html, url);
+    url = JBCefFileSchemeHandlerFactory.registerLoadHTMLRequest(cefBrowser, html, url);
     cefBrowser.loadURL(url);
   }
 
