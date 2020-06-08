@@ -826,7 +826,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
 
       //  2) All children should have a parent if the connection has a restriction for that
       if (!connectionId.isParentNullable) {
-        checkStrongConnection(map.keys, connectionId.childClass)
+        checkStrongConnection(map.keys, connectionId.childClass, connectionId.parentClass)
       }
     }
 
@@ -842,8 +842,8 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
       }
 
       //  2) Connections satisfy connectionId requirements
-      if (!connectionId.isParentNullable) checkStrongConnection(map.keys, connectionId.childClass)
-      if (!connectionId.isChildNullable) checkStrongConnection(map.values, connectionId.parentClass)
+      if (!connectionId.isParentNullable) checkStrongConnection(map.keys, connectionId.childClass, connectionId.parentClass)
+      if (!connectionId.isChildNullable) checkStrongConnection(map.values, connectionId.parentClass, connectionId.childClass)
     }
 
     refs.oneToAbstractManyContainer.forEach { (connectionId, map) ->
@@ -894,13 +894,14 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     indexes.assertConsistency(this)
   }
 
-  private fun checkStrongConnection(connectionKeys: Set<Int>, entityFamilyClass: Int) {
+  private fun checkStrongConnection(connectionKeys: Set<Int>, entityFamilyClass: Int, connectionTo: Int) {
     val keys = connectionKeys.toMutableSet()
-    val entityFamily = entitiesByType.entities[entityFamilyClass] ?: error("Entity family doesn't exist")
+    val entityFamily = entitiesByType.entities[entityFamilyClass]
+                       ?: error("Entity family ${entityFamilyClass.findWorkspaceEntity()} doesn't exist")
     entityFamily.entities.forEachIndexed { i, entity ->
       if (entity == null) return@forEachIndexed
       val removed = keys.remove(i)
-      assert(removed) { "Entity $entity doesn't have a correct connection" }
+      assert(removed) { "Entity $entity doesn't have a correct connection to ${connectionTo.findWorkspaceEntity()}" }
     }
     assert(keys.isEmpty()) { "Store is inconsistent" }
   }
