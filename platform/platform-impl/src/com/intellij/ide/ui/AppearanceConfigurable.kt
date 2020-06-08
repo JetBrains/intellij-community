@@ -50,8 +50,8 @@ private val lafManager get() = LafManager.getInstance()
 
 private val cdShowToolWindowBars                      get() = CheckboxDescriptor(message("checkbox.show.tool.window.bars"), PropertyBinding({ !settings.hideToolStripes }, { settings.hideToolStripes = !it }), groupName = windowOptionGroupName)
 private val cdShowToolWindowNumbers                   get() = CheckboxDescriptor(message("checkbox.show.tool.window.numbers"), settings::showToolWindowsNumbers, groupName = windowOptionGroupName)
-private val cdDisableMenuMnemonics                    get() = CheckboxDescriptor(KeyMapBundle.message("disable.mnemonic.in.menu.check.box"), settings::disableMnemonics, groupName = windowOptionGroupName)
-private val cdDisableControlsMnemonics                get() = CheckboxDescriptor(KeyMapBundle.message("disable.mnemonic.in.controls.check.box"), settings::disableMnemonicsInControls, groupName = windowOptionGroupName)
+private val cdEnableMenuMnemonics                     get() = CheckboxDescriptor(KeyMapBundle.message("enable.mnemonic.in.menu.check.box"), PropertyBinding({ !settings.disableMnemonics }, { settings.disableMnemonics = !it }), groupName = windowOptionGroupName)
+private val cdEnableControlsMnemonics                 get() = CheckboxDescriptor(KeyMapBundle.message("enable.mnemonic.in.controls.check.box"), PropertyBinding({ !settings.disableMnemonicsInControls }, { settings.disableMnemonicsInControls = !it }), groupName = windowOptionGroupName)
 private val cdSmoothScrolling                         get() = CheckboxDescriptor(message("checkbox.smooth.scrolling"), settings::smoothScrolling, groupName = uiOptionGroupName)
 private val cdWidescreenToolWindowLayout              get() = CheckboxDescriptor(message("checkbox.widescreen.tool.window.layout"), settings::wideScreenSupport, groupName = windowOptionGroupName)
 private val cdLeftToolWindowLayout                    get() = CheckboxDescriptor(message("checkbox.left.toolwindow.layout"), settings::leftHorizontalSplit, groupName = windowOptionGroupName)
@@ -70,8 +70,8 @@ internal val appearanceOptionDescriptors: List<OptionDescription>
   get() = listOf(
     cdShowToolWindowBars,
     cdShowToolWindowNumbers,
-    cdDisableMenuMnemonics,
-    cdDisableControlsMnemonics,
+    cdEnableMenuMnemonics,
+    cdEnableControlsMnemonics,
     cdSmoothScrolling,
     cdWidescreenToolWindowLayout,
     cdLeftToolWindowLayout,
@@ -172,22 +172,22 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       }
       titledRow(message("group.ui.options")) {
         twoColumnRow(
-          { checkBox(cdUseCompactTreeIndents) },
-          { checkBox(cdShowTreeIndents) }
-        )
-        twoColumnRow(
-          { checkBox(cdDisableMenuMnemonics) },
-          { checkBox(cdDisableControlsMnemonics) }
-        )
-        twoColumnRow(
+          { checkBox(cdShowTreeIndents) },
           {
             checkBox(cdSmoothScrolling)
             ContextHelpLabel.create(message("checkbox.smooth.scrolling.description"))()
-          },
+          }
+        )
+        twoColumnRow(
+          { checkBox(cdUseCompactTreeIndents) },
           { checkBox(cdDnDWithAlt) }
         )
+        twoColumnRow(
+          { checkBox(cdEnableMenuMnemonics) },
+          { checkBox(cdFullPathsInTitleBar) }
+        )
         fullRow {
-          checkBox(cdFullPathsInTitleBar)
+          checkBox(cdEnableControlsMnemonics)
         }
         val backgroundImageAction = ActionManager.getInstance().getAction("Images.SetBackgroundImage")
         if (backgroundImageAction != null) {
