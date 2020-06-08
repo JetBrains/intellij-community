@@ -71,6 +71,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
                                                     "intellij.cidr.debugger",
                                                     "intellij.cidr.debugger.commandInterpreterLang",
                                                     "intellij.c",
+                                                    "intellij.c.debugger",
                                                     "intellij.c.dfa",
                                                     "intellij.cidr.util",
                                                     "intellij.c.doxygen",
