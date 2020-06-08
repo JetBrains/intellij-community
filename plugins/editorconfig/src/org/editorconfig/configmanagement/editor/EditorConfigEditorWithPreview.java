@@ -38,7 +38,6 @@ public class EditorConfigEditorWithPreview extends TextEditorWithPreview {
       });
   }
 
-
   @Override
   public void dispose() {
     myInactivityDetector.stop();
