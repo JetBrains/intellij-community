@@ -12,19 +12,28 @@ import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.GithubUtil
 
+private fun getGHAccounts(): Collection<GithubAccount> =
+  GithubAuthenticationManager.getInstance().getAccounts().filter { it.server.isGithubDotCom }
+
 class GHCloneDialogExtension : BaseCloneDialogExtension() {
   override fun getName() = GithubUtil.SERVICE_DISPLAY_NAME
 
-  override fun getAccounts(): Collection<GithubAccount> =
-    GithubAuthenticationManager.getInstance().getAccounts().filter { it.server.isGithubDotCom }
+  override fun getAccounts(): Collection<GithubAccount> = getGHAccounts()
 
   override fun createMainComponent(project: Project, modalityState: ModalityState): VcsCloneDialogExtensionComponent =
-    GHCloneDialogExtensionComponent(
+    object : BaseCloneDialogExtensionComponent(
       project,
       GithubAuthenticationManager.getInstance(),
       GithubApiRequestExecutorManager.getInstance(),
       GithubAccountInformationProvider.getInstance(),
       CachingGithubUserAvatarLoader.getInstance(),
       GithubImageResizer.getInstance()
-    )
+    ) {
+
+      init {
+        setup()
+      }
+
+      override fun getAccounts(): Collection<GithubAccount> = getGHAccounts()
+    }
 }

@@ -65,7 +65,7 @@ import javax.swing.*
 import javax.swing.event.DocumentEvent
 import kotlin.properties.Delegates
 
-internal class GHCloneDialogExtensionComponent(
+internal abstract class BaseCloneDialogExtensionComponent(
   private val project: Project,
   private val authenticationManager: GithubAuthenticationManager,
   private val executorManager: GithubApiRequestExecutorManager,
@@ -122,8 +122,7 @@ internal class GHCloneDialogExtensionComponent(
   private val avatarsByAccount = hashMapOf<GithubAccount, Icon>()
 
   init {
-    val listWithSearchBundle = ListWithSearchComponent(originListModel,
-                                                       GHRepositoryListCellRenderer(authenticationManager))
+    val listWithSearchBundle = ListWithSearchComponent(originListModel, GHRepositoryListCellRenderer { getAccounts() })
 
     repositoryList = listWithSearchBundle.list
     val mouseAdapter = GHRepositoryMouseAdapter(repositoryList)
@@ -183,11 +182,15 @@ internal class GHCloneDialogExtensionComponent(
       }
     }
     repositoriesPanel.border = JBEmptyBorder(UIUtil.getRegularPanelInsets())
+  }
 
+  protected abstract fun getAccounts(): Collection<GithubAccount>
 
-    if (authenticationManager.hasAccounts()) {
+  fun setup() {
+    val accounts = getAccounts()
+    if (accounts.isNotEmpty()) {
       switchToRepositories()
-      authenticationManager.getAccounts().forEach(this@GHCloneDialogExtensionComponent::addAccount)
+      accounts.forEach(::addAccount)
     }
     else {
       switchToLogin()
@@ -246,7 +249,7 @@ internal class GHCloneDialogExtensionComponent(
       accountsPanel.repaint()
     }
     refillRepositories()
-    if (!authenticationManager.hasAccounts()) switchToLogin()
+    if (getAccounts().isEmpty()) switchToLogin()
   }
 
   private fun loadUserDetails(account: GithubAccount,
@@ -321,7 +324,7 @@ internal class GHCloneDialogExtensionComponent(
   private fun refillRepositories() {
     val selectedValue = repositoryList.selectedValue
     originListModel.removeAll()
-    for (account in authenticationManager.getAccounts()) {
+    for (account in getAccounts()) {
       if (errorsByAccount[account] != null) {
         originListModel.add(errorsByAccount[account])
       }
@@ -458,7 +461,7 @@ internal class GHCloneDialogExtensionComponent(
     val menuItems = mutableListOf<AccountMenuItem>()
     val project = ProjectManager.getInstance().defaultProject
 
-    for ((index, account) in authenticationManager.getAccounts().withIndex()) {
+    for ((index, account) in getAccounts().withIndex()) {
       val user = userDetailsByAccount[account]
 
       val accountTitle = user?.login ?: account.name

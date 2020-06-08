@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.cloneDialog
 
 import com.intellij.ui.CellRendererPanel
@@ -7,12 +7,14 @@ import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
+import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import java.awt.BorderLayout
 import java.awt.Component
 import javax.swing.JList
 
-class GHRepositoryListCellRenderer(private val authenticationManager: GithubAuthenticationManager) : ColoredListCellRenderer<GHRepositoryListItem>() {
+class GHRepositoryListCellRenderer(private val accountsSupplier: () -> Collection<GithubAccount>) :
+  ColoredListCellRenderer<GHRepositoryListItem>() {
+
   private val nameRenderer = AccountNameRenderer()
 
   override fun getListCellRendererComponent(list: JList<out GHRepositoryListItem>,
@@ -30,10 +32,9 @@ class GHRepositoryListCellRenderer(private val authenticationManager: GithubAuth
     return component
   }
 
-  private fun showAccountNameAbove(list: JList<out GHRepositoryListItem>, index: Int): Boolean {
-    return authenticationManager.getAccounts().size > 1
-           && (index == 0 || list.model.getElementAt(index).account != list.model.getElementAt(index - 1).account)
-  }
+  private fun showAccountNameAbove(list: JList<out GHRepositoryListItem>, index: Int): Boolean =
+    accountsSupplier().size > 1 &&
+    (index == 0 || list.model.getElementAt(index).account != list.model.getElementAt(index - 1).account)
 
   override fun customizeCellRenderer(list: JList<out GHRepositoryListItem>,
                                      value: GHRepositoryListItem,
