@@ -9,6 +9,7 @@ import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceExcept
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 
 /**
@@ -437,4 +438,18 @@ class ReplaceBySourceTest {
       builder.assertConsistency()
     }
   */
+
+  @Ignore("Not supported yet")
+  @Test
+  fun `trying to create two similar persistent ids`() {
+    val namedEntity = builder.addNamedEntity("MyName", source = AnotherSource)
+    val replacement = WorkspaceEntityStorageBuilderImpl.from(builder)
+    replacement.modifyEntity(ModifiableNamedEntity::class.java, namedEntity) {
+      this.name = "AnotherName"
+    }
+
+    replacement.addNamedEntity("MyName", source = MySource)
+
+    builder.replaceBySource({ it is MySource }, replacement)
+  }
 }

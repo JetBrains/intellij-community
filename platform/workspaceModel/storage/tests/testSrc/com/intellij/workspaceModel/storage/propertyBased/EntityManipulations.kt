@@ -8,6 +8,7 @@ import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.impl.ClassConversion
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
 import com.intellij.workspaceModel.storage.impl.toClassId
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
@@ -40,7 +41,10 @@ internal interface EntityManipulation {
       SampleEntityManipulation,
       ParentEntityManipulation,
       ChildEntityManipulation,
-      ChildWithOptionalParentManipulation
+      ChildWithOptionalParentManipulation //,
+
+      // Do not enable at the moment. A lot of issues about entities with persistentId
+      //NamedEntityManipulation
     )
   }
 }
@@ -94,9 +98,43 @@ internal abstract class ModifyEntity<E : WorkspaceEntity, M : ModifiableWorkspac
 
     val modifications = env.generateValue(Generator.sampledFrom(modifyEntity(env)), null)
 
-    storage.modifyEntity(modifiableClass, entity, modifications)
+    try {
+      storage.modifyEntity(modifiableClass, entity, modifications)
+    }
+    catch (e: PersistentIdAlreadyExistsException) {
+      env.logMessage("Cannot modify entity. Persistent id ${e.id} already exists")
+    }
 
     env.logMessage("----------------------------------")
+  }
+}
+
+private object NamedEntityManipulation : EntityManipulation {
+  override fun addManipulation(storage: WorkspaceEntityStorageBuilderImpl): AddEntity {
+    return object : AddEntity(storage, "NamedEntity") {
+      override fun makeEntity(source: EntitySource, someProperty: String, env: ImperativeCommand.Environment): WorkspaceEntity? {
+        env.logMessage("Set property for NamedEntity: $someProperty")
+        return try {
+          storage.addNamedEntity(someProperty, source)
+        }
+        catch (e: PersistentIdAlreadyExistsException) {
+          env.logMessage("NamedEntity with this property isn't added because this persistent id already exists")
+          val persistentId = e.id as NameId
+          assert(storage.entities(NamedEntity::class.java).any { it.persistentId() == persistentId }) {
+            "$persistentId reported as existing, but it's not found"
+          }
+          null
+        }
+      }
+    }
+  }
+
+  override fun modifyManipulation(storage: WorkspaceEntityStorageBuilderImpl): ModifyEntity<out WorkspaceEntity, out ModifiableWorkspaceEntity<out WorkspaceEntity>> {
+    return object : ModifyEntity<NamedEntity, ModifiableNamedEntity>(NamedEntity::class, storage) {
+      override fun modifyEntity(env: ImperativeCommand.Environment): List<ModifiableNamedEntity.() -> Unit> {
+        return listOf(modifyStringProperty(ModifiableNamedEntity::name, env))
+      }
+    }
   }
 }
 
@@ -208,7 +246,7 @@ private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> modifyNot
   return {
     val value = env.generateValue(takeFrom, null)
     if (value != null) {
-      env.logMessage("Change ${property.name} to %s")
+      env.logMessage("Change `${property.name}` to $value")
       property.set(this, value)
     }
   }
@@ -221,7 +259,7 @@ private fun <B : WorkspaceEntity, A : ModifiableWorkspaceEntity<B>, T> modifyNul
 ): A.() -> Unit {
   return {
     val value = env.generateValue(takeFrom, null)
-    env.logMessage("Change ${property.name} to %s")
+    env.logMessage("Change `${property.name}` to $value")
     property.set(this, value)
   }
 }
