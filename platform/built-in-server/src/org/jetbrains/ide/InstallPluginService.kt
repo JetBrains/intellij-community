@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
@@ -10,12 +10,11 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser
-import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
-import com.intellij.util.io.hostName
+import com.intellij.util.io.getHostName
 import com.intellij.util.io.origin
 import com.intellij.util.net.NetUtils
 import com.intellij.util.text.nullize
@@ -127,7 +126,7 @@ internal class InstallPluginService : RestService() {
       return false
     }
 
-    val hostName = request.hostName
+    val hostName = getHostName(request)
     if (hostName != null && !NetUtils.isLocalhost(hostName)) {
       LOG.error("Expected 'request.hostName' to be localhost. hostName='$hostName', origin='$origin'")
     }

@@ -2,7 +2,7 @@
 package org.jetbrains.ide
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.util.io.hostName
+import com.intellij.util.io.getHostName
 import com.intellij.util.io.isLocalHost
 import com.intellij.util.io.isLocalOrigin
 import io.netty.channel.Channel
@@ -42,7 +42,7 @@ abstract class HttpRequestHandler {
    */
   @SuppressWarnings("SpellCheckingInspection")
   open fun isAccessible(request: HttpRequest): Boolean {
-    val hostName = request.hostName
+    val hostName = getHostName(request)
     // If attacker.com DNS rebound to 127.0.0.1 and user open site directly - no Origin or Referrer headers.
     // So we should check Host header.
     return hostName != null && request.isLocalOrigin() && isLocalHost(hostName)

@@ -197,12 +197,11 @@ val Channel.uriScheme: String
 val HttpRequest.host: String?
   get() = headers().getAsString(HttpHeaderNames.HOST)
 
-val HttpRequest.hostName: String?
-  get() {
-    val hostAndPort = headers().getAsString(HttpHeaderNames.HOST)?.ifBlank { null } ?: return null
-    val portIndex = hostAndPort.lastIndexOf(':')
-    return if (portIndex > 0) hostAndPort.substring(0, portIndex).ifBlank { null } else hostAndPort
-  }
+fun getHostName(httpRequest: HttpRequest): String? {
+  val hostAndPort = httpRequest.headers().getAsString(HttpHeaderNames.HOST)?.ifBlank { null } ?: return null
+  val portIndex = hostAndPort.lastIndexOf(':')
+  return if (portIndex > 0) hostAndPort.substring(0, portIndex).ifBlank { null } else hostAndPort
+}
 
 val HttpRequest.origin: String?
   get() = headers().getAsString(HttpHeaderNames.ORIGIN)
