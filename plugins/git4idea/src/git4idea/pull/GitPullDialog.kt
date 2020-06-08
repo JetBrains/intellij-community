@@ -44,7 +44,9 @@ class GitPullDialog(private val project: Project,
   private val repositories = sortRepositories(GitRepositoryManager.getInstance(project).repositories)
 
   private val branches = repositories.associateWith { repository ->
-    repository.branches.remoteBranches.groupBy { branch -> branch.remote }
+    repository.branches.remoteBranches
+      .sortedBy { branch -> branch.nameForRemoteOperations }
+      .groupBy { branch -> branch.remote }
   }
 
   private val optionInfos = mutableMapOf<PullOption, OptionInfo<PullOption>>()

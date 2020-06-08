@@ -167,7 +167,7 @@ class GitMergeDialog(private val project: Project,
     }
 
     branches = repository.branches
-      .let { it.localBranches + it.remoteBranches }
+      .let { it.localBranches.sorted() + it.remoteBranches.sorted() }
       .map { it.name }
 
     repositoryBranches[repository] = branches
