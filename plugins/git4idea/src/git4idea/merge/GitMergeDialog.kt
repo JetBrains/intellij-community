@@ -359,8 +359,11 @@ class GitMergeDialog(private val project: Project,
   }
 
   private fun updateCommitMessagePanel() {
-    commitMsgPanel.isVisible = MergeOption.COMMIT_MESSAGE in selectedOptions
-    commitMsgField.text = ""
+    val useCommitMsg = MergeOption.COMMIT_MESSAGE in selectedOptions
+    commitMsgPanel.isVisible = useCommitMsg
+    if (!useCommitMsg) {
+      commitMsgField.text = ""
+    }
   }
 
   private fun createOptionButton(option: MergeOption) = OptionButton(option, option.option) { optionChosen(option) }
