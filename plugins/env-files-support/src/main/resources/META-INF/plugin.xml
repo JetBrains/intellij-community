@@ -78,6 +78,14 @@
                          level="WARNING"
                          implementationClass="ru.adelf.idea.dotenv.inspections.DuplicateKeyInspection"/>
 
+        <localInspection language="DotEnv"
+                         groupName="DotEnv"
+                         shortName="DotEnvSpaceInsideNonQuotedInspection"
+                         displayName="Space inside non-quoted value"
+                         enabledByDefault="true"
+                         level="WARNING"
+                         implementationClass="ru.adelf.idea.dotenv.inspections.SpaceInsideNonQuotedInspection"/>
+
         <lang.syntaxHighlighterFactory language="DotEnv"
                                        implementationClass="ru.adelf.idea.dotenv.DotEnvSyntaxHighlighterFactory"/>
     </extensions>
