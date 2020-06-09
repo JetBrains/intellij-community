@@ -678,12 +678,10 @@ internal class WorkspaceEntityStorageBuilderImpl(
   private fun updateEntityRefs(entityId: EntityId, updatedChildren: ChildrenConnectionsInfo,
                                updatedParents: ParentConnectionsInfo) {
     // Restore children references of the entity
-    val localChildrenByConnectionid = this.refs.getChildrenRefsOfParentBy(entityId)
     for ((connectionId, children) in updatedChildren) {
       val (missingChildren, existingChildren) = children.partition { this.entityDataById(it) == null }
       if (missingChildren.isNotEmpty() && !connectionId.canRemoveChild()) adFailed("Cannot restore some dependencies")
-      val localChildren = localChildrenByConnectionid[connectionId] ?: emptySet()
-      refs.updateChildrenOfParent(connectionId, entityId, existingChildren + localChildren)
+      refs.updateChildrenOfParent(connectionId, entityId, existingChildren)
     }
 
     // Restore parent references of the entity
