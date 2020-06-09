@@ -3,6 +3,8 @@ package com.intellij.spellchecker.settings;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.util.SPFileUtil;
 import org.jdom.Element;
@@ -32,6 +34,8 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   private static final String RUNTIME_DICTIONARIES_ATTR_NAME = "RuntimeDictionaries";
   private static final String RUNTIME_DICTIONARY_ATTR_NAME = "RuntimeDictionary";
 
+  private static final String CORRECTIONS_MAX_LIMIT = "CorrectionsLimit";
+  private static final int DEFAULT_MAX_VALUE = 5;
   private static final String DICTIONARY_TO_SAVE_ATTR_NAME = "DefaultDictionary";
   private static final String DEFAULT_DICTIONARY_TO_SAVE = SpellCheckerManager.DictionaryLevel.PROJECT.getName();
   private static final String USE_SINGLE_DICT_ATTR_NAME = "UseSingleDictionary";
@@ -173,6 +177,12 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
       final int scriptsSize = parseInt(element.getAttributeValue(DICTIONARIES_ATTR_NAME), 0);
       for (int i = 0; i < scriptsSize; i++) {
         myDisabledDictionariesPaths.add(element.getAttributeValue(DICTIONARY_ATTR_NAME + i));
+      }
+      int correctionsLimit = parseInt(element.getAttributeValue(CORRECTIONS_MAX_LIMIT), DEFAULT_MAX_VALUE);
+      final RegistryValue registryValue = Registry.get("spellchecker.corrections.limit");
+      if (correctionsLimit != DEFAULT_MAX_VALUE && !registryValue.isChangedFromDefault()) {
+        registryValue.setValue(correctionsLimit);
+        element.setAttribute(CORRECTIONS_MAX_LIMIT, String.valueOf(DEFAULT_MAX_VALUE));
       }
       myDictionaryToSave = notNullize(element.getAttributeValue(DICTIONARY_TO_SAVE_ATTR_NAME), DEFAULT_DICTIONARY_TO_SAVE);
       myUseSingleDictionaryToSave =
