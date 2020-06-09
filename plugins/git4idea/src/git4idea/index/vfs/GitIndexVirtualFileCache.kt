@@ -3,7 +3,9 @@ package git4idea.index.vfs
 
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
+import com.google.common.util.concurrent.UncheckedExecutionException
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
@@ -14,7 +16,15 @@ class GitIndexVirtualFileCache(private val project: Project) : Disposable {
   })
 
   fun get(root: VirtualFile, filePath: FilePath): GitIndexVirtualFile {
-    return cache.get(Key(root, filePath))
+    try {
+      return cache.get(Key(root, filePath))
+    } catch (e: UncheckedExecutionException) {
+      val cause = e.cause
+      if (cause is ProcessCanceledException) {
+        throw cause
+      }
+      throw e
+    }
   }
 
   fun filesMatching(function: (GitIndexVirtualFile) -> Boolean): List<GitIndexVirtualFile> {
