@@ -5,6 +5,8 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,6 +17,8 @@ import java.util.List;
 
 public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends RunConfigurationEditorFragment<S, JComponent> {
   private final BeforeRunComponent myComponent;
+  private final Key<?> myKey;
+  private RunnerAndConfigurationSettingsImpl mySettings;
 
   public static <S extends RunConfigurationBase<?>> List<SettingsEditorFragment<S, ?>> createGroup() {
     ArrayList<SettingsEditorFragment<S, ?>> list = new ArrayList<>();
@@ -31,16 +35,23 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
     return list;
   }
 
-  public static <S extends RunConfigurationBase<?>> BeforeRunFragment<S> createComponent(BeforeRunComponent component) {
-    return new BeforeRunFragment<>(component);
+  public static <S extends RunConfigurationBase<?>> BeforeRunFragment<S> createBeforeRun(BeforeRunComponent component,
+                                                                                         Key<?> key) {
+    return new BeforeRunFragment<>(component, key);
   }
 
-  private BeforeRunFragment(BeforeRunComponent component) {
+  private BeforeRunFragment(BeforeRunComponent component, Key<?> key) {
     super("beforeRunTasks", ExecutionBundle.message("run.configuration.before.run.task"),
           ExecutionBundle.message("run.configuration.before.run.group"), wrap(component), -2);
     myComponent = component;
+    myKey = key;
     component.myChangeListener = () -> fireEditorStateChanged();
     Disposer.register(this, component);
+  }
+
+  @Override
+  public boolean isInitiallyVisible(S s) {
+    return ContainerUtil.exists(mySettings.getManager().getBeforeRunTasks(s), task -> task.getProviderId() != myKey);
   }
 
   private static JComponent wrap(BeforeRunComponent component) {
@@ -69,7 +80,8 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
 
   @Override
   public void resetEditorFrom(@NotNull RunnerAndConfigurationSettingsImpl s) {
-    myComponent.reset(s);
+    mySettings = s;
+    myComponent.reset(mySettings);
   }
 
   @Override

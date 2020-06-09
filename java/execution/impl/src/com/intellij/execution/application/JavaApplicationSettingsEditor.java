@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.application;
 
+import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.diagnostic.logging.LogsFragment;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaRunConfigurationExtensionManager;
@@ -31,7 +32,7 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
   protected List<SettingsEditorFragment<ApplicationConfiguration, ?>> createRunFragments() {
     List<SettingsEditorFragment<ApplicationConfiguration, ?>> fragments = new ArrayList<>();
     BeforeRunComponent beforeRunComponent = new BeforeRunComponent();
-    fragments.add(BeforeRunFragment.createComponent(beforeRunComponent));
+    fragments.add(BeforeRunFragment.createBeforeRun(beforeRunComponent, CompileStepBeforeRun.ID));
     fragments.addAll(BeforeRunFragment.createGroup());
 
     ModuleClasspathCombo.Item item = new ModuleClasspathCombo.Item(ExecutionBundle.message("application.configuration.include.provided.scope"));
