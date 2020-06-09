@@ -873,9 +873,17 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
       createShutdownCallback = false;
 
       DialogWrapper settings = DialogWrapper.findInstance(component);
-      assert settings instanceof SettingsDialog : settings;
-      ((SettingsDialog)settings).applyAndClose(false /* will be saved on app exit */);
-
+      if (settings instanceof SettingsDialog) {
+        ((SettingsDialog)settings).applyAndClose(false /* will be saved on app exit */);
+      }
+      else if (isModified()) {
+        try {
+          apply(null);
+        }
+        catch (ConfigurationException e) {
+          LOG.error(e);
+        }
+      }
       ApplicationManager.getApplication().exit(true, false, true);
     }
   }
