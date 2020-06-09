@@ -31,6 +31,10 @@ class ProjectTitlePane : ShrinkingTitlePart {
 
   fun updatePath() {
     project?.let {
+      if (it.isDisposed) {
+        return@let
+      }
+
       val name = it.name
       val path = FileUtil.toSystemDependentName(FileUtil.getLocationRelativeToUserHome(it.basePath))
 
@@ -42,7 +46,14 @@ class ProjectTitlePane : ShrinkingTitlePart {
 
       projectTitle.openChar = openChat
       projectTitle.closeChar = closeChar
+      return
     }
+
+    projectTitle.project = ""
+    projectTitle.path = ""
+
+    unparsed.shortText = ""
+    unparsed.longText = ""
   }
 
   override val longWidth: Int
@@ -51,6 +62,7 @@ class ProjectTitlePane : ShrinkingTitlePart {
     get() = projectTitle.shortWidth
   override val toolTipPart: String
     get() = unparsed.toolTipPart
+
   override fun getLong(): String {
     return projectTitle.getLong()
   }
@@ -65,13 +77,13 @@ class ProjectTitlePane : ShrinkingTitlePart {
   }
 
   override fun shrink(label: JComponent, fm: FontMetrics, maxWidth: Int): String {
-      return projectTitle.shrink(label, fm, maxWidth)
+    return projectTitle.shrink(label, fm, maxWidth)
   }
 }
 
 class ProjectTitle : ShrinkingTitlePart {
 
-  private var text: String =""
+  private var text: String = ""
   private val description = ClippingTitle()
 
   private var projectTextWidth: Int = 0
@@ -108,7 +120,7 @@ class ProjectTitle : ShrinkingTitlePart {
   override val shortWidth: Int
     get() = projectTextWidth
   override val toolTipPart: String
-    get() = project+description.getLong()
+    get() = project + description.getLong()
 
   override fun getLong(): String {
     text = project + description.getLong()

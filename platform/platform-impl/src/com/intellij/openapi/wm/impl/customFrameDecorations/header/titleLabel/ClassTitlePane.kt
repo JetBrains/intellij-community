@@ -17,6 +17,11 @@ class ClassTitlePane : ClippingTitle() {
 
   fun updatePath(c: Component) {
     longText = project?.let {
+      if(it.isDisposed) {
+        classPath = ""
+        return@let ""
+      }
+
       val fileEditorManager = FileEditorManager.getInstance(it)
 
       val file = if (fileEditorManager is FileEditorManagerEx) {
@@ -44,8 +49,11 @@ class ClassTitlePane : ClippingTitle() {
 
         if(fullPath) classPath else baseTitle
 
-      } ?: ""
-    } ?: ""
+      }
+    } ?: kotlin.run {
+      classPath = ""
+      ""
+    }
   }
 
   override val toolTipPart: String
