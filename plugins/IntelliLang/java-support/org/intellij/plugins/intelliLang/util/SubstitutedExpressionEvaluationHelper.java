@@ -88,7 +88,7 @@ public class SubstitutedExpressionEvaluationHelper {
                 values = DfaPsiUtil.getVariableAssignmentsInFile(psiVariable, true, o);
               }
               else if (dfaOption == Configuration.DfaOption.DFA) {
-                values = DfaUtil.getCachedVariableValues(psiVariable, o);
+                values = DfaUtil.getVariableValues(psiVariable, o);
               }
               else if (dfaOption == Configuration.DfaOption.RESOLVE) {
                 PsiExpression initializer = psiVariable.getInitializer();

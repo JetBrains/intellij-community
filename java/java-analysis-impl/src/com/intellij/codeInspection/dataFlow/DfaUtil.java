@@ -33,7 +33,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
  */
 public class DfaUtil {
 
-  public static @NotNull Collection<PsiExpression> getCachedVariableValues(@Nullable PsiVariable variable, @Nullable PsiElement context) {
+  public static @NotNull Collection<PsiExpression> getVariableValues(@Nullable PsiVariable variable, @Nullable PsiElement context) {
     if (variable == null || context == null) return Collections.emptyList();
 
     final PsiCodeBlock codeBlock = tryCast(DfaPsiUtil.getEnclosingCodeBlock(variable, context), PsiCodeBlock.class);
@@ -114,7 +114,7 @@ public class DfaUtil {
       if (!(targetElement instanceof PsiVariable)) {
         return Collections.emptyList();
       }
-      Collection<PsiExpression> variableValues = getCachedVariableValues((PsiVariable)targetElement, qualifierExpression);
+      Collection<PsiExpression> variableValues = getVariableValues((PsiVariable)targetElement, qualifierExpression);
       if (variableValues.isEmpty()) {
         return DfaPsiUtil.getVariableAssignmentsInFile((PsiVariable)targetElement, false, qualifierExpression);
       }
