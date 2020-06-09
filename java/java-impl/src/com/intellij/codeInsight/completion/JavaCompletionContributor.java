@@ -481,13 +481,9 @@ public class JavaCompletionContributor extends CompletionContributor {
     MultiMap<CompletionResultSet, LookupElement> items = MultiMap.create();
     final PsiElement position = parameters.getPosition();
     final boolean first = parameters.getInvocationCount() <= 1;
-    final TailType switchLabelTail;
-    if (IN_ENUM_SWITCH_LABEL.accepts(position)) {
-      PsiSwitchBlock block = Objects.requireNonNull(PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class));
-      switchLabelTail = TailTypes.forSwitchLabel(block);
-    } else {
-      switchLabelTail = null;
-    }
+    final TailType switchLabelTail = IN_SWITCH_LABEL.accepts(position)
+                                     ? TailTypes.forSwitchLabel(Objects.requireNonNull(PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class)))
+                                     : null;
     final boolean isAfterNew = JavaClassNameCompletionContributor.AFTER_NEW.accepts(position);
     final boolean pkgContext = JavaCompletionUtil.inSomePackage(position);
     final PsiType[] expectedTypes = ExpectedTypesGetter.getExpectedTypes(parameters.getPosition(), true);

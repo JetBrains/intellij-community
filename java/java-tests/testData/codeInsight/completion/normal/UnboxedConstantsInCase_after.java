@@ -1,7 +1,7 @@
 public class Demo {
     void foo(Integer i){
         switch(i) {
-            case Types.CHAR<caret>
+            case Types.CHAR:<caret>
         }
     }
 }

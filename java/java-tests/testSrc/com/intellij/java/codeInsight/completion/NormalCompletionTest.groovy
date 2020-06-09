@@ -1998,4 +1998,6 @@ class Abc {
     myFixture.type('\n')
     checkResult()
   }
+
+  void testCaseColonAfterStringConstant() { doTest() }
 }
