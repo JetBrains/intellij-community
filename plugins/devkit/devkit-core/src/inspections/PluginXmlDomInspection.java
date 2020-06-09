@@ -260,7 +260,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
     IdeaPlugin ideaPlugin = DomUtil.getParentOfType(listeners, IdeaPlugin.class, true);
     assert ideaPlugin != null;
-    if (!hasRealPluginId(ideaPlugin)) {
+    if (!ideaPlugin.hasRealPluginId()) {
       ideaPlugin = findMainDescriptor(module);
     }
 
@@ -363,7 +363,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     checkTemplateTextContains(ideaPlugin.getChangeNotes(), "Add change notes here", holder);
     checkTemplateTextContains(ideaPlugin.getChangeNotes(), "most HTML tags may be used", holder);
 
-    if (!hasRealPluginId(ideaPlugin)) return;
+    if (!ideaPlugin.hasRealPluginId()) return;
 
     MultiMap<String, Dependency> dependencies = MultiMap.create();
     ideaPlugin.getDependencies().forEach(dependency -> {
@@ -410,7 +410,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       }
     }
 
-    if (!hasRealPluginId(ideaPlugin)) return;
+    if (!ideaPlugin.hasRealPluginId()) return;
 
     String id = ideaPlugin.getId().getStringValue();
     if (id != null &&
@@ -457,7 +457,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   }
 
   private static void checkPluginIcon(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder, Module module) {
-    if (!hasRealPluginId(ideaPlugin)) return;
+    if (!ideaPlugin.hasRealPluginId()) return;
     if (!isUnderProductionSources(ideaPlugin, module)) return;
     if (Boolean.TRUE == ideaPlugin.getImplementationDetail().getValue()) return;
 
@@ -468,11 +468,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
                            DevKitBundle.message("inspections.plugin.xml.no.plugin.icon.svg.file", PLUGIN_ICON_SVG_FILENAME),
                            null);
     }
-  }
-
-  private static boolean hasRealPluginId(IdeaPlugin ideaPlugin) {
-    String pluginId = ideaPlugin.getPluginId();
-    return pluginId != null && !pluginId.equals(PluginManagerCore.CORE_PLUGIN_ID);
   }
 
   private static void annotateExtensionPoint(ExtensionPoint extensionPoint,
