@@ -21,16 +21,19 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public class SuspiciousInvocationHandlerImplementationInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final CallMatcher INVOKE = CallMatcher.instanceCall(
-    "java.lang.reflect.InvocationHandler", "invoke").parameterTypes(
-      CommonClassNames.JAVA_LANG_OBJECT, "java.lang.reflect.Method", CommonClassNames.JAVA_LANG_OBJECT + "[]");
+  private static final String HANDLER_CLASS = "java.lang.reflect.InvocationHandler";
+  private static final String[] HANDLER_ARGUMENT_TYPES =
+    {CommonClassNames.JAVA_LANG_OBJECT, "java.lang.reflect.Method", CommonClassNames.JAVA_LANG_OBJECT + "[]"};
+  private static final CallMatcher INVOKE = CallMatcher.instanceCall(HANDLER_CLASS, "invoke").parameterTypes(HANDLER_ARGUMENT_TYPES);
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -40,13 +43,25 @@ public class SuspiciousInvocationHandlerImplementationInspection extends Abstrac
         if (INVOKE.methodMatches(method)) {
           check(method);
         }
+        if (method.getReturnType() instanceof PsiClassType) {
+          PsiParameterList list = method.getParameterList();
+          if (list.getParametersCount() == 3) {
+            PsiParameter[] parameters = list.getParameters();
+            if (EntryStream.zip(parameters, HANDLER_ARGUMENT_TYPES).allMatch((p, t) -> TypeUtils.typeEquals(t, p.getType())) &&
+                SyntaxTraverser.psiTraverser(holder.getFile()).filter(PsiMethodReferenceExpression.class)
+                  .filter(ref -> ref.isReferenceTo(method) && TypeUtils.typeEquals(HANDLER_CLASS, ref.getFunctionalInterfaceType()))
+                  .first() != null) {
+              check(method);
+            }
+          }
+        }
       }
 
       @Override
       public void visitLambdaExpression(PsiLambdaExpression lambda) {
         if (lambda.getParameterList().getParametersCount() != 3) return;
         PsiType type = lambda.getFunctionalInterfaceType();
-        if (!InheritanceUtil.isInheritor(type, "java.lang.reflect.InvocationHandler")) return;
+        if (!InheritanceUtil.isInheritor(type, HANDLER_CLASS)) return;
         check(lambda);
       }
 
