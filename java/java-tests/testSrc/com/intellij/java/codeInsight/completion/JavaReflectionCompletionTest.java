@@ -36,7 +36,7 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
   }
 
   public void testDeclaredField() {
-    doTest(2, "num", "num1", "num2", "num0");
+    doTest(3, "num", "num0", "num1", "num2");
   }
 
   public void testDeclaredMethod() {

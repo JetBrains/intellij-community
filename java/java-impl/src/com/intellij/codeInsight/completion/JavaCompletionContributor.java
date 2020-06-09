@@ -23,7 +23,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,7 +54,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -269,14 +267,16 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     if (position instanceof PsiIdentifier) {
       addIdentifierVariants(parameters, position, result, session, matcher);
-    }
 
-    Set<String> usedWords = Collections.emptySet();
-    if (!smart) {
-      MultiMap<CompletionResultSet, LookupElement> referenceVariants = addReferenceVariants(parameters, result, session);
-      usedWords = ContainerUtil.map2Set(referenceVariants.values(), LookupElement::getLookupString);
-      for (Map.Entry<CompletionResultSet, Collection<LookupElement>> entry : referenceVariants.entrySet()) {
-        session.registerBatchItems(entry.getKey(), entry.getValue());
+      PsiReference ref = position.getContainingFile().findReferenceAt(parameters.getOffset());
+      if (ref instanceof PsiLabelReference) {
+        session.registerBatchItems(processLabelReference((PsiLabelReference)ref));
+        result.stopHere();
+      }
+
+      if (!smart && ref instanceof PsiJavaCodeReferenceElement) {
+        session.registerBatchItems(completeReference(parameters, (PsiJavaCodeReferenceElement)ref, session));
+        result.stopHere();
       }
     }
 
@@ -290,6 +290,12 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     if (!smart && psiElement().inside(PsiLiteralExpression.class).accepts(position)) {
+      Set<String> usedWords = new HashSet<>();
+      result.runRemainingContributors(parameters, cr -> {
+        usedWords.add(cr.getLookupElement().getLookupString());
+        result.passResult(cr);
+      });
+
       PsiReference reference = position.getContainingFile().findReferenceAt(parameters.getOffset());
       if (reference == null || reference.isSoft()) {
         WordCompletionContributor.addWordCompletionVariants(result, parameters, usedWords);
@@ -320,15 +326,13 @@ public class JavaCompletionContributor extends CompletionContributor {
     if (!smart && parent instanceof PsiJavaModuleReferenceElement) {
       addModuleReferences(parent, parameters.getOriginalFile(), result);
     }
-
-    result.stopHere();
   }
 
   private static void addIdentifierVariants(@NotNull CompletionParameters parameters,
                                             PsiElement position,
                                             CompletionResultSet result,
                                             JavaCompletionSession session, PrefixMatcher matcher) {
-    session.registerBatchItems(result, getFastIdentifierVariants(parameters, position, matcher, position.getParent(), session));
+    session.registerBatchItems(getFastIdentifierVariants(parameters, position, matcher, position.getParent(), session));
 
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
       session.flushBatchItems();
@@ -409,11 +413,6 @@ public class JavaCompletionContributor extends CompletionContributor {
       items.addAll(new JavaKeywordCompletion(parameters, session).getResults());
     }
 
-    PsiReference ref = position.getContainingFile().findReferenceAt(parameters.getOffset());
-    if (ref instanceof PsiLabelReference) {
-      items.addAll(processLabelReference((PsiLabelReference)ref));
-    }
-
     addExpressionVariants(parameters, position, items::add);
 
     return items;
@@ -475,104 +474,66 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static MultiMap<CompletionResultSet, LookupElement> addReferenceVariants(final CompletionParameters parameters,
-                                                                                   CompletionResultSet result,
-                                                                                   JavaCompletionSession session) {
-    MultiMap<CompletionResultSet, LookupElement> items = MultiMap.create();
-    final PsiElement position = parameters.getPosition();
-    final boolean first = parameters.getInvocationCount() <= 1;
-    final TailType switchLabelTail = IN_SWITCH_LABEL.accepts(position)
-                                     ? TailTypes.forSwitchLabel(Objects.requireNonNull(PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class)))
-                                     : null;
-    final boolean isAfterNew = JavaClassNameCompletionContributor.AFTER_NEW.accepts(position);
-    final boolean pkgContext = JavaCompletionUtil.inSomePackage(position);
-    final PsiType[] expectedTypes = ExpectedTypesGetter.getExpectedTypes(parameters.getPosition(), true);
-    LegacyCompletionContributor.processReferences(parameters, result, (reference, result1) -> {
-      if (reference instanceof PsiJavaReference) {
-        ElementFilter filter = getReferenceFilter(position);
-        if (filter != null) {
-          if (INSIDE_CONSTRUCTOR.accepts(position) &&
-              (parameters.getInvocationCount() <= 1 || CheckInitialized.isInsideConstructorCall(position))) {
-            filter = new AndFilter(filter, new CheckInitialized(position));
-          }
-          final PsiFile originalFile = parameters.getOriginalFile();
-          JavaCompletionProcessor.Options options =
-            JavaCompletionProcessor.Options.DEFAULT_OPTIONS
-              .withCheckAccess(first)
-              .withFilterStaticAfterInstance(first)
-              .withShowInstanceInStaticContext(!first);
-          for (LookupElement element : JavaCompletionUtil.processJavaReference(position,
-                                                                               (PsiJavaReference)reference,
-                                                                               new ElementExtractorFilter(filter),
-                                                                               options,
-                                                                               result1.getPrefixMatcher(), parameters)) {
-            if (session.alreadyProcessed(element)) {
-              continue;
-            }
+  private static List<LookupElement> completeReference(CompletionParameters parameters,
+                                                       PsiJavaCodeReferenceElement ref,
+                                                       JavaCompletionSession session) {
+    PsiElement position = parameters.getPosition();
+    ElementFilter filter = getReferenceFilter(position);
+    if (filter == null) return Collections.emptyList();
 
-            if (switchLabelTail != null) {
-              items.putValue(result1, new IndentingDecorator(TailTypeDecorator.withTail(element, switchLabelTail)));
-            }
-            else {
-              LookupItem<?> item = element.as(LookupItem.CLASS_CONDITION_KEY);
-              if (originalFile instanceof PsiJavaCodeReferenceCodeFragment &&
-                  !((PsiJavaCodeReferenceCodeFragment)originalFile).isClassesAccepted() && item != null) {
-                item.setTailType(TailType.NONE);
-              }
-              if (item instanceof JavaMethodCallElement) {
-                JavaMethodCallElement call = (JavaMethodCallElement)item;
-                final PsiMethod method = call.getObject();
-                if (method.getTypeParameters().length > 0) {
-                  final PsiType returned = TypeConversionUtil.erasure(method.getReturnType());
-                  PsiType matchingExpectation = returned == null
-                                                ? null
-                                                : ContainerUtil.find(expectedTypes, type -> type.isAssignableFrom(returned));
-                  if (matchingExpectation != null) {
-                    call.setInferenceSubstitutorFromExpectedType(position, matchingExpectation);
-                  }
-                }
-              }
+    List<LookupElement> items = new ArrayList<>();
+    if (INSIDE_CONSTRUCTOR.accepts(position) &&
+        (parameters.getInvocationCount() <= 1 || CheckInitialized.isInsideConstructorCall(position))) {
+      filter = new AndFilter(filter, new CheckInitialized(position));
+    }
+    PsiFile originalFile = parameters.getOriginalFile();
 
-              items.putValue(result1, element);
+    boolean first = parameters.getInvocationCount() <= 1;
+    TailType switchLabelTail = IN_SWITCH_LABEL.accepts(position)
+                               ? TailTypes.forSwitchLabel(Objects.requireNonNull(PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class)))
+                               : null;
+    PsiType[] expectedTypes = ExpectedTypesGetter.getExpectedTypes(parameters.getPosition(), true);
+    JavaCompletionProcessor.Options options =
+      JavaCompletionProcessor.Options.DEFAULT_OPTIONS
+        .withCheckAccess(first)
+        .withFilterStaticAfterInstance(first)
+        .withShowInstanceInStaticContext(!first);
+
+    for (LookupElement element : JavaCompletionUtil.processJavaReference(position,
+                                                                         ref,
+                                                                         new ElementExtractorFilter(filter),
+                                                                         options,
+                                                                         session.getMatcher(), parameters)) {
+      if (session.alreadyProcessed(element)) {
+        continue;
+      }
+
+      if (switchLabelTail != null) {
+        items.add(new IndentingDecorator(TailTypeDecorator.withTail(element, switchLabelTail)));
+      }
+      else {
+        LookupItem<?> item = element.as(LookupItem.CLASS_CONDITION_KEY);
+        if (originalFile instanceof PsiJavaCodeReferenceCodeFragment &&
+            !((PsiJavaCodeReferenceCodeFragment)originalFile).isClassesAccepted() && item != null) {
+          item.setTailType(TailType.NONE);
+        }
+        if (item instanceof JavaMethodCallElement) {
+          JavaMethodCallElement call = (JavaMethodCallElement)item;
+          final PsiMethod method = call.getObject();
+          if (method.getTypeParameters().length > 0) {
+            final PsiType returned = TypeConversionUtil.erasure(method.getReturnType());
+            PsiType matchingExpectation = returned == null
+                                          ? null
+                                          : ContainerUtil.find(expectedTypes, type -> type.isAssignableFrom(returned));
+            if (matchingExpectation != null) {
+              call.setInferenceSubstitutorFromExpectedType(position, matchingExpectation);
             }
           }
         }
 
-        return;
+        items.add(element);
       }
-
-      if (reference instanceof PsiLabelReference) {
-        return;
-      }
-
-      final Object[] variants = reference.getVariants();
-      if (variants == null) {
-        LOG.error("Reference=" + reference);
-        return;
-      }
-      for (Object completion : variants) {
-        if (completion == null) {
-          LOG.error("Position=" + position + "\n;Reference=" + reference + "\n;variants=" + Arrays.toString(variants));
-        }
-        if (completion instanceof LookupElement && !session.alreadyProcessed((LookupElement)completion)) {
-          items.putValue(result1, (LookupElement)completion);
-        }
-        else if (completion instanceof PsiClass) {
-          Condition<PsiClass> condition = psiClass -> !session.alreadyProcessed(psiClass) &&
-                                                      JavaCompletionUtil.isSourceLevelAccessible(position, psiClass, pkgContext);
-          items.putValues(result1, JavaClassNameCompletionContributor.createClassLookupItems(
-            (PsiClass)completion,
-            isAfterNew,
-            JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER,
-            condition));
-
-        }
-        else {
-          //noinspection deprecation
-          items.putValue(result1, LookupItemUtil.objectToLookupItem(completion));
-        }
-      }
-    });
+    }
     return items;
   }
 
