@@ -657,7 +657,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
     private boolean isInsideTryBlock(@NotNull PsiExpression methodExpression) {
       PsiElement parent = methodExpression.getParent();
       while (parent != null) {
-        if (parent.isEquivalentTo(context)) return false;
+        if (parent.equals(context)) return false;
         if (parent instanceof PsiTryStatement) return true;
         if (parent instanceof PsiFile) return false;
         parent = parent.getParent();
