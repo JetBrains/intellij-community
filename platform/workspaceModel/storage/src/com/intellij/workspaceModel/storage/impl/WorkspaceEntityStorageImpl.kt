@@ -54,8 +54,12 @@ internal class WorkspaceEntityStorageBuilderImpl(
   private val changeLog: List<ChangeEntry>
     get() = changeLogImpl
 
-  internal inline fun updateChangeLog(updater: (MutableList<ChangeEntry>) -> Unit) {
+  private inline fun updateChangeLog(updater: (MutableList<ChangeEntry>) -> Unit) {
     updater(changeLogImpl)
+    incModificationCount()
+  }
+
+  internal fun incModificationCount() {
     modificationCount++
   }
 

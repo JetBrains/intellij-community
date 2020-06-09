@@ -9,11 +9,12 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.AbstractEntityStorage
 import com.intellij.workspaceModel.storage.impl.EntityId
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import java.util.*
 
 internal open class ExternalEntityMappingImpl<T> internal constructor(internal val index: BidirectionalMap<EntityId, T>)
   : ExternalEntityMapping<T> {
-  private lateinit var entityStorage: AbstractEntityStorage
+  protected lateinit var entityStorage: AbstractEntityStorage
 
   override fun getEntities(data: T): List<WorkspaceEntity> = index.getKeysByValue(data)?.mapNotNull {
     entityStorage.entityDataById(it)?.createEntity(entityStorage)
@@ -43,6 +44,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
 
   override fun addMapping(entity: WorkspaceEntity, data: T) {
     add((entity as WorkspaceEntityBase).id, data)
+    (entityStorage as WorkspaceEntityStorageBuilderImpl).incModificationCount()
   }
 
   private fun add(id: EntityId, data: T) {
@@ -53,6 +55,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   override fun removeMapping(entity: WorkspaceEntity) {
     entity as WorkspaceEntityBase
     remove(entity.id)
+    (entityStorage as WorkspaceEntityStorageBuilderImpl).incModificationCount()
   }
 
   internal fun remove(id: EntityId) {

@@ -25,9 +25,13 @@ class ExternalEntityMappingTest {
     mapping.addMapping(entity, 1)
     mapping.addMapping(entity, 2)
     assertEquals(2, mapping.getDataByEntity(entity))
+    val countBeforeRemove = builder.modificationCount
     mapping.removeMapping(entity)
+    assertTrue(builder.modificationCount > countBeforeRemove)
     assertNull(mapping.getDataByEntity(entity))
+    val countBeforeAdd = builder.modificationCount
     mapping.addMapping(entity, 3)
+    assertTrue(builder.modificationCount > countBeforeAdd)
     assertEquals(3, mapping.getDataByEntity(entity))
 
     val storage = builder.toStorage()
