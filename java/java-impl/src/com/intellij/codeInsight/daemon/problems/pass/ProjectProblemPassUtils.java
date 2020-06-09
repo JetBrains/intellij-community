@@ -29,6 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -56,48 +57,48 @@ public class ProjectProblemPassUtils {
                                                     @NotNull PresentationFactory factory,
                                                     int offset,
                                                     @NotNull PsiMember member,
-                                                    @NotNull Set<PsiElement> brokenUsages) {
+                                                    @NotNull Set<PsiElement> relatedProblems) {
     int column = offset - document.getLineStartOffset(document.getLineNumber(offset));
     int columnWidth = EditorUtil.getPlainSpaceWidth(editor);
-    SpacePresentation usagesOffset = new SpacePresentation(column * columnWidth, 0);
-    InlayPresentation textPresentation = factory.smallText(JavaBundle.message("project.problems.broken.usages", brokenUsages.size()));
+    SpacePresentation problemsOffset = new SpacePresentation(column * columnWidth, 0);
+    InlayPresentation textPresentation = factory.smallText(JavaBundle.message("project.problems.hint.text", relatedProblems.size()));
     InlayPresentation errorTextPresentation = new AttributesTransformerPresentation(textPresentation, __ ->
       editor.getColorsScheme().getAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES));
-    InlayPresentation usagesPresentation = factory.referenceOnHover(errorTextPresentation, (e, p) -> showUsages(member, brokenUsages));
+    InlayPresentation problemsPresentation = factory.referenceOnHover(errorTextPresentation, (e, p) -> showProblems(member, relatedProblems));
 
     JPopupMenu popupMenu = new JPopupMenu();
     JMenuItem item = new JMenuItem(JavaBundle.message("project.problems.settings"));
     item.addActionListener(e -> JavaLensProvider.openSettings(JavaLanguage.INSTANCE, project));
     popupMenu.add(item);
 
-    InlayPresentation withSettings = factory.onClick(usagesPresentation, MouseButton.Right, (e, __) -> {
+    InlayPresentation withSettings = factory.onClick(problemsPresentation, MouseButton.Right, (e, __) -> {
       popupMenu.show(e.getComponent(), e.getX(), e.getY());
       return Unit.INSTANCE;
     });
 
-    return factory.seq(usagesOffset, withSettings);
+    return factory.seq(problemsOffset, withSettings);
   }
 
-  private static void showUsages(@NotNull PsiMember member, @NotNull Set<PsiElement> brokenUsages) {
+  private static void showProblems(@NotNull PsiMember member, @NotNull Set<PsiElement> relatedProblems) {
     Project project = member.getProject();
-    if (brokenUsages.size() == 1) {
-      PsiElement usage = brokenUsages.iterator().next();
-      if (usage instanceof Navigatable) ((Navigatable)usage).navigate(true);
+    if (relatedProblems.size() == 1) {
+      PsiElement problem = relatedProblems.iterator().next();
+      if (problem instanceof Navigatable) ((Navigatable)problem).navigate(true);
     }
     else {
-      String memberName = Objects.requireNonNull(member.getName());
+      String memberName = UsageViewUtil.getLongName(member);
 
       UsageViewPresentation presentation = new UsageViewPresentation();
       String title = JavaBundle.message("project.problems.window.title", memberName);
-      presentation.setCodeUsagesString(title);
+      presentation.setCodeUsagesString(JavaBundle.message("project.problems.title"));
       presentation.setTabName(title);
       presentation.setTabText(title);
 
       PsiElement[] primary = new PsiElement[]{member};
-      Usage[] usages = ContainerUtil.map2Array(brokenUsages, new Usage[brokenUsages.size()],
+      Usage[] usages = ContainerUtil.map2Array(relatedProblems, new Usage[relatedProblems.size()],
                                                e -> UsageInfoToUsageConverter.convert(primary, new UsageInfo(e)));
 
-      UsageTarget[] usageTargets = new UsageTarget[]{new BrokenUsageTargetAdapter(member)};
+      UsageTarget[] usageTargets = new UsageTarget[]{new RelatedProblemTargetAdapter(member)};
       UsageViewManager usageViewManager = UsageViewManager.getInstance(project);
       usageViewManager.showUsages(usageTargets, usages, presentation);
     }
@@ -125,14 +126,16 @@ public class ProjectProblemPassUtils {
     });
   }
 
-  static @NotNull HighlightInfo createHighlightInfo(@NotNull Editor editor, @NotNull PsiElement identifier, @NotNull Set<PsiElement> brokenUsages) {
-    ShowBrokenUsagesAction brokenUsagesAction = new ShowBrokenUsagesAction(brokenUsages);
-    return createHighlightInfo(editor, identifier, brokenUsagesAction);
+  static @NotNull HighlightInfo createHighlightInfo(@NotNull Editor editor,
+                                                    @NotNull PsiElement identifier,
+                                                    @NotNull Set<PsiElement> relatedProblems) {
+    ShowRelatedProblemsAction relatedProblemsAction = new ShowRelatedProblemsAction(relatedProblems);
+    return createHighlightInfo(editor, identifier, relatedProblemsAction);
   }
 
   private static @NotNull HighlightInfo createHighlightInfo(@NotNull Editor editor,
-                                                    @NotNull PsiElement identifier,
-                                                    @NotNull IntentionAction action) {
+                                                            @NotNull PsiElement identifier,
+                                                            @NotNull IntentionAction action) {
     Color textColor = editor.getColorsScheme().getAttributes(CodeInsightColors.WEAK_WARNING_ATTRIBUTES).getEffectColor();
     TextAttributes attributes = new TextAttributes(null, null, textColor, null, Font.PLAIN);
 
@@ -163,7 +166,7 @@ public class ProjectProblemPassUtils {
   }
 
   static boolean hintsEnabled() {
-    return JavaLensProvider.getSettings().isShowBrokenUsages();
+    return JavaLensProvider.getSettings().isShowRelatedProblems();
   }
 
   public static @NotNull Map<PsiMember, Inlay<?>> getInlays(@NotNull Editor editor) {
@@ -275,12 +278,12 @@ public class ProjectProblemPassUtils {
     }
   }
 
-  private static class ShowBrokenUsagesAction extends BaseElementAtCaretIntentionAction {
+  private static class ShowRelatedProblemsAction extends BaseElementAtCaretIntentionAction {
 
-    private final Set<PsiElement> myBrokenUsages;
+    private final Set<PsiElement> myRelatedProblems;
 
-    private ShowBrokenUsagesAction(Set<PsiElement> usages) {
-      myBrokenUsages = usages;
+    private ShowRelatedProblemsAction(Set<PsiElement> relatedProblems) {
+      myRelatedProblems = relatedProblems;
     }
 
     @Override
@@ -292,7 +295,7 @@ public class ProjectProblemPassUtils {
     public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
       PsiMember member = PsiTreeUtil.getParentOfType(element, PsiMember.class);
       if (member == null) return;
-      showUsages(member, myBrokenUsages);
+      showProblems(member, myRelatedProblems);
     }
 
     @Override

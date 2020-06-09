@@ -63,9 +63,9 @@ public class ProjectProblemPass extends EditorBoundHighlightingPass {
     Map<PsiMember, ScopedMember> changes = new SmartHashMap<>();
     problems.forEach((curMember, problem) -> {
       ScopedMember prevMember = problem.prevMember;
-      Set<PsiElement> brokenUsages = problem.brokenUsages;
+      Set<PsiElement> relatedProblems = problem.relatedProblems;
       changes.put(curMember, prevMember);
-      if (brokenUsages != null) addInfo(factory, curMember, brokenUsages, editorInfos);
+      if (relatedProblems != null) addInfo(factory, curMember, relatedProblems, editorInfos);
     });
     updateInfos(myEditor, editorInfos);
 
@@ -80,20 +80,20 @@ public class ProjectProblemPass extends EditorBoundHighlightingPass {
 
   private void addInfo(@NotNull PresentationFactory factory,
                        @NotNull PsiMember psiMember,
-                       @NotNull Set<PsiElement> brokenUsages,
+                       @NotNull Set<PsiElement> relatedProblems,
                        @NotNull Map<PsiMember, EditorInfo> editorInfos) {
     EditorInfo oldInfo = editorInfos.remove(psiMember);
     if (oldInfo != null) Disposer.dispose(oldInfo.myInlay);
-    if (brokenUsages.isEmpty() || hasOtherElementsOnSameLine(psiMember)) return;
+    if (relatedProblems.isEmpty() || hasOtherElementsOnSameLine(psiMember)) return;
     PsiElement identifier = getIdentifier(psiMember);
     if (identifier == null) return;
     int offset = getMemberOffset(psiMember);
-    InlayPresentation presentation = getPresentation(myProject, myEditor, myEditor.getDocument(), factory, offset, psiMember, brokenUsages);
+    InlayPresentation presentation = getPresentation(myProject, myEditor, myEditor.getDocument(), factory, offset, psiMember, relatedProblems);
     BlockInlayRenderer renderer = createBlockRenderer(presentation);
     Inlay<?> newInlay = myEditor.getInlayModel().addBlockElement(offset, true, true, BlockInlayPriority.PROBLEMS, renderer);
     if (newInlay == null) return;
     addListener(renderer, newInlay);
-    HighlightInfo newHighlightInfo = createHighlightInfo(myEditor, identifier, brokenUsages);
+    HighlightInfo newHighlightInfo = createHighlightInfo(myEditor, identifier, relatedProblems);
     editorInfos.put(psiMember, new EditorInfo(newInlay, newHighlightInfo));
   }
 
@@ -121,11 +121,11 @@ public class ProjectProblemPass extends EditorBoundHighlightingPass {
 
   private static class Problem {
     private final ScopedMember prevMember;
-    private final Set<PsiElement> brokenUsages;
+    private final Set<PsiElement> relatedProblems;
 
-    private Problem(ScopedMember prevMember, Set<PsiElement> brokenUsages) {
+    private Problem(ScopedMember prevMember, Set<PsiElement> relatedProblems) {
       this.prevMember = prevMember;
-      this.brokenUsages = brokenUsages;
+      this.relatedProblems = relatedProblems;
     }
   }
 }

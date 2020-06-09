@@ -41,17 +41,17 @@ internal abstract class ProjectProblemsViewTest : LightJavaCodeInsightFixtureTes
       val rootPresentation = presentation.root
       val sequencePresentation = rootPresentation.content as SequencePresentation
       val settingsOnClickPresentation = sequencePresentation.presentations[1] as OnClickPresentation
-      val usagesOnHoverPresentation = settingsOnClickPresentation.presentation as OnHoverPresentation
-      usagesOnHoverPresentation.mouseMoved(clickEvent, point)
-      val usagesDelegatePresentation = usagesOnHoverPresentation.presentation as DynamicDelegatePresentation
-      val usagesOnClickPresentation = usagesDelegatePresentation.delegate as OnClickPresentation
-      usagesOnClickPresentation.mouseClicked(clickEvent, point)
+      val problemOnHoverPresentation = settingsOnClickPresentation.presentation as OnHoverPresentation
+      problemOnHoverPresentation.mouseMoved(clickEvent, point)
+      val problemsDelegatePresentation = problemOnHoverPresentation.presentation as DynamicDelegatePresentation
+      val problemsOnClickPresentation = problemsDelegatePresentation.delegate as OnClickPresentation
+      problemsOnClickPresentation.mouseClicked(clickEvent, point)
       val editor = editorManager.selectedTextEditor!!
       val openedFile = FileDocumentManager.getInstance().getFile(editor.document)!!
       if (openedFile != targetFile) {
         // one problem is reported in inlay, we navigated to this problem
-        val usagePsiFile = PsiManager.getInstance(project).findFile(openedFile)!!
-        val psiElement = usagePsiFile.findElementAt(editor.caretModel.offset)!!
+        val psiFileWithProblem = PsiManager.getInstance(project).findFile(openedFile)!!
+        val psiElement = psiFileWithProblem.findElementAt(editor.caretModel.offset)!!
         problems.add(psiElement)
         // restore file for the next iteration
         editorManager.openFile(targetFile, true)

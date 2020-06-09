@@ -16,11 +16,11 @@ import javax.swing.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-class BrokenUsageTargetAdapter implements PsiElementUsageTarget, ItemPresentation {
+class RelatedProblemTargetAdapter implements PsiElementUsageTarget, ItemPresentation {
 
   private final SmartPsiElementPointer<PsiElement> myPointer;
 
-  BrokenUsageTargetAdapter(@NotNull PsiElement element) {
+  RelatedProblemTargetAdapter(@NotNull PsiElement element) {
     myPointer = SmartPointerManager.createPointer(element);
   }
 

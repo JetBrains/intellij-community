@@ -82,7 +82,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
 
         changedFiles.add(fileToChange.virtualFile)
 
-        val expected = findFilesWithBrokenUsages(relatedFiles, members)
+        val expected = findFilesWithProblems(relatedFiles, members)
         assertContainsElements(actual, expected)
 
         i++
@@ -231,7 +231,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     return possibleOverride == JavaOverridingMethodsSearcher.findOverridingMethod(overrideClass, target, targetClass)
   }
 
-  private fun findFilesWithBrokenUsages(relatedFiles: Set<VirtualFile>, members: List<ScopedMember>): Set<VirtualFile> {
+  private fun findFilesWithProblems(relatedFiles: Set<VirtualFile>, members: List<ScopedMember>): Set<VirtualFile> {
     val psiManager = PsiManager.getInstance(myProject)
     val filesWithErrors = mutableSetOf<VirtualFile>()
     for (file in relatedFiles) {
@@ -324,11 +324,11 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
       val presentation = constrainedPresentations[0]
       val rootPresentation = presentation.root
       val settingsOnClickPresentation = (rootPresentation.content as SequencePresentation).presentations[1] as OnClickPresentation
-      val usagesHoverPresentation = settingsOnClickPresentation.presentation as OnHoverPresentation
-      usagesHoverPresentation.mouseMoved(click, point)
-      val delegatePresentation = usagesHoverPresentation.presentation as DynamicDelegatePresentation
-      val usagesClickPresentation = delegatePresentation.delegate as OnClickPresentation
-      usagesClickPresentation.mouseClicked(click, point)
+      val problemsHoverPresentation = settingsOnClickPresentation.presentation as OnHoverPresentation
+      problemsHoverPresentation.mouseMoved(click, point)
+      val delegatePresentation = problemsHoverPresentation.presentation as DynamicDelegatePresentation
+      val problemsClickPresentation = delegatePresentation.delegate as OnClickPresentation
+      problemsClickPresentation.mouseClicked(click, point)
     }
   }
 
