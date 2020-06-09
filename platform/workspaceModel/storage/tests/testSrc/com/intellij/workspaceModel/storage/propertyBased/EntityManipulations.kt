@@ -20,7 +20,8 @@ internal fun getEntityManipulation(workspace: WorkspaceEntityStorageBuilderImpl)
   return Generator.anyOf(
     RemoveSomeEntity.create(workspace),
     EntityManipulation.addManipulations(workspace),
-    EntityManipulation.modifyManipulations(workspace)
+    EntityManipulation.modifyManipulations(workspace),
+    ChangeEntitySource.create(workspace)
   )
 }
 
@@ -62,6 +63,27 @@ private class RemoveSomeEntity(private val storage: WorkspaceEntityStorageBuilde
 
   companion object {
     fun create(workspace: WorkspaceEntityStorageBuilderImpl): Generator<RemoveSomeEntity> = Generator.constant(RemoveSomeEntity(workspace))
+  }
+}
+
+private class ChangeEntitySource(private val storage: WorkspaceEntityStorageBuilderImpl) : ImperativeCommand {
+  override fun performCommand(env: ImperativeCommand.Environment) {
+    val id = env.generateValue(EntityIdGenerator.create(storage), null) ?: run {
+      env.logMessage("Tried to change entity source, but entity to change isn't found")
+      return
+    }
+    val newSource = env.generateValue(sources, null)
+    val entity = storage.entityDataByIdOrDie(id).createEntity(storage)
+    val oldEntitySource = entity.entitySource
+    storage.changeSource(entity, newSource)
+
+    env.logMessage("Entity source changed. Entity: $entity, Old source: $oldEntitySource, New source: $newSource")
+  }
+
+  companion object {
+    fun create(workspace: WorkspaceEntityStorageBuilderImpl): Generator<ChangeEntitySource> {
+      return Generator.constant(ChangeEntitySource(workspace))
+    }
   }
 }
 
