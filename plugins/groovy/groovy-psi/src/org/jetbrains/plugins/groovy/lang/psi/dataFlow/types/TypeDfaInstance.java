@@ -23,10 +23,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.BiConsumer;
 
 class TypeDfaInstance implements DfaInstance<TypeDfaState> {
@@ -201,12 +198,14 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       return;
     }
     InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
+    Map<VariableDescriptor, DFAType> initialTypes = new LinkedHashMap<>(myFlowInfo.getInitialTypes());
+    initialTypes.putAll(state.getVarTypes());
     switch (kind) {
       case IN_PLACE_ONCE:
-        handleClosureDFAResult(state, instruction, blockFlowOwner, state::putType);
+        handleClosureDFAResult(instruction, blockFlowOwner, initialTypes, state::putType);
         break;
       case IN_PLACE_UNKNOWN:
-        handleClosureDFAResult(state, instruction, blockFlowOwner, (descriptor, dfaType) -> {
+        handleClosureDFAResult(instruction, blockFlowOwner, initialTypes, (descriptor, dfaType) -> {
           DFAType existingType = state.getVariableType(descriptor);
           if (existingType == null) {
             PsiType initialType = myInitialTypeProvider.initialType(descriptor);
@@ -219,40 +218,44 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
         });
         break;
       case UNKNOWN:
-        for (VariableDescriptor descriptor : myFlowInfo.getInterestingDescriptors()) {
-          PsiType upperBoundByWrites = TypeDfaInstanceUtilKt.getLeastUpperBoundByAllWrites(blockFlowOwner, descriptor);
-          if (upperBoundByWrites != PsiType.NULL) {
-            DFAType currentType = state.getVariableType(descriptor);
-            currentType = currentType == null ? DFAType.create(null) : currentType;
-            DFAType flushedType = currentType.addFlushingType(upperBoundByWrites, myManager);
-            state.putType(descriptor, flushedType);
+        runWithCycleCheck(instruction, () -> {
+          for (VariableDescriptor descriptor : myFlowInfo.getInterestingDescriptors()) {
+            PsiType upperBoundByWrites = TypeDfaInstanceUtilKt.getLeastUpperBoundByAllWrites(blockFlowOwner, initialTypes, descriptor);
+            if (upperBoundByWrites != PsiType.NULL) {
+              DFAType currentType = state.getVariableType(descriptor);
+              currentType = currentType == null ? DFAType.create(null) : currentType;
+              DFAType flushedType = currentType.addFlushingType(upperBoundByWrites, myManager);
+              state.putType(descriptor, flushedType);
+            }
           }
-        }
+          return null;
+        });
     }
   }
 
-  private void handleClosureDFAResult(@NotNull TypeDfaState state,
-                                      @NotNull Instruction instruction,
+  private void handleClosureDFAResult(@NotNull Instruction instruction,
                                       @NotNull GrControlFlowOwner block,
+                                      @NotNull Map<VariableDescriptor, DFAType> initialTypes,
                                       @NotNull BiConsumer<? super VariableDescriptor, ? super DFAType> typeConsumer) {
     InferenceCache blockCache = TypeInferenceHelper.getInferenceCache(block);
     Instruction[] blockFlow = block.getControlFlow();
-    Map<VariableDescriptor, DFAType> initialTypesForNestedFlow = new LinkedHashMap<>(myFlowInfo.getInitialTypes());
-    initialTypesForNestedFlow.putAll(state.getVarTypes());
     Instruction lastBlockInstruction = blockFlow[blockFlow.length - 1];
-    Computable<?> inference = () -> {
+    runWithCycleCheck(instruction, () -> {
       for (VariableDescriptor outerDescriptor : myFlowInfo.getInterestingDescriptors()) {
-        PsiType descriptorType = blockCache.getInferredType(outerDescriptor, lastBlockInstruction, false, initialTypesForNestedFlow);
+        PsiType descriptorType = blockCache.getInferredType(outerDescriptor, lastBlockInstruction, false, initialTypes);
         typeConsumer.accept(outerDescriptor, DFAType.create(descriptorType));
       }
       return null;
-    };
-    if (!myFlowInfo.getAcyclicInstructions().contains(instruction)) {
-      // todo: IDEA-242437
-      TypeInferenceHelper.doInference(initialTypesForNestedFlow, inference);
+    });
+  }
+
+  private void runWithCycleCheck(@NotNull Instruction instruction, @NotNull Computable<?> action) {
+    if (myFlowInfo.getAcyclicInstructions().contains(instruction)) {
+      action.get();
     }
     else {
-      inference.compute();
+      // todo: IDEA-242437
+      TypeInferenceHelper.doInference(Collections.emptyMap(), action);
     }
   }
 }

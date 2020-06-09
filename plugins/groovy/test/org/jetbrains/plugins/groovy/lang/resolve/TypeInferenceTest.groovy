@@ -1894,4 +1894,17 @@ for (def i = 0; i < 10; i++) {
 }
 ''', JAVA_LANG_INTEGER
   }
+
+  void 'test cycle with unknown closure'() {
+    allowNestedContext(2, testRootDisposable)
+    doTest '''
+static  bar(Closure cl) {}
+
+static def foo() {
+    for (def i = 0; i < 10; i = bar { i++ }) {
+      <caret>i
+    }
+}
+''', JAVA_LANG_INTEGER
+  }
 }
