@@ -842,6 +842,17 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     consoleContent.scrollToEnd();
   }
 
+  @Override
+  public boolean isConsoleVisible() {
+    if (!Registry.is("vcs.showConsole")) return false;
+
+    ContentManager cm = getContentManager();
+    if (cm == null) return false;
+
+    VcsConsoleContent consoleContent = getConsoleContent(cm);
+    return consoleContent != null;
+  }
+
   private void showConsoleInternal() {
     ContentManager cm = getContentManager();
     if (cm == null) {
