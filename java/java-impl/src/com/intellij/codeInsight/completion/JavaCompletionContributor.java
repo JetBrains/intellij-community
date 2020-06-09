@@ -229,10 +229,6 @@ public class JavaCompletionContributor extends CompletionContributor {
 
   @Override
   public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet _result) {
-    if (parameters.getCompletionType() != CompletionType.BASIC) {
-      return;
-    }
-
     final PsiElement position = parameters.getPosition();
     if (!isInJavaContext(position)) {
       return;
@@ -245,13 +241,20 @@ public class JavaCompletionContributor extends CompletionContributor {
       return;
     }
 
+    boolean smart = parameters.getCompletionType() == CompletionType.SMART;
+
     final CompletionResultSet result = JavaCompletionSorting.addJavaSorting(parameters, _result);
     JavaCompletionSession session = new JavaCompletionSession(result);
 
     if (ANNOTATION_ATTRIBUTE_NAME.accepts(position) && !JavaKeywordCompletion.isAfterPrimitiveOrArrayType(position)) {
-      addExpectedTypeMembers(parameters, result);
-      JavaKeywordCompletion.addPrimitiveTypes(result, position, session);
-      completeAnnotationAttributeName(result, position, parameters);
+      addExpectedTypeMembers(parameters, false, result);
+      if (smart) {
+        JavaSmartCompletionContributor.provideSmartCompletionSuggestions(parameters, result);
+      }
+      else {
+        JavaKeywordCompletion.addPrimitiveTypes(result, position, session);
+        completeAnnotationAttributeName(result, position, parameters);
+      }
       result.stopHere();
       return;
     }
@@ -259,7 +262,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     PrefixMatcher matcher = result.getPrefixMatcher();
     PsiElement parent = position.getParent();
 
-    if (new JavaKeywordCompletion(parameters, session).addWildcardExtendsSuper(result, position)) {
+    if (!smart && new JavaKeywordCompletion(parameters, session).addWildcardExtendsSuper(result, position)) {
       result.stopHere();
       return;
     }
@@ -268,32 +271,45 @@ public class JavaCompletionContributor extends CompletionContributor {
       addIdentifierVariants(parameters, position, result, session, matcher);
     }
 
-    MultiMap<CompletionResultSet, LookupElement> referenceVariants = addReferenceVariants(parameters, result, session);
-    Set<String> usedWords = ContainerUtil.map2Set(referenceVariants.values(), LookupElement::getLookupString);
-    for (Map.Entry<CompletionResultSet, Collection<LookupElement>> entry : referenceVariants.entrySet()) {
-      session.registerBatchItems(entry.getKey(), entry.getValue());
+    Set<String> usedWords = Collections.emptySet();
+    if (!smart) {
+      MultiMap<CompletionResultSet, LookupElement> referenceVariants = addReferenceVariants(parameters, result, session);
+      usedWords = ContainerUtil.map2Set(referenceVariants.values(), LookupElement::getLookupString);
+      for (Map.Entry<CompletionResultSet, Collection<LookupElement>> entry : referenceVariants.entrySet()) {
+        session.registerBatchItems(entry.getKey(), entry.getValue());
+      }
     }
 
     session.flushBatchItems();
 
-    if (psiElement().inside(PsiLiteralExpression.class).accepts(position)) {
+    if (smart) {
+      JavaSmartCompletionContributor.provideSmartCompletionSuggestions(parameters, result);
+      if (parameters.getInvocationCount() > 1 && shouldAddExpressionVariants(parameters)) {
+        addExpectedTypeMembers(parameters, true, result);
+      }
+    }
+
+    if (!smart && psiElement().inside(PsiLiteralExpression.class).accepts(position)) {
       PsiReference reference = position.getContainingFile().findReferenceAt(parameters.getOffset());
       if (reference == null || reference.isSoft()) {
         WordCompletionContributor.addWordCompletionVariants(result, parameters, usedWords);
       }
     }
 
-    if (position instanceof PsiIdentifier) {
+    if (!smart && position instanceof PsiIdentifier) {
       JavaGenerateMemberCompletionContributor.fillCompletionVariants(parameters, result);
     }
 
-    addAllClasses(parameters, result, session);
+    if (!smart) {
+      addAllClasses(parameters, result, session);
+    }
 
     if (position instanceof PsiIdentifier) {
       FunctionalExpressionCompletionProvider.addFunctionalVariants(parameters, true, result.getPrefixMatcher(), result);
     }
 
     if (position instanceof PsiIdentifier &&
+        !smart &&
         parent instanceof PsiReferenceExpression &&
         !((PsiReferenceExpression)parent).isQualified() &&
         parameters.isExtendedCompletion() &&
@@ -301,7 +317,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       new JavaStaticMemberProcessor(parameters).processStaticMethodsGlobally(matcher, result);
     }
 
-    if (parent instanceof PsiJavaModuleReferenceElement) {
+    if (!smart && parent instanceof PsiJavaModuleReferenceElement) {
       addModuleReferences(parent, parameters.getOriginalFile(), result);
     }
 
@@ -316,9 +332,18 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
       session.flushBatchItems();
-      new JavaInheritorsGetter(ConstructorInsertHandler.BASIC_INSTANCE).generateVariants(parameters, matcher, lookupElement -> {
-        if (!isSuggestedByKeywordCompletion(lookupElement)) {
-          session.addClassItem(lookupElement);
+
+      boolean smart = parameters.getCompletionType() == CompletionType.SMART;
+      ConstructorInsertHandler handler = smart
+                                         ? ConstructorInsertHandler.SMART_INSTANCE
+                                         : ConstructorInsertHandler.BASIC_INSTANCE;
+      ExpectedTypeInfo[] types = JavaSmartCompletionContributor.getExpectedTypes(parameters);
+      new JavaInheritorsGetter(handler).generateVariants(parameters, matcher, types, lookupElement -> {
+        if ((smart || !isSuggestedByKeywordCompletion(lookupElement)) && result.getPrefixMatcher().prefixMatches(lookupElement)) {
+          session.registerClassFrom(lookupElement);
+          result.addElement(smart
+                            ? JavaSmartCompletionContributor.decorate(lookupElement, Arrays.asList(types))
+                            : AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(lookupElement));
         }
       });
     }
@@ -349,15 +374,17 @@ public class JavaCompletionContributor extends CompletionContributor {
                                                                PrefixMatcher matcher,
                                                                PsiElement parent,
                                                                @NotNull JavaCompletionSession session) {
+    boolean smart = parameters.getCompletionType() == CompletionType.SMART;
+
     List<LookupElement> items = new ArrayList<>();
     if (TypeArgumentCompletionProvider.IN_TYPE_ARGS.accepts(position)) {
-      new TypeArgumentCompletionProvider(false, session).addTypeArgumentVariants(parameters, items::add, matcher);
+      new TypeArgumentCompletionProvider(smart, session).addTypeArgumentVariants(parameters, items::add, matcher);
     }
 
     FunctionalExpressionCompletionProvider.addFunctionalVariants(parameters, false, matcher, items::add);
 
     if (MethodReturnTypeProvider.IN_METHOD_RETURN_TYPE.accepts(position)) {
-      MethodReturnTypeProvider.addProbableReturnTypes(parameters, element -> {
+      MethodReturnTypeProvider.addProbableReturnTypes(position, element -> {
         registerClassFromTypeElement(element, session);
         items.add(element);
       });
@@ -369,14 +396,23 @@ public class JavaCompletionContributor extends CompletionContributor {
       final List<ExpectedTypeInfo> expected = Arrays.asList(ExpectedTypesProvider.getExpectedTypes((PsiExpression)parent, true));
       StreamConversion.addCollectConversion((PsiReferenceExpression)parent, expected,
                                              lookupElement -> items.add(JavaSmartCompletionContributor.decorate(lookupElement, expected)));
-      items.addAll(StreamConversion.addToStreamConversion((PsiReferenceExpression)parent, parameters));
+      if (!smart) {
+        items.addAll(StreamConversion.addToStreamConversion((PsiReferenceExpression)parent, parameters));
+      }
     }
 
     if (IMPORT_REFERENCE.accepts(position)) {
       items.add(LookupElementBuilder.create("*"));
     }
 
-    items.addAll(new JavaKeywordCompletion(parameters, session).getResults());
+    if (!smart) {
+      items.addAll(new JavaKeywordCompletion(parameters, session).getResults());
+    }
+
+    PsiReference ref = position.getContainingFile().findReferenceAt(parameters.getOffset());
+    if (ref instanceof PsiLabelReference) {
+      items.addAll(processLabelReference((PsiLabelReference)ref));
+    }
 
     addExpressionVariants(parameters, position, items::add);
 
@@ -396,12 +432,17 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
   }
 
+  private static boolean shouldAddExpressionVariants(CompletionParameters parameters) {
+    return JavaSmartCompletionContributor.INSIDE_EXPRESSION.accepts(parameters.getPosition()) &&
+           !JavaKeywordCompletion.AFTER_DOT.accepts(parameters.getPosition()) &&
+           !SmartCastProvider.shouldSuggestCast(parameters);
+  }
+
   private static void addExpressionVariants(@NotNull CompletionParameters parameters, PsiElement position, Consumer<? super LookupElement> result) {
-    if (JavaSmartCompletionContributor.INSIDE_EXPRESSION.accepts(position) &&
-        !JavaKeywordCompletion.AFTER_DOT.accepts(position) && !SmartCastProvider.shouldSuggestCast(parameters)) {
-      addExpectedTypeMembers(parameters, result);
+    if (shouldAddExpressionVariants(parameters)) {
+      addExpectedTypeMembers(parameters, false, result);
       if (SameSignatureCallParametersProvider.IN_CALL_ARGUMENT.accepts(position)) {
-        new SameSignatureCallParametersProvider().addSignatureItems(parameters, result);
+        new SameSignatureCallParametersProvider().addSignatureItems(position, result);
       }
     }
   }
@@ -505,7 +546,6 @@ public class JavaCompletionContributor extends CompletionContributor {
       }
 
       if (reference instanceof PsiLabelReference) {
-        items.putValues(result1, LabelReferenceCompletion.processLabelReference((PsiLabelReference)reference));
         return;
       }
 
@@ -538,6 +578,10 @@ public class JavaCompletionContributor extends CompletionContributor {
       }
     });
     return items;
+  }
+
+  private static List<LookupElement> processLabelReference(PsiLabelReference reference) {
+    return ContainerUtil.map(reference.getVariants(), s -> TailTypeDecorator.withTail(LookupElementBuilder.create(s), TailType.SEMICOLON));
   }
 
   static boolean isClassNamePossible(CompletionParameters parameters) {
@@ -843,6 +887,10 @@ public class JavaCompletionContributor extends CompletionContributor {
         context.setReplacementOffset(ref.getTextRange().getEndOffset());
       }
     }
+
+    if (context.getCompletionType() == CompletionType.SMART) {
+      JavaSmartCompletionContributor.beforeSmartCompletion(context);
+    }
   }
 
   @Nullable
@@ -977,10 +1025,16 @@ public class JavaCompletionContributor extends CompletionContributor {
     return null;
   }
 
-  private static void addExpectedTypeMembers(CompletionParameters parameters, final Consumer<? super LookupElement> result) {
-    if (parameters.getInvocationCount() <= 1) { // on second completion, StaticMemberProcessor will suggest those
-      for (final ExpectedTypeInfo info : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
-        new JavaMembersGetter(info.getDefaultType(), parameters).addMembers(false, result);
+  private static void addExpectedTypeMembers(CompletionParameters parameters, boolean searchInheritors, final Consumer<? super LookupElement> result) {
+    boolean smart = parameters.getCompletionType() == CompletionType.SMART;
+    if (smart || parameters.getInvocationCount() <= 1) { // on second basic completion, StaticMemberProcessor will suggest those
+      ExpectedTypeInfo[] types = JavaSmartCompletionContributor.getExpectedTypes(parameters);
+      Consumer<LookupElement> consumer = e -> result.consume(smart ? JavaSmartCompletionContributor.decorate(e, Arrays.asList(types)) : e);
+      for (ExpectedTypeInfo info : types) {
+        new JavaMembersGetter(info.getType(), parameters).addMembers(searchInheritors, consumer);
+        if (!info.getType().equals(info.getDefaultType())) {
+          new JavaMembersGetter(info.getDefaultType(), parameters).addMembers(searchInheritors, consumer);
+        }
       }
     }
   }

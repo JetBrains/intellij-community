@@ -12,16 +12,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
-public class MethodReferenceCompletionProvider extends CompletionProvider<CompletionParameters> {
+class MethodReferenceCompletionProvider {
   private static final Logger LOG = Logger.getInstance(MethodReferenceCompletionProvider.class);
 
-  @Override
-  protected void addCompletions(@NotNull CompletionParameters parameters,
-                                @NotNull ProcessingContext context,
-                                @NotNull final CompletionResultSet result) {
+  static void addCompletions(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     if (!PsiUtil.isLanguageLevel8OrHigher(parameters.getOriginalFile())) return;
 
     final PsiElement rulezzRef = parameters.getPosition().getParent();

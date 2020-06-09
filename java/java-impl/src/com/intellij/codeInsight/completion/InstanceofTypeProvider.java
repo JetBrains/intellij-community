@@ -21,7 +21,6 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.InstanceOfLeftPartTypeGetter;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -34,13 +33,10 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 /**
  * @author peter
  */
-class InstanceofTypeProvider extends CompletionProvider<CompletionParameters> {
+class InstanceofTypeProvider {
   static final ElementPattern<PsiElement> AFTER_INSTANCEOF = psiElement().afterLeaf(PsiKeyword.INSTANCEOF);
 
-  @Override
-  protected void addCompletions(@NotNull final CompletionParameters parameters,
-                                @NotNull final ProcessingContext context,
-                                @NotNull final CompletionResultSet result) {
+  static void addCompletions(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     final PsiElement position = parameters.getPosition();
     final PsiType[] leftTypes = InstanceOfLeftPartTypeGetter.getLeftTypes(position);
     final Set<PsiClassType> expectedClassTypes = new LinkedHashSet<>();
@@ -61,7 +57,6 @@ class InstanceofTypeProvider extends CompletionProvider<CompletionParameters> {
         final PsiClass psiClass = PsiUtil.resolveClassInType(type);
         if (psiClass == null || psiClass instanceof PsiTypeParameter) return;
 
-        //noinspection SuspiciousMethodCalls
         if (expectedClassTypes.contains(type)) return;
 
         result.addElement(createInstanceofLookupElement(psiClass, parameterizedTypes));

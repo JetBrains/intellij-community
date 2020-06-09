@@ -13,7 +13,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.ProcessingContext;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -28,7 +27,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 /**
 * @author peter
 */
-class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParameters> {
+class TypeArgumentCompletionProvider {
   static final ElementPattern<PsiElement> IN_TYPE_ARGS = psiElement().inside(PsiReferenceParameterList.class);
   private static final Logger LOG = Logger.getInstance(TypeArgumentCompletionProvider.class);
   private final boolean mySmart;
@@ -37,11 +36,6 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
   TypeArgumentCompletionProvider(boolean smart, @Nullable JavaCompletionSession session) {
     mySmart = smart;
     mySession = session;
-  }
-
-  @Override
-  protected void addCompletions(@NotNull final CompletionParameters parameters, @NotNull final ProcessingContext processingContext, @NotNull final CompletionResultSet resultSet) {
-    addTypeArgumentVariants(parameters, resultSet, resultSet.getPrefixMatcher());
   }
 
   void addTypeArgumentVariants(CompletionParameters parameters, Consumer<? super LookupElement> result, PrefixMatcher matcher) {
