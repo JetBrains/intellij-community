@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.OrderEnumerator;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,7 +33,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class LoaderFactory {
+public final class LoaderFactory implements Disposable {
   private final Project myProject;
 
   private final ConcurrentMap<Module, ClassLoader> myModule2ClassLoader;
@@ -55,14 +54,12 @@ public final class LoaderFactory {
         clearClassLoaderCache();
       }
     });
+  }
 
-    Disposer.register(project, new Disposable() {
-      @Override
-      public void dispose() {
-        myConnection.disconnect();
-        myModule2ClassLoader.clear();
-      }
-    });
+  @Override
+  public void dispose() {
+    myConnection.disconnect();
+    myModule2ClassLoader.clear();
   }
 
   @NotNull public ClassLoader getLoader(final VirtualFile formFile) {

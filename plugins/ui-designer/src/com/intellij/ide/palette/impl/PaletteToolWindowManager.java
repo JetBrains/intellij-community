@@ -47,7 +47,7 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
     Disposer.register(this, () -> myToolWindowPanel.dispose());
 
     myToolWindow = ToolWindowManager.getInstance(myProject)
-      .registerToolWindow(IdeBundle.message("toolwindow.palette"), false, getAnchor(), myProject, true);
+      .registerToolWindow(IdeBundle.message("toolwindow.palette"), false, getAnchor(), this, true);
     myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowPalette);
     initGearActions();
 
