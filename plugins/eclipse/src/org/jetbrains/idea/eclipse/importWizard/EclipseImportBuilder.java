@@ -184,7 +184,7 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
       catch (IOException | JDOMException e) {
         refEx.set(e);
       }
-    }, EclipseBundle.message("eclipse.import.converting"), false, currentProject);
+    }, EclipseBundle.message("eclipse.import.converting"), false, null);
 
     if (!refEx.isNull()) {
       Messages.showErrorDialog(project, refEx.get().getMessage(), getTitle());
