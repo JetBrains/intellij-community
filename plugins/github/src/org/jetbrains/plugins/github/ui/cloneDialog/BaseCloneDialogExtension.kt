@@ -8,12 +8,13 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionStatusLine
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionStatusLine.Companion.greyText
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
+import org.jetbrains.plugins.github.authentication.accounts.isGHAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import javax.swing.Icon
 
 private val GithubAccount.nameWithServer: String
   get() {
-    val serverPrefix = if (server.isGithubDotCom) "" else "${server.host}/"
+    val serverPrefix = if (isGHAccount) "" else "${server.host}/"
     return serverPrefix + name
   }
 

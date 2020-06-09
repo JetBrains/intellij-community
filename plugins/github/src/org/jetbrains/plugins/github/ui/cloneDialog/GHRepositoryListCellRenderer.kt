@@ -8,6 +8,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
+import org.jetbrains.plugins.github.authentication.accounts.isGHAccount
 import java.awt.BorderLayout
 import java.awt.Component
 import javax.swing.JList
@@ -25,7 +26,7 @@ class GHRepositoryListCellRenderer(private val accountsSupplier: () -> Collectio
     val component = super.getListCellRendererComponent(list, value, index, selected, hasFocus)
     if (showAccountNameAbove(list, index)) {
       val name = with(value) {
-        if (account.server.isGithubDotCom) account.name else ("${account.server.host}/${account.name}")
+        if (account.isGHAccount) account.name else ("${account.server.host}/${account.name}")
       }
       return nameRenderer.withName(name, component, index != 0)
     }

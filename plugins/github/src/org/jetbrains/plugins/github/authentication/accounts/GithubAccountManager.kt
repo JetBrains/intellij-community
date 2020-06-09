@@ -17,6 +17,8 @@ import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.util.GithubUtil
 import kotlin.properties.Delegates.observable
 
+internal val GithubAccount.isGHAccount: Boolean get() = server.isGithubDotCom
+
 /**
  * Handles application-level Github accounts
  */

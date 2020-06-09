@@ -8,7 +8,6 @@ import com.intellij.dvcs.ui.SelectChildTextFieldWithBrowseButton
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -52,7 +51,10 @@ import org.jetbrains.plugins.github.api.data.request.Affiliation
 import org.jetbrains.plugins.github.api.data.request.GithubRequestPagination
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
-import org.jetbrains.plugins.github.authentication.accounts.*
+import org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListener
+import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
+import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
+import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
@@ -72,7 +74,10 @@ internal abstract class BaseCloneDialogExtensionComponent(
   private val accountInformationProvider: GithubAccountInformationProvider,
   private val avatarLoader: CachingGithubUserAvatarLoader,
   private val imageResizer: GithubImageResizer
-) : VcsCloneDialogExtensionComponent() {
+) : VcsCloneDialogExtensionComponent(),
+    AccountRemovedListener,
+    AccountTokenChangedListener {
+
   private val LOG = GithubUtil.LOG
 
   private val progressManager: ProgressVisibilityManager
@@ -147,25 +152,6 @@ internal abstract class BaseCloneDialogExtensionComponent(
 
     Disposer.register(this, progressManager)
 
-    ApplicationManager.getApplication().messageBus.connect(this).apply {
-      subscribe(GithubAccountManager.ACCOUNT_REMOVED_TOPIC, object : AccountRemovedListener {
-        override fun accountRemoved(removedAccount: GithubAccount) {
-          removeAccount(removedAccount)
-          dialogStateListener.onListItemChanged()
-        }
-      })
-
-      subscribe(GithubAccountManager.ACCOUNT_TOKEN_CHANGED_TOPIC, object : AccountTokenChangedListener {
-        override fun tokenChanged(account: GithubAccount) {
-          if (repositoriesByAccount[account] != null)
-            return
-          dialogStateListener.onListItemChanged()
-          addAccount(account)
-          switchToRepositories()
-        }
-      })
-    }
-
     repositoriesPanel = panel {
       row {
         cell(isFullWidth = true) {
@@ -197,6 +183,19 @@ internal abstract class BaseCloneDialogExtensionComponent(
     else {
       switchToLogin()
     }
+  }
+
+  override fun accountRemoved(removedAccount: GithubAccount) {
+    removeAccount(removedAccount)
+    dialogStateListener.onListItemChanged()
+  }
+
+  override fun tokenChanged(account: GithubAccount) {
+    if (repositoriesByAccount[account] != null) return
+
+    dialogStateListener.onListItemChanged()
+    addAccount(account)
+    switchToRepositories()
   }
 
   private fun switchToLogin(account: GithubAccount? = null) {
