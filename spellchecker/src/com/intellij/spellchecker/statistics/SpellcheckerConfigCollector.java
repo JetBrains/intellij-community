@@ -22,7 +22,7 @@ public class SpellcheckerConfigCollector extends ProjectUsagesCollector {
   protected @NotNull Set<MetricEvent> getMetrics(@NotNull Project project) {
     SpellCheckerSettings settings = SpellCheckerSettings.getInstance(project);
     Set<MetricEvent> result =
-      ContainerUtil.set(newMetric("all.bundled.enabled", settings.getBundledDisabledDictionariesPaths().isEmpty()),
+      ContainerUtil.set(newMetric("all.bundled.enabled", true),
                         newMetric("max.spellchecker.suggestions", settings.getCorrectionsLimit()),
                         newCounterMetric("custom.dict.count", settings.getCustomDictionariesPaths().size()),
                         newBooleanMetric("use.single.dict.to.save", settings.isUseSingleDictionaryToSave()));

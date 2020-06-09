@@ -32,9 +32,6 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   private static final String RUNTIME_DICTIONARIES_ATTR_NAME = "RuntimeDictionaries";
   private static final String RUNTIME_DICTIONARY_ATTR_NAME = "RuntimeDictionary";
 
-  private static final String BUNDLED_DICTIONARIES_ATTR_NAME = "BundledDictionaries";
-  private static final String BUNDLED_DICTIONARY_ATTR_NAME = "BundledDictionary";
-
   private static final String CORRECTIONS_MAX_LIMIT = "CorrectionsLimit";
   private static final int DEFAULT_MAX_VALUE = 5;
   private static final String DICTIONARY_TO_SAVE_ATTR_NAME = "DefaultDictionary";
@@ -47,7 +44,6 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   private List<String> myCustomDictionariesPaths = new ArrayList<>();
   private Set<String> myDisabledDictionariesPaths = new HashSet<>();
 
-  private Set<String> myBundledDisabledDictionariesPaths = new HashSet<>();
   private Set<String> myRuntimeDisabledDictionariesNames = new HashSet<>();
   private int myCorrectionsLimit = DEFAULT_MAX_VALUE;
   private String myDictionaryToSave = DEFAULT_DICTIONARY_TO_SAVE;
@@ -98,15 +94,6 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
     myDisabledDictionariesPaths = disabledDictionariesPaths;
   }
 
-
-  public Set<String> getBundledDisabledDictionariesPaths() {
-    return myBundledDisabledDictionariesPaths;
-  }
-
-  public void setBundledDisabledDictionariesPaths(Set<String> bundledDisabledDictionariesPaths) {
-    myBundledDisabledDictionariesPaths = bundledDisabledDictionariesPaths;
-  }
-
   public Set<String> getRuntimeDisabledDictionariesNames() {
     return myRuntimeDisabledDictionariesNames;
   }
@@ -123,8 +110,7 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
 
   @Override
   public Element getState() {
-    if (myBundledDisabledDictionariesPaths.isEmpty() &&
-        myRuntimeDisabledDictionariesNames.isEmpty() &&
+    if (myRuntimeDisabledDictionariesNames.isEmpty() &&
         myOldDictionaryFoldersPaths.isEmpty() &&
         myCustomDictionariesPaths.isEmpty() &&
         myDisabledDictionariesPaths.isEmpty() &&
@@ -135,18 +121,10 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
     }
 
     final Element element = new Element(SPELLCHECKER_MANAGER_SETTINGS_TAG);
-    // bundled
-    element.setAttribute(BUNDLED_DICTIONARIES_ATTR_NAME, String.valueOf(myBundledDisabledDictionariesPaths.size()));
-    Iterator<String> iterator = myBundledDisabledDictionariesPaths.iterator();
-    int i = 0;
-    while (iterator.hasNext()) {
-      element.setAttribute(BUNDLED_DICTIONARY_ATTR_NAME + i, iterator.next());
-      i++;
-    }
     // runtime
     element.setAttribute(RUNTIME_DICTIONARIES_ATTR_NAME, String.valueOf(myRuntimeDisabledDictionariesNames.size()));
-    iterator = myRuntimeDisabledDictionariesNames.iterator();
-    i = 0;
+    Iterator<String> iterator  = myRuntimeDisabledDictionariesNames.iterator();
+    int i = 0;
     while (iterator.hasNext()) {
       element.setAttribute(RUNTIME_DICTIONARY_ATTR_NAME + i, iterator.next());
       i++;
@@ -178,17 +156,11 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
 
   @Override
   public void loadState(@NotNull final Element element) {
-    myBundledDisabledDictionariesPaths.clear();
     myRuntimeDisabledDictionariesNames.clear();
     myCustomDictionariesPaths.clear();
     myOldDictionaryFoldersPaths.clear();
     myDisabledDictionariesPaths.clear();
     try {
-      // bundled
-      final int bundledDictionariesSize = parseInt(element.getAttributeValue(BUNDLED_DICTIONARIES_ATTR_NAME), 0);
-      for (int i = 0; i < bundledDictionariesSize; i++) {
-        myBundledDisabledDictionariesPaths.add(element.getAttributeValue(BUNDLED_DICTIONARY_ATTR_NAME + i));
-      }
       // runtime
       final int runtimeDictionariesSize = parseInt(element.getAttributeValue(RUNTIME_DICTIONARIES_ATTR_NAME), 0);
       for (int i = 0; i < runtimeDictionariesSize; i++) {

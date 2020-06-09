@@ -29,7 +29,6 @@ import com.intellij.spellchecker.state.CachedDictionaryState;
 import com.intellij.spellchecker.state.DictionaryStateListener;
 import com.intellij.spellchecker.state.ProjectDictionaryState;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
-import com.intellij.spellchecker.util.Strings;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -108,12 +107,7 @@ public class SpellCheckerManager implements Disposable {
   public void updateBundledDictionaries(final List<String> removedDictionaries) {
     for (BundledDictionaryProvider provider : BundledDictionaryProvider.EP_NAME.getExtensionList()) {
       for (String dictionary : provider.getBundledDictionaries()) {
-        boolean dictionaryShouldBeLoad = settings == null || !settings.getBundledDisabledDictionariesPaths().contains(dictionary);
-        boolean dictionaryIsLoad = mySpellChecker.isDictionaryLoad(dictionary);
-        if (dictionaryIsLoad && !dictionaryShouldBeLoad) {
-          mySpellChecker.removeDictionary(dictionary);
-        }
-        else if (!dictionaryIsLoad && dictionaryShouldBeLoad) {
+        if (!mySpellChecker.isDictionaryLoad(dictionary)) {
           loadBundledDictionary(provider, dictionary);
         }
       }
@@ -178,9 +172,7 @@ public class SpellCheckerManager implements Disposable {
   private void loadBundledDictionaries() {
     for (BundledDictionaryProvider provider : BundledDictionaryProvider.EP_NAME.getExtensionList()) {
       for (String dictionary : provider.getBundledDictionaries()) {
-        if (settings == null || !settings.getBundledDisabledDictionariesPaths().contains(dictionary)) {
-          loadBundledDictionary(provider, dictionary);
-        }
+        loadBundledDictionary(provider, dictionary);
       }
     }
   }
