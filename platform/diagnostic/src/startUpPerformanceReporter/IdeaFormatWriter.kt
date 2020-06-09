@@ -6,7 +6,7 @@ import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.diagnostic.ThreadNameManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit
 
 internal abstract class IdeaFormatWriter(private val activities: Map<String, MutableList<ActivityImpl>>, private val threadNameManager: ThreadNameManager) {
   private val logPrefix = "=== Start: StartUp Measurement ===\n"
-  private val stringWriter = ExposingCharArrayWriter()
+  protected val stringWriter = ExposingCharArrayWriter()
 
   fun write(timeOffset: Long, items: List<ActivityImpl>, serviceActivities: Map<String, MutableList<ActivityImpl>>, instantEvents: List<ActivityImpl>, end: Long, projectName: String) {
     stringWriter.write(logPrefix)
@@ -105,10 +105,6 @@ internal abstract class IdeaFormatWriter(private val activities: Map<String, Mut
     return stringWriter.toByteBuffer(logPrefix.length)
   }
 
-  fun writeToLog(log: Logger) {
-    stringWriter.write("\n=== Stop: StartUp Measurement ===")
-    log.info(stringWriter.toString())
-  }
 
   private fun writeParallelActivities(startTime: Long, writer: JsonGenerator) {
     // sorted to get predictable JSON
@@ -204,7 +200,7 @@ private fun compactName(name: String): String {
   return name
 }
 
-private class ExposingCharArrayWriter : CharArrayWriter(8192) {
+class ExposingCharArrayWriter : CharArrayWriter(8192) {
   fun toByteBuffer(offset: Int): ByteBuffer {
     return Charsets.UTF_8.encode(CharBuffer.wrap(buf, offset, count - offset))
   }

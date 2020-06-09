@@ -67,7 +67,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
       val serviceActivities = Object2ObjectOpenHashMap<String, MutableList<ActivityImpl>>()
       val services = mutableListOf<ActivityImpl>()
 
-      val threadNameManager = ThreadNameManager()
+      val threadNameManager = IdeThreadNameManager()
 
       var end = -1L
 

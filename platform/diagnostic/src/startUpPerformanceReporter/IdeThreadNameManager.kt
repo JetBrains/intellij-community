@@ -2,14 +2,15 @@
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.intellij.diagnostic.ActivityImpl
+import com.intellij.diagnostic.ThreadNameManager
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 
-internal class ThreadNameManager {
+internal class IdeThreadNameManager : ThreadNameManager {
   // ConcurrencyUtil.runUnderThreadName is used in our code (to make thread dumps more clear) and changes thread name,
   // so, use first thread name that associated with thread and not subsequent one
   private val idToName = Long2ObjectOpenHashMap<String>()
 
-  fun getThreadName(event: ActivityImpl): String {
+  override fun getThreadName(event: ActivityImpl): String {
     var result = idToName.get(event.threadId)
     if (result != null) {
       return result

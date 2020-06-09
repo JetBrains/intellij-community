@@ -4,10 +4,12 @@ package com.intellij.diagnostic.startUpPerformanceReporter
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.ThreadNameManager
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
@@ -29,6 +31,11 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
 
   init {
     publicStatMetrics.defaultReturnValue(-1)
+  }
+
+  fun writeToLog(log: Logger) {
+    stringWriter.write("\n=== Stop: StartUp Measurement ===")
+    log.info(stringWriter.toString())
   }
 
   override fun writeAppInfo(writer: JsonGenerator) {
