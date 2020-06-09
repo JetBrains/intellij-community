@@ -11,17 +11,13 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes.ERROR_ATTRIBUTES
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI.Borders.empty
-import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.JBUI.emptyInsets
-import com.intellij.util.ui.UIUtil.ComponentStyle
 import com.intellij.util.ui.UIUtil.getRegularPanelInsets
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
@@ -35,8 +31,8 @@ import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal class GHCloneDialogLoginPanel(private val account: GithubAccount?) :
-  JBPanel<GHCloneDialogLoginPanel>(VerticalLayout(0)) {
+internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
+  JBPanel<CloneDialogLoginPanel>(VerticalLayout(0)) {
 
   private val authenticationManager get() = GithubAuthenticationManager.getInstance()
 
@@ -44,7 +40,6 @@ internal class GHCloneDialogLoginPanel(private val account: GithubAccount?) :
   private val loginPanel = GithubLoginPanel(GithubApiRequestExecutor.Factory.getInstance()) { name, server ->
     if (account == null) authenticationManager.isAccountUnique(name, server) else true
   }
-  private val switchLoginUiLink = loginPanel.createSwitchUiLink()
   private val loginButton = JButton(message("button.login.mnemonic"))
   private val backLink = LinkLabel<Any?>(IdeBundle.message("button.back"), null)
 
@@ -68,16 +63,11 @@ internal class GHCloneDialogLoginPanel(private val account: GithubAccount?) :
 
   fun setCancelHandler(listener: () -> Unit) = backLink.setListener({ _, _ -> listener() }, null)
 
+  fun createSwitchUiLink(): LinkLabel<*> = loginPanel.createSwitchUiLink()
+
   private fun buildLayout() {
     loginPanel.footer = { buttonPanel() } // footer is used to put buttons in 2-nd column - align under text boxes
 
-    add(simplePanel().apply {
-      border = JBEmptyBorder(getRegularPanelInsets().apply { bottom = 0 })
-
-      val title = JBLabel(message("login.to.github"), ComponentStyle.LARGE).apply { font = JBFont.label().biggerOn(5.0f) }
-      addToLeft(title)
-      addToRight(switchLoginUiLink)
-    })
     add(loginPanel)
     add(errorPanel.apply { border = JBEmptyBorder(getRegularPanelInsets().apply { top = 0 }) })
   }
@@ -93,12 +83,8 @@ internal class GHCloneDialogLoginPanel(private val account: GithubAccount?) :
   private fun login() {
     val modalityState = ModalityState.stateForComponent(this)
 
-    switchLoginUiLink.isEnabled = false
     loginPanel.acquireLoginAndToken(EmptyProgressIndicator(modalityState))
-      .completionOnEdt(modalityState) {
-        switchLoginUiLink.isEnabled = true
-        errorPanel.removeAll()
-      }
+      .completionOnEdt(modalityState) { errorPanel.removeAll() }
       .errorOnEdt(modalityState) {
         loginPanel.doValidateAll().forEach { errorPanel.add(toErrorComponent(it)) }
 
