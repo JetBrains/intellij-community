@@ -115,12 +115,6 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
     modifiableModel.assertModelIsLive()
     library as LibraryBridge
 
-    val moduleLibraryTableId = library.libraryId.tableId as LibraryTableId.ModuleLibraryTableId
-    if (moduleLibraryTableId.moduleId != modifiableModel.moduleId) {
-      error("removeLibrary should be called on a module library from the same module. " +
-            "Library moduleId: '${moduleLibraryTableId.moduleId}', this model moduleId: '${modifiableModel.moduleId}'")
-    }
-
     val libraryEntity = library.libraryId.resolve(modifiableModel.entityStorageOnDiff.current)
                         ?: error("Unable to resolve module library by id: ${library.libraryId}")
 

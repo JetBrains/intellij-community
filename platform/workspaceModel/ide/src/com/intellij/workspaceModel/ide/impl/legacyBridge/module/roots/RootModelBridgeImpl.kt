@@ -11,24 +11,23 @@ import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.CompilerModuleExtensionBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.VersionedEntityStorageOnStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.FakeContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.CompilerModuleExtensionBridge
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.collections.HashMap
 
-internal class RootModelBridgeImpl(internal val moduleEntityId: PersistentEntityId<ModuleEntity>,
+internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
                                    val storage: WorkspaceEntityStorage,
                                    private val moduleLibraryTable: LibraryTable,
                                    private val itemUpdater: ((Int, (ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?,
@@ -40,22 +39,20 @@ internal class RootModelBridgeImpl(internal val moduleEntityId: PersistentEntity
     loadExtensions(storage = storage, module = module, writable = false, parentDisposable = this)
   }
 
-  val moduleEntity: ModuleEntity? = storage.resolve(moduleEntityId)
-
   private val orderEntriesArray: Array<OrderEntry> by lazy {
-    val moduleEntity = storage.resolve(moduleEntityId) ?: return@lazy emptyArray<OrderEntry>()
+    val moduleEntity = moduleEntity ?: return@lazy emptyArray<OrderEntry>()
     moduleEntity.dependencies.mapIndexed { index, e ->
       toOrderEntry(e, index)
     }.toTypedArray()
   }
 
   val contentEntities: List<ContentRootEntity> by lazy {
-    val moduleEntity = storage.resolve(moduleEntityId) ?: return@lazy emptyList<ContentRootEntity>()
+    val moduleEntity = moduleEntity ?: return@lazy emptyList<ContentRootEntity>()
     return@lazy moduleEntity.contentRoots.toList()
   }
 
   private val contentEntriesList by lazy {
-    val moduleEntity = storage.resolve(moduleEntityId) ?: return@lazy emptyList<ContentEntryBridge>()
+    val moduleEntity = moduleEntity ?: return@lazy emptyList<ContentEntryBridge>()
     val contentEntries = moduleEntity.contentRoots.toMutableList()
 
     val contentUrlToSourceRoots = moduleEntity.sourceRoots.groupByTo(HashMap()) { sourceRoot ->

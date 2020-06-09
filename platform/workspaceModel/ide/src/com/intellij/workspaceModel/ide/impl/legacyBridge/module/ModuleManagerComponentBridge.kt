@@ -624,5 +624,8 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       get() = getExternalMapping(INDEX_ID)
     internal val WorkspaceEntityStorageDiffBuilder.mutableModuleMap: MutableExternalEntityMapping<ModuleBridge>
       get() = getMutableExternalMapping(INDEX_ID)
+    internal fun WorkspaceEntityStorage.findModuleEntity(module: ModuleBridge) =
+      moduleMap.getEntities(module).firstOrNull() as ModuleEntity?
+
   }
 }

@@ -23,6 +23,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableB
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.CompilerModuleExtensionBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
@@ -35,7 +36,6 @@ import java.util.concurrent.ConcurrentHashMap
 class ModifiableRootModelBridge(
   diff: WorkspaceEntityStorageBuilder,
   override val moduleBridge: ModuleBridge,
-  internal val moduleId: ModuleId,
   private val initialStorage: WorkspaceEntityStorage,
   override val accessor: RootConfigurationAccessor
 ) : LegacyBridgeModifiableBase(diff), ModifiableRootModel, ModificationTracker, ModuleRootModelBridge {
@@ -55,18 +55,14 @@ class ModifiableRootModelBridge(
 
   private val sourceRootPropertiesMap = ConcurrentHashMap<VirtualFileUrl, JpsModuleSourceRoot>()
 
-  private val moduleEntityValue: CachedValue<ModuleEntity?> = CachedValue {
-    it.resolve(moduleId)
-  }
-
   internal val moduleEntity: ModuleEntity
-    get() = entityStorageOnDiff.cachedValue(moduleEntityValue) ?: error("Unable to resolve module by id '$moduleId'")
+    get() = entityStorageOnDiff.current.findModuleEntity(module) ?: error("Cannot find module entity for '$moduleBridge'")
 
   private val moduleLibraryTable = ModifiableModuleLibraryTableBridge(this,
                                                                       ModuleRootComponentBridge.getInstance(module).moduleLibraryTable.moduleLibraries)
 
   private val contentEntriesImplValue: CachedValue<List<ModifiableContentEntryBridge>> = CachedValue { storage ->
-    val moduleEntity = storage.resolve(moduleId) ?: return@CachedValue emptyList<ModifiableContentEntryBridge>()
+    val moduleEntity = storage.findModuleEntity(module) ?: return@CachedValue emptyList<ModifiableContentEntryBridge>()
     val contentEntries = moduleEntity.contentRoots.sortedBy { it.url.url }.toList()
 
     contentEntries.map {
@@ -459,7 +455,7 @@ class ModifiableRootModelBridge(
 
   private val modelValue = CachedValue { storage ->
     RootModelBridgeImpl(
-      moduleEntityId = moduleId,
+      moduleEntity = storage.findModuleEntity(moduleBridge),
       storage = storage,
       moduleLibraryTable = moduleLibraryTable,
       itemUpdater = { index, transformer -> updateDependencies { dependencies ->
