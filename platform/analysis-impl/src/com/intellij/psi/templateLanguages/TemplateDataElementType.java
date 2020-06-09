@@ -29,7 +29,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.function.Function;
 
 /**
@@ -75,7 +78,6 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     RangeCollector collector = new RangeCollector(this);
     final PsiFile templatePsiFile = createTemplateFile(psiFile, templateLanguage, sourceCode, viewProvider, collector);
     final FileElement templateFileElement = ((PsiFileImpl)templatePsiFile).calcTreeElement();
-    collector.addDummyStringsToRangesToRemove(templatePsiFile);
 
     return DebugUtil.performPsiModification("template language parsing", () -> {
       collector.insertOuterElementsAndRemoveRanges(templateFileElement, sourceCode, charTable, templateFileElement.getPsi().getLanguage());
@@ -112,7 +114,14 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
                                        final CharSequence sourceCode,
                                        final TemplateLanguageFileViewProvider viewProvider,
                                        @NotNull TemplateDataElementType.RangeCollector rangeCollector) {
-    final CharSequence templateSourceCode = createTemplateText(sourceCode, createBaseLexer(viewProvider), rangeCollector);
+    CharSequence templateSourceCode = createTemplateText(sourceCode, createBaseLexer(viewProvider), rangeCollector);
+    rangeCollector.addDummyStringsToRangesToRemove(templateSourceCode);
+    TemplateDataPatcher patcher = TemplateDataPatcher.EXTENSION.forLanguage(templateLanguage);
+    if (patcher != null) {
+      StringBuilder builder =
+        templateSourceCode instanceof StringBuilder ? (StringBuilder)templateSourceCode : new StringBuilder(templateSourceCode);
+      patcher.prepareContentForParsing(rangeCollector, builder);
+    }
     return createPsiFileFromSource(templateLanguage, templateSourceCode, psiFile.getManager());
   }
 
@@ -186,6 +195,14 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     return viewProvider.getPsi(language);
   }
 
+  public static @NotNull ASTNode parseWithOuterAndRemoveRangesApplied(@NotNull ASTNode chameleon,
+                                                                      @NotNull Language language,
+                                                                      @NotNull Function<@NotNull CharSequence, @NotNull ASTNode> parser) {
+    RangeCollector collector = chameleon.getUserData(RangeCollector.OUTER_ELEMENT_RANGES);
+    return collector != null ? collector.applyRangeCollectorAndExpandChameleon(chameleon, language, parser)
+                             : parser.apply(chameleon.getChars());
+  }
+
   protected static class TemplateFileType extends LanguageFileType {
     private final Language myLanguage;
 
@@ -249,10 +266,6 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
       myOuterAndRemoveRanges = outerAndRemoveRanges;
     }
 
-    public static @Nullable RangeCollector getRangeCollector(@NotNull ASTNode chameleon) {
-      return chameleon.getUserData(OUTER_ELEMENT_RANGES);
-    }
-
     /**
      * @deprecated Use {@link #addOuterRange(TextRange, boolean)} instead.
      */
@@ -311,7 +324,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
      * Sets {@link RangeToRemove#myTextToRemove} in {@link #myOuterAndRemoveRanges} from generated file,
      * so lazy parseables will have dummy strings when they are parsed.
      */
-    private void addDummyStringsToRangesToRemove(@NotNull PsiFile file) {
+    private void addDummyStringsToRangesToRemove(@NotNull CharSequence generatedText) {
       boolean hasRangeToRemove = false;
       for (TextRange range : myOuterAndRemoveRanges) {
         if (range instanceof RangeToRemove) {
@@ -321,13 +334,12 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
       }
       if (!hasRangeToRemove) return; // optimization to avoid calling file.getText()
 
-      String text = file.getText();
       int shift = 0;
       ListIterator<TextRange> iterator = myOuterAndRemoveRanges.listIterator();
       while (iterator.hasNext()) {
         TextRange range = iterator.next();
         if (range instanceof RangeToRemove) {
-          CharSequence insertedString = text.subSequence(range.getStartOffset() - shift, range.getEndOffset() - shift);
+          CharSequence insertedString = generatedText.subSequence(range.getStartOffset() - shift, range.getEndOffset() - shift);
           iterator.set(new RangeToRemove(range.getStartOffset(), insertedString)); // only add insertedString
           shift -= range.getLength();
         }
@@ -577,13 +589,9 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     }
 
     /**
-     * Like {@link #insertOuterElementsAndRemoveRanges} builds the tree considering outer language elements, but for lazy parseables.
-     *
-     * @param dummyString Optional text to insert for outer language elements which were added by {@link #addOuterRange}
-     *                    having <tt>isInsertion == true</tt>
+     * Like {@link #parseContents} builds the tree considering outer language elements, but for inner lazy parseables.
      */
     public @NotNull ASTNode applyRangeCollectorAndExpandChameleon(@NotNull ASTNode chameleon,
-                                                                  @Nullable String dummyString,
                                                                   @NotNull Language language,
                                                                   @NotNull Function<@NotNull CharSequence, @NotNull ASTNode> parser) {
       CharSequence chars = chameleon.getChars();
@@ -591,20 +599,8 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
 
       StringBuilder stringBuilder = new StringBuilder(chars);
       int shift = 0;
-      LinkedList<TextRange> copiedRanges = new LinkedList<>(myOuterAndRemoveRanges); // copy to linked list for faster insertions
-      ListIterator<TextRange> iterator = copiedRanges.listIterator();
-      while (iterator.hasNext()) {
-        TextRange outerElementRange = iterator.next();
-        if (outerElementRange instanceof InsertionRange && dummyString != null) {
-          // Don't set RangeToRemove#myTextToRemove so it won't be applied to nested lazy parseables.
-          // Nested lazy parseables may add dummy string themselves.
-          iterator.add(new RangeToRemove(outerElementRange.getEndOffset(), outerElementRange.getEndOffset() + dummyString.length()));
-          stringBuilder.replace(outerElementRange.getStartOffset() + shift,
-                                outerElementRange.getEndOffset() + shift,
-                                dummyString);
-          shift -= outerElementRange.getLength() - dummyString.length();
-        }
-        else if (outerElementRange instanceof RangeToRemove) {
+      for (TextRange outerElementRange : myOuterAndRemoveRanges) {
+        if (outerElementRange instanceof RangeToRemove) {
           CharSequence textToRemove = ((RangeToRemove)outerElementRange).myTextToRemove;
           if (textToRemove != null) {
             stringBuilder.insert(outerElementRange.getStartOffset() + shift, textToRemove);
@@ -618,10 +614,14 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
         }
       }
 
+      TemplateDataPatcher templateDataPatcher = TemplateDataPatcher.EXTENSION.forLanguage(language);
+      if (templateDataPatcher != null) {
+        templateDataPatcher.prepareContentForParsing(this, stringBuilder);
+      }
+
       ASTNode root = parser.apply(stringBuilder.toString());
-      RangeCollector copiedCollector = new RangeCollector(myTemplateDataElementType, copiedRanges);
       DebugUtil.performPsiModification("lazy parseable outer elements insertion", () -> {
-        copiedCollector.insertOuterElementsAndRemoveRanges((TreeElement)root, chars, SharedImplUtil.findCharTableByTree(chameleon), language);
+        insertOuterElementsAndRemoveRanges((TreeElement)root, chars, SharedImplUtil.findCharTableByTree(chameleon), language);
       });
 
       return root;
@@ -698,10 +698,40 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
    * Marker interface for element types which handle outer language elements themselves in
    * {@link ILazyParseableElementTypeBase#parseContents(ASTNode)} method.
    *
-   * To parse lazy parseable element {@link RangeCollector#applyRangeCollectorAndExpandChameleon(ASTNode, String, Language, Function)}
-   * may be used. {@link RangeCollector} may be obtained using {@link RangeCollector#getRangeCollector(ASTNode)}.
+   * To parse lazy parseable element {@link TemplateDataElementType#parseWithOuterAndRemoveRangesApplied(ASTNode, Language, Function)}
+   * should be used.
    */
   public interface TemplateAwareElementType extends ILazyParseableElementTypeBase {
     @NotNull TreeElement createTreeElement(@NotNull CharSequence text);
+  }
+
+  public abstract static class DummyStringInserter implements TemplateDataPatcher {
+
+    public abstract @NotNull String getDummyString();
+
+    @Override
+    public void prepareContentForParsing(@NotNull TemplateDataElementType.RangeCollector collector, @NotNull StringBuilder modifiedText) {
+      if (collector.myOuterAndRemoveRanges.isEmpty()) return;
+
+      String dummyString = getDummyString();
+      int shift = 0;
+      ListIterator<TextRange> iterator = collector.myOuterAndRemoveRanges.listIterator();
+      while (iterator.hasNext()) {
+        TextRange outerElementRange = iterator.next();
+        if (outerElementRange instanceof TemplateDataElementType.RangeCollector.InsertionRange) {
+          // Don't set RangeToRemove#myTextToRemove so it won't be applied to nested lazy parseables.
+          // Nested lazy parseables may add dummy string themselves.
+          iterator.add(new TemplateDataElementType.RangeCollector.RangeToRemove(outerElementRange.getEndOffset(), outerElementRange.getEndOffset() + dummyString.length()));
+          modifiedText.insert(outerElementRange.getStartOffset() + shift, dummyString);
+          shift -= outerElementRange.getLength() - dummyString.length();
+        }
+        else if (outerElementRange instanceof TemplateDataElementType.RangeCollector.RangeToRemove) {
+          shift += outerElementRange.getLength();
+        }
+        else {
+          shift -= outerElementRange.getLength();
+        }
+      }
+    }
   }
 }
