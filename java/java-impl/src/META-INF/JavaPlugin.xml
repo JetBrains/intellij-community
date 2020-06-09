@@ -1226,8 +1226,6 @@
                             implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.JavaMethodHandleCompletionContributor"/>
     <completion.contributor language="JAVA" id="javaReflection" order="before javaLegacy, before javaClassReference"
                             implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionCompletionContributor"/>
-    <completion.contributor language="JAVA" id="smartNull" order="last, before java"
-                            implementationClass="com.intellij.codeInsight.completion.NullSmartCompletionContributor"/>
     <completion.contributor language="JAVA" id="javadoc" order="last, before javaLegacy, before wordCompletion"
                             implementationClass="com.intellij.codeInsight.completion.JavaDocCompletionContributor"/>
     <completion.contributor language="JVM" id="javaClassName" order="last, before default"
