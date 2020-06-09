@@ -9,11 +9,15 @@ import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,8 +33,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
  */
 public class DfaUtil {
 
-  public static @NotNull Collection<PsiExpression> 
-  getCachedVariableValues(final @Nullable PsiVariable variable, final @Nullable PsiElement context) {
+  public static @NotNull Collection<PsiExpression> getCachedVariableValues(@Nullable PsiVariable variable, @Nullable PsiElement context) {
     if (variable == null || context == null) return Collections.emptyList();
 
     final PsiCodeBlock codeBlock = tryCast(DfaPsiUtil.getEnclosingCodeBlock(variable, context), PsiCodeBlock.class);
@@ -43,9 +46,9 @@ public class DfaUtil {
         ContainerUtil.addIfNotNull(results, ((PsiLocalVariable)def).getInitializer());
       }
       else if (def instanceof PsiReferenceExpression) {
-        PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(def.getParent());
+        PsiAssignmentExpression assignment = tryCast(def.getParent(), PsiAssignmentExpression.class);
         if(assignment != null && assignment.getLExpression() == def) {
-          ContainerUtil.addIfNotNull(results, assignment.getRExpression());
+          ContainerUtil.addIfNotNull(results, unrollConcatenation(assignment, variable, codeBlock));
         }
       }
       else if (def instanceof PsiExpression) {
@@ -53,6 +56,40 @@ public class DfaUtil {
       }
     }
     return results;
+  }
+
+  private static PsiExpression unrollConcatenation(PsiAssignmentExpression assignment, PsiVariable variable, PsiCodeBlock block) {
+    List<PsiExpression> operands = new ArrayList<>();
+    while (true) {
+      if (assignment == null) return null;
+      PsiExpression rExpression = assignment.getRExpression();
+      if (rExpression == null) return null;
+      operands.add(rExpression);
+      IElementType type = assignment.getOperationTokenType();
+      if (type.equals(JavaTokenType.EQ)) break;
+      if (!type.equals(JavaTokenType.PLUSEQ)) {
+        return null;
+      }
+      PsiElement[] previous = DefUseUtil.getDefs(block, variable, assignment);
+      if (previous.length != 1) return null;
+      PsiElement def = previous[0];
+      if (def instanceof PsiLocalVariable) {
+        PsiExpression initializer = ((PsiLocalVariable)def).getInitializer();
+        if (initializer == null) return null;
+        operands.add(initializer);
+        break;
+      }
+      else if (def instanceof PsiReferenceExpression) {
+        assignment = tryCast(def.getParent(), PsiAssignmentExpression.class);
+      }
+      else return null;
+    }
+    if (operands.size() == 1) {
+      return operands.get(0);
+    }
+    return JavaPsiFacade.getElementFactory(block.getProject()).createExpressionFromText(
+      StreamEx.ofReversed(operands).map(op -> ParenthesesUtils.getText(op, PsiPrecedenceUtil.ADDITIVE_PRECEDENCE)).joining("+"), 
+      assignment);
   }
 
   /**
