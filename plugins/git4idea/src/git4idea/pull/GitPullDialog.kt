@@ -303,9 +303,12 @@ class GitPullDialog(private val project: Project,
   }
 
   private fun createRemoteField() = ComboBox<GitRemote>(MutableCollectionComboBoxModel()).apply {
+    isSwingPopup = false
     renderer = SimpleListCellRenderer.create(GitBundle.message("util.remote.renderer.none")) { it.name }
     val bw = DarculaUIUtil.BW.get()
-    ui = FlatComboBoxUI(outerInsets = Insets(bw, 0, bw, 0))
+    ui = FlatComboBoxUI(
+      outerInsets = Insets(bw, 0, bw, 0),
+      popupEmptyText = GitBundle.message("pull.branch.no.matching.remotes"))
 
     item = getCurrentOrDefaultRemote(getRepository())
 
