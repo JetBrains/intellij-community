@@ -136,6 +136,10 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems(0, "XxxImpl", "Xxx")
   }
 
+  void testAfterThrowNew() {
+    checkPreferredItems(0, "Exception", "RuntimeException")
+  }
+
   void testPreferLessHumps() throws Throwable {
     myFixture.addClass("package foo; public interface XaYa {}")
     myFixture.addClass("package foo; public interface XyYa {}")

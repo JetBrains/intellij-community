@@ -714,12 +714,19 @@ public class JavaKeywordCompletion {
       return;
     }
 
-    boolean afterNew = psiElement().afterLeaf(
-      psiElement().withText(PsiKeyword.NEW).andNot(psiElement().afterLeaf(PsiKeyword.THROW, "."))).accepts(position);
+    boolean afterNew = JavaSmartCompletionContributor.AFTER_NEW.accepts(position) &&
+                       !psiElement().afterLeaf(psiElement().afterLeaf(".")).accepts(position);
     if (afterNew) {
+      Set<PsiType> expected = ContainerUtil.map2Set(JavaSmartCompletionContributor.getExpectedTypes(position, false),
+                                                    ExpectedTypeInfo::getDefaultType);
+      boolean addAll = expected.isEmpty() || ContainerUtil.exists(expected, t ->
+        t.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || t.equalsToText(CommonClassNames.JAVA_IO_SERIALIZABLE));
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(position.getProject());
       for (String primitiveType : PRIMITIVE_TYPES) {
-        result.consume(PsiTypeLookupItem.createLookupItem(factory.createTypeFromText(primitiveType + "[]", null), null));
+        PsiType array = factory.createTypeFromText(primitiveType + "[]", null);
+        if (addAll || expected.contains(array)) {
+          result.consume(PsiTypeLookupItem.createLookupItem(array, null));
+        }
       }
       return;
     }

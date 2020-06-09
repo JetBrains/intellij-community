@@ -47,11 +47,7 @@ public class JavaSmartCompletionContributor {
   };
 
   private static final ElementExtractorFilter THROWABLES_FILTER = new ElementExtractorFilter(new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE));
-  public static final ElementPattern<PsiElement> AFTER_NEW =
-      psiElement().afterLeaf(
-          psiElement().withText(PsiKeyword.NEW).andNot(
-              psiElement().afterLeaf(
-                  psiElement().withText(PsiKeyword.THROW))));
+  static final ElementPattern<PsiElement> AFTER_NEW = psiElement().afterLeaf(psiElement().withText(PsiKeyword.NEW));
   static final ElementPattern<PsiElement> AFTER_THROW_NEW = psiElement().afterLeaf(psiElement().withText(PsiKeyword.NEW).afterLeaf(PsiKeyword.THROW));
   public static final ElementPattern<PsiElement> INSIDE_EXPRESSION = or(
         psiElement().withParent(PsiExpression.class)

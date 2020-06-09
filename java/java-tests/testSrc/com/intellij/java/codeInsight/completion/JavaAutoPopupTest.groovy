@@ -39,6 +39,7 @@ import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.util.ThrowableRunnable
@@ -1807,6 +1808,14 @@ ita<caret>
     myFixture.configureByText 'a.java', 'class Foo {{ int a42; a<caret> }}'
     type '4'
     assert lookup
+  }
+
+  void "test autopopup after new"() {
+    myFixture.configureByText('a.java', 'class Foo { { java.util.List<String> l = new<caret> }}')
+    type ' '
+    assert lookup
+    def firstItems = myFixture.lookupElements[0..<4]
+    assert firstItems.each { InheritanceUtil.isInheritor(it.object as PsiClass, List.name) }
   }
 
 }
