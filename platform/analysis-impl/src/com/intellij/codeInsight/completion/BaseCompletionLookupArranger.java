@@ -121,6 +121,10 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     element.putUserData(mySorterKey, sorter);
   }
 
+  public void clearClassifierCache() {
+    myClassifiers.clear();
+  }
+
   private static boolean haveSameWeights(List<? extends Pair<LookupElement, Object>> pairs) {
     if (pairs.isEmpty()) return true;
 
@@ -256,7 +260,8 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   protected void removeItem(LookupElement element, ProcessingContext context) {
     CompletionSorterImpl sorter = obtainSorter(element);
     Classifier<LookupElement> classifier = myClassifiers.get(sorter);
-    classifier.removeElement(element, context);
+    if (classifier != null)
+      classifier.removeElement(element, context);
   }
 
   private List<LookupElement> sortByPresentation(Iterable<? extends LookupElement> source) {
