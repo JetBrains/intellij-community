@@ -525,8 +525,6 @@
     <moduleConfigurationEditorProvider implementation="com.intellij.openapi.roots.ui.configuration.DefaultModuleEditorsProvider"
                                        order="first"/>
 
-    <postStartupActivity implementation="com.intellij.compiler.impl.CleanStaleModuleOutputsActivity"/>
-
     <postStartupActivity implementation="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileSelectionListener$MyStartupActivity"/>
 
     <bundledKeymap file="Visual Studio.xml"/>
