@@ -2,9 +2,11 @@
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.connect.StatisticsResult;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public interface EventLogResultDecorator {
   default void onLogsLoaded(int localFiles) {}
 

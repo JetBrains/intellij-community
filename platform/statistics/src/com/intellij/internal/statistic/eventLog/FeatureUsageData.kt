@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -38,6 +39,7 @@ private val LOG = logger<FeatureUsageData>()
  * <br/>
  * </p>
  */
+@ApiStatus.Internal
 class FeatureUsageData {
   private var data: MutableMap<String, Any> = HashMap()
 

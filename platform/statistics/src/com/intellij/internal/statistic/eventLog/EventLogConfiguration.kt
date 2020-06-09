@@ -10,12 +10,14 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.MathUtil
 import com.intellij.util.io.DigestUtil
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.SecureRandom
 import java.util.*
 import java.util.prefs.Preferences
 
+@ApiStatus.Internal
 object EventLogConfiguration {
   private val LOG = Logger.getInstance(EventLogConfiguration::class.java)
   private const val SALT_PREFERENCE_KEY = "feature_usage_event_log_salt"

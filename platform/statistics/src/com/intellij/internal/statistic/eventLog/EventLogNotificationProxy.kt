@@ -2,7 +2,9 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class EventLogNotificationProxy(private val writer: StatisticsEventLogWriter,
                                 private val recorderId: String) : StatisticsEventLogWriter {
   override fun log(logEvent: LogEvent) {
@@ -19,6 +21,7 @@ class EventLogNotificationProxy(private val writer: StatisticsEventLogWriter,
   override fun rollOver() = writer.rollOver()
 }
 
+@ApiStatus.Internal
 object EventLogNotificationService {
   private val subscribers = MultiMap.createConcurrent<String, (LogEvent) -> Unit>()
 

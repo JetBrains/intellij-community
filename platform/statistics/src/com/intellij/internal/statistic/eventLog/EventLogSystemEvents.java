@@ -5,6 +5,9 @@ import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Set;
 
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.Internal
 public interface EventLogSystemEvents {
   /**
    * System event which indicates that the counter collector is enabled in current IDE build.

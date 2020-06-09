@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.service.request.StatsHttpRequests;
 import com.intellij.internal.statistic.service.request.StatsHttpResponse;
 import org.apache.http.Consts;
 import org.apache.http.entity.ContentType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -23,6 +24,7 @@ import java.util.List;
 import static com.intellij.internal.statistic.StatisticsStringUtil.isEmpty;
 import static com.intellij.internal.statistic.StatisticsStringUtil.isNotEmpty;
 
+@ApiStatus.Internal
 public class EventLogStatisticsService implements StatisticsService {
   private static final ContentType APPLICATION_JSON = ContentType.create("application/json", Consts.UTF_8);
 

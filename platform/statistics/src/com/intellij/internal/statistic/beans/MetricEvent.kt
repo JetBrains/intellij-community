@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.beans
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 /**
@@ -15,6 +16,7 @@ import java.util.*
  * @see newBooleanMetric
  * @see newCounterMetric
  */
+@ApiStatus.Internal
 class MetricEvent @JvmOverloads @StatisticsEventProvider(eventIdIndex = 0, dataIndex = 1) constructor(val eventId: String,
                                                                                                       data: FeatureUsageData? = null) {
   val data: FeatureUsageData = data ?: FeatureUsageData()

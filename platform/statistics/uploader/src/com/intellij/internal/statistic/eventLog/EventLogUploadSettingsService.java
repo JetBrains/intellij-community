@@ -6,10 +6,12 @@ import com.intellij.internal.statistic.config.bean.EventLogSendConfiguration;
 import com.intellij.internal.statistic.connect.SettingsConnectionService;
 import com.intellij.internal.statistic.service.fus.StatisticsWhitelistConditions;
 import com.intellij.internal.statistic.service.fus.StatisticsWhitelistLoader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class EventLogUploadSettingsService extends SettingsConnectionService implements EventLogSettingsService {
   private static final String SEND = "send";
   private static final String WHITELIST = "whitelist";
