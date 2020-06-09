@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.annotate;
 
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,6 +13,10 @@ public interface AnnotationProvider {
 
   @NotNull
   FileAnnotation annotate(@NotNull VirtualFile file, VcsFileRevision revision) throws VcsException;
+
+  default String getActionName() {
+    return ActionsBundle.message("action.Annotate.text");
+  }
 
   /**
    * Check whether the annotation retrieval is valid (or possible) for the

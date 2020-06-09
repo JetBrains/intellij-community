@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.ide.DataManager;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -42,6 +43,7 @@ import com.intellij.ui.LightColors;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +67,26 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     Provider provider = getProvider(e);
-    e.getPresentation().setEnabled(provider != null && !provider.isSuspended(e));
+    Presentation presentation = e.getPresentation();
+    Project project = e.getProject();
+    presentation.setEnabled(provider != null && !provider.isSuspended(e));
+    if (project != null) {
+      presentation.setText(getActionName(project));
+    }
+  }
+
+  private static @Nls @NotNull String getActionName(@NotNull Project project) {
+    String defaultName = ActionsBundle.message("action.Annotate.text");
+
+    Set<String> names = ContainerUtil.map2Set(ProjectLevelVcsManager.getInstance(project).getAllActiveVcss(), vcs -> {
+      AnnotationProvider provider = vcs.getAnnotationProvider();
+      if (provider != null) {
+        return provider.getActionName();
+      }
+      return defaultName;
+    });
+
+    return ContainerUtil.getOnlyItem(names, defaultName);
   }
 
   @Override
