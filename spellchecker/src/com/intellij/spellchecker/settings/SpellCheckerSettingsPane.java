@@ -19,7 +19,10 @@ import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.spellchecker.util.Strings;
-import com.intellij.ui.*;
+import com.intellij.ui.AddDeleteListPanel;
+import com.intellij.ui.HyperlinkLabel;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.OptionalChooserComponent;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -47,8 +50,6 @@ public class SpellCheckerSettingsPane implements Disposable {
   private JPanel myPanelForCustomDictionaries;
   private JBCheckBox myUseSingleDictionary;
   private ComboBox<String> myDictionariesComboBox;
-  private JPanel myAdvancedSettingsPanel;
-  private JPanel myAdvancedSettingsPlaceHolder;
   private final CustomDictionariesPanel myDictionariesPanel;
 
   //Dictionaries provided by plugins -- runtime and bundled
@@ -59,7 +60,6 @@ public class SpellCheckerSettingsPane implements Disposable {
   private final WordsPanel wordsPanel;
   private final SpellCheckerManager manager;
   private final SpellCheckerSettings settings;
-  private final HideableDecorator decorator;
 
   public SpellCheckerSettingsPane(SpellCheckerSettings settings, final Project project) {
     this.settings = settings;
@@ -134,9 +134,6 @@ public class SpellCheckerSettingsPane implements Disposable {
     wordsPanel = new WordsPanel(manager);
     panelForAcceptedWords.setLayout(new BorderLayout());
     panelForAcceptedWords.add(wordsPanel, BorderLayout.CENTER);
-    decorator = new HideableDecorator(myAdvancedSettingsPlaceHolder, SpellCheckerBundle.message("advanced.settings"), false);
-    decorator.setContentComponent(myAdvancedSettingsPanel);
-    decorator.setOn(!settings.isDefaultAdvancedSettings());
   }
 
   private static String getHunspellDescription() {
