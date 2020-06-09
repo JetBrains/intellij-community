@@ -124,7 +124,9 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
         throw new RuntimeException(e);
       }
     }
-    return false;
+    else {
+      return false;
+    }
   }
 
   /**
@@ -493,7 +495,9 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
         "Error in evaluate():"
       );
     }
-    return null;
+    else {
+      return null;
+    }
   }
 
   @Nullable
@@ -510,7 +514,9 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
         "Error in loadFrame():"
       );
     }
-    return new XValueChildrenList();
+    else {
+      return new XValueChildrenList();
+    }
   }
 
   public synchronized int getNextFullValueSeq() {
@@ -565,7 +571,9 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
         "Error in loadVariable():"
       );
     }
-    return new XValueChildrenList();
+    else {
+      return new XValueChildrenList();
+    }
   }
 
   @Override
@@ -610,7 +618,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   public ArrayChunk getArrayItems(PyDebugValue var, int rowOffset, int colOffset, int rows, int cols, String format)
     throws PyDebuggerException {
     if (!isCommunicationClosed()) {
-      executeBackgroundTask(
+      return executeBackgroundTask(
         () -> {
           GetArrayResponse ret = getPythonConsoleBackendClient().getArray(var.getName(), rowOffset, colOffset, rows, cols, format);
           return createArrayChunk(ret, this);
@@ -620,7 +628,9 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
         "Error in getArrayItems():"
       );
     }
-    return null;
+    else {
+      return null;
+    }
   }
 
   @Nullable
