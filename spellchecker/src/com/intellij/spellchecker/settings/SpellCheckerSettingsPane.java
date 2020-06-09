@@ -19,10 +19,7 @@ import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.spellchecker.util.Strings;
-import com.intellij.ui.AddDeleteListPanel;
-import com.intellij.ui.HyperlinkLabel;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.OptionalChooserComponent;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -219,6 +216,13 @@ public class SpellCheckerSettingsPane implements Disposable {
       getEmptyText().setText(SpellCheckerBundle.message("no.words"));
     }
 
+
+    @Override
+    protected void customizeDecorator(ToolbarDecorator decorator) {
+      decorator.setRemoveAction((button) -> {
+        ListUtil.removeSelectedItems(myList);
+      });
+    }
 
     @Override
     protected String findItemToAdd() {
