@@ -69,7 +69,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
     val localRootPath = if (isDir) uploadPath else uploadPath.parent
     val uploadRoot = TargetEnvironment.UploadRoot(
       localRootPath = localRootPath,
-      remoteRootPath = TargetEnvironment.RemotePath.Temporary()
+      targetRootPath = TargetEnvironment.TargetPath.Temporary()
     )
     request.uploadVolumes += uploadRoot
     val result = DeferredTargetValue(uploadPathString)

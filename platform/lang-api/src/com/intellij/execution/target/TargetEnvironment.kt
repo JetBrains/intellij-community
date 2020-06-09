@@ -2,7 +2,6 @@
 package com.intellij.execution.target
 
 import com.intellij.execution.ExecutionException
-import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
@@ -18,8 +17,8 @@ abstract class TargetEnvironment(
   open val request: TargetEnvironmentRequest
 ) {
 
-  sealed class RemotePath {
-    data class Persistent(val absolutePath: String) : RemotePath()
+  sealed class TargetPath {
+    data class Persistent(val absolutePath: String) : TargetPath()
 
     data class Temporary @JvmOverloads constructor(
       /** Any string. An environment implementation may reuse previously created directories for the same hint. */
@@ -27,13 +26,13 @@ abstract class TargetEnvironment(
 
       /** If null, use `/tmp` or something similar, autodetected. */
       val parentDirectory: String? = null
-    ) : RemotePath()
+    ) : TargetPath()
   }
 
   data class UploadRoot @JvmOverloads constructor(
     val localRootPath: Path,
 
-    val remoteRootPath: RemotePath,
+    val targetRootPath: TargetPath,
 
     /**
      * If true, IDE should try to remove the directory when [shutdown] is being called.
@@ -50,7 +49,7 @@ abstract class TargetEnvironment(
     val localRootPath: Path?,
 
     /** TODO Should [Temprorary] paths with the same hint point on the same directory for uploads and downloads? */
-    val remoteRootPath: RemotePath
+    val targetRootPath: TargetPath
   )
 
   /** Target TCP port forwardings. */

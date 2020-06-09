@@ -30,8 +30,8 @@ public class LocalTargetEnvironment extends TargetEnvironment {
 
     for (UploadRoot uploadRoot : request.getUploadVolumes()) {
       final Path targetRoot;
-      if (uploadRoot.getRemoteRootPath() instanceof RemotePath.Persistent) {
-        targetRoot = Paths.get(((RemotePath.Persistent)uploadRoot.getRemoteRootPath()).getAbsolutePath());
+      if (uploadRoot.getTargetRootPath() instanceof TargetPath.Persistent) {
+        targetRoot = Paths.get(((TargetPath.Persistent)uploadRoot.getTargetRootPath()).getAbsolutePath());
       }
       else {
         targetRoot = uploadRoot.getLocalRootPath().toAbsolutePath();
@@ -54,8 +54,8 @@ public class LocalTargetEnvironment extends TargetEnvironment {
         }
       }
       final Path targetRoot;
-      if (downloadRoot.getRemoteRootPath() instanceof RemotePath.Persistent) {
-        targetRoot = Paths.get(((RemotePath.Persistent)downloadRoot.getRemoteRootPath()).getAbsolutePath());
+      if (downloadRoot.getTargetRootPath() instanceof TargetPath.Persistent) {
+        targetRoot = Paths.get(((TargetPath.Persistent)downloadRoot.getTargetRootPath()).getAbsolutePath());
       }
       else {
         targetRoot = localRoot;
