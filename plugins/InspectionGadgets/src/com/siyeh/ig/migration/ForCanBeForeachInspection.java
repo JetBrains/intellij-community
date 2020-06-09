@@ -631,7 +631,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
         @NonNls final String methodName = methodExpression.getReferenceName();
         if (HardcodedMethodConstants.NEXT.equals(methodName)) {
           final PsiExpression qualifier = methodExpression.getQualifierExpression();
-          if (ExpressionUtils.isReferenceTo(qualifier, iterator) && isNotInsideTryBlock(methodExpression)) {
+          if (ExpressionUtils.isReferenceTo(qualifier, iterator) && !isInsideTryBlock(methodExpression)) {
             numCallsToIteratorNext++;
             return;
           }
@@ -654,15 +654,15 @@ public class ForCanBeForeachInspection extends BaseInspection {
       return numCallsToIteratorNext == 1 && !iteratorUsed;
     }
 
-    private boolean isNotInsideTryBlock(@NotNull PsiExpression methodExpression) {
+    private boolean isInsideTryBlock(@NotNull PsiExpression methodExpression) {
       PsiElement parent = methodExpression.getParent();
       while (parent != null) {
-        if (parent.isEquivalentTo(context)) return true;
-        if (parent instanceof PsiTryStatement) return false;
-        if (parent instanceof PsiFile) return true;
+        if (parent.isEquivalentTo(context)) return false;
+        if (parent instanceof PsiTryStatement) return true;
+        if (parent instanceof PsiFile) return false;
         parent = parent.getParent();
       }
-      return true;
+      return false;
     }
   }
 
