@@ -333,6 +333,11 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   private val entityStore by lazy { WorkspaceModel.getInstance(project).entityStorage }
 
   private fun loadModules(entities: List<ModuleEntity>) {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      val fileSystem = LocalFileSystem.getInstance()
+      entities.forEach { module -> fileSystem.refreshAndFindFileByPath(getModuleFilePath(module)) }
+    }
+
     val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", JobSchedulerImpl.getCPUCoresCount())
     try {
       val tasks = entities
@@ -574,7 +579,6 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     module.init {
       try {
         val moduleStore = module.stateStore as ModuleStoreBase
-        if (ApplicationManager.getApplication().isUnitTestMode) LocalFileSystem.getInstance().refreshAndFindFileByPath(modulePath)
         moduleStore.setPath(modulePath, null, isNew)
       }
       catch (t: Throwable) {
