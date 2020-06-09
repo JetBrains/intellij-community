@@ -268,12 +268,35 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     smallIconLabel.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent event) {
-        AnActionEvent actionEvent = AnActionEvent.createFromInputEvent(event, ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR,
-                                                                       statusAction.getTemplatePresentation(),
-                                                                       myEditor.getDataContext(), true, false);
-        ActionsCollector.getInstance().record(myEditor.getProject(), statusAction, actionEvent, null);
-        myPopupManager.showPopup(event);
+        if (Experiments.getInstance().isFeatureEnabled("problems.view.enabled")) {
+          myPopupManager.hidePopup();
+          if (analyzerStatus != null) {
+            analyzerStatus.getController().toggleProblemsView();
+          }
+        }
+        else {
+          AnActionEvent actionEvent = AnActionEvent.createFromInputEvent(event, ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR,
+                                                                         statusAction.getTemplatePresentation(),
+                                                                         myEditor.getDataContext(), true, false);
+          ActionsCollector.getInstance().record(myEditor.getProject(), statusAction, actionEvent, null);
+          myPopupManager.showPopup(event);
+        }
       }
+
+      @Override
+      public void mouseEntered(MouseEvent event) {
+        if (Experiments.getInstance().isFeatureEnabled("problems.view.enabled")) {
+          myPopupManager.scheduleShow(event);
+        }
+      }
+
+      @Override
+      public void mouseExited(MouseEvent event) {
+        if (Experiments.getInstance().isFeatureEnabled("problems.view.enabled")) {
+          myPopupManager.scheduleHide();
+        }
+      }
+
     });
     smallIconLabel.setOpaque(false);
     smallIconLabel.setBackground(new JBColor(() -> myEditor.getColorsScheme().getDefaultBackground()));
@@ -452,7 +475,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     boolean resetAnalyzingStatus = analyzerStatus != null &&
                             analyzerStatus.isTextStatus() && analyzerStatus.getAnalyzingType() == AnalyzingType.COMPLETE;
     analyzerStatus = newStatus;
-    smallIconLabel.setIcon(analyzerStatus.getIcon());
+    if (analyzerStatus.getAnalyzingType() != AnalyzingType.PARTIAL) {
+      smallIconLabel.setIcon(analyzerStatus.getIcon());
+    }
 
     if (showToolbar != analyzerStatus.getController().enableToolbar()) {
       showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget() &&
@@ -1470,7 +1495,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       if (Experiments.getInstance().isFeatureEnabled("problems.view.enabled")) {
         myPopupManager.hidePopup();
         if (analyzerStatus != null) {
-          analyzerStatus.getController().openProblemsView();
+          analyzerStatus.getController().toggleProblemsView();
         }
       }
       else {

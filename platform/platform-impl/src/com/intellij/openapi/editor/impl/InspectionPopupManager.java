@@ -9,7 +9,6 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.markup.*;
@@ -230,15 +229,6 @@ class InspectionPopupManager {
       else if (getAnalyzerStatus().getExpandedStatus().size() > 0 && getAnalyzerStatus().getAnalyzingType() != AnalyzingType.EMPTY) {
         myContent.add(createDetailsPanel(), gc);
       }
-    }
-
-    if (!Experiments.getInstance().isFeatureEnabled("problems.view.enabled")) {
-      JLabel openProblemsViewLabel = new TrackableLinkLabel(EditorBundle.message("iw.open.problems.view"), () -> {
-        hidePopup();
-        controller.openProblemsView();
-      });
-      myContent.add(openProblemsViewLabel,
-                    gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().coverLine().weightx(1).insets(10, 10, 10, 0));
     }
 
     myContent.add(createLowerPanel(controller),
