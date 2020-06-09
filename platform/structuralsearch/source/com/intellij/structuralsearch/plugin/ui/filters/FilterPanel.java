@@ -162,6 +162,7 @@ public class FilterPanel implements FilterTable {
     if (index >= 0) myTableModel.removeRow(index);
     if (myTableModel.getRowCount() == 1) myTableModel.removeRow(0); // remove header
     filter.clearFilter();
+    filter.reset();
     myConstraintChangedCallback.run();
   }
 
