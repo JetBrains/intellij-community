@@ -120,10 +120,12 @@ class CloneOrderEntriesTest : JavaModuleTestCase() {
   }
 
   fun `test copy module with module`() {
-    val copyToModifiableModel = ModuleRootManager.getInstance(createModule("Copy To Model")).modifiableModel
+    val mainModule = createModule("Copy To Model")
+    val depModule = createModule("My Module")
+    val copyToModifiableModel = ModuleRootManager.getInstance(mainModule).modifiableModel
 
     ModuleRootModificationUtil.updateModel(module) {
-      it.addModuleOrderEntry(createModule("My Module"))
+      it.addModuleOrderEntry(depModule)
     }
 
     val modifiableRootModel = ModuleRootManager.getInstance(module).modifiableModel
