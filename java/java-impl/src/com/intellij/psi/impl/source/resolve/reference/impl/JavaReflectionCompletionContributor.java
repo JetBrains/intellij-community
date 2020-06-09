@@ -93,6 +93,9 @@ public class JavaReflectionCompletionContributor extends CompletionContributor {
     else if (BEGINNING_OF_CONSTRUCTOR_ARGUMENTS.accepts(position)) {
       addVariants(position, (psiClass, isDeclared) -> addConstructorParameterTypes(psiClass, isDeclared, result));
     }
+    else if (JavaReflectionReferenceContributor.Holder.CLASS_PATTERN.accepts(position.getParent())) {
+      JavaClassNameCompletionContributor.addAllClasses(parameters, parameters.getInvocationCount() <= 1, result.getPrefixMatcher(), result);
+    }
   }
 
   private static void addVariants(PsiElement position, BiConsumer<? super PsiClass, ? super Boolean> variantAdder) {

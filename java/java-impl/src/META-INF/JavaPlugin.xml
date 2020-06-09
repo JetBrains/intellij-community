@@ -1224,7 +1224,7 @@
     <lookup.charFilter implementation="com.intellij.codeInsight.completion.JavaCharFilter" id="java"/>
     <completion.contributor language="JAVA" id="javaMethodHandle" order="last, before javaLegacy"
                             implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.JavaMethodHandleCompletionContributor"/>
-    <completion.contributor language="JAVA" id="javaReflection" order="last, before javaLegacy"
+    <completion.contributor language="JAVA" id="javaReflection" order="before javaLegacy, before javaClassReference"
                             implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionCompletionContributor"/>
     <completion.contributor language="JAVA" id="javaSmart" order="last, before default"
                             implementationClass="com.intellij.codeInsight.completion.JavaSmartCompletionContributor"/>
