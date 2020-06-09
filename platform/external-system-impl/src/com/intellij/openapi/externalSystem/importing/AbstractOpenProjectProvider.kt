@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.importing
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil.*
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.project.Project
@@ -44,7 +45,9 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
                                   runConfigurators = false,
                                   beforeOpen = { project ->
                                     project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, true)
-                                    linkAndRefreshProject(projectDirectory.path, project)
+                                    ApplicationManager.getApplication().invokeAndWait {
+                                      linkAndRefreshProject(projectDirectory.path, project)
+                                    }
                                     updateLastProjectLocation(projectDirectory.toNioPath())
                                     true
                                   })
