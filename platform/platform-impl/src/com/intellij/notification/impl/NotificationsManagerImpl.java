@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -146,7 +147,13 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
 
     if (NotificationsConfigurationImpl.getInstanceImpl().SHOW_BALLOONS) {
-      Runnable runnable = () -> showNotification(notification, project);
+      Runnable runnable;
+      if (notification.isShownInDumbMode()) {
+        runnable = (DumbAwareRunnable) () -> showNotification(notification, project);
+      } else {
+        runnable = () -> showNotification(notification, project);
+      }
+
       if (project == null) {
         GuiUtils.invokeLaterIfNeeded(runnable, ModalityState.any(), ApplicationManager.getApplication().getDisposed());
       }
