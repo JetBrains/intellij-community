@@ -599,11 +599,16 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
     randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Libraries/lib1.dylib"));
     randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Libraries/lib2.dylib"));
+    randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Resources/r1/res.bin"));
+    randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Resources/r2/res.bin"));
     Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Versions/Current"), Paths.get("A"));
     Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Libraries"), Paths.get("Versions/Current/Libraries"));
+    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Resources"), Paths.get("Versions/Current/Resources"));
 
     randomFile(myNewerDir.toPath().resolve("A.framework/Libraries/lib1.dylib"));
     randomFile(myNewerDir.toPath().resolve("A.framework/Libraries/lib2.dylib"));
+    randomFile(myNewerDir.toPath().resolve("A.framework/Resources/r1/res.bin"));
+    randomFile(myNewerDir.toPath().resolve("A.framework/Resources/r2/res.bin"));
 
     assertAppliedAndReverted();
   }

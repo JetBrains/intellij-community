@@ -343,6 +343,25 @@ public class PatchCreationTest extends PatchTestCase {
     assertThat(patch.validate(myOlderDir, TEST_UI)).isEmpty();
   }
 
+  @Test
+  public void testValidatingMultipleSymlinkConversion() throws Exception {
+    assumeSymLinkCreationIsSupported();
+
+    resetNewerDir();
+
+    randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Libraries/lib.dylib"));
+    randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Resources/r/res.bin"));
+    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Versions/Current"), Paths.get("A"));
+    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Libraries"), Paths.get("Versions/Current/Libraries"));
+    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Resources"), Paths.get("Versions/Current/Resources"));
+
+    randomFile(myNewerDir.toPath().resolve("A.framework/Libraries/lib.dylib"));
+    randomFile(myNewerDir.toPath().resolve("A.framework/Resources/r/res.bin"));
+
+    Patch patch = createPatch();
+    assertThat(patch.validate(myOlderDir, TEST_UI)).isEmpty();
+  }
+
   private Patch createCaseOnlyRenamePatch() throws IOException {
     Patch patch = createPatch();
     assertThat(patch.getActions().get(0))

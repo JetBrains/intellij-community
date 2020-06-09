@@ -249,17 +249,21 @@ public class Patch {
 
     List<ValidationResult> results = new ArrayList<>();
 
-    Set<String> deletedPaths = new HashSet<>();
+    Set<String> deletedPaths = new HashSet<>(), deletedLinks = new HashSet<>();
     forEach(myActions, "Validating installation...", ui, action -> {
       ValidationResult result = action.validate(toDir);
 
       if (action instanceof DeleteAction) {
-        deletedPaths.add(mapPath(action.getPath()));
+        String path = mapPath(action.getPath());
+        deletedPaths.add(path);
+        if (Digester.isSymlink(action.getChecksum())) {
+          deletedLinks.add(path);
+        }
       }
       else if (result != null &&
                action instanceof CreateAction &&
                ValidationResult.ALREADY_EXISTS_MESSAGE.equals(result.message) &&
-               deletedPaths.contains(mapPath(action.getPath()))) {
+               toBeDeleted(mapPath(action.getPath()), deletedPaths, deletedLinks)) {
         result = null;  // do not warn about files going to be deleted
       }
 
@@ -277,6 +281,17 @@ public class Patch {
       path = path.substring(0, path.length() - 1);
     }
     return path;
+  }
+
+  private static boolean toBeDeleted(String path, Set<String> deletedPaths, Set<String> deletedLinks) {
+    if (deletedPaths.contains(path)) return true;
+    if (!deletedLinks.isEmpty()) {
+      int p = path.length();
+      while ((p = path.lastIndexOf('/', p - 1)) > 0) {
+        if (deletedLinks.contains(path.substring(0, p))) return true;
+      }
+    }
+    return false;
   }
 
   public PatchFileCreator.ApplicationResult apply(ZipFile patchFile,
