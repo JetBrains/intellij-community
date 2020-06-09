@@ -782,7 +782,7 @@ public class UsageViewImpl implements UsageViewEx {
     addFilteringActions(group, true);
   }
 
-  private void addFilteringActions(@NotNull DefaultActionGroup group, boolean includeExtensionPoints) {
+  protected void addFilteringActions(@NotNull DefaultActionGroup group, boolean includeExtensionPoints) {
     if (getPresentation().isMergeDupLinesAvailable()) {
       final MergeDupLines mergeDupLines = new MergeDupLines();
       final JComponent component = myRootPanel;
@@ -796,7 +796,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  private void addFilteringFromExtensionPoints(@NotNull DefaultActionGroup group) {
+  protected void addFilteringFromExtensionPoints(@NotNull DefaultActionGroup group) {
     for (UsageFilteringRuleProvider provider : UsageFilteringRuleProvider.EP_NAME.getExtensionList()) {
       AnAction[] actions = provider.createFilteringActions(this);
       for (AnAction action : actions) {
@@ -804,32 +804,32 @@ public class UsageViewImpl implements UsageViewEx {
       }
     }
   }
+  protected final TreeExpander treeExpander = new TreeExpander() {
+    @Override
+    public void expandAll() {
+      UsageViewImpl.this.expandAll();
+      getUsageViewSettings().setExpanded(true);
+    }
+
+    @Override
+    public boolean canExpand() {
+      return true;
+    }
+
+    @Override
+    public void collapseAll() {
+      UsageViewImpl.this.collapseAll();
+      getUsageViewSettings().setExpanded(false);
+    }
+
+    @Override
+    public boolean canCollapse() {
+      return true;
+    }
+  };
 
   protected AnAction @NotNull [] createActions() {
     EDT.assertIsEdt();
-    final TreeExpander treeExpander = new TreeExpander() {
-      @Override
-      public void expandAll() {
-        UsageViewImpl.this.expandAll();
-        getUsageViewSettings().setExpanded(true);
-      }
-
-      @Override
-      public boolean canExpand() {
-        return true;
-      }
-
-      @Override
-      public void collapseAll() {
-        UsageViewImpl.this.collapseAll();
-        getUsageViewSettings().setExpanded(false);
-      }
-
-      @Override
-      public boolean canCollapse() {
-        return true;
-      }
-    };
 
     CommonActionsManager actionsManager = CommonActionsManager.getInstance();
 
@@ -848,7 +848,11 @@ public class UsageViewImpl implements UsageViewEx {
     group.getTemplatePresentation().setIcon(AllIcons.Actions.GroupBy);
     group.getTemplatePresentation().setText(UsageViewBundle.messagePointer("action.group.by.title"));
     group.getTemplatePresentation().setDescription(UsageViewBundle.messagePointer("action.group.by.title"));
+    group.getTemplatePresentation().setMultipleChoice(true);
     final AnAction[] groupingActions = createGroupingActions();
+    for (AnAction a: groupingActions) {
+      a.getTemplatePresentation().setMultipleChoice(true);
+    }
     if (groupingActions.length > 0) {
       group.add(new Separator(UsageViewBundle.message("action.group.by.title")));
       group.addAll(groupingActions);
@@ -875,7 +879,7 @@ public class UsageViewImpl implements UsageViewEx {
     };
   }
 
-  private boolean canShowSettings() {
+  protected boolean canShowSettings() {
     if (myTargets.length == 0) return false;
     NavigationItem target = myTargets[0];
     return target instanceof ConfigurableUsageTarget;
@@ -892,15 +896,36 @@ public class UsageViewImpl implements UsageViewEx {
     return configurableUsageTarget;
   }
 
-  private AnAction @NotNull [] createGroupingActions() {
+  protected AnAction @NotNull [] createGroupingActions() {
     final List<UsageGroupingRuleProvider> providers = UsageGroupingRuleProvider.EP_NAME.getExtensionList();
-    List<AnAction> list = new ArrayList<>(providers.size());
+    ArrayList<AnAction> list = new ArrayList<>(providers.size());
     for (UsageGroupingRuleProvider provider : providers) {
       ContainerUtil.addAll(list, provider.createGroupingActions(this));
     }
-    ActionUtil.sortAlphabetically(list);
+    sortGroupingActions(list);
     ActionUtil.moveActionTo(list, "Module", "Flatten Modules", true);
     return list.toArray(AnAction.EMPTY_ARRAY);
+  }
+
+
+  protected AnAction createPreviewAction() {
+    return new PreviewUsageAction(this);
+  }
+
+  protected AnAction createSettingsAction() {
+    return new ShowSettings();
+  }
+
+  protected AnAction createPreviousOccurrenceAction(){
+    return CommonActionsManager.getInstance().createPrevOccurenceAction(myRootPanel);
+  }
+
+  protected AnAction createNextOccurrenceAction(){
+    return CommonActionsManager.getInstance().createNextOccurenceAction(myRootPanel);
+  }
+
+  protected void sortGroupingActions(ArrayList<AnAction> actions){
+    ActionUtil.sortAlphabetically(actions);
   }
 
   private boolean shouldTreeReactNowToRuleChanges() {
