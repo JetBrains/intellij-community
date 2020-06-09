@@ -2,9 +2,7 @@
 package com.siyeh.ig.jdk;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AutoBoxingInspectionTest extends LightJavaInspectionTestCase {
@@ -19,9 +17,4 @@ public class AutoBoxingInspectionTest extends LightJavaInspectionTestCase {
     return new AutoBoxingInspection();
   }
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_13;
-  }
 }

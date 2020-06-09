@@ -41,7 +41,7 @@ public class JavaLexer extends LexerBase {
     return id != null &&
            (level.isAtLeast(LanguageLevel.JDK_1_9) && JAVA9_KEYWORDS.contains(id) ||
             level.isAtLeast(LanguageLevel.JDK_10) && VAR.contentEquals(id) ||
-            level.isAtLeast(LanguageLevel.JDK_13_PREVIEW) && YIELD.contentEquals(id) ||
+            level.isAtLeast(LanguageLevel.JDK_14) && YIELD.contentEquals(id) ||
             level.isAtLeast(LanguageLevel.JDK_14_PREVIEW) && RECORD.contentEquals(id));
   }
 

@@ -2,7 +2,6 @@
 package org.jetbrains.uast.test.java
 
 import com.intellij.psi.PsiMethod
-import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.uast.UParameter
 import org.jetbrains.uast.UVariable
 import org.jetbrains.uast.evaluation.SimpleEvaluatorExtension
@@ -11,8 +10,6 @@ import org.jetbrains.uast.values.UValue
 import org.junit.Test
 
 class JavaValuesTest : AbstractJavaValuesTest() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_13
-
   @Test
   fun testAliveThenElse() = doTest("Simple/AliveThenElse.java")
 

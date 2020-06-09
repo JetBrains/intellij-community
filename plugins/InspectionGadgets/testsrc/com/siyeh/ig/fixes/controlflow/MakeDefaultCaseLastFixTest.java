@@ -18,7 +18,7 @@ public class MakeDefaultCaseLastFixTest extends IGQuickFixesTestCase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
     super.tuneFixture(builder);
-    builder.setLanguageLevel(LanguageLevel.JDK_13_PREVIEW);
+    builder.setLanguageLevel(LanguageLevel.JDK_14);
   }
 
   public void testLabeledSwitchRule() { doTest(); }

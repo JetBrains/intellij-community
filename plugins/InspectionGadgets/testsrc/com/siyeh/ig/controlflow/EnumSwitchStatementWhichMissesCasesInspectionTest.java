@@ -16,9 +16,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -151,7 +149,7 @@ public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightJava
            "}");
   }
 
-  public void testJava13Preview() {
+  public void testJava14() {
     doTest("enum E {A, B, C}\n" +
            "\n" +
            "class X {\n" +
@@ -176,11 +174,6 @@ public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightJava
            "}");
   }
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_13;
-  }
 
   @Nullable
   @Override

@@ -36,7 +36,7 @@ class JavaQuoteTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_13
+    return JAVA_14
   }
 
   private void doTest(String before, String after, char c = '"') {

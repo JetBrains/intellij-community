@@ -186,7 +186,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     waitUntilImported(result);
     assertEquals(LanguageLevel.JDK_1_8, EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module));
 
-    getExtension().changeLanguageLevel(module, LanguageLevel.JDK_13_PREVIEW);
+    getExtension().changeLanguageLevel(module, LanguageLevel.JDK_14_PREVIEW);
     assertEquals("--enable-preview",
                  findTag("project.build.plugins.plugin")
                    .findFirstSubTag("configuration")

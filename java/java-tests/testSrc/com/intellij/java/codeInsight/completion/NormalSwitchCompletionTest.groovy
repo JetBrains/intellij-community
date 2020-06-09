@@ -6,11 +6,11 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
 @CompileStatic
-class Normal13CompletionTest extends NormalCompletionTestCase {
+class NormalSwitchCompletionTest extends NormalCompletionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_13
+    return JAVA_14
   }
 
   void testDefaultInRuleSwitch() { doTest() }

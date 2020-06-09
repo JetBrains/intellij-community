@@ -6,7 +6,7 @@ import com.intellij.codeInspection.redundantCast.RedundantCastInspection
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 class JavaSwitchExpressionsHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun getProjectDescriptor() = JAVA_13
+  override fun getProjectDescriptor() = JAVA_14
   override fun getBasePath() = "${JavaTestUtil.getRelativeJavaTestDataPath()}/codeInsight/daemonCodeAnalyzer/switchExpressions"
 
   fun testEnhancedSwitchStatements() = doTest()
