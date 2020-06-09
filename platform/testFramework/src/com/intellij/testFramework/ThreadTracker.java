@@ -82,6 +82,7 @@ public final class ThreadTracker {
     "Monitor Ctrl-Break",
     "Netty ",
     "ObjectCleanerThread",
+    "OkHttp ConnectionPool", // Dockers okhttp3.internal.connection.RealConnectionPool
     "Okio Watchdog", // Dockers "okio.AsyncTimeout.Watchdog"
     "Reference Handler",
     "RMI GC Daemon",
