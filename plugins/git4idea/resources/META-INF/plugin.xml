@@ -45,6 +45,7 @@
     <action id="Git.Uncommit" class="git4idea.reset.GitUncommitAction"/>
     <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction"/>
     <action id="Git.Squash.Commits" class="git4idea.rebase.log.squash.GitSquashLogAction"/>
+    <action id="Git.Drop.Commits" class="git4idea.rebase.log.drop.GitDropLogAction"/>
     <action id="Git.Rename.Local.Branch" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$RenameLocalBranch"/>
     <action id="Git.Checkout.Branch" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$CheckoutSelectedBranchAction"/>
     <action id="Git.Log.Hide.Branches" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$HideBranchesAction"
@@ -155,6 +156,7 @@
       <reference id="Git.Reword.Commit"/>
       <reference id="Git.Fixup.To.Commit" />
       <reference id="Git.Squash.Into.Commit" />
+      <reference id="Git.Drop.Commits"/>
       <reference id="Git.Squash.Commits" />
       <reference id="Git.Interactive.Rebase"/>
       <separator/>
