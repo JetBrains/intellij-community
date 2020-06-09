@@ -18,8 +18,7 @@ import javax.swing.*;
 import java.awt.*;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createSmallLogo;
-import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getMainBackground;
-import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getTabListSelectionBackgroundColor;
+import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getMainTabListBackground;
 
 public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
   private final JBSlidingPanel mySlidingPanel = new JBSlidingPanel();
@@ -27,7 +26,7 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
 
   TabbedWelcomeScreen() {
     mySlidingPanel.add("root", this);
-    setBackground(getMainBackground());
+    setBackground(getMainTabListBackground());
 
     CardLayoutPanel<WelcomeScreenTab, WelcomeScreenTab, JPanel> centralPanel = createCardPanel();
 
@@ -35,7 +34,7 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     WelcomeTabFactory.WELCOME_TAB_FACTORY_EP.getExtensionList().forEach(it -> mainListModel.addElement(it.createWelcomeTab(this)));
 
     JBList<WelcomeScreenTab> tabList = new JBList<>(mainListModel);
-    tabList.setBackground(getMainBackground());
+    tabList.setBackground(getMainTabListBackground());
     tabList.setBorder(JBUI.Borders.emptyLeft(16));
     tabList.setFixedCellHeight(JBUI.scale(32));
     tabList.setCellRenderer(new MyCellRenderer());
@@ -103,8 +102,8 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
                                                   boolean cellHasFocus) {
       JComponent keyComponent = value.getKeyComponent();
       JPanel wrappedPanel = JBUI.Panels.simplePanel(keyComponent);
-      UIUtil.setBackgroundRecursively(wrappedPanel, isSelected ? getTabListSelectionBackgroundColor(cellHasFocus) : list.getBackground());
-      UIUtil.setForegroundRecursively(wrappedPanel, UIUtil.getListForeground(isSelected,cellHasFocus));
+      UIUtil.setBackgroundRecursively(wrappedPanel, isSelected ? UIUtil.getListSelectionBackground(cellHasFocus): getMainTabListBackground());
+      UIUtil.setForegroundRecursively(wrappedPanel, UIUtil.getListForeground(isSelected, cellHasFocus));
       return wrappedPanel;
     }
   }
@@ -115,7 +114,7 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     private JComponent myAssociatedComponent;
 
     public DefaultWelcomeScreenTab(@NotNull String tabName) {
-      myKeyComponent = JBUI.Panels.simplePanel().addToLeft(new JLabel(tabName)).withBackground(getMainBackground());
+      myKeyComponent = JBUI.Panels.simplePanel().addToLeft(new JLabel(tabName)).withBackground(getMainTabListBackground());
     }
 
     @Override

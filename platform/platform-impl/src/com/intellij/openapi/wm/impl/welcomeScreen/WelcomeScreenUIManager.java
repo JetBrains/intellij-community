@@ -52,6 +52,10 @@ public class WelcomeScreenUIManager {
     return JBColor.namedColor("WelcomeScreen.background", new JBColor(0xf7f7f7, 0x45474a));
   }
 
+  public static Color getMainTabListBackground() {
+    return JBColor.namedColor("WelcomeScreen.List.background", new JBColor(0xF2F2F2, 0x393939));
+  }
+
   public static Color getProjectsBackground() {
     if (Registry.is("use.tabbed.welcome.screen")) {
       return getMainAssociatedComponentBackground();
