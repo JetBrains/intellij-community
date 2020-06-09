@@ -82,6 +82,7 @@ public class PatchCreationTest extends PatchTestCase {
     Patch patch = createPatch();
 
     FileUtil.writeToFile(new File(myOlderDir, "bin/idea.bat"), "changed");
+    File focuskiller = new File(myOlderDir, "bin/focuskiller.bat");
     FileUtil.writeToFile(new File(myOlderDir, "bin/focuskiller.dll"), "changed");
     FileUtil.createDirectory(new File(myOlderDir, "extraDir"));
     FileUtil.writeToFile(new File(myOlderDir, "extraDir/extraFile.txt"), "");
@@ -94,6 +95,7 @@ public class PatchCreationTest extends PatchTestCase {
     assertThat(sortResults(patch.validate(myOlderDir, TEST_UI))).containsExactly(
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "bin/focuskiller.dll",
+                           focuskiller,
                            ValidationResult.Action.DELETE,
                            ValidationResult.MODIFIED_MESSAGE,
                            ValidationResult.Option.DELETE, ValidationResult.Option.KEEP),
@@ -119,6 +121,7 @@ public class PatchCreationTest extends PatchTestCase {
                            ValidationResult.Option.IGNORE),
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "bin/focuskiller.dll",
+                           focuskiller,
                            ValidationResult.Action.UPDATE,
                            ValidationResult.MODIFIED_MESSAGE,
                            ValidationResult.Option.IGNORE),
