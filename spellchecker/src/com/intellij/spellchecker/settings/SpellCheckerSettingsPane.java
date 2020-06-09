@@ -37,6 +37,7 @@ import java.util.Set;
 import static com.intellij.openapi.extensions.PluginId.getId;
 import static com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel.APP;
 import static com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel.PROJECT;
+import static com.intellij.spellchecker.SpellCheckerManager.getBundledDictionaries;
 import static javax.swing.event.HyperlinkEvent.EventType.ACTIVATED;
 
 public class SpellCheckerSettingsPane implements Disposable {
@@ -45,7 +46,6 @@ public class SpellCheckerSettingsPane implements Disposable {
   public static final int MAX_CORRECTIONS = 15;
   private JPanel root;
   private JPanel linkContainer;
-  private JPanel myPanelForBundledDictionaries;
   private JPanel panelForAcceptedWords;
   private JPanel myPanelForCustomDictionaries;
   private JSpinner myMaxCorrectionsSpinner;
@@ -57,7 +57,6 @@ public class SpellCheckerSettingsPane implements Disposable {
 
   //Dictionaries provided by plugins -- runtime and bundled
   private final OptionalChooserComponent<String> myProvidedDictionariesChooserComponent;
-  private final Set<String> bundledDictionaries = new HashSet<>();
   private final Set<String> runtimeDictionaries = new HashSet<>();
   private final List<Pair<String, Boolean>> providedDictionaries = new ArrayList<>();
 
@@ -115,20 +114,15 @@ public class SpellCheckerSettingsPane implements Disposable {
       public void apply() {
         super.apply();
 
-        final HashSet<String> bundledDisabledDictionaries = new HashSet<>();
         final HashSet<String> runtimeDisabledDictionaries = new HashSet<>();
 
         for (Pair<String, Boolean> pair : providedDictionaries) {
           if (pair.second) continue;
 
-          if (bundledDictionaries.contains(pair.first)) {
-            bundledDisabledDictionaries.add(pair.first);
-          }
           else if (runtimeDictionaries.contains(pair.first)) {
             runtimeDisabledDictionaries.add(pair.first);
           }
         }
-        settings.setBundledDisabledDictionariesPaths(bundledDisabledDictionaries);
         settings.setRuntimeDisabledDictionariesNames(runtimeDisabledDictionaries);
       }
 
@@ -139,11 +133,6 @@ public class SpellCheckerSettingsPane implements Disposable {
       }
     };
 
-    myPanelForBundledDictionaries.setBorder(
-      IdeBorderFactory.createTitledBorder(SpellCheckerBundle.message("dictionaries.panel.description"), false, JBUI.insetsTop(8)).setShowLine(false)
-    );
-    myPanelForBundledDictionaries.setLayout(new BorderLayout());
-    myPanelForBundledDictionaries.add(myProvidedDictionariesChooserComponent.getContentPane(), BorderLayout.CENTER);
     myProvidedDictionariesChooserComponent.getEmptyText().setText(SpellCheckerBundle.message("no.dictionaries"));
 
 
@@ -199,8 +188,6 @@ public class SpellCheckerSettingsPane implements Disposable {
 
     myProvidedDictionariesChooserComponent.apply();
     myDictionariesPanel.apply();
-
-    manager.updateBundledDictionaries(myDictionariesPanel.getRemovedDictionaries());
   }
 
   private int getLimit() {
@@ -220,9 +207,7 @@ public class SpellCheckerSettingsPane implements Disposable {
   private void fillProvidedDictionaries() {
     providedDictionaries.clear();
 
-    bundledDictionaries.clear();
-    for (String dictionary : SpellCheckerManager.getBundledDictionaries()) {
-      bundledDictionaries.add(dictionary);
+    for (String dictionary : getBundledDictionaries()) {
       providedDictionaries.add(Pair.create(dictionary, !settings.getBundledDisabledDictionariesPaths().contains(dictionary)));
     }
 
