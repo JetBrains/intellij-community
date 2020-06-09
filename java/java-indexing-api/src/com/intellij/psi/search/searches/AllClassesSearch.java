@@ -1,8 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -15,7 +11,7 @@ import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 
-public class AllClassesSearch extends ExtensibleQueryFactory<PsiClass, AllClassesSearch.SearchParameters> {
+public final class AllClassesSearch extends ExtensibleQueryFactory<PsiClass, AllClassesSearch.SearchParameters> {
   public static final ExtensionPointName<QueryExecutor<PsiClass, AllClassesSearch.SearchParameters>> EP_NAME = ExtensionPointName.create("com.intellij.allClassesSearch");
   public static final AllClassesSearch INSTANCE = new AllClassesSearch();
 

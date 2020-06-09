@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.intellij.plugins.relaxNG.model.descriptors;
 
-import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.kohsuke.rngom.digested.*;
 
 import java.util.Set;
 
 public class RecursionSaveWalker extends DPatternWalker {
-  private final Set<DPattern> myVisited = ContainerUtil.newIdentityTroveSet(256);
+  private final Set<DPattern> myVisited = new ReferenceOpenHashSet<>(256);
 
   protected RecursionSaveWalker() {
   }

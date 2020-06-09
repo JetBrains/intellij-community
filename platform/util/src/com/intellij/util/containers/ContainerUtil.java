@@ -153,7 +153,6 @@ public class ContainerUtil {
   /**
    * @deprecated Use {@link IdentityHashMap#IdentityHashMap()}
    */
-  @SuppressWarnings("unused")
   @Deprecated
   public static @NotNull <K, V> IdentityHashMap<K, V> newIdentityHashMap() {
     return new IdentityHashMap<>();
@@ -303,16 +302,6 @@ public class ContainerUtil {
   }
 
   /**
-   * @deprecated Use {@link SmartList(T)}
-   */
-  @SafeVarargs
-  @Contract(pure = true)
-  @Deprecated
-  public static @NotNull <T> List<T> newSmartList(T @NotNull ... elements) {
-    return new SmartList<>(elements);
-  }
-
-  /**
    * @deprecated Use {@link HashSet#HashSet()}
    */
   @Contract(pure = true)
@@ -394,7 +383,7 @@ public class ContainerUtil {
   }
 
   /**
-   * @deprecated Use {@link THashSet#THashSet()}
+   * @deprecated Use {@link HashSet#HashSet()}
    */
   @Deprecated
   @Contract(pure = true)
@@ -403,15 +392,10 @@ public class ContainerUtil {
   }
 
   /**
-   * @deprecated Use {@link THashSet#THashSet(TObjectHashingStrategy)}
+   * @deprecated Use {@link HashSet}
    */
-  @Deprecated
-  @Contract(pure = true)
-  public static @NotNull <T> THashSet<T> newTroveSet(@NotNull TObjectHashingStrategy<T> strategy) {
-    return new THashSet<>(strategy);
-  }
-
   @SafeVarargs
+  @Deprecated
   @Contract(pure = true)
   public static @NotNull <T> THashSet<T> newTroveSet(T @NotNull ... elements) {
     return new THashSet<>(Arrays.asList(elements));
@@ -427,7 +411,11 @@ public class ContainerUtil {
     return new THashSet<>(Arrays.asList(elements), strategy);
   }
 
+  /**
+   * @deprecated Use {@link HashSet}.
+   */
   @Contract(pure = true)
+  @Deprecated
   public static @NotNull <T> THashSet<T> newTroveSet(@NotNull TObjectHashingStrategy<T> strategy, @NotNull Collection<? extends T> elements) {
     return new THashSet<>(elements, strategy);
   }
@@ -450,15 +438,19 @@ public class ContainerUtil {
     return new THashSet<>(identityStrategy());
   }
 
-  @Contract(pure = true)
-  public static @NotNull <K> THashSet<K> newIdentityTroveSet(int initialCapacity) {
-    return new THashSet<>(initialCapacity, identityStrategy());
-  }
+  /**
+   * @deprecated Use {@link it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet}.
+   */
+  @Deprecated
   @Contract(pure = true)
   public static @NotNull <K> THashSet<K> newIdentityTroveSet(@NotNull Collection<? extends K> collection) {
     return new THashSet<>(collection, identityStrategy());
   }
 
+  /**
+   * @deprecated Use {@link it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap}
+   */
+  @Deprecated
   @Contract(pure = true)
   public static @NotNull <K,V> THashMap<K,V> newIdentityTroveMap() {
     return new THashMap<>(identityStrategy());

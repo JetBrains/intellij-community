@@ -16,16 +16,16 @@ import com.intellij.util.WalkingState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 public abstract class SliceNullnessAnalyzerBase {
-  @NotNull
-  private final SliceLeafEquality myLeafEquality;
+  private final @NotNull SliceLeafEquality myLeafEquality;
 
-  @NotNull
-  private final SliceLanguageSupportProvider myProvider;
+  private final @NotNull SliceLanguageSupportProvider myProvider;
 
   public SliceNullnessAnalyzerBase(@NotNull SliceLeafEquality leafEquality,
                                    @NotNull SliceLanguageSupportProvider provider) {
@@ -37,11 +37,11 @@ public abstract class SliceNullnessAnalyzerBase {
     SliceRootNode root = createNewTree(result, oldRoot, map);
 
     SliceUsage rootUsage = oldRoot.getCachedChildren().get(0).getValue();
-    SliceManager.getInstance(root.getProject()).createToolWindow(true, root, true, SliceManager.getElementDescription(null, rootUsage.getElement(), " Grouped by Nullness") );
+    SliceManager.getInstance(Objects.requireNonNull(root.getProject()))
+      .createToolWindow(true, root, true, SliceManager.getElementDescription(null, Objects.requireNonNull(rootUsage).getElement(), " Grouped by Nullness") );
   }
 
-  @NotNull
-  public SliceRootNode createNewTree(NullAnalysisResult result, SliceRootNode oldRoot, final Map<SliceNode, NullAnalysisResult> map) {
+  public @NotNull SliceRootNode createNewTree(NullAnalysisResult result, SliceRootNode oldRoot, final Map<SliceNode, NullAnalysisResult> map) {
     SliceRootNode root = oldRoot.copy();
     assert oldRoot.getCachedChildren().size() == 1;
     SliceNode oldRootStart = oldRoot.getCachedChildren().get(0);
@@ -63,7 +63,7 @@ public abstract class SliceNullnessAnalyzerBase {
                                                       SliceNode oldRootStart,
                                                       String nodeName,
                                                       final int group) {
-    Collection<PsiElement> groupedByValue = result.groupedByValue[group];
+    Collection<PsiElement> groupedByValue = result.groupedByValue.get(group);
     if (groupedByValue.isEmpty()) {
       return null;
     }
@@ -107,7 +107,7 @@ public abstract class SliceNullnessAnalyzerBase {
     ProgressManager.getInstance().run(new Task.Backgroundable(
       root.getProject(), JavaRefactoringBundle.message("dataflow.to.here.expand.progress", encouragementPiece), true) {
       @Override
-      public void run(@NotNull final ProgressIndicator indicator) {
+      public void run(final @NotNull ProgressIndicator indicator) {
         NullAnalysisResult l = calcNullableLeaves(root, treeStructure, map);
         leafExpressions.set(l);
       }
@@ -132,25 +132,25 @@ public abstract class SliceNullnessAnalyzerBase {
     });
   }
 
-  public static Map<SliceNode, NullAnalysisResult> createMap() {
-    return FactoryMap.createMap(k->new NullAnalysisResult(), ContainerUtil::newIdentityTroveMap);
+  public static @NotNull Map<SliceNode, NullAnalysisResult> createMap() {
+    return FactoryMap.createMap(k -> new NullAnalysisResult(), () -> new Reference2ObjectOpenHashMap<>());
   }
 
   private static NullAnalysisResult node(@NotNull SliceNode node, @NotNull Map<SliceNode, NullAnalysisResult> nulls) {
     return nulls.get(node);
   }
+
   private static Collection<PsiElement> group(@NotNull SliceNode node, @NotNull Map<SliceNode, NullAnalysisResult> nulls, int group) {
-    return nulls.get(node).groupedByValue[group];
+    return nulls.get(node).groupedByValue.get(group);
   }
 
-  @NotNull
-  public NullAnalysisResult calcNullableLeaves(@NotNull final SliceNode root,
-                                               @NotNull AbstractTreeStructure treeStructure,
-                                               @NotNull final Map<SliceNode, NullAnalysisResult> map) {
+  public @NotNull NullAnalysisResult calcNullableLeaves(final @NotNull SliceNode root,
+                                                        @NotNull AbstractTreeStructure treeStructure,
+                                                        final @NotNull Map<SliceNode, NullAnalysisResult> map) {
     final SliceLeafAnalyzer.SliceNodeGuide guide = new SliceLeafAnalyzer.SliceNodeGuide(treeStructure);
     WalkingState<SliceNode> walkingState = new WalkingState<SliceNode>(guide) {
       @Override
-      public void visit(@NotNull final SliceNode element) {
+      public void visit(final @NotNull SliceNode element) {
         element.calculateDupNode();
         node(element, map).clear();
         SliceNode duplicate = element.getDuplicate();
@@ -195,16 +195,15 @@ public abstract class SliceNullnessAnalyzerBase {
    * @param element element to find nullability for
    * @return element nullability
    */
-  @NotNull
-  protected Nullability checkNullability(final PsiElement element) {
+  protected @NotNull Nullability checkNullability(final PsiElement element) {
     throw new UnsupportedOperationException();
   }
 
-  public static class NullAnalysisResult {
+  public static final class NullAnalysisResult {
     static final int NULLS = 0;
     static final int NOT_NULLS = 1;
     static final int UNKNOWNS = 2;
-    final Collection<PsiElement>[] groupedByValue = new Collection[] {new THashSet<PsiElement>(),new THashSet<PsiElement>(),new THashSet<PsiElement>()};
+    final List<ObjectOpenHashSet<PsiElement>> groupedByValue = Arrays.asList(new ObjectOpenHashSet<>(), new ObjectOpenHashSet<>(), new ObjectOpenHashSet<>());
 
     public void clear() {
       for (Collection<PsiElement> elements : groupedByValue) {
@@ -213,9 +212,9 @@ public abstract class SliceNullnessAnalyzerBase {
     }
 
     private void add(NullAnalysisResult duplicate) {
-      for (int i = 0; i < groupedByValue.length; i++) {
-        Collection<PsiElement> elements = groupedByValue[i];
-        Collection<PsiElement> other = duplicate.groupedByValue[i];
+      for (int i = 0; i < groupedByValue.size(); i++) {
+        Collection<PsiElement> elements = groupedByValue.get(i);
+        Collection<PsiElement> other = duplicate.groupedByValue.get(i);
         elements.addAll(other);
       }
     }

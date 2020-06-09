@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -134,7 +133,7 @@ public final class RecursionManager {
       @NotNull
       @Override
       public List<Key> currentStack() {
-        ArrayList<Key> result = new ArrayList<>();
+        List<Key> result = new ArrayList<>();
         for (MyKey pair : ourStack.get().progressMap.keySet()) {
           if (pair.guardId.equals(id)) {
             //noinspection unchecked
@@ -225,12 +224,12 @@ public final class RecursionManager {
     }
   }
 
-  private static class CalculationStack {
+  private static final class CalculationStack {
     private int reentrancyCount;
     private int depth;
     private int firstLoopStart = Integer.MAX_VALUE; // outermost recursion-prevented frame depth; memoized values are dropped on its change.
     private final LinkedHashMap<MyKey, StackFrame> progressMap = new LinkedHashMap<>();
-    private final Map<MyKey, Throwable> preventions = ContainerUtil.newIdentityTroveMap();
+    private final Map<MyKey, Throwable> preventions = new IdentityHashMap<>();
     private final Map<MyKey, MemoizedValue> intermediateCache = ContainerUtil.createSoftKeySoftValueMap();
     private int enters;
     private int exits;
@@ -396,7 +395,7 @@ public final class RecursionManager {
     void addPrevention(int stamp, MyKey prevented) {
       reentrancyStamp = stamp;
       if (preventionsInside == null) {
-        preventionsInside = new THashSet<>();
+        preventionsInside = new HashSet<>();
       }
       preventionsInside.add(prevented);
     }

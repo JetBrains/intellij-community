@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.idea.HardwareAgentRequired;
@@ -20,11 +6,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
-import com.intellij.util.MathUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.IntObjectCache;
 import com.intellij.util.io.storage.AbstractStorage;
-import gnu.trove.THashSet;
-import gnu.trove.TIntIntHashMap;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -177,7 +164,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
     FileUtil.createParentDirs(file);
 
     int size = 10000000;
-    TIntIntHashMap checkMap = new TIntIntHashMap(size);
+    Int2IntOpenHashMap checkMap = new Int2IntOpenHashMap(size);
     Random r = new Random(1);
     while (size != checkMap.size()) {
       if (checkMap.size() == 0) {
@@ -202,18 +189,17 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
       };
 
       final PersistentHashMap<Integer, Integer> mapFinal = map;
-      boolean result = checkMap.forEachEntry((a, b) -> {
+      for (ObjectIterator<Int2IntMap.Entry> iterator = checkMap.int2IntEntrySet().fastIterator(); iterator.hasNext(); ) {
+        Int2IntMap.Entry entry = iterator.next();
         try {
-          mapFinal.put(a, b);
+          mapFinal.put(entry.getIntKey(), entry.getIntValue());
         }
         catch (IOException e) {
           e.printStackTrace();
           fail();
-          return false;
+          break;
         }
-        return true;
-      });
-      assertTrue(result);
+      }
       map.close();
       LOG.debug("Done:" + (System.currentTimeMillis() - started));
       started = System.currentTimeMillis();
@@ -224,18 +210,16 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
         }
       };
       final PersistentHashMap<Integer, Integer> mapFinal2 = map;
-      result = checkMap.forEachEntry((a, b) -> {
+      for (ObjectIterator<Int2IntMap.Entry> iterator = checkMap.int2IntEntrySet().fastIterator(); iterator.hasNext(); ) {
         try {
-          assertEquals(b, (int)mapFinal2.get(a));
+          Int2IntMap.Entry entry = iterator.next();
+          assertEquals(entry.getIntValue(), (int)mapFinal2.get(entry.getIntKey()));
         }
         catch (IOException e) {
           e.printStackTrace();
           fail();
-          return false;
         }
-        return true;
-      });
-      assertTrue(result);
+      }
 
       LOG.debug("Done 2:" + (System.currentTimeMillis() - started));
     }
@@ -256,7 +240,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
 
     @Override
     public Collection<String> read(@NotNull DataInput in) throws IOException {
-      final Set<String> result = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+      final Set<String> result = CollectionFactory.createFilePathSet();
       final DataInputStream stream = (DataInputStream)in;
       while (stream.available() > 0) {
         final String str = IOUtil.readString(stream);

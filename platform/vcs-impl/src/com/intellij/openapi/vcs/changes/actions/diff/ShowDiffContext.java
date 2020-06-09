@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.DiffDialogHints;
@@ -15,8 +15,8 @@ public class ShowDiffContext {
   @NotNull private final DiffDialogHints myDialogHints;
 
   @Nullable private List<AnAction> myActions;
-  @Nullable private Map<Key, Object> myChainContext;
-  @Nullable private Map<Change, Map<Key, Object>> myRequestContext;
+  @Nullable private Map<Key<?>, Object> myChainContext;
+  @Nullable private Map<Change, Map<Key<?>, Object>> myRequestContext;
 
   public ShowDiffContext() {
     this(DiffDialogHints.DEFAULT);
@@ -38,16 +38,15 @@ public class ShowDiffContext {
   }
 
   @NotNull
-  public Map<Key, Object> getChainContext() {
+  public Map<Key<?>, Object> getChainContext() {
     return ContainerUtil.notNullize(myChainContext);
   }
 
   @NotNull
-  public Map<Key, Object> getChangeContext(@NotNull Change change) {
+  public Map<Key<?>, Object> getChangeContext(@NotNull Change change) {
     if (myRequestContext == null) return Collections.emptyMap();
-    Map<Key, Object> map = myRequestContext.get(change);
-    if (map == null) return Collections.emptyMap();
-    return map;
+    Map<Key<?>, Object> map = myRequestContext.get(change);
+    return map == null ? Collections.emptyMap() : map;
   }
 
   public void addActions(@NotNull List<? extends AnAction> action) {

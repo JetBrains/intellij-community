@@ -8,10 +8,10 @@ import com.intellij.ui.layout.*
 import com.intellij.ui.layout.migLayout.patched.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.SmartList
-import com.intellij.util.containers.ContainerUtil
 import net.miginfocom.layout.*
 import java.awt.Component
 import java.awt.Container
+import java.util.*
 import javax.swing.*
 
 internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuilderImpl {
@@ -49,7 +49,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
   /**
    * Map of component to constraints shared among rows (since components are unique)
    */
-  internal val componentConstraints: MutableMap<Component, CC> = ContainerUtil.newIdentityTroveMap()
+  internal val componentConstraints: MutableMap<Component, CC> = IdentityHashMap()
   override val rootRow = MigLayoutRow(parent = null, builder = this, indent = 0)
 
   private val buttonGroupStack: MutableList<ButtonGroup> = mutableListOf()

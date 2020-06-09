@@ -21,7 +21,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.EqualityPolicy;
-import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,7 +94,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
       ProcessingContext context = createContext();
       Classifier<LookupElement> classifier = myClassifiers.get(sorter);
       while (classifier != null) {
-        final THashSet<LookupElement> itemSet = ContainerUtil.newIdentityTroveSet(thisSorterItems);
+        Set<LookupElement> itemSet = new ReferenceOpenHashSet<>(thisSorterItems);
         List<LookupElement> unsortedItems = ContainerUtil.filter(myItems, lookupElement -> itemSet.contains(lookupElement));
         List<Pair<LookupElement, Object>> pairs = classifier.getSortingWeights(unsortedItems, context);
         if (!hideSingleValued || !haveSameWeights(pairs)) {
@@ -339,7 +339,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     LookupElement relevantSelection = findMostRelevantItem(sortedByRelevance);
     List<LookupElement> listModel = isAlphaSorted() ?
                                     sortByPresentation(items) :
-                                    fillModelByRelevance(lookup, ContainerUtil.newIdentityTroveSet(items), sortedByRelevance, relevantSelection);
+                                    fillModelByRelevance(lookup, new ReferenceOpenHashSet<>(items), sortedByRelevance, relevantSelection);
 
     int toSelect = getItemToSelect(lookup, listModel, onExplicitAction, relevantSelection);
     LOG.assertTrue(toSelect >= 0);

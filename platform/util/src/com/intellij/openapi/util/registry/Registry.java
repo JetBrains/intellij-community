@@ -2,7 +2,6 @@
 package com.intellij.openapi.util.registry;
 
 import com.intellij.diagnostic.LoadingState;
-import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -30,18 +29,16 @@ public final class Registry  {
 
   private final Map<String, String> myUserProperties = new LinkedHashMap<>();
   private final ConcurrentMap<String, RegistryValue> myValues = new ConcurrentHashMap<>();
-  private final THashMap<String, RegistryKeyDescriptor> myContributedKeys = new THashMap<>();
+  private final Map<String, RegistryKeyDescriptor> myContributedKeys = new HashMap<>();
 
   private static final Registry ourInstance = new Registry();
   private volatile boolean myLoaded = false;
 
-  @NotNull
-  public static RegistryValue get(@NonNls @NotNull String key) {
+  public static @NotNull RegistryValue get(@NonNls @NotNull String key) {
     return getInstance().doGet(key);
   }
 
-  @NotNull
-  private RegistryValue doGet(@NonNls @NotNull String key) {
+  private @NotNull RegistryValue doGet(@NonNls @NotNull String key) {
     RegistryValue value = myValues.get(key);
     if (value != null) {
       return value;
@@ -92,8 +89,7 @@ public final class Registry  {
     return get(key).asDouble();
   }
 
-  @NotNull
-  public static String stringValue(@NonNls @NotNull String key) throws MissingResourceException {
+  public static @NotNull String stringValue(@NonNls @NotNull String key) throws MissingResourceException {
     return get(key).asString();
   }
 
@@ -101,8 +97,7 @@ public final class Registry  {
     return get(key).asColor(defaultValue);
   }
 
-  @NotNull
-  static ResourceBundle getBundle() {
+  static @NotNull ResourceBundle getBundle() {
     ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
     if (bundle == null) {
       bundle = ResourceBundle.getBundle(REGISTRY_BUNDLE);
@@ -128,14 +123,12 @@ public final class Registry  {
     return null;
   }
 
-  @NotNull
-  public static Registry getInstance() {
+  public static @NotNull Registry getInstance() {
     LoadingState.COMPONENTS_REGISTERED.checkOccurred();
     return ourInstance;
   }
 
-  @NotNull
-  public Element getState() {
+  public @NotNull Element getState() {
     final Element state = new Element("registry");
     for (String eachKey : myUserProperties.keySet()) {
       final Element entry = new Element("entry");
@@ -172,14 +165,12 @@ public final class Registry  {
     return myLoaded;
   }
 
-  @NotNull
   @ApiStatus.Internal
-  public Map<String, String> getUserProperties() {
+  public @NotNull Map<String, String> getUserProperties() {
     return myUserProperties;
   }
 
-  @NotNull
-  public static List<RegistryValue> getAll() {
+  public static @NotNull List<RegistryValue> getAll() {
     final ResourceBundle bundle = getBundle();
     final Enumeration<String> keys = bundle.getKeys();
 
@@ -231,10 +222,8 @@ public final class Registry  {
 
   public static synchronized void addKeys(@NotNull List<RegistryKeyDescriptor> descriptors) {
     // getInstance must be not used here - phase COMPONENT_REGISTERED is not yet completed
-    THashMap<String, RegistryKeyDescriptor> map = ourInstance.myContributedKeys;
-    map.ensureCapacity(descriptors.size());
     for (RegistryKeyDescriptor descriptor : descriptors) {
-      map.put(descriptor.getName(), descriptor);
+      ourInstance.myContributedKeys.put(descriptor.getName(), descriptor);
     }
   }
 
