@@ -4,6 +4,7 @@
  * his brothers keeper and the finder of lost children. And I will strike down upon thee with great vengeance and furious anger,
  * those who attempt to poison and destroy my brothers. And you will know my name is the Lord, when I lay my vengeance upon thee.
  */
+// overtones
 package com.siyeh.igtest.javadoc.dangling_javadoc;
 
 <warning descr="Dangling Javadoc comment">/**</warning>
