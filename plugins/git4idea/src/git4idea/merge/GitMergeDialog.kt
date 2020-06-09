@@ -67,7 +67,13 @@ class GitMergeDialog(private val project: Project,
   private val isNoVerifySupported = NO_VERIFY_SUPPORTED.existsIn(GitExecutableManager.getInstance().getVersion(project))
 
   init {
-    title = GitBundle.message("merge.branch.title")
+    val currentBranchName = getRepository(getSelectedRoot()).currentBranchName
+    title = if (currentBranchName.isNullOrEmpty()) {
+      GitBundle.message("merge.branch.title")
+    }
+    else {
+      GitBundle.message("merge.branch.into.current.title", currentBranchName)
+    }
     setOKButtonText(GitBundle.message("merge.action.name"))
     updateBranches()
     loadSettings()
@@ -295,7 +301,7 @@ class GitMergeDialog(private val project: Project,
     OptionInfo(option, option.option, GitBundle.message(option.descriptionKey))
   }
 
-  private fun createOptionPopupStep() = object : BaseListPopupStep<MergeOption>(GitBundle.message("merge.options.modify"), getOptions()) {
+  private fun createOptionPopupStep() = object : BaseListPopupStep<MergeOption>(GitBundle.message("merge.options.modify.popup.title"), getOptions()) {
 
     override fun isSelectable(value: MergeOption?) = isOptionEnabled(value!!)
 

@@ -16,11 +16,11 @@ enum class MergeOption(@NonNls val option: String,
   fun isOptionSuitable(option: MergeOption): Boolean {
     return when (this) {
       NO_FF -> option != SQUASH && option != FF_ONLY
-      SQUASH -> option == SQUASH || option == NO_COMMIT
+      FF_ONLY -> option != NO_FF
+      SQUASH -> option != NO_FF && option != COMMIT_MESSAGE
       COMMIT_MESSAGE -> option != SQUASH && option != NO_COMMIT
       NO_COMMIT -> option != COMMIT_MESSAGE
       NO_VERIFY -> true
-      FF_ONLY -> option != NO_FF
     }
   }
 }
