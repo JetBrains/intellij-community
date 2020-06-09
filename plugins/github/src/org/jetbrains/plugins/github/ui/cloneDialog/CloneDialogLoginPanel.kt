@@ -23,6 +23,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.ui.GithubLoginPanel
+import org.jetbrains.plugins.github.authentication.ui.setTokenUi
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.util.completionOnEdt
 import org.jetbrains.plugins.github.util.errorOnEdt
@@ -64,6 +65,8 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
   fun setCancelHandler(listener: () -> Unit) = backLink.setListener({ _, _ -> listener() }, null)
 
   fun createSwitchUiLink(): LinkLabel<*> = loginPanel.createSwitchUiLink()
+  fun setTokenUi() = loginPanel.setTokenUi()
+  fun setServer(path: String, editable: Boolean) = loginPanel.setServer(path, editable)
 
   private fun buildLayout() {
     loginPanel.footer = { buttonPanel() } // footer is used to put buttons in 2-nd column - align under text boxes

@@ -54,14 +54,15 @@ class GHECloneDialogExtension : BaseCloneDialogExtension() {
 }
 
 private class GHECloneDialogLoginPanel(account: GithubAccount?) : BorderLayoutPanel() {
-  val loginPanel = CloneDialogLoginPanel(account)
-
   private val titlePanel =
     simplePanel().apply {
       val title = JBLabel(message("login.to.github.enterprise"), ComponentStyle.LARGE).apply { font = JBFont.label().biggerOn(5.0f) }
       addToLeft(title)
-      addToRight(loginPanel.createSwitchUiLink())
     }
+  val loginPanel = CloneDialogLoginPanel(account).apply {
+    setServer("", true)
+    setTokenUi()
+  }
 
   init {
     addToTop(titlePanel.apply { border = JBEmptyBorder(getRegularPanelInsets().apply { bottom = 0 }) })
