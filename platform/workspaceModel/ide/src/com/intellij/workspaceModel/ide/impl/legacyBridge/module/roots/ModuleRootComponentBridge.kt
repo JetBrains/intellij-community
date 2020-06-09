@@ -116,8 +116,11 @@ class ModuleRootComponentBridge(
    * Different serializers will be used ExternalModuleImlFileEntitiesSerializer and ModuleImlFileEntitiesSerializer
    * which leads to store settings in different folders. For example, the content root will not be recognized as belonging
    * to the module because entitySource is different (ModuleImlFileEntitiesSerializer#saveModuleEntities).
+   *
+   * Also this method is used in Project Structure dialog to ensure that changes made in {@link ModifiableModuleModel} after creation
+   * of this {@link ModifiableRootModel} are available in its storage and references in its {@link OrderEntry} can be resolved properly.
    */
-  override fun getModifiableModelForExternalSystem(accessor: RootConfigurationAccessor): ModifiableRootModel = ModifiableRootModelBridge(
+  override fun getModifiableModelForMultiCommit(accessor: RootConfigurationAccessor): ModifiableRootModel = ModifiableRootModelBridge(
     (moduleBridge.diff as? WorkspaceEntityStorageBuilder) ?: WorkspaceEntityStorageBuilder.from(moduleBridge.entityStorage.current),
     moduleBridge, moduleBridge.moduleEntityId,
     moduleBridge.entityStorage.current, accessor)
