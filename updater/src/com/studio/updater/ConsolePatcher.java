@@ -1,6 +1,7 @@
 package com.studio.updater;
 
 import com.intellij.updater.*;
+import java.nio.file.Paths;
 
 /**
  * This class performs the install of an intellij patch. Patches are to be created by the {@link Runner} and can then be applied
@@ -19,7 +20,7 @@ public class ConsolePatcher {
       String destFolder = args[1];
       UpdaterUI ui = new ConsoleUpdaterUI();
       Runner.initLogger();
-      Runner.doInstall(jarFile, ui, destFolder);
+      Runner.doInstall(jarFile, ui, Paths.get(destFolder));
     }
     else {
       printUsage();

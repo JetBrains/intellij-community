@@ -339,7 +339,7 @@ public class Runner {
     Utils.cleanup();
   }
 
-  public static boolean doInstall(String jarFile, UpdaterUI ui, String destFolder) {
+  public static boolean doInstall(String jarFile, UpdaterUI ui, Path destFolder) {
     return install(jarFile, destFolder, ui, false);
   }
 
