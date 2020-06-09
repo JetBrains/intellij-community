@@ -32,8 +32,6 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   private static final String RUNTIME_DICTIONARIES_ATTR_NAME = "RuntimeDictionaries";
   private static final String RUNTIME_DICTIONARY_ATTR_NAME = "RuntimeDictionary";
 
-  private static final String CORRECTIONS_MAX_LIMIT = "CorrectionsLimit";
-  private static final int DEFAULT_MAX_VALUE = 5;
   private static final String DICTIONARY_TO_SAVE_ATTR_NAME = "DefaultDictionary";
   private static final String DEFAULT_DICTIONARY_TO_SAVE = SpellCheckerManager.DictionaryLevel.PROJECT.getName();
   private static final String USE_SINGLE_DICT_ATTR_NAME = "UseSingleDictionary";
@@ -45,17 +43,8 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   private Set<String> myDisabledDictionariesPaths = new HashSet<>();
 
   private Set<String> myRuntimeDisabledDictionariesNames = new HashSet<>();
-  private int myCorrectionsLimit = DEFAULT_MAX_VALUE;
   private String myDictionaryToSave = DEFAULT_DICTIONARY_TO_SAVE;
   private boolean myUseSingleDictionaryToSave = DEFAULT_USE_SINGLE_DICT;
-
-  public int getCorrectionsLimit() {
-    return myCorrectionsLimit;
-  }
-
-  public void setCorrectionsLimit(int correctionsLimit) {
-    myCorrectionsLimit = correctionsLimit;
-  }
 
   public String getDictionaryToSave() {
     return myDictionaryToSave;
@@ -103,8 +92,7 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   }
 
   public boolean isDefaultAdvancedSettings() {
-    return myCorrectionsLimit == DEFAULT_MAX_VALUE &&
-           myUseSingleDictionaryToSave == DEFAULT_USE_SINGLE_DICT &&
+    return myUseSingleDictionaryToSave == DEFAULT_USE_SINGLE_DICT &&
            myDictionaryToSave == DEFAULT_DICTIONARY_TO_SAVE;
   }
 
@@ -114,7 +102,6 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
         myOldDictionaryFoldersPaths.isEmpty() &&
         myCustomDictionariesPaths.isEmpty() &&
         myDisabledDictionariesPaths.isEmpty() &&
-        myCorrectionsLimit == DEFAULT_MAX_VALUE &&
         myUseSingleDictionaryToSave == DEFAULT_USE_SINGLE_DICT &&
         myDictionaryToSave.equals(DEFAULT_DICTIONARY_TO_SAVE)) {
       return null;
@@ -147,7 +134,6 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
       element.setAttribute(DICTIONARY_ATTR_NAME + i, iterator.next());
       i++;
     }
-    element.setAttribute(CORRECTIONS_MAX_LIMIT, String.valueOf(myCorrectionsLimit));
     element.setAttribute(DICTIONARY_TO_SAVE_ATTR_NAME, myDictionaryToSave);
     element.setAttribute(USE_SINGLE_DICT_ATTR_NAME, String.valueOf(myUseSingleDictionaryToSave));
     return element;
@@ -188,7 +174,6 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
       for (int i = 0; i < scriptsSize; i++) {
         myDisabledDictionariesPaths.add(element.getAttributeValue(DICTIONARY_ATTR_NAME + i));
       }
-      myCorrectionsLimit = parseInt(element.getAttributeValue(CORRECTIONS_MAX_LIMIT), DEFAULT_MAX_VALUE);
       myDictionaryToSave = notNullize(element.getAttributeValue(DICTIONARY_TO_SAVE_ATTR_NAME), DEFAULT_DICTIONARY_TO_SAVE);
       myUseSingleDictionaryToSave =
         Boolean.parseBoolean(notNullize(element.getAttributeValue(USE_SINGLE_DICT_ATTR_NAME), String.valueOf(DEFAULT_USE_SINGLE_DICT)));

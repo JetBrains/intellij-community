@@ -41,14 +41,10 @@ import static com.intellij.spellchecker.SpellCheckerManager.getBundledDictionari
 import static javax.swing.event.HyperlinkEvent.EventType.ACTIVATED;
 
 public class SpellCheckerSettingsPane implements Disposable {
-
-  public static final int MIN_CORRECTIONS = 1;
-  public static final int MAX_CORRECTIONS = 15;
   private JPanel root;
   private JPanel linkContainer;
   private JPanel panelForAcceptedWords;
   private JPanel myPanelForCustomDictionaries;
-  private JSpinner myMaxCorrectionsSpinner;
   private JBCheckBox myUseSingleDictionary;
   private ComboBox<String> myDictionariesComboBox;
   private JPanel myAdvancedSettingsPanel;
@@ -87,7 +83,6 @@ public class SpellCheckerSettingsPane implements Disposable {
         myDictionariesComboBox.setEnabled(myUseSingleDictionary.isSelected());
       }
     });
-    myMaxCorrectionsSpinner.setModel(new SpinnerNumberModel(1, MIN_CORRECTIONS, MAX_CORRECTIONS, 1));
     myDictionariesComboBox.addItem(APP.getName());
     myDictionariesComboBox.addItem(PROJECT.getName());
     linkContainer.setLayout(new BorderLayout());
@@ -163,7 +158,6 @@ public class SpellCheckerSettingsPane implements Disposable {
     return wordsPanel.isModified() ||
            myProvidedDictionariesChooserComponent.isModified() ||
            myDictionariesPanel.isModified() ||
-           settings.getCorrectionsLimit() != getLimit() ||
            settings.isUseSingleDictionaryToSave() != myUseSingleDictionary.isSelected() ||
            (settings.isUseSingleDictionaryToSave() && settings.getDictionaryToSave() != myDictionariesComboBox.getSelectedItem());
   }
@@ -171,9 +165,6 @@ public class SpellCheckerSettingsPane implements Disposable {
   public void apply() throws ConfigurationException {
     if (wordsPanel.isModified()) {
       manager.updateUserDictionary(wordsPanel.getWords());
-    }
-    if (settings.getCorrectionsLimit() != getLimit()) {
-      settings.setCorrectionsLimit(getLimit());
     }
     if (settings.isUseSingleDictionaryToSave() != myUseSingleDictionary.isSelected()) {
       settings.setUseSingleDictionaryToSave(myUseSingleDictionary.isSelected());
@@ -190,12 +181,7 @@ public class SpellCheckerSettingsPane implements Disposable {
     myDictionariesPanel.apply();
   }
 
-  private int getLimit() {
-    return ((SpinnerNumberModel)myMaxCorrectionsSpinner.getModel()).getNumber().intValue();
-  }
-
   public void reset() {
-    myMaxCorrectionsSpinner.setValue(settings.getCorrectionsLimit());
     myUseSingleDictionary.setSelected(settings.isUseSingleDictionaryToSave());
     myDictionariesComboBox.setSelectedItem(settings.getDictionaryToSave());
     myDictionariesComboBox.setEnabled(myUseSingleDictionary.isSelected());

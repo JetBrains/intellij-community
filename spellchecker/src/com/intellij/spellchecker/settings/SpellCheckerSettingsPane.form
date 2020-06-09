@@ -61,7 +61,7 @@
                     <properties/>
                     <border type="none"/>
                     <children>
-                      <grid id="14ed7" binding="myAdvancedSettingsPanel" layout-manager="GridLayoutManager" row-count="3" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                      <grid id="14ed7" binding="myAdvancedSettingsPanel" layout-manager="GridLayoutManager" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                         <margin top="0" left="0" bottom="0" right="0"/>
                         <constraints border-constraint="Center"/>
                         <properties/>
@@ -70,26 +70,9 @@
                         </clientProperties>
                         <border type="none"/>
                         <children>
-                          <component id="47654" class="com.intellij.ui.components.JBLabel">
-                            <constraints>
-                              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                            </constraints>
-                            <properties>
-                              <labelFor value="a3ad8"/>
-                              <text resource-bundle="messages/SpellCheckerBundle" key="max.number.of.corrections"/>
-                            </properties>
-                          </component>
-                          <component id="a3ad8" class="javax.swing.JSpinner" binding="myMaxCorrectionsSpinner" default-binding="true">
-                            <constraints>
-                              <grid row="1" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="2" anchor="8" fill="2" indent="0" use-parent-layout="false">
-                                <preferred-size width="50" height="-1"/>
-                              </grid>
-                            </constraints>
-                            <properties/>
-                          </component>
                           <vspacer id="ea51e">
                             <constraints>
-                              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                             </constraints>
                           </vspacer>
                           <component id="52e36" class="com.intellij.ui.components.JBCheckBox" binding="myUseSingleDictionary">

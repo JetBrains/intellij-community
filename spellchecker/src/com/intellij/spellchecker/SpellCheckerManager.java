@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.spellchecker.dictionary.Dictionary;
@@ -338,7 +339,8 @@ public class SpellCheckerManager implements Disposable {
 
   @NotNull
   public List<String> getSuggestions(@NotNull String text) {
-    return mySuggestionProvider.getSuggestions(text, settings.getCorrectionsLimit(), MAX_METRICS);
+    final int correctionsLimit = Registry.intValue("spellchecker.corrections.limit", 5);
+    return mySuggestionProvider.getSuggestions(text, correctionsLimit, MAX_METRICS);
   }
 
   public static void restartInspections() {
