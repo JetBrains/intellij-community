@@ -32,6 +32,8 @@ import com.intellij.pom.Navigatable;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -64,6 +66,18 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
         (getComponent().getWidth() <= 0 || getComponent().getHeight() <= 0)) {
       LOG.warn("Diff shown for a hidden component, initial scroll position might be invalid", new Throwable());
     }
+
+    new UiNotifyConnector(getComponent(), new Activatable() {
+      @Override
+      public void showNotify() {
+        rediff(false);
+      }
+
+      @Override
+      public void hideNotify() {
+        abortRediff();
+      }
+    });
 
     processContextHints();
     onInit();
@@ -111,7 +125,10 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
     if (isDisposed()) return;
 
     abortRediff();
-    myTaskAlarm.addRequest(this::rediff, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+
+    if (getComponent().isShowing()) {
+      myTaskAlarm.addRequest(this::rediff, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+    }
   }
 
   @CalledInAwt
