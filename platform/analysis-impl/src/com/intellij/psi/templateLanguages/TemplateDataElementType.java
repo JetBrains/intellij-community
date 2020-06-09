@@ -4,6 +4,8 @@ package com.intellij.psi.templateLanguages;
 import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -37,10 +39,8 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   public static final LanguageExtension<TreePatcher> TREE_PATCHER =
     new LanguageExtension<>("com.intellij.lang.treePatcher", new SimpleTreePatcher());
 
-  public static final Key<RangeCollector> OUTER_ELEMENT_RANGES = Key.create("template.parser.outer.element.handler");
-
   @NotNull private final IElementType myTemplateElementType;
-  @NotNull final IElementType myOuterElementType;
+  @NotNull private final IElementType myOuterElementType;
 
   public TemplateDataElementType(@NonNls String debugName,
                                  Language language,
@@ -75,7 +75,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     RangeCollector collector = new RangeCollector(this);
     final PsiFile templatePsiFile = createTemplateFile(psiFile, templateLanguage, sourceCode, viewProvider, collector);
     final FileElement templateFileElement = ((PsiFileImpl)templatePsiFile).calcTreeElement();
-    collector.fillRangeToRemoveTexts(templatePsiFile);
+    collector.addDummyStringsToRangesToRemove(templatePsiFile);
 
     return DebugUtil.performPsiModification("template language parsing", () -> {
       collector.insertOuterElementsAndRemoveRanges(templateFileElement, sourceCode, charTable, templateFileElement.getPsi().getLanguage());
@@ -98,7 +98,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   }
 
   /**
-   * Creates psi tree without template tokens. The result PsiFile can contain additional elements.
+   * Creates psi tree without base language elements. The result PsiFile can contain additional elements.
    * Ranges of the removed tokens/additional elements should be stored in the rangeCollector
    *
    * @param psiFile          chameleon's psi file
@@ -238,6 +238,8 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     private final TemplateDataElementType myTemplateDataElementType;
     private final List<TextRange> myOuterAndRemoveRanges;
 
+    private static final Key<RangeCollector> OUTER_ELEMENT_RANGES = Key.create("template.parser.outer.element.handler");
+
     public RangeCollector(@NotNull TemplateDataElementType templateDataElementType) {
       this(templateDataElementType, new ArrayList<>());
     }
@@ -245,6 +247,10 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     private RangeCollector(@NotNull TemplateDataElementType templateDataElementType, @NotNull List<TextRange> outerAndRemoveRanges) {
       myTemplateDataElementType = templateDataElementType;
       myOuterAndRemoveRanges = outerAndRemoveRanges;
+    }
+
+    public static @Nullable RangeCollector getRangeCollector(@NotNull ASTNode chameleon) {
+      return chameleon.getUserData(OUTER_ELEMENT_RANGES);
     }
 
     /**
@@ -301,7 +307,11 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
       assert range == null || newRange.getStartOffset() >= range.getStartOffset();
     }
 
-    private void fillRangeToRemoveTexts(@NotNull PsiFile file) {
+    /**
+     * Sets {@link RangeToRemove#myTextToRemove} in {@link #myOuterAndRemoveRanges} from generated file,
+     * so lazy parseables will have dummy strings when they are parsed.
+     */
+    private void addDummyStringsToRangesToRemove(@NotNull PsiFile file) {
       boolean hasRangeToRemove = false;
       for (TextRange range : myOuterAndRemoveRanges) {
         if (range instanceof RangeToRemove) {
@@ -309,7 +319,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
           break;
         }
       }
-      if (!hasRangeToRemove) return;
+      if (!hasRangeToRemove) return; // optimization to avoid calling file.getText()
 
       String text = file.getText();
       int shift = 0;
@@ -318,7 +328,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
         TextRange range = iterator.next();
         if (range instanceof RangeToRemove) {
           CharSequence insertedString = text.subSequence(range.getStartOffset() - shift, range.getEndOffset() - shift);
-          iterator.set(new RangeToRemove(range.getStartOffset(), insertedString));
+          iterator.set(new RangeToRemove(range.getStartOffset(), insertedString)); // only add insertedString
           shift -= range.getLength();
         }
         else {
@@ -358,7 +368,14 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
 
         boolean addRangeToLazyParseableCollector = false;
         if (rangeToProcess instanceof RangeToRemove) {
-          assert currentLeafOrLazyParseable != null;
+          if (currentLeafOrLazyParseable == null) {
+            Logger.getInstance(RangeCollector.class).error(
+              "RangeToRemove's range is out of original text bound",
+              new Attachment("myOuterAndRemoveRanges", StringUtil.join(myOuterAndRemoveRanges, TextRange::toString, ", ")),
+              new Attachment("rangeToProcess", rangeToProcess.toString()),
+              new Attachment("sourceCode", sourceCode.toString()));
+            continue;
+          }
           currentLeafOrLazyParseable =
             removeElementsForRange(currentLeafOrLazyParseable, currentLeafOffset, rangeToProcess, templateTreePatcher, charTable);
           if (currentLeafOrLazyParseable != null &&
@@ -400,6 +417,9 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
       }
     }
 
+    /**
+     * Similar to {@link TreeUtil#findFirstLeaf(ASTNode)}, but also treats collapsed lazy parseable elements as leaves and returns them.
+     */
     private static @Nullable TreeElement findFirstSuitableElement(@NotNull ASTNode element) {
       if (isSuitableElement(element)) {
         return (TreeElement)element;
@@ -413,6 +433,9 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
       }
     }
 
+    /**
+     * Similar to {@link TreeUtil#nextLeaf(ASTNode)}, but also treats collapsed lazy parseable elements as leaves and returns them.
+     */
     private static @Nullable TreeElement findNextSuitableElement(@NotNull TreeElement start) {
       TreeElement element = start;
       while (element != null) {
@@ -553,28 +576,33 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
       return rLeaf;
     }
 
-    public @NotNull ASTNode replaceOuterElementsInLazyParseable(@NotNull ASTNode chameleon,
-                                                                @NotNull String dummyString,
-                                                                @NotNull Language language,
-                                                                @NotNull Function<@NotNull CharSequence, @NotNull ASTNode> parser) {
+    /**
+     * Like {@link #insertOuterElementsAndRemoveRanges} builds the tree considering outer language elements, but for lazy parseables.
+     *
+     * @param dummyString Optional text to insert for outer language elements which were added by {@link #addOuterRange}
+     *                    having <tt>isInsertion == true</tt>
+     */
+    public @NotNull ASTNode applyRangeCollectorAndExpandChameleon(@NotNull ASTNode chameleon,
+                                                                  @Nullable String dummyString,
+                                                                  @NotNull Language language,
+                                                                  @NotNull Function<@NotNull CharSequence, @NotNull ASTNode> parser) {
       CharSequence chars = chameleon.getChars();
       if (myOuterAndRemoveRanges.isEmpty()) return parser.apply(chars);
 
       StringBuilder stringBuilder = new StringBuilder(chars);
       int shift = 0;
-      int dummyStringLength = dummyString.length();
-      // copy to prevent ConcurrentModificationException
-      LinkedList<TextRange> copiedRanges = new LinkedList<>(myOuterAndRemoveRanges);
+      LinkedList<TextRange> copiedRanges = new LinkedList<>(myOuterAndRemoveRanges); // copy to linked list for faster insertions
       ListIterator<TextRange> iterator = copiedRanges.listIterator();
       while (iterator.hasNext()) {
         TextRange outerElementRange = iterator.next();
-        if (outerElementRange instanceof InsertionRange) {
-          // don't pass dummyString to RangeToRemove's constructor so it won't be applied to nested lazy parseables
-          iterator.add(new RangeToRemove(outerElementRange.getEndOffset(), outerElementRange.getEndOffset() + dummyStringLength));
+        if (outerElementRange instanceof InsertionRange && dummyString != null) {
+          // Don't set RangeToRemove#myTextToRemove so it won't be applied to nested lazy parseables.
+          // Nested lazy parseables may add dummy string themselves.
+          iterator.add(new RangeToRemove(outerElementRange.getEndOffset(), outerElementRange.getEndOffset() + dummyString.length()));
           stringBuilder.replace(outerElementRange.getStartOffset() + shift,
                                 outerElementRange.getEndOffset() + shift,
                                 dummyString);
-          shift += dummyStringLength - outerElementRange.getLength();
+          shift -= outerElementRange.getLength() - dummyString.length();
         }
         else if (outerElementRange instanceof RangeToRemove) {
           CharSequence textToRemove = ((RangeToRemove)outerElementRange).myTextToRemove;
@@ -639,6 +667,11 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
                ? new RangeToRemove(getStartOffset() - delta, myTextToRemove)
                : new RangeToRemove(getStartOffset() - delta, getEndOffset() - delta);
       }
+
+      @Override
+      public String toString() {
+        return "RangeToRemove" + super.toString();
+      }
     }
 
     private static final class InsertionRange extends TextRange {
@@ -652,6 +685,11 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
         if (delta == 0) return this;
         return new InsertionRange(getStartOffset() - delta, getEndOffset() - delta);
       }
+
+      @Override
+      public String toString() {
+        return "InsertionRange" + super.toString();
+      }
     }
   }
 
@@ -660,8 +698,8 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
    * Marker interface for element types which handle outer language elements themselves in
    * {@link ILazyParseableElementTypeBase#parseContents(ASTNode)} method.
    *
-   * {@link RangeCollector#replaceOuterElementsInLazyParseable(ASTNode, String, Language, Function)} may be used for this.
-   * Ranges are stored in element's user data by {@link #OUTER_ELEMENT_RANGES} key.
+   * To parse lazy parseable element {@link RangeCollector#applyRangeCollectorAndExpandChameleon(ASTNode, String, Language, Function)}
+   * may be used. {@link RangeCollector} may be obtained using {@link RangeCollector#getRangeCollector(ASTNode)}.
    */
   public interface TemplateAwareElementType extends ILazyParseableElementTypeBase {
     @NotNull TreeElement createTreeElement(@NotNull CharSequence text);
