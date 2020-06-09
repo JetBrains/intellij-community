@@ -83,7 +83,6 @@ public class SpellCheckerManager implements Disposable {
 
     fullConfigurationReload();
 
-    Disposer.register(project, this);
     final VirtualFile projectStoreDir = project.getBaseDir() != null ? getProjectStoreDirectory(project.getBaseDir()) : null;
     myProjectDictionaryPath = projectStoreDir != null ? projectStoreDir.getPath() + File.separator + PROJECT_DICTIONARY_PATH : "";
     myAppDictionaryPath = getOptionsPath() + File.separator + CACHED_DICTIONARY_FILE;
