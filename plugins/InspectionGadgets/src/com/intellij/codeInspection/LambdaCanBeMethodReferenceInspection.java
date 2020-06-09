@@ -197,7 +197,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
       return !(callExpression instanceof PsiNewExpression && qualifier != null);
     }
 
-    final int offset = ExpressionUtils.isReferenceTo(qualifier, parameters[0]) ? 1 : 0;
+    final int offset = parameters.length > 0 && ExpressionUtils.isReferenceTo(qualifier, parameters[0]) ? 1 : 0;
     if (parameters.length != expressions.length + offset) return false;
 
     if (psiMethod.isVarArgs()) {
