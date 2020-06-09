@@ -21,6 +21,7 @@ import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.mutableModuleMap
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 
 internal class ModifiableModuleModelBridge(
@@ -56,6 +57,7 @@ internal class ModifiableModuleModelBridge(
     )
 
     val module = ModuleBridgeImpl(moduleEntity.persistentId(), moduleName, project, null, entityStorageOnDiff, diff)
+    diff.mutableModuleMap.addMapping(moduleEntity, module)
     moduleManager.addUncommittedModule(module)
     myModulesToAdd[moduleName] = module
 
@@ -91,6 +93,7 @@ internal class ModifiableModuleModelBridge(
     )
 
     val moduleInstance = moduleManager.createModuleInstance(moduleEntity, entityStorageOnDiff, diff = diff, isNew = true)
+    diff.mutableModuleMap.addMapping(moduleEntity, moduleInstance)
     moduleManager.addUncommittedModule(moduleInstance)
     myModulesToAdd[moduleName] = moduleInstance
 
@@ -128,6 +131,12 @@ internal class ModifiableModuleModelBridge(
     newModule(filePath, "")
 
   override fun disposeModule(module: Module) {
+    if (Disposer.isDisposing(module.project)) {
+      //if the project is being disposed now, removing module won't work because WorkspaceModelImpl won't fire events and the module won't be disposed
+      //it looks like this may happen in tests only so it's ok to skip removal of the module since the project will be disposed anyway
+      return
+    }
+
     module as ModuleBridge
 
     if (findModuleByName(module.name) == null) {
@@ -135,7 +144,7 @@ internal class ModifiableModuleModelBridge(
     }
 
     if (myModulesToAdd.inverse().remove(module) != null) {
-      (ModuleManager.getInstance(project) as ModuleManagerComponentBridge).removeUncommittedModule(module.name)
+      (ModuleManager.getInstance(project) as ModuleManagerComponentBridge).removeUncommittedModule(module)
       myUncommittedModulesToDispose.add(module)
     }
 
@@ -163,7 +172,7 @@ internal class ModifiableModuleModelBridge(
 
     val moduleManager = ModuleManager.getInstance(project) as ModuleManagerComponentBridge
     for (moduleToAdd in myModulesToAdd.values) {
-      moduleManager.removeUncommittedModule(moduleToAdd.name)
+      moduleManager.removeUncommittedModule(moduleToAdd)
       Disposer.dispose(moduleToAdd)
     }
     for (module in myUncommittedModulesToDispose) {
@@ -220,9 +229,7 @@ internal class ModifiableModuleModelBridge(
     if (oldName != newName) { // if renaming to itself, forget it altogether
       val moduleToAdd = myModulesToAdd.remove(oldName)
       if (moduleToAdd != null) {
-        moduleManager.removeUncommittedModule(oldName)
         moduleToAdd.rename(newName, false)
-        moduleManager.addUncommittedModule(moduleToAdd)
         myModulesToAdd[newName] = moduleToAdd
       }
       else {
