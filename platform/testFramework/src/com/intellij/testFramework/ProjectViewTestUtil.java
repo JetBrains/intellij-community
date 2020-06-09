@@ -19,14 +19,13 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.ToolWindowHeadlessManagerImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.tree.TreeVisitor.Action;
 import com.intellij.util.Function;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
-import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.util.Collection;
 import java.util.Comparator;
@@ -112,36 +111,16 @@ public final class ProjectViewTestUtil {
     Assert.assertEquals(expected, actual);
   }
 
-  protected static boolean isExpanded(DefaultMutableTreeNode nodeForElement, AbstractProjectViewPSIPane pane) {
-    TreePath path = new TreePath(nodeForElement.getPath());
-    return pane.getTree().isExpanded(path.getParentPath());
-  }
-
-  public static DefaultMutableTreeNode getNodeForElement(PsiElement element, AbstractProjectViewPSIPane pane) {
-    JTree tree = pane.getTree();
-    TreeModel model = tree.getModel();
-    Object root = model.getRoot();
-    return getNodeForElement(root, model, element);
-  }
-
-  private static DefaultMutableTreeNode getNodeForElement(Object root, TreeModel model, PsiElement element) {
-    if (root instanceof DefaultMutableTreeNode) {
-      Object userObject = ((DefaultMutableTreeNode)root).getUserObject();
-      if (userObject instanceof AbstractTreeNode) {
-        AbstractTreeNode treeNode = (AbstractTreeNode)userObject;
-        if (element.equals(treeNode.getValue())) return (DefaultMutableTreeNode)root;
-        for (int i = 0; i < model.getChildCount(root); i++) {
-          DefaultMutableTreeNode nodeForChild = getNodeForElement(model.getChild(root, i), model, element);
-          if (nodeForChild != null) return nodeForChild;
-        }
-      }
-    }
-    return null;
-  }
-
   public static boolean isExpanded(PsiElement element, AbstractProjectViewPSIPane pane) {
-    DefaultMutableTreeNode nodeForElement = getNodeForElement(element, pane);
-    return nodeForElement != null && isExpanded((DefaultMutableTreeNode)nodeForElement.getParent(), pane);
+    return null != getVisiblePath(element, pane);
+  }
+
+  public static @Nullable TreePath getVisiblePath(@NotNull PsiElement element, @NotNull AbstractProjectViewPSIPane pane) {
+    PlatformTestUtil.waitWhileBusy(pane.getTree());
+    return TreeUtil.visitVisibleRows(pane.getTree(), path -> {
+      AbstractTreeNode<?> node = TreeUtil.getLastUserObject(AbstractTreeNode.class, path);
+      return node != null && element.equals(node.getValue()) ? Action.INTERRUPT : Action.CONTINUE;
+    });
   }
 
   public static void setupImpl(@NotNull Project project, boolean loadPaneExtensions) {
