@@ -48,28 +48,6 @@ public class DfaPsiUtil {
     return var.hasModifierProperty(PsiModifier.FINAL) && !var.hasModifierProperty(PsiModifier.TRANSIENT) && var instanceof PsiField;
   }
 
-  static PsiElement getEnclosingCodeBlock(final PsiVariable variable, final PsiElement context) {
-    PsiElement codeBlock;
-    if (variable instanceof PsiParameter) {
-      codeBlock = ((PsiParameter)variable).getDeclarationScope();
-      if (codeBlock instanceof PsiMethod) {
-        codeBlock = ((PsiMethod)codeBlock).getBody();
-      }
-    }
-    else if (variable instanceof PsiLocalVariable) {
-      codeBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
-    }
-    else {
-      codeBlock = getTopmostBlockInSameClass(context);
-    }
-    while (codeBlock != null) {
-      PsiAnonymousClass anon = PsiTreeUtil.getParentOfType(codeBlock, PsiAnonymousClass.class);
-      if (anon == null) break;
-      codeBlock = PsiTreeUtil.getParentOfType(anon, PsiCodeBlock.class);
-    }
-    return codeBlock;
-  }
-
   @NotNull
   public static Nullability getElementNullability(@Nullable PsiType resultType, @Nullable PsiModifierListOwner owner) {
     return getElementNullability(resultType, owner, false);

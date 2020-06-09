@@ -36,7 +36,7 @@ public class DfaUtil {
   public static @NotNull Collection<PsiExpression> getVariableValues(@Nullable PsiVariable variable, @Nullable PsiElement context) {
     if (variable == null || context == null) return Collections.emptyList();
 
-    final PsiCodeBlock codeBlock = tryCast(DfaPsiUtil.getEnclosingCodeBlock(variable, context), PsiCodeBlock.class);
+    final PsiCodeBlock codeBlock = tryCast(getEnclosingCodeBlock(variable, context), PsiCodeBlock.class);
     if (codeBlock == null) return Collections.emptyList();
     PsiElement[] defs = DefUseUtil.getDefs(codeBlock, variable, context);
 
@@ -56,6 +56,28 @@ public class DfaUtil {
       }
     }
     return results;
+  }
+
+  private static PsiElement getEnclosingCodeBlock(final PsiVariable variable, final PsiElement context) {
+    PsiElement codeBlock;
+    if (variable instanceof PsiParameter) {
+      codeBlock = ((PsiParameter)variable).getDeclarationScope();
+      if (codeBlock instanceof PsiMethod) {
+        codeBlock = ((PsiMethod)codeBlock).getBody();
+      }
+    }
+    else if (variable instanceof PsiLocalVariable) {
+      codeBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+    }
+    else {
+      codeBlock = DfaPsiUtil.getTopmostBlockInSameClass(context);
+    }
+    while (codeBlock != null) {
+      PsiAnonymousClass anon = PsiTreeUtil.getParentOfType(codeBlock, PsiAnonymousClass.class);
+      if (anon == null) break;
+      codeBlock = PsiTreeUtil.getParentOfType(anon, PsiCodeBlock.class);
+    }
+    return codeBlock;
   }
 
   private static PsiExpression unrollConcatenation(PsiAssignmentExpression assignment, PsiVariable variable, PsiCodeBlock block) {
