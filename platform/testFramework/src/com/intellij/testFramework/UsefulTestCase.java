@@ -47,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.ComparisonFailure;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -62,9 +63,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 
-/**
- * @author peter
- */
 public abstract class UsefulTestCase extends TestCase {
   public static final boolean IS_UNDER_TEAMCITY = System.getenv("TEAMCITY_VERSION") != null;
   public static final String TEMP_DIR_MARKER = "unitTest_";
@@ -75,10 +73,6 @@ public abstract class UsefulTestCase extends TestCase {
   private static final Map<String, Long> TOTAL_SETUP_COST_MILLIS = new HashMap<>();
   private static final Map<String, Long> TOTAL_TEARDOWN_COST_MILLIS = new HashMap<>();
 
-  static {
-    IdeaForkJoinWorkerThreadFactory.setupPoisonFactory();
-    Logger.setFactory(TestLoggerFactory.class);
-  }
   protected static final Logger LOG = Logger.getInstance(UsefulTestCase.class);
 
   @NotNull
@@ -91,7 +85,11 @@ public abstract class UsefulTestCase extends TestCase {
 
   private static final String DEFAULT_SETTINGS_EXTERNALIZED;
   private static final CodeInsightSettings defaultSettings = new CodeInsightSettings();
+
   static {
+    IdeaForkJoinWorkerThreadFactory.setupPoisonFactory();
+    Logger.setFactory(TestLoggerFactory.class);
+
     // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
     System.setProperty("apple.awt.UIElement", "true");
 
@@ -122,7 +120,6 @@ public abstract class UsefulTestCase extends TestCase {
    *   }
    * }
    * </pre>
-   *
    */
   protected void addSuppressedException(@NotNull Throwable e) {
     List<Throwable> list = mySuppressedExceptions;
@@ -314,9 +311,9 @@ public abstract class UsefulTestCase extends TestCase {
 
   /**
    * Test root disposable is used for add an activity on test {@link #tearDown()}
-   * 
+   *
    * @see #disposeOnTearDown(Disposable)
-   * @see #tearDown() 
+   * @see #tearDown()
    */
   @NotNull
   public Disposable getTestRootDisposable() {
@@ -366,10 +363,19 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
     if (runInDispatchThread()) {
-      EdtTestUtilKt.runInEdtAndWait(() -> {
-        runnable.run();
-        return null;
-      });
+      // reduce stack trace
+      Application app = ApplicationManager.getApplication();
+      if (app == null) {
+        if (SwingUtilities.isEventDispatchThread()) {
+          runnable.run();
+        }
+        else {
+          SwingUtilities.invokeAndWait(runnable);
+        }
+      }
+      else {
+        app.invokeAndWait(runnable);
+      }
     }
     else {
       runnable.run();
@@ -466,7 +472,7 @@ public abstract class UsefulTestCase extends TestCase {
   /**
    * If you want a more shorter name than runInEdtAndWait.
    */
-  protected final void edt(@NotNull ThrowableRunnable<Throwable> runnable) {
+  protected static void edt(@NotNull ThrowableRunnable<Throwable> runnable) {
     EdtTestUtil.runInEdtAndWait(runnable);
   }
 
@@ -476,8 +482,8 @@ public abstract class UsefulTestCase extends TestCase {
       return "<empty>";
     }
 
-    final StringBuilder builder = new StringBuilder();
-    for (final Object o : collection) {
+    StringBuilder builder = new StringBuilder();
+    for (Object o : collection) {
       if (o instanceof THashSet) {
         builder.append(new TreeSet<>((THashSet<?>)o));
       }

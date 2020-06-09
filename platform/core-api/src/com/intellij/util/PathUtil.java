@@ -44,6 +44,10 @@ public final class PathUtil {
     return getLocalPath(VirtualFileManager.extractPath(url));
   }
 
+  /**
+   * @deprecated Use {@link FileUtil#toCanonicalPath(String)}
+   */
+  @Deprecated
   public static String getCanonicalPath(@NonNls String path) {
     return FileUtil.toCanonicalPath(path);
   }

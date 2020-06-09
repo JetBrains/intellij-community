@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,12 +14,10 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
-import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
@@ -79,7 +63,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     assertModules("project");
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
-                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/"),
+                       Collections.singletonList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/"),
                        Collections.emptyList(), Collections.emptyList());
   }
 
@@ -140,7 +124,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     importProjectWithErrors();
 
     assertModules("project");
-    assertModuleLibDeps("project"); // dependency was not added due to reported pom model problem. 
+    assertModuleLibDeps("project"); // dependency was not added due to reported pom model problem.
   }
 
   public void testPreservingDependenciesOrder() {
@@ -1939,9 +1923,10 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     });
   }
 
-  private void addLibraryRoot(final String libraryName, final OrderRootType type, final String path) {
+  private void addLibraryRoot(@NotNull String libraryName, @NotNull OrderRootType type, @NotNull String path) {
+    LibraryTablesRegistrar libraryTablesRegistrar = LibraryTablesRegistrar.getInstance();
     ApplicationManager.getApplication().runWriteAction(() -> {
-      Library lib = com.intellij.openapi.roots.libraries.LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraryByName(libraryName);
+      Library lib = libraryTablesRegistrar.getLibraryTable(myProject).getLibraryByName(libraryName);
       Library.ModifiableModel model = lib.getModifiableModel();
       model.addRoot(path, type);
       model.commit();
