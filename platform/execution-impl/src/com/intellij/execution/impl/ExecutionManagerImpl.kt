@@ -557,12 +557,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
             processHandler.notifyTextAvailable("$text\n", ProcessOutputType.STDOUT)
           }
         }
-        if (currentState is TargetEnvironmentAwareRunProfileState) {
-          promise.setResult(environment.prepareTargetEnvironment(currentState, progressIndicator))
-        }
-        else {
-          promise.setResult(environment.prepareTargetEnvironment(currentState, progressIndicator))
-        }
+        promise.setResult(environment.prepareTargetEnvironment(currentState, progressIndicator))
       }
       catch (t: Throwable) {
         promise.setError(t)
