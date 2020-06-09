@@ -419,18 +419,8 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   override fun isModuleDependent(module: Module, onModule: Module): Boolean =
     ModuleRootManager.getInstance(module).isDependsOn(onModule)
 
-  override fun getAllModuleDescriptions(): MutableCollection<ModuleDescription> =
-    (modules().map { module ->
-      object : ModuleDescription {
-        override fun getName(): String = module.name
-
-        override fun getDependencyModuleNames(): MutableList<String> =
-          this@ModuleManagerComponentBridge
-            .getModuleDependentModules(module)
-            .map { it.name }
-            .toMutableList()
-      }
-    } + unloadedModuleDescriptions).toMutableList()
+  override fun getAllModuleDescriptions(): Collection<ModuleDescription> =
+    (modules().map { LoadedModuleDescriptionImpl(it) } + unloadedModuleDescriptions).toList()
 
   override fun getModuleGroupPath(module: Module): Array<String>? = getModuleGroupPath(module, entityStore)
 
