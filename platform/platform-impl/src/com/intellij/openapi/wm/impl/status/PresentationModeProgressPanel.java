@@ -28,7 +28,7 @@ public class PresentationModeProgressPanel {
   private JPanel myRootPanel;
   private JPanel myButtonPanel;
 
-  public PresentationModeProgressPanel(InlineProgressIndicator progress) {
+  public PresentationModeProgressPanel(@NotNull InlineProgressIndicator progress) {
     myProgress = progress;
     Font font = JBUI.Fonts.label(11);
     myText.setFont(font);
