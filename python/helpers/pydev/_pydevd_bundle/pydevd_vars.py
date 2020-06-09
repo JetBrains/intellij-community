@@ -642,7 +642,7 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
             except AttributeError:
                 try:
                     kind = df.dtypes[0].kind
-                except IndexError:
+                except (IndexError, KeyError):
                     kind = 'O'
             format = array_default_format(kind)
         else:
