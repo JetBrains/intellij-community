@@ -224,11 +224,11 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
     JPanel panel = new MavenProjectsNavigatorPanel(myProject, myTree);
 
     AnAction removeAction = EmptyAction.wrap(ActionManager.getInstance().getAction("Maven.RemoveRunConfiguration"));
-    removeAction.registerCustomShortcutSet(CommonShortcuts.getDelete(), myTree, myProject);
+    removeAction.registerCustomShortcutSet(CommonShortcuts.getDelete(), myTree, this);
     AnAction editSource = EmptyAction.wrap(ActionManager.getInstance().getAction("Maven.EditRunConfiguration"));
-    editSource.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myTree, myProject);
+    editSource.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myTree, this);
 
-    myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(TOOL_WINDOW_ID, false, ToolWindowAnchor.RIGHT, myProject, true);
+    myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(TOOL_WINDOW_ID, false, ToolWindowAnchor.RIGHT, this, true);
     myToolWindow.setIcon(MavenIcons.ToolWindowMaven);
     final ContentFactory contentFactory = ServiceManager.getService(ContentFactory.class);
     final Content content = contentFactory.createContent(panel, "", false);

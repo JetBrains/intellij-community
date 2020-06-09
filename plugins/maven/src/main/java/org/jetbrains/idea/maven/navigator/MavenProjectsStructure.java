@@ -103,7 +103,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     myTreeBuilder = new SimpleTreeBuilder(tree, (DefaultTreeModel)tree.getModel(), this, null) {
       // unique class to simplify search through the logs
     };
-    Disposer.register(myProject, myTreeBuilder);
+    Disposer.register(projectsNavigator, myTreeBuilder);
 
     myTreeBuilder.initRoot();
     myTreeBuilder.expand(myRoot, null);
