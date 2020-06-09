@@ -81,9 +81,8 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
         }
         DvcsUtil.addMappingIfSubRoot(project, FileUtil.join(parentDirectory, directoryName), GitVcs.NAME);
         destinationParent.refresh(true, true, () -> {
-          if (project.isOpen() && (!project.isDisposed()) && (!project.isDefault())) {
-            final VcsDirtyScopeManager mgr = VcsDirtyScopeManager.getInstance(project);
-            mgr.fileDirty(destinationParent);
+          if (project.isOpen() && (!project.isDisposed()) && !project.isDefault()) {
+            VcsDirtyScopeManager.getInstance(project).fileDirty(destinationParent);
           }
         });
         listener.directoryCheckedOut(new File(parentDirectory, directoryName), GitVcs.getKey());

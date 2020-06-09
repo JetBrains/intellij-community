@@ -11,6 +11,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.idea.SplashManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -72,41 +73,40 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
     var result: T? = null
     val progressTitle = IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name",
                                                                         getPresentableName(options, projectStoreBaseDir))
-    ApplicationManager.getApplication().invokeAndWait {
-      val frame = createFrameIfNeeded()
-      val progressTask = object : Task.Modal(null, progressTitle, true) {
-        override fun run(indicator: ProgressIndicator) {
-          if (frameHelper == null) {
-            ApplicationManager.getApplication().invokeLater {
-              if (cancelled) {
-                return@invokeLater
-              }
+    val frame = invokeAndWaitIfNeeded {
+      createFrameIfNeeded()
+    }
 
-              runActivity("project frame initialization") {
-                initNewFrame(frame)
-              }
+    val progressTask = object : Task.Modal(null, progressTitle, true) {
+      override fun run(indicator: ProgressIndicator) {
+        if (frameHelper == null) {
+          ApplicationManager.getApplication().invokeLater {
+            if (cancelled) {
+              return@invokeLater
+            }
+
+            runActivity("project frame initialization") {
+              initNewFrame(frame)
             }
           }
-
-          result = task()
         }
 
-        override fun onThrowable(error: Throwable) {
-          if (error is StartupAbortedException || error is PluginException) {
-            StartupAbortedException.logAndExit(error)
-          }
-          else {
-            logger<ProjectFrameAllocator>().error(error)
-            projectNotLoaded(error as? CannotConvertException)
-          }
-        }
+        result = task()
       }
 
-      if (!(ProgressManager.getInstance() as CoreProgressManager).runProcessWithProgressSynchronously(progressTask, frame.rootPane)) {
-        result = null
+      override fun onThrowable(error: Throwable) {
+        if (error is StartupAbortedException || error is PluginException) {
+          StartupAbortedException.logAndExit(error)
+        }
+        else {
+          logger<ProjectFrameAllocator>().error(error)
+          projectNotLoaded(error as? CannotConvertException)
+        }
       }
     }
-    return result
+
+    val progressManager = ProgressManager.getInstance() as CoreProgressManager
+    return if (progressManager.runProcessWithProgressSynchronously(progressTask, frame.rootPane)) result else null
   }
 
   @CalledInAwt
