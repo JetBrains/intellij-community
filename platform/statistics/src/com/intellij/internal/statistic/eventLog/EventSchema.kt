@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.beans.MetricEvent
+import com.intellij.internal.statistic.eventLog.EventLogSystemEvents.SYSTEM_EVENTS
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension
 import com.intellij.internal.statistic.utils.PluginInfo
@@ -324,9 +325,14 @@ class EventLogGroup(val id: String, val version: Int) {
   }
 
   internal fun validateEventId(eventId: String) {
-    if (registeredEventIds.isNotEmpty() && eventId !in registeredEventIds) {
+    if (!isEventIdValid(eventId)) {
       throw IllegalArgumentException("Trying to report unregistered event ID $eventId to group $id")
     }
+  }
+
+  private fun isEventIdValid(eventId: String): Boolean {
+    if (SYSTEM_EVENTS.contains(eventId)) return true
+    return registeredEventIds.isEmpty() || eventId in registeredEventIds
   }
 }
 

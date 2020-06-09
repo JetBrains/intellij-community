@@ -134,7 +134,10 @@ public class FUCounterUsageLogger {
       FeatureUsageLogger.INSTANCE.log(group, EventLogSystemEvents.COLLECTOR_REGISTERED);
     }
     for (FeatureUsagesCollector collector : instantiateCounterCollectors()) {
-      FeatureUsageLogger.INSTANCE.log(collector.getGroup(), EventLogSystemEvents.COLLECTOR_REGISTERED);
+      EventLogGroup group = collector.getGroup();
+      if (group != null) {
+        FeatureUsageLogger.INSTANCE.log(group, EventLogSystemEvents.COLLECTOR_REGISTERED);
+      }
     }
   }
 
