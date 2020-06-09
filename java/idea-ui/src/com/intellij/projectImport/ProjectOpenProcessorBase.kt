@@ -10,6 +10,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -179,11 +180,11 @@ abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> : ProjectOp
   }
 
   private fun importToProject(projectToOpen: Project, projectToClose: Project?, wizardContext: WizardContext): Boolean {
-    if (!builder.validate(projectToClose, projectToOpen)) {
-      return false
-    }
+    return invokeAndWaitIfNeeded {
+      if (!builder.validate(projectToClose, projectToOpen)) {
+        return@invokeAndWaitIfNeeded false
+      }
 
-    ApplicationManager.getApplication().invokeAndWait {
       ApplicationManager.getApplication().runWriteAction {
         wizardContext.projectJdk?.let {
           NewProjectUtil.applyJdkToProject(projectToOpen, it)
@@ -196,8 +197,8 @@ abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> : ProjectOp
         }
       }
       builder.commit(projectToOpen, null, ModulesProvider.EMPTY_MODULES_PROVIDER)
+      true
     }
-    return true
   }
 }
 
