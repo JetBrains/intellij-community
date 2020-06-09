@@ -16,10 +16,9 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.Reader;
+import java.io.*;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
@@ -57,7 +56,6 @@ public final class PathManager {
   private static final String CONFIG_DIRECTORY = "config";
   private static final String SYSTEM_DIRECTORY = "system";
   private static final String PATHS_SELECTOR = System.getProperty(PROPERTY_PATHS_SELECTOR);
-  private static final String IDE_VENDOR_NAME = System.getProperty("idea.vendor.name", "JetBrains");
 
   private static class Lazy {
     private static final Pattern PROPERTY_REF = Pattern.compile("\\$\\{(.+?)}");
@@ -65,6 +63,7 @@ public final class PathManager {
 
   private static volatile String ourHomePath;
   private static volatile List<Path> ourBinDirectories;
+  private static Path ourCommonDataPath;
   private static String ourConfigPath;
   private static String ourSystemPath;
   private static String ourScratchPath;
@@ -250,6 +249,22 @@ public final class PathManager {
   }
 
   // config paths
+
+  public static synchronized @NotNull Path getCommonDataPath() {
+    if (ourCommonDataPath == null) {
+      Path path = Paths.get(platformPath("", "Application Support", "", "APPDATA", "", "XDG_DATA_HOME", ".local/share", ""));
+      if (!Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
+        try {
+          Files.createDirectories(path);
+        }
+        catch (IOException e) {
+          throw new UncheckedIOException(e);
+        }
+      }
+      ourCommonDataPath = path;
+    }
+    return ourCommonDataPath;
+  }
 
   public static @Nullable String getPathsSelector() {
     return PATHS_SELECTOR;
@@ -602,11 +617,15 @@ public final class PathManager {
     return path != null ? getAbsolutePath(StringUtilRt.unquoteString(path, '"')) : null;
   }
 
-  private static String platformPath(String selector, String macDir, String macSub, String winVar, String winSub, String xdgVar, String xdgDfl, String xdgSub) {
-    String userHome = SystemProperties.getUserHome();
+  private static String platformPath(String selector,
+                                     String macDir, String macSub,
+                                     String winVar, String winSub,
+                                     String xdgVar, String xdgDfl, String xdgSub) {
+    String userHome = SystemProperties.getUserHome(), vendorName = vendorName();
 
     if (SystemInfoRt.isMac) {
-      String dir = userHome + "/Library/" + macDir + '/' + IDE_VENDOR_NAME + '/' + selector;
+      String dir = userHome + "/Library/" + macDir + '/' + vendorName;
+      if (!selector.isEmpty()) dir = dir + '/' + selector;
       if (!macSub.isEmpty()) dir = dir + '/' + macSub;
       return dir;
     }
@@ -614,7 +633,8 @@ public final class PathManager {
     if (SystemInfoRt.isWindows) {
       String dir = System.getenv(winVar);
       if (dir == null || dir.isEmpty()) dir = userHome + "\\AppData\\" + (winVar.startsWith("LOCAL") ? "Local" : "Roaming");
-      dir = dir + '\\' + IDE_VENDOR_NAME + '\\' + selector;
+      dir = dir + '\\' + vendorName;
+      if (!selector.isEmpty()) dir = dir + '\\' + selector;
       if (!winSub.isEmpty()) dir = dir + '\\' + winSub;
       return dir;
     }
@@ -622,11 +642,30 @@ public final class PathManager {
     if (SystemInfoRt.isUnix) {
       String dir = System.getenv(xdgVar);
       if (dir == null || dir.isEmpty()) dir = userHome + '/' + xdgDfl;
-      dir = dir + '/' + IDE_VENDOR_NAME + '/' + selector;
+      dir = dir + '/' + vendorName;
+      if (!selector.isEmpty()) dir = dir + '/' + selector;
       if (!xdgSub.isEmpty()) dir = dir + '/' + xdgSub;
       return dir;
     }
 
     throw new UnsupportedOperationException("Unsupported OS: " + SystemInfoRt.OS_NAME);
+  }
+
+  private static String vendorName() {
+    String property = System.getProperty("idea.vendor.name");
+    if (property == null) {
+      try {
+        Class<?> ex = Class.forName("com.intellij.openapi.application.ex.ApplicationInfoEx");
+        Class<?> impl = Class.forName("com.intellij.openapi.application.impl.ApplicationInfoImpl");
+        MethodHandles.Lookup lookup = MethodHandles.lookup();
+        Object instance = lookup.findStatic(impl, "getShadowInstance", MethodType.methodType(ex)).invoke();
+        property = (String)lookup.findVirtual(impl, "getShortCompanyName", MethodType.methodType(String.class)).invoke(instance);
+      }
+      catch (Throwable t) {
+        property = "JetBrains";
+      }
+      System.setProperty("idea.vendor.name", property);
+    }
+    return property;
   }
 }

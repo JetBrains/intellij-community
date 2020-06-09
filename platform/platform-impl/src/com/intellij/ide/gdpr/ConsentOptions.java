@@ -6,6 +6,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,8 +40,8 @@ public final class ConsentOptions {
     static {
       final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
       ourInstance = new ConsentOptions(new IOBackend() {
-        private final File DEFAULT_CONSENTS_FILE = Locations.getDataRoot().resolve(ApplicationNamesInfo.getInstance().getLowercaseProductName()).resolve("consentOptions").resolve("cached").toFile();
-        private final File CONFIRMED_CONSENTS_FILE = Locations.getDataRoot().resolve("consentOptions").resolve("accepted").toFile();
+        private final File DEFAULT_CONSENTS_FILE = PathManager.getCommonDataPath().resolve(ApplicationNamesInfo.getInstance().getLowercaseProductName()).resolve("consentOptions").resolve("cached").toFile();
+        private final File CONFIRMED_CONSENTS_FILE = PathManager.getCommonDataPath().resolve("consentOptions").resolve("accepted").toFile();
         private final String BUNDLED_CONSENTS_PATH = getBundledResourcePath();
 
         @Override
@@ -374,6 +375,4 @@ public final class ConsentOptions {
     @NotNull
     String readConfirmedConsents() throws IOException;
   }
-
-
 }
