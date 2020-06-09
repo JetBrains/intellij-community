@@ -4,7 +4,6 @@ package com.intellij.usages;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.GuiUtils;
 import com.intellij.usageView.UsageViewBundle;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +20,7 @@ public final class UsageLimitUtil {
                                                 @NotNull final String message,
                                                 @NotNull final UsageViewPresentation usageViewPresentation) {
     int result = runOrInvokeAndWait(() -> {
-      String title = UsageViewBundle.message("find.excessive.usages.title", StringUtil.capitalize(StringUtil.pluralize(usageViewPresentation.getUsagesWord())));
+      String title = UsageViewBundle.message("find.excessive.usages.title", usageViewPresentation.getUsagesWord(2));
       return Messages.showOkCancelDialog(project, message,
                                          title, UsageViewBundle.message("button.text.continue"), UsageViewBundle.message("button.text.abort"),
                                          Messages.getWarningIcon());

@@ -1,16 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
-import static org.jetbrains.annotations.Nls.Capitalization.Title;
-
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.usageView.UsageViewBundle;
-import java.util.Objects;
-import java.util.regex.Pattern;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.regex.Pattern;
+
+import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
 public class UsageViewPresentation {
 
@@ -29,7 +31,7 @@ public class UsageViewPresentation {
   private boolean myOpenInNewTab = true;
   private boolean myCodeUsages = true;
   private boolean myUsageTypeFilteringAvailable;
-  private String myUsagesWord = UsageViewBundle.message("usage.name");
+  private Function<Integer, String> myUsagesWordSupplier = count -> UsageViewBundle.message("usage.name", count);
 
   private String myTabName;
   private String myToolwindowTitle;
@@ -151,13 +153,29 @@ public class UsageViewPresentation {
     myCodeUsages = codeUsages;
   }
 
+  /**
+   * Use {@link #getUsagesWord(int)} instead
+   */
+  @Deprecated
   @NotNull
   public String getUsagesWord() {
-    return myUsagesWord;
+    return myUsagesWordSupplier.apply(1);
   }
 
+  /**
+   * Use {@link #setUsagesWord(Function)} instead
+   */
+  @Deprecated
   public void setUsagesWord(@NotNull String usagesWord) {
-    myUsagesWord = usagesWord;
+    myUsagesWordSupplier = count -> usagesWord;
+  }
+
+  public String getUsagesWord(int count) {
+    return myUsagesWordSupplier.apply(count);
+  }
+
+  public void setUsagesWord(@NotNull Function<Integer, String> usagesWordSupplier) {
+    myUsagesWordSupplier = usagesWordSupplier;
   }
 
   public String getTabName() {
@@ -274,7 +292,8 @@ public class UsageViewPresentation {
            && Objects.equals(myUsagesInGeneratedCodeString, that.myUsagesInGeneratedCodeString)
            && Objects.equals(myUsagesString, that.myUsagesString)
            && Objects.equals(mySearchString, that.mySearchString)
-           && Objects.equals(myUsagesWord, that.myUsagesWord)
+           && Objects.equals(myUsagesWordSupplier.apply(1), that.myUsagesWordSupplier.apply(1))
+           && Objects.equals(myUsagesWordSupplier.apply(2), that.myUsagesWordSupplier.apply(2))
            && arePatternsEqual(mySearchPattern, that.mySearchPattern)
            && arePatternsEqual(myReplacePattern, that.myReplacePattern);
   }
@@ -308,7 +327,8 @@ public class UsageViewPresentation {
       myCodeUsages,
       myUsageTypeFilteringAvailable,
       myExcludeAvailable,
-      myUsagesWord,
+      myUsagesWordSupplier.apply(1),
+      myUsagesWordSupplier.apply(2),
       myTabName,
       myToolwindowTitle,
       myDetachedMode,
@@ -336,7 +356,7 @@ public class UsageViewPresentation {
     copyInstance.myOpenInNewTab = myOpenInNewTab;
     copyInstance.myCodeUsages = myCodeUsages;
     copyInstance.myUsageTypeFilteringAvailable = myUsageTypeFilteringAvailable;
-    copyInstance.myUsagesWord = myUsagesWord;
+    copyInstance.myUsagesWordSupplier = myUsagesWordSupplier;
     copyInstance.myTabName = myTabName;
     copyInstance.myToolwindowTitle = myToolwindowTitle;
     copyInstance.myDetachedMode = myDetachedMode;
