@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
-import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.ui.FontUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
@@ -34,8 +33,8 @@ import javax.swing.ScrollPaneConstants
 
 internal object GHPRCommitsBrowserComponent {
 
-  fun create(commitsModel: SingleValueModel<Map<GHCommit, List<Change>>>, onCommitSelected: (GHCommit?) -> Unit): JComponent {
-    val commitsListModel = CollectionListModel(commitsModel.value.keys.toList())
+  fun create(commitsModel: SingleValueModel<List<GHCommit>>, onCommitSelected: (GHCommit?) -> Unit): JComponent {
+    val commitsListModel = CollectionListModel(commitsModel.value)
 
     val actionManager = ActionManager.getInstance()
     val commitsList = JBList(commitsListModel).apply {

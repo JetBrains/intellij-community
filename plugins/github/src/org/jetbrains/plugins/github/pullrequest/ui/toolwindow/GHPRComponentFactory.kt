@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.Wrapper
@@ -19,11 +20,11 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContext
-import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRChangesDataProvider
@@ -32,12 +33,10 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataPro
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
-import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesBrowserFactory
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelper
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelperImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModelImpl
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
 import javax.swing.JComponent
@@ -169,11 +168,30 @@ internal class GHPRComponentFactory(private val project: Project) {
       ActionManager.getInstance().getAction("Github.PullRequest.Details.Reload").registerCustomShortcutSet(it, disposable)
     }
 
-    val changesLoadingModel = createChangesLoadingModel(dataProvider.changesData, disposable)
-    val changesBrowser = GHPRChangesBrowserFactory(ActionManager.getInstance(), project).create(
-      changesLoadingModel,
-      GithubBundle.message("pull.request.does.not.contain.changes"),
-      disposable)
+    val changesLoadingModel = GHCompletableFutureLoadingModel<List<Change>>(disposable)
+    dataProvider.changesData.loadChanges(disposable) { future ->
+      changesLoadingModel.future = future.thenApply { it.changes }
+    }
+    val changesLoadingErrorHandler = GHLoadingErrorHandlerImpl(project, dataContext.securityService.account) {
+      dataProvider.changesData.reloadChanges()
+    }
+
+    val changesBrowserFactory = GHPRChangesBrowserFactory(ActionManager.getInstance(), project)
+    val changesLoadingPanel = GHLoadingPanelFactory(changesLoadingModel, null,
+                                                    GithubBundle.message("cannot.load.changes"),
+                                                    changesLoadingErrorHandler)
+      .createWithUpdatesStripe(disposable) { parent, model ->
+        val tree = changesBrowserFactory.createTree(parent, model).apply {
+          emptyText.text = GithubBundle.message("pull.request.does.not.contain.changes")
+        }
+        ScrollPaneFactory.createScrollPane(tree, true)
+      }.apply {
+        border = IdeBorderFactory.createBorder(SideBorder.TOP)
+      }
+    val toolbar = changesBrowserFactory.createToolbar(changesLoadingPanel)
+    val changesBrowser = BorderLayoutPanel().andTransparent()
+      .addToTop(toolbar)
+      .addToCenter(changesLoadingPanel)
 
     return OnePixelSplitter(true, "Github.PullRequest.Info.Component", 0.33f).apply {
       isOpaque = true
@@ -186,22 +204,43 @@ internal class GHPRComponentFactory(private val project: Project) {
 
   private fun createCommitsComponent(dataContext: GHPRDataContext, dataProvider: GHPRDataProvider, disposable: Disposable): JComponent {
 
-    val changesModel = SingleValueModel<List<Change>?>(null)
+    val commitsLoadingModel = GHCompletableFutureLoadingModel<List<GHCommit>>(disposable)
+    dataProvider.changesData.loadCommitsFromApi(disposable) { future ->
+      commitsLoadingModel.future = future
+    }
+    val changesLoadingModel = GHCompletableFutureLoadingModel<List<Change>>(disposable)
+    val changesLoadingErrorHandler = GHLoadingErrorHandlerImpl(project, dataContext.securityService.account) {
+      dataProvider.changesData.reloadChanges()
+    }
 
-    val changesLoadingModel = createChangesLoadingModel(dataProvider.changesData, disposable)
-    val commitsLoadingPanel = GHLoadingPanelFactory(changesLoadingModel,
+    val commitSelectionListener = CommitsSelectionListener(changesLoadingModel, dataProvider.changesData).also {
+      Disposer.register(disposable, it)
+    }
+
+    val commitsLoadingPanel = GHLoadingPanelFactory(commitsLoadingModel,
                                                     null, GithubBundle.message("cannot.load.commits"),
-                                                    GHLoadingErrorHandlerImpl(project, dataContext.securityService.account) {
-                                                      dataProvider.changesData.reloadChanges()
-                                                    })
+                                                    changesLoadingErrorHandler)
       .createWithUpdatesStripe(disposable) { _, model ->
-        GHPRCommitsBrowserComponent.create(model.map { it.changesByCommits }) {
-          changesModel.value = model.value.changesByCommits[it]
-        }
+        GHPRCommitsBrowserComponent.create(model, commitSelectionListener)
       }
 
-    val changesBrowser = GHPRChangesBrowserFactory(ActionManager.getInstance(), project)
-      .create(changesModel, GithubBundle.message("pull.request.select.commit.to.view.changes"))
+    val changesBrowserFactory = GHPRChangesBrowserFactory(ActionManager.getInstance(), project)
+    val changesLoadingPanel = GHLoadingPanelFactory(changesLoadingModel,
+                                                    GithubBundle.message("pull.request.select.commit.to.view.changes"),
+                                                    GithubBundle.message("cannot.load.changes"),
+                                                    changesLoadingErrorHandler)
+      .createWithModel { parent, model ->
+        val tree = changesBrowserFactory.createTree(parent, model).apply {
+          emptyText.text = GithubBundle.message("pull.request.commit.does.not.contain.changes")
+        }
+        ScrollPaneFactory.createScrollPane(tree, true)
+      }.apply {
+        border = IdeBorderFactory.createBorder(SideBorder.TOP)
+      }
+    val toolbar = changesBrowserFactory.createToolbar(changesLoadingPanel)
+    val changesBrowser = BorderLayoutPanel().andTransparent()
+      .addToTop(toolbar)
+      .addToCenter(changesLoadingPanel)
 
     return OnePixelSplitter(true, "Github.PullRequest.Commits.Component", 0.4f).apply {
       isOpaque = true
@@ -211,6 +250,30 @@ internal class GHPRComponentFactory(private val project: Project) {
       secondComponent = changesBrowser
     }.also {
       ActionManager.getInstance().getAction("Github.PullRequest.Changes.Reload").registerCustomShortcutSet(it, disposable)
+    }
+  }
+
+  private class CommitsSelectionListener(private val changesLoadingModel: GHCompletableFutureLoadingModel<List<Change>>,
+                                         private val changesData: GHPRChangesDataProvider)
+    : (GHCommit?) -> Unit, Disposable {
+
+    private var currentDisposable: Disposable? = null
+
+    override fun invoke(commit: GHCommit?) {
+      if (Disposer.isDisposed(this)) return
+      currentDisposable?.let { Disposer.dispose(it) }
+      changesLoadingModel.future = null
+      if (commit != null) {
+        val disposable = Disposer.newDisposable()
+        currentDisposable = disposable
+        changesData.loadChanges(disposable) { future ->
+          changesLoadingModel.future = future.thenApply { it.changesByCommits[commit] }
+        }
+      }
+    }
+
+    override fun dispose() {
+      currentDisposable?.let { Disposer.dispose(it) }
     }
   }
 
@@ -225,15 +288,6 @@ internal class GHPRComponentFactory(private val project: Project) {
       }
     }
     return diffHelper
-  }
-
-  private fun createChangesLoadingModel(changesProvider: GHPRChangesDataProvider, disposable: Disposable)
-    : GHSimpleLoadingModel<GHPRChangesProvider> {
-    val model = GHCompletableFutureLoadingModel<GHPRChangesProvider>(disposable)
-    changesProvider.loadChanges(disposable) {
-      model.future = it
-    }
-    return model
   }
 
   private fun createDetailsLoadingModel(detailsProvider: GHPRDetailsDataProvider,

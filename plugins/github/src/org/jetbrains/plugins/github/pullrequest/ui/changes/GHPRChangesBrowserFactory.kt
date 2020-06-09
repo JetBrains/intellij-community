@@ -2,53 +2,27 @@
 package org.jetbrains.plugins.github.pullrequest.ui.changes
 
 import com.intellij.ide.DataManager
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.SideBorder
-import com.intellij.util.ui.components.BorderLayoutPanel
-import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.github.i18n.GithubBundle
+import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
+import com.intellij.ui.SelectionSaver
+import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.plugins.github.pullrequest.action.GHPRReviewSubmitAction
 import org.jetbrains.plugins.github.pullrequest.action.GHPRShowDiffAction
-import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
-import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
-import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 class GHPRChangesBrowserFactory(private val actionManager: ActionManager, private val project: Project) {
 
-  fun create(changesModel: SingleValueModel<List<Change>?>,
-             @Nls(capitalization = Nls.Capitalization.Sentence) panelEmptyText: String): JComponent {
-
-    val changesTreePanel = GHPRChangesTree.createLazyTreePanel(changesModel) {
-      createTree(project, changesModel, it).apply {
-        emptyText.text = panelEmptyText
-      }
-    }.apply {
-      emptyText.text = panelEmptyText
-    }
-
-    val toolbar = createToolbar(actionManager, changesTreePanel)
-    val scrollPane = ScrollPaneFactory.createScrollPane(changesTreePanel, SideBorder.TOP).apply {
-      isOpaque = false
-      viewport.isOpaque = false
-    }
-
-    return BorderLayoutPanel().andTransparent()
-      .addToTop(toolbar)
-      .addToCenter(scrollPane)
-  }
-
-  private fun createToolbar(actionManager: ActionManager, target: JComponent)
+  fun createToolbar(target: JComponent)
     : TreeActionsToolbarPanel {
 
     val diffAction = GHPRShowDiffAction().apply {
@@ -64,40 +38,38 @@ class GHPRChangesBrowserFactory(private val actionManager: ActionManager, privat
     return TreeActionsToolbarPanel(changesToolbar, treeActionsGroup, target)
   }
 
-  fun create(loadingModel: GHSimpleLoadingModel<GHPRChangesProvider>,
-             @Nls(capitalization = Nls.Capitalization.Sentence) panelEmptyText: String = "",
-             disposable: Disposable): JComponent {
+  fun createTree(parentPanel: JPanel, changesModel: SingleValueModel<List<Change>>): ChangesTree {
+    val tree = object : ChangesTree(project, false, false) {
+      override fun rebuildTree() {
+        updateTreeModel(TreeModelBuilder(project, grouping).setChanges(changesModel.value, null).build())
+        if (isSelectionEmpty && !isEmpty) TreeUtil.selectFirstNode(this)
+      }
 
-    val loadingPanel = GHLoadingPanelFactory(loadingModel,
-                                             errorPrefix = GithubBundle.message("cannot.load.changes"))
-      .createWithUpdatesStripe(disposable) { parent, model ->
-        createTree(project, model.map { it.changes }, parent).apply {
-          emptyText.text = panelEmptyText
-        }.let { tree ->
-          ScrollPaneFactory.createScrollPane(tree, true)
+      override fun getData(dataId: String) = super.getData(dataId) ?: VcsTreeModelData.getData(project, this, dataId)
+
+    }.also<ChangesTree> {
+      SelectionSaver.installOn(it)
+      it.addFocusListener(object : FocusAdapter() {
+        override fun focusGained(e: FocusEvent?) {
+          if (it.isSelectionEmpty && !it.isEmpty) TreeUtil.selectFirstNode(it)
         }
-      }.apply {
-        border = IdeBorderFactory.createBorder(SideBorder.TOP)
-      }
-
-    val toolbar = createToolbar(actionManager, loadingPanel)
-
-    return BorderLayoutPanel().andTransparent()
-      .addToTop(toolbar)
-      .addToCenter(loadingPanel)
-  }
-
-  private fun createTree(project: Project, changesModel: SingleValueModel<List<Change>?>, parentPanel: JPanel) =
-    GHPRChangesTree.create(project, changesModel).also {
-      DataManager.registerDataProvider(parentPanel, it::getData)
-
-      val diffAction = GHPRShowDiffAction().apply {
-        ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON)
-      }
-      val reloadAction = actionManager.getAction("Github.PullRequest.Changes.Reload")
-
-      diffAction.registerCustomShortcutSet(CompositeShortcutSet(diffAction.shortcutSet, CommonShortcuts.DOUBLE_CLICK_1), it)
-      reloadAction.registerCustomShortcutSet(it, null)
-      it.installPopupHandler(DefaultActionGroup(diffAction, reloadAction))
+      })
     }
+
+    changesModel.addValueChangedListener(tree::rebuildTree)
+    tree.rebuildTree()
+
+    DataManager.registerDataProvider(parentPanel, tree::getData)
+
+    val diffAction = GHPRShowDiffAction().apply {
+      ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON)
+    }
+    val reloadAction = actionManager.getAction("Github.PullRequest.Changes.Reload")
+
+    diffAction.registerCustomShortcutSet(CompositeShortcutSet(diffAction.shortcutSet, CommonShortcuts.DOUBLE_CLICK_1), tree)
+    reloadAction.registerCustomShortcutSet(tree, null)
+    tree.installPopupHandler(DefaultActionGroup(diffAction, reloadAction))
+
+    return tree
+  }
 }
