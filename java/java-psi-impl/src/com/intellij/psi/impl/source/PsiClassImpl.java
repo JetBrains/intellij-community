@@ -30,10 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements PsiExtensibleClass, Queryable {
   private final ClassInnerStuffCache myInnersCache = new ClassInnerStuffCache(this);
@@ -76,7 +73,6 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   private void dropCaches() {
-    myInnersCache.dropCaches();
     myCachedName = null;
   }
 
@@ -478,7 +474,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
     String oldName = getName();
     boolean isRenameFile = isRenameFileOnRenaming();
 
-    PsiImplUtil.setName(getNameIdentifier(), newName);
+    PsiImplUtil.setName(Objects.requireNonNull(getNameIdentifier()), newName);
 
     if (isRenameFile) {
       PsiFile file = (PsiFile)getParent();
