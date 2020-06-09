@@ -15,7 +15,6 @@ import com.intellij.java.JavaBundle;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -66,8 +65,6 @@ import static com.intellij.patterns.PsiJavaPatterns.*;
  * @author peter
  */
 public class JavaCompletionContributor extends CompletionContributor {
-  private static final Logger LOG = Logger.getInstance(JavaCompletionContributor.class);
-
   private static final ElementPattern<PsiElement> UNEXPECTED_REFERENCE_AFTER_DOT =
     psiElement().afterLeaf(".").insideStarting(psiExpressionStatement());
   private static final PsiNameValuePairPattern NAME_VALUE_PAIR =
