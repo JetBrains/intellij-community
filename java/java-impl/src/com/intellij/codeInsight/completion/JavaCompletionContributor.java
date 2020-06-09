@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.TailType;
@@ -60,6 +61,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.getSpace;
 import static com.intellij.patterns.PsiJavaPatterns.*;
 
 /**
@@ -624,34 +626,48 @@ public class JavaCompletionContributor extends CompletionContributor {
           if (Objects.equals(existingAttr.getName(), attrName) ||
               PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(attrName) && existingAttr.getName() == null) continue methods;
         }
-        LookupElementBuilder element = LookupElementBuilder.createWithIcon(method)
-                            .withStrikeoutness(PsiImplUtil.isDeprecated(method))
-                            .withInsertHandler(new InsertHandler<LookupElement>() {
-          @Override
-          public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
-            final Editor editor = context.getEditor();
-            EqTailType.INSTANCE.processTail(editor, editor.getCaretModel().getOffset());
-            context.setAddCompletionChar(false);
-
-            context.commitDocument();
-            PsiAnnotationParameterList paramList =
-              PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiAnnotationParameterList.class, false);
-            if (paramList != null && paramList.getAttributes().length > 0 && paramList.getAttributes()[0].getName() == null) {
-              int valueOffset = paramList.getAttributes()[0].getTextRange().getStartOffset();
-              context.getDocument().insertString(valueOffset, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
-              EqTailType.INSTANCE.processTail(editor, valueOffset + PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.length());
-            }
-          }
-        });
 
         PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)method).getDefaultValue();
-        if (defaultValue != null) {
-          element = element.withTailText(" default " + defaultValue.getText(), true);
+        String defText = defaultValue == null ? null : defaultValue.getText();
+        if (PsiKeyword.TRUE.equals(defText) || PsiKeyword.FALSE.equals(defText)) {
+          result.addElement(createAnnotationAttributeElement(method, PsiKeyword.TRUE.equals(defText) ? PsiKeyword.FALSE : PsiKeyword.TRUE));
+          result.addElement(PrioritizedLookupElement.withPriority(createAnnotationAttributeElement(method, defText).withTailText(" (default)", true), -1));
+        } else {
+          LookupElementBuilder element = createAnnotationAttributeElement(method, null);
+          if (defText != null) {
+            element = element.withTailText(" default " + defText, true);
+          }
+          result.addElement(element);
         }
-
-        result.addElement(element);
       }
     }
+  }
+
+  @NotNull
+  private static LookupElementBuilder createAnnotationAttributeElement(PsiMethod annoMethod, @Nullable String value) {
+    String space = getSpace(CodeStyle.getLanguageSettings(annoMethod.getContainingFile()).SPACE_AROUND_ASSIGNMENT_OPERATORS);
+    String lookupString = annoMethod.getName() + (value == null ? "" : space + "=" + space + value);
+    return LookupElementBuilder.create(annoMethod, lookupString).withIcon(annoMethod.getIcon(0))
+      .withStrikeoutness(PsiImplUtil.isDeprecated(annoMethod))
+      .withInsertHandler(new InsertHandler<LookupElement>() {
+        @Override
+        public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
+          final Editor editor = context.getEditor();
+          if (value == null) {
+            EqTailType.INSTANCE.processTail(editor, editor.getCaretModel().getOffset());
+          }
+          context.setAddCompletionChar(false);
+
+          context.commitDocument();
+          PsiAnnotationParameterList paramList =
+            PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiAnnotationParameterList.class, false);
+          if (paramList != null && paramList.getAttributes().length > 0 && paramList.getAttributes()[0].getName() == null) {
+            int valueOffset = paramList.getAttributes()[0].getTextRange().getStartOffset();
+            context.getDocument().insertString(valueOffset, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
+            EqTailType.INSTANCE.processTail(editor, valueOffset + PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.length());
+          }
+        }
+      });
   }
 
   @Override

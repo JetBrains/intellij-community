@@ -103,8 +103,8 @@ class NormalCompletionTest extends NormalCompletionTestCase {
   void testDisplayDefaultValueInAnnotationMethods() {
     configure()
     LookupElementPresentation presentation = renderElement(myItems[0])
-    assert "myBool" == presentation.itemText
-    assert presentation.tailText == " default false"
+    assert "myInt" == presentation.itemText
+    assert presentation.tailText == " default 42"
     assert presentation.tailFragments[0].grayed
     assert !presentation.typeText
     assert !presentation.itemTextBold
@@ -1984,6 +1984,18 @@ class Abc {
     checkGetClassPresent("class C implements Unresolved {{ getCl<caret>x }}")
     checkGetClassPresent("class C extends Unresolved implements Runnable {{ getCl<caret>x }}")
     checkGetClassPresent("class C extends Unresolved1 implements Unresolved2 {{ getCl<caret>x }}")
+  }
 
+  void testSuggestInverseOfDefaultAnnoParamValueForBoolean() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems(0, 'smth = true', 'value = false')
+
+    def smthDefault = myItems.find { it.lookupString == 'smth = false' }
+    def presentation = LookupElementPresentation.renderElement(smthDefault)
+    assert presentation.tailText == ' (default)'
+    assert presentation.tailFragments[0].grayed
+
+    myFixture.type('\n')
+    checkResult()
   }
 }
