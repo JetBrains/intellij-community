@@ -473,14 +473,6 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     return entityStore.current.moduleMap.getDataByEntity(entity)
   }
 
-  @ApiStatus.Internal
-  internal fun addUncommittedModule(module: ModuleBridge) {
-  }
-
-  @ApiStatus.Internal
-  internal fun removeUncommittedModule(module: ModuleBridge) {
-  }
-
   override fun disposeModule(module: Module) = ApplicationManager.getApplication().runWriteAction {
     val modifiableModel = modifiableModel
     modifiableModel.disposeModule(module)

@@ -58,7 +58,6 @@ internal class ModifiableModuleModelBridge(
 
     val module = ModuleBridgeImpl(moduleEntity.persistentId(), moduleName, project, null, entityStorageOnDiff, diff)
     diff.mutableModuleMap.addMapping(moduleEntity, module)
-    moduleManager.addUncommittedModule(module)
     myModulesToAdd[moduleName] = module
 
     module.init {}
@@ -94,7 +93,6 @@ internal class ModifiableModuleModelBridge(
 
     val moduleInstance = moduleManager.createModuleInstance(moduleEntity, entityStorageOnDiff, diff = diff, isNew = true)
     diff.mutableModuleMap.addMapping(moduleEntity, moduleInstance)
-    moduleManager.addUncommittedModule(moduleInstance)
     myModulesToAdd[moduleName] = moduleInstance
 
     return moduleInstance
@@ -144,7 +142,6 @@ internal class ModifiableModuleModelBridge(
     }
 
     if (myModulesToAdd.inverse().remove(module) != null) {
-      (ModuleManager.getInstance(project) as ModuleManagerComponentBridge).removeUncommittedModule(module)
       myUncommittedModulesToDispose.add(module)
     }
 
@@ -172,7 +169,6 @@ internal class ModifiableModuleModelBridge(
 
     val moduleManager = ModuleManager.getInstance(project) as ModuleManagerComponentBridge
     for (moduleToAdd in myModulesToAdd.values) {
-      moduleManager.removeUncommittedModule(moduleToAdd)
       Disposer.dispose(moduleToAdd)
     }
     for (module in myUncommittedModulesToDispose) {
