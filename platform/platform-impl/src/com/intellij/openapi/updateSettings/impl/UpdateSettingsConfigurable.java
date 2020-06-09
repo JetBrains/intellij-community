@@ -182,7 +182,7 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
       });
       List<Pair<String, String>> extraStatuses = Lists.newArrayList();
 
-      for (ExternalComponentSource source : ExternalComponentManager.getInstance().getComponentSources()) {
+      for (ExternalComponentSource source : ExternalComponentManager.getInstance().getEnabledComponentSources(mySettings)) {
         extraStatuses.addAll(source.getStatuses());
       }
       int row = 0;
