@@ -6,7 +6,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import java.util.concurrent.CancellationException
 
 inline fun <reified T : Any> logger() = Logger.getInstance(T::class.java)
-inline fun <reified T : Any> T.logger() = Logger.getInstance(T::class.java)
 
 fun logger(category: String) = Logger.getInstance(category)
 
