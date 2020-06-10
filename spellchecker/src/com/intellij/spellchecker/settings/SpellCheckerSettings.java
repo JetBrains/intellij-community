@@ -28,9 +28,6 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   private static final String CUSTOM_DICTIONARIES_ATTR_NAME = "CustomDictionaries";
   private static final String CUSTOM_DICTIONARY_ATTR_NAME = "CustomDictionary";
 
-  private static final String DICTIONARIES_ATTR_NAME = "Dictionaries";
-  private static final String DICTIONARY_ATTR_NAME = "Dictionary";
-
   private static final String RUNTIME_DICTIONARIES_ATTR_NAME = "RuntimeDictionaries";
   private static final String RUNTIME_DICTIONARY_ATTR_NAME = "RuntimeDictionary";
 
@@ -45,7 +42,6 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   // Paths
   private final List<String> myOldDictionaryFoldersPaths = new ArrayList<>();
   private List<String> myCustomDictionariesPaths = new ArrayList<>();
-  private Set<String> myDisabledDictionariesPaths = new HashSet<>();
 
   private Set<String> myRuntimeDisabledDictionariesNames = new HashSet<>();
   private String myDictionaryToSave = DEFAULT_DICTIONARY_TO_SAVE;
@@ -88,15 +84,6 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
     myCustomDictionariesPaths = customDictionariesPaths;
   }
 
-  public Set<String> getDisabledDictionariesPaths() {
-    return myDisabledDictionariesPaths;
-  }
-
-
-  public void setDisabledDictionariesPaths(Set<String> disabledDictionariesPaths) {
-    myDisabledDictionariesPaths = disabledDictionariesPaths;
-  }
-
   public Set<String> getRuntimeDisabledDictionariesNames() {
     return myRuntimeDisabledDictionariesNames;
   }
@@ -115,7 +102,6 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
     if (myRuntimeDisabledDictionariesNames.isEmpty() &&
         myOldDictionaryFoldersPaths.isEmpty() &&
         myCustomDictionariesPaths.isEmpty() &&
-        myDisabledDictionariesPaths.isEmpty() &&
         myUseSingleDictionaryToSave == DEFAULT_USE_SINGLE_DICT &&
         myDictionaryToSave.equals(DEFAULT_DICTIONARY_TO_SAVE)) {
       return null;
@@ -141,13 +127,6 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
     for (int j = 0; j < myCustomDictionariesPaths.size(); j++) {
       element.setAttribute(CUSTOM_DICTIONARY_ATTR_NAME + j, myCustomDictionariesPaths.get(j));
     }
-    element.setAttribute(DICTIONARIES_ATTR_NAME, String.valueOf(myDisabledDictionariesPaths.size()));
-    iterator = myDisabledDictionariesPaths.iterator();
-    i = 0;
-    while (iterator.hasNext()) {
-      element.setAttribute(DICTIONARY_ATTR_NAME + i, iterator.next());
-      i++;
-    }
     element.setAttribute(DICTIONARY_TO_SAVE_ATTR_NAME, myDictionaryToSave);
     element.setAttribute(USE_SINGLE_DICT_ATTR_NAME, String.valueOf(myUseSingleDictionaryToSave));
     element.setAttribute(SETTINGS_TRANSFERRED, String.valueOf(mySettingsTransferred));
@@ -160,7 +139,6 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
     myRuntimeDisabledDictionariesNames.clear();
     myCustomDictionariesPaths.clear();
     myOldDictionaryFoldersPaths.clear();
-    myDisabledDictionariesPaths.clear();
     try {
       // runtime
       final int runtimeDictionariesSize = parseInt(element.getAttributeValue(RUNTIME_DICTIONARIES_ATTR_NAME), 0);
@@ -184,10 +162,6 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
       final int customDictSize = parseInt(element.getAttributeValue(CUSTOM_DICTIONARIES_ATTR_NAME), 0);
       for (int i = 0; i < customDictSize; i++) {
         myCustomDictionariesPaths.add(element.getAttributeValue(CUSTOM_DICTIONARY_ATTR_NAME + i));
-      }
-      final int scriptsSize = parseInt(element.getAttributeValue(DICTIONARIES_ATTR_NAME), 0);
-      for (int i = 0; i < scriptsSize; i++) {
-        myDisabledDictionariesPaths.add(element.getAttributeValue(DICTIONARY_ATTR_NAME + i));
       }
       int correctionsLimit = parseInt(element.getAttributeValue(CORRECTIONS_MAX_LIMIT), DEFAULT_MAX_VALUE);
       final RegistryValue registryValue = Registry.get("spellchecker.corrections.limit");
