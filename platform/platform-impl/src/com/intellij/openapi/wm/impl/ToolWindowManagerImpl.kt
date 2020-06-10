@@ -1249,9 +1249,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       .setHideOnClickOutside(false)
       .setHideOnFrameResize(false)
       .createBalloon() as BalloonImpl
-    NotificationsManagerImpl.frameActivateBalloonListener(balloon) {
+    NotificationsManagerImpl.frameActivateBalloonListener(balloon, Runnable {
       AppExecutorUtil.getAppScheduledExecutorService().schedule({ balloon.setHideOnClickOutside(true) }, 100, TimeUnit.MILLISECONDS)
-    }
+    })
 
     listenerWrapper.balloon = balloon
     entry.balloon = balloon
