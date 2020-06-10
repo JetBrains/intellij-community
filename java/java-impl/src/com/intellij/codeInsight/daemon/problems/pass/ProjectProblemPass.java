@@ -4,10 +4,7 @@ package com.intellij.codeInsight.daemon.problems.pass;
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil;
-import com.intellij.codeInsight.daemon.problems.FileState;
-import com.intellij.codeInsight.daemon.problems.FileStateUpdater;
-import com.intellij.codeInsight.daemon.problems.ProblemCollector;
-import com.intellij.codeInsight.daemon.problems.ScopedMember;
+import com.intellij.codeInsight.daemon.problems.*;
 import com.intellij.codeInsight.hints.BlockInlayRenderer;
 import com.intellij.codeInsight.hints.presentation.InlayPresentation;
 import com.intellij.codeInsight.hints.presentation.PresentationFactory;
@@ -35,7 +32,7 @@ public class ProjectProblemPass extends EditorBoundHighlightingPass {
 
   private final FileEditorManager myEditorManager = FileEditorManager.getInstance(myProject);
 
-  private Map<PsiMember, Problem> myProblems = null;
+  private Map<PsiMember, MemberState> myMemberStates = null;
   private Map<SmartPsiElementPointer<PsiMember>, ScopedMember> mySnapshot = null;
 
   ProjectProblemPass(@NotNull Editor editor, @NotNull PsiJavaFile file) {
@@ -47,7 +44,7 @@ public class ProjectProblemPass extends EditorBoundHighlightingPass {
     FileState prevState = FileStateUpdater.getState(myFile);
     if (prevState == null) return;
     FileState curState = FileStateUpdater.findState(myFile, prevState.getSnapshot());
-    myProblems = collectProblems(curState.getChanges(), prevState.getChanges());
+    myMemberStates = collectStates(curState.getChanges(), prevState.getChanges());
     mySnapshot = curState.getSnapshot();
   }
 
@@ -55,15 +52,15 @@ public class ProjectProblemPass extends EditorBoundHighlightingPass {
   public void doApplyInformationToEditor() {
     Map<SmartPsiElementPointer<PsiMember>, ScopedMember> snapshot = mySnapshot;
     if (snapshot == null) return;
-    Map<PsiMember, Problem> problems = myProblems;
-    if (problems == null) return;
+    Map<PsiMember, MemberState> memberStates = myMemberStates;
+    if (memberStates == null) return;
 
     PresentationFactory factory = new PresentationFactory((EditorImpl)myEditor);
     Map<PsiMember, EditorInfo> editorInfos = getEditorInfos(myEditor);
     Map<PsiMember, ScopedMember> changes = new SmartHashMap<>();
-    problems.forEach((curMember, problem) -> {
-      ScopedMember prevMember = problem.prevMember;
-      Set<PsiElement> relatedProblems = problem.relatedProblems;
+    memberStates.forEach((curMember, state) -> {
+      ScopedMember prevMember = state.prevMember;
+      Set<Problem> relatedProblems = state.relatedProblems;
       changes.put(curMember, prevMember);
       if (relatedProblems != null) addInfo(factory, curMember, relatedProblems, editorInfos);
     });
@@ -80,7 +77,7 @@ public class ProjectProblemPass extends EditorBoundHighlightingPass {
 
   private void addInfo(@NotNull PresentationFactory factory,
                        @NotNull PsiMember psiMember,
-                       @NotNull Set<PsiElement> relatedProblems,
+                       @NotNull Set<Problem> relatedProblems,
                        @NotNull Map<PsiMember, EditorInfo> editorInfos) {
     EditorInfo oldInfo = editorInfos.remove(psiMember);
     if (oldInfo != null) Disposer.dispose(oldInfo.myInlay);
@@ -97,33 +94,30 @@ public class ProjectProblemPass extends EditorBoundHighlightingPass {
     editorInfos.put(psiMember, new EditorInfo(newInlay, newHighlightInfo));
   }
 
-  private @NotNull Map<PsiMember, Problem> collectProblems(@NotNull Map<PsiMember, ScopedMember> curChanges,
-                                                           @NotNull Map<PsiMember, ScopedMember> oldChanges) {
-    if (inSplitEditorMode() && curChanges.isEmpty() && !isDocumentUpdated(myEditor)) {
+  private @NotNull Map<PsiMember, MemberState> collectStates(@NotNull Map<PsiMember, ScopedMember> curChanges,
+                                                             @NotNull Map<PsiMember, ScopedMember> oldChanges) {
+    boolean isInSplitEditorMode = myEditorManager.getSelectedEditors().length > 1;
+    if (isInSplitEditorMode && curChanges.isEmpty() && !isDocumentUpdated(myEditor)) {
       // some other file changed. this change might be a new broken usage of one of members in current file.
       // so, now we need to recheck all of the previous changes.
       curChanges = oldChanges;
       oldChanges = Collections.emptyMap();
     }
-    Map<PsiMember, Problem> problems = ContainerUtil.map2Map(oldChanges.entrySet(),
-                                                             e -> Pair.create(e.getKey(), new Problem(e.getValue(), null)));
+    Map<PsiMember, MemberState> states = ContainerUtil.map2Map(oldChanges.entrySet(),
+                                                               e -> Pair.create(e.getKey(), new MemberState(e.getValue(), null)));
     curChanges.forEach((curMember, prevMember) -> {
-      Set<PsiElement> changeProblems = ProblemCollector.collect(prevMember, curMember);
+      Set<Problem> changeProblems = ProblemCollector.collect(prevMember, curMember);
       if (changeProblems == null) changeProblems = Collections.emptySet();
-      problems.put(curMember, new Problem(prevMember, changeProblems));
+      states.put(curMember, new MemberState(prevMember, changeProblems));
     });
-    return problems;
+    return states;
   }
 
-  private boolean inSplitEditorMode() {
-    return myEditorManager.getSelectedEditors().length > 1;
-  }
-
-  private static class Problem {
+  private static class MemberState {
     private final ScopedMember prevMember;
-    private final Set<PsiElement> relatedProblems;
+    private final Set<Problem> relatedProblems;
 
-    private Problem(ScopedMember prevMember, Set<PsiElement> relatedProblems) {
+    private MemberState(ScopedMember prevMember, Set<Problem> relatedProblems) {
       this.prevMember = prevMember;
       this.relatedProblems = relatedProblems;
     }

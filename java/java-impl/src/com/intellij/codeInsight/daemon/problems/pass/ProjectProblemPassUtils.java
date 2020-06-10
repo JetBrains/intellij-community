@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.JavaLensProvider;
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.daemon.problems.Problem;
 import com.intellij.codeInsight.hints.BlockConstrainedPresentation;
 import com.intellij.codeInsight.hints.BlockConstraints;
 import com.intellij.codeInsight.hints.BlockInlayRenderer;
@@ -13,6 +14,7 @@ import com.intellij.codeInsight.hints.presentation.*;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.SmartHashMap;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.*;
@@ -24,7 +26,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.Navigatable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -57,7 +59,7 @@ public class ProjectProblemPassUtils {
                                                     @NotNull PresentationFactory factory,
                                                     int offset,
                                                     @NotNull PsiMember member,
-                                                    @NotNull Set<PsiElement> relatedProblems) {
+                                                    @NotNull Set<Problem> relatedProblems) {
     int column = offset - document.getLineStartOffset(document.getLineNumber(offset));
     int columnWidth = EditorUtil.getPlainSpaceWidth(editor);
     SpacePresentation problemsOffset = new SpacePresentation(column * columnWidth, 0);
@@ -79,11 +81,15 @@ public class ProjectProblemPassUtils {
     return factory.seq(problemsOffset, withSettings);
   }
 
-  private static void showProblems(@NotNull PsiMember member, @NotNull Set<PsiElement> relatedProblems) {
+  private static void showProblems(@NotNull PsiMember member, @NotNull Set<Problem> relatedProblems) {
     Project project = member.getProject();
     if (relatedProblems.size() == 1) {
-      PsiElement problem = relatedProblems.iterator().next();
-      if (problem instanceof Navigatable) ((Navigatable)problem).navigate(true);
+      Problem problem = relatedProblems.iterator().next();
+      PsiElement reportedElement = problem.getReportedElement();
+      VirtualFile fileWithProblem = reportedElement.getContainingFile().getVirtualFile();
+      TextRange elementRange = reportedElement.getTextRange();
+      int offset = elementRange != null ? elementRange.getStartOffset() : -1;
+      PsiNavigationSupport.getInstance().createNavigatable(project, fileWithProblem, offset).navigate(true);
     }
     else {
       String memberName = UsageViewUtil.getLongName(member);
@@ -94,9 +100,11 @@ public class ProjectProblemPassUtils {
       presentation.setTabName(title);
       presentation.setTabText(title);
 
-      PsiElement[] primary = new PsiElement[]{member};
-      Usage[] usages = ContainerUtil.map2Array(relatedProblems, new Usage[relatedProblems.size()],
-                                               e -> UsageInfoToUsageConverter.convert(primary, new UsageInfo(e)));
+      Usage[] usages = ContainerUtil.map2Array(relatedProblems, new Usage[relatedProblems.size()], e -> {
+        PsiElement reportedElement = e.getReportedElement();
+        UsageInfo usageInfo = new UsageInfo(e.getContext());
+        return new BrokenUsage(usageInfo, reportedElement);
+      });
 
       UsageTarget[] usageTargets = new UsageTarget[]{new RelatedProblemTargetAdapter(member)};
       UsageViewManager usageViewManager = UsageViewManager.getInstance(project);
@@ -128,7 +136,7 @@ public class ProjectProblemPassUtils {
 
   static @NotNull HighlightInfo createHighlightInfo(@NotNull Editor editor,
                                                     @NotNull PsiElement identifier,
-                                                    @NotNull Set<PsiElement> relatedProblems) {
+                                                    @NotNull Set<Problem> relatedProblems) {
     ShowRelatedProblemsAction relatedProblemsAction = new ShowRelatedProblemsAction(relatedProblems);
     return createHighlightInfo(editor, identifier, relatedProblemsAction);
   }
@@ -280,9 +288,9 @@ public class ProjectProblemPassUtils {
 
   private static class ShowRelatedProblemsAction extends BaseElementAtCaretIntentionAction {
 
-    private final Set<PsiElement> myRelatedProblems;
+    private final Set<Problem> myRelatedProblems;
 
-    private ShowRelatedProblemsAction(Set<PsiElement> relatedProblems) {
+    private ShowRelatedProblemsAction(Set<Problem> relatedProblems) {
       myRelatedProblems = relatedProblems;
     }
 
