@@ -92,9 +92,10 @@ static void _ReadAndSetEnvVars(DWORD nParentPid, _In_ HANDLE eventSource)
 
 	HANDLE hEnvVarsPipe = CreateFile(sEnvVarsPipeName, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
 	if (hEnvVarsPipe == INVALID_HANDLE_VALUE) {
+		DWORD nError = GetLastError();
 		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_INVALID_HANDLE, NULL, 0, 0, NULL, NULL);
-		fwprintf(stderr, L"Error opening env vars pipe. Exit code %ld", GetLastError());
-		exit(ERR_INVALID_HANDLE);
+		fwprintf(stderr, L"Error opening env vars pipe. Exit code %ld", nError);
+		exit(nError);
 	}
 
 	WCHAR* buf = malloc(_MAX_ENV);
