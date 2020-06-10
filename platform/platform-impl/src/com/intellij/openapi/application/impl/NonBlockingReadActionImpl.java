@@ -7,7 +7,6 @@ import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.NonBlockingReadAction;
@@ -26,9 +25,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -142,22 +139,7 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
    */
   @NotNull
   private NonBlockingReadAction<T> expireWithRWCompliantParent(@NotNull ComponentManager parent) {
-    if (parent instanceof ProjectImpl && parent.getUserData(TRACKED_PROJECT) == null) {
-      trackProjectDisposal((ProjectImpl)parent);
-    }
     return expireWhen(() -> parent.isDisposed());
-  }
-
-  private static final Key<Boolean> TRACKED_PROJECT = Key.create("NBRA_TRACKED_PROJECT");
-
-  private static void trackProjectDisposal(@NotNull ProjectImpl project) {
-    synchronized (TRACKED_PROJECT) {
-      if (project.getUserData(TRACKED_PROJECT) != null) return;
-
-      project.putUserData(TRACKED_PROJECT, true);
-      Application app = ApplicationManager.getApplication();
-      Disposer.register(project.getEarlyDisposable(), () -> app.invokeLater(NonBlockingReadActionImpl::cleanupObsoleteTasks));
-    }
   }
 
   @Override
@@ -575,15 +557,6 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
     @Override
     public String toString() {
       return "Submission{" + myComputation + ", " + getState() + "}";
-    }
-  }
-
-  private static void cleanupObsoleteTasks() {
-    for (NonBlockingReadActionImpl<?>.Submission task : ourTasks) {
-      task.checkObsolete();
-    }
-    for (NonBlockingReadActionImpl<?>.Submission task : ourTasksByEquality.values()) {
-      task.checkObsolete();
     }
   }
 
