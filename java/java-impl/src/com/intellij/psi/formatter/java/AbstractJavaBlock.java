@@ -301,13 +301,13 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return Indent.getNoneIndent();
     }
 
-    final ASTNode prevElement = FormatterUtil.getPreviousNonWhitespaceSibling(child);
+    final ASTNode prevElement = skipCommentsAndWhitespacesBackwards(child);
     if (prevElement != null && prevElement.getElementType() == JavaElementType.MODIFIER_LIST && !isMethodParameterAnnotation(prevElement)) {
       return Indent.getNoneIndent();
     }
 
     if (childNodeType == JavaDocElementType.DOC_TAG) return Indent.getNoneIndent();
-    if (childNodeType == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) return Indent.getSpaceIndent(1);
+     if (childNodeType == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) return Indent.getSpaceIndent(1);
     if (child.getPsi() instanceof PsiFile) return Indent.getNoneIndent();
     if (parent != null) {
       final Indent defaultChildIndent = getChildIndent(parent, indentOptions);
@@ -318,6 +318,16 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
 
     return null;
+  }
+
+  @Nullable
+  private static ASTNode skipCommentsAndWhitespacesBackwards(@NotNull ASTNode node) {
+    ASTNode currNode = node.getTreePrev();
+    while (currNode != null &&
+           (currNode.getElementType() == JavaTokenType.END_OF_LINE_COMMENT || FormatterUtil.isWhitespaceOrEmpty(currNode))) {
+      currNode = currNode.getTreePrev();
+    }
+    return currNode;
   }
 
   private static boolean isMethodParameterAnnotation(@NotNull ASTNode element) {

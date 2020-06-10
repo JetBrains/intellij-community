@@ -3996,4 +3996,35 @@ public enum LevelCode {
       }
     """.trimIndent())
   }
+
+  fun testIdea154076() {
+    doTextTest("""
+    public class Test {
+    @SuppressWarnings("any")
+      String suppressed = null;
+      @SuppressWarnings("any") // comment
+       String commented = null;
+
+      void f() {
+      @SuppressWarnings("any")
+      String suppressed = null;
+    @SuppressWarnings("any") // comment
+            String commented = null;
+     }
+    }""".trimIndent(), """
+    public class Test {
+        @SuppressWarnings("any")
+        String suppressed = null;
+        @SuppressWarnings("any") // comment
+        String commented = null;
+
+        void f() {
+            @SuppressWarnings("any")
+            String suppressed = null;
+            @SuppressWarnings("any") // comment
+            String commented = null;
+        }
+    }""".trimIndent()
+    )
+  }
 }
