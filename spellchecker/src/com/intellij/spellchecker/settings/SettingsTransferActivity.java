@@ -15,11 +15,13 @@ public class SettingsTransferActivity implements StartupActivity {
   @Override
   public void runActivity(@NotNull Project project) {
     final SpellCheckerSettings settings = SpellCheckerSettings.getInstance(project);
-    if (!settings.isSettingsTransferred() && settings.isUseSingleDictionaryToSave() && PROJECT.getName().equals(settings.getDictionaryToSave())) {
-      if (ServiceManager.getService(project, ProjectDictionaryState.class).getProjectDictionary().getWords().isEmpty()) {
+    if (!settings.isSettingsTransferred()) {
+      if (settings.isUseSingleDictionaryToSave() &&
+          PROJECT.getName().equals(settings.getDictionaryToSave()) &&
+          ServiceManager.getService(project, ProjectDictionaryState.class).getProjectDictionary().getWords().isEmpty()) {
         settings.setDictionaryToSave(APP.getName());
-        settings.setSettingsTransferred(true);
       }
+      settings.setSettingsTransferred(true);
     }
   }
 }
