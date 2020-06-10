@@ -27,6 +27,7 @@ class DiffColorSettingsTest : HeavyDiffTestCase() {
     try {
       panel = DiffPreviewPanel()
       val viewer = panel.testGetViewer()
+      viewer.rediff()
 
       assertEquals(viewer.changes.size, 6)
       assertContainsRange(viewer, TextDiffType.MODIFIED)
