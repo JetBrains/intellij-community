@@ -5,7 +5,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -63,7 +62,6 @@ public class Notification {
   private final String myGroupId;
   private Icon myIcon;
   private final NotificationType myType;
-  private boolean myShowInDumbMode = false;
 
   private String myTitle;
   private String mySubtitle;
@@ -210,20 +208,6 @@ public class Notification {
 
   public boolean hasContent() {
     return !StringUtil.isEmptyOrSpaces(myContent);
-  }
-
-  /**
-   * Allows the notification balloon to be shown in DumbMode
-   * @see DumbService#isDumb()
-   */
-  @NotNull
-  public Notification showInDumbMode() {
-    myShowInDumbMode = true;
-    return this;
-  }
-
-  public boolean isShownInDumbMode() {
-    return myShowInDumbMode;
   }
 
   @NotNull

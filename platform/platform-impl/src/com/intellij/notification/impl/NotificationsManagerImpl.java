@@ -17,7 +17,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -131,7 +130,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     return ArrayUtil.toObjectArray(result, klass);
   }
 
-  private void doNotify(Notification notification, @Nullable Project project) {
+  private void doNotify(@NotNull Notification notification, @Nullable Project project) {
     NotificationsConfigurationImpl configuration = NotificationsConfigurationImpl.getInstanceImpl();
     if (!configuration.isRegistered(notification.getGroupId())) {
       configuration.register(notification.getGroupId(), NotificationDisplayType.BALLOON);
@@ -147,19 +146,13 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
 
     if (NotificationsConfigurationImpl.getInstanceImpl().SHOW_BALLOONS) {
-      Runnable runnable;
-      if (notification.isShownInDumbMode()) {
-        runnable = (DumbAwareRunnable) () -> showNotification(notification, project);
-      }
-      else {
-        runnable = () -> showNotification(notification, project);
-      }
-
       if (project == null) {
-        GuiUtils.invokeLaterIfNeeded(runnable, ModalityState.any(), ApplicationManager.getApplication().getDisposed());
+        GuiUtils.invokeLaterIfNeeded(() -> showNotification(notification, null), ModalityState.any(), ApplicationManager.getApplication().getDisposed());
       }
       else if (!project.isDisposed()) {
-        StartupManager.getInstance(project).runWhenProjectIsInitialized(runnable);
+        StartupManager.getInstance(project).runAfterOpened(() -> {
+          GuiUtils.invokeLaterIfNeeded(() -> showNotification(notification, project), ModalityState.any(), project.getDisposed());
+        });
       }
     }
   }
