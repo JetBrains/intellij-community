@@ -9,7 +9,6 @@ import org.cef.browser.CefMessageRouter;
 import org.cef.callback.CefQueryCallback;
 import org.cef.handler.CefMessageRouterHandler;
 import org.cef.handler.CefMessageRouterHandlerAdapter;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +23,6 @@ import java.util.function.Function;
  *
  * @author tav
  */
-@ApiStatus.Experimental
 public class JBCefJSQuery implements JBCefDisposable {
   @NotNull private final String myJSCallID;
   @NotNull private final CefMessageRouter myMsgRouter;
