@@ -489,7 +489,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       () -> disposeRootDisposable(),
       () -> {
         if (myProject != null) {
-          LightPlatformTestCase.doTearDown(myProject, TestApplicationManager.getInstanceIfCreated());
+          TestApplicationManagerKt.tearDownProjectAndApp(myProject);
           myProject = null;
         }
       },

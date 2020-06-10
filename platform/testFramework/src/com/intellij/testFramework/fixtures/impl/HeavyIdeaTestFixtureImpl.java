@@ -58,7 +58,6 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   private Project myProject;
   private volatile Module myModule;
   private final Set<Path> myFilesToDelete = new HashSet<>();
-  private TestApplicationManager myTestAppManager;
   private final Set<ModuleFixtureBuilder<?>> myModuleFixtureBuilders = new LinkedHashSet<>();
   private EditorListenerTracker myEditorListenerTracker;
   private ThreadTracker myThreadTracker;
@@ -100,7 +99,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
       runAll = runAll
         .append(
           () -> {
-            TestApplicationManagerKt.tearDownProjectAndApp(myProject, myTestAppManager);
+            TestApplicationManagerKt.tearDownProjectAndApp(myProject);
             myProject = null;
           },
           () -> {
@@ -181,9 +180,8 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
       }
     });
 
+    PlatformTestUtil.openProject(myProject);
     EdtTestUtil.runInEdtAndWait(() -> {
-      PlatformTestUtil.openProject(myProject);
-
       for (ModuleFixtureBuilder<?> moduleFixtureBuilder : myModuleFixtureBuilders) {
         moduleFixtureBuilder.getFixture().setUp();
       }
@@ -200,8 +198,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   }
 
   private void initApplication() {
-    myTestAppManager = TestApplicationManager.getInstance();
-    myTestAppManager.setDataProvider(new MyDataProvider());
+    TestApplicationManager.getInstance().setDataProvider(new MyDataProvider());
   }
 
   @Override

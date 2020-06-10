@@ -183,12 +183,11 @@ private inline fun MutableList<Throwable>.catchAndStoreExceptions(executor: () -
 
 inline fun <reified T : Any, reified TI : Any> Application.serviceIfCreated(): TI? = this.getServiceIfCreated(T::class.java) as TI?
 
-
 private var testCounter = 0
 
 // Kotlin allows to easily debug code and to get clear and short stack traces
 @ApiStatus.Internal
-fun tearDownProjectAndApp(project: Project, appManager: TestApplicationManager? = null) {
+fun tearDownProjectAndApp(project: Project) {
   val isLightProject = ProjectManagerImpl.isLight(project)
 
   val l = mutableListOf<Throwable>()
@@ -246,7 +245,7 @@ fun tearDownProjectAndApp(project: Project, appManager: TestApplicationManager? 
   l.catchAndStoreExceptions { (ProjectManager.getInstance() as ProjectManagerImpl).forceCloseProject(project, !isLightProject) }
   l.catchAndStoreExceptions { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() }
 
-  l.catchAndStoreExceptions { (appManager ?: TestApplicationManager.getInstanceIfCreated())?.setDataProvider(null) }
+  l.catchAndStoreExceptions { TestApplicationManager.getInstanceIfCreated()?.setDataProvider(null) }
   l.catchAndStoreExceptions { UiInterceptors.clear() }
   l.catchAndStoreExceptions { CompletionProgressIndicator.cleanupForNextTest() }
   l.catchAndStoreExceptions {
