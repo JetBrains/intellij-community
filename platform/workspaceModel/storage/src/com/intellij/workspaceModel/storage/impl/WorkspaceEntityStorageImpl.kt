@@ -233,8 +233,10 @@ internal class WorkspaceEntityStorageBuilderImpl(
   override fun removeEntity(e: WorkspaceEntity) {
     e as WorkspaceEntityBase
 
-    removeEntity(e.id, null)
-    updateChangeLog { it.add(ChangeEntry.RemoveEntity(e.id)) }
+    val removedEntities = removeEntity(e.id, null)
+    updateChangeLog {
+      removedEntities.forEach { removedEntityId -> it.add(ChangeEntry.RemoveEntity(removedEntityId)) }
+    }
 
     // Assert consistency
     this.assertConsistencyInStrictMode()
@@ -649,7 +651,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
   }
 
   // modificationCount is not incremented
-  private fun removeEntity(idx: EntityId, mapToUpdate: MutableMap<EntityId, EntityId>?) {
+  private fun removeEntity(idx: EntityId, mapToUpdate: MutableMap<EntityId, EntityId>?): Collection<EntityId> {
     val accumulator: MutableSet<EntityId> = mutableSetOf(idx)
 
     accumulateEntitiesToRemove(idx, accumulator)
@@ -664,6 +666,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
     // Update index
     //   Please don't join it with the previous loop
     for (id in accumulator) indexes.removeFromIndices(id)
+
+    return accumulator
   }
 
   private fun WorkspaceEntityData<*>.hasPersistentId(): Boolean {

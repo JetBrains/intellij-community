@@ -204,4 +204,17 @@ class DiffBuilderTest {
 
     source.applyDiff(target)
   }
+
+  @Test
+  fun `remove parent in both diffs`() {
+    val source = WorkspaceEntityStorageBuilderImpl.create()
+    val parent = source.addParentEntity()
+
+    val target = WorkspaceEntityStorageBuilderImpl.from(source)
+    target.addChildWithOptionalParentEntity(parent)
+    target.removeEntity(parent)
+    source.removeEntity(parent)
+
+    source.applyDiff(target)
+  }
 }
