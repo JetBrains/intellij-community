@@ -35,6 +35,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiJavaFile
@@ -502,13 +503,8 @@ class Foo {
     String toType = "ArrayIndexOutOfBoundsException ind"
     testArrows toType, LookupFocusDegree.UNFOCUSED, 0, 2
 
-    UISettings.instance.cycleScrolling = false
-    try {
-      testArrows toType, LookupFocusDegree.UNFOCUSED, 0, -1
-    }
-    finally {
-      UISettings.instance.cycleScrolling = true
-    }
+    Registry.get("ide.cycle.scrolling").setValue(false, getTestRootDisposable())
+    testArrows toType, LookupFocusDegree.UNFOCUSED, 0, -1
   }
 
   void "test vertical arrows in semi-focused lookup"() {
@@ -518,13 +514,8 @@ class Foo {
     String toType = "fo"
     testArrows toType, LookupFocusDegree.SEMI_FOCUSED, 2, 0
 
-    UISettings.instance.cycleScrolling = false
-    try {
-      testArrows toType, LookupFocusDegree.SEMI_FOCUSED, 2, 0
-    }
-    finally {
-      UISettings.instance.cycleScrolling = true
-    }
+    Registry.get("ide.cycle.scrolling").setValue(false, getTestRootDisposable())
+    testArrows toType, LookupFocusDegree.SEMI_FOCUSED, 2, 0
   }
 
   void testHideOnOnePrefixVariant() {
