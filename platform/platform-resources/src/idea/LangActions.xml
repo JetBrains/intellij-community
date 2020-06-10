@@ -1072,6 +1072,7 @@
       <add-to-group anchor="first" group-id="TestTreePopupMenu"/>
     </group>
     <group id="RunTestGroup">
+      <add-to-group group-id="RunMenu" anchor="after" relative-to-action="DebugMainMenu"/>
     </group>
 
     <action id="DumpLookupElementWeights" class="com.intellij.internal.DumpLookupElementWeights">
