@@ -160,91 +160,104 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
                             @NotNull PersistentHashMapValueStorage.CreationTimeOptions options) throws IOException {
     // it's important to initialize it as early as possible
     myIsReadOnly = isReadOnly();
-    if (myIsReadOnly) options = options.setReadOnly();
+    Boolean oldThreadLocalReadOnlyStatus = null;
+    if (myIsReadOnly) {
+      options = options.setReadOnly();
+      oldThreadLocalReadOnlyStatus = PersistentHashMapValueStorage.CreationTimeOptions.READONLY.get();
+      PersistentHashMapValueStorage.CreationTimeOptions.READONLY.set(Boolean.TRUE);
+    }
 
-    myEnumerator = PersistentEnumeratorDelegate.createDefaultEnumerator(checkDataFiles(file),
-                                                                        keyDescriptor,
-                                                                        initialSize,
-                                                                        lockContext,
-                                                                        modifyVersionDependingOnOptions(version, options));
-
-    myStorageFile = file;
-    myKeyDescriptor = keyDescriptor;
-
-    final PersistentEnumeratorBase.@NotNull RecordBufferHandler<PersistentEnumeratorBase<?>> recordHandler = myEnumerator.getRecordHandler();
-    myParentValueRefOffset = recordHandler.getRecordBuffer(myEnumerator).length;
-    myIntMapping = valueExternalizer instanceof IntInlineKeyDescriptor && wantNonNegativeIntegralValues();
-    myDirectlyStoreLongFileOffsetMode = keyDescriptor instanceof InlineKeyDescriptor && myEnumerator instanceof PersistentBTreeEnumerator;
-
-    myRecordBuffer = ThreadLocal
-      .withInitial(() -> myDirectlyStoreLongFileOffsetMode ? ArrayUtilRt.EMPTY_BYTE_ARRAY : new byte[myParentValueRefOffset + 8]);
-    mySmallRecordBuffer = ThreadLocal
-      .withInitial(() -> myDirectlyStoreLongFileOffsetMode ? ArrayUtilRt.EMPTY_BYTE_ARRAY : new byte[myParentValueRefOffset + 4]);
-
-    myEnumerator.setRecordHandler(new PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase<?>>() {
-      @Override
-      int recordWriteOffset(PersistentEnumeratorBase<?> enumerator, byte[] buf) {
-        return recordHandler.recordWriteOffset(enumerator, buf);
-      }
-
-      @Override
-      byte @NotNull [] getRecordBuffer(PersistentEnumeratorBase<?> enumerator) {
-        return myIntAddressForNewRecord ? mySmallRecordBuffer.get() : myRecordBuffer.get();
-      }
-
-      @Override
-      void setupRecord(PersistentEnumeratorBase enumerator, int hashCode, int dataOffset, byte @NotNull [] buf) {
-        recordHandler.setupRecord(enumerator, hashCode, dataOffset, buf);
-        for (int i = myParentValueRefOffset; i < buf.length; i++) {
-          buf[i] = 0;
-        }
-      }
-    });
-
-    myEnumerator.setMarkCleanCallback(
-      new Flushable() {
-        @Override
-        public void flush() {
-          myEnumerator.putMetaData(myLiveAndGarbageKeysCounter);
-          myEnumerator.putMetaData2(myLargeIndexWatermarkId | ((long)myReadCompactionGarbageSize << 32));
-        }
-      }
-    );
-
-    if (myDoTrace) LOG.info("Opened " + file);
     try {
-      myValueExternalizer = valueExternalizer;
-      myValueStorage = myIntMapping ? null : new PersistentHashMapValueStorage(getDataFile(file), options);
-      myAppendCache = myIntMapping ? null : createAppendCache(keyDescriptor);
-      myAppendCacheFlusher = myIntMapping ? null : LowMemoryWatcher.register(this::dropMemoryCaches);
-      myLiveAndGarbageKeysCounter = myEnumerator.getMetaData();
-      long data2 = myEnumerator.getMetaData2();
-      myLargeIndexWatermarkId = (int)(data2 & DEAD_KEY_NUMBER_MASK);
-      myReadCompactionGarbageSize = (int)(data2 >>> 32);
-      myCanReEnumerate = myEnumerator.canReEnumerate();
+      myEnumerator = PersistentEnumeratorDelegate.createDefaultEnumerator(checkDataFiles(file),
+                                                                          keyDescriptor,
+                                                                          initialSize,
+                                                                          lockContext,
+                                                                          modifyVersionDependingOnOptions(version, options));
 
-      if (!options.isReadOnly() && makesSenseToCompact()) {
-        compact();
+      myStorageFile = file;
+      myKeyDescriptor = keyDescriptor;
+
+      final PersistentEnumeratorBase.@NotNull RecordBufferHandler<PersistentEnumeratorBase<?>> recordHandler =
+        myEnumerator.getRecordHandler();
+      myParentValueRefOffset = recordHandler.getRecordBuffer(myEnumerator).length;
+      myIntMapping = valueExternalizer instanceof IntInlineKeyDescriptor && wantNonNegativeIntegralValues();
+      myDirectlyStoreLongFileOffsetMode = keyDescriptor instanceof InlineKeyDescriptor && myEnumerator instanceof PersistentBTreeEnumerator;
+
+      myRecordBuffer = ThreadLocal
+        .withInitial(() -> myDirectlyStoreLongFileOffsetMode ? ArrayUtilRt.EMPTY_BYTE_ARRAY : new byte[myParentValueRefOffset + 8]);
+      mySmallRecordBuffer = ThreadLocal
+        .withInitial(() -> myDirectlyStoreLongFileOffsetMode ? ArrayUtilRt.EMPTY_BYTE_ARRAY : new byte[myParentValueRefOffset + 4]);
+
+      myEnumerator.setRecordHandler(new PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase<?>>() {
+        @Override
+        int recordWriteOffset(PersistentEnumeratorBase<?> enumerator, byte[] buf) {
+          return recordHandler.recordWriteOffset(enumerator, buf);
+        }
+
+        @Override
+        byte @NotNull [] getRecordBuffer(PersistentEnumeratorBase<?> enumerator) {
+          return myIntAddressForNewRecord ? mySmallRecordBuffer.get() : myRecordBuffer.get();
+        }
+
+        @Override
+        void setupRecord(PersistentEnumeratorBase enumerator, int hashCode, int dataOffset, byte @NotNull [] buf) {
+          recordHandler.setupRecord(enumerator, hashCode, dataOffset, buf);
+          for (int i = myParentValueRefOffset; i < buf.length; i++) {
+            buf[i] = 0;
+          }
+        }
+      });
+
+      myEnumerator.setMarkCleanCallback(
+        new Flushable() {
+          @Override
+          public void flush() {
+            myEnumerator.putMetaData(myLiveAndGarbageKeysCounter);
+            myEnumerator.putMetaData2(myLargeIndexWatermarkId | ((long)myReadCompactionGarbageSize << 32));
+          }
+        }
+      );
+
+      if (myDoTrace) LOG.info("Opened " + file);
+      try {
+        myValueExternalizer = valueExternalizer;
+        myValueStorage = myIntMapping ? null : new PersistentHashMapValueStorage(getDataFile(file), options);
+        myAppendCache = myIntMapping ? null : createAppendCache(keyDescriptor);
+        myAppendCacheFlusher = myIntMapping ? null : LowMemoryWatcher.register(this::dropMemoryCaches);
+        myLiveAndGarbageKeysCounter = myEnumerator.getMetaData();
+        long data2 = myEnumerator.getMetaData2();
+        myLargeIndexWatermarkId = (int)(data2 & DEAD_KEY_NUMBER_MASK);
+        myReadCompactionGarbageSize = (int)(data2 >>> 32);
+        myCanReEnumerate = myEnumerator.canReEnumerate();
+
+        if (!options.isReadOnly() && makesSenseToCompact()) {
+          compact();
+        }
+      }
+      catch (IOException e) {
+        try {
+          // attempt to close already opened resources
+          close();
+        }
+        catch (Throwable ignored) {
+        }
+        throw e; // rethrow
+      }
+      catch (Throwable t) {
+        LOG.error(t);
+        try {
+          // attempt to close already opened resources
+          close();
+        }
+        catch (Throwable ignored) {
+        }
+        throw new PersistentEnumerator.CorruptedException(file);
       }
     }
-    catch (IOException e) {
-      try {
-        // attempt to close already opened resources
-        close();
+    finally {
+      if (myIsReadOnly) {
+        PersistentHashMapValueStorage.CreationTimeOptions.READONLY.set(oldThreadLocalReadOnlyStatus);
       }
-      catch (Throwable ignored) {
-      }
-      throw e; // rethrow
-    }
-    catch (Throwable t) {
-      LOG.error(t);
-      try {
-        // attempt to close already opened resources
-        close();
-      }
-      catch (Throwable ignored) {
-      }
-      throw new PersistentEnumerator.CorruptedException(file);
     }
   }
 

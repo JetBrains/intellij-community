@@ -43,7 +43,6 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
 
   static class FileContext implements AutoCloseable {
     private final FileChannel myFile;
-    private final boolean myReadOnly;
 
     FileContext(Path path, boolean readOnly) throws IOException {
       myFile = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<FileChannel, IOException>() {
@@ -53,7 +52,7 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
         @Override
         public FileChannel execute(boolean finalAttempt) throws IOException {
           try {
-            Set<StandardOpenOption> options = myReadOnly
+            Set<StandardOpenOption> options = readOnly
                                               ? EnumSet.of(StandardOpenOption.READ)
                                               : EnumSet.of(StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
             return unInterruptible(FileChannel.open(path, options));
@@ -74,7 +73,6 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
           }
         }
       });
-      myReadOnly = readOnly;
     }
 
     @Override
