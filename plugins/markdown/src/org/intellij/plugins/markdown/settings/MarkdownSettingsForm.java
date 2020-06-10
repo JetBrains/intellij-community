@@ -343,12 +343,10 @@ public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, Markdow
   }
 
   @NotNull
-  private static MarkdownHtmlPanelProvider getProvider(@SuppressWarnings("SameParameterValue") @NotNull String providerClass) {
-    for (MarkdownHtmlPanelProvider provider : MarkdownHtmlPanelProvider.getProviders()) {
-      if (isProviderOf(provider.getProviderInfo(), providerClass)) return provider;
-    }
-
-    throw new RuntimeException("Cannot find " + providerClass);
+  private static MarkdownHtmlPanelProvider getDefaultProvider() {
+    MarkdownHtmlPanelProvider[] providers = MarkdownHtmlPanelProvider.getProviders();
+    if (providers.length > 0) return providers[0];
+    throw new RuntimeException("No providers are defined");
   }
 
   @NotNull
@@ -357,7 +355,7 @@ public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, Markdow
       return Objects.requireNonNull(myPreviewPanelModel.getSelected());
     }
     else {
-      return getProvider(JAVA_FX_HTML_PANEL_PROVIDER).getProviderInfo();
+      return getDefaultProvider().getProviderInfo();
     }
   }
 
