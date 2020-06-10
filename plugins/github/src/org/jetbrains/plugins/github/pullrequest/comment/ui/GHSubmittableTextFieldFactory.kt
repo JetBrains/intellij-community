@@ -6,7 +6,6 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.actions.IncrementalFindAction
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -45,27 +44,28 @@ import javax.swing.JPanel
 import javax.swing.border.EmptyBorder
 import kotlin.properties.Delegates
 
-object GHPRSubmittableTextField {
+class GHSubmittableTextFieldFactory(private val model: Model) {
 
-  private val SUBMIT_SHORTCUT_SET = CommonShortcuts.CTRL_ENTER
-  private val CANCEL_SHORTCUT_SET = CommonShortcuts.ESCAPE
+  companion object {
+    private val SUBMIT_SHORTCUT_SET = CommonShortcuts.CTRL_ENTER
+    private val CANCEL_SHORTCUT_SET = CommonShortcuts.ESCAPE
+  }
 
-  fun create(model: Model,
-             @Nls(capitalization = Nls.Capitalization.Title) actionName: String = "Comment",
+  fun create(@Nls(capitalization = Nls.Capitalization.Title) actionName: String = "Comment",
              onCancel: (() -> Unit)? = null): JComponent {
 
-    val textField = createTextField(model.document, actionName)
+    val textField = createTextField(actionName)
     val submitButton = createSubmitButton(actionName)
     val cancelButton = createCancelButton()
 
-    return create(model, textField, submitButton, cancelButton, null, onCancel)
+    return create(textField, submitButton, cancelButton, null, onCancel)
   }
 
-  fun create(model: Model, avatarIconsProvider: GHAvatarIconsProvider, author: GHUser,
+  fun create(avatarIconsProvider: GHAvatarIconsProvider, author: GHUser,
              @Nls(capitalization = Nls.Capitalization.Title) actionName: String = "Comment",
              onCancel: (() -> Unit)? = null): JComponent {
 
-    val textField = createTextField(model.document, actionName)
+    val textField = createTextField(actionName)
     val submitButton = createSubmitButton(actionName)
     val cancelButton = createCancelButton()
 
@@ -78,18 +78,17 @@ object GHPRSubmittableTextField {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
 
-    return create(model, textField, submitButton, cancelButton, authorLabel, onCancel)
+    return create(textField, submitButton, cancelButton, authorLabel, onCancel)
   }
 
-  private fun create(model: Model,
-                     textField: EditorTextField,
+  private fun create(textField: EditorTextField,
                      submitButton: InlineIconButton,
                      cancelButton: InlineIconButton,
                      authorLabel: LinkLabel<out Any>? = null,
                      onCancel: (() -> Unit)? = null): JComponent {
     val panel = JPanel(null)
     val loadingLabel = JLabel(AnimatedIcon.Default())
-    Controller(model, panel, textField, loadingLabel, submitButton, cancelButton, onCancel)
+    Controller(panel, textField, loadingLabel, submitButton, cancelButton, onCancel)
 
     val textFieldWithSubmitButton = createTextFieldWithInlinedButton(textField, submitButton)
     return JComponentOverlay.createCentered(panel.apply {
@@ -110,9 +109,9 @@ object GHPRSubmittableTextField {
     }, loadingLabel)
   }
 
-  private fun createTextField(document: Document, placeHolder: String): EditorTextField {
+  private fun createTextField(placeHolder: String): EditorTextField {
 
-    return object : EditorTextField(document, null, FileTypes.PLAIN_TEXT) {
+    return object : EditorTextField(model.document, null, FileTypes.PLAIN_TEXT) {
       //always paint pretty border
       override fun updateBorder(editor: EditorEx) = setupBorder(editor)
 
@@ -223,13 +222,12 @@ object GHPRSubmittableTextField {
     fun addStateListener(listener: () -> Unit) = SimpleEventListener.addListener(stateEventDispatcher, listener)
   }
 
-  private class Controller(private val model: Model,
-                           private val panel: JPanel,
-                           private val textField: EditorTextField,
-                           private val busyLabel: JLabel,
-                           private val submitButton: InlineIconButton,
-                           cancelButton: InlineIconButton,
-                           onCancel: (() -> Unit)?) {
+  private inner class Controller(private val panel: JPanel,
+                                 private val textField: EditorTextField,
+                                 private val busyLabel: JLabel,
+                                 private val submitButton: InlineIconButton,
+                                 cancelButton: InlineIconButton,
+                                 onCancel: (() -> Unit)?) {
     init {
       textField.addDocumentListener(object : DocumentListener {
         override fun documentChanged(event: DocumentEvent) {

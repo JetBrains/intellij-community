@@ -119,7 +119,7 @@ object GHPRReviewCommentComponent {
       val linesCount = calcLines(textPane)
       val text = StringUtil.repeatSymbol('\n', linesCount - 1)
 
-      val model = GHPRSubmittableTextField.Model { newText ->
+      val model = GHSubmittableTextFieldFactory.Model { newText ->
         reviewDataProvider.updateComment(EmptyProgressIndicator(), comment.id, newText).handleOnEdt { _, _ ->
           editorWrapper.setContent(null)
           editorWrapper.revalidate()
@@ -141,7 +141,7 @@ object GHPRReviewCommentComponent {
         }
       }
 
-      val editor = GHPRSubmittableTextField.create(model, CommonBundle.message("button.submit"), onCancel = {
+      val editor = GHSubmittableTextFieldFactory(model).create(CommonBundle.message("button.submit"), onCancel = {
         editorWrapper.setContent(null)
         editorWrapper.revalidate()
       })

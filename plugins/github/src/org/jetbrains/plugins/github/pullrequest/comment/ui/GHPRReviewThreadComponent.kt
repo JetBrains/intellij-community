@@ -56,7 +56,7 @@ object GHPRReviewThreadComponent {
                                         avatarIconsProvider: GHAvatarIconsProvider,
                                         currentUser: GHUser): JComponent {
     val toggleModel = SingleValueModel(false)
-    val textFieldModel = GHPRSubmittableTextField.Model { text ->
+    val textFieldModel = GHSubmittableTextFieldFactory.Model { text ->
       reviewDataProvider.addComment(EmptyProgressIndicator(), thread.getElementAt(0).id, text).successOnEdt {
         thread.addComment(GHPRReviewCommentModel.convert(it))
         toggleModel.value = false
@@ -94,9 +94,10 @@ object GHPRReviewThreadComponent {
     return GHPRToggleableContainer.create(toggleModel,
                                           { createThreadActionsComponent(thread, toggleReplyLink, resolveLink, unresolveLink) },
                                           {
-                                            GHPRSubmittableTextField.create(textFieldModel, avatarIconsProvider, currentUser,
-                                                                            GithubBundle.message("pull.request.review.thread.reply"),
-                                                                            onCancel = { toggleModel.value = false })
+                                            GHSubmittableTextFieldFactory(textFieldModel).create(avatarIconsProvider, currentUser,
+                                                                                                 GithubBundle.message(
+                                                                                                   "pull.request.review.thread.reply"),
+                                                                                                 onCancel = { toggleModel.value = false })
                                           })
   }
 
