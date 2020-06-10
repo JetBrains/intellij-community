@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
@@ -23,6 +24,11 @@ public class JavaHighlighterTest extends LightJavaCodeInsightTestCase {
   private EditorHighlighter myHighlighter;
   private Document myDocument;
   private final ArrayList<Editor> myEditorsToRelease = new ArrayList<>();
+
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_15_PREVIEW;
+  }
 
   @Override
   protected void tearDown() throws Exception {
@@ -158,6 +164,23 @@ public class JavaHighlighterTest extends LightJavaCodeInsightTestCase {
     CheckHighlighterConsistency.performCheck(editor);
   }
 
+  public void testNonSealedEditing() {
+    Editor editor = initDocument("non-sealed class A {\n" +
+                                 "    \n" +
+                                 "} ");
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      int idx = myDocument.getText().lastIndexOf(" class");
+      myDocument.deleteString(idx - 1, idx);
+    });
+    CheckHighlighterConsistency.performCheck(editor);
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      int idx = myDocument.getText().lastIndexOf(" class");
+      myDocument.insertString(idx, "d");
+    });
+    CheckHighlighterConsistency.performCheck(editor);
+  }
+
   private Editor initDocument(String text) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     myDocument = editorFactory.createDocument(text);
@@ -165,7 +188,7 @@ public class JavaHighlighterTest extends LightJavaCodeInsightTestCase {
 
     myHighlighter = HighlighterFactory
       .createHighlighter(JavaFileType.INSTANCE, EditorColorsManager.getInstance().getGlobalScheme(), getProject());
-    ((EditorEx) editor).setHighlighter(myHighlighter);
+    ((EditorEx)editor).setHighlighter(myHighlighter);
 
     myEditorsToRelease.add(editor);
     return editor;
