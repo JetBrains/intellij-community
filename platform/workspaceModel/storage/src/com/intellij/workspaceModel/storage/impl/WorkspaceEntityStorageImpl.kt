@@ -586,6 +586,12 @@ internal class WorkspaceEntityStorageBuilderImpl(
         is ChangeEntry.AddEntity<out WorkspaceEntity> -> {
           change as ChangeEntry.AddEntity<WorkspaceEntity>
 
+          val newPersistentId = change.entityData.persistentId(this)
+          if (newPersistentId != null) {
+            val existingIds = this.indexes.persistentIdIndex.getIdsByEntry(newPersistentId)
+            if (existingIds != null && existingIds.isNotEmpty()) adFailed("PersistentId already exists: $newPersistentId")
+          }
+
           val updatedChildren = change.children.mapValues { it.value.map { v -> replaceMap.getOrDefault(v, v) }.toSet() }
           val updatedParents = change.parents.mapValues { replaceMap.getOrDefault(it.value, it.value) }
 

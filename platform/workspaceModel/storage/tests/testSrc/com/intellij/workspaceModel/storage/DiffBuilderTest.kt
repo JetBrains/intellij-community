@@ -5,6 +5,7 @@ import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageImpl
+import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -230,6 +231,17 @@ class DiffBuilderTest {
     }
 
     source.removeEntity(parent)
+
+    source.applyDiff(target)
+  }
+
+  @Test(expected = AddDiffException::class)
+  fun `adding duplicated persistent ids`() {
+    val source = WorkspaceEntityStorageBuilderImpl.create()
+    val target = WorkspaceEntityStorageBuilderImpl.from(source)
+
+    target.addNamedEntity("Name")
+    source.addNamedEntity("Name")
 
     source.applyDiff(target)
   }
