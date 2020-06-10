@@ -17,6 +17,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
+import com.intellij.spellchecker.statistics.SpellcheckerActionStatistics;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.spellchecker.util.Strings;
 import com.intellij.ui.*;
@@ -220,12 +221,14 @@ public class SpellCheckerSettingsPane implements Disposable {
     @Override
     protected void customizeDecorator(ToolbarDecorator decorator) {
       decorator.setRemoveAction((button) -> {
+        SpellcheckerActionStatistics.reportAction("remove.from.accepted.words.ui");
         ListUtil.removeSelectedItems(myList);
       });
     }
 
     @Override
     protected String findItemToAdd() {
+      SpellcheckerActionStatistics.reportAction("add.to.accepted.words.ui");
       String word = Messages.showInputDialog(SpellCheckerBundle.message("enter.simple.word"),
                                              SpellCheckerBundle.message("add.new.word"), null);
       if (word == null) {
