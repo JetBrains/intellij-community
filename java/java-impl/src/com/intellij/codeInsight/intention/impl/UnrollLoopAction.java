@@ -2,12 +2,18 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.SpecialField;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.InlineUtil;
@@ -104,16 +110,59 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
           }
         }
       }
+      if (ExpressionUtils.isSafelyRecomputableExpression(expression)) {
+        PsiType type = expression.getType();
+        if (type instanceof PsiArrayType) {
+          DfType dfType = CommonDataflow.getDfType(expression);
+          Integer arraySize = DfConstantType.getConstantOfType(SpecialField.ARRAY_LENGTH.getFromQualifier(dfType), Integer.class);
+          if (arraySize != null) {
+            PsiElementFactory factory = JavaPsiFacade.getElementFactory(loop.getProject());
+            PsiExpression array = expression;
+            return new AbstractList<PsiExpression>() {
+              @Override
+              public PsiExpression get(int index) {
+                return factory.createExpressionFromText(ParenthesesUtils.getText(array, PsiPrecedenceUtil.POSTFIX_PRECEDENCE)
+                  +"["+index+"]", loop);
+              }
+
+              @Override
+              public int size() {
+                return arraySize;
+              }
+            };
+          }
+        }
+        if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_LIST)) {
+          DfType dfType = CommonDataflow.getDfType(expression);
+          Integer listSize = DfConstantType.getConstantOfType(SpecialField.COLLECTION_SIZE.getFromQualifier(dfType), Integer.class);
+          if (listSize != null) {
+            PsiElementFactory factory = JavaPsiFacade.getElementFactory(loop.getProject());
+            PsiExpression array = expression;
+            return new AbstractList<PsiExpression>() {
+              @Override
+              public PsiExpression get(int index) {
+                return factory.createExpressionFromText(ParenthesesUtils.getText(array, PsiPrecedenceUtil.METHOD_CALL_PRECEDENCE)
+                                                        +".get("+index+")", loop);
+              }
+
+              @Override
+              public int size() {
+                return listSize;
+              }
+            };
+          }
+        }
+      }
     }
     if (loop instanceof PsiForStatement) {
       CountingLoop countingLoop = CountingLoop.from((PsiForStatement)loop);
       if (countingLoop != null) {
         boolean descending = countingLoop.isDescending();
         long multiplier = descending ? -1 : 1;
-        Object from = ExpressionUtils.computeConstantExpression(countingLoop.getInitializer());
+        Object from = CommonDataflow.computeValue(countingLoop.getInitializer());
         if (!(from instanceof Integer) && !(from instanceof Long)) return Collections.emptyList();
         long fromValue = ((Number)from).longValue();
-        Object to = ExpressionUtils.computeConstantExpression(countingLoop.getBound());
+        Object to = CommonDataflow.computeValue(countingLoop.getBound());
         if (!(to instanceof Integer) && !(to instanceof Long)) return Collections.emptyList();
         long toValue = ((Number)to).longValue();
         long diff = multiplier * (toValue - fromValue);
@@ -200,7 +249,7 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
     if (loop instanceof PsiForeachStatement) {
       PsiExpression iteratedValue = ((PsiForeachStatement)loop).getIteratedValue();
       PsiLocalVariable variable = ExpressionUtils.resolveLocalVariable(iteratedValue);
-      if (variable != null) ct.delete(variable);
+      if (variable != null && PsiTreeUtil.isAncestor(variable, expressions.get(0), true)) ct.delete(variable);
     }
     ct.deleteAndRestoreComments(loop);
   }
