@@ -157,7 +157,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setHorizontalAlignment(LEFT);
       setFocusable(ScreenReader.isActive());
       putClientProperty("styleCombo", ComboBoxAction.this);
-      setMargin(JBUI.insets(0, 5, 0, 2));
+      setMargin(JBUI.insets(0, 8, 0, 5));
       if (isSmallVariant()) {
         setFont(JBUI.Fonts.toolbarSmallComboBoxFont());
       }
@@ -295,10 +295,15 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     @Override
     public Dimension getPreferredSize() {
       Dimension prefSize = super.getPreferredSize();
+      Insets i = getInsets();
       int width = prefSize.width + (StringUtil.isNotEmpty(getText()) ? getIconTextGap() : 0) +
        (myPresentation == null || !isArrowVisible(myPresentation) ? 0 : JBUIScale.scale(16));
 
-      Dimension size = new Dimension(width, isSmallVariant() ? JBUIScale.scale(24) : Math.max(JBUIScale.scale(24), prefSize.height));
+      int height = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height + i.top + i.bottom;
+      if (!isSmallVariant()) {
+        height = Math.max(height, prefSize.height);
+      }
+      Dimension size = new Dimension(width, height);
       JBInsets.addTo(size, getMargin());
       return size;
     }
@@ -364,7 +369,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     @Override public void updateUI() {
       super.updateUI();
-      setMargin(JBUI.insets(0, 5, 0, 2));
+      setMargin(JBUI.insets(0, 8, 0, 5));
     }
 
     /**

@@ -50,7 +50,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
 
         float lw = LW(g2);
         float arc = ARC.getFloat();
-        Insets i = DarculaButtonUI.isSmallComboButton(c) ? JBUI.insets(1) : c.getInsets();
+        Insets i = DarculaButtonUI.isSmallVariant(c) ? JBUI.insets(1) : c.getInsets();
 
         if (b.isContentAreaFilled()) {
           // Draw background
@@ -122,11 +122,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
       return new Dimension(icon.getIconWidth(), icon.getIconHeight());
     }
     else {
-      Insets i = c.getInsets();
-      return new Dimension(DarculaButtonUI.getComboAction(c) != null ?
-                           prefSize.width :
-                           Math.max(DarculaButtonUI.HORIZONTAL_PADDING.get() * 2 + prefSize.width, DarculaButtonUI.MINIMUM_BUTTON_WIDTH.get() + i.left + i.right),
-                           Math.max(prefSize.height, getMinimumHeight() + i.top + i.bottom));
+      return super.getDarculaButtonSize(c, prefSize);
     }
   }
 
