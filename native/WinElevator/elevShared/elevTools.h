@@ -23,7 +23,8 @@
 // So called "descriptors". Used as arguments in many macros and can also be used as binary flags
 #define ELEV_DESCR_STDOUT  1
 #define ELEV_DESCR_STDERR  2
-#define ELEV_DESCR_STDIN  4
+#define ELEV_DESCR_STDIN   4
+#define ELEV_DESCR_ENVVAR  8
 
 // Rules to generate pipe name
 #define ELEV_GEN_PIPE_NAME(sDest, nPid, nDescriptor) wsprintf(sDest, L"\\\\.\\pipe\\_jetbrains%ld_%d", nPid, nDescriptor)

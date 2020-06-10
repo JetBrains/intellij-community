@@ -218,15 +218,15 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 
 	MemoryBarrier(); // To make sure threads has access to g_
 
-	WCHAR sEnvVarsPipename[100];
-	wsprintf(sEnvVarsPipename, L"\\\\.\\pipe\\EnvVarsPipe-%ls", sPid);
-	HANDLE envVarsPipe = CreateNamedPipe(
-		sEnvVarsPipename,
-		PIPE_ACCESS_INBOUND | PIPE_ACCESS_OUTBOUND,
+	ELEV_PIPE_NAME sEnvVarsPipeName;
+	ELEV_GEN_PIPE_NAME(sEnvVarsPipeName, nPid, ELEV_DESCR_ENVVAR);
+	HANDLE hEnvVarsPipe = CreateNamedPipe(
+		sEnvVarsPipeName,
+		PIPE_ACCESS_OUTBOUND,
 		PIPE_WAIT | PIPE_TYPE_MESSAGE,
-		1, _MAX_ENV, _MAX_ENV, 120 * 1000, NULL
+		1, _MAX_ENV, _MAX_ENV, 0, NULL
 	);
-	if (sEnvVarsPipename == INVALID_HANDLE_VALUE) {
+	if (hEnvVarsPipe == INVALID_HANDLE_VALUE) {
 		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_CREATE_PIPE, NULL, 0, 0, NULL, NULL);
 		fprintf(stderr, "Failed to open env vars pipe: %ld", GetLastError());
 		return ERR_CREATE_PIPE;
@@ -247,7 +247,6 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 	size_t chCurrentSize = 1;
 	WCHAR* sNewCommandLine = calloc(1, sizeof(WCHAR));
 
-	_AddStringToCommandLine(&chCurrentSize, &sNewCommandLine, sEnvVarsPipename, TRUE);
 	_AddStringToCommandLine(&chCurrentSize, &sNewCommandLine, sPid, TRUE);
 	_AddStringToCommandLine(&chCurrentSize, &sNewCommandLine, sCurrentDirectory, TRUE);
 	WCHAR sDescriptorFlags[3];
@@ -296,7 +295,12 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 
 	{
 		// Waiting for the client to connect.
-		ConnectNamedPipe(envVarsPipe, NULL);
+		if (!ConnectNamedPipe(hEnvVarsPipe, NULL))
+		{
+			ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_FAIL_WAIT, NULL, 0, 0, NULL, NULL);
+			fwprintf(stderr, L"Failed to wait for in pipe: %ld", GetLastError());
+			exit(ERR_FAIL_WAIT);
+		}
 
 		// Getting the env vars block.
 		LPWCH lpEnvString = GetEnvironmentStringsW();
@@ -305,7 +309,7 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 		{
 			size_t len = (wcslen(lpszVariable) + 1) * sizeof(WCHAR);
 			DWORD numWritten;
-			BOOL bWriteOk = WriteFile(envVarsPipe, lpszVariable, (DWORD)len, &numWritten, NULL);
+			BOOL bWriteOk = WriteFile(hEnvVarsPipe, lpszVariable, (DWORD)len, &numWritten, NULL);
 			if (!bWriteOk)
 			{
 				ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_WRITE_PIPE, NULL, 0, 0, NULL, NULL);
@@ -314,14 +318,19 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 			}
 
 			// Waiting for the client to read the message.
-			FlushFileBuffers(envVarsPipe);
+			BOOL bFlushOk = FlushFileBuffers(hEnvVarsPipe);
+			if (!bFlushOk) {
+				ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_WRITE_PIPE, NULL, 0, 0, NULL, NULL);
+				fprintf(stderr, "Failed to flush the env vars pipe: %ld", GetLastError());
+				return ERR_WRITE_PIPE;
+			}
 
 			lpszVariable += wcslen(lpszVariable) + 1;
 		}
 		FreeEnvironmentStringsW(lpEnvString);
 
 		// Closing the pipe to signal the client to stop waiting for new msgs.
-		CloseHandle(envVarsPipe);
+		CloseHandle(hEnvVarsPipe);
 	}
 		
 	// Wait for all threads
