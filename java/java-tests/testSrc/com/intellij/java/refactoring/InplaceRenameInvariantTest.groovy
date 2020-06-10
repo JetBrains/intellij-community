@@ -2,14 +2,12 @@
 package com.intellij.java.refactoring
 
 import com.intellij.codeInsight.TargetElementUtil
-import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler
 import com.intellij.testFramework.LightJavaCodeInsightTestCase
-import groovy.transform.CompileStatic
-
+import groovy.transform.CompileStatic 
 /**
  * User: anna
  */
@@ -89,7 +87,6 @@ class InplaceRenameInvariantTest extends LightJavaCodeInsightTestCase {
 
   private doTestPositionInvariance(String text, final boolean preselect, final boolean checkTyping) {
     configure text
-    TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(project)
     def oldPreselectSetting = editor.settings.preselectRename
     try {
       TemplateManagerImpl.setTemplateTesting(getTestRootDisposable())
