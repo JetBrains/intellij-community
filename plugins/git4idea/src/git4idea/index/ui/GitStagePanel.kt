@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.VcsRoot
+import com.intellij.openapi.vcs.changes.EditorTabPreview
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
 import com.intellij.openapi.vfs.VirtualFile
@@ -54,13 +55,18 @@ import javax.swing.JPanel
 
 val GIT_STAGE_TRACKER = DataKey.create<GitStageTracker>("GitStageTracker")
 
-internal class GitStagePanel(private val tracker: GitStageTracker, vertical: Boolean, disposableParent: Disposable) :
+internal class GitStagePanel(private val tracker: GitStageTracker, isEditorDiffPreview: Boolean, disposableParent: Disposable) :
   JPanel(BorderLayout()), DataProvider, Disposable {
   private val project = tracker.project
 
   private val tree: GitStageTree
   private val commitPanel: GitCommitPanel
   private val progressStripe: ProgressStripe
+  private val commitDiffSplitter: OnePixelSplitter
+  private val toolbar: ActionToolbar
+
+  private var diffPreviewProcessor: GitStageDiffPreview? = null
+  private var editorTabPreview: EditorTabPreview? = null
 
   private val state: GitStageTracker.State
     get() = tracker.state
@@ -80,7 +86,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, vertical: Boo
     toolbarGroup.add(ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP))
     toolbarGroup.addSeparator()
     toolbarGroup.addAll(TreeActionsToolbarPanel.createTreeActions(tree))
-    val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroup, true)
+    toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroup, true)
     toolbar.setTargetComponent(tree)
 
     PopupHandler.installPopupHandler(tree, "Git.Stage.Tree.Menu", "Git.Stage.Tree.Menu")
@@ -95,18 +101,10 @@ internal class GitStagePanel(private val tracker: GitStageTracker, vertical: Boo
     leftPanel.add(toolbar.component, BorderLayout.NORTH)
     leftPanel.add(treeMessageSplitter, BorderLayout.CENTER)
 
-    if (vertical) {
-      add(leftPanel, BorderLayout.CENTER)
-    } else {
-      val diffPreview = GitStageDiffPreview(project, tree, tracker, this)
-      diffPreview.getToolbarWrapper().setVerticalSizeReferent(toolbar.component)
-
-      val commitDiffSplitter = OnePixelSplitter("git.stage.commit.diff.splitter", 0.5f)
-      commitDiffSplitter.firstComponent = leftPanel
-      commitDiffSplitter.secondComponent = diffPreview.component
-
-      add(commitDiffSplitter, BorderLayout.CENTER)
-    }
+    commitDiffSplitter = OnePixelSplitter("git.stage.commit.diff.splitter", 0.5f)
+    commitDiffSplitter.firstComponent = leftPanel
+    add(commitDiffSplitter, BorderLayout.CENTER)
+    setDiffPreviewInEditor(isEditorDiffPreview, force = true)
 
     tracker.addListener(MyGitStageTrackerListener(), this)
     project.messageBus.connect(this).subscribe(GitChangeProvider.TOPIC, MyGitChangeProviderListener())
@@ -163,6 +161,23 @@ internal class GitStagePanel(private val tracker: GitStageTracker, vertical: Boo
   override fun getData(dataId: String): Any? {
     if (GIT_STAGE_TRACKER.`is`(dataId)) return tracker
     return null
+  }
+
+  fun setDiffPreviewInEditor(isInEditor: Boolean, force: Boolean = false) {
+    if (!force && (isInEditor == (editorTabPreview != null))) return
+
+    if (diffPreviewProcessor != null) Disposer.dispose(diffPreviewProcessor!!)
+    diffPreviewProcessor = GitStageDiffPreview(project, tree, tracker, this)
+    diffPreviewProcessor!!.getToolbarWrapper().setVerticalSizeReferent(toolbar.component)
+
+    if (isInEditor) {
+      editorTabPreview = GitStageEditorDiffPreview(diffPreviewProcessor!!, tree, this)
+      commitDiffSplitter.secondComponent = null
+    }
+    else {
+      editorTabPreview = null
+      commitDiffSplitter.secondComponent = diffPreviewProcessor!!.component
+    }
   }
 
   override fun dispose() {
