@@ -43,6 +43,7 @@ import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Function;
+import com.intellij.util.IconUtil;
 import com.intellij.util.MathUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EmptyIcon;
@@ -505,7 +506,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           }
           Icon icon = presentation.getIcon();
           if (icon == null || icon.getIconHeight() != JBUIScale.scale(16) || icon.getIconWidth() != JBUIScale.scale(16)) {
-            icon = JBUI.scale(EmptyIcon.create(16));
+            icon = icon != null ? IconUtil.scale(icon, null, 16f / icon.getIconWidth()) : JBUI.scale(EmptyIcon.create(16));
+            icon = IconUtil.colorize(icon, new JBColor(0x6e6e6e, 0xafb1b3));
           }
           action = wrapGroups(action);
           ActionLink link = new ActionLink(text, icon, action, null, ActionPlaces.WELCOME_SCREEN);
