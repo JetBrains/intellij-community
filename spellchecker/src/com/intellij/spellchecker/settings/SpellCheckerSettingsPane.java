@@ -221,14 +221,14 @@ public class SpellCheckerSettingsPane implements Disposable {
     @Override
     protected void customizeDecorator(ToolbarDecorator decorator) {
       decorator.setRemoveAction((button) -> {
-        SpellcheckerActionStatistics.reportAction("remove.from.accepted.words.ui");
+        SpellcheckerActionStatistics.reportAction("remove.from.accepted.words.ui", manager.getProject());
         ListUtil.removeSelectedItems(myList);
       });
     }
 
     @Override
     protected String findItemToAdd() {
-      SpellcheckerActionStatistics.reportAction("add.to.accepted.words.ui");
+      SpellcheckerActionStatistics.reportAction("add.to.accepted.words.ui", manager.getProject());
       String word = Messages.showInputDialog(SpellCheckerBundle.message("enter.simple.word"),
                                              SpellCheckerBundle.message("add.new.word"), null);
       if (word == null) {

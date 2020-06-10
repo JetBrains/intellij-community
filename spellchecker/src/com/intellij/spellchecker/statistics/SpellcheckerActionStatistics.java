@@ -2,11 +2,12 @@
 package com.intellij.spellchecker.statistics;
 
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public class SpellcheckerActionStatistics {
 
-  public static void reportAction(@NotNull String action) {
-    FUCounterUsageLogger.getInstance().logEvent("spellchecker.events", action);
+  public static void reportAction(@NotNull String action, @NotNull Project project) {
+    FUCounterUsageLogger.getInstance().logEvent(project, "spellchecker.events", action);
   }
 }
