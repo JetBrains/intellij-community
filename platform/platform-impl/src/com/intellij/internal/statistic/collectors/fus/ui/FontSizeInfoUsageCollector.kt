@@ -3,7 +3,6 @@ package com.intellij.internal.statistic.collectors.fus.ui
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.internal.statistic.CollectUsagesException
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
@@ -15,7 +14,6 @@ import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
  * @author Konstantin Bulenkov
  */
 class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
-  @Throws(CollectUsagesException::class)
   override fun getMetrics(): Set<MetricEvent> {
     val scheme = EditorColorsManager.getInstance().globalScheme
     val ui = UISettings.shadowInstance
