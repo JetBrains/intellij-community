@@ -183,7 +183,7 @@ public class JavaSmartCompletionContributor {
     if (CatchTypeProvider.CATCH_CLAUSE_TYPE.accepts(position)) {
       CatchTypeProvider.addCompletions(parameters, result);
     }
-    if (psiElement().afterLeaf("::").accepts(position)) {
+    if (psiElement().afterLeaf("::").withParent(PsiMethodReferenceExpression.class).accepts(position)) {
       MethodReferenceCompletionProvider.addCompletions(parameters, result);
     }
   }
