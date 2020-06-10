@@ -541,8 +541,6 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.mozilla.org/MPL/"),
     new LibraryLicense(libraryName: "Saxon-9HE", version: "9", license: "Mozilla Public License", url: "http://saxon.sourceforge.net/",
                        licenseUrl: "http://www.mozilla.org/MPL/"),
-    new LibraryLicense(libraryName: "SceneBuilderKit", version: "8.2.0", license: "BSD", url: "http://gluonhq.com/open-source/scene-builder/",
-                       licenseUrl: "http://www.oracle.com/technetwork/licenses/bsd-license-1835287.html"),
     new LibraryLicense(name: "six.py", attachedTo: "intellij.python.helpers", version: "1.9.0", license: "MIT",
                        url: "http://pythonhosted.org/six/"),
     new LibraryLicense(libraryName: "Slf4j", license: "MIT License", url: "http://slf4j.org/",

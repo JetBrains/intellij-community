@@ -85,6 +85,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "plugins/Groovy/lib/groovy_rt.jar"                          : "1.6",
     "plugins/Groovy/lib/groovy-rt-constants.jar"                : "1.6",
     "plugins/coverage/lib/coverage_rt.jar"                      : "1.6",
+    "plugins/javaFX/lib/rt/sceneBuilderBridge.jar"              : "11",
     "plugins/junit/lib/junit-rt.jar"                            : "1.6",
     "plugins/junit/lib/junit5-rt.jar"                           : "1.8",
     "plugins/gradle/lib/gradle-tooling-extension-api.jar"       : "1.6",
