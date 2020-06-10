@@ -51,7 +51,7 @@ final class DumbServiceGuiTaskQueue {
   }
 
   private static void runSingleTask(@NotNull final QueuedDumbModeTask task) {
-    if (ApplicationManager.getApplication().isInternal()) LOG.info("Running dumb mode task: " + task);
+    if (ApplicationManager.getApplication().isInternal()) LOG.info("Running dumb mode task: " + task.getInfoString());
 
     // nested runProcess is needed for taskIndicator to be honored in ProgressManager.checkCanceled calls deep inside tasks
     ProgressManager.getInstance().runProcess(() -> {
