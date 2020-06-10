@@ -1274,6 +1274,8 @@ public class ListUtils {
     myFixture.configureByText "a.java", """
 class XInternalError {}
 
+@interface Anno { Class value(); }
+
 @Anno(XInternal<caret>)
 """
     myFixture.complete(CompletionType.BASIC, 2)
