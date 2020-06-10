@@ -661,10 +661,8 @@ public final class PathManager {
         Object instance = lookup.findStatic(impl, "getShadowInstance", MethodType.methodType(ex)).invoke();
         property = (String)lookup.findVirtual(impl, "getShortCompanyName", MethodType.methodType(String.class)).invoke(instance);
       }
-      catch (Throwable t) {
-        property = "JetBrains";
-      }
-      System.setProperty("idea.vendor.name", property);
+      catch (Throwable ignored) { }
+      System.setProperty("idea.vendor.name", property != null ? property : "JetBrains");
     }
     return property;
   }
