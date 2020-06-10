@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.xmlb.annotations.Property
 import java.io.File
 import kotlin.reflect.KMutableProperty0
@@ -48,19 +49,22 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
 
   val defaultStartingDirectory: String?
     get() {
+      var directory: String? = null
       for (customizer in LocalTerminalCustomizer.EP_NAME.extensions) {
         try {
-          val directory = customizer.getDefaultFolder(project)
+          directory = customizer.getDefaultFolder(project)
           if (directory != null) {
-            return directory
+            break
           }
         }
         catch (e: Exception) {
           LOG.error("Exception during getting default folder", e)
         }
       }
-
-      return getDefaultWorkingDirectory()
+      if (directory == null) {
+        directory = getDefaultWorkingDirectory()
+      }
+      return if (directory != null) FileUtil.toSystemDependentName(directory) else null
     }
 
   private fun getDefaultWorkingDirectory(): String? {
@@ -73,6 +77,12 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
   var shellPath: String by ValueWithDefault(myState::myShellPath) { defaultShellPath() }
 
   fun defaultShellPath(): String {
+    if (SystemInfo.isWindows) {
+      val wslDistribution = findWslDistribution(startingDirectory)
+      if (wslDistribution != null) {
+        return "wsl.exe --distribution $wslDistribution"
+      }
+    }
     val shell = System.getenv("SHELL")
     if (shell != null && File(shell).canExecute()) {
       return shell
@@ -85,6 +95,14 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
       return "/bin/sh"
     }
     return "cmd.exe"
+  }
+
+  private fun findWslDistribution(directory: String?): String? {
+    if (directory == null) return null
+    val prefix = "\\\\wsl$\\"
+    if (!directory.startsWith(prefix)) return null
+    val endInd = directory.indexOf('\\', prefix.length)
+    return if (endInd >= 0) directory.substring(prefix.length, endInd) else null
   }
 
   companion object {
