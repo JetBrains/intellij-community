@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageImpl
 import org.junit.Assert.*
-import org.junit.Ignore
 import org.junit.Test
 
 private fun WorkspaceEntityStorageBuilder.applyDiff(anotherBuilder: WorkspaceEntityStorageBuilder): WorkspaceEntityStorage {
@@ -191,7 +190,6 @@ class DiffBuilderTest {
     source.applyDiff(target)
   }
 
-  @Ignore("Unsupported")
   @Test
   fun `modify child and parent`() {
     val source = WorkspaceEntityStorageBuilderImpl.create()

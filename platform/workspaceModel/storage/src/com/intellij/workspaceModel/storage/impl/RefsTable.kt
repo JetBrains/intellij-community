@@ -223,7 +223,7 @@ internal class MutableRefsTable(
     }.let { }
   }
 
-  internal fun updateChildrenOfParent(connectionId: ConnectionId, parentId: EntityId, childrenIds: List<EntityId>) {
+  internal fun updateChildrenOfParent(connectionId: ConnectionId, parentId: EntityId, childrenIds: Collection<EntityId>) {
     when (connectionId.connectionType) {
       ConnectionId.ConnectionType.ONE_TO_MANY -> {
         val copiedMap = getOneToManyMutableMap(connectionId)
@@ -361,7 +361,7 @@ internal sealed class AbstractRefsTable {
             })
   }
 
-  fun getParentRefsOfChild(childId: EntityId): ParentConnectionsInfo {
+  fun getParentRefsOfChild(childId: EntityId): Map<ConnectionId, EntityId> {
     val childArrayId = childId.arrayId
     val childClassId = childId.clazz
     val childClass = childId.clazz.findEntityClass<WorkspaceEntity>()
@@ -405,7 +405,7 @@ internal sealed class AbstractRefsTable {
     return res
   }
 
-  fun getChildrenRefsOfParentBy(parentId: EntityId): ChildrenConnectionsInfo {
+  fun getChildrenRefsOfParentBy(parentId: EntityId): Map<ConnectionId, Set<EntityId>> {
     val parentArrayId = parentId.arrayId
     val parentClassId = parentId.clazz
     val parentClass = parentId.clazz.findEntityClass<WorkspaceEntity>()
