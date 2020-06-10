@@ -20,11 +20,13 @@ import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.IntFunction;
 
 import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
@@ -109,6 +111,16 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
             return Arrays.asList(args);
           }
         }
+        if (CallMatcher.enumValues().test(call)) {
+          PsiType type = call.getType();
+          if (type instanceof PsiArrayType) {
+            PsiClass enumClass = PsiUtil.resolveClassInClassTypeOnly(((PsiArrayType)type).getComponentType());
+            if (enumClass != null && enumClass.isEnum()) {
+              List<PsiEnumConstant> constants = StreamEx.of(enumClass.getFields()).select(PsiEnumConstant.class).toList();
+              return generatedList(loop, constants.size(), index -> enumClass.getQualifiedName() + "." + constants.get(index).getName());
+            }
+          }
+        }
       }
       if (ExpressionUtils.isSafelyRecomputableExpression(expression)) {
         PsiType type = expression.getType();
@@ -116,40 +128,18 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
           DfType dfType = CommonDataflow.getDfType(expression);
           Integer arraySize = DfConstantType.getConstantOfType(SpecialField.ARRAY_LENGTH.getFromQualifier(dfType), Integer.class);
           if (arraySize != null) {
-            PsiElementFactory factory = JavaPsiFacade.getElementFactory(loop.getProject());
             PsiExpression array = expression;
-            return new AbstractList<PsiExpression>() {
-              @Override
-              public PsiExpression get(int index) {
-                return factory.createExpressionFromText(ParenthesesUtils.getText(array, PsiPrecedenceUtil.POSTFIX_PRECEDENCE)
-                  +"["+index+"]", loop);
-              }
-
-              @Override
-              public int size() {
-                return arraySize;
-              }
-            };
+            return generatedList(loop, arraySize, index -> ParenthesesUtils.getText(array, PsiPrecedenceUtil.POSTFIX_PRECEDENCE)
+                                                           +"["+index+"]");
           }
         }
         if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_LIST)) {
           DfType dfType = CommonDataflow.getDfType(expression);
           Integer listSize = DfConstantType.getConstantOfType(SpecialField.COLLECTION_SIZE.getFromQualifier(dfType), Integer.class);
           if (listSize != null) {
-            PsiElementFactory factory = JavaPsiFacade.getElementFactory(loop.getProject());
-            PsiExpression array = expression;
-            return new AbstractList<PsiExpression>() {
-              @Override
-              public PsiExpression get(int index) {
-                return factory.createExpressionFromText(ParenthesesUtils.getText(array, PsiPrecedenceUtil.METHOD_CALL_PRECEDENCE)
-                                                        +".get("+index+")", loop);
-              }
-
-              @Override
-              public int size() {
-                return listSize;
-              }
-            };
+            PsiExpression list = expression;
+            return generatedList(loop, listSize, index -> ParenthesesUtils.getText(list, PsiPrecedenceUtil.METHOD_CALL_PRECEDENCE)
+                                                          +".get("+index+")");
           }
         }
       }
@@ -172,22 +162,25 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
         }
         if (diff < 0 || diff > MAX_BODY_SIZE_ESTIMATE) return Collections.emptyList();
         int size = (int)(diff); // Less or equal to MAX_ITERATIONS => fits to int
-        PsiElementFactory factory = JavaPsiFacade.getElementFactory(loop.getProject());
-        return new AbstractList<PsiExpression>() {
-          @Override
-          public PsiExpression get(int index) {
-            long value = fromValue + multiplier * index;
-            return factory.createExpressionFromText(value + suffix, loop);
-          }
-
-          @Override
-          public int size() {
-            return size;
-          }
-        };
+        return generatedList(loop, size, index -> (fromValue + multiplier * index) + suffix);
       }
     }
     return Collections.emptyList();
+  }
+  
+  private static List<PsiExpression> generatedList(PsiElement context, int size, IntFunction<String> generator) {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
+    return new AbstractList<PsiExpression>() {
+      @Override
+      public PsiExpression get(int index) {
+        return factory.createExpressionFromText(generator.apply(index), context);
+      }
+
+      @Override
+      public int size() {
+        return size;
+      }
+    };
   }
 
   @NotNull
