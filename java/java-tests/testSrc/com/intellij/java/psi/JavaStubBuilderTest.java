@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.List;
 
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_14;
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_15;
 
 @SuppressWarnings("SpellCheckingInspection")
 public class JavaStubBuilderTest extends LightIdeaTestCase {
@@ -45,7 +45,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return JAVA_15;
   }
 
   public void testEmpty() {
@@ -84,6 +84,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:I, J<I>]\n" +
+           "    PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n" +
            "  CLASS:PsiClassStub[name=B fqn=p.B]\n" +
            "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
@@ -93,11 +94,13 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "        EXTENDS_BOUND_LIST:PsiRefListStub[EXTENDS_BOUNDS_LIST:X]\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:a/*skip*/.A]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n" +
            "    CLASS:PsiClassStub[name=I fqn=p.B.I]\n" +
            "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "      EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "      IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "      PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n" +
            "  CLASS:PsiClassStub[interface deprecatedA name=I fqn=p.I]\n" +
            "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      ANNOTATION:PsiAnnotationStub[@java.lang.Deprecated]\n" +
@@ -105,16 +108,19 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n" +
            "  CLASS:PsiClassStub[interface annotation deprecated name=N fqn=p.N]\n" +
            "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n" +
            "  CLASS:PsiClassStub[name=X fqn=p.X]\n" +
            "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
+           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n");
   }
 
   @SuppressWarnings({"CStyleArrayDeclaration", "RedundantThrows", "UnnecessaryInterfaceModifier"})
@@ -140,6 +146,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n" +
            "    ANNOTATION_METHOD:PsiMethodStub[annotation i:int default=42]\n" +
            "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
@@ -155,6 +162,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n" +
            "    METHOD:PsiMethodStub[cons C:null]\n" +
            "      MODIFIER_LIST:PsiModifierListStub[mask=1]\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
@@ -185,6 +193,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n" +
            "    METHOD:PsiMethodStub[m1:void]\n" +
            "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
@@ -216,6 +225,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n" +
            "    FIELD:PsiFieldStub[f:float]\n" +
            "      MODIFIER_LIST:PsiModifierListStub[mask=2048]\n" +
            "    FIELD:PsiFieldStub[j:int[]={0}]\n" +
@@ -228,6 +238,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n" +
            "    FIELD:PsiFieldStub[b:boolean]\n" +
            "      MODIFIER_LIST:PsiModifierListStub[mask=66]\n" +
            "    FIELD:PsiFieldStub[x:double]\n" +
@@ -248,6 +259,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n" +
            "    CLASS_INITIALIZER:PsiClassInitializerStub\n" +
            "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=O.P]\n" +
@@ -270,6 +282,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n" +
            "    ENUM_CONSTANT:PsiFieldStub[enumconst E1:E]\n" +
            "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      ENUM_CONSTANT_INITIALIZER:PsiClassStub[anonymous enumInit name=null fqn=null baseref=E]\n" +
@@ -283,6 +296,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n" +
            "    ENUM_CONSTANT:PsiFieldStub[enumconst U1:U]\n" +
            "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "    ENUM_CONSTANT:PsiFieldStub[enumconst U2:U]\n" +
@@ -313,6 +327,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n" +
            "    METHOD:PsiMethodStub[m:void]\n" +
            "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
@@ -356,6 +371,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n" +
            "    CLASS_INITIALIZER:PsiClassInitializerStub\n" +
            "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=Iterable<String>]\n" +
@@ -385,7 +401,8 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "            LITERAL_EXPRESSION:PsiLiteralStub\n" +
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
+           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n");
   }
 
   @SuppressWarnings({"rawtypes", "InfiniteRecursion", "UnusedAssignment", "CStyleArrayDeclaration"})
@@ -424,6 +441,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
            "      ANNOTATION:PsiAnnotationStub[@A]\n" +
            "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
+           "    PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n" +
            "    FIELD:PsiFieldStub[f:T<@A T1, @A ? extends @A T2>]\n" +
            "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "        ANNOTATION:PsiAnnotationStub[@TA]\n" +
@@ -498,6 +516,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n" +
            "    METHOD:PsiMethodStub[m:void]\n" +
            "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
@@ -507,7 +526,8 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "        MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "        TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "        EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "        IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
+           "        IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "        PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n");
   }
 
   public void testModuleInfo() {
@@ -548,7 +568,8 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "      RECORD_COMPONENT:PsiRecordComponentStub[y:String]\n" +
            "        MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
+           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n");
   }
 
   public void testLocalRecord() {
@@ -565,6 +586,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n" +
            "    METHOD:PsiMethodStub[test:void]\n" +
            "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
@@ -578,7 +600,8 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "          RECORD_COMPONENT:PsiRecordComponentStub[s:String]\n" +
            "            MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "        EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "        IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
+           "        IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "        PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n");
   }
 
 
@@ -597,6 +620,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n" +
            "    METHOD:PsiMethodStub[test:void]\n" +
            "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
@@ -618,6 +642,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n" +
            "    METHOD:PsiMethodStub[foo:void]\n" +
            "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
@@ -640,19 +665,20 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n" +
            "    METHOD:PsiMethodStub[foo:void]\n" +
            "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "      PARAMETER_LIST:PsiParameterListStub\n" +
-           "      THROWS_LIST:PsiRefListStub[THROW" +
-           "S_LIST:]\n" +
+           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
            "      CLASS:PsiClassStub[record name=turn fqn=null]\n" +
            "        MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "        TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "          TYPE_PARAMETER:PsiTypeParameter[A]\n" +
            "            EXTENDS_BOUND_LIST:PsiRefListStub[EXTENDS_BOUNDS_LIST:]\n" +
            "        EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "        IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
+           "        IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "        PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n");
   }
 
   public void testLocalRecordWithTypeParameters() {
@@ -670,6 +696,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n" +
            "    METHOD:PsiMethodStub[foo:void]\n" +
            "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
@@ -683,7 +710,8 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "            EXTENDS_BOUND_LIST:PsiRefListStub[EXTENDS_BOUNDS_LIST:]\n" +
            "        RECORD_HEADER:PsiRecordHeaderStub\n" +
            "        EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "        IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
+           "        IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "        PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n");
   }
   
   public void testInterfaceKeywordInBody() {
@@ -722,6 +750,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
                  "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
                  "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
                  "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+                 "    PERMITS_LIST:PsiRefListStub[PERMITS_LIST:]\n" +
                  "    FIELD:PsiFieldStub[BIG:BigInteger=;INITIALIZER_NOT_STORED;]\n" +
                  "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n",
                  DebugUtil.stubTreeToString(tree));

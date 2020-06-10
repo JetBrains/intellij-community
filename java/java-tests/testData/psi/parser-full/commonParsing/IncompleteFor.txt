@@ -28,6 +28,8 @@ PsiJavaFile:IncompleteFor.java
       <empty list>
     PsiReferenceList
       <empty list>
+    PsiReferenceList
+      <empty list>
     PsiWhiteSpace(' ')
     PsiJavaToken:LBRACE('{')
     PsiJavaToken:RBRACE('}')
@@ -39,6 +41,8 @@ PsiJavaFile:IncompleteFor.java
     PsiWhiteSpace(' ')
     PsiIdentifier:Foo('Foo')
     PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
       <empty list>
     PsiReferenceList
       <empty list>

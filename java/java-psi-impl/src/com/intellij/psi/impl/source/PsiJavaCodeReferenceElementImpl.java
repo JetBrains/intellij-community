@@ -100,6 +100,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
     if (i == JavaElementType.EXTENDS_LIST ||
         i == JavaElementType.IMPLEMENTS_LIST ||
+        i == JavaElementType.PERMITS_LIST ||
         i == JavaElementType.EXTENDS_BOUND_LIST ||
         i == JavaElementType.THROWS_LIST ||
         i == JavaElementType.THIS_EXPRESSION ||
