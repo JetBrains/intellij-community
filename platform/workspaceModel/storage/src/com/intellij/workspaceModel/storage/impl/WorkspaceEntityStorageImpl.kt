@@ -802,7 +802,10 @@ internal class WorkspaceEntityStorageBuilderImpl(
     // Any new parents? Add them
     for ((connectionId, parentId) in modifiedParentsMap) {
       if (parentId == null) continue
-      refs.updateParentOfChild(connectionId, id, parentId)
+      if (this.entityDataById(parentId) != null) {
+        refs.updateParentOfChild(connectionId, id, parentId)
+      }
+      else if (!connectionId.canRemoveParent()) adFailed("Cannot restore some dependencies")
     }
   }
 
