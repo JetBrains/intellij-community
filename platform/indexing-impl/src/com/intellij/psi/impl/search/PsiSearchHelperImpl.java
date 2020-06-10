@@ -991,7 +991,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
               for (T single : processors) {
                 ProgressManager.checkCanceled();
                 if ((mask & single.getSearchContext()) != 0 && single.getSearchScope().contains(file)) {
-                  result.computeIfAbsent(file, ___ -> new SmartList<>()).add(single);
+                  Collection<T> singleProcessors = result.computeIfAbsent(file, ___ -> new SmartList<>());
+                  if (!singleProcessors.contains(single)) {
+                    singleProcessors.add(single);
+                  }
                 }
               }
               return true;
