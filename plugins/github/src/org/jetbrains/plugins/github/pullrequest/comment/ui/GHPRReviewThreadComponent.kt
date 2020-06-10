@@ -56,7 +56,7 @@ object GHPRReviewThreadComponent {
                                         avatarIconsProvider: GHAvatarIconsProvider,
                                         currentUser: GHUser): JComponent {
     val toggleModel = SingleValueModel(false)
-    val textFieldModel = GHSubmittableTextFieldFactory.Model { text ->
+    val textFieldModel = GHSubmittableTextFieldModel { text ->
       reviewDataProvider.addComment(EmptyProgressIndicator(), thread.getElementAt(0).id, text).successOnEdt {
         thread.addComment(GHPRReviewCommentModel.convert(it))
         toggleModel.value = false

@@ -5,8 +5,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.actions.IncrementalFindAction
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -18,7 +16,6 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.ListFocusTraversalPolicy
 import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
@@ -30,21 +27,17 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import org.jetbrains.plugins.github.ui.InlineIconButton
 import org.jetbrains.plugins.github.ui.JComponentOverlay
-import org.jetbrains.plugins.github.util.handleOnEdt
 import java.awt.Dimension
 import java.awt.event.*
-import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JLayeredPane
 import javax.swing.JPanel
 import javax.swing.border.EmptyBorder
-import kotlin.properties.Delegates
 
-class GHSubmittableTextFieldFactory(private val model: Model) {
+class GHSubmittableTextFieldFactory(private val model: GHSubmittableTextFieldModel) {
 
   companion object {
     private val SUBMIT_SHORTCUT_SET = CommonShortcuts.CTRL_ENTER
@@ -191,35 +184,6 @@ class GHSubmittableTextFieldFactory(private val model: Model) {
     layeredPane.add(button, JLayeredPane.POPUP_LAYER, 1)
 
     return layeredPane
-  }
-
-  class Model(private val submitter: (String) -> CompletableFuture<*>) {
-    val document = EditorFactory.getInstance().createDocument("")
-
-    var isSubmitting by Delegates.observable(false) { _, _, _ ->
-      stateEventDispatcher.multicaster.eventOccurred()
-    }
-      private set
-
-    var isLoading by Delegates.observable(false) { _, _, _ ->
-      stateEventDispatcher.multicaster.eventOccurred()
-    }
-
-    private val stateEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
-
-    fun submit() {
-      if (isSubmitting) return
-
-      isSubmitting = true
-      submitter(document.text).handleOnEdt { _, error ->
-        if (error == null) runWriteAction {
-          document.setText("")
-        }
-        isSubmitting = false
-      }
-    }
-
-    fun addStateListener(listener: () -> Unit) = SimpleEventListener.addListener(stateEventDispatcher, listener)
   }
 
   private inner class Controller(private val panel: JPanel,

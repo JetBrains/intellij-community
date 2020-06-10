@@ -48,7 +48,7 @@ internal constructor(private val reviewDataProvider: GHPRReviewDataProvider,
   }
 
   override fun createSingleCommentComponent(side: Side, line: Int, hideCallback: () -> Unit): JComponent {
-    val textFieldModel = GHSubmittableTextFieldFactory.Model {
+    val textFieldModel = GHSubmittableTextFieldModel {
       val commitSha = createCommentParametersHelper.commitSha
       val filePath = createCommentParametersHelper.filePath
       val diffLine = createCommentParametersHelper.findPosition(side, line) ?: error("Can't determine comment position")
@@ -62,7 +62,7 @@ internal constructor(private val reviewDataProvider: GHPRReviewDataProvider,
   }
 
   override fun createNewReviewCommentComponent(side: Side, line: Int, hideCallback: () -> Unit): JComponent {
-    val textFieldModel = GHSubmittableTextFieldFactory.Model {
+    val textFieldModel = GHSubmittableTextFieldModel {
       val commitSha = createCommentParametersHelper.commitSha
       val filePath = createCommentParametersHelper.filePath
       val diffLine = createCommentParametersHelper.findPosition(side, line) ?: error("Can't determine comment position")
@@ -76,7 +76,7 @@ internal constructor(private val reviewDataProvider: GHPRReviewDataProvider,
   }
 
   override fun createReviewCommentComponent(reviewId: String, side: Side, line: Int, hideCallback: () -> Unit): JComponent {
-    val textFieldModel = GHSubmittableTextFieldFactory.Model {
+    val textFieldModel = GHSubmittableTextFieldModel {
       val commitSha = createCommentParametersHelper.commitSha
       val filePath = createCommentParametersHelper.filePath
       val diffLine = createCommentParametersHelper.findPosition(side, line) ?: error("Can't determine comment position")
@@ -88,7 +88,7 @@ internal constructor(private val reviewDataProvider: GHPRReviewDataProvider,
     return createCommentComponent(textFieldModel, GithubBundle.message("pull.request.diff.editor.review.comment"), hideCallback)
   }
 
-  private fun createCommentComponent(textFieldModel: GHSubmittableTextFieldFactory.Model, actionName: String, hideCallback: () -> Unit)
+  private fun createCommentComponent(textFieldModel: GHSubmittableTextFieldModel, actionName: String, hideCallback: () -> Unit)
     : JComponent {
 
     val wrapper = RoundedPanel(BorderLayout()).apply {

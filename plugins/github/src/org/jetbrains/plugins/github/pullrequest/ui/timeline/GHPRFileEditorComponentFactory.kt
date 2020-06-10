@@ -27,6 +27,7 @@ import org.jetbrains.plugins.github.pullrequest.GHPRTimelineFileEditor
 import org.jetbrains.plugins.github.pullrequest.action.GHPRReloadStateAction
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHSubmittableTextFieldFactory
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHSubmittableTextFieldModel
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
@@ -186,7 +187,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
   private fun createCommentField(commentService: GHPRCommentsDataProvider,
                                  avatarIconsProvider: GHAvatarIconsProvider,
                                  currentUser: GHUser): JComponent {
-    val model = GHSubmittableTextFieldFactory.Model {
+    val model = GHSubmittableTextFieldModel {
       commentService.addComment(EmptyProgressIndicator(), it)
     }
     return GHSubmittableTextFieldFactory(model).create(avatarIconsProvider, currentUser)
