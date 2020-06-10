@@ -74,13 +74,22 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
   }
 
   private int getTodoCountImpl(@NotNull VirtualFile file, IndexPattern @NotNull ... indexPatterns) {
+    if (myProject.isDefault()) {
+      return 0;
+    }
+
+    if (file instanceof VirtualFileWindow) {
+      return -1;
+    }
+
     if (file instanceof LightVirtualFile) {
       return calculateTodoCount((LightVirtualFile)file, indexPatterns);
     }
-    if (myProject.isDefault() || !TodoIndexers.belongsToProject(myProject, file)) {
+
+    if (!TodoIndexers.belongsToProject(myProject, file)) {
       return 0;
     }
-    if (file instanceof VirtualFileWindow) return 0;
+
     return fetchTodoCountFromIndex(file, indexPatterns);
   }
 
