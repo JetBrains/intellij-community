@@ -1936,6 +1936,10 @@
       <category>Java/Control Flow</category>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.CollapseIntoLoopAction</className>
+      <category>Java/Control Flow</category>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.MoveIntoIfBranchesAction</className>
       <category>Java/Control Flow</category>
     </intentionAction>
