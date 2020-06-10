@@ -255,7 +255,7 @@ class BundledJreManager {
     }
     else {
       buildContext.ant.exec(executable: "tar", dir: "${jreDirectoryPath}/jre32", failonerror: true) {
-        arg(value: "cf")
+        arg(value: "czf")
         arg(value: artifactPath)
         for (f in new File("${jreDirectoryPath}/jre32").list()) {
           arg(value: f)
