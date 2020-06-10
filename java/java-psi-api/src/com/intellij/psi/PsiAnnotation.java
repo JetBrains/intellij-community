@@ -103,6 +103,17 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, JvmAnnotation {
   @Nullable
   PsiAnnotationOwner getOwner();
 
+  /**
+   * @return the target of {@link #getNameReferenceElement()}, if it's an {@code @interface}, otherwise null
+   */
+  @Nullable
+  default PsiClass resolveAnnotationType() {
+    PsiJavaCodeReferenceElement element = getNameReferenceElement();
+    PsiElement declaration = element == null ? null : element.resolve();
+    if (!(declaration instanceof PsiClass) || !((PsiClass)declaration).isAnnotationType()) return null;
+    return (PsiClass)declaration;
+  }
+
   @NotNull
   @Override
   default List<JvmAnnotationAttribute> getAttributes() {

@@ -291,11 +291,7 @@ public abstract class MetaAnnotationUtil {
   private static List<PsiClass> getResolvedClassesInAnnotationsList(PsiModifierListOwner owner) {
     PsiModifierList modifierList = owner.getModifierList();
     if (modifierList != null) {
-      return ContainerUtil.mapNotNull(modifierList.getApplicableAnnotations(), psiAnnotation -> {
-        PsiJavaCodeReferenceElement nameReferenceElement = psiAnnotation.getNameReferenceElement();
-        PsiElement resolve = nameReferenceElement != null ? nameReferenceElement.resolve() : null;
-        return resolve instanceof PsiClass && ((PsiClass)resolve).isAnnotationType() ? (PsiClass)resolve : null;
-      });
+      return ContainerUtil.mapNotNull(modifierList.getApplicableAnnotations(), annotation -> annotation.resolveAnnotationType());
     }
     return Collections.emptyList();
   }

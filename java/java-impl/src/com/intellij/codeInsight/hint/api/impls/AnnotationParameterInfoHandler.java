@@ -44,26 +44,17 @@ public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiA
     final PsiAnnotation annotation = ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), PsiAnnotation.class);
 
     if (annotation != null) {
-      final PsiJavaCodeReferenceElement nameReference = annotation.getNameReferenceElement();
+      PsiClass aClass = annotation.resolveAnnotationType();
+      if (aClass != null) {
+        final PsiMethod[] methods = aClass.getMethods();
 
-      if (nameReference != null) {
-        final PsiElement resolved = nameReference.resolve();
+        if (methods.length != 0) {
+          context.setItemsToShow(methods);
 
-        if (resolved instanceof PsiClass) {
-          final PsiClass aClass = (PsiClass)resolved;
+          final PsiAnnotationMethod annotationMethod = findAnnotationMethod(context.getFile(), context.getOffset());
+          if (annotationMethod != null) context.setHighlightedElement(annotationMethod);
 
-          if (aClass.isAnnotationType()) {
-            final PsiMethod[] methods = aClass.getMethods();
-
-            if (methods.length != 0) {
-              context.setItemsToShow(methods);
-
-              final PsiAnnotationMethod annotationMethod = findAnnotationMethod(context.getFile(), context.getOffset());
-              if (annotationMethod != null) context.setHighlightedElement(annotationMethod);
-
-              return annotation.getParameterList();
-            }
-          }
+          return annotation.getParameterList();
         }
       }
     }
