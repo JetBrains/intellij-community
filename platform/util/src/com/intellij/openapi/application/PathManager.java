@@ -48,6 +48,7 @@ public final class PathManager {
   private static final String INTELLIJ_SUB_REPO_NAME = "intellij";
 
   private static final String PROPERTY_HOME = "idea.home";  // reduced variant of PROPERTY_HOME_PATH, now deprecated
+  private static final String PROPERTY_VENDOR_NAME = "idea.vendor.name";
 
   private static final String LIB_DIRECTORY = "lib";
   private static final String PLUGINS_DIRECTORY = "plugins";
@@ -652,7 +653,7 @@ public final class PathManager {
   }
 
   private static String vendorName() {
-    String property = System.getProperty("idea.vendor.name");
+    String property = System.getProperty(PROPERTY_VENDOR_NAME);
     if (property == null) {
       try {
         Class<?> ex = Class.forName("com.intellij.openapi.application.ex.ApplicationInfoEx");
@@ -662,7 +663,7 @@ public final class PathManager {
         property = (String)lookup.findVirtual(impl, "getShortCompanyName", MethodType.methodType(String.class)).invoke(instance);
       }
       catch (Throwable ignored) { }
-      System.setProperty("idea.vendor.name", property != null ? property : "JetBrains");
+      System.setProperty(PROPERTY_VENDOR_NAME, property != null ? property : "JetBrains");
     }
     return property;
   }
