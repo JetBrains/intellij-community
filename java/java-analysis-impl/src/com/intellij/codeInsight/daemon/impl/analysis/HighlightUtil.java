@@ -1218,13 +1218,13 @@ public class HighlightUtil {
         }
         else {
           if (file != null && containsUnescaped(text, "\\\n")) {
-            final HighlightInfo info = checkFeature(expression, HighlightingFeature.TEXT_BLOCKS, level, file);
+            final HighlightInfo info = checkFeature(expression, HighlightingFeature.TEXT_BLOCK_ESCAPES, level, file);
             if (info != null) return info;
           }
         }
       }
       if (file != null && containsUnescaped(text, "\\s")) {
-        final HighlightInfo info = checkFeature(expression, HighlightingFeature.TEXT_BLOCKS, level, file);
+        final HighlightInfo info = checkFeature(expression, HighlightingFeature.TEXT_BLOCK_ESCAPES, level, file);
         if (info != null) return info;
       }
     }

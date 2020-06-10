@@ -36,6 +36,7 @@ public enum HighlightingFeature {
   SWITCH_EXPRESSION(LanguageLevel.JDK_14, "feature.switch.expressions"),
   RECORDS(LanguageLevel.JDK_14_PREVIEW, "feature.records"),
   PATTERNS(LanguageLevel.JDK_14_PREVIEW, "feature.patterns.instanceof"),
+  TEXT_BLOCK_ESCAPES(LanguageLevel.JDK_14_PREVIEW, "feature.text.block.escape.sequences"),
   TEXT_BLOCKS(LanguageLevel.JDK_14_PREVIEW, "feature.text.blocks") {
     @Override
     boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
