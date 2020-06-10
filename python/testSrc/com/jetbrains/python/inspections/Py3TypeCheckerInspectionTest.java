@@ -418,4 +418,20 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testParametrizedBuiltinTypeAndTypingTypeAreEquivalent() {
     doTest();
   }
+
+  // PY-30747
+  public void testPathlibPathMatchingOsPathLike() {
+    doTestByText(
+      "import pathlib\n" +
+      "import os\n" +
+      "\n" +
+      "def foo(p: pathlib.Path):\n" +
+      "    with open(p) as file:\n" +
+      "        pass\n" +
+      "\n" +
+      "p1: pathlib.Path\n" +
+      "p2: os.PathLike[bytes] = p1  # false negative, see PyTypeChecker.matchGenerics\n" +
+      "p3: os.PathLike[str] = p1"
+    );
+  }
 }
