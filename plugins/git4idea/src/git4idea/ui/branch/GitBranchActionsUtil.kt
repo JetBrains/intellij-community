@@ -138,9 +138,9 @@ internal fun createOrCheckoutNewBranch(project: Project,
   }
 }
 
-internal fun updateBranches(project: Project, repositories: List<GitRepository>, branchNames: List<String>) {
+internal fun updateBranches(project: Project, repositories: List<GitRepository>, localBranchNames: List<String>) {
   val repoToTrackingInfos =
-    repositories.associateWith { it.branchTrackInfos.filter { info -> branchNames.contains(info.localBranch.name) } }
+    repositories.associateWith { it.branchTrackInfos.filter { info -> localBranchNames.contains(info.localBranch.name) } }
   if (repoToTrackingInfos.isEmpty()) return
 
   GitVcs.runInBackground(object : Task.Backgroundable(project, GitBundle.message("branches.updating.process"), true) {
@@ -149,8 +149,9 @@ internal fun updateBranches(project: Project, repositories: List<GitRepository>,
       val fetchSupport = GitFetchSupport.fetchSupport(project)
       for ((repo, trackingInfos) in repoToTrackingInfos) {
         for (trackingInfo in trackingInfos) {
-          val branchName = trackingInfo.localBranch.name
-          val fetchResult = fetchSupport.fetch(repo, trackingInfo.remote, "$branchName:$branchName")
+          val localBranchName = trackingInfo.localBranch.name
+          val remoteBranchName = trackingInfo.remoteBranch.nameForRemoteOperations
+          val fetchResult = fetchSupport.fetch(repo, trackingInfo.remote, "$remoteBranchName:$localBranchName")
           try {
             fetchResult.throwExceptionIfFailed()
             successFetches += 1
@@ -165,7 +166,7 @@ internal fun updateBranches(project: Project, repositories: List<GitRepository>,
     override fun onSuccess() {
       if (successFetches > 0) {
         VcsNotifier.getInstance(myProject).notifySuccess(GitBundle.message("branches.selected.branches.updated.title",
-                                                                           branchNames.size))
+                                                                           localBranchNames.size))
       }
     }
   })
