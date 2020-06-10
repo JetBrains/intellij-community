@@ -35,9 +35,6 @@
                        helpTopic="configurable.group.build.help.topic"
                        displayNameKey="configurable.group.build.settings.display.name"
                        descriptionKey="configurable.group.build.settings.description"/>
-    <groupConfigurable id="build.tools" parentId="build" weight="1000"
-                       displayNameKey="configurable.group.build.tools.settings.display.name"
-                       descriptionKey="configurable.group.build.tools.settings.description"/>
     <groupConfigurable id="profiler" parentId="build"
                        displayNameKey="configurable.group.profiler.settings.display.name"
                        descriptionKey="configurable.group.profiler.settings.description"/>
