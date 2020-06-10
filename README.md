@@ -3,7 +3,6 @@ These instructions will help you build IntelliJ IDEA Community Edition from sour
 The following conventions will be used to refer to directories on your machine:
 * `<USER_HOME>` is your home directory.
 * `<IDEA_HOME>` is the root directory for the IntelliJ source code.
-* `<JDK_16_HOME>` is the root directory for the 1.6 JDK, which is optional.
 * `<JDK_18_HOME>` is the root directory for the 1.8 JDK.
 
 ## Getting IntelliJ IDEA Community Edition Source Code
@@ -40,18 +39,20 @@ Using IntelliJ IDEA **File | Open**, select the `<IDEA_HOME>` directory.
   [refresh the Gradle projects](https://www.jetbrains.com/help/idea/jetgradle-tool-window.html). 
 
 ### IntelliJ Build Configuration
-JDK version 1.8 (u162 or newer) is required for building and developing for IntelliJ IDEA Community Edition. Note that IntelliJ IDEA depends
-on JavaFX classes so the JDK distribution must include jfxrt.jar. You may use for example Oracle JDK or Amazon Corretto (the latter can be 
-downloaded directly from Project Structure dialog since IntelliJ IDEA 2020.1).  
-1. Using IntelliJ IDEA, [configure](https://www.jetbrains.com/help/idea/sdk.html) a JDK named "**1.8**", pointing to `<JDK_18_HOME>`.
+JDK version 1.8 and JDK version 11 are required for building and developing for IntelliJ IDEA Community Edition.
+1. Using IntelliJ IDEA, [configure](https://www.jetbrains.com/help/idea/sdk.html) a JDK named "**1.8**", pointing to `<JDK_18_HOME>`. The JDK
+   should be of version 1.8.0_162 or newer; also it must include jfxrt.jar. You may use for example Oracle JDK or Amazon Corretto (the latter 
+   can be downloaded directly from Project Structure dialog).
    * If not already present, add `<JDK_18_HOME>/lib/tools.jar` [to the Classpath](https://www.jetbrains.com/help/idea/sdk.html#manage_sdks) tab
      for the **1.8** JDK.
-2. Also configure a JDK named "**IDEA jdk**" (case sensitive), pointing to `<JDK_16_HOME>`. If you don’t want to install JDK 1.6
+2. Configure a JDK named "**corretto-11**", pointing to installation of JDK 11. It's recommended to use Amazon Corretto JDK. You may 
+   [download it directly](https://www.jetbrains.com/help/idea/sdk.html#jdk-from-ide) from Project Structure dialog.    
+3. Also configure a JDK named "**IDEA jdk**" (case sensitive), pointing to installation of JDK 1.6. If you don’t want to install JDK 1.6
    then you may configure **IDEA jdk** to point to `<JDK_18_HOME>`. However, you must be careful to avoid using Java 8 APIs in IntelliJ IDEA Community Edition modules that use **IDEA jdk**. 
    * If not already present, add the corresponding path for tools.jar to the Classpath for "**IDEA jdk**" JDK.
-3. If the _Maven Integration_ plugin is disabled, [add the path variable](https://www.jetbrains.com/help/idea/absolute-path-variables.html)
+4. If the _Maven Integration_ plugin is disabled, [add the path variable](https://www.jetbrains.com/help/idea/absolute-path-variables.html)
    "**MAVEN_REPOSITORY**" pointing to `<USER_HOME>/.m2/repository` directory.
-4. _**Speed Tip:**_ If you have enough RAM on your computer,
+5. _**Speed Tip:**_ If you have enough RAM on your computer,
    [configure the compiler settings](https://www.jetbrains.com/help/idea/specifying-compilation-settings.html)
    to enable the "Compile independent modules in parallel" option. Also, set the "User-local build process VM options" to `-Xmx2G`.
    These changes will greatly reduce the compile time.
