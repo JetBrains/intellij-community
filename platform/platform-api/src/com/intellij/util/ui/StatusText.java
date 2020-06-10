@@ -9,7 +9,6 @@ import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class StatusText {
@@ -40,7 +40,7 @@ public abstract class StatusText {
 
   // Hardcoded layout manages two columns (primary and secondary) with vertically aligned components inside
   protected static final class Column {
-    List<Fragment> fragments = new SmartList<>();
+    List<Fragment> fragments = new ArrayList<>();
     private final Dimension preferredSize = new Dimension();
   }
 
