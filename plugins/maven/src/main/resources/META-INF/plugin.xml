@@ -582,7 +582,6 @@
       <reference id="Maven.RunBuild"/>
       <reference id="Maven.ExecuteGoal"/>
       <reference id="Maven.ToggleOffline"/>
-      <reference id="ExternalSystem.ToggleAutoReload"/>
       <reference id="Maven.ToggleSkipTests"/>
       <reference id="Maven.CollapseAll"/>
       <separator/>
