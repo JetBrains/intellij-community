@@ -111,7 +111,7 @@ public final class PluginInstaller {
     boolean uninstalledWithoutRestart = parentComponent != null
       ? DynamicPlugins.unloadPluginWithProgress(null, parentComponent, (IdeaPluginDescriptorImpl)pluginDescriptor, false, isUpdate)
       : DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl)pluginDescriptor,
-                                    new DynamicPlugins.UnloadPluginOptions().withUpdate(isUpdate).withWaitForClassloaderUnload(isUpdate));
+                                    new DynamicPlugins.UnloadPluginOptions().withUpdate(isUpdate).withWaitForClassloaderUnload(true));
 
     if (uninstalledWithoutRestart) {
       try {
