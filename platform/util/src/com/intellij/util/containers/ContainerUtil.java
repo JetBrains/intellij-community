@@ -698,10 +698,10 @@ public class ContainerUtil {
       map2 = t;
     }
     final Map<K, V> res = new HashMap<>(map1);
-    for (Map.Entry<? extends K, ? extends V> entry : map2.entrySet()) {
+    for (Map.Entry<? extends K, ? extends V> entry : map1.entrySet()) {
       K key = entry.getKey();
-      V v2 = entry.getValue();
-      V v1 = map1.get(key);
+      V v1 = entry.getValue();
+      V v2 = map2.get(key);
       if (!Objects.equals(v1, v2)) {
         res.remove(key);
       }
