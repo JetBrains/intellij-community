@@ -5,6 +5,8 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -73,6 +75,22 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     AsyncEventSupport.startListening();
 
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener(){
+      @Override
+      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        // myIdToDirCache could retain alien file systems
+        clearIdCache();
+        // remove alien file system references from myRoots
+        for (Iterator<Map.Entry<String, VirtualFileSystemEntry>> iterator = myRoots.entrySet().iterator(); iterator.hasNext(); ) {
+          Map.Entry<String, VirtualFileSystemEntry> entry = iterator.next();
+          VirtualFileSystemEntry root = entry.getValue();
+          if (VirtualFileManager.getInstance().getFileSystem(root.getFileSystem().getProtocol()) == null) {
+            // the file system must have been unregistered
+            iterator.remove();
+          }
+        }
+      }
+    });
     Activity activity = StartUpMeasurer.startActivity("connect FSRecords");
     FSRecords.connect();
     activity.end();
