@@ -193,9 +193,10 @@ class FilePartNode {
 
   void doCheckConsistency(@NotNull String pathFromRoot) {
     String name = getName().toString();
+    String myUrl = myUrl();
     if (!(this instanceof FilePartNodeRoot)) {
       String expectedUrl = VirtualFileManager.constructUrl(myFS.getProtocol(), pathFromRoot + (pathFromRoot.endsWith("/") ? "" : "/"));
-      String actualUrl = myUrl() + (myUrl().endsWith("/") ? "" : "/");
+      String actualUrl = myUrl + (myUrl.endsWith("/") ? "" : "/");
       assert actualUrl.equals(expectedUrl) : "Expected url: '"+expectedUrl+"' but got: '"+actualUrl+"'";
     }
     assert !"..".equals(name) && !".".equals(name) : "url must not contain '.' or '..' but got: " + this;
@@ -212,13 +213,13 @@ class FilePartNode {
     assert (useCount == 0) == (leaves == null) : useCount + " - " + (leaves instanceof VirtualFilePointerImpl ? leaves : Arrays.toString((VirtualFilePointerImpl[])leaves));
     // there's just a name in UrlPartNode
     if (!(this instanceof UrlPartNode)) {
-      String url = myUrl();
-      String myPath = VfsUtilCore.urlToPath(url);
+      String myPath = VfsUtilCore.urlToPath(myUrl);
       String nameFromPath = nameId == JAR_SEPARATOR_NAME_ID ? JarFileSystem.JAR_SEPARATOR : PathUtil.getFileName(myPath);
       if (!myPath.isEmpty() && nameFromPath.isEmpty()/* && SystemInfo.isUnix*/) {
         nameFromPath = "/";
       }
-      assert StringUtilRt.equal(nameFromPath, name, SystemInfo.isFileSystemCaseSensitive) : "fileAndUrl: " + myFileOrUrl + "; but this: " + this+"; nameFromPath: "+nameFromPath+"; name: "+name+"; path: "+myPath+"; url: "+url+";";
+      assert StringUtilRt.equal(nameFromPath, name, SystemInfo.isFileSystemCaseSensitive) : "fileAndUrl: " + myFileOrUrl + "; but this: " + this + "; nameFromPath: " + nameFromPath + "; name: " + name + "; path: " + myPath + "; url: " +
+                                                                                            myUrl + ";";
       VirtualFile file = myFile();
       if (file != null) {
         String fileName = file.getParent() == null && file.getFileSystem() instanceof ArchiveFileSystem ? JarFileSystem.JAR_SEPARATOR : file.getName();
