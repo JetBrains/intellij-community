@@ -57,7 +57,7 @@ import java.util.*;
 
 public final class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget {
   private final ProcessPopup myPopup;
-  private final ProcessBalloon myBalloon = new ProcessBalloon();
+  private final ProcessBalloon myBalloon = new ProcessBalloon(3);
 
   private final StatusPanel myInfoPanel = new StatusPanel();
   private final JPanel myRefreshAndInfoPanel = new JPanel();
@@ -553,15 +553,15 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     public void updateProgressNow() {
       super_updateProgressNow();
       mySuspendUpdateRunnable.run();
-      boolean painting = getInfo().isCancellable() && !isStopping();
-      myCancelButton.setPainting(painting);
-      myCancelButton.setVisible(painting || !mySuspendButton.isVisible());
+      updateCancelButton(mySuspendButton, myCancelButton);
     }
   }
 
   class MyInlineProgressIndicator extends InlineProgressIndicator {
     private ProgressIndicatorEx myOriginal;
     PresentationModeProgressPanel myPresentationModeProgressPanel;
+    Balloon myPresentationModeBalloon;
+    boolean myPresentationModeShowBalloon;
 
     MyInlineProgressIndicator(@NotNull TaskInfo task, @NotNull ProgressIndicatorEx original) {
       this(true, task, original);
@@ -603,6 +603,18 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     @Override
     protected JBIterable<ProgressButton> createEastButtons() {
       return JBIterable.of(createSuspendButton()).append(super.createEastButtons());
+    }
+
+    protected void updateCancelButton(@NotNull InplaceButton suspend, @NotNull InplaceButton cancel) {
+      boolean painting = getInfo().isCancellable() && !isStopping();
+      cancel.setPainting(painting);
+      cancel.setVisible(painting || !suspend.isVisible());
+    }
+
+    JBIterable<ProgressButton> createPresentationButtons() {
+      ProgressButton suspend = createSuspendButton();
+      ProgressButton cancel = createCancelButton();
+      return JBIterable.of(suspend).append(new ProgressButton(cancel.button, () -> updateCancelButton(suspend.button, cancel.button)));
     }
 
     private ProgressButton createSuspendButton() {
@@ -725,6 +737,10 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
       myProgress.setVisible(!PowerSaveMode.isEnabled() || !isPaintingIndeterminate());
       super.updateProgressNow();
       if (myPresentationModeProgressPanel != null) myPresentationModeProgressPanel.update();
+    }
+
+    public boolean showInPresentationMode() {
+      return !isProcessWindowOpen();
     }
   }
 

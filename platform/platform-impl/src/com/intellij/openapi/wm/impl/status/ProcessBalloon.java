@@ -28,39 +28,93 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProcessBalloon {
+class ProcessBalloon {
   private final List<MyInlineProgressIndicator> myIndicators = new ArrayList<>();
+  private final int myMaxVisible;
+  private int myVisible;
 
-  void addIndicator(@Nullable JRootPane pane, @NotNull MyInlineProgressIndicator indicator) {
-    if (pane == null) {
-      return;
-    }
+  ProcessBalloon(int visibleCount) {
+    myMaxVisible = visibleCount;
+  }
 
-    myIndicators.add(indicator);
-
-    if (myIndicators.size() == 1) {
+  public void addIndicator(@Nullable JRootPane pane, @NotNull MyInlineProgressIndicator indicator) {
+    if (pane != null) {
+      myIndicators.add(indicator);
       show(pane);
     }
   }
 
-  void removeIndicator(@Nullable JRootPane pane, @NotNull MyInlineProgressIndicator indicator) {
+  public void removeIndicator(@Nullable JRootPane pane, @NotNull MyInlineProgressIndicator indicator) {
     myIndicators.remove(indicator);
 
-    if (pane != null && indicator.myPresentationModeProgressPanel != null && !myIndicators.isEmpty()) {
-      show(pane);
+    if (indicator.myPresentationModeProgressPanel != null) {
+      myVisible--;
+
+      if (pane != null && !myIndicators.isEmpty()) {
+        show(pane);
+      }
     }
   }
 
   private void show(@NotNull JRootPane pane) {
-    MyInlineProgressIndicator indicator = myIndicators.get(0);
+    List<MyInlineProgressIndicator> indicators = new ArrayList<>();
 
-    indicator.myPresentationModeProgressPanel = new PresentationModeProgressPanel(indicator);
-    indicator.updateProgressNow();
+    for (MyInlineProgressIndicator indicator : myIndicators) {
+      if (indicator.myPresentationModeProgressPanel == null) {
+        if (myVisible == myMaxVisible) {
+          continue;
+        }
 
-    show(pane, indicator, indicator.myPresentationModeProgressPanel.getProgressPanel());
+        myVisible++;
+
+        indicator.myPresentationModeProgressPanel = new PresentationModeProgressPanel(indicator);
+        indicator.updateProgressNow();
+
+        indicator.myPresentationModeBalloon = create(pane, indicator, indicator.myPresentationModeProgressPanel.getProgressPanel());
+        indicator.myPresentationModeShowBalloon = true;
+
+        indicators.add(indicator);
+      }
+      else if (!indicator.myPresentationModeBalloon.isDisposed()) {
+        indicators.add(indicator);
+      }
+    }
+
+    for (MyInlineProgressIndicator indicator : indicators) {
+      if (indicator.myPresentationModeShowBalloon) {
+        indicator.myPresentationModeShowBalloon = false;
+
+        indicator.myPresentationModeBalloon.show(new PositionTracker<Balloon>(getAnchor(pane)) {
+          @Override
+          public RelativePoint recalculateLocation(Balloon balloon) {
+            Component c = getAnchor(pane);
+            int y = c.getHeight() - JBUIScale.scale(45);
+
+            BalloonLayoutImpl balloonLayout = getBalloonLayout(pane);
+            if (balloonLayout != null && !isBottomSideToolWindowsVisible(pane)) {
+              Component component = balloonLayout.getTopBalloonComponent();
+              if (component != null) {
+                y = SwingUtilities.convertPoint(component, 0, -JBUIScale.scale(45), c).y;
+              }
+            }
+
+            if (myVisible > 1) {
+              int index = myIndicators.indexOf(indicator);
+              int rowHeight = balloon.getPreferredSize().height + JBUI.scale(5);
+              y -= rowHeight * (myVisible - index - 1);
+            }
+
+            return new RelativePoint(c, new Point(c.getWidth() - JBUIScale.scale(150), y));
+          }
+        }, Balloon.Position.above);
+      }
+      else {
+        indicator.myPresentationModeBalloon.revalidate();
+      }
+    }
   }
 
-  private static void show(@NotNull JRootPane pane, @NotNull Disposable parentDisposable, @NotNull JComponent content) {
+  private static @NotNull Balloon create(@NotNull JRootPane pane, @NotNull Disposable parentDisposable, @NotNull JComponent content) {
     Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(content)
       .setFadeoutTime(0)
       .setFillColor(Gray.TRANSPARENT)
@@ -101,21 +155,7 @@ public class ProcessBalloon {
       balloon.addListener(new MyListener());
     }
 
-    balloon.show(new PositionTracker<Balloon>(getAnchor(pane)) {
-      @Override
-      public RelativePoint recalculateLocation(Balloon object) {
-        Component c = getAnchor(pane);
-        int y = c.getHeight() - JBUIScale.scale(45);
-        if (balloonLayout != null && !isBottomSideToolWindowsVisible(pane)) {
-          Component component = balloonLayout.getTopBalloonComponent();
-          if (component != null) {
-            y = SwingUtilities.convertPoint(component, 0, -JBUIScale.scale(45), c).y;
-          }
-        }
-
-        return new RelativePoint(c, new Point(c.getWidth() - JBUIScale.scale(150), y));
-      }
-    }, Balloon.Position.above);
+    return balloon;
   }
 
   private static @Nullable BalloonLayoutImpl getBalloonLayout(@NotNull JRootPane pane) {
