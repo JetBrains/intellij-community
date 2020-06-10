@@ -35,6 +35,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.project.ProjectStoreOwner;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimedReference;
@@ -375,7 +376,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx, Proj
   @ApiStatus.Internal
   public final @NotNull Disposable getEarlyDisposable() {
     if (isDisposed()) {
-      throw new IllegalStateException(this + " is disposed already");
+      throw new AlreadyDisposedException(this + " is disposed already");
     }
 
     // maybe null only if disposed, but this condition is checked above
