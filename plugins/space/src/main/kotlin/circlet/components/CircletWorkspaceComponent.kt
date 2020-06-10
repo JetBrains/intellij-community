@@ -7,7 +7,6 @@ import circlet.permission.FeatureFlagsVmPersistenceKey
 import circlet.platform.api.oauth.OAuthTokenResponse
 import circlet.platform.api.oauth.toTokenInfo
 import circlet.platform.api.serialization.ExtendableSerializationRegistry
-import circlet.platform.client.ConnectionStatus
 import circlet.platform.workspaces.CodeFlowConfig
 import circlet.platform.workspaces.WorkspaceConfiguration
 import circlet.platform.workspaces.WorkspaceManagerHost
@@ -36,7 +35,9 @@ import runtime.mutableUiDispatch
 import runtime.persistence.InMemoryPersistence
 import runtime.persistence.PersistenceConfiguration
 import runtime.persistence.PersistenceKey
-import runtime.reactive.*
+import runtime.reactive.SequentialLifetimes
+import runtime.reactive.flatMapInit
+import runtime.reactive.mutableProperty
 import runtime.utils.selectFreePort
 import java.awt.Desktop
 import java.io.BufferedReader
@@ -75,14 +76,7 @@ class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedDisposable by
         launch(wsLifetime, Ui) {
             if (!autoSignIn(settingsOnStartup, wsLifetime)) {
             }
-            notifyDisconnected(wsLifetime)
-        }
-
-        // notify circlet is connected on the first connect (remove it later)
-        workspace.whenNotNull(lifetime) { lt, ws ->
-            ws.client.connectionStatus.filterIsInstance<ConnectionStatus.Connected>().first().forEach(lt) { status ->
-                notifyConnected(lt)
-            }
+            notifyDisconnected()
         }
     }
 
@@ -98,7 +92,7 @@ class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedDisposable by
 
 
     override suspend fun authFailed() {
-        authCheckFailedNotification(lifetime)
+        authCheckFailedNotification()
         manager.value?.signOut(false)
     }
 
@@ -164,6 +158,7 @@ class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedDisposable by
             wss.signInWithToken(response.toTokenInfo())
             settings.serverSettings = CircletServerSettings(true, server)
             manager.value = wss
+            notifyConnected()
         }
         return response
     }
@@ -194,21 +189,17 @@ val circletWorkspace: CircletWorkspaceComponent
     get() = ServiceManager.getService(CircletWorkspaceComponent::class.java)
 
 
-private fun notifyDisconnected(lifetime: Lifetime) {
-    notify(lifetime, "Disconnected.<br><a href=\"switch-on\">Configure Server</a>", ::configure)
+private fun notifyDisconnected() {
+    notify("Disconnected.<br><a href=\"switch-on\">Configure Server</a>", ::configure)
 }
 
-private fun notifyConnected(lifetime: Lifetime) {
-    notify(lifetime, "Connected")
+private fun notifyConnected() {
+    notify("Connected")
 }
 
-private fun notifyAuthFailed(lifetime: Lifetime) {
-    notify(lifetime, "Auth Failed")
-}
-
-private fun authCheckFailedNotification(lifetime: Lifetime) {
-    notify(lifetime, "Not authenticated.<br> <a href=\"sign-in\">Sign in</a>", {
-    })
+private fun authCheckFailedNotification() {
+    notify("Not authenticated.<br> <a href=\"sign-in\">Sign in</a>") {
+    }
 }
 
 private fun configure() {
