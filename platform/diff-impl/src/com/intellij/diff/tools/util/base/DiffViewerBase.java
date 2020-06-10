@@ -67,18 +67,6 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
       LOG.warn("Diff shown for a hidden component, initial scroll position might be invalid", new Throwable());
     }
 
-    new UiNotifyConnector(getComponent(), new Activatable() {
-      @Override
-      public void showNotify() {
-        rediff(false);
-      }
-
-      @Override
-      public void hideNotify() {
-        abortRediff();
-      }
-    });
-
     processContextHints();
     onInit();
 
@@ -89,7 +77,21 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
     fireEvent(EventType.INIT);
 
-    rediff(true);
+    new UiNotifyConnector(getComponent(), new Activatable() {
+      private boolean wasNotShownYet = true;
+
+      @Override
+      public void showNotify() {
+        rediff(wasNotShownYet);
+        wasNotShownYet = false;
+      }
+
+      @Override
+      public void hideNotify() {
+        abortRediff();
+      }
+    });
+
     return components;
   }
 

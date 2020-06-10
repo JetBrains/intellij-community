@@ -152,6 +152,13 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     installTypingSupport();
     myPanel.setLoadingContent(); // We need loading panel only for initial rediff()
     myPanel.setPersistentNotifications(DiffUtil.getCustomNotifications(myContext, myRequest));
+
+    new UiNotifyConnector(getComponent(), new Activatable() {
+      @Override
+      public void showNotify() {
+        myMarkupUpdater.scheduleUpdate();
+      }
+    });
   }
 
   @Override
@@ -1303,13 +1310,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true);
         model.addMarkupModelListener(this, markupListener);
       }
-
-      new UiNotifyConnector(getComponent(), new Activatable() {
-        @Override
-        public void showNotify() {
-          scheduleUpdate();
-        }
-      });
     }
 
     @Override
