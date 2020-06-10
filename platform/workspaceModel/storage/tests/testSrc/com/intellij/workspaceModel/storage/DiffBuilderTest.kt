@@ -245,4 +245,18 @@ class DiffBuilderTest {
 
     source.applyDiff(target)
   }
+
+  @Test(expected = AddDiffException::class)
+  fun `modifying duplicated persistent ids`() {
+    val source = WorkspaceEntityStorageBuilderImpl.create()
+    val namedEntity = source.addNamedEntity("Hello")
+    val target = WorkspaceEntityStorageBuilderImpl.from(source)
+
+    source.addNamedEntity("Name")
+    target.modifyEntity(ModifiableNamedEntity::class.java, namedEntity) {
+      this.name = "Name"
+    }
+
+    source.applyDiff(target)
+  }
 }

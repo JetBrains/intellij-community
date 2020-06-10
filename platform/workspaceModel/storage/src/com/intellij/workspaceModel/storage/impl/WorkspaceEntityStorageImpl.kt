@@ -623,6 +623,14 @@ internal class WorkspaceEntityStorageBuilderImpl(
           val newData = change.newData.clone()
           newData.id = usedPid.arrayId
 
+          val newPersistentId = change.newData.persistentId(this)
+          if (newPersistentId != null) {
+            val existingIds = this.indexes.persistentIdIndex.getIdsByEntry(newPersistentId)
+            if (existingIds != null && existingIds.isNotEmpty() && existingIds.single() != newData.createPid()) {
+              adFailed("PersistentId already exists: $newPersistentId")
+            }
+          }
+
           // We don't modify entity that isn't exist in this version of storage
           if (this.entityDataById(usedPid) != null) {
             indexes.updateIndices(outdatedId, newData.createPid(), builder)
