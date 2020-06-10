@@ -9,10 +9,12 @@ import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -98,6 +100,11 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
 
   public Configuration getMostRecentConfiguration() {
     return historyConfigurations.isEmpty() ? null : historyConfigurations.get(0);
+  }
+
+  @TestOnly
+  public void addConfiguration(Configuration configuration) {
+    myApplicationState.add(configuration);
   }
 
   public void removeConfiguration(Configuration configuration) {
@@ -201,7 +208,26 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
 
   @Nullable
   private static Configuration findConfigurationByName(Collection<? extends Configuration> configurations, final String name) {
-    return configurations.stream().filter(config -> config.getName().equals(name)).findFirst().orElse(null);
+    return ContainerUtil.find(configurations, config -> config.getName().equals(name));
+  }
+
+  @NotNull
+  public Collection<Configuration> findConfigurationsByName(String name) {
+    Collection<Configuration> results = findConfigurationsByName(StructuralSearchUtil.getPredefinedTemplates(), name);
+    if (Registry.is("ssr.save.templates.to.ide.instead.of.project.workspace")) {
+      final Configuration ideConfiguration = myApplicationState.get(name);
+      if (ideConfiguration != null) results.add(ideConfiguration);
+    }
+    else {
+      final Configuration configuration = findConfigurationByName(configurations, name);
+      if (configuration != null) results.add(configuration);
+    }
+    return results;
+  }
+
+  @NotNull
+  private static Collection<Configuration> findConfigurationsByName(Collection<? extends Configuration> configurations, final String name) {
+    return ContainerUtil.findAll(configurations, config -> config.getName().equals(name));
   }
 
   @Nullable
