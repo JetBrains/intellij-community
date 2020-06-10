@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -12,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
@@ -325,11 +325,13 @@ public final class GitVcs extends AbstractVcs {
   @Override
   @CalledInAwt
   public void enableIntegration() {
-    Runnable task = () -> {
-      Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
-      new GitIntegrationEnabler(this).enable(roots);
-    };
-    BackgroundTaskUtil.executeOnPooledThread(myProject, task);
+    new Task.Backgroundable(myProject, GitBundle.message("progress.title.enabling.git"), true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
+        new GitIntegrationEnabler(GitVcs.this).enable(roots);
+      }
+    }.queue();
   }
 
   @Override
