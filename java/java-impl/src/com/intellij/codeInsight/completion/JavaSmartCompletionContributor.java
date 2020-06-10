@@ -16,16 +16,17 @@ import com.intellij.psi.filters.types.AssignableToFilter;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.proximity.ReferenceListWeigher;
-import com.intellij.util.Consumer;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.or;
@@ -34,7 +35,7 @@ import static com.intellij.patterns.StandardPatterns.or;
  * @author peter
  */
 public class JavaSmartCompletionContributor {
-  private static final TObjectHashingStrategy<ExpectedTypeInfo> EXPECTED_TYPE_INFO_STRATEGY = new TObjectHashingStrategy<ExpectedTypeInfo>() {
+  static final TObjectHashingStrategy<ExpectedTypeInfo> EXPECTED_TYPE_INFO_STRATEGY = new TObjectHashingStrategy<ExpectedTypeInfo>() {
     @Override
     public int computeHashCode(ExpectedTypeInfo object) {
       return object.getType().hashCode();
@@ -93,10 +94,10 @@ public class JavaSmartCompletionContributor {
     return null;
   }
 
-  private static void addClassReferenceSuggestions(@NotNull CompletionParameters parameters,
-                                                   @NotNull CompletionResultSet result,
-                                                   PsiElement element,
-                                                   PsiJavaCodeReferenceElement reference) {
+  static void addClassReferenceSuggestions(@NotNull CompletionParameters parameters,
+                                           @NotNull CompletionResultSet result,
+                                           @NotNull PsiElement element,
+                                           @NotNull PsiJavaCodeReferenceElement reference) {
     boolean inRefList = ReferenceListWeigher.INSIDE_REFERENCE_LIST.accepts(element);
     ElementFilter filter = getClassReferenceFilter(element, inRefList);
     if (filter != null) {
@@ -121,70 +122,6 @@ public class JavaSmartCompletionContributor {
           result.addElement(item);
         }
       }
-    }
-  }
-
-  private static void addExpressionSuggestions(CompletionParameters params,
-                                               CompletionResultSet result,
-                                               Collection<? extends ExpectedTypeInfo> _infos) {
-    Consumer<LookupElement> noTypeCheck = decorateWithoutTypeCheck(result, _infos);
-
-    THashSet<ExpectedTypeInfo> mergedInfos = new THashSet<>(_infos, EXPECTED_TYPE_INFO_STRATEGY);
-    List<Runnable> chainedEtc = new ArrayList<>();
-    for (final ExpectedTypeInfo info : mergedInfos) {
-      Runnable slowContinuation =
-        ReferenceExpressionCompletionContributor.fillCompletionVariants(new JavaSmartCompletionParameters(params, info), noTypeCheck);
-      ContainerUtil.addIfNotNull(chainedEtc, slowContinuation);
-    }
-
-    for (final ExpectedTypeInfo info : mergedInfos) {
-      BasicExpressionCompletionContributor.fillCompletionVariants(new JavaSmartCompletionParameters(params, info), lookupElement -> {
-        final PsiType psiType = JavaCompletionUtil.getLookupElementType(lookupElement);
-        if (psiType != null && info.getType().isAssignableFrom(psiType)) {
-          result.addElement(decorate(lookupElement, _infos));
-        }
-      }, result.getPrefixMatcher());
-
-    }
-
-    for (Runnable runnable : chainedEtc) {
-      runnable.run();
-    }
-  }
-
-  @NotNull
-  private static Consumer<LookupElement> decorateWithoutTypeCheck(final CompletionResultSet result, final Collection<? extends ExpectedTypeInfo> infos) {
-    return lookupElement -> result.addElement(decorate(lookupElement, infos));
-  }
-
-  static void provideSmartCompletionSuggestions(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    PsiElement position = parameters.getPosition();
-    if (position instanceof PsiComment || position.getParent() instanceof PsiLiteralExpression) {
-      return;
-    }
-
-    if (!SmartCastProvider.shouldSuggestCast(parameters)) {
-      PsiJavaCodeReferenceElement reference =
-        PsiTreeUtil.findElementOfClassAtOffset(position.getContainingFile(), parameters.getOffset(), PsiJavaCodeReferenceElement.class, false);
-      if (reference != null) {
-        addClassReferenceSuggestions(parameters, result, position, reference);
-      }
-
-      if (INSIDE_EXPRESSION.accepts(position)) {
-        addExpressionSuggestions(parameters, result, ContainerUtil.newHashSet(getExpectedTypes(parameters)));
-      }
-    }
-    if (InstanceofTypeProvider.AFTER_INSTANCEOF.accepts(position)) {
-      InstanceofTypeProvider.addCompletions(parameters, result);
-    }
-    if (ExpectedAnnotationsProvider.ANNOTATION_ATTRIBUTE_VALUE.accepts(position)) {
-      ExpectedAnnotationsProvider.addCompletions(position, result);
-    }
-    if (CatchTypeProvider.CATCH_CLAUSE_TYPE.accepts(position)) {
-      CatchTypeProvider.addCompletions(parameters, result);
-    }
-    if (psiElement().afterLeaf("::").withParent(PsiMethodReferenceExpression.class).accepts(position)) {
-      MethodReferenceCompletionProvider.addCompletions(parameters, result);
     }
   }
 

@@ -2,7 +2,10 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.lookup.*;
@@ -50,6 +53,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -263,14 +267,11 @@ public class JavaCompletionContributor extends CompletionContributor {
         session.registerBatchItems(completeReference(parameters, (PsiJavaCodeReferenceElement)parent, session));
         result.stopHere();
       }
-    }
 
-    session.flushBatchItems();
+      session.flushBatchItems();
 
-    if (smart) {
-      JavaSmartCompletionContributor.provideSmartCompletionSuggestions(parameters, result);
-      if (parameters.getInvocationCount() > 1 && shouldAddExpressionVariants(parameters)) {
-        addExpectedTypeMembers(parameters, true, result);
+      if (smart) {
+        addSmartCompletionSuggestions(parameters, result);
       }
     }
 
@@ -310,6 +311,54 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     if (!smart && parent instanceof PsiJavaModuleReferenceElement) {
       addModuleReferences(parent, parameters.getOriginalFile(), result);
+    }
+  }
+
+  private static void addSmartCompletionSuggestions(CompletionParameters parameters, CompletionResultSet result) {
+    PsiElement position = parameters.getPosition();
+    Set<ExpectedTypeInfo> infos = ContainerUtil.newHashSet(JavaSmartCompletionContributor.getExpectedTypes(parameters));
+    Set<ExpectedTypeInfo> mergedInfos = new THashSet<>(infos, JavaSmartCompletionContributor.EXPECTED_TYPE_INFO_STRATEGY);
+    List<Runnable> chainedEtc = new ArrayList<>();
+    if (!SmartCastProvider.shouldSuggestCast(parameters) && position.getParent() instanceof PsiJavaCodeReferenceElement) {
+      JavaSmartCompletionContributor.addClassReferenceSuggestions(parameters, result, position, (PsiJavaCodeReferenceElement)position.getParent());
+
+      if (JavaSmartCompletionContributor.INSIDE_EXPRESSION.accepts(position)) {
+        for (ExpectedTypeInfo info : mergedInfos) {
+          Runnable slowContinuation = ReferenceExpressionCompletionContributor.fillCompletionVariants(
+            new JavaSmartCompletionParameters(parameters, info),
+            e -> result.addElement(JavaSmartCompletionContributor.decorate(e, infos)));
+          ContainerUtil.addIfNotNull(chainedEtc, slowContinuation);
+        }
+
+        for (ExpectedTypeInfo info : mergedInfos) {
+          BasicExpressionCompletionContributor.fillCompletionVariants(new JavaSmartCompletionParameters(parameters, info), lookupElement -> {
+            final PsiType psiType = JavaCompletionUtil.getLookupElementType(lookupElement);
+            if (psiType != null && info.getType().isAssignableFrom(psiType)) {
+              result.addElement(JavaSmartCompletionContributor.decorate(lookupElement, infos));
+            }
+          }, result.getPrefixMatcher());
+        }
+      }
+    }
+    if (InstanceofTypeProvider.AFTER_INSTANCEOF.accepts(position)) {
+      InstanceofTypeProvider.addCompletions(parameters, result);
+    }
+    if (ExpectedAnnotationsProvider.ANNOTATION_ATTRIBUTE_VALUE.accepts(position)) {
+      ExpectedAnnotationsProvider.addCompletions(position, result);
+    }
+    if (CatchTypeProvider.CATCH_CLAUSE_TYPE.accepts(position)) {
+      CatchTypeProvider.addCompletions(parameters, result);
+    }
+    if (psiElement().afterLeaf("::").withParent(PsiMethodReferenceExpression.class).accepts(position)) {
+      MethodReferenceCompletionProvider.addCompletions(parameters, result);
+    }
+
+    for (Runnable runnable : chainedEtc) {
+      runnable.run();
+    }
+
+    if (parameters.getInvocationCount() > 1 && shouldAddExpressionVariants(parameters)) {
+      addExpectedTypeMembers(parameters, true, result);
     }
   }
 
