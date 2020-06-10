@@ -191,40 +191,49 @@ class FilePartNode {
     processPointers(pointer -> { if (pointer.isRecursive()) toFirePointers.putValue(pointer.myListener, pointer); });
   }
 
-  void doCheckConsistency(@NotNull String pathFromRoot) {
+  void doCheckConsistency(@Nullable VirtualFile parent, @NotNull String pathFromRoot) {
     String name = getName().toString();
-    String myUrl = myUrl();
+    VirtualFile myFile = myFile();
+
     if (!(this instanceof FilePartNodeRoot)) {
-      String expectedUrl = VirtualFileManager.constructUrl(myFS.getProtocol(), pathFromRoot + (pathFromRoot.endsWith("/") ? "" : "/"));
-      String actualUrl = myUrl + (myUrl.endsWith("/") ? "" : "/");
-      assert actualUrl.equals(expectedUrl) : "Expected url: '"+expectedUrl+"' but got: '"+actualUrl+"'";
+      if (myFile == null) {
+        String myUrl = myUrl();
+        String expectedUrl = VirtualFileManager.constructUrl(myFS.getProtocol(), pathFromRoot + (pathFromRoot.endsWith("/") ? "" : "/"));
+        String actualUrl = myUrl + (myUrl.endsWith("/") ? "" : "/");
+        assert actualUrl.equals(expectedUrl) : "Expected url: '" + expectedUrl + "' but got: '" + actualUrl + "'";
+      }
+      else {
+        assert Comparing.equal(getParentThroughJar(myFile, myFS), parent) : "parent: " + parent + "; myFile: " + myFile;
+      }
     }
     assert !"..".equals(name) && !".".equals(name) : "url must not contain '.' or '..' but got: " + this;
     for (int i = 0; i < children.length; i++) {
       FilePartNode child = children[i];
-      child.doCheckConsistency(pathFromRoot + (pathFromRoot.isEmpty() || pathFromRoot.endsWith("/") || child.getName().equals(JarFileSystem.JAR_SEPARATOR) ? "" : "/") + child.getName());
+      CharSequence childName = child.getName();
+      String childPathRoot = pathFromRoot +
+                    (pathFromRoot.isEmpty() || pathFromRoot.endsWith("/") || childName.equals(JarFileSystem.JAR_SEPARATOR) ? "" : "/") +
+                    childName;
+      child.doCheckConsistency(myFile, childPathRoot);
       if (i != 0) {
-        assert !FileUtil.namesEqual(child.getName().toString(), children[i-1].getName().toString()) : "child["+i+"] = "+child+"; [-1] = "+children[i-1];
+        assert !FileUtil.namesEqual(childName.toString(), children[i - 1].getName().toString()) : "child[" + i + "] = " + child + "; [-1] = " + children[i - 1];
       }
     }
     int[] leafNumber = new int[1];
     processPointers(p -> { assert p.myNode == this; leafNumber[0]++; });
     int useCount = leafNumber[0];
     assert (useCount == 0) == (leaves == null) : useCount + " - " + (leaves instanceof VirtualFilePointerImpl ? leaves : Arrays.toString((VirtualFilePointerImpl[])leaves));
-    // there's just a name in UrlPartNode
-    if (!(this instanceof UrlPartNode)) {
-      String myPath = VfsUtilCore.urlToPath(myUrl);
-      String nameFromPath = nameId == JAR_SEPARATOR_NAME_ID ? JarFileSystem.JAR_SEPARATOR : PathUtil.getFileName(myPath);
-      if (!myPath.isEmpty() && nameFromPath.isEmpty()/* && SystemInfo.isUnix*/) {
+
+    if (myFileOrUrl instanceof String) {
+      String myPath = VfsUtilCore.urlToPath(myUrl());
+      String nameFromPath = nameId == JAR_SEPARATOR_NAME_ID || myPath.endsWith(JarFileSystem.JAR_SEPARATOR) ? JarFileSystem.JAR_SEPARATOR : PathUtil.getFileName(myPath);
+      if (!myPath.isEmpty() && nameFromPath.isEmpty()) {
         nameFromPath = "/";
       }
-      assert StringUtilRt.equal(nameFromPath, name, SystemInfo.isFileSystemCaseSensitive) : "fileAndUrl: " + myFileOrUrl + "; but this: " + this + "; nameFromPath: " + nameFromPath + "; name: " + name + "; path: " + myPath + "; url: " +
-                                                                                            myUrl + ";";
-      VirtualFile file = myFile();
-      if (file != null) {
-        String fileName = file.getParent() == null && file.getFileSystem() instanceof ArchiveFileSystem ? JarFileSystem.JAR_SEPARATOR : file.getName();
+      assert StringUtilRt.equal(nameFromPath, name, SystemInfo.isFileSystemCaseSensitive) : "fileAndUrl: " + myFileOrUrl + "; but this: " + this + "; nameFromPath: " + nameFromPath + "; name: " + name + "; myPath: " + myPath + "; url: " + myUrl() + ";";
+      if (myFile != null) {
+        String fileName = myFile.getParent() == null && myFile.getFileSystem() instanceof ArchiveFileSystem ? JarFileSystem.JAR_SEPARATOR : myFile.getName();
         assert fileName.equals(name) : "fileAndUrl: " + myFileOrUrl + "; but this: " + this;
-        assert file.getFileSystem() == myFS;
+        assert myFile.getFileSystem() == myFS;
       }
     }
   }

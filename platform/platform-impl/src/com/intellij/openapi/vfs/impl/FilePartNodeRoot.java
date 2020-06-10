@@ -249,7 +249,7 @@ class FilePartNodeRoot extends FilePartNode {
 
   void checkConsistency() {
     if (VirtualFilePointerManagerImpl.IS_UNDER_UNIT_TEST && !ApplicationInfoImpl.isInStressTest()) {
-      doCheckConsistency("");
+      doCheckConsistency(null, "");
     }
   }
 
