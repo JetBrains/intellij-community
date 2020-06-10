@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WelcomeScreenTab;
 import com.intellij.openapi.wm.WelcomeTabFactory;
@@ -19,6 +20,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearch;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,13 +29,12 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 
 import static com.intellij.openapi.actionSystem.impl.ActionButton.HIDE_DROPDOWN_ICON;
-import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.ToolbarTextButtonWrapper.wrapAsTextButton;
-import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createErrorsLink;
+import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.*;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getProjectsBackground;
 
 public class ProjectsTabFactory implements WelcomeTabFactory {
 
-  public static final int PRIMARY_BUTTONS_NUM = 3;
+  static final int PRIMARY_BUTTONS_NUM = 3;
 
   @Override
   public @NotNull WelcomeScreenTab createWelcomeTab(@NotNull Disposable parentDisposable) {
@@ -115,26 +116,17 @@ public class ProjectsTabFactory implements WelcomeTabFactory {
 
       @NotNull
       private ActionToolbar createActionsToolbar() {
-        ActionGroup quickStartActionGroup =
-          (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART);
-        DefaultActionGroup group = new DefaultActionGroup();
-        WelcomeScreenComponentFactory.collectAllActions(group, quickStartActionGroup);
+        Couple<DefaultActionGroup> mainAndMore =
+          splitActionGroupToMainAndMore((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART),
+                                        PRIMARY_BUTTONS_NUM);
+        DefaultActionGroup toolbarActionGroup = new DefaultActionGroup(
+          ContainerUtil.map2List(mainAndMore.getFirst().getChildren(null), ToolbarTextButtonWrapper::wrapAsTextButton));
+        ActionGroup moreActionGroup = mainAndMore.getSecond();
 
-        DefaultActionGroup moreActionGroup = new DefaultActionGroup(IdeBundle.message("welcome.screen.projects.action.more.text"), true);
         Presentation moreActionPresentation = moreActionGroup.getTemplatePresentation();
         moreActionPresentation.setIcon(AllIcons.Actions.More);
         moreActionPresentation.putClientProperty(HIDE_DROPDOWN_ICON, true);
 
-        DefaultActionGroup toolbarActionGroup = new DefaultActionGroup();
-        for (AnAction child : group.getChildren(null)) {
-          boolean isPrimary = toolbarActionGroup.getChildrenCount() < PRIMARY_BUTTONS_NUM;
-          if (isPrimary && child.getTemplatePresentation().isVisible()) {
-            toolbarActionGroup.addAction(wrapAsTextButton(child));
-          }
-          else {
-            moreActionGroup.addAction(child);
-          }
-        }
         toolbarActionGroup.addAction(moreActionGroup);
         ActionToolbarImpl toolbar = new ActionToolbarImpl(ActionPlaces.WELCOME_SCREEN, toolbarActionGroup, true) {
           @Override

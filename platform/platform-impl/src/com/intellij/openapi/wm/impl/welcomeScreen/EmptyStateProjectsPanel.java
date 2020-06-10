@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Couple;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -20,11 +21,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.ProjectsTabFactory.PRIMARY_BUTTONS_NUM;
-import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.LargeIconWithTextWrapper.wrapAsBigIconWithText;
-import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.getApplicationTitle;
+import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.*;
 
 public class EmptyStateProjectsPanel extends JPanel {
 
@@ -37,18 +36,18 @@ public class EmptyStateProjectsPanel extends JPanel {
     mainPanel.add(createCommentLabel(IdeBundle.message("welcome.screen.empty.projects.create.comment")));
     mainPanel.add(createCommentLabel(IdeBundle.message("welcome.screen.empty.projects.open.comment")));
 
-    ActionGroup quickStartActionGroup =
-      (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART);
-    DefaultActionGroup group = new DefaultActionGroup();
-    WelcomeScreenComponentFactory.collectAllActions(group, quickStartActionGroup);
-    AnAction[] actions = group.getChildren(null);
+    Couple<DefaultActionGroup> mainAndMore =
+      splitActionGroupToMainAndMore((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART),
+                                    PRIMARY_BUTTONS_NUM);
 
-    ActionToolbarImpl actionsToolbar = createActionsToolbar(Arrays.copyOfRange(actions, 0, PRIMARY_BUTTONS_NUM));
+    ActionGroup main = new DefaultActionGroup(
+      ContainerUtil.map2List(mainAndMore.getFirst().getChildren(null), LargeIconWithTextWrapper::wrapAsBigIconWithText));
+
+    ActionToolbarImpl actionsToolbar = createActionsToolbar(main);
     mainPanel.add(new Wrapper(new FlowLayout(), actionsToolbar.getComponent()));
 
-    if (PRIMARY_BUTTONS_NUM < actions.length) {
-      ActionGroup moreActionGroup = new DefaultActionGroup(IdeBundle.message("welcome.screen.empty.projects.more.text"),
-                                                           ContainerUtil.newArrayList(actions, PRIMARY_BUTTONS_NUM, actions.length));
+    DefaultActionGroup moreActionGroup = mainAndMore.getSecond();
+    if (moreActionGroup.getChildrenCount() > 0) {
       LinkLabel<String> moreLink = createLinkWithPopup(moreActionGroup);
       JPanel moreLinkPanel = new Wrapper(new FlowLayout(), moreLink);
       mainPanel.add(moreLinkPanel);
@@ -58,12 +57,8 @@ public class EmptyStateProjectsPanel extends JPanel {
   }
 
   @NotNull
-  static ActionToolbarImpl createActionsToolbar(AnAction... actions) {
-    DefaultActionGroup mainActionGroup = new DefaultActionGroup();
-    for (AnAction action : actions) {
-      mainActionGroup.addAction(wrapAsBigIconWithText(action));
-    }
-    ActionToolbarImpl actionToolbar = new ActionToolbarImpl(ActionPlaces.WELCOME_SCREEN, mainActionGroup, true);
+  static ActionToolbarImpl createActionsToolbar(ActionGroup actionGroup) {
+    ActionToolbarImpl actionToolbar = new ActionToolbarImpl(ActionPlaces.WELCOME_SCREEN, actionGroup, true);
     actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     actionToolbar.setBorder(JBUI.Borders.emptyTop(50));
     actionToolbar.setOpaque(false);

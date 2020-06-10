@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
@@ -302,6 +303,12 @@ public class WelcomeScreenComponentFactory {
     }
   }
 
+  static boolean isActionAvailable(@NotNull AnAction action) {
+    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataContext.EMPTY_CONTEXT);
+    action.update(event);
+    return event.getPresentation().isEnabledAndVisible();
+  }
+
   @NotNull
   static ActionListener createActionListenerForComponent(@NotNull JComponent component, @NotNull AnAction action) {
     return l -> {
@@ -372,5 +379,29 @@ public class WelcomeScreenComponentFactory {
     public static @NotNull WelcomeScreenComponentFactory.LargeIconWithTextWrapper wrapAsBigIconWithText(AnAction action) {
       return new LargeIconWithTextWrapper(action);
     }
+  }
+
+  static Couple<DefaultActionGroup> splitActionGroupToMainAndMore(@NotNull ActionGroup actionGroup, int mainButtonsNum) {
+    DefaultActionGroup group = new DefaultActionGroup();
+    collectAllActions(group, actionGroup);
+    AnAction[] actions = group.getChildren(null);
+
+    DefaultActionGroup main = new DefaultActionGroup();
+    DefaultActionGroup more = new DefaultActionGroup(IdeBundle.message("welcome.screen.empty.projects.more.text"), true) {
+      @Override
+      public boolean hideIfNoVisibleChildren() {
+        return true;
+      }
+    };
+    for (AnAction child : actions) {
+      if (!isActionAvailable(child)) continue;
+      if (main.getChildrenCount() < mainButtonsNum) {
+        main.addAction(child);
+      }
+      else {
+        more.addAction(child);
+      }
+    }
+    return Couple.of(main, more);
   }
 }
