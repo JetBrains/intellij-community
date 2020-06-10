@@ -23,7 +23,6 @@ import com.intellij.spellchecker.util.Strings;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -39,12 +38,14 @@ import static com.intellij.openapi.extensions.PluginId.getId;
 import static com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel.APP;
 import static com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel.PROJECT;
 import static com.intellij.spellchecker.SpellCheckerManager.getBundledDictionaries;
+import static com.intellij.ui.IdeBorderFactory.createTitledBorder;
+import static com.intellij.util.ui.JBUI.insetsTop;
 import static javax.swing.event.HyperlinkEvent.EventType.ACTIVATED;
 
 public class SpellCheckerSettingsPane implements Disposable {
   private JPanel root;
   private JPanel linkContainer;
-  private JPanel panelForAcceptedWords;
+  private JPanel myPanelForAcceptedWords;
   private JPanel myPanelForCustomDictionaries;
   private JBCheckBox myUseSingleDictionary;
   private ComboBox<String> myDictionariesComboBox;
@@ -92,8 +93,11 @@ public class SpellCheckerSettingsPane implements Disposable {
     myDictionariesPanel = new CustomDictionariesPanel(settings, project, manager);
 
     myPanelForCustomDictionaries.setBorder(
-      IdeBorderFactory.createTitledBorder(SpellCheckerBundle.message("add.dictionary.description", getHunspellDescription()),
-                                          false, JBUI.insetsTop(8)).setShowLine(false));
+      createTitledBorder(SpellCheckerBundle.message("add.dictionary.description", getHunspellDescription()),
+                                          false, insetsTop(8)).setShowLine(false));
+
+    myPanelForAcceptedWords
+      .setBorder(createTitledBorder(SpellCheckerBundle.message("settings.tab.accepted.words"), false, insetsTop(8)).setShowLine(false));
     myPanelForCustomDictionaries.setLayout(new BorderLayout());
     myPanelForCustomDictionaries.add(myDictionariesPanel, BorderLayout.CENTER);
 
@@ -130,8 +134,8 @@ public class SpellCheckerSettingsPane implements Disposable {
 
 
     wordsPanel = new WordsPanel(manager);
-    panelForAcceptedWords.setLayout(new BorderLayout());
-    panelForAcceptedWords.add(wordsPanel, BorderLayout.CENTER);
+    myPanelForAcceptedWords.setLayout(new BorderLayout());
+    myPanelForAcceptedWords.add(wordsPanel, BorderLayout.CENTER);
   }
 
   private static String getHunspellDescription() {
