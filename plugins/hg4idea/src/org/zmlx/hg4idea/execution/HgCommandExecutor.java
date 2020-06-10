@@ -27,6 +27,7 @@ import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgBundle;
+import org.zmlx.hg4idea.HgDisposable;
 import org.zmlx.hg4idea.HgExecutableManager;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.util.HgEncodingUtil;
@@ -110,7 +111,7 @@ public class HgCommandExecutor {
                       @NotNull final String operation,
                       @Nullable final List<String> arguments,
                       @Nullable final HgCommandResultHandler handler) {
-    BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
+    BackgroundTaskUtil.executeOnPooledThread(HgDisposable.getInstance(myProject), () -> {
       HgCommandResult result = executeInCurrentThread(repo, operation, arguments);
       if (handler != null) {
         handler.process(result);

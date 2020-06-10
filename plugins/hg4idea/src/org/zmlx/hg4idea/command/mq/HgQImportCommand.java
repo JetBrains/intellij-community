@@ -37,7 +37,7 @@ public class HgQImportCommand {
   }
 
   public void execute(@NotNull final String startRevisionNumber) {
-    BackgroundTaskUtil.executeOnPooledThread(myRepository.getProject(), () -> executeInCurrentThread(startRevisionNumber));
+    BackgroundTaskUtil.executeOnPooledThread(myRepository, () -> executeInCurrentThread(startRevisionNumber));
   }
 
   public void executeInCurrentThread(@NotNull final String startRevisionNumber) {

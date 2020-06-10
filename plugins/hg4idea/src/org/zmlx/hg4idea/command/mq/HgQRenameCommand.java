@@ -63,7 +63,7 @@ public class HgQRenameCommand {
                                         @NotNull String newName) {
     if (oldName.equals(newName)) return;
     Project project = repository.getProject();
-    BackgroundTaskUtil.executeOnPooledThread(project, () -> {
+    BackgroundTaskUtil.executeOnPooledThread(repository, () -> {
       HgCommandExecutor executor = new HgCommandExecutor(project);
       HgCommandResult result = executor.executeInCurrentThread(repository.getRoot(), "qrename", Arrays.asList(oldName, newName));
       if (HgErrorUtil.hasErrorsInCommandExecution(result)) {

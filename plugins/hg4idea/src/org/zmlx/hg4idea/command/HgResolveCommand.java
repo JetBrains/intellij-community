@@ -21,6 +21,7 @@ import com.intellij.util.Consumer;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgDisposable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -58,7 +59,7 @@ public class HgResolveCommand {
     }
     HgCommandExecutor executor = new HgCommandExecutor(myProject);
     executor.setSilent(true);
-    BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
+    BackgroundTaskUtil.executeOnPooledThread(HgDisposable.getInstance(myProject), () -> {
       HgCommandResult result = executor.executeInCurrentThread(repo, "resolve", Collections.singletonList("--list"));
       resultHandler.consume(result == null ? Collections.emptyMap() : handleResult(repo, result));
     });
@@ -88,7 +89,7 @@ public class HgResolveCommand {
       List<String> args = new ArrayList<>();
       args.add("--mark");
       args.addAll(chunk);
-      BackgroundTaskUtil.executeOnPooledThread(myProject, () ->
+      BackgroundTaskUtil.executeOnPooledThread(HgDisposable.getInstance(myProject), () ->
         new HgCommandExecutor(myProject).executeInCurrentThread(repo, "resolve", args));
     }
   }
