@@ -414,11 +414,14 @@ public final class ProjectUtil {
       },
       MODE_NEW.equals(mode) ? 1 : MODE_REPLACE.equals(mode) ? 0 : MODE_ATTACH.equals(mode) ? 2 : 0,
       Messages.getQuestionIcon());
-    LifecycleUsageTriggerCollector.onProjectFrameSelected(exitCode);
-    return exitCode == 0 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW :
-           exitCode == 1 ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW :
-           exitCode == 2 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH :
-           -1;
+    int returnValue = exitCode == 0 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW :
+            exitCode == 1 ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW :
+            exitCode == 2 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH :
+            -1;
+    if (returnValue != -1) {
+      LifecycleUsageTriggerCollector.onProjectFrameSelected(returnValue);
+    }
+    return returnValue;
   }
 
   public static boolean isSameProject(@Nullable String projectFilePath, @NotNull Project project) {
