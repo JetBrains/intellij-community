@@ -65,6 +65,7 @@ import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 import org.jetbrains.idea.devkit.inspections.quickfix.AddWithTagFix;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
+import org.jetbrains.idea.devkit.util.PluginPlatformInfo;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
@@ -258,38 +259,30 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     final Module module = listeners.getModule();
     if (module == null || PsiUtil.isIdeaProject(module.getProject())) return;
 
-    IdeaPlugin ideaPlugin = DomUtil.getParentOfType(listeners, IdeaPlugin.class, true);
-    assert ideaPlugin != null;
-    if (!ideaPlugin.hasRealPluginId()) {
-      ideaPlugin = findMainDescriptor(module);
-    }
+    PluginPlatformInfo platformInfo = PluginPlatformInfo.forDomElement(listeners);
+    final PluginPlatformInfo.PlatformResolveStatus resolveStatus = platformInfo.getResolveStatus();
 
-    if (ideaPlugin == null) {
-      // Gradle setups usually do not specify it in plugin.xml
-      if (!PluginModuleType.isPluginModuleOrDependency(module)) return;
-
+    if (resolveStatus == PluginPlatformInfo.PlatformResolveStatus.DEVKIT_NO_MAIN) {
       holder.createProblem(listeners, ProblemHighlightType.ERROR,
                            "Could not locate main plugin.xml file to determine required <idea-version> 'since-build'", null)
         .highlightWholeElement();
       return;
     }
 
-    final GenericAttributeValue<BuildNumber> sinceBuild = ideaPlugin.getIdeaVersion().getSinceBuild();
-    final boolean noSinceBuildXml = !DomUtil.hasXml(sinceBuild);
-    if (noSinceBuildXml ||
-        sinceBuild.getValue() == null) {
-
-      // Gradle setups usually do not specify it in plugin.xml
-      if (!PluginModuleType.isPluginModuleOrDependency(module)) return;
-
+    if (resolveStatus == PluginPlatformInfo.PlatformResolveStatus.DEVKIT_NO_SINCE_BUILD) {
+      final boolean noSinceBuildXml = !DomUtil.hasXml(platformInfo.getMainIdeaPlugin().getIdeaVersion().getSinceBuild());
       holder.createProblem(listeners, ProblemHighlightType.ERROR,
                            "Must specify <idea-version> 'since-build'", null,
-                           noSinceBuildXml ? new AddDomElementQuickFix<>(ideaPlugin.getIdeaVersion()) : null)
+                           noSinceBuildXml ? new AddDomElementQuickFix<>(platformInfo.getMainIdeaPlugin().getIdeaVersion()) : null)
         .highlightWholeElement();
       return;
     }
 
-    final int baselineVersion = sinceBuild.getValue().getBaselineVersion();
+    if (resolveStatus != PluginPlatformInfo.PlatformResolveStatus.DEVKIT) {
+      return;
+    }
+
+    final int baselineVersion = platformInfo.getSinceBuildNumber().getBaselineVersion();
 
     boolean canHaveOsAttribute = baselineVersion >= LISTENERS_OS_ATTRIBUTE_PLATFORM_VERSION;
     if (!canHaveOsAttribute) {
@@ -311,14 +304,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
                          "Feature available in platform version " + LISTENERS_PLATFORM_VERSION + " or later only, " +
                          "but specified 'since-build' platform is '" + baselineVersion + "'", null)
       .highlightWholeElement();
-  }
-
-  @Nullable
-  private static IdeaPlugin findMainDescriptor(@NotNull Module module) {
-    final XmlFile mainPluginXml = PluginModuleType.getPluginXml(module);
-    if (mainPluginXml == null) return null;
-
-    return DescriptorUtil.getIdeaPlugin(mainPluginXml);
   }
 
   private static void annotateDependency(Dependency dependency, DomElementAnnotationHolder holder) {
