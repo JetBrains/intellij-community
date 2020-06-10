@@ -164,7 +164,9 @@ class GitPullDialog(private val project: Project,
   }
 
   private fun createOptionsDropDown() = DropDownLink(GitBundle.message("pull.options.modify"),
-                                                     Function<DropDownLink<*>?, ListPopupImpl> { createOptionsPopup() })
+                                                     Function<DropDownLink<*>?, ListPopupImpl> { createOptionsPopup() }).apply {
+    isFocusable = true
+  }
 
   private fun createOptionsPopup() = object : ListPopupImpl(project, createOptionPopupStep()) {
     override fun getListElementRenderer() = OptionListCellRenderer(

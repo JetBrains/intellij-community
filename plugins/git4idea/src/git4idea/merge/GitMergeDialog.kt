@@ -301,7 +301,9 @@ class GitMergeDialog(private val project: Project,
   }
 
   private fun createOptionsDropDown() = DropDownLink(GitBundle.message("merge.options.modify"),
-                                                     Function<DropDownLink<*>?, ListPopupImpl> { createOptionsPopup() })
+                                                     Function<DropDownLink<*>?, ListPopupImpl> { createOptionsPopup() }).apply {
+    isFocusable = true
+}
 
   private fun createOptionsPopup() = object : ListPopupImpl(project, createOptionPopupStep()) {
     override fun getListElementRenderer() = OptionListCellRenderer(
