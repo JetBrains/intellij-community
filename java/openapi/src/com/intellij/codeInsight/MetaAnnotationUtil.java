@@ -107,7 +107,7 @@ public abstract class MetaAnnotationUtil {
 
       return new Result<>(factoryMap, PsiModificationTracker.MODIFICATION_COUNT);
     });
-    return map.getOrDefault(annotationName, emptyList());
+    return map.get(annotationName);
   }
 
   /**
