@@ -23,10 +23,10 @@ import java.util.function.Predicate;
 
 import static com.intellij.testFramework.ServiceContainerUtil.createSimpleMessageBusOwner;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Fail.fail;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+@SuppressWarnings("TypeMayBeWeakened")
 public class MessageBusTest implements MessageBusOwner {
   private CompositeMessageBus myBus;
   private final List<String> myLog = new ArrayList<>();
@@ -373,7 +373,7 @@ public class MessageBusTest implements MessageBusOwner {
   @Test
   public void testHasUndeliveredEventsInChildBys() {
     MessageBusImpl childBus = new MessageBusImpl(this, myBus);
-    myBus.connect().subscribe(RUNNABLE_TOPIC, () -> assertTrue(myBus.hasUndeliveredEvents(RUNNABLE_TOPIC)));
+    myBus.connect().subscribe(RUNNABLE_TOPIC, () -> assertThat(myBus.hasUndeliveredEvents(RUNNABLE_TOPIC)).isTrue());
     childBus.connect().subscribe(RUNNABLE_TOPIC, () -> assertFalse(myBus.hasUndeliveredEvents(RUNNABLE_TOPIC)));
     myBus.syncPublisher(RUNNABLE_TOPIC).run();
   }
@@ -416,7 +416,7 @@ public class MessageBusTest implements MessageBusOwner {
       myBus.connect(disposable).subscribe(RUNNABLE_TOPIC, () -> Disposer.dispose(disposable));
     }
     myBus.syncPublisher(RUNNABLE_TOPIC).run();
-    assertTrue(Disposer.isDisposed(disposable));
+    assertThat(Disposer.isDisposed(disposable)).isTrue();
   }
 
   @Test
@@ -535,5 +535,18 @@ public class MessageBusTest implements MessageBusOwner {
 
     myBus.syncPublisher(RUNNABLE_TOPIC).run();
     assertThat(eventCounter.get()).isEqualTo(threadsNumber);
+  }
+
+  @Test
+  public void disconnectOnDisposeForImmediateDeliveryTopic() {
+    Topic<Runnable> TOPIC = new Topic<>(Runnable.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true);
+
+    Disposable disposable = Disposer.newDisposable();
+    MessageBusConnectionImpl connection = myBus.connect(disposable);
+    connection.subscribe(TOPIC, () -> {
+      fail("must be not called");
+    });
+    Disposer.dispose(disposable);
+    myBus.syncPublisher(TOPIC).run();
   }
 }
