@@ -70,6 +70,7 @@ class VariableView(override val variableName: String, private val variable: Vari
               }
               else {
                 value = it.value
+                variable.value = it.value
                 computePresentation(it.value, node)
               }
             }
