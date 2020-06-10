@@ -450,16 +450,18 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                        writer: JpsFileContentWriter) {
     val optionsMap = TreeMap<String, String?>()
     if (externalSystemOptions != null) {
-      optionsMap["external.system.id"] = externalSystemOptions.externalSystem
+      if (externalSystemOptions.externalSystem == ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID) {
+        optionsMap[ExternalProjectSystemRegistry.IS_MAVEN_MODULE_KEY] = true.toString()
+      }
+      else {
+        optionsMap["external.system.id"] = externalSystemOptions.externalSystem
+      }
       optionsMap["external.root.project.path"] = externalSystemOptions.rootProjectPath
       optionsMap["external.linked.project.id"] = externalSystemOptions.linkedProjectId
       optionsMap["external.linked.project.path"] = externalSystemOptions.linkedProjectPath
       optionsMap["external.system.module.type"] = externalSystemOptions.externalSystemModuleType
       optionsMap["external.system.module.group"] = externalSystemOptions.externalSystemModuleGroup
       optionsMap["external.system.module.version"] = externalSystemOptions.externalSystemModuleVersion
-      if (externalSystemOptions.externalSystem == ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID) {
-        optionsMap[ExternalProjectSystemRegistry.IS_MAVEN_MODULE_KEY] = true.toString()
-      }
     }
     optionsMap["type"] = moduleType
     if (customImlData != null) {
