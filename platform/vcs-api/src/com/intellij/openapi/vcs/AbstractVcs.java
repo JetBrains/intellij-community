@@ -51,8 +51,6 @@ public abstract class AbstractVcs extends StartedActivated {
   private RollbackEnvironment myRollbackEnvironment;
 
   public AbstractVcs(@NotNull Project project, final String name) {
-    super(project);
-
     myProject = project;
     myName = name;
     myKey = new VcsKey(myName);
