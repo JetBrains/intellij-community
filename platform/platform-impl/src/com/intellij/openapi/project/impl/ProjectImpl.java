@@ -380,12 +380,16 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx, Proj
     }
 
     // maybe null only if disposed, but this condition is checked above
-    return earlyDisposable.get();
+    Disposable disposable = earlyDisposable.get();
+    if (disposable == null) {
+      throw new IllegalStateException("earlyDisposable is null for " + this);
+    }
+    return disposable;
   }
 
   @ApiStatus.Internal
   public final void disposeEarlyDisposable() {
-    Disposable earlyDisposable = this.earlyDisposable.getAndSet(null);
-    Disposer.dispose(earlyDisposable);
+    Disposable disposable = earlyDisposable.getAndSet(null);
+    Disposer.dispose(disposable);
   }
 }

@@ -485,9 +485,11 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
       // if we are shutting down the entire test framework, proceed to full dispose
       ProjectImpl projectImpl = (ProjectImpl)project;
       if (!projectImpl.isTemporarilyDisposed()) {
-        projectImpl.disposeEarlyDisposable();
-        projectImpl.setTemporarilyDisposed(true);
-        removeFromOpened(project);
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          projectImpl.disposeEarlyDisposable();
+          projectImpl.setTemporarilyDisposed(true);
+          removeFromOpened(project);
+        });
         updateTheOnlyProjectField();
         return true;
       }
@@ -496,13 +498,13 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
     else if (!isProjectOpened(project)) {
       if (dispose) {
         if (project instanceof ProjectImpl) {
-          ProjectImpl projectImpl = (ProjectImpl)project;
-          projectImpl.stopServicePreloading();
-          projectImpl.disposeEarlyDisposable();
+          ((ProjectImpl)project).stopServicePreloading();
         }
         ApplicationManager.getApplication().runWriteAction(() -> {
           if (project instanceof ProjectImpl) {
-            ((ProjectImpl)project).startDispose();
+            ProjectImpl projectImpl = (ProjectImpl)project;
+            projectImpl.disposeEarlyDisposable();
+            projectImpl.startDispose();
           }
           Disposer.dispose(project);
         });
