@@ -42,7 +42,8 @@ public enum HighlightingFeature {
     boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
       return useSiteLevel.isAtLeast(LanguageLevel.JDK_14_PREVIEW);
     }
-  };
+  },
+  SEALED_CLASSES(LanguageLevel.JDK_15_PREVIEW, "feature.sealed.classes");
 
   final LanguageLevel level;
   @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE)

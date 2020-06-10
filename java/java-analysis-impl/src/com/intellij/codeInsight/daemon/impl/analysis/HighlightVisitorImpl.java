@@ -516,6 +516,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     else if (!myHolder.hasErrorResults() && type == JavaTokenType.RECORD_KEYWORD) {
       myHolder.add(checkFeature(token, HighlightingFeature.RECORDS));
     }
+    else if (!myHolder.hasErrorResults() && (type == JavaTokenType.SEALED_KEYWORD ||
+                                             type == JavaTokenType.PERMITS_KEYWORD ||
+                                             type == JavaTokenType.NON_SEALED_KEYWORD)) {
+      myHolder.add(checkFeature(token, HighlightingFeature.SEALED_CLASSES));
+    }
 
     if (!myHolder.hasErrorResults() && type == JavaTokenType.RBRACE && token.getParent() instanceof PsiCodeBlock) {
       PsiElement gParent = token.getParent().getParent();
