@@ -252,11 +252,13 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return getCommand(shellPath, envs, TerminalOptionsProvider.getInstance().shellIntegration());
   }
 
-  private static String getShellPath() {
-    return TerminalOptionsProvider.getInstance().getShellPath();
+  private @NotNull String getShellPath() {
+    return TerminalProjectOptionsProvider.getInstance(myProject).getShellPath();
   }
 
-  public static @NotNull List<String> getCommand(String shellPath, Map<String, String> envs, boolean shellIntegration) {
+  public static @NotNull List<String> getCommand(@NotNull String shellPath,
+                                                 @NotNull Map<String, String> envs,
+                                                 boolean shellIntegration) {
     if (SystemInfo.isWindows) {
       return ParametersListUtil.parse(shellPath, false, false);
     }

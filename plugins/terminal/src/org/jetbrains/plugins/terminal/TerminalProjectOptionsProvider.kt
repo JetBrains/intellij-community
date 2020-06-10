@@ -9,8 +9,10 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.xmlb.annotations.Property
-import kotlin.reflect.KMutableProperty1
+import java.io.File
+import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
 
 @State(name = "TerminalProjectOptionsProvider", storages = [(Storage("terminal.xml"))])
@@ -37,20 +39,20 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
 
   class State {
     var myStartingDirectory: String? = null
+    var myShellPath: String? = null
     @get:Property(surroundWithTag = false, flat = true)
     var envDataOptions = EnvironmentVariablesDataOptions()
   }
 
-  var startingDirectory: String? by ValueWithDefault(State::myStartingDirectory, myState) { defaultStartingDirectory }
+  var startingDirectory: String? by ValueWithDefault(myState::myStartingDirectory) { defaultStartingDirectory }
 
   val defaultStartingDirectory: String?
     get() {
-      var directory: String? = null
       for (customizer in LocalTerminalCustomizer.EP_NAME.extensions) {
         try {
-
-          if (directory == null) {
-            directory = customizer.getDefaultFolder(project)
+          val directory = customizer.getDefaultFolder(project)
+          if (directory != null) {
+            return directory
           }
         }
         catch (e: Exception) {
@@ -58,7 +60,7 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
         }
       }
 
-      return directory ?: getDefaultWorkingDirectory()
+      return getDefaultWorkingDirectory()
     }
 
   private fun getDefaultWorkingDirectory(): String? {
@@ -66,6 +68,23 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
     @Suppress("DEPRECATION")
     val dir = if (roots.size == 1 && roots[0] != null && roots[0].isDirectory) roots[0] else project.baseDir
     return dir?.canonicalPath
+  }
+
+  var shellPath: String by ValueWithDefault(myState::myShellPath) { defaultShellPath() }
+
+  fun defaultShellPath(): String {
+    val shell = System.getenv("SHELL")
+    if (shell != null && File(shell).canExecute()) {
+      return shell
+    }
+    if (SystemInfo.isUnix) {
+      val bashPath = "/bin/bash"
+      if (File(bashPath).exists()) {
+        return bashPath
+      }
+      return "/bin/sh"
+    }
+    return "cmd.exe"
   }
 
   companion object {
@@ -85,14 +104,13 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
 
 }
 
-// TODO: In Kotlin 1.1 it will be possible to pass references to instance properties. Until then we need 'state' argument as a receiver for
-// to property to apply
-class ValueWithDefault<S>(val prop: KMutableProperty1<S, String?>, val state: S, val default: () -> String?) {
-  operator fun getValue(thisRef: Any?, property: KProperty<*>): String? {
-    return if (prop.get(state) !== null) prop.get(state) else default()
+class ValueWithDefault<T : String?>(val prop: KMutableProperty0<T?>, val default: () -> T) {
+  operator fun getValue(thisRef: Any?, property: KProperty<*>): T {
+    val value : T? = prop.get()
+    return if (value !== null) value else default()
   }
 
-  operator fun setValue(thisRef: Any?, property: KProperty<*>, value: String?) {
-    prop.set(state, if (value == default() || value.isNullOrEmpty()) null else value)
+  operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
+    prop.set(if (value == default() || value.isNullOrEmpty()) null else value)
   }
 }

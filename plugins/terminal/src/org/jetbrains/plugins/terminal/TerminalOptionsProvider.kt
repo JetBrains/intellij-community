@@ -6,9 +6,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.xmlb.annotations.Property
-import java.io.File
 
 @State(name = "TerminalOptionsProvider", storages = [(Storage("terminal.xml"))], reportStatistic = true)
 class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider.State> {
@@ -20,12 +18,6 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
 
   override fun loadState(state: State) {
     myState = state
-  }
-
-  fun getShellPath(): String = getEffectiveShellPath(myState.myShellPath)
-
-  fun setShellPath(shellPath: String) {
-    myState.myShellPath = if (shellPath == defaultShellPath()) null else shellPath
   }
 
   fun closeSessionOnLogout(): Boolean {
@@ -63,7 +55,6 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
   }
 
   class State {
-    var myShellPath: String? = null
     var myTabName: String = "Local"
     var myCloseSessionOnLogout: Boolean = true
     var myReportMouse: Boolean = true
@@ -121,24 +112,6 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     myState.envDataOptions.set(envData)
   }
 
-  fun defaultShellPath(): String {
-    val shell = System.getenv("SHELL")
-    if (shell != null && File(shell).canExecute()) {
-      return shell
-    }
-    if (SystemInfo.isUnix) {
-      val bashPath = "/bin/bash"
-      if (File(bashPath).exists()) {
-        return bashPath
-      }
-      return "/bin/sh"
-    }
-    return "cmd.exe"
-  }
-
-  fun getEffectiveShellPath(shellPath: String?): String {
-    return if (shellPath.isNullOrEmpty()) defaultShellPath() else shellPath
-  }
 
   companion object {
     val instance: TerminalOptionsProvider
