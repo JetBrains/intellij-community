@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
+import java.util.List;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.psiutils.ParenthesesUtils.getParentSkipParentheses;
@@ -631,7 +633,8 @@ public class ForCanBeForeachInspection extends BaseInspection {
         @NonNls final String methodName = methodExpression.getReferenceName();
         if (HardcodedMethodConstants.NEXT.equals(methodName)) {
           final PsiExpression qualifier = methodExpression.getQualifierExpression();
-          if (ExpressionUtils.isReferenceTo(qualifier, iterator) && !isInsideTryBlock(methodExpression)) {
+          if (ExpressionUtils.isReferenceTo(qualifier, iterator)
+              && !isInsidePsiStatements(methodExpression, Arrays.asList(PsiTryStatement.class, PsiLoopStatement.class))) {
             numCallsToIteratorNext++;
             return;
           }
@@ -654,11 +657,12 @@ public class ForCanBeForeachInspection extends BaseInspection {
       return numCallsToIteratorNext == 1 && !iteratorUsed;
     }
 
-    private boolean isInsideTryBlock(@NotNull PsiExpression methodExpression) {
+    private boolean isInsidePsiStatements(@NotNull PsiExpression methodExpression, @NotNull List<Class<? extends PsiStatement>> psiStatements) {
       PsiElement parent = methodExpression.getParent();
       while (parent != null) {
         if (parent.equals(context)) return false;
-        if (parent instanceof PsiTryStatement) return true;
+        final PsiElement p = parent;
+        if (psiStatements.stream().anyMatch(ps -> ps.isAssignableFrom(p.getClass()))) return true;
         if (parent instanceof PsiFile) return false;
         parent = parent.getParent();
       }

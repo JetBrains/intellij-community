@@ -300,6 +300,25 @@ public class ForCanBeForEach {
       }
     }
 
+    void insideInnerForPositive() {
+      <warning descr="'for' loop replaceable with enhanced 'for'">for</warning> (Iterator<Integer> iterator = Arrays.asList(1, 2, 3, 4, 5, 6).iterator(); iterator.hasNext();) {
+        for (int i = 0; i < 3; i++) {
+          System.out.println("Test");
+        }
+        Integer next = iterator.next();
+        System.out.println(next);
+      }
+    }
+
+  void insideInnerForNegative() {
+      for (Iterator<Integer> iterator = Arrays.asList(1, 2, 3, 4, 5, 6).iterator(); iterator.hasNext();) {
+      for (int i = 0; i < 3; i++) {
+        Integer next = iterator.next();
+        System.out.println(next);
+      }
+    }
+  }
+
     void b(List<String> list) {
         for (final Iterator<String> iterator = list.iterator(); iterator.hasNext(); ) {
             System.out.println(iterator.next());
