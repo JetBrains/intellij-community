@@ -16,18 +16,18 @@
 package com.intellij.codeInsight.hints.settings
 
 
-import com.intellij.codeInsight.hints.getBlackListInvalidLineNumbers
+import com.intellij.codeInsight.hints.getExcludeListInvalidLineNumbers
 import com.intellij.codeInsight.hints.getHintProviders
 import com.intellij.testFramework.LightPlatformTestCase
 import junit.framework.TestCase
 
-class BlackListCorrectnessTest: LightPlatformTestCase() {
+class ExcludeListCorrectnessTest: LightPlatformTestCase() {
   
   fun `test check all blacklists are valid`() {
     val providers = getHintProviders()
     providers.forEach {
       val blacklist = it.second.defaultBlackList
-      val invalidLineNumbers = getBlackListInvalidLineNumbers(blacklist.joinToString("\n"))
+      val invalidLineNumbers = getExcludeListInvalidLineNumbers(blacklist.joinToString("\n"))
       
       TestCase.assertTrue(
         "Blacklist pattern error detected in ${it.first.displayName} implementation: ${getInvalidElements(blacklist, invalidLineNumbers)}", 
