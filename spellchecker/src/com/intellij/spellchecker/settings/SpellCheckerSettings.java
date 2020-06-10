@@ -40,6 +40,7 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   private static final String DEFAULT_DICTIONARY_TO_SAVE = SpellCheckerManager.DictionaryLevel.PROJECT.getName();
   private static final String USE_SINGLE_DICT_ATTR_NAME = "UseSingleDictionary";
   private static final boolean DEFAULT_USE_SINGLE_DICT = true;
+  private static final String SETTINGS_TRANSFERRED = "transferred"; 
 
   // Paths
   private final List<String> myOldDictionaryFoldersPaths = new ArrayList<>();
@@ -49,6 +50,7 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   private Set<String> myRuntimeDisabledDictionariesNames = new HashSet<>();
   private String myDictionaryToSave = DEFAULT_DICTIONARY_TO_SAVE;
   private boolean myUseSingleDictionaryToSave = DEFAULT_USE_SINGLE_DICT;
+  private boolean mySettingsTransferred = false;
 
   public String getDictionaryToSave() {
     return myDictionaryToSave;
@@ -64,6 +66,14 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
 
   public void setUseSingleDictionaryToSave(boolean useSingleDictionaryToSave) {
     this.myUseSingleDictionaryToSave = useSingleDictionaryToSave;
+  }
+
+  public boolean isSettingsTransferred() {
+    return mySettingsTransferred;
+  }
+
+  public void setSettingsTransferred(boolean settingsTransferred) {
+    mySettingsTransferred = settingsTransferred;
   }
 
   public static @NotNull SpellCheckerSettings getInstance(Project project) {
@@ -140,6 +150,7 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
     }
     element.setAttribute(DICTIONARY_TO_SAVE_ATTR_NAME, myDictionaryToSave);
     element.setAttribute(USE_SINGLE_DICT_ATTR_NAME, String.valueOf(myUseSingleDictionaryToSave));
+    element.setAttribute(SETTINGS_TRANSFERRED, String.valueOf(mySettingsTransferred));
     return element;
   }
 
@@ -187,6 +198,7 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
       myDictionaryToSave = notNullize(element.getAttributeValue(DICTIONARY_TO_SAVE_ATTR_NAME), DEFAULT_DICTIONARY_TO_SAVE);
       myUseSingleDictionaryToSave =
         Boolean.parseBoolean(notNullize(element.getAttributeValue(USE_SINGLE_DICT_ATTR_NAME), String.valueOf(DEFAULT_USE_SINGLE_DICT)));
+      mySettingsTransferred = Boolean.parseBoolean(notNullize(element.getAttributeValue(SETTINGS_TRANSFERRED), "false"));
     }
     catch (Exception ignored) {
     }

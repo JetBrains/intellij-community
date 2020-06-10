@@ -14,6 +14,7 @@
                         overrides="true"/>
     <fileType name="Dictionary" implementationClass="com.intellij.spellchecker.DictionaryFileType" extensions="dic"/>
     <projectService serviceImplementation="com.intellij.spellchecker.settings.SpellCheckerSettings"/>
+    <postStartupActivity implementation="com.intellij.spellchecker.settings.SettingsTransferActivity"/>
     <projectService serviceImplementation="com.intellij.spellchecker.SpellCheckerManager"/>
     <projectConfigurable parentId="proofread" instance="com.intellij.spellchecker.settings.SpellCheckerSettingsManager" id="reference.settings.ide.settings.spelling" key="spelling" bundle="messages.SpellCheckerBundle" />
 
