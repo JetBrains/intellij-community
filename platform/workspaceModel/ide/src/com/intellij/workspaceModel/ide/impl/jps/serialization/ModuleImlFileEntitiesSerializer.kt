@@ -605,8 +605,13 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
     writer.saveComponent(fileUrl, componentName, componentTag)
   }
 
-  protected open fun getSourceToSave(module: ModuleEntity): JpsFileEntitySource.FileInDirectory? =
-    module.entitySource as? JpsFileEntitySource.FileInDirectory
+  protected open fun getSourceToSave(module: ModuleEntity): JpsFileEntitySource.FileInDirectory? {
+    val entitySource = module.entitySource
+    if (entitySource is JpsImportedEntitySource) {
+      return entitySource.internalFile as? JpsFileEntitySource.FileInDirectory
+    }
+    return entitySource as? JpsFileEntitySource.FileInDirectory
+  }
 
   override fun deleteObsoleteFile(fileUrl: String, writer: JpsFileContentWriter) {
     writer.saveComponent(fileUrl, MODULE_ROOT_MANAGER_COMPONENT_NAME, null)
