@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types
 
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiType
-import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
@@ -29,12 +29,11 @@ import java.util.concurrent.atomic.AtomicReferenceArray
  */
 class SharedVariableInferenceCache(val scope: GrControlFlowOwner) {
 
-  val sharedVariableDescriptors: Set<VariableDescriptor> by lazyPub { doGetSharedVariables() }
-  private val writeInstructions: List<Pair<ReadWriteVariableInstruction, GrControlFlowOwner>> by lazyPub {
+  val sharedVariableDescriptors: Set<VariableDescriptor> = doGetSharedVariables()
+  private val writeInstructions: List<Pair<ReadWriteVariableInstruction, GrControlFlowOwner>> =
     getWriteInstructionsFromNestedFlows(scope).mapNotNull { pair ->
       pair.takeIf { it.first.descriptor in sharedVariableDescriptors }
     }
-  }
   private val finalTypes: AtomicReferenceArray<PsiType?> = AtomicReferenceArray(sharedVariableDescriptors.size)
 
   fun getSharedVariableType(descriptor: VariableDescriptor): PsiType? {
@@ -65,6 +64,7 @@ class SharedVariableInferenceCache(val scope: GrControlFlowOwner) {
   private fun runSharedVariableInferencePhase() {
     val flowTypes: Array<PsiType?> = Array(writeInstructions.size) { null }
     for (index: Int in writeInstructions.indices) {
+      ProgressManager.checkCanceled()
       val (instruction: ReadWriteVariableInstruction, scope : GrControlFlowOwner) = writeInstructions[index]
       val inferenceCache = scope.run { TypeInferenceHelper.getInferenceCache(scope) }
       val inferredType: PsiType? = inferenceCache.getInferredType(instruction.descriptor, instruction, false) ?: PsiType.NULL

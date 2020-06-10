@@ -1338,7 +1338,7 @@ def foo() {
 }''', JAVA_LANG_INTEGER
   }
 
-  void '_test forbid use of outer context for nested closures'() {
+  void 'test use outer context in nested closures'() {
     doTest '''
 def foo() {
   def x = 1
@@ -1346,7 +1346,7 @@ def foo() {
     def closure = { <caret>x }
   })
   x = ""
-}''', null
+}''', JAVA_LANG_INTEGER
   }
 
   void 'test allow use of outer context for nested DGM closures'() {

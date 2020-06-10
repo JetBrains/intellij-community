@@ -361,7 +361,7 @@ class W {
 ''', 'java.lang.Integer'
   }
 
-  void '_test do not use outer types inside unknown lambdas'() {
+  void 'test use outer types inside unknown lambdas'() {
     doTest '''
 def foo() {
   def a = 1
@@ -370,6 +370,6 @@ def foo() {
   }
   a = ""
 }
-''', null
+''', 'java.lang.Integer'
   }
 }
