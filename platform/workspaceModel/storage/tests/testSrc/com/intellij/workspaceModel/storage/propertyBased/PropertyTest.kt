@@ -63,8 +63,13 @@ private class AddDiff(private val storage: WorkspaceEntityStorageBuilder) : Impe
     env.logMessage("Modify diff:")
     env.executeCommands(getEntityManipulation(another))
 
+    env.logMessage("Modify original storage:")
+    env.executeCommands(getEntityManipulation(storage as WorkspaceEntityStorageBuilderImpl))
+
     try {
       storage.addDiff(another)
+      env.logMessage("addDiff finished")
+      env.logMessage("---------------------------")
     }
     catch (e: AddDiffException) {
       env.logMessage("Cannot perform addDiff: ${e.message}. Fallback to previous state")
