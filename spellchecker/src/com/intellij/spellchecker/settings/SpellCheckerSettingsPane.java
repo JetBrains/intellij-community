@@ -111,7 +111,7 @@ public class SpellCheckerSettingsPane implements Disposable {
         for (Pair<String, Boolean> pair : providedDictionaries) {
           if (pair.second) continue;
 
-          else if (runtimeDictionaries.contains(pair.first)) {
+          if (runtimeDictionaries.contains(pair.first)) {
             runtimeDisabledDictionaries.add(pair.first);
           }
         }
