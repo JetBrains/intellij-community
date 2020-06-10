@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.connect.StatServiceException;
 import com.intellij.internal.statistic.connect.StatisticsResult;
 import com.intellij.internal.statistic.connect.StatisticsResult.ResultCode;
 import com.intellij.internal.statistic.connect.StatisticsService;
+import com.intellij.internal.statistic.eventLog.filters.LogEventFilter;
 import com.intellij.internal.statistic.service.request.StatsHttpRequests;
 import com.intellij.internal.statistic.service.request.StatsHttpResponse;
 import org.apache.http.Consts;

@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.google.gson.JsonSyntaxException
+import com.intellij.internal.statistic.eventLog.filters.LogEventFilter
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader

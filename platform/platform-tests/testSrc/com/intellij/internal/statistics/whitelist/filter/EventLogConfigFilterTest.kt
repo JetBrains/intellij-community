@@ -3,7 +3,7 @@ package com.intellij.internal.statistics.whitelist.filter
 
 import com.intellij.internal.statistic.config.EventLogExternalSettings
 import com.intellij.internal.statistic.eventLog.EventLogBuildType.RELEASE
-import com.intellij.internal.statistic.eventLog.LogEventBucketsFilter
+import com.intellij.internal.statistic.eventLog.filters.LogEventBucketsFilter
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
 import org.junit.Assert
 import org.junit.Test

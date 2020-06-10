@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.eventLog;
 import com.intellij.internal.statistic.config.EventLogExternalSendSettings;
 import com.intellij.internal.statistic.config.bean.EventLogSendConfiguration;
 import com.intellij.internal.statistic.connect.SettingsConnectionService;
+import com.intellij.internal.statistic.eventLog.filters.*;
 import com.intellij.internal.statistic.service.fus.StatisticsWhitelistConditions;
 import com.intellij.internal.statistic.service.fus.StatisticsWhitelistLoader;
 import org.jetbrains.annotations.ApiStatus;

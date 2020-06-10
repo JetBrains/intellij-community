@@ -2,6 +2,10 @@
 package com.intellij.internal.statistics.whitelist.filter
 
 import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.filters.LogEventCompositeFilter
+import com.intellij.internal.statistic.eventLog.filters.LogEventFilter
+import com.intellij.internal.statistic.eventLog.filters.LogEventSnapshotBuildFilter
+import com.intellij.internal.statistic.eventLog.filters.LogEventWhitelistFilter
 import com.intellij.internal.statistic.service.fus.StatisticsWhitelistConditions
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
 import com.intellij.internal.statistics.logger.TestDataCollectorDebugLogger
