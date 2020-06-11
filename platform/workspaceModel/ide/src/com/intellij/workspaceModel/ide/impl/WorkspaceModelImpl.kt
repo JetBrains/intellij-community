@@ -24,20 +24,24 @@ class WorkspaceModelImpl(project: Project): WorkspaceModel, Disposable {
     // TODO It's possible to load this cache from the moment we know project path
     //  Like in ProjectLifecycleListener or something
 
+    entityStorage = ProjectModelEntityStorage(project, WorkspaceEntityStorageBuilder.create().toStorage())
+
     val initialContent = WorkspaceModelInitialTestContent.pop()
-    when {
-      initialContent != null -> projectEntities = WorkspaceEntityStorageBuilder.from(initialContent)
+    projectEntities = when {
+      initialContent != null -> {
+        val testEntities = WorkspaceEntityStorageBuilder.from(initialContent)
+        entityStorage.replace(testEntities.toStorage(), testEntities.collectChanges(WorkspaceEntityStorageBuilder.create()))
+        testEntities
+      }
       cache != null -> {
         val activity = StartUpMeasurer.startActivity("(wm) Loading cache")
-        val previousStorage = cache.loadCache()
-        projectEntities = if (previousStorage != null) WorkspaceEntityStorageBuilder.from(previousStorage)
-        else WorkspaceEntityStorageBuilder.create()
+        val cacheEntities = cache.loadCache() ?: WorkspaceEntityStorageBuilder.create()
         activity.end()
+        entityStorage.replace(cacheEntities.toStorage(), cacheEntities.collectChanges(WorkspaceEntityStorageBuilder.create()))
+        cacheEntities
       }
-      else -> projectEntities = WorkspaceEntityStorageBuilder.create()
+      else -> WorkspaceEntityStorageBuilder.create()
     }
-
-    entityStorage = ProjectModelEntityStorage(project, projectEntities.toStorage())
   }
 
   override fun <R> updateProjectModel(updater: (WorkspaceEntityStorageBuilder) -> R): R = doUpdateProject(updater, true)
