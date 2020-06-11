@@ -109,6 +109,7 @@
 
     <fileIconProvider implementation="org.jetbrains.idea.maven.utils.MavenIconProvider"/>
     <editorTabTitleProvider implementation="org.jetbrains.idea.maven.utils.MavenEditorTabTitleProvider"/>
+    <treeStructureProvider implementation="org.jetbrains.idea.maven.utils.MavenTreeStructureProvider" order="last"/>
 
     <problemFileHighlightFilter implementation="org.jetbrains.idea.maven.utils.MavenProblemFileHighlighter"/>
 
