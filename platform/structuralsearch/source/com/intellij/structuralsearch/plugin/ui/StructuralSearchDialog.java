@@ -774,13 +774,13 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
   @Override
   public void show() {
-    StructuralSearchPlugin.getInstance(getProject()).setDialog(this);
     if (!myUseLastConfiguration) {
       setTextFromContext();
     }
     final PropertiesComponent properties = PropertiesComponent.getInstance();
     setFilterPanelVisible(properties.getBoolean(FILTERS_VISIBLE_STATE, true));
     super.show();
+    StructuralSearchPlugin.getInstance(getProject()).setDialog(this);
   }
 
   private void startTemplate() {
