@@ -17,25 +17,27 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.intellij.jps.cache.JpsCachesPluginUtil.EXECUTOR_SERVICE;
 
-class JpsOutputsDownloader {
+class JpsCachesDownloader {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.client.JpsOutputsDownloader");
   private static final byte MAX_RETRY_COUNT = 3;
   private final List<DownloadableFileDescription> myFilesDescriptions;
   private final SegmentedProgressIndicatorManager myProgressIndicatorManager;
 
-  JpsOutputsDownloader(@NotNull List<DownloadableFileDescription> filesDescriptions, @NotNull SegmentedProgressIndicatorManager indicatorManager) {
+  JpsCachesDownloader(@NotNull List<DownloadableFileDescription> filesDescriptions,
+                      @NotNull SegmentedProgressIndicatorManager indicatorManager) {
     myFilesDescriptions = filesDescriptions;
     myProgressIndicatorManager = indicatorManager;
   }
 
   @NotNull
-  List<Pair<File, DownloadableFileDescription>> download(@NotNull File targetDir) throws IOException {
+  List<Pair<File, DownloadableFileDescription>> download(@NotNull File targetDir, @NotNull Map<String, String> requestHeaders) throws IOException {
     List<Pair<File, DownloadableFileDescription>> downloadedFiles = Collections.synchronizedList(new ArrayList<>());
     List<Pair<File, DownloadableFileDescription>> existingFiles = Collections.synchronizedList(new ArrayList<>());
 
@@ -54,7 +56,7 @@ class JpsOutputsDownloader {
           File downloaded = null;
           while (downloaded == null && attempt++ < MAX_RETRY_COUNT) {
             try {
-              downloaded = downloadFile(description, existing, indicator);
+              downloaded = downloadFile(description, existing, requestHeaders, indicator);
             } catch (IOException e) {
               if (e  instanceof HttpRequests.HttpStatusException && ((HttpRequests.HttpStatusException)e).getStatusCode() == 404) {
                 LOG.info("File not found to download " + description.getDownloadUrl());
@@ -121,12 +123,14 @@ class JpsOutputsDownloader {
 
   @NotNull
   private static File downloadFile(@NotNull final DownloadableFileDescription description, @NotNull final File existingFile,
-                                   @NotNull final ProgressIndicator indicator) throws IOException {
+                                   @NotNull Map<String, String> headers, @NotNull final ProgressIndicator indicator) throws IOException {
     final String presentableUrl = description.getPresentableDownloadUrl();
     indicator.setText2(IdeBundle.message("progress.connecting.to.download.file.text", presentableUrl));
     indicator.setIndeterminate(false);
 
-    return HttpRequests.request(description.getDownloadUrl()).connect(new HttpRequests.RequestProcessor<File>() {
+    return HttpRequests.request(description.getDownloadUrl())
+      .tuner(tuner -> headers.forEach((k, v) -> tuner.addRequestProperty(k, v)))
+      .connect(new HttpRequests.RequestProcessor<File>() {
       @Override
       public File process(@NotNull HttpRequests.Request request) throws IOException {
         int size = request.getConnection().getContentLength();
