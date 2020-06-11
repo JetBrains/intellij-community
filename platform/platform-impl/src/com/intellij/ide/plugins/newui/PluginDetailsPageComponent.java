@@ -678,14 +678,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
   }
 
-  private void showMarketplaceHomePage() {
-    myHomePage.show(
-      IdeBundle.message("plugins.configurable.plugin.homepage.link"),
-      () -> BrowserUtil.browse(MARKETPLACE_LINK + URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString()))
-    );
-  }
-
-
   private void updateIcon() {
     boolean errors = !myMarketplace && myPluginModel.hasErrors(myPlugin);
 
