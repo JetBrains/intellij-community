@@ -30,6 +30,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -120,11 +121,27 @@ public abstract class MoveFilesOrDirectoriesDialog extends RefactoringDialog {
     myCbSearchForReferences = new NonFocusableCheckBox(RefactoringBundle.message("search.for.references"));
     myCbSearchForReferences.setSelected(RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE);
 
-    return FormBuilder.createFormBuilder().addComponent(myNameLabel)
+    FormBuilder builder = FormBuilder.createFormBuilder().addComponent(myNameLabel)
       .addLabeledComponent(RefactoringBundle.message("move.files.to.directory.label"), myTargetDirectoryField, UIUtil.LARGE_VGAP)
       .addTooltip(RefactoringBundle.message("path.completion.shortcut", shortcutText))
-      .addComponentToRightColumn(myCbSearchForReferences, UIUtil.LARGE_VGAP)
-      .getPanel();
+      .addComponentToRightColumn(myCbSearchForReferences, UIUtil.LARGE_VGAP);
+    addAdditionalCheckboxes(builder);
+    return builder.getPanel();
+  }
+
+  private void addAdditionalCheckboxes(@NotNull FormBuilder builder) {
+    JCheckBox[] checkboxes = getAdditionalCheckboxes();
+    if (checkboxes == null) return;
+    for (JCheckBox checkbox : checkboxes) {
+      builder.addComponentToRightColumn(checkbox, UIUtil.LARGE_VGAP);
+    }
+  }
+
+  /**
+   * @return additional checkboxes to be displayed under "Search for references" checkbox
+   */
+  protected @NotNull JCheckBox @Nullable [] getAdditionalCheckboxes() {
+    return null;
   }
 
   @Override
