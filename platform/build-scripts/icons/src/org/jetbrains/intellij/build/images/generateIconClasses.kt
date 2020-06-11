@@ -8,13 +8,21 @@ import java.io.File
 
 fun main() = generateIconsClasses()
 
-internal open class IconsClasses {
+internal abstract class IconsClasses {
   open val homePath: String get() = PathManager.getHomePath()
   open val modules: List<JpsModule> get() = jpsProject(homePath).modules
   open fun generator(home: File, modules: List<JpsModule>) = IconsClassGenerator(home, modules)
 }
 
-internal fun generateIconsClasses(config: IconsClasses = IconsClasses()) {
+private class IntellijIconsClasses : IconsClasses() {
+  override val modules: List<JpsModule>
+    get() = super.modules.filterNot {
+      // TODO: use icon-robots.txt
+      it.name.startsWith("fleet")
+    }
+}
+
+internal fun generateIconsClasses(config: IconsClasses = IntellijIconsClasses()) {
   val home = File(config.homePath)
 
   val modules = config.modules
