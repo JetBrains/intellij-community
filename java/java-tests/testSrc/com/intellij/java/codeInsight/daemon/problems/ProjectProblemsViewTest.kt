@@ -36,6 +36,7 @@ internal abstract class ProjectProblemsViewTest : LightJavaCodeInsightFixtureTes
     val clickEvent = MouseEvent(JPanel(), 0, 0, 0, 0, 0, 0, true, MouseEvent.BUTTON1)
     val point = Point(0, 0)
     for (inlay in reportedChanges.values) {
+      val startOffset = editor.caretModel.offset
       val renderer = inlay.renderer as BlockInlayRenderer
       val presentation = renderer.getConstrainedPresentations()[0]
       val rootPresentation = presentation.root
@@ -48,10 +49,11 @@ internal abstract class ProjectProblemsViewTest : LightJavaCodeInsightFixtureTes
       problemsOnClickPresentation.mouseClicked(clickEvent, point)
       val editor = editorManager.selectedTextEditor!!
       val openedFile = FileDocumentManager.getInstance().getFile(editor.document)!!
-      if (openedFile != targetFile) {
+      val curOffset = editor.caretModel.offset
+      if (openedFile != targetFile || curOffset != startOffset) {
         // one problem is reported in inlay, we navigated to this problem
         val psiFileWithProblem = PsiManager.getInstance(project).findFile(openedFile)!!
-        val psiElement = psiFileWithProblem.findElementAt(editor.caretModel.offset)!!
+        val psiElement = psiFileWithProblem.findElementAt(curOffset)!!
         problems.add(psiElement)
         // restore file for the next iteration
         editorManager.openFile(targetFile, true)

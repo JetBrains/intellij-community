@@ -207,7 +207,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
           else -> null
         }
       }
-      val collector = MemberUsageCollector(name, member.containingFile, usageExtractor)
+      val collector = MemberUsageCollector(name, myProject, usageExtractor)
       PsiSearchHelper.getInstance(myProject).processAllFilesWithWord(name, scope, collector, true)
       val memberUsages = collector.collectedUsages ?: return null
       usages.addAll(memberUsages)
@@ -298,18 +298,21 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     val virtualFile = psiFile.virtualFile
     val filesWithProblems = mutableSetOf<VirtualFile>()
     for (inlay in reportedChanges.values) {
+      var selectedEditor = FileEditorManager.getInstance(myProject).selectedEditor
+      (selectedEditor as TextEditor).editor.caretModel.moveToOffset(0)
       clickOnInlay(inlay)
-      val openedFile = FileEditorManager.getInstance(myProject).selectedEditor!!.file!!
+      selectedEditor = FileEditorManager.getInstance(myProject).selectedEditor
+      val openedFile = selectedEditor!!.file!!
       if (openedFile != virtualFile) {
         filesWithProblems.add(openedFile)
         openEditor(virtualFile)
-        continue
       }
-      val usageView = UsageViewManager.getInstance(myProject).selectedUsageView!!
-      for (usage in usageView.usages) {
-        val usageFile = (usage as UsageInfo2UsageAdapter).usageInfo.virtualFile!!
-        assertNotEquals(usageFile, virtualFile)
-        filesWithProblems.add(usageFile)
+      else if ((selectedEditor as TextEditor).editor.caretModel.offset == 0) {
+        val usageView = UsageViewManager.getInstance(myProject).selectedUsageView!!
+        for (usage in usageView.usages) {
+          val usageFile = (usage as UsageInfo2UsageAdapter).usageInfo.virtualFile!!
+          if (usageFile != virtualFile) filesWithProblems.add(usageFile)
+        }
       }
     }
     return filesWithProblems
