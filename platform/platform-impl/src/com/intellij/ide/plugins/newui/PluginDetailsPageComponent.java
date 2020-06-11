@@ -43,6 +43,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.io.IOException;
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -56,7 +58,11 @@ public class PluginDetailsPageComponent extends MultiPanel {
   @NotNull
   private final AsyncProcessIcon myLoadingIcon = new AsyncProcessIcon.BigCentered(IdeBundle.message("progress.text.loading"));
 
+  private static final String MARKETPLACE_LINK = "https://plugins.jetbrains.com/plugin/index?xmlId=";
+
+
   private JBPanelWithEmptyText myEmptyPanel;
+
 
   private OpaquePanel myPanel;
   private JLabel myIconLabel;
@@ -508,9 +514,29 @@ public class PluginDetailsPageComponent extends MultiPanel {
       myHomePage.hide();
     }
     else {
-      myHomePage.show(IdeBundle.message("plugins.configurable.plugin.homepage.link"),
-                      () -> BrowserUtil.browse("https://plugins.jetbrains.com/plugin/index?xmlId=" +
-                                               URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString())));
+      try {
+        List<String> marketplacePlugins = MarketplaceRequests.getInstance().getMarketplaceCachedPlugins();
+        if (marketplacePlugins != null) {
+          if (marketplacePlugins.contains(myPlugin.getPluginId().getIdString())) {
+            // Prevent the link to the marketplace from showing to external plugins
+            showMarketplaceHomePage();
+          }
+        }
+        else {
+          // There are no marketplace plugins in the cache, but we should show the title anyway.
+          showMarketplaceHomePage();
+          // will get the marketplace plugins ids next time
+          ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            try {
+              MarketplaceRequests.getInstance().getMarketplacePlugins(null);
+            }
+            catch (IOException ignore) {
+            }
+          });
+        }
+      }
+      catch (IOException ignore) {
+      }
     }
 
     String date = PluginManagerConfigurable.getLastUpdatedDate(myUpdateDescriptor == null ? myPlugin : myUpdateDescriptor);
@@ -650,6 +676,14 @@ public class PluginDetailsPageComponent extends MultiPanel {
       updateErrors();
     }
   }
+
+  private void showMarketplaceHomePage() {
+    myHomePage.show(
+      IdeBundle.message("plugins.configurable.plugin.homepage.link"),
+      () -> BrowserUtil.browse(MARKETPLACE_LINK + URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString()))
+    );
+  }
+
 
   private void updateIcon() {
     boolean errors = !myMarketplace && myPluginModel.hasErrors(myPlugin);
