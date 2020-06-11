@@ -436,6 +436,7 @@
 
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="git4idea.index.actions.GitStageDiffAction"/>
 
+    <vcs.consoleFolding implementation="git4idea.console.GitConsoleFolding"/>
   </extensions>
 
   <extensionPoints>

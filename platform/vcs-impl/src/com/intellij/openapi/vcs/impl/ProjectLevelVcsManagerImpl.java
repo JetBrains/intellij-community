@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -53,6 +52,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.ViewUpdateInfoNotification;
+import com.intellij.vcs.console.VcsConsoleView;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
@@ -873,7 +873,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
       SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true);
 
-      myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
+      myConsole = new VcsConsoleView(project);
       Disposer.register(this, myConsole);
       panel.setContent(myConsole.getComponent());
 
