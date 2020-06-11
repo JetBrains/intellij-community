@@ -25,7 +25,7 @@ public class JUnitForkedStarter {
     for (int i = 2, argsLength = args.length; i < argsLength; i++) {
       listeners.add(args[i]);
     }
-    IdeaTestRunner testRunner = (IdeaTestRunner)JUnitStarter.getAgentClass(argentName).newInstance();
+    IdeaTestRunner<?> testRunner = (IdeaTestRunner<?>)JUnitStarter.getAgentClass(argentName).newInstance();
     System.exit(IdeaTestRunner.Repeater.startRunnerWithArgs(testRunner, childTestDescription, listeners, null, JUnitStarter.ourCount, false));
   }
 }

@@ -11,9 +11,9 @@ import java.util.List;
 /**
  * @author anna
  */
-public class JUnitForkedSplitter extends ForkedSplitter {
+public class JUnitForkedSplitter<T> extends ForkedSplitter<T> {
 
-  private IdeaTestRunner myTestRunner;
+  private IdeaTestRunner<T> myTestRunner;
 
   public JUnitForkedSplitter(String workingDirsPath, String forkMode, List newArgs) {
     super(workingDirsPath, forkMode, newArgs);
@@ -26,19 +26,19 @@ public class JUnitForkedSplitter extends ForkedSplitter {
   }
 
   @Override
-  protected Object createRootDescription(String[] args, String configName)
+  protected T createRootDescription(String[] args, String configName)
     throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-    myTestRunner = (IdeaTestRunner)JUnitStarter.getAgentClass(myNewArgs.get(0)).newInstance();
+    myTestRunner = (IdeaTestRunner<T>)JUnitStarter.getAgentClass(myNewArgs.get(0)).newInstance();
     return myTestRunner.getTestToStart(args, configName);
   }
 
   @Override
-  protected String getTestClassName(Object child) {
+  protected String getTestClassName(T child) {
     return myTestRunner.getTestClassName(child);
   }
 
   @Override
-  protected List<String> createChildArgs(Object child) {
+  protected List<String> createChildArgs(T child) {
     List<String> newArgs = new ArrayList<String>();
     newArgs.add(myTestRunner.getStartDescription(child));
     newArgs.addAll(myNewArgs);
@@ -49,7 +49,7 @@ public class JUnitForkedSplitter extends ForkedSplitter {
   protected List<String> createPerModuleArgs(String packageName,
                                              String workingDir,
                                              List<String> classNames,
-                                             Object rootDescription,
+                                             T rootDescription,
                                              String filters) throws IOException {
     File tempFile = File.createTempFile("idea_junit", ".tmp");
     tempFile.deleteOnExit();
@@ -62,7 +62,7 @@ public class JUnitForkedSplitter extends ForkedSplitter {
 
 
   @Override
-  protected List<?> getChildren(Object child) {
+  protected List<T> getChildren(T child) {
     return myTestRunner.getChildTests(child);
   }
 }

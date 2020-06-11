@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** @noinspection UnusedDeclaration*/
-public class JUnit4IdeaTestRunner implements IdeaTestRunner {
+public class JUnit4IdeaTestRunner implements IdeaTestRunner<Description> {
   private JUnit4TestListener myTestsListener;
   private ArrayList<String> myListeners;
 
@@ -147,7 +147,7 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
 
 
   @Override
-  public Object getTestToStart(String[] args, String name) {
+  public Description getTestToStart(String[] args, String name) {
     final Request request = JUnit4TestRunnerUtil.buildRequest(args, name, false);
     if (request == null) return null;
     final Runner testRunner = request.getRunner();
@@ -163,20 +163,19 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
   }
 
   @Override
-  public List<?> getChildTests(Object description) {
-    return ((Description)description).getChildren();
+  public List<Description> getChildTests(Description description) {
+    return description.getChildren();
   }
 
   @Override
-  public String getTestClassName(Object child) {
-    return ((Description)child).getClassName();
+  public String getTestClassName(Description child) {
+    return child.getClassName();
   }
 
   @Override
-  public String getStartDescription(Object child) {
-    final Description description = (Description)child;
-    final String methodName = description.getMethodName();
-    return methodName != null ? description.getClassName() + "," + methodName : description.getClassName();
+  public String getStartDescription(Description child) {
+    final String methodName = child.getMethodName();
+    return methodName != null ? child.getClassName() + "," + methodName : child.getClassName();
   }
 
   private static class MyCustomRunListenerWrapper extends RunListener {
