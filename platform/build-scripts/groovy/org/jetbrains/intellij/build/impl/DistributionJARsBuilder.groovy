@@ -483,34 +483,36 @@ class DistributionJARsBuilder {
 
     def resultLines = new ArrayList<String>()
     for (def line : lines) {
-      String modulePath;
+      String modulePath, className;
       if (!isWindows()) {
         List<String> split = StringUtil.split(line, ":")
         if (!(split.size() == 2)) continue
+        className = split.get(0)
         modulePath = split.get(1)
       } else {
         // Convert "/D:/intellij-community/out/idea-ce/classes/production/XX" to "D:\intellij-community\out\idea-ce\classes\production\XX"
         final int i = line.indexOf(':')
         if (-1 == i) continue
+        className = line.substring(0, i);
         modulePath = line.substring(i + 2).replace('/', '\\')
       }
       if (modulePath.endsWith(".jar")) {
         String jarName = pathToToJarName.get(modulePath)
         //possible jar from a plugin
         if (jarName == null) continue
-        resultLines.add(split.get(0) + ":/lib/" + jarName)
+        resultLines.add(className + ":/lib/" + jarName)
       }
       else {
         def moduleName = pathToModuleName.get(modulePath)
         if (moduleName == null) continue
         def libJarName = libModulesToJar.get(moduleName)
         if (libJarName != null) {
-          resultLines.add(split.get(0) + ":/lib/" + libJarName)
+          resultLines.add(className + ":/lib/" + libJarName)
         }
         else {
           def moduleJarName = pluginModulesToJar.get(moduleName)
           if (moduleName == null) continue
-          resultLines.add("${split.get(0)}:$moduleJarName")
+          resultLines.add("${className}:$moduleJarName")
         }
       }
     }
