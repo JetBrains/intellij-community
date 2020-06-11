@@ -92,6 +92,10 @@ internal class GHPRDataProviderRepositoryImpl(private val detailsService: GHPRDe
       Disposer.register(parentDisposable, it)
     }
 
+    messageBus.connect(stateData).subscribe(GHPRDataOperationsListener.TOPIC, object : GHPRDataOperationsListener {
+      override fun onReviewsChanged() = stateData.reloadMergeabilityState()
+    })
+
     return GHPRDataProviderImpl(id, detailsData, stateData, changesData, commentsData, reviewData, timelineLoaderHolder,
                                 GHPRDiffControllerImpl())
   }
