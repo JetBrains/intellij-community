@@ -51,6 +51,8 @@ import java.util.function.Consumer;
  * @author Alexander Lobas
  */
 public class PluginDetailsPageComponent extends MultiPanel {
+  private static final String MARKETPLACE_LINK = "https://plugins.jetbrains.com/plugin/index?xmlId=";
+
   private final MyPluginModel myPluginModel;
   private final LinkListener<Object> mySearchListener;
   private final boolean myMarketplace;
@@ -510,33 +512,14 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     showLicensePanel();
 
-    if (bundled) {
+    if (bundled || !isPluginFromMarketplace()) {
       myHomePage.hide();
     }
     else {
-      try {
-        List<String> marketplacePlugins = MarketplaceRequests.getInstance().getMarketplaceCachedPlugins();
-        if (marketplacePlugins != null) {
-          if (marketplacePlugins.contains(myPlugin.getPluginId().getIdString())) {
-            // Prevent the link to the marketplace from showing to external plugins
-            showMarketplaceHomePage();
-          }
-        }
-        else {
-          // There are no marketplace plugins in the cache, but we should show the title anyway.
-          showMarketplaceHomePage();
-          // will get the marketplace plugins ids next time
-          ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            try {
-              MarketplaceRequests.getInstance().getMarketplacePlugins(null);
-            }
-            catch (IOException ignore) {
-            }
-          });
-        }
-      }
-      catch (IOException ignore) {
-      }
+      myHomePage.show(IdeBundle.message(
+        "plugins.configurable.plugin.homepage.link"),
+                      () -> BrowserUtil.browse(MARKETPLACE_LINK + URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString()))
+      );
     }
 
     String date = PluginManagerConfigurable.getLastUpdatedDate(myUpdateDescriptor == null ? myPlugin : myUpdateDescriptor);
@@ -568,6 +551,27 @@ public class PluginDetailsPageComponent extends MultiPanel {
     else {
       fullRepaint();
     }
+  }
+
+  private boolean isPluginFromMarketplace() {
+    try {
+      List<String> marketplacePlugins = MarketplaceRequests.getInstance().getMarketplaceCachedPlugins();
+      if (marketplacePlugins != null) {
+        return marketplacePlugins.contains(myPlugin.getPluginId().getIdString());
+      }
+      // will get the marketplace plugins ids next time
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        try {
+          MarketplaceRequests.getInstance().getMarketplacePlugins(null);
+        }
+        catch (IOException ignore) {
+        }
+      });
+    }
+    catch (IOException ignored) {
+    }
+    // There are no marketplace plugins in the cache, but we should show the title anyway.
+    return true;
   }
 
   private void showLicensePanel() {
