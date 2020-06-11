@@ -693,7 +693,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     return this.persistentId(storage) ?: this.hashCode()
   }
 
-  private fun <T : WorkspaceEntity> createAddEvent(pEntityData: WorkspaceEntityData<T>) {
+  internal fun <T : WorkspaceEntity> createAddEvent(pEntityData: WorkspaceEntityData<T>) {
     val pid = pEntityData.createPid()
     val parents = refs.getParentRefsOfChild(pid)
     val children = refs.getChildrenRefsOfParentBy(pid)
