@@ -200,7 +200,7 @@ class FilePartNode {
         String myUrl = myUrl();
         String expectedUrl = VirtualFileManager.constructUrl(myFS.getProtocol(), pathFromRoot + (pathFromRoot.endsWith("/") ? "" : "/"));
         String actualUrl = myUrl + (myUrl.endsWith("/") ? "" : "/");
-        assert actualUrl.equals(expectedUrl) : "Expected url: '" + expectedUrl + "' but got: '" + actualUrl + "'";
+        assert FileUtil.PATH_HASHING_STRATEGY.equals(actualUrl, expectedUrl) : "Expected url: '" + expectedUrl + "' but got: '" + actualUrl + "'";
       }
       else {
         assert Comparing.equal(getParentThroughJar(myFile, myFS), parent) : "parent: " + parent + "; myFile: " + myFile;
