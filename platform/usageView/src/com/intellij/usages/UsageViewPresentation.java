@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.IntFunction;
 import java.util.regex.Pattern;
 
 import static org.jetbrains.annotations.Nls.Capitalization.Title;
@@ -31,7 +32,7 @@ public class UsageViewPresentation {
   private boolean myOpenInNewTab = true;
   private boolean myCodeUsages = true;
   private boolean myUsageTypeFilteringAvailable;
-  private Function<Integer, String> myUsagesWordSupplier = count -> UsageViewBundle.message("usage.name", count);
+  private IntFunction<String> myUsagesWordSupplier = count -> UsageViewBundle.message("usage.name", count);
 
   private String myTabName;
   private String myToolwindowTitle;
@@ -174,7 +175,7 @@ public class UsageViewPresentation {
     return myUsagesWordSupplier.apply(count);
   }
 
-  public void setUsagesWord(@NotNull Function<Integer, String> usagesWordSupplier) {
+  public void setUsagesWord(@NotNull IntFunction<String> usagesWordSupplier) {
     myUsagesWordSupplier = usagesWordSupplier;
   }
 
