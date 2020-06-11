@@ -77,9 +77,9 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab("Cust
                                      fontOptions.setSize(fontOptions.fontFamily, it)
                                      updateFontSettings()
                                    }, parentDisposable)
-    keymapProperty.afterChange { keymapManager.activeKeymap = it }
-    adjustColorsProperty.afterChange { updateColorBlindness() }
-    colorBlindnessProperty.afterChange { updateColorBlindness() }
+    keymapProperty.afterChange({ keymapManager.activeKeymap = it }, parentDisposable)
+    adjustColorsProperty.afterChange({ updateColorBlindness() }, parentDisposable)
+    colorBlindnessProperty.afterChange({ updateColorBlindness() }, parentDisposable)
 
     val busConnection = ApplicationManager.getApplication().messageBus.connect(parentDisposable)
     busConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener { updateProperty(ideFontProperty) { getIdeFont() } })
