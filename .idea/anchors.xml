@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="KotlinIdeAnchorService">
+    <option name="moduleNameToAnchorName">
+      <map>
+        <entry key="kotlin-plugin-android-compile-deps" value="intellij.tools.dependencies.kotlin" />
+      </map>
+    </option>
+  </component>
+  <component name="LibraryToSourceAnalysisState">
+    <option name="isEnabled" value="true" />
+  </component>
+</project>

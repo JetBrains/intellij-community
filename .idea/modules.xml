@@ -796,6 +796,7 @@
       <module fileurl="file://$PROJECT_DIR$/build/dependencies/intellij.tools.dependencies.iml" filepath="$PROJECT_DIR$/build/dependencies/intellij.tools.dependencies.iml" />
       <module fileurl="file://$PROJECT_DIR$/build/dependencies/androidSdkUpload/intellij.tools.dependencies.androidSdkUpload.iml" filepath="$PROJECT_DIR$/build/dependencies/androidSdkUpload/intellij.tools.dependencies.androidSdkUpload.iml" />
       <module fileurl="file://$PROJECT_DIR$/build/dependencies/gradle-api-deps/intellij.tools.dependencies.gradle.iml" filepath="$PROJECT_DIR$/build/dependencies/gradle-api-deps/intellij.tools.dependencies.gradle.iml" />
+      <module fileurl="file://$PROJECT_DIR$/build/dependencies/kotlin-deps/intellij.tools.dependencies.kotlin.iml" filepath="$PROJECT_DIR$/build/dependencies/kotlin-deps/intellij.tools.dependencies.kotlin.iml" />
       <module fileurl="file://$PROJECT_DIR$/tools/index-tools/intellij.tools.index.iml" filepath="$PROJECT_DIR$/tools/index-tools/intellij.tools.index.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/antLayout/intellij.tools.jps.antTasks.iml" filepath="$PROJECT_DIR$/jps/antLayout/intellij.tools.jps.antTasks.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/standalone-builder/intellij.tools.jps.build.standalone.iml" filepath="$PROJECT_DIR$/jps/standalone-builder/intellij.tools.jps.build.standalone.iml" />
