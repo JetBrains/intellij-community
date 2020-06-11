@@ -3,6 +3,7 @@ package com.intellij.module;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.module.impl.ModulePointerManagerImpl;
 import com.intellij.testFramework.HeavyPlatformTestCase;
