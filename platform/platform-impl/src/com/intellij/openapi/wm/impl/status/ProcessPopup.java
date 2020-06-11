@@ -40,7 +40,7 @@ class ProcessPopup {
 
     myIndicatorPanel = new JBPanelWithEmptyText().withEmptyText(IdeBundle.message("progress.window.empty.text")).andTransparent();
     myIndicatorPanel.setLayout(new VerticalLayout(0));
-    myIndicatorPanel.setBorder(JBUI.Borders.empty(2, 0, 6, 0));
+    myIndicatorPanel.setBorder(JBUI.Borders.empty(10, 0, 18, 0));
     myIndicatorPanel.setFocusable(true);
 
     myContentPanel = new JBScrollPane(myIndicatorPanel, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER) {
