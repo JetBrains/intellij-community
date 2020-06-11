@@ -19,52 +19,50 @@
   <!--suppress PluginXmlValidity -->
   <depends optional="true">XPathView</depends>
 
-  <actions>
+  <actions resource-bundle="messages.TaskBundle">
 
     <group id="task.actions">
-      <action id="tasks.switch" class="com.intellij.tasks.actions.SwitchTaskAction" text="_Switch Task...">
+      <action id="tasks.switch" class="com.intellij.tasks.actions.SwitchTaskAction">
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift T"/>
       </action>
       <action id="tasks.goto" class="com.intellij.tasks.actions.GotoTaskAction">
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift N"/>
       </action>
-      <action id="tasks.close" class="com.intellij.tasks.actions.CloseTaskAction" text="_Close Active Task...">
+      <action id="tasks.close" class="com.intellij.tasks.actions.CloseTaskAction">
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift W"/>
       </action>
       <separator/>
-      <action id="tasks.edit" class="com.intellij.tasks.actions.EditTaskAction" text="Edit Task..."/>
-      <action id="tasks.create.changelist" class="com.intellij.tasks.actions.CreateChangelistAction" text="Create Change_list..."/>
-      <action id="tasks.show.task.description" class="com.intellij.tasks.actions.ShowTaskDescription" text="Show Description"/>
-      <action id="tasks.open.in.browser" class="com.intellij.tasks.actions.OpenTaskInBrowserAction" text="Open in _Browser">
+      <action id="tasks.edit" class="com.intellij.tasks.actions.EditTaskAction"/>
+      <action id="tasks.create.changelist" class="com.intellij.tasks.actions.CreateChangelistAction"/>
+      <action id="tasks.show.task.description" class="com.intellij.tasks.actions.ShowTaskDescription"/>
+      <action id="tasks.open.in.browser" class="com.intellij.tasks.actions.OpenTaskInBrowserAction">
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift B"/>
       </action>
-      <action id="tasks.analyze.stacktrace" class="com.intellij.tasks.actions.AnalyzeTaskStacktraceAction"
-              text="Analyze _Stack Trace From Task..."/>
+      <action id="tasks.analyze.stacktrace" class="com.intellij.tasks.actions.AnalyzeTaskStacktraceAction"/>
       <separator/>
-      <action id="tasks.configure.servers" class="com.intellij.tasks.actions.ConfigureServersAction" text="Configure Servers..."/>
+      <action id="tasks.configure.servers" class="com.intellij.tasks.actions.ConfigureServersAction"/>
     </group>
 
     <group id="working.context">
-      <action id="context.save" class="com.intellij.tasks.actions.context.SaveContextAction" text="_Save Context...">
+      <action id="context.save" class="com.intellij.tasks.actions.context.SaveContextAction">
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift S"/>
       </action>
-      <action id="context.load" class="com.intellij.tasks.actions.context.LoadContextAction" text="_Load Context...">
+      <action id="context.load" class="com.intellij.tasks.actions.context.LoadContextAction">
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift L"/>
         <keyboard-shortcut keymap="Mac OS X" first-keystroke="alt shift L" remove="true"/>
       </action>
-      <action id="context.clear" class="com.intellij.tasks.actions.context.ClearContextAction" text="_Clear Context">
+      <action id="context.clear" class="com.intellij.tasks.actions.context.ClearContextAction">
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift X"/>
       </action>
     </group>
 
-    <group id="tasks.internal" text="_Tasks" internal="true" popup="true">
-      <action id="show.certificate" class="com.intellij.tasks.actions.ShowCertificateInfoAction" text="_Show certificate dialog"/>
-      <action id="deadlock.with.certificate.dialog" class="com.intellij.tasks.actions.DeadlockWithCertificateDialogAction"
-              text="_Deadlock IDE with certificate dialog"/>
+    <group id="tasks.internal" internal="true" popup="true">
+      <action id="show.certificate" class="com.intellij.tasks.actions.ShowCertificateInfoAction"/>
+      <action id="deadlock.with.certificate.dialog" class="com.intellij.tasks.actions.DeadlockWithCertificateDialogAction"/>
       <add-to-group group-id="Internal"/>
     </group>
 
-    <group id="tasks.and.contexts" text="_Tasks &amp; Contexts" popup="true">
+    <group id="tasks.and.contexts" popup="true">
       <reference ref="task.actions"/>
       <separator/>
       <reference ref="working.context"/>
@@ -77,7 +75,7 @@
       <add-to-group group-id="ToolsMenu" anchor="first"/>
     </group>
 
-    <group id="tasks.toolbar.group" text="Tasks toolbar">
+    <group id="tasks.toolbar.group">
       <separator/>
       <reference id="tasks.switch"/>
       <add-to-group group-id="MainToolBar" anchor="last"/>
