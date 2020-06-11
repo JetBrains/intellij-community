@@ -252,7 +252,7 @@ class GitMergeDialog(private val project: Project,
       isSwingPopup = false
 
       val bw = DarculaUIUtil.BW.get()
-      ui = FlatComboBoxUI(outerInsets = Insets(bw, bw, bw, 0))
+      setUI(FlatComboBoxUI(outerInsets = Insets(bw, bw, bw, 0)))
 
       addItemListener { e ->
         if (e.stateChange == ItemEvent.SELECTED
@@ -276,9 +276,9 @@ class GitMergeDialog(private val project: Project,
 
       val bw = DarculaUIUtil.BW.get()
 
-      ui = FlatComboBoxUI(
+      setUI(FlatComboBoxUI(
         outerInsets = Insets(bw, 0, bw, bw),
-        popupEmptyText = GitBundle.message("merge.branch.popup.empty.text"))
+        popupEmptyText = GitBundle.message("merge.branch.popup.empty.text")))
     }
   }
 

@@ -306,7 +306,7 @@ class GitPullDialog(private val project: Project,
   private fun createRepositoryField() = ComboBox(CollectionComboBoxModel(repositories)).apply {
     isSwingPopup = false
     renderer = SimpleListCellRenderer.create("") { DvcsUtil.getShortRepositoryName(it) }
-    ui = FlatComboBoxUI(outerInsets = Insets(1, 1, 1, 0))
+    setUI(FlatComboBoxUI(outerInsets = Insets(1, 1, 1, 0)))
 
     item = repositories.find { repo -> repo.root == defaultRoot }
 
@@ -320,9 +320,9 @@ class GitPullDialog(private val project: Project,
     isSwingPopup = false
     renderer = SimpleListCellRenderer.create(GitBundle.message("util.remote.renderer.none")) { it.name }
     val bw = DarculaUIUtil.BW.get()
-    ui = FlatComboBoxUI(
+    setUI(FlatComboBoxUI(
       outerInsets = Insets(bw, 0, bw, 0),
-      popupEmptyText = GitBundle.message("pull.branch.no.matching.remotes"))
+      popupEmptyText = GitBundle.message("pull.branch.no.matching.remotes")))
 
     item = getCurrentOrDefaultRemote(getRepository())
 
@@ -338,9 +338,9 @@ class GitPullDialog(private val project: Project,
     isEditable = true
 
     val bw = DarculaUIUtil.BW.get()
-    ui = FlatComboBoxUI(
+    setUI(FlatComboBoxUI(
       Insets(1, 0, 1, 1),
       Insets(bw, 0, bw, bw),
-      GitBundle.message("pull.branch.nothing.to.pull"))
+      GitBundle.message("pull.branch.nothing.to.pull")))
   }
 }
