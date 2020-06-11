@@ -276,8 +276,6 @@
       <reference id="Vcs.Log.Refresh"/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
       <reference id="Vcs.Log.ShowDiffPreview"/>
-      <reference ref="Vcs.Log.MoveDiffPreviewToBottom"/>
-      <reference ref="Vcs.Log.MoveDiffPreviewToRight"/>
       <reference id="Vcs.FileHistory.ContextMenu"/>
       <reference id="Vcs.FileHistory.Toolbar"/>
       <reference id="VcsHistoryActionsGroup"/>
