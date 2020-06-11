@@ -4,6 +4,7 @@ import circlet.pipelines.common.api.ExecutionStatus
 import circlet.pipelines.common.api.GraphExecId
 import circlet.pipelines.common.api.StepExecId
 import circlet.pipelines.config.api.ScriptAction
+import circlet.pipelines.config.api.ScriptJob
 import circlet.pipelines.config.api.ScriptStep
 import circlet.pipelines.config.api.flatten
 import circlet.pipelines.engine.api.storage.*
@@ -76,7 +77,7 @@ class CircletIdeaExecutionProviderStorage : LocalExecutionProviderStorage {
         return executions.firstOrNull { it.id == graphExecutionId.value }
     }
 
-    override fun createGraphExecution(
+    fun createGraphExecution(
 
         actionMeta: ScriptAction,
         bootstrapStepFactory: (AGraphExecutionEntity) -> ScriptStep.Process.Container?): AGraphExecutionEntity {
@@ -118,6 +119,16 @@ class CircletIdeaExecutionProviderStorage : LocalExecutionProviderStorage {
         executions.add(graphExecutionEntity)
 
         return graphExecutionEntity
+    }
+
+    override fun createGraphExecution(actionMeta: ScriptJob,
+                                      bootstrapStepFactory: (AGraphExecutionEntity) -> ScriptStep.Process.Container?): AGraphExecutionEntity {
+        TODO("Not yet implemented")
+    }
+
+    override fun createGraphExecutions(idToActionMeta: Map<Long, ScriptJob>,
+                                       bootstrapStepFactory: (AGraphExecutionEntity) -> ScriptStep.Process.Container?): Map<Long, AGraphExecutionEntity> {
+        TODO("Not yet implemented")
     }
 
     override fun createStepExecutionCustomMessage(stepExec: StepExecId, message: String, severity: TextMessageSeverity) {
