@@ -307,6 +307,9 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
     if (anchor instanceof PsiWhileStatement || anchor instanceof PsiDoWhileStatement) {
       return anchor;
     }
+    if (anchor instanceof PsiSwitchLabeledRuleStatement) {
+      return null; // unsupported yet
+    }
     PsiElement e = anchor;
     while (e != null && !(e instanceof PsiClass) && !(e instanceof PsiFileSystemItem)) {
       e = e.getParent();
