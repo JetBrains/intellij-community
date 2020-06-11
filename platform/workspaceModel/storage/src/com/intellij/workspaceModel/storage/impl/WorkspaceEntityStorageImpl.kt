@@ -233,7 +233,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
   override fun removeEntity(e: WorkspaceEntity) {
     e as WorkspaceEntityBase
 
-    val removedEntities = removeEntity(e.id, null)
+    val removedEntities = removeEntity(e.id)
     updateChangeLog {
       removedEntities.forEach { removedEntityId -> it.add(ChangeEntry.RemoveEntity(removedEntityId)) }
     }
@@ -606,8 +606,9 @@ internal class WorkspaceEntityStorageBuilderImpl(
           val outdatedId = change.id
           val usedPid = replaceMap.getOrDefault(outdatedId, outdatedId)
           indexes.removeFromIndices(usedPid)
+          replaceMap.inverse().remove(usedPid)
           if (this.entityDataById(usedPid) != null) {
-            removeEntity(usedPid, replaceMap.inverse())
+            removeEntity(usedPid)
           }
           updateChangeLog { it.add(ChangeEntry.RemoveEntity(usedPid)) }
         }
@@ -665,7 +666,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
   }
 
   // modificationCount is not incremented
-  private fun removeEntity(idx: EntityId, mapToUpdate: MutableMap<EntityId, EntityId>?): Collection<EntityId> {
+  private fun removeEntity(idx: EntityId): Collection<EntityId> {
     val accumulator: MutableSet<EntityId> = mutableSetOf(idx)
 
     accumulateEntitiesToRemove(idx, accumulator)
@@ -674,7 +675,6 @@ internal class WorkspaceEntityStorageBuilderImpl(
       val entityData = entityDataById(id)
       if (entityData is SoftLinkable) indexes.removeFromSoftLinksIndex(entityData)
       entitiesByType.remove(id.arrayId, id.clazz)
-      mapToUpdate?.remove(id)
     }
 
     // Update index

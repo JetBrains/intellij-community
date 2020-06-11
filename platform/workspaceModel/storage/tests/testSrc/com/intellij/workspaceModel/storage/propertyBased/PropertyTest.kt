@@ -16,6 +16,7 @@ import junit.framework.TestCase
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
+import org.junit.Ignore
 import org.junit.Test
 import kotlin.reflect.full.memberProperties
 
@@ -43,6 +44,7 @@ class PropertyTest {
     }
   }
 
+  @Ignore("Temporally disable")
   @Test
   fun testAddDiff() {
     PropertyChecker.checkScenarios {
