@@ -9,30 +9,29 @@ import org.jetbrains.plugins.github.util.handleOnEdt
 import java.util.concurrent.CompletableFuture
 import kotlin.properties.Delegates.observable
 
-class GHSubmittableTextFieldModel(private val submitter: (String) -> CompletableFuture<*>) {
+open class GHSubmittableTextFieldModel(initialText: String, private val submitter: (String) -> CompletableFuture<*>) {
 
-  val document = EditorFactory.getInstance().createDocument("")
+  constructor(submitter: (String) -> CompletableFuture<*>) : this("", submitter)
 
-  var isSubmitting by observable(false) { _, _, _ ->
+  val document = EditorFactory.getInstance().createDocument(initialText)
+
+  protected val stateEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
+
+  var isBusy by observable(false) { _, _, newValue ->
+    document.setReadOnly(newValue)
     stateEventDispatcher.multicaster.eventOccurred()
   }
-    private set
-
-  var isLoading by observable(false) { _, _, _ ->
-    stateEventDispatcher.multicaster.eventOccurred()
-  }
-
-  private val stateEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
+    protected set
 
   fun submit() {
-    if (isSubmitting) return
+    if (isBusy) return
 
-    isSubmitting = true
+    isBusy = true
     submitter(document.text).handleOnEdt { _, error ->
       if (error == null) runWriteAction {
         document.setText("")
       }
-      isSubmitting = false
+      isBusy = false
     }
   }
 

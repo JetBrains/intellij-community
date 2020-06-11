@@ -16,10 +16,7 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.ListFocusTraversalPolicy
 import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import icons.GithubIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -28,7 +25,6 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.InlineIconButton
-import org.jetbrains.plugins.github.ui.JComponentOverlay
 import java.awt.Dimension
 import java.awt.event.*
 import javax.swing.JComponent
@@ -79,12 +75,9 @@ class GHSubmittableTextFieldFactory(private val model: GHSubmittableTextFieldMod
                      cancelButton: InlineIconButton,
                      authorLabel: LinkLabel<out Any>? = null,
                      onCancel: (() -> Unit)? = null): JComponent {
-    val panel = JPanel(null)
-    val loadingLabel = JLabel(AnimatedIcon.Default())
-    Controller(panel, textField, loadingLabel, submitButton, cancelButton, onCancel)
-
-    val textFieldWithSubmitButton = createTextFieldWithInlinedButton(textField, submitButton)
-    return JComponentOverlay.createCentered(panel.apply {
+    val busyLabel = JLabel(AnimatedIcon.Default())
+    val textFieldWithOverlay = createTextFieldWithOverlay(textField, submitButton, busyLabel)
+    val panel = JPanel(null).apply {
       isOpaque = false
       layout = MigLayout(LC().gridGap("0", "0")
                            .insets("0", "0", "0", "0")
@@ -97,9 +90,12 @@ class GHSubmittableTextFieldFactory(private val model: GHSubmittableTextFieldMod
         add(authorLabel, CC().alignY("top").gapRight("${UI.scale(6)}"))
       }
 
-      add(textFieldWithSubmitButton, CC().grow().pushX())
+      add(textFieldWithOverlay, CC().grow().pushX())
       add(cancelButton, CC().alignY("top").hideMode(3))
-    }, loadingLabel)
+    }
+    Controller(panel, textField, busyLabel, submitButton, cancelButton, onCancel)
+
+    return panel
   }
 
   private fun createTextField(placeHolder: String): EditorTextField {
@@ -146,7 +142,7 @@ class GHSubmittableTextFieldFactory(private val model: GHSubmittableTextFieldMod
 
   private fun getEditorTextFieldVerticalOffset() = if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) 6 else 4
 
-  private fun createTextFieldWithInlinedButton(textField: EditorTextField, button: JComponent): JComponent {
+  private fun createTextFieldWithOverlay(textField: EditorTextField, button: JComponent, busyLabel: JComponent): JComponent {
 
     val bordersListener = object : ComponentAdapter(), HierarchyListener {
       override fun componentResized(e: ComponentEvent?) {
@@ -178,10 +174,12 @@ class GHSubmittableTextFieldFactory(private val model: GHSubmittableTextFieldMod
         val preferredButtonSize = button.preferredSize
         button.setBounds(width - preferredButtonSize.width, height - preferredButtonSize.height,
                          preferredButtonSize.width, preferredButtonSize.height)
+        busyLabel.bounds = SingleComponentCenteringLayout.getBoundsForCentered(textField, busyLabel)
       }
     }
     layeredPane.add(textField, JLayeredPane.DEFAULT_LAYER, 0)
-    layeredPane.add(button, JLayeredPane.POPUP_LAYER, 1)
+    layeredPane.add(busyLabel, JLayeredPane.POPUP_LAYER, 1)
+    layeredPane.add(button, JLayeredPane.POPUP_LAYER, 2)
 
     return layeredPane
   }
@@ -222,9 +220,8 @@ class GHSubmittableTextFieldFactory(private val model: GHSubmittableTextFieldMod
     }
 
     private fun update() {
-      busyLabel.isVisible = model.isLoading
-      textField.isEnabled = !model.isSubmitting
-      submitButton.isEnabled = !model.isSubmitting && !model.isLoading && textField.text.isNotBlank()
+      busyLabel.isVisible = model.isBusy
+      submitButton.isEnabled = !model.isBusy && textField.text.isNotBlank()
     }
   }
 }

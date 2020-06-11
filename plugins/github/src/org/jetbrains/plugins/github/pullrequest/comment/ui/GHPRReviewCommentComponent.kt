@@ -4,7 +4,6 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.text.StringUtil
@@ -27,8 +26,8 @@ import org.jetbrains.plugins.github.ui.InlineIconButton
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
-import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.event.ActionListener
+import java.lang.Integer.max
 import javax.swing.JComponent
 import javax.swing.JEditorPane
 import javax.swing.JPanel
@@ -117,27 +116,13 @@ object GHPRReviewCommentComponent {
 
     val action = ActionListener {
       val linesCount = calcLines(textPane)
-      val text = StringUtil.repeatSymbol('\n', linesCount - 1)
+      val placeHolderText = StringUtil.repeatSymbol('\n', max(0, linesCount - 1))
+      val textFuture = reviewDataProvider.getCommentMarkdownBody(EmptyProgressIndicator(), comment.id)
 
-      val model = GHSubmittableTextFieldModel { newText ->
+      val model = GHPreLoadingSubmittableTextFieldModel(placeHolderText, textFuture) { newText ->
         reviewDataProvider.updateComment(EmptyProgressIndicator(), comment.id, newText).handleOnEdt { _, _ ->
           editorWrapper.setContent(null)
           editorWrapper.revalidate()
-        }
-      }
-
-      with(model.document) {
-        runWriteAction {
-          setText(text)
-          setReadOnly(true)
-        }
-        model.isLoading = true
-        reviewDataProvider.getCommentMarkdownBody(EmptyProgressIndicator(), comment.id).successOnEdt {
-          runWriteAction {
-            setReadOnly(false)
-            setText(it)
-          }
-          model.isLoading = false
         }
       }
 
