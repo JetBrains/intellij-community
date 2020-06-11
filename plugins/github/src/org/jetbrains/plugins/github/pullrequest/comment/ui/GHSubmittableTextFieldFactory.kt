@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.editor.actions.IncrementalFindAction
@@ -11,12 +12,17 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.ListFocusTraversalPolicy
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.*
+import com.intellij.util.ui.update.Activatable
+import com.intellij.util.ui.update.UiNotifyConnector
 import icons.GithubIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -27,6 +33,7 @@ import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.InlineIconButton
 import java.awt.Dimension
 import java.awt.event.*
+import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JLayeredPane
@@ -75,6 +82,7 @@ class GHSubmittableTextFieldFactory(private val model: GHSubmittableTextFieldMod
                      cancelButton: InlineIconButton,
                      authorLabel: LinkLabel<out Any>? = null,
                      onCancel: (() -> Unit)? = null): JComponent {
+
     val busyLabel = JLabel(AnimatedIcon.Default())
     val textFieldWithOverlay = createTextFieldWithOverlay(textField, submitButton, busyLabel)
     val panel = JPanel(null).apply {
@@ -94,8 +102,34 @@ class GHSubmittableTextFieldFactory(private val model: GHSubmittableTextFieldMod
       add(cancelButton, CC().alignY("top").hideMode(3))
     }
     Controller(panel, textField, busyLabel, submitButton, cancelButton, onCancel)
+    UiNotifyConnector(textField, ValidatorActivatable(textField))
 
     return panel
+  }
+
+  private inner class ValidatorActivatable(private val textField: EditorTextField) : Activatable {
+
+    private var validatorDisposable: Disposable? = null
+    private var validator: ComponentValidator? = null
+
+    init {
+      model.addStateListener {
+        validator?.revalidate()
+      }
+    }
+
+    override fun showNotify() {
+      validatorDisposable = Disposer.newDisposable("ETF validator")
+      validator = ComponentValidator(validatorDisposable!!).withValidator(Supplier {
+        model.error?.let { ValidationInfo(it.message.orEmpty(), textField) }
+      }).installOn(textField)
+    }
+
+    override fun hideNotify() {
+      validatorDisposable?.let { Disposer.dispose(it) }
+      validatorDisposable = null
+      validator = null
+    }
   }
 
   private fun createTextField(placeHolder: String): EditorTextField {

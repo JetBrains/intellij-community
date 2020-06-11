@@ -5,9 +5,11 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.util.EventDispatcher
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
-import org.jetbrains.plugins.github.util.handleOnEdt
+import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
+import org.jetbrains.plugins.github.util.completionOnEdt
+import org.jetbrains.plugins.github.util.errorOnEdt
+import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.concurrent.CompletableFuture
-import kotlin.properties.Delegates.observable
 
 open class GHSubmittableTextFieldModel(initialText: String, private val submitter: (String) -> CompletableFuture<*>) {
 
@@ -17,20 +19,26 @@ open class GHSubmittableTextFieldModel(initialText: String, private val submitte
 
   protected val stateEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
-  var isBusy by observable(false) { _, _, newValue ->
-    document.setReadOnly(newValue)
-    stateEventDispatcher.multicaster.eventOccurred()
-  }
+  var isBusy by observableField(false, stateEventDispatcher)
+    protected set
+
+  var error: Throwable? by observableField<Throwable?>(null, stateEventDispatcher)
     protected set
 
   fun submit() {
     if (isBusy) return
 
     isBusy = true
-    submitter(document.text).handleOnEdt { _, error ->
-      if (error == null) runWriteAction {
+    document.setReadOnly(true)
+    submitter(document.text).successOnEdt {
+      document.setReadOnly(false)
+      runWriteAction {
         document.setText("")
       }
+    }.errorOnEdt {
+      document.setReadOnly(false)
+      error = it
+    }.completionOnEdt {
       isBusy = false
     }
   }

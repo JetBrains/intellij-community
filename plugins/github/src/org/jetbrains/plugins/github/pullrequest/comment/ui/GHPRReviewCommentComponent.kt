@@ -25,7 +25,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProv
 import org.jetbrains.plugins.github.ui.InlineIconButton
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.util.GithubUIUtil
-import org.jetbrains.plugins.github.util.handleOnEdt
+import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.event.ActionListener
 import java.lang.Integer.max
 import javax.swing.JComponent
@@ -120,7 +120,7 @@ object GHPRReviewCommentComponent {
       val textFuture = reviewDataProvider.getCommentMarkdownBody(EmptyProgressIndicator(), comment.id)
 
       val model = GHPreLoadingSubmittableTextFieldModel(placeHolderText, textFuture) { newText ->
-        reviewDataProvider.updateComment(EmptyProgressIndicator(), comment.id, newText).handleOnEdt { _, _ ->
+        reviewDataProvider.updateComment(EmptyProgressIndicator(), comment.id, newText).successOnEdt {
           editorWrapper.setContent(null)
           editorWrapper.revalidate()
         }
