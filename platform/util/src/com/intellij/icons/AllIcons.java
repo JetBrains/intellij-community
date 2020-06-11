@@ -1087,6 +1087,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon CommitNode = load("/vcs/commitNode.svg");
     /** 16x16 */ public static final @NotNull Icon Equal = load("/vcs/equal.svg");
     /** 16x16 */ public static final @NotNull Icon Folders = load("/vcs/folders.svg");
+    /** 24x24 */ public static final @NotNull Icon FromVCSDialog = load("/vcs/fromVCSDialog.svg");
     /** 16x16 */ public static final @NotNull Icon History = load("/vcs/history.svg");
     /** 16x16 */ public static final @NotNull Icon HistoryInline = load("/vcs/historyInline.svg");
     /** 16x16 */ public static final @NotNull Icon HistoryInlineHovered = load("/vcs/historyInlineHovered.svg");
