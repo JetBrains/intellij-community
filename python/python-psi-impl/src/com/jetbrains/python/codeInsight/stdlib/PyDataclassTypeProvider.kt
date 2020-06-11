@@ -168,10 +168,10 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
             .filterNot { PyTypingTypeProvider.isClassVar(it, context) }
             .mapNotNull { fieldToParameter(current, it, parameters.type, ellipsis, context) }
             .filterNot { it.first in seenNames }
-            .forEach { (name, parameter) ->
+            .forEach { (name, kwOnly, parameter) ->
               // note: attributes are visited from inheritors to ancestors, in reversed order for every of them
 
-              if (seenKeywordOnlyClass && name !in collected) {
+              if ((seenKeywordOnlyClass || kwOnly) && name !in collected) {
                 keywordOnly += name
               }
 
@@ -218,12 +218,12 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
                                  field: PyTargetExpression,
                                  dataclassType: PyDataclassParameters.Type,
                                  ellipsis: PyNoneLiteralExpression,
-                                 context: TypeEvalContext): Pair<String, PyCallableParameter?>? {
+                                 context: TypeEvalContext): Triple<String, Boolean, PyCallableParameter?>? {
       val fieldName = field.name ?: return null
 
       val stub = field.stub
       val fieldStub = if (stub == null) PyDataclassFieldStubImpl.create(field) else stub.getCustomStub(PyDataclassFieldStub::class.java)
-      if (fieldStub != null && !fieldStub.initValue()) return fieldName to null
+      if (fieldStub != null && !fieldStub.initValue()) return Triple(fieldName, false, null)
       if (fieldStub == null && field.annotationValue == null) return null // skip fields that are not annotated
 
       val parameterName =
@@ -234,11 +234,13 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
           else it
         }
 
-      val parameter = PyCallableParameterImpl.nonPsi(parameterName,
-                                                     getTypeForParameter(cls, field, dataclassType, context),
-                                                     getDefaultValueForParameter(cls, field, fieldStub, dataclassType, ellipsis, context))
+      val parameter = PyCallableParameterImpl.nonPsi(
+        parameterName,
+        getTypeForParameter(cls, field, dataclassType, context),
+        getDefaultValueForParameter(cls, field, fieldStub, dataclassType, ellipsis, context)
+      )
 
-      return parameterName to parameter
+      return Triple(parameterName, fieldStub?.kwOnly() == true, parameter)
     }
 
     private fun getTypeForParameter(cls: PyClass,

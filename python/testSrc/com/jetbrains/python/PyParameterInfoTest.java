@@ -909,6 +909,17 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg3>").getTextOffset()).check("*, a: int", new String[]{"*, a: int"});
   }
 
+  // PY-33189
+  public void testInitializingAttrsKwOnlyOnFields() {
+    final var marks = loadTest(5);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("b: int, *, a", new String[]{"b: int, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("b: int, *, a", new String[]{"b: int, "});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("a: int, *, b", new String[]{"a: int, "});
+    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("*, a", ArrayUtil.EMPTY_STRING_ARRAY);
+    feignCtrlP(marks.get("<arg5>").getTextOffset()).check("a: int", new String[]{"a: int"});
+  }
+
   // PY-28957
   public void testDataclassesReplace() {
     runWithLanguageLevel(
