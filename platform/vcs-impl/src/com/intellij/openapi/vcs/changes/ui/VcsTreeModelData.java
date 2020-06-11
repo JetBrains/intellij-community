@@ -252,7 +252,7 @@ public abstract class VcsTreeModelData {
         if (node.shouldExpandByDefault()) {
           return () -> {
             //noinspection unchecked
-            Enumeration<ChangesBrowserNode<?>> children = node.children();
+            Enumeration<ChangesBrowserNode<?>> children = (Enumeration)node.children();
             return ContainerUtil.iterate(children);
           };
         }
