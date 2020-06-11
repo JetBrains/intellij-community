@@ -475,14 +475,19 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     val shadowInstance: UISettings
       get() = instanceOrNull ?: UISettings(NotRoamableUiSettings())
 
-    @JvmField
-    val FORCE_USE_FRACTIONAL_METRICS = SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", SystemInfo.isMacOSCatalina)
+    @JvmStatic
+    val PREFERRED_FRACTIONAL_METRICS_VALUE: Any
+      get() {
+        return if (!Registry.`is`("ide.disable.fractionalMetrics", false)
+                   && SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", SystemInfo.isMacOSCatalina))
+          RenderingHints.VALUE_FRACTIONALMETRICS_ON
+        else
+          RenderingHints.VALUE_FRACTIONALMETRICS_OFF
+      }
 
     @JvmStatic
     fun setupFractionalMetrics(g2d: Graphics2D) {
-      if (FORCE_USE_FRACTIONAL_METRICS) {
-        g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON)
-      }
+      g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, PREFERRED_FRACTIONAL_METRICS_VALUE)
     }
 
     /**
