@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts.PopupContent;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
@@ -600,8 +601,10 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     protected void createCompactTextAndProgress() {
       myText.setTextAlignment(Component.RIGHT_ALIGNMENT);
       myText.recomputeSize();
+      UIUtil.setCursor(myText, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       UIUtil.setCursor(myProgress, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       super.createCompactTextAndProgress();
+      ((JComponent)myProgress.getParent()).setBorder(JBUI.Borders.empty(0, 8, 0, 4));
     }
 
     protected boolean canCheckPowerSaveMode() {
@@ -784,6 +787,8 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     private final LinkLabel<?> myMultiProcessLink = LinkLabel.create("", InfoAndProgressPanel.this::triggerPopupShowing);
 
     InlineProgressPanel() {
+      myMultiProcessLink.setFont(SystemInfo.isMac ? JBUI.Fonts.label(11) : JBFont.label());
+
       setLayout(new AbstractLayoutManager() {
         @Override
         public Dimension preferredLayoutSize(Container parent) {
