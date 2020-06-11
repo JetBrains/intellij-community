@@ -51,9 +51,9 @@ public class RestPreviewFileEditor extends UserDataHolderBase implements FileEdi
     myFile = file;
     myProject = project;
     myDocument = FileDocumentManager.getInstance().getDocument(myFile);
-    myPanel = RestSettings.getInstance().getCurrentPanel().equals(RestConfigurable.SWING) ?
-              new RestSwingHtmlPanel() :
-              new RestJavaFxHtmlPanel();
+    myPanel = RestSettings.getInstance().getCurrentPanel().equals(RestConfigurable.JCEF) ?
+              new RestJcefHtmlPanel(myProject) :
+              new RestSwingHtmlPanel();
 
     if (myDocument != null) {
       myDocument.addDocumentListener(new DocumentListener() {
