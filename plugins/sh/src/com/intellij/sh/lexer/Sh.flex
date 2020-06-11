@@ -31,6 +31,7 @@ import com.intellij.openapi.util.text.StringUtil;
   private boolean heredocWithWhiteSpaceIgnore;
   private int regexStart = -1;
   private int regexGroups = 0;
+  private int herestringStartPosition = -1;
   private final IntStack stateStack = new IntStack(1_000);
   private final IntStack parenStack = new IntStack(1_000);
 
@@ -71,6 +72,7 @@ import com.intellij.openapi.util.text.StringUtil;
     isArithmeticExpansion = false;
     isQuoteOpen = false;
     isBackquoteOpen = false;
+    herestringStartPosition = -1;
     regexStart = -1;
     regexGroups = 0;
   }
@@ -321,9 +323,9 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedChar}
 
 <HERE_STRING> {
   ">"  | ";" | "|" | "(" | ")"  |
-  "&"  | "`"                    { popState(); yypushback(1);}
-  {LineTerminator}              { popState(); return LINEFEED; }
-  {WhiteSpace}+                 { popState(); return WHITESPACE; }
+  "&"  | "`"                    { herestringStartPosition=-1; popState(); yypushback(1);}
+  {LineTerminator}              { herestringStartPosition=-1; popState(); return LINEFEED; }
+  {WhiteSpace}+                 { if (herestringStartPosition != getTokenStart()) { herestringStartPosition=-1; popState(); } return WHITESPACE; }
   {HereString}+                 { return WORD; }
 }
 
@@ -435,7 +437,7 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedChar}
     ">("                          { return OUTPUT_PROCESS_SUBSTITUTION; }
     "<("                          { return INPUT_PROCESS_SUBSTITUTION; }
 
-    "<<<" {WhiteSpace}*           { pushState(HERE_STRING); return REDIRECT_HERE_STRING; }
+    "<<<"                         { herestringStartPosition = getTokenEnd(); pushState(HERE_STRING); return REDIRECT_HERE_STRING; }
     "<<-"                         { if (yystate() != HERE_DOC_PIPELINE)
                                     { pushState(HERE_DOC_START_MARKER); heredocWithWhiteSpaceIgnore = true; return HEREDOC_MARKER_TAG; }
                                     else return SHIFT_LEFT; }

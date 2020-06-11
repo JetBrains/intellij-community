@@ -7,64 +7,28 @@ import com.intellij.psi.PsiElement;
 
 public interface ShRedirection extends ShCompositeElement {
 
-  @NotNull
-  List<ShArithmeticExpansion> getArithmeticExpansionList();
+  @Nullable
+  ShArithmeticExpansion getArithmeticExpansion();
 
-  @NotNull
-  List<ShBraceExpansion> getBraceExpansionList();
+  @Nullable
+  ShBraceExpansion getBraceExpansion();
 
   @NotNull
   List<ShCommand> getCommandList();
 
-  @NotNull
-  List<ShNumber> getNumberList();
+  @Nullable
+  ShNumber getNumber();
 
   @Nullable
   ShProcessSubstitution getProcessSubstitution();
 
-  @NotNull
-  List<ShShellParameterExpansion> getShellParameterExpansionList();
-
-  @NotNull
-  List<ShString> getStringList();
-
-  @NotNull
-  List<ShVariable> getVariableList();
+  @Nullable
+  ShShellParameterExpansion getShellParameterExpansion();
 
   @Nullable
-  PsiElement getGt();
+  ShString getString();
 
   @Nullable
-  PsiElement getLt();
-
-  @Nullable
-  PsiElement getMinus();
-
-  @Nullable
-  PsiElement getRedirectAmpGreater();
-
-  @Nullable
-  PsiElement getRedirectAmpGreaterGreater();
-
-  @Nullable
-  PsiElement getRedirectGreaterAmp();
-
-  @Nullable
-  PsiElement getRedirectGreaterBar();
-
-  @Nullable
-  PsiElement getRedirectHereString();
-
-  @Nullable
-  PsiElement getRedirectLessAmp();
-
-  @Nullable
-  PsiElement getRedirectLessGreater();
-
-  @Nullable
-  PsiElement getShiftLeft();
-
-  @Nullable
-  PsiElement getShiftRight();
+  ShVariable getVariable();
 
 }
