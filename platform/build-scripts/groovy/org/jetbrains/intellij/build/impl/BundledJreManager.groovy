@@ -10,7 +10,13 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 
+import java.nio.file.*
+import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.DosFileAttributeView
+import java.nio.file.attribute.PosixFilePermission
 import java.util.concurrent.ConcurrentHashMap
+
+import static java.nio.file.attribute.PosixFilePermission.*
 
 @CompileStatic
 class BundledJreManager {
@@ -56,6 +62,7 @@ class BundledJreManager {
       File destinationDir = new File(destination)
       if (destinationDir.exists()) destinationDir.deleteDir()
       untar(archive, destination)
+      fixJbrPermissions(destination, os == OsFamily.WINDOWS)
     }
 
     targetDir
@@ -105,6 +112,34 @@ class BundledJreManager {
         arg(value: destination)
       }
     }
+  }
+
+  private static void fixJbrPermissions(String destination, boolean forWin) {
+    Set<PosixFilePermission> exeOrDir = EnumSet.of(OWNER_READ, OWNER_WRITE, OWNER_EXECUTE, GROUP_READ, GROUP_EXECUTE, OTHERS_READ, OTHERS_EXECUTE)
+    Set<PosixFilePermission> regular = EnumSet.of(OWNER_READ, OWNER_WRITE, GROUP_READ, OTHERS_READ)
+
+    Path root = Paths.get(destination)
+    Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+      @Override
+      FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+        if (dir != root && SystemInfo.isUnix) {
+          Files.setPosixFilePermissions(dir, exeOrDir)
+        }
+        return FileVisitResult.CONTINUE
+      }
+
+      @Override
+      FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        if (SystemInfo.isUnix) {
+          boolean noExec = forWin || !(OWNER_EXECUTE in Files.getPosixFilePermissions(file))
+          Files.setPosixFilePermissions(file, noExec ? regular : exeOrDir)
+        }
+        else {
+          ((DosFileAttributeView)Files.getFileAttributeView(file, DosFileAttributeView.class)).setReadOnly(false)
+        }
+        return FileVisitResult.CONTINUE
+      }
+    })
   }
 
   /**
