@@ -261,6 +261,8 @@
     <registryKey key="maven.server.debug.default" defaultValue="false"
                  description="Debug maven server for default project"/>
 
+    <registryKey key="maven.modules.do.not.ignore.on.delete" defaultValue="false"
+                 description="Deleted maven modules will not be marked as ignored"/>
 
     <intentionAction>
       <className>org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesConverter$MyUpdateIndicesIntention</className>
