@@ -59,7 +59,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
   private val timelineModel = GHPRTimelineMergingModel()
   private val reviewThreadsModelsProvider = GHPRReviewsThreadsModelsProviderImpl(editor.reviewData, uiDisposable)
 
-  private val stateModel = GHPRStateModelImpl(project, editor.stateData, editor.changesData, currentDetails, uiDisposable)
+  private val stateModel = GHPRStateModelImpl(project, editor.stateData, editor.changesData, detailsModel, uiDisposable)
 
   init {
     editor.detailsData.loadDetails(uiDisposable) {
