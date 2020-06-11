@@ -30,7 +30,6 @@
     <applicationService serviceImplementation="com.intellij.grazie.GrazieConfig"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.grazie.ide.notification.GrazieNotificationComponent"/>
-    <preloadingActivity implementation="com.intellij.grazie.ide.msg.GrazieIDEInit"/>
 
     <!-- getDisplayName is overridden in GrazieInspection itself! Placeholder is required to suppress validation. -->
     <localInspection bundle="messages.GrazieBundle" groupKey="grazie.group.name" enabledByDefault="true" shortName="GrazieInspection"

@@ -61,7 +61,7 @@ class GrammarCheckerTests : GrazieTestBase() {
     Assert.assertEquals(3, fixes.size)
     fixes[0].assertTypoIs(IntRange(12, 13), listOf(","), text[0])
     fixes[1].assertTypoIs(IntRange(15, 20), listOf("to the"), text[0])
-    fixes[2].assertTypoIs(IntRange(0, 7), listOf("This is"), text[1])
+    fixes[2].assertTypoIs(IntRange(0, 3), listOf("These"), text[1])
   }
 
   @Test
@@ -73,6 +73,6 @@ class GrammarCheckerTests : GrazieTestBase() {
     Assert.assertEquals(3, fixes.size)
     fixes[0].assertTypoIs(IntRange(27, 28), listOf(","), text[0])
     fixes[1].assertTypoIs(IntRange(30, 35), listOf("to the"), text[0])
-    fixes[2].assertTypoIs(IntRange(4, 11), listOf("This is"), text[2])
+    fixes[2].assertTypoIs(IntRange(4, 7), listOf("These"), text[2])
   }
 }

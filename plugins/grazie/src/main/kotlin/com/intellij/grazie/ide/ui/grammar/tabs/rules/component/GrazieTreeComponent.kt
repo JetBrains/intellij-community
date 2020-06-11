@@ -58,7 +58,7 @@ class GrazieTreeComponent(onSelectionChanged: (meta: Any) -> Unit) : CheckboxTre
     TreeSpeedSearch(this) {
       when (val node = TreeUtil.getLastUserObject(it)) {
         is RuleWithLang -> node.rule.description
-        is ComparableCategory -> node.category.getName(node.lang.jLanguage)
+        is ComparableCategory -> node.category.name
         is Lang -> node.nativeName
         else -> ""
       }

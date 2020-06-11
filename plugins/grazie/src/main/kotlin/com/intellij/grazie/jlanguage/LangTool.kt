@@ -5,9 +5,11 @@ import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.jlanguage.broker.GrazieDynamicClassBroker
 import com.intellij.grazie.jlanguage.broker.GrazieDynamicDataBroker
+import com.intellij.grazie.jlanguage.filters.UppercaseMatchFilter
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.containers.CollectionFactory
 import org.languagetool.JLanguageTool
-import org.languagetool.rules.UppercaseMatchFilter
+import org.languagetool.rules.CategoryId
 import java.util.concurrent.ConcurrentHashMap
 
 object LangTool : GrazieStateLifecycle {
@@ -15,8 +17,8 @@ object LangTool : GrazieStateLifecycle {
   private val rulesToLanguages = CollectionFactory.createSmallMemoryFootprintMap<String, MutableSet<Lang>>()
 
   init {
-    JLanguageTool.dataBroker = GrazieDynamicDataBroker
-    JLanguageTool.classBroker = GrazieDynamicClassBroker
+    JLanguageTool.setDataBroker(GrazieDynamicDataBroker)
+    JLanguageTool.setClassBrokerBroker(GrazieDynamicClassBroker)
   }
 
   val allRules: Set<String>
@@ -27,10 +29,46 @@ object LangTool : GrazieStateLifecycle {
 
     return langs.computeIfAbsent(lang) {
       JLanguageTool(lang.jLanguage!!).apply {
+        setCheckCancelledCallback { ProgressManager.checkCanceled(); false }
         addMatchFilter(UppercaseMatchFilter())
 
         state.userDisabledRules.forEach { id -> disableRule(id) }
         state.userEnabledRules.forEach { id -> enableRule(id) }
+
+        fun loadConfigFile(path: String, block: (iso: String, id: String) -> Unit) {
+          GrazieDynamicDataBroker.getFromResourceDirAsStream(path).use { stream ->
+            stream.bufferedReader().forEachLine {
+              val (iso, id) = it.split(':')
+              block(iso, id)
+            }
+          }
+        }
+
+        loadConfigFile("en/enabled_rules.txt") { iso, ruleId ->
+          if (iso == lang.iso.name && ruleId !in state.userDisabledRules) {
+            enableRule(ruleId)
+          }
+        }
+
+        loadConfigFile("en/disabled_rules.txt") { iso, ruleId ->
+          if (iso == lang.iso.name && ruleId !in state.userEnabledRules) {
+            disableRule(ruleId)
+          }
+        }
+
+        loadConfigFile("en/enabled_categories.txt") { iso, categoryId ->
+          if (iso == lang.iso.name) {
+            enableRuleCategory(CategoryId(categoryId))
+          }
+        }
+
+        loadConfigFile("en/disabled_categories.txt") { iso, categoryId ->
+          if (iso == lang.iso.name) {
+            disableCategory(CategoryId(categoryId))
+          }
+        }
+
+        allSpellingCheckRules.forEach { rule -> disableRule(rule.id) }
 
         allRules.distinctBy { it.id }.onEach { rule ->
           rulesToLanguages.getOrPut(rule.id, {CollectionFactory.createSmallMemoryFootprintSet()}).add(lang)
