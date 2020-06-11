@@ -4,6 +4,7 @@ package com.intellij.ui.jcef;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.cef.CefClient;
 import org.cef.CefSettings;
@@ -91,7 +92,7 @@ public class JBCefClient implements JBCefDisposable {
                                             CefContextMenuParams params,
                                             int commandId,
                                             int eventFlags) {
-          return myContextMenuHandler.handleNotNull(browser, handler -> {
+          return myContextMenuHandler.handleBoolean(browser, handler -> {
             return handler.onContextMenuCommand(browser, frame, params, commandId, eventFlags);
           });
         }
@@ -121,7 +122,7 @@ public class JBCefClient implements JBCefDisposable {
                                     Vector<String> acceptFilters,
                                     int selectedAcceptFilter,
                                     CefFileDialogCallback callback) {
-          return myDialogHandler.handleNotNull(browser, handler -> {
+          return myDialogHandler.handleBoolean(browser, handler -> {
             return handler.onFileDialog(browser, mode, title, defaultFilePath, acceptFilters, selectedAcceptFilter, callback);
           });
         }
@@ -152,7 +153,7 @@ public class JBCefClient implements JBCefDisposable {
 
         @Override
         public boolean onTooltip(CefBrowser browser, String text) {
-          return myDisplayHandler.handleNotNull(browser, handler -> {
+          return myDisplayHandler.handleBoolean(browser, handler -> {
             return handler.onTooltip(browser, text);
           });
         }
@@ -166,7 +167,7 @@ public class JBCefClient implements JBCefDisposable {
 
         @Override
         public boolean onConsoleMessage(CefBrowser browser, CefSettings.LogSeverity level, String message, String source, int line) {
-          return myDisplayHandler.handleNotNull(browser, handler -> {
+          return myDisplayHandler.handleBoolean(browser, handler -> {
             return handler.onConsoleMessage(browser, level, message, source, line);
           });
         }
@@ -210,7 +211,7 @@ public class JBCefClient implements JBCefDisposable {
       myCefClient.addDragHandler(new CefDragHandler() {
         @Override
         public boolean onDragEnter(CefBrowser browser, CefDragData dragData, int mask) {
-          return myDragHandler.handleNotNull(browser, handler -> {
+          return myDragHandler.handleBoolean(browser, handler -> {
             return handler.onDragEnter(browser, dragData, mask);
           });
         }
@@ -234,7 +235,7 @@ public class JBCefClient implements JBCefDisposable {
 
         @Override
         public boolean onSetFocus(CefBrowser browser, FocusSource source) {
-          return myFocusHandler.handleNotNull(browser, handler -> {
+          return myFocusHandler.handleBoolean(browser, handler -> {
             return handler.onSetFocus(browser, source);
           });
         }
@@ -264,14 +265,14 @@ public class JBCefClient implements JBCefDisposable {
                                   String default_prompt_text,
                                   CefJSDialogCallback callback,
                                   BoolRef suppress_message) {
-          return myJSDialogHandler.handleNotNull(browser, handler -> {
+          return myJSDialogHandler.handleBoolean(browser, handler -> {
             return handler.onJSDialog(browser, origin_url, dialog_type, message_text, default_prompt_text, callback, suppress_message);
           });
         }
 
         @Override
         public boolean onBeforeUnloadDialog(CefBrowser browser, String message_text, boolean is_reload, CefJSDialogCallback callback) {
-          return myJSDialogHandler.handleNotNull(browser, handler -> {
+          return myJSDialogHandler.handleBoolean(browser, handler -> {
             return handler.onBeforeUnloadDialog(browser, message_text, is_reload, callback);
           });
         }
@@ -302,14 +303,14 @@ public class JBCefClient implements JBCefDisposable {
       myCefClient.addKeyboardHandler(new CefKeyboardHandler() {
         @Override
         public boolean onPreKeyEvent(CefBrowser browser, CefKeyEvent event, BoolRef is_keyboard_shortcut) {
-          return myKeyboardHandler.handleNotNull(browser, handler -> {
+          return myKeyboardHandler.handleBoolean(browser, handler -> {
             return handler.onPreKeyEvent(browser, event, is_keyboard_shortcut);
           });
         }
 
         @Override
         public boolean onKeyEvent(CefBrowser browser, CefKeyEvent event) {
-          return myKeyboardHandler.handleNotNull(browser, handler -> {
+          return myKeyboardHandler.handleBoolean(browser, handler -> {
             return handler.onKeyEvent(browser, event);
           });
         }
@@ -326,7 +327,7 @@ public class JBCefClient implements JBCefDisposable {
       myCefClient.addLifeSpanHandler(new CefLifeSpanHandler() {
         @Override
         public boolean onBeforePopup(CefBrowser browser, CefFrame frame, String target_url, String target_frame_name) {
-          return myLifeSpanHandler.handleNotNull(browser, handler -> {
+          return myLifeSpanHandler.handleBoolean(browser, handler -> {
             return handler.onBeforePopup(browser, frame, target_url, target_frame_name);
           });
         }
@@ -347,7 +348,7 @@ public class JBCefClient implements JBCefDisposable {
 
         @Override
         public boolean doClose(CefBrowser browser) {
-          return myLifeSpanHandler.handleNotNull(browser, handler -> {
+          return myLifeSpanHandler.handleBoolean(browser, handler -> {
             return handler.doClose(browser);
           });
         }
@@ -409,7 +410,7 @@ public class JBCefClient implements JBCefDisposable {
       myCefClient.addRequestHandler(new CefRequestHandler() {
         @Override
         public boolean onBeforeBrowse(CefBrowser browser, CefFrame frame, CefRequest request, boolean user_gesture, boolean is_redirect) {
-          return myRequestHandler.handleNotNull(browser, handler -> {
+          return myRequestHandler.handleBoolean(browser, handler -> {
             return handler.onBeforeBrowse(browser, frame, request, user_gesture, is_redirect);
           });
         }
@@ -439,14 +440,14 @@ public class JBCefClient implements JBCefDisposable {
                                           String scheme,
                                           CefAuthCallback callback)
         {
-          return myRequestHandler.handleNotNull(browser, handler -> {
+          return myRequestHandler.handleBoolean(browser, handler -> {
             return handler.getAuthCredentials(browser, origin_url, isProxy, host, port, realm, scheme, callback);
           });
         }
 
         @Override
         public boolean onQuotaRequest(CefBrowser browser, String origin_url, long new_size, CefRequestCallback callback) {
-          return myRequestHandler.handleNotNull(browser, handler -> {
+          return myRequestHandler.handleBoolean(browser, handler -> {
             return handler.onQuotaRequest(browser, origin_url, new_size, callback);
           });
         }
@@ -456,7 +457,7 @@ public class JBCefClient implements JBCefDisposable {
                                           CefLoadHandler.ErrorCode cert_error,
                                           String request_url,
                                           CefRequestCallback callback) {
-          return myRequestHandler.handleNotNull(browser, handler -> {
+          return myRequestHandler.handleBoolean(browser, handler -> {
             return handler.onCertificateError(browser, cert_error, request_url, callback);
           });
         }
@@ -545,17 +546,17 @@ public class JBCefClient implements JBCefDisposable {
     @Nullable
     public <R> R handle(@NotNull CefBrowser browser, @NotNull HandlerCallable<T, R> callable) {
       List<T> list = get(browser);
-      assert list != null;
+      if (list == null) {
+        return null;
+      }
       final Ref<R> lastResult = new Ref<>(null);
       list.forEach(handler -> lastResult.set(callable.handle(handler)));
       return lastResult.get();
     }
 
-    @NotNull
-    public <R> R handleNotNull(@NotNull CefBrowser browser, @NotNull HandlerCallableNotNull<T, R> callable) {
-      return Objects.requireNonNull(handle(browser, callable));
+    public <R> boolean handleBoolean(@NotNull CefBrowser browser, @NotNull HandlerCallable<T, Boolean> callable) {
+      return ObjectUtils.notNull(handle(browser, callable), Boolean.FALSE);
     }
-
 
     public void handle(@NotNull CefBrowser browser, @NotNull HandlerRunnable<T> runnable) {
       List<T> list = get(browser);
@@ -566,12 +567,6 @@ public class JBCefClient implements JBCefDisposable {
 
   private interface HandlerCallable<T, R> {
     @Nullable
-    R handle(T handler);
-  }
-
-  private interface HandlerCallableNotNull<T, R> extends HandlerCallable<T, R> {
-    @Override
-    @NotNull
     R handle(T handler);
   }
 
