@@ -191,32 +191,36 @@ class FilePartNode {
     processPointers(pointer -> { if (pointer.isRecursive()) toFirePointers.putValue(pointer.myListener, pointer); });
   }
 
-  void doCheckConsistency(@Nullable VirtualFile parent, @NotNull String pathFromRoot) {
-    String name = getName().toString();
+  void doCheckConsistency(@Nullable VirtualFile parent, @NotNull String name, @NotNull String urlFromRoot) {
     VirtualFile myFile = myFile();
 
     if (!(this instanceof FilePartNodeRoot)) {
       if (myFile == null) {
         String myUrl = myUrl();
-        String expectedUrl = VirtualFileManager.constructUrl(myFS.getProtocol(), pathFromRoot + (pathFromRoot.endsWith("/") ? "" : "/"));
-        String actualUrl = myUrl + (myUrl.endsWith("/") ? "" : "/");
-        assert FileUtil.PATH_HASHING_STRATEGY.equals(actualUrl, expectedUrl) : "Expected url: '" + expectedUrl + "' but got: '" + actualUrl + "'";
+        String expectedUrl = StringUtil.trimEnd(urlFromRoot, '/');
+        String actualUrl = StringUtil.trimEnd(myUrl, '/');
+        assert FileUtil.namesEqual(actualUrl, expectedUrl) : "Expected url: '" + expectedUrl + "' but got: '" + actualUrl + "'";
       }
       else {
         assert Comparing.equal(getParentThroughJar(myFile, myFS), parent) : "parent: " + parent + "; myFile: " + myFile;
       }
     }
     assert !"..".equals(name) && !".".equals(name) : "url must not contain '.' or '..' but got: " + this;
+    String prevChildName = "";
     for (int i = 0; i < children.length; i++) {
       FilePartNode child = children[i];
-      CharSequence childName = child.getName();
-      String childPathRoot = pathFromRoot +
-                    (pathFromRoot.isEmpty() || pathFromRoot.endsWith("/") || childName.equals(JarFileSystem.JAR_SEPARATOR) ? "" : "/") +
-                    childName;
-      child.doCheckConsistency(myFile, childPathRoot);
-      if (i != 0) {
-        assert !FileUtil.namesEqual(childName.toString(), children[i - 1].getName().toString()) : "child[" + i + "] = " + child + "; [-1] = " + children[i - 1];
+      String childName = child.getName().toString();
+      boolean needSeparator = !urlFromRoot.isEmpty() && !urlFromRoot.endsWith("/") && !childName.equals(JarFileSystem.JAR_SEPARATOR);
+      String childUrlFromRoot = needSeparator ? urlFromRoot + "/" + childName : urlFromRoot + childName;
+      if (child.myFS != myFS) {
+        // "file:" changed to "jar:"
+        childUrlFromRoot = child.myFS.getProtocol() + StringUtil.trimStart(childUrlFromRoot, myFS.getProtocol());
       }
+      child.doCheckConsistency(myFile, childName, childUrlFromRoot);
+      if (i != 0) {
+        assert !FileUtil.namesEqual(childName, prevChildName) : "child[" + i + "] = " + child + "; [-1] = " + children[i - 1];
+      }
+      prevChildName = childName;
     }
     int[] leafNumber = new int[1];
     processPointers(p -> { assert p.myNode == this; leafNumber[0]++; });
