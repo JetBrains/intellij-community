@@ -252,8 +252,7 @@
       <reference ref="Vcs.Log.ShowChangesFromParents"/>
       <reference ref="Vcs.Log.ShowOnlyAffectedChanges"/>
       <reference ref="Vcs.Log.ShowDiffPreview"/>
-      <reference ref="Vcs.Log.MoveDiffPreviewToBottom"/>
-      <reference ref="Vcs.Log.MoveDiffPreviewToRight"/>
+      <reference ref="Vcs.Log.Diff.Preview.Location"/>
       <separator/>
       <reference ref="Vcs.Log.Refresh"/>
       <reference ref="Vcs.Log.OpenAnotherTab"/>
