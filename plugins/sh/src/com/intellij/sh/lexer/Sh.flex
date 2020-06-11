@@ -89,17 +89,18 @@ Shebang                  = #\! {InputCharacter}*
 Comment                  = # {InputCharacter}*
 
 EscapedChar              = "\\" [^\n]
+EscapedAnyChar           = {EscapedChar} | {LineContinuation}
 Quote                    = \"
 
 UnclosedRawString        = '[^']*
 DollarSignRawString      = "$'"([^'] | {EscapedChar})*
 RawString                = {UnclosedRawString}' | {DollarSignRawString}'
 
-WordFirst                = [[:letter:]||[:digit:]||[_/@?.*:%\^+,~-]] | {EscapedChar} | [\u00C0-\u00FF] | {LineContinuation}
+WordFirst                = [[:letter:]||[:digit:]||[_/@?.*:%\^+,~-]] | {EscapedAnyChar} | [\u00C0-\u00FF]
 WordAfter                = {WordFirst} | [#!]
 Word                     = {WordFirst}{WordAfter}*
 
-ArithWordFirst           = [a-zA-Z_@.] | {EscapedChar} | {LineContinuation}
+ArithWordFirst           = [a-zA-Z_@.] | {EscapedAnyChar}
 ArithWordAfter           = {ArithWordFirst} | [0-9#!]
 ArithWord                = {ArithWordFirst}{ArithWordAfter}*
 
@@ -121,7 +122,7 @@ CasePattern              = {CaseFirst} ({LineContinuation}? {CaseAfter})*
 Filedescriptor           = "&" {IntegerLiteral} | "&-"  //todo:: check the usage ('<&' | '>&') (num | '-') in parser
 AssigOp                  = "=" | "+="
 
-ParamExpansionName       = ([a-zA-Z0-9_] | {EscapedChar})*
+ParamExpansionName       = ([a-zA-Z0-9_] | {EscapedAnyChar})*
 ParamExpansionSeparator  = "#""#"? | "!" | ":" | ":"?"=" | ":"?"+" | ":"?"-" | ":"?"?" | "@" | ","","? | "^""^"? | "*"
 
 HeredocMarker            = [^\r\n|&\\;()[] \t\"'] | {EscapedChar}
@@ -131,8 +132,8 @@ RegexWord                = [^\r\n\\\"' \t$`()] | {EscapedChar}
 Regex                    = {RegexWord}+
 
 HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
-StringContent            = [^$\"`(\\] | {EscapedChar}
-EvalContent              = [^\r\n$\"`'() ;] | {EscapedChar}
+StringContent            = [^$\"`(\\] | {EscapedAnyChar}
+EvalContent              = [^\r\n$\"`'() ;] | {EscapedAnyChar}
 
 %state ARITHMETIC_EXPRESSION
 %state OLD_ARITHMETIC_EXPRESSION

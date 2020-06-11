@@ -16,6 +16,7 @@ public class ShParserTest extends ParsingTestCase {
 
   public void testTrickyStrings() { doTest(true); }
   public void testStrings()       { doTest(true); }
+  public void testStrings2()      { doTest(true); }
   public void testShebang()       { doTest(true); }
   public void testFirst()         { doTest(true); }
   public void testLines()         { doTest(true); }
