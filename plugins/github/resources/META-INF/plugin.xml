@@ -146,6 +146,7 @@
     <group id="Github.PullRequest.Details.Popup">
       <action id="Github.PullRequest.Timeline.Show"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPROpenPullRequestTimelineAction"/>
+      <reference id="Github.Open.In.Browser"/>
       <action id="Github.PullRequest.Branch.Create"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRCreateBranchAction"/>
       <action id="Github.PullRequest.Details.Reload"
