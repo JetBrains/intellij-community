@@ -60,9 +60,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
   @NotNull
   private final AsyncProcessIcon myLoadingIcon = new AsyncProcessIcon.BigCentered(IdeBundle.message("progress.text.loading"));
 
-  private static final String MARKETPLACE_LINK = "https://plugins.jetbrains.com/plugin/index?xmlId=";
-
-
   private JBPanelWithEmptyText myEmptyPanel;
 
 
