@@ -1172,18 +1172,20 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     Computable<Boolean> query =
       () -> FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, keys, scope, checker, processor);
 
-    Boolean[] result = {null};
     if (FileBasedIndex.isIndexAccessDuringDumbModeEnabled() && FileBasedIndex.getInstance().getCurrentDumbModeAccessType() == null) {
-      ReadAction.nonBlocking(() ->
-        FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE, () -> result[0] = query.compute())
-      ).executeSynchronously();
+      return ReadAction.nonBlocking(() -> FileBasedIndex.getInstance().ignoreDumbMode(
+        DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE,
+        () -> query.compute()
+      )).executeSynchronously();
     }
     else if (FileBasedIndex.isIndexAccessDuringDumbModeEnabled()) {
-      ReadAction.nonBlocking(() -> {
-        result[0] = query.compute();
-      }).executeSynchronously();
+      return ReadAction.nonBlocking(
+        () -> query.compute()
+      ).executeSynchronously();
     }
-    return result[0] != null ? result[0] : DumbService.getInstance(project).runReadActionInSmartMode(query);
+    else {
+      return DumbService.getInstance(project).runReadActionInSmartMode(query);
+    }
   }
 
   @NotNull
