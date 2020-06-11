@@ -22,7 +22,7 @@ import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.keymap.impl.keymapComparator
 import com.intellij.openapi.keymap.impl.ui.KeymapSchemeManager
 import com.intellij.openapi.observable.properties.GraphProperty
-import com.intellij.openapi.observable.properties.GraphPropertyImpl
+import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.ShowSettingsUtil.getSettingsMenuName
@@ -56,15 +56,15 @@ class CustomizeTabFactory : WelcomeTabFactory {
 private fun getIdeFont() = if (settings.overrideLafFonts) settings.fontSize else JBFont.label().size
 private fun getEditorFont() = fontOptions.getSize(fontOptions.fontFamily)
 
-class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScreenTab("Customize") {
+class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab("Customize") {
   private val supportedColorBlindness = getColorBlindness()
   private val propertyGraph = PropertyGraph()
-  private val lafProperty = GraphPropertyImpl<LafManager.LafReference>(propertyGraph) { laf.currentLookAndFeelReference }
-  private val ideFontProperty = GraphPropertyImpl(propertyGraph) { getIdeFont() }
-  private val editorFontProperty = GraphPropertyImpl(propertyGraph) { getEditorFont() }
-  private val keymapProperty = GraphPropertyImpl(propertyGraph) { keymapManager.activeKeymap }
-  private val colorBlindnessProperty = GraphPropertyImpl(propertyGraph) { settings.colorBlindness ?: supportedColorBlindness.firstOrNull() }
-  private val adjustColorsProperty = GraphPropertyImpl(propertyGraph) { settings.colorBlindness != null }
+  private val lafProperty = propertyGraph.graphProperty { laf.currentLookAndFeelReference }
+  private val ideFontProperty = propertyGraph.graphProperty { getIdeFont() }
+  private val editorFontProperty = propertyGraph.graphProperty { getEditorFont() }
+  private val keymapProperty = propertyGraph.graphProperty { keymapManager.activeKeymap }
+  private val colorBlindnessProperty = propertyGraph.graphProperty { settings.colorBlindness ?: supportedColorBlindness.firstOrNull() }
+  private val adjustColorsProperty = propertyGraph.graphProperty { settings.colorBlindness != null }
 
   init {
     lafProperty.afterChange({ QuickChangeLookAndFeel.switchLafAndUpdateUI(laf, laf.findLaf(it), false) }, parentDisposable)
@@ -80,6 +80,15 @@ class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScreenTab("
     keymapProperty.afterChange { keymapManager.activeKeymap = it }
     adjustColorsProperty.afterChange { updateColorBlindness() }
     colorBlindnessProperty.afterChange { updateColorBlindness() }
+
+    val busConnection = ApplicationManager.getApplication().messageBus.connect(parentDisposable)
+    busConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener { updateProperty(ideFontProperty) { getIdeFont() } })
+    busConnection.subscribe(EditorColorsManager.TOPIC, EditorColorsListener { updateAccessibilityProperties() })
+    busConnection.subscribe(KeymapManagerListener.TOPIC, object : KeymapManagerListener {
+      override fun activeKeymapChanged(keymap: Keymap?) {
+        updateProperty(keymapProperty) { keymapManager.activeKeymap }
+      }
+    })
   }
 
   private fun updateColorBlindness() {
@@ -112,7 +121,6 @@ class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScreenTab("
   }
 
   override fun buildComponent(): JComponent {
-    val busConnection = ApplicationManager.getApplication().messageBus.connect(parentDisposable)
     return panel {
       blockRow {
         header(IdeBundle.message("welcome.screen.color.theme.header"))
@@ -133,20 +141,11 @@ class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScreenTab("
         }.largeGapAfter()
 
         createColorBlindnessSettingBlock()
-
-        busConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener { updateProperty(ideFontProperty) { getIdeFont() } })
-        busConnection.subscribe(EditorColorsManager.TOPIC, EditorColorsListener { updateAccessibilityProperties() })
       }.largeGapAfter()
       blockRow {
         header(KeyMapBundle.message("keymap.display.name"))
         fullRow {
           comboBox(DefaultComboBoxModel(getKeymaps().toTypedArray()), keymapProperty)
-          busConnection.subscribe(KeymapManagerListener.TOPIC, object : KeymapManagerListener {
-            override fun activeKeymapChanged(keymap: Keymap?) {
-              updateProperty(keymapProperty) { keymapManager.activeKeymap }
-            }
-          })
-
           component(Link(KeyMapBundle.message("welcome.screen.keymap.configure.link")) {
             ShowSettingsUtil.getInstance().showSettingsDialog(null, KeyMapBundle.message("keymap.display.name"))
           }).withLargeLeftGap()
