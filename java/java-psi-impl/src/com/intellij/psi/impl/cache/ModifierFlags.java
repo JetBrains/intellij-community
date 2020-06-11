@@ -31,6 +31,8 @@ public final class ModifierFlags {
   public static final int PACKAGE_LOCAL_MASK = 0x1000;
   public static final int OPEN_MASK = 0x2000;
   public static final int TRANSITIVE_MASK = 0x4000;
+  public static final int SEALED_MASK = 0x8000;
+  public static final int NON_SEALED_MASK = 0x10000;
 
   public static final Object2IntMap<String> NAME_TO_MODIFIER_FLAG_MAP = new Object2IntOpenHashMap<>();
   public static final Int2ObjectMap<String> MODIFIER_FLAG_TO_NAME_MAP = new Int2ObjectOpenHashMap<>();
@@ -51,6 +53,8 @@ public final class ModifierFlags {
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.PACKAGE_LOCAL, PACKAGE_LOCAL_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.OPEN, OPEN_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.TRANSITIVE, TRANSITIVE_MASK);
+    NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.SEALED, SEALED_MASK);
+    NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.NON_SEALED, NON_SEALED_MASK);
 
     for (Object name : NAME_TO_MODIFIER_FLAG_MAP.keySet()) {
       MODIFIER_FLAG_TO_NAME_MAP.put(NAME_TO_MODIFIER_FLAG_MAP.getInt(name), (String)name);
@@ -70,6 +74,8 @@ public final class ModifierFlags {
     KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.STRICTFP_KEYWORD, STRICTFP_MASK);
     KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.OPEN_KEYWORD, OPEN_MASK);
     KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.TRANSITIVE_KEYWORD, TRANSITIVE_MASK);
+    KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.SEALED_KEYWORD, SEALED_MASK);
+    KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.NON_SEALED_KEYWORD, NON_SEALED_MASK);
   }
 
   public static boolean hasModifierProperty(String name, int mask) {
