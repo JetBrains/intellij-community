@@ -179,7 +179,7 @@
       <reference id="Vcs.Log.ResumeIndexing"/>
       <reference id="Vcs.Log.GoToRef"/>
     </group>
-    <group id="Vcs.Log.Diff.Preview.Location" popup="true">
+    <group id="Vcs.Log.Diff.Preview.Location" popup="true" class="com.intellij.vcs.log.ui.actions.DiffPreviewLocationActionGroup">
       <reference id="Vcs.Log.MoveDiffPreviewToBottom"/>
       <reference id="Vcs.Log.MoveDiffPreviewToRight"/>
     </group>
