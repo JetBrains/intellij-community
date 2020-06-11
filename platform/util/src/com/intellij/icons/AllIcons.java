@@ -549,6 +549,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon IncomingChangesOn = load("/ide/incomingChangesOn.svg");
     /** 12x12 */ public static final @NotNull Icon Link = load("/ide/link.svg");
     /** 16x16 */ public static final @NotNull Icon LocalScope = load("/ide/localScope.svg");
+    /** 16x16 */ public static final @NotNull Icon LocalScopeAction = load("/ide/localScopeAction.svg");
 
     public final static class Macro {
       /** 16x16 */ public static final @NotNull Icon Recording_1 = load("/ide/macro/recording_1.svg");
