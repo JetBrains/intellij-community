@@ -16,7 +16,10 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThre
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewService
-import org.jetbrains.plugins.github.util.*
+import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
+import org.jetbrains.plugins.github.util.completionOnEdt
+import org.jetbrains.plugins.github.util.handleOnEdt
+import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.concurrent.CompletableFuture
 
 class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
@@ -49,7 +52,7 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
                             comments: List<GHPullRequestDraftReviewComment>?): CompletableFuture<GHPullRequestPendingReview> {
     val future = reviewService.createReview(progressIndicator, pullRequestId, event, body, commitSha, comments).notifyReviews()
     if (event == null) {
-      pendingReviewRequestValue.overrideProcess(future.errorOnEdt { throw ProcessCanceledException() }.successOnEdt { it })
+      pendingReviewRequestValue.overrideProcess(future.successOnEdt { it })
     }
     return if (comments.isNullOrEmpty()) future else future.dropReviews()
   }
@@ -59,7 +62,7 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
                             event: GHPullRequestReviewEvent,
                             body: String?): CompletableFuture<out Any?> {
     val future = reviewService.submitReview(progressIndicator, pullRequestId, reviewId, event, body)
-    pendingReviewRequestValue.overrideProcess(future.errorOnEdt { throw ProcessCanceledException() }.successOnEdt { null })
+    pendingReviewRequestValue.overrideProcess(future.successOnEdt { null })
     return future.dropReviews().notifyReviews()
   }
 
@@ -86,7 +89,7 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
     val future =
       reviewService.addComment(progressIndicator, reviewId, body, commitSha, fileName, diffLine)
 
-    pendingReviewRequestValue.overrideProcess(future.errorOnEdt { throw ProcessCanceledException() }.successOnEdt { it.pullRequestReview })
+    pendingReviewRequestValue.overrideProcess(future.successOnEdt { it.pullRequestReview })
     return future.dropReviews().notifyReviews()
   }
 
@@ -106,8 +109,7 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
       }
       else {
         val future = reviewService.addComment(progressIndicator, pullRequestId, reviewId, replyToCommentId, body)
-        pendingReviewRequestValue.overrideProcess(
-          future.errorOnEdt { throw ProcessCanceledException() }.successOnEdt { it.pullRequestReview })
+        pendingReviewRequestValue.overrideProcess(future.successOnEdt { it.pullRequestReview })
         future.dropReviews().notifyReviews()
       }
     }
