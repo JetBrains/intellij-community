@@ -286,4 +286,5 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     myFixture.addClass("package org.eclipse.jdt.annotation;public @interface NonNullByDefault {}");
     doTest();
   }
+  public void testClassInsideLambda() { doTest(); }
 }

@@ -298,6 +298,7 @@ public class DfaPsiUtil {
         final PsiCodeBlock body = constructor.getBody();
         final Map<PsiField, Boolean> map = new HashMap<>();
         final DataFlowRunner dfaRunner = new DataFlowRunner(constructor.getProject()) {
+          PsiElement currentBlock;
 
           private boolean isCallExposingNonInitializedFields(Instruction instruction) {
             if (!(instruction instanceof MethodCallInstruction)) {
@@ -336,10 +337,19 @@ public class DfaPsiUtil {
           }
 
           @Override
+          protected @NotNull List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
+                                                                                      @NotNull Collection<? extends DfaMemoryState> memStates,
+                                                                                      @NotNull ControlFlow flow) {
+            currentBlock = psiBlock;
+            return super.createInitialInstructionStates(psiBlock, memStates, flow);
+          }
+
+          @Override
           protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
             Instruction instruction = instructionState.getInstruction();
-            if (isCallExposingNonInitializedFields(instruction) ||
-                instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException()) {
+            if (currentBlock == body &&
+                (isCallExposingNonInitializedFields(instruction) ||
+                instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException())) {
               for (PsiField field : containingClass.getFields()) {
                 if (!instructionState.getMemoryState().isNotNull(getFactory().getVarFactory().createVariableValue(field))) {
                   map.put(field, false);
