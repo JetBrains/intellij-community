@@ -511,6 +511,21 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
 
     @Override
+    protected @NotNull Runnable createSuspendUpdateRunnable(@NotNull InplaceButton suspendButton) {
+      suspendButton.setVisible(false);
+
+      return () -> {
+        ProgressSuspender suspender = getSuspender();
+        suspendButton.setVisible(suspender != null);
+
+        if (suspender != null && (myProgressPanel.getState() == ProgressPanel.State.PAUSED) != suspender.isSuspended()) {
+          myProgressPanel.setState(suspender.isSuspended() ? ProgressPanel.State.PAUSED : ProgressPanel.State.PLAYING);
+          updateProgressIcon();
+        }
+      };
+    }
+
+    @Override
     protected boolean canCheckPowerSaveMode() {
       return false;
     }
@@ -676,7 +691,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
       button.setIcons(isCompact() ? compactRegular : regular, null, isCompact() ? compactHovered : hovered);
     }
 
-    private @Nullable ProgressSuspender getSuspender() {
+    protected @Nullable ProgressSuspender getSuspender() {
       ProgressIndicatorEx original = myOriginal;
       return original == null ? null : ProgressSuspender.getSuspender(original);
     }
