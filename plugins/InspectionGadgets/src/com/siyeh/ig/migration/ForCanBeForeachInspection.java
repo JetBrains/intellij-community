@@ -662,7 +662,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
       while (parent != null) {
         if (parent.equals(context)) return false;
         final PsiElement p = parent;
-        if (psiStatements.stream().anyMatch(ps -> ps.isAssignableFrom(p.getClass()))) return true;
+        if (psiStatements.stream().anyMatch(ps -> ps.isInstance(p))) return true;
         if (parent instanceof PsiFile) return false;
         parent = parent.getParent();
       }
