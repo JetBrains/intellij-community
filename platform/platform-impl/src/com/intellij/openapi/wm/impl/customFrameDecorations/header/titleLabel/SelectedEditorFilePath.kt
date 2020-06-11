@@ -42,7 +42,7 @@ import javax.swing.event.AncestorEvent
 import kotlin.math.min
 
 open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = null) {
-  private val classKey = "ide.borderless.class.in.title"
+  private val classKey = "ide.borderless.tab.caption.in.title"
   private val projectTitle = ProjectTitlePane()
   private val classTitle = ClassTitlePane()
 
