@@ -488,16 +488,11 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     runAll(
       () -> disposeRootDisposable(),
       () -> {
-        if (myProject != null) {
-          TestApplicationManagerKt.tearDownProjectAndApp(myProject);
-          myProject = null;
+        if (project != null) {
+          TestApplicationManagerKt.tearDownProjectAndApp(project);
         }
-      },
-      () -> {
-        if (myProject != null) {
-          PlatformTestUtil.closeAndDisposeProjectAndCheckThatNoOpenProjects(myProject);
-          myProject = null;
-        }
+        // must be set to null only after dispose (maybe used by tests during dispose)
+        myProject = null;
       },
       () -> UIUtil.dispatchAllInvocationEvents(),
       () -> {

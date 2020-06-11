@@ -539,10 +539,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertTrue("visitedCount = "+visitedCount+"; countAfter="+countAfter, countAfter >= visitedCount);
   }
 
-  @NotNull
-  private <T extends LocalInspectionTool> T registerInspection(T tool) {
+  private @NotNull <T extends LocalInspectionTool> T registerInspection(@NotNull T tool) {
     enableInspectionTool(tool);
-    disposeOnTearDown(() -> disableInspectionTool(tool.getShortName()));
     return tool;
   }
 

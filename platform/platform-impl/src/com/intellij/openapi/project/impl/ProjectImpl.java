@@ -34,9 +34,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.project.ProjectStoreOwner;
-import com.intellij.psi.impl.DebugUtil;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.serviceContainer.ComponentManagerImpl;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimedReference;
 import com.intellij.util.messages.impl.MessageBusEx;
@@ -52,8 +52,8 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx, Proj
   private static final Logger LOG = Logger.getInstance(ProjectImpl.class);
 
   public static final Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
-
   public static final Key<String> CREATION_TRACE = Key.create("ProjectImpl.CREATION_TRACE");
+  private static final Key<String> DISPOSE_EARLY_DISPOSABLE_TRACE = Key.create("ProjectImpl.DISPOSE_EARLY_DISPOSABLE_TRACE");
 
   @TestOnly
   public static final String LIGHT_PROJECT_NAME = "light_temp";
@@ -76,7 +76,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx, Proj
     super((ComponentManagerImpl)ApplicationManager.getApplication());
 
     putUserData(CREATION_TIME, System.nanoTime());
-    creationTrace = ApplicationManager.getApplication().isUnitTestMode() ? DebugUtil.currentStackTrace() : null;
+    creationTrace = ApplicationManager.getApplication().isUnitTestMode() ? ExceptionUtil.currentStackTrace() : null;
 
     registerServiceInstance(Project.class, this, ComponentManagerImpl.getFakeCorePluginDescriptor());
 
@@ -94,10 +94,10 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx, Proj
 
     putUserData(CREATION_TIME, System.nanoTime());
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      putUserData(CREATION_TRACE, DebugUtil.currentStackTrace());
+      putUserData(CREATION_TRACE, ExceptionUtil.currentStackTrace());
     }
 
-    creationTrace = ApplicationManager.getApplication().isUnitTestMode() ? DebugUtil.currentStackTrace() : null;
+    creationTrace = ApplicationManager.getApplication().isUnitTestMode() ? ExceptionUtil.currentStackTrace() : null;
 
     myName = TEMPLATE_PROJECT_NAME;
     myLight = false;
@@ -355,7 +355,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx, Proj
   @NonNls
   @Override
   public String toString() {
-    return "Project (name=" + myName + ", containerState=" + getContainerStateName() +
+    return "Project(name=" + myName + ", containerState=" + getContainerStateName() +
            ", componentStore=" + (myComponentStore.isComputed() ? getPresentableUrl() : "<not initialized>") + ") " +
            (temporarilyDisposed ? " (disposed" + " temporarily)" : "");
   }
@@ -382,14 +382,31 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx, Proj
     // maybe null only if disposed, but this condition is checked above
     Disposable disposable = earlyDisposable.get();
     if (disposable == null) {
-      throw new IllegalStateException("earlyDisposable is null for " + this);
+      throwEarlyDisposableError("earlyDisposable is null for");
     }
     return disposable;
   }
 
   @ApiStatus.Internal
   public final void disposeEarlyDisposable() {
+    if (LOG.isDebugEnabled() || ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.debug("dispose early disposable: " + toString());
+    }
+
     Disposable disposable = earlyDisposable.getAndSet(null);
+    if (disposable == null) {
+      throwEarlyDisposableError("earlyDisposable was already disposed");
+    }
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      putUserData(DISPOSE_EARLY_DISPOSABLE_TRACE, ExceptionUtil.currentStackTrace());
+    }
+
     Disposer.dispose(disposable);
+  }
+
+  private void throwEarlyDisposableError(@NotNull String error) {
+    throw new IllegalStateException(error + " for " + toString() +
+                                    "\n---begin of dispose trace--\n" + getUserData(DISPOSE_EARLY_DISPOSABLE_TRACE) + "---end of dispose trace---\n");
   }
 }

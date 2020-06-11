@@ -45,7 +45,6 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.paths.UrlReference;
-import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Queryable;
@@ -1115,10 +1114,5 @@ public final class PlatformTestUtil {
     Project project = FixtureRuleKt.createHeavyProject(file, /* useDefaultProjectAsTemplate = */ false);
     Disposer.register(parentDisposable, () -> forceCloseProjectWithoutSaving(project));
     return project;
-  }
-
-  public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull Project projectToClose) {
-    ProjectManagerEx.getInstanceEx().forceCloseProject(projectToClose);
-    ProjectRule.checkThatNoOpenProjects();
   }
 }

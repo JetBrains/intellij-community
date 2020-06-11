@@ -38,6 +38,8 @@ import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.jdom.Element;
@@ -58,6 +60,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
@@ -70,8 +73,8 @@ public abstract class UsefulTestCase extends TestCase {
 
   private static final String ORIGINAL_TEMP_DIR = FileUtil.getTempDirectory();
 
-  private static final Map<String, Long> TOTAL_SETUP_COST_MILLIS = new HashMap<>();
-  private static final Map<String, Long> TOTAL_TEARDOWN_COST_MILLIS = new HashMap<>();
+  private static final Object2LongOpenHashMap<String> TOTAL_SETUP_COST_MILLIS = new Object2LongOpenHashMap<>();
+  private static final Object2LongOpenHashMap<String> TOTAL_TEARDOWN_COST_MILLIS = new Object2LongOpenHashMap<>();
 
   protected static final Logger LOG = Logger.getInstance(UsefulTestCase.class);
 
@@ -129,7 +132,6 @@ public abstract class UsefulTestCase extends TestCase {
     list.add(e);
   }
   private List<Throwable> mySuppressedExceptions;
-
 
   public UsefulTestCase() {
   }
@@ -203,7 +205,7 @@ public abstract class UsefulTestCase extends TestCase {
             }
           }
           else {
-            FileUtil.delete(new File(myTempDir));
+            FileUtil.delete(Paths.get(myTempDir));
           }
         }
       },
@@ -421,26 +423,23 @@ public abstract class UsefulTestCase extends TestCase {
    *
    * @param cost setup cost in milliseconds
    */
-  private void logPerClassCost(long cost, @NotNull Map<String, Long> costMap) {
-    Class<?> superclass = getClass().getSuperclass();
-    Long oldCost = costMap.get(superclass.getName());
-    long newCost = oldCost == null ? cost : oldCost + cost;
-    costMap.put(superclass.getName(), newCost);
+  private void logPerClassCost(long cost, @NotNull Object2LongOpenHashMap<String> costMap) {
+    costMap.addTo(getClass().getSuperclass().getName(), cost);
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   static void logSetupTeardownCosts() {
     System.out.println("Setup costs");
     long totalSetup = 0;
-    for (Map.Entry<String, Long> entry : TOTAL_SETUP_COST_MILLIS.entrySet()) {
-      System.out.printf("  %s: %d ms%n", entry.getKey(), entry.getValue());
-      totalSetup += entry.getValue();
+    for (Object2LongMap.Entry<String> entry : TOTAL_SETUP_COST_MILLIS.object2LongEntrySet()) {
+      System.out.printf("  %s: %d ms%n", entry.getKey(), entry.getLongValue());
+      totalSetup += entry.getLongValue();
     }
     System.out.println("Teardown costs");
     long totalTeardown = 0;
-    for (Map.Entry<String, Long> entry : TOTAL_TEARDOWN_COST_MILLIS.entrySet()) {
-      System.out.printf("  %s: %d ms%n", entry.getKey(), entry.getValue());
-      totalTeardown += entry.getValue();
+    for (Object2LongMap.Entry<String> entry : TOTAL_TEARDOWN_COST_MILLIS.object2LongEntrySet()) {
+      System.out.printf("  %s: %d ms%n", entry.getKey(), entry.getLongValue());
+      totalTeardown += entry.getLongValue();
     }
     System.out.printf("Total overhead: setup %d ms, teardown %d ms%n", totalSetup, totalTeardown);
     System.out.printf("##teamcity[buildStatisticValue key='ideaTests.totalSetupMs' value='%d']%n", totalSetup);
@@ -1135,7 +1134,7 @@ public abstract class UsefulTestCase extends TestCase {
     });
   }
 
-  protected class TestDisposable implements Disposable {
+  protected final class TestDisposable implements Disposable {
     private volatile boolean myDisposed;
 
     public TestDisposable() {
