@@ -4,14 +4,15 @@ package org.jetbrains.plugins.github.pullrequest.ui.details
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.ui.CardLayoutPanel
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
-import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.util.ui.UIUtil
 import icons.GithubIcons
+import net.miginfocom.layout.LC
+import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -48,18 +49,24 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
     fun createComponent(): JComponent {
       val statusComponent = createStatusComponent()
 
-      val buttonsPanel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0))
+      val buttonsPanel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)).apply {
+        for (button in createButtons()) {
+          add(button)
+        }
+      }
       val errorComponent = HtmlEditorPane().apply {
-        foreground = SimpleTextAttributes.ERROR_ATTRIBUTES.fgColor
+        foreground = UIUtil.getErrorForeground()
       }
       stateModel.addAndInvokeActionErrorChangedListener {
         errorComponent.setBody(stateModel.actionError?.message.orEmpty())
       }
 
-      val actionsPanel = BorderLayoutPanel().andTransparent()
-        .addToLeft(buttonsPanel).addToCenter(errorComponent)
-      for (button in createButtons()) {
-        buttonsPanel.add(button)
+      val actionsPanel = JPanel(null).apply {
+        isOpaque = false
+        layout = MigLayout(LC().fill().gridGap("${UI.scale(5)}", "0").insets("0"))
+
+        add(buttonsPanel)
+        add(errorComponent)
       }
 
       return NonOpaquePanel(VerticalLayout(UI.scale(4))).apply {
