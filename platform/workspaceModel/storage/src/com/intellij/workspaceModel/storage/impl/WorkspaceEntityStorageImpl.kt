@@ -137,7 +137,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       val newPersistentId = copiedData.persistentId(this) ?: error("Persistent id expected")
       if (beforePersistentId != newPersistentId && indexes.persistentIdIndex.getIdsByEntry(newPersistentId) != null ) {
           // Restore previous value
-          (entitiesByType.entities[e.id.clazz] as MutableEntityFamily<T>).set(e.id.arrayId, backup)
+        (entitiesByType.entityFamilies[e.id.clazz] as MutableEntityFamily<T>).set(e.id.arrayId, backup)
           throw PersistentIdAlreadyExistsException(newPersistentId)
         }
     }
@@ -1011,7 +1011,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
 
   private fun checkStrongConnection(connectionKeys: Set<Int>, entityFamilyClass: Int, connectionTo: Int) {
     val keys = connectionKeys.toMutableSet()
-    val entityFamily = entitiesByType.entities[entityFamilyClass]
+    val entityFamily = entitiesByType.entityFamilies[entityFamilyClass]
                        ?: error("Entity family ${entityFamilyClass.findWorkspaceEntity()} doesn't exist")
     entityFamily.entities.forEachIndexed { i, entity ->
       if (entity == null) return@forEachIndexed
@@ -1030,7 +1030,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
   }
 
   private fun checkAllStrongConnections(entityFamilyClass: Int, keys: MutableSet<EntityId>, debugInfo: String) {
-    val entityFamily = entitiesByType.entities[entityFamilyClass] ?: error("Entity family doesn't exist. $debugInfo")
+    val entityFamily = entitiesByType.entityFamilies[entityFamilyClass] ?: error("Entity family doesn't exist. $debugInfo")
     entityFamily.entities.forEachIndexed { i, entity ->
       if (entity == null) return@forEachIndexed
       val removed = keys.remove(entity.createPid())

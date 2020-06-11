@@ -116,7 +116,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     kryo.register(ImmutableEntitiesBarrel::class.java, object : Serializer<ImmutableEntitiesBarrel>(false, true) {
       override fun write(kryo: Kryo, output: Output, `object`: ImmutableEntitiesBarrel) {
         val res = HashMap<TypeInfo, EntityFamily<*>>()
-        `object`.entities.forEachIndexed { i, v ->
+        `object`.entityFamilies.forEachIndexed { i, v ->
           if (v == null) return@forEachIndexed
           val clazz = i.findEntityClass<WorkspaceEntity>()
           val typeInfo = TypeInfo(clazz.name, typesResolver.getPluginId(clazz))
@@ -131,7 +131,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
         for ((typeInfo, family) in families) {
           val classId = typesResolver.resolveClass(typeInfo.name, typeInfo.pluginId).toClassId()
           mutableBarrel.fillEmptyFamilies(classId)
-          mutableBarrel.entities[classId] = family
+          mutableBarrel.entityFamilies[classId] = family
         }
         return mutableBarrel.toImmutable()
       }
@@ -258,7 +258,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
       // Collect all classes existing in entity data
       val simpleClasses = HashSet<TypeInfo>()
       val objectClasses = HashSet<TypeInfo>()
-      storage.entitiesByType.entities.filterNotNull().forEach { family ->
+      storage.entitiesByType.entityFamilies.filterNotNull().forEach { family ->
         family.entities.filterNotNull().forEach { recursiveClassFinder(kryo, it, simpleClasses, objectClasses) }
       }
 

@@ -118,8 +118,8 @@ private class ReplaceBySource(private val storage: WorkspaceEntityStorageBuilder
 
 private fun WorkspaceEntityStorageBuilderImpl.restoreFromBackup(backup: WorkspaceEntityStorage) {
   val backupBuilder = WorkspaceEntityStorageBuilderImpl.from(backup)
-  entitiesByType.entities.clear()
-  entitiesByType.entities.addAll(backupBuilder.entitiesByType.entities)
+  entitiesByType.entityFamilies.clear()
+  entitiesByType.entityFamilies.addAll(backupBuilder.entitiesByType.entityFamilies)
 
   refs.oneToManyContainer.clear()
   refs.oneToOneContainer.clear()
