@@ -575,6 +575,11 @@ public class ControlFlowUtils {
     return !containsReturn(codeBlock) && !codeBlockMayCompleteNormally(codeBlock);
   }
 
+  /**
+   * @param statement statement to test
+   * @return true if statement contains a break without a label that could jump outside of the supplied statement
+   */
+  @Contract("null -> false")
   public static boolean statementContainsNakedBreak(PsiStatement statement) {
     if (statement == null) {
       return false;
@@ -582,6 +587,20 @@ public class ControlFlowUtils {
     final NakedBreakFinder breakFinder = new NakedBreakFinder();
     statement.accept(breakFinder);
     return breakFinder.breakFound();
+  }
+
+  /**
+   * @param statement statement to test
+   * @return true if statement contains a continue without a label that could jump outside of the supplied statement
+   */
+  @Contract("null -> false")
+  public static boolean statementContainsNakedContinue(PsiStatement statement) {
+    if (statement == null) {
+      return false;
+    }
+    final NakedContinueFinder breakFinder = new NakedContinueFinder();
+    statement.accept(breakFinder);
+    return breakFinder.continueFound();
   }
 
   /**
@@ -1026,16 +1045,8 @@ public class ControlFlowUtils {
     }
 
     @Override
-    public void visitElement(@NotNull PsiElement element) {
-      if (m_found) {
-        return;
-      }
-      super.visitElement(element);
-    }
-
-    @Override
-    public void visitReferenceExpression(
-      PsiReferenceExpression expression) {
+    public void visitExpression(PsiExpression expression) {
+      // don't drill down
     }
 
     @Override
@@ -1044,6 +1055,7 @@ public class ControlFlowUtils {
         return;
       }
       m_found = true;
+      stopWalking();
     }
 
     @Override
@@ -1068,6 +1080,47 @@ public class ControlFlowUtils {
 
     @Override
     public void visitSwitchStatement(PsiSwitchStatement statement) {
+      // don't drill down
+    }
+  }
+
+  private static class NakedContinueFinder extends JavaRecursiveElementWalkingVisitor {
+    private boolean m_found;
+
+    private boolean continueFound() {
+      return m_found;
+    }
+
+    @Override
+    public void visitExpression(PsiExpression expression) {
+      // don't drill down
+    }
+
+    @Override
+    public void visitContinueStatement(PsiContinueStatement statement) {
+      if (statement.getLabelIdentifier() != null) {
+        return;
+      }
+      m_found = true;
+    }
+
+    @Override
+    public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+      // don't drill down
+    }
+
+    @Override
+    public void visitForStatement(PsiForStatement statement) {
+      // don't drill down
+    }
+
+    @Override
+    public void visitForeachStatement(PsiForeachStatement statement) {
+      // don't drill down
+    }
+
+    @Override
+    public void visitWhileStatement(PsiWhileStatement statement) {
       // don't drill down
     }
   }
