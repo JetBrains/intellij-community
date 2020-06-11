@@ -26,36 +26,26 @@ public class ShFileLexerTest extends LexerTestCase {
     return getDirPath() + "/" + getTestName(true) + extension;
   }
 
-  public void testFirst()       { doFileTest("sh"); }
-  public void testHello()       { doFileTest("sh"); }
-  public void testExprs()       { doFileTest("sh"); }
-  public void testCase()        { doFileTest("sh"); }
-  public void testFor()         { doFileTest("sh"); }
-  public void testIf()          { doFileTest("sh"); }
-  public void testHeredoc()     { doFileTest("sh"); }
-  public void testTrap()        { doFileTest("sh"); }
-  public void testTrap2()       { doFileTest("sh"); }
-  public void testLet()         { doFileTest("sh"); }
-  public void testParams()      { doFileTest("sh"); }
-  public void testSelect()      { doFileTest("sh"); }
-  public void testBinaryData()  { doFileTest("sh"); }
-
-  public void testParamExpansionSub()  { doFileTest("sh"); }
-
-  public void testRegex1() { doFileTest("sh"); }
-  public void testRegex2() { doFileTest("sh"); }
-
-  public void testStrings() { doFileTest("sh"); }
-
-  /**
-   * IDEA-219928
-   */
-  public void testParamExpansionEscape() { doFileTest("sh"); }
-
-  /**
-   * IDEA-220072
-   */
-  public void testProcessSubstitution()  { doFileTest("sh"); }
+  public void testFirst()                { doFileTest("sh"); }
+  public void testHello()                { doFileTest("sh"); }
+  public void testExprs()                { doFileTest("sh"); }
+  public void testCase()                 { doFileTest("sh"); }
+  public void testFor()                  { doFileTest("sh"); }
+  public void testIf()                   { doFileTest("sh"); }
+  public void testHeredoc()              { doFileTest("sh"); }
+  public void testTrap()                 { doFileTest("sh"); }
+  public void testTrap2()                { doFileTest("sh"); }
+  public void testLet()                  { doFileTest("sh"); }
+  public void testParams()               { doFileTest("sh"); }
+  public void testSelect()               { doFileTest("sh"); }
+  public void testBinaryData()           { doFileTest("sh"); }
+  public void testParamExpansionSub()    { doFileTest("sh"); }
+  public void testRegex1()               { doFileTest("sh"); }
+  public void testRegex2()               { doFileTest("sh"); }
+  public void testStrings()              { doFileTest("sh"); }
+  public void testParamExpansionEscape() { doFileTest("sh"); } // IDEA-219928
+  public void testProcessSubstitution()  { doFileTest("sh"); } // IDEA-220072
+  public void testShouldBeFixed()        { doFileTest("sh"); }
 
   @Override
   protected void doFileTest(String fileExt) {
@@ -93,8 +83,9 @@ public class ShFileLexerTest extends LexerTestCase {
       }
       lexer.advance();
     }
-    if (segmentStart)
+    if (segmentStart) {
       segments.add(segmentSize);
+    }
     double averageSize = segments.stream().mapToInt(Integer::intValue).average().orElse(0);
     double maxSize = segments.stream().mapToInt(Integer::intValue).max().orElse(0);
 
@@ -104,9 +95,5 @@ public class ShFileLexerTest extends LexerTestCase {
       System.out.println("Max rows in segment: " + maxSize);
       System.out.println();
     }
-  }
-
-  public void testShouldBeFixed() {
-      doFileTest("sh");
   }
 }
