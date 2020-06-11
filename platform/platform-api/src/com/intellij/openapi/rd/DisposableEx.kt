@@ -53,7 +53,7 @@ internal fun Lifetime.createNestedDisposable(debugName: String = "lifetimeToDisp
 }
 
 @Suppress("ObjectLiteralToLambda")
-fun Disposable.attach(disposable: () -> Unit) {
+inline fun Disposable.attach(crossinline disposable: () -> Unit) {
   Disposer.register(this, object : Disposable {
     override fun dispose() {
       disposable()

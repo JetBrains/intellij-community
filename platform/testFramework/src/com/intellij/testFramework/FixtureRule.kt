@@ -76,8 +76,7 @@ class ProjectRule(val projectDescriptor: LightProjectDescriptor = LightProjectDe
       val errors: MutableList<IllegalStateException> = SmartList()
       val tasks: MutableList<ThrowableRunnable<Throwable>> = SmartList()
       for (project in openProjects) {
-        errors.add(IllegalStateException(
-          "Test project is not disposed: $project;\n created in: ${getCreationPlace(project)}"))
+        errors.add(IllegalStateException("Test project is not disposed: $project;\n created in: ${getCreationPlace(project)}"))
         tasks.add(ThrowableRunnable { projectManager.forceCloseProject(project) })
       }
       RunAll(tasks).run(errors)
@@ -406,6 +405,16 @@ class DisposableRule : ExternalResource() {
 
   val disposable: Disposable
     get() = _disposable.value
+
+
+  @Suppress("ObjectLiteralToLambda")
+  inline fun register(crossinline disposable: () -> Unit) {
+    Disposer.register(this.disposable, object : Disposable {
+      override fun dispose() {
+        disposable()
+      }
+    })
+  }
 
   override fun after() {
     if (_disposable.isInitialized()) {

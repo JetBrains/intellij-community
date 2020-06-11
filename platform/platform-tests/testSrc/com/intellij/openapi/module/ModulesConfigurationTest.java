@@ -6,8 +6,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -79,7 +77,7 @@ public class ModulesConfigurationTest extends HeavyPlatformTestCase {
     if (isSave) {
       StateStorageManagerKt.saveComponentManager(project, true);
     }
-    ((ProjectManagerImpl)ProjectManager.getInstance()).forceCloseProject(project);
+    PlatformTestUtil.forceCloseProjectWithoutSaving(project);
   }
 
   private void closeOnTearDown(Project project) {

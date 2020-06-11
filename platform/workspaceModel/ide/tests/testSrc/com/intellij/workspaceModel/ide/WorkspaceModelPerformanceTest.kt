@@ -2,32 +2,28 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.ModuleManagerComponent
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.rd.attach
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Ignore
@@ -227,10 +223,8 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
     val project = logExecutionTimeInMillis<Project>("Project load") {
       PlatformTestUtil.loadAndOpenProject(projectDir)
     }
-    disposableRule.disposable.attach {
-      invokeAndWaitIfNeeded {
-        ProjectManagerEx.getInstanceEx().forceCloseProject(project)
-      }
+    disposableRule.register {
+      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     }
     return project
   }
