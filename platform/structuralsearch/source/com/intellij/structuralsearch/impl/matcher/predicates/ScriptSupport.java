@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -89,7 +89,7 @@ public class ScriptSupport {
     return out;
   }
 
-  public String evaluate(MatchResult result, PsiElement context) {
+  public Object evaluate(MatchResult result, PsiElement context) {
     try {
       final HashMap<String, Object> variableMap = new HashMap<>();
       myVariableNames.forEach(n -> variableMap.put(n, null));
@@ -107,8 +107,7 @@ public class ScriptSupport {
 
       script.setBinding(new Binding(variableMap));
 
-      final Object o = script.run();
-      return String.valueOf(o);
+      return script.run();
     }
     catch (ThreadDeath | ProcessCanceledException t) {
       throw t;
