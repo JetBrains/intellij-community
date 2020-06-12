@@ -40,6 +40,7 @@ import git4idea.index.actions.GitResetOperation
 import git4idea.index.actions.performStageOperation
 import git4idea.repo.GitRepository
 import git4idea.status.GitChangeProvider
+import org.jetbrains.annotations.CalledInAwt
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -57,6 +58,9 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
 
   private val state: GitStageTracker.State
     get() = tracker.state
+
+  private var isCommitInProgress = false
+  private var hasPendingUpdates = false
 
   init {
     tree = MyChangesTree(project)
@@ -113,11 +117,35 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
     val commitMessage = commitPanel.commitMessage.text
     if (commitMessage.isBlank() && !showEmptyCommitMessageConfirmation()) return
 
+    commitStarted()
+
     FileDocumentManager.getInstance().saveAllDocuments()
     git4idea.index.performCommit(project, rootsToCommit, commitMessage, amend, MyCommitListener(commitMessage))
   }
 
+  @CalledInAwt
+  private fun commitStarted() {
+    isCommitInProgress = true
+    commitPanel.commitButton.isEnabled = false
+  }
+
+  @CalledInAwt
+  private fun commitFinished(success: Boolean) {
+    isCommitInProgress = false
+    // commit button is going to be enabled after state update
+    if (success) commitPanel.isAmend = false
+    if (hasPendingUpdates) {
+      hasPendingUpdates = false
+      update()
+    }
+  }
+
+  @CalledInAwt
   fun update() {
+    if (isCommitInProgress) {
+      hasPendingUpdates = true
+      return
+    }
     tree.update()
     commitPanel.commitButton.isEnabled = state.hasStagedRoots()
   }
@@ -230,6 +258,8 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
     private val notifier = VcsNotifier.getInstance(project)
 
     override fun commitProcessFinished(successfulRoots: Collection<VirtualFile>, failedRoots: Map<VirtualFile, VcsException>) {
+      commitFinished(successfulRoots.isNotEmpty() && failedRoots.isEmpty())
+
       if (successfulRoots.isNotEmpty()) {
         notifier.notifySuccess(GitBundle.message("stage.commit.successful", successfulRoots.joinToString {
           "'${VcsImplUtil.getShortVcsRootName(project, it)}'"

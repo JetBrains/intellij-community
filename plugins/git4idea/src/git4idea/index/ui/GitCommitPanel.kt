@@ -34,6 +34,13 @@ import javax.swing.border.EmptyBorder
 abstract class GitCommitPanel(private val project: Project,
                               parent: Disposable) : BorderLayoutPanel(), EditorColorsListener, ComponentContainer, DataProvider {
   var isAmend: Boolean = false
+    internal set(value) {
+      if (field != value) {
+        field = value
+        commitButton.text = getCommitText()
+        updateCommitMessage()
+      }
+    }
 
   private var lastCommitMessage: String = ""
   private var lastAmendMessage: String = ""
@@ -138,11 +145,7 @@ abstract class GitCommitPanel(private val project: Project,
   inner class AmendAction : CheckboxAction(VcsBundle.messagePointer("checkbox.amend")) {
     override fun isSelected(e: AnActionEvent): Boolean = isAmend
     override fun setSelected(e: AnActionEvent, state: Boolean) {
-      if (isAmend != state) {
-        isAmend = state
-        commitButton.text = getCommitText()
-        updateCommitMessage()
-      }
+      isAmend = state
     }
   }
 }
