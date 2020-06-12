@@ -144,6 +144,13 @@ internal class CredentialStoreTest {
       val credentials = Credentials(randomString(), "pass")
       store.set(serviceNameOnlyAttributes, credentials)
       assertThat(store.get(serviceNameOnlyAttributes)).isEqualTo(credentials)
+      val credentials2 = Credentials(randomString(), "pass2")
+      store.set(serviceNameOnlyAttributes, credentials2)
+      assertThat(store.get(serviceNameOnlyAttributes)).isEqualTo(credentials2)
+      val attributesWithUser = CredentialAttributes(serviceNameOnlyAttributes.serviceName, credentials.userName)
+      assertThat(store.get(attributesWithUser)).isNull()
+      val attributesWithUser2 = CredentialAttributes(serviceNameOnlyAttributes.serviceName, credentials2.userName)
+      assertThat(store.get(attributesWithUser2)).isEqualTo(credentials2)
     }
     finally {
       store.set(serviceNameOnlyAttributes, null)
