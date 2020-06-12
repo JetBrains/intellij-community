@@ -129,7 +129,7 @@ public final class MavenMergingUpdateQueue extends MergingUpdateQueue {
     MavenUtil.invokeLater(project, () -> {
       final ModalityStateListener listener = new ModalityStateListener() {
         @Override
-        public void beforeModalityStateChanged(boolean entering) {
+        public void beforeModalityStateChanged(boolean entering, @NotNull Object modalEntity) {
           if (entering) {
             suspend();
           }

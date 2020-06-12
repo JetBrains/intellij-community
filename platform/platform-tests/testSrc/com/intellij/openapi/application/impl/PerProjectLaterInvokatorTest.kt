@@ -42,10 +42,12 @@ class RunnableActionsTest : HeavyPlatformTestCase() {
 
     val enteringIndex = AtomicInteger(-1)
 
-    val modalityStateListener = ModalityStateListener { entering ->
-      if (entering != enteringOrder[enteringIndex.incrementAndGet()]) {
-        throw RuntimeException(
-          "Entrance index: " + enteringIndex + "; value: " + entering + " expected value: " + enteringOrder[enteringIndex.get()])
+    val modalityStateListener = object: ModalityStateListener {
+      override fun beforeModalityStateChanged(entering: Boolean, modalEntity: Any) {
+        if (entering != enteringOrder[enteringIndex.incrementAndGet()]) {
+          throw RuntimeException(
+            "Entrance index: " + enteringIndex + "; value: " + entering + " expected value: " + enteringOrder[enteringIndex.get()])
+        }
       }
     }
 

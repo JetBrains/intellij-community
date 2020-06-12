@@ -171,7 +171,7 @@ public final class LaterInvocator {
       LOG.debug("enterModal:" + modalEntity);
     }
 
-    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(true);
+    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(true, modalEntity);
 
     ourModalEntities.add(modalEntity);
     synchronized (ourModalityStack) {
@@ -186,7 +186,7 @@ public final class LaterInvocator {
     reincludeSkippedItemsAndRequestFlush();
   }
 
-  public static void enterModal(Project project, Dialog dialog) {
+  public static void enterModal(Project project, @NotNull Dialog dialog) {
     LOG.assertTrue(isDispatchThread(), "enterModal() should be invoked in event-dispatch thread");
 
     if (LOG.isDebugEnabled()) {
@@ -198,7 +198,7 @@ public final class LaterInvocator {
       return;
     }
 
-    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(true);
+    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(true, dialog);
 
     List<Dialog> modalEntitiesList = projectToModalEntities.getOrDefault(project, ContainerUtil.createLockFreeCopyOnWriteList());
     projectToModalEntities.put(project, modalEntitiesList);
@@ -220,14 +220,14 @@ public final class LaterInvocator {
     reincludeSkippedItemsAndRequestFlush();
   }
 
-  public static void leaveModal(Project project, Dialog dialog) {
+  public static void leaveModal(Project project, @NotNull Dialog dialog) {
     LOG.assertTrue(isWriteThread(), "leaveModal() should be invoked in write thread");
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("leaveModal:" + dialog.getName() + " ; for project: " + project.getName());
     }
 
-    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(false);
+    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(false, dialog);
 
     int index = ourModalEntities.indexOf(dialog);
 
@@ -267,7 +267,7 @@ public final class LaterInvocator {
       LOG.debug("leaveModal:" + modalEntity);
     }
 
-    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(false);
+    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(false, modalEntity);
 
     int index = ourModalEntities.indexOf(modalEntity);
     LOG.assertTrue(index >= 0);
