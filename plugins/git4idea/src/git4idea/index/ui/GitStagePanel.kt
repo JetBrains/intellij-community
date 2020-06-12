@@ -120,12 +120,12 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
   override fun dispose() {
   }
 
-  inner class MyChangesTree(project: Project) : GitStageTree(project) {
+  private inner class MyChangesTree(project: Project) : GitStageTree(project) {
     override val state
       get() = this@GitStagePanel.state
   }
 
-  inner class MyGitCommitPanel : GitCommitPanel(project, this) {
+  private inner class MyGitCommitPanel : GitCommitPanel(project, this) {
     override fun isFocused(): Boolean {
       return IdeFocusManager.getInstance(project).getFocusedDescendantFor(this@GitStagePanel) != null
     }
@@ -137,13 +137,13 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
     override fun rootsToCommit() = state.stagedRoots.map { VcsRoot(GitVcs.getInstance(project), it) }
   }
 
-  inner class MyGitStageTrackerListener : GitStageTrackerListener {
+  private inner class MyGitStageTrackerListener : GitStageTrackerListener {
     override fun update() {
       this@GitStagePanel.update()
     }
   }
 
-  inner class MyGitChangeProviderListener : GitChangeProvider.ChangeProviderListener {
+  private inner class MyGitChangeProviderListener : GitChangeProvider.ChangeProviderListener {
     override fun progressStarted() {
       runInEdt(this@GitStagePanel) {
         tree.setEmptyText(GitBundle.message("stage.loading.status"))
