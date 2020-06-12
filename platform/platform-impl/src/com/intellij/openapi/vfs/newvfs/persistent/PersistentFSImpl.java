@@ -186,7 +186,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
       List<ChildInfo> toAddChildren = new ArrayList<>(toAddNames.size());
       for (String newName : toAddNames) {
-        Pair<FileAttributes, String> childData = getChildData(fs, file, newName, null, null);
+        Pair<@NotNull FileAttributes, String> childData = getChildData(fs, file, newName, null, null);
         if (childData != null) {
           ChildInfo newChild = justCreated.computeIfAbsent(newName, name->makeChildRecord(id, name, childData, fs, null));
           toAddChildren.add(newChild);
@@ -396,7 +396,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         result.set(child);
         return children;
       }
-      Pair<FileAttributes, String> childData = getChildData(fs, parent, childName, null, null);
+      Pair<@NotNull FileAttributes, String> childData = getChildData(fs, parent, childName, null, null);
       if (childData == null) {
         return children;
       }
@@ -1115,7 +1115,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     for (VFileCreateEvent createEvent : createEvents) {
       createEvent.resetCache();
       String name = createEvent.getChildName();
-      Pair<FileAttributes, String> childData = getChildData(delegate, createEvent.getParent(), name, createEvent.getAttributes(), createEvent.getSymlinkTarget());
+      Pair<@NotNull FileAttributes, String> childData = getChildData(delegate, createEvent.getParent(), name, createEvent.getAttributes(), createEvent.getSymlinkTarget());
       if (childData != null) {
         ChildInfo child = makeChildRecord(parentId, name, childData, delegate, createEvent.getChildren());
         childrenAdded.add(child);
@@ -1148,7 +1148,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           List<ChildInfo> added = new ArrayList<>(scannedChildren.size());
           for (ChildInfo childInfo : scannedChildren) {
             CharSequence childName = childInfo.getName();
-            Pair<FileAttributes, String> childData = getChildData(delegate, directory, childName.toString(), childInfo.getFileAttributes(), childInfo.getSymlinkTarget());
+            Pair<@NotNull FileAttributes, String> childData = getChildData(delegate, directory, childName.toString(), childInfo.getFileAttributes(), childInfo.getSymlinkTarget());
             if (childData != null) {
               ChildInfo newChild = makeChildRecord(directoryId, childName, childData, delegate, childInfo.getChildren());
               added.add(newChild);
@@ -1384,7 +1384,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                   boolean isEmptyDirectory) {
     NewVirtualFileSystem delegate = getDelegate(parent);
     int parentId = getFileId(parent);
-    Pair<FileAttributes, String> childData = getChildData(delegate, parent, name, attributes, symlinkTarget);
+    Pair<@NotNull FileAttributes, String> childData = getChildData(delegate, parent, name, attributes, symlinkTarget);
     if (childData != null) {
       ChildInfo childInfo = makeChildRecord(parentId, name, childData, delegate, null);
       FSRecords.update(parentId, children -> {
@@ -1412,7 +1412,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @NotNull
   private static ChildInfo makeChildRecord(int parentId,
                                            @NotNull CharSequence name,
-                                           @NotNull Pair<FileAttributes, String> childData,
+                                           @NotNull Pair<@NotNull FileAttributes, String> childData,
                                            @NotNull NewVirtualFileSystem fs,
                                            ChildInfo @Nullable [] children) {
     int childId = FSRecords.createRecord();
@@ -1423,11 +1423,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   // return File attributes, symlink target
   @Nullable // null when file not found
-  private static Pair<FileAttributes, String> getChildData(@NotNull NewVirtualFileSystem fs,
-                                                           @NotNull VirtualFile parent,
-                                                           @NotNull String name,
-                                                           @Nullable FileAttributes attributes,
-                                                           @Nullable String symlinkTarget) {
+  private static Pair<@NotNull FileAttributes, String> getChildData(@NotNull NewVirtualFileSystem fs,
+                                                                    @NotNull VirtualFile parent,
+                                                                    @NotNull String name,
+                                                                    @Nullable FileAttributes attributes,
+                                                                    @Nullable String symlinkTarget) {
     if (attributes == null) {
       FakeVirtualFile virtualFile = new FakeVirtualFile(parent, name);
       attributes = fs.getAttributes(virtualFile);

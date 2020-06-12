@@ -204,7 +204,7 @@ public class JavaResolveUtil {
            !PsiImplUtil.isInServerPage(placeFile);
   }
 
-  public static boolean isInJavaDoc(final PsiElement place) {
+  public static boolean isInJavaDoc(@NotNull PsiElement place) {
     PsiElement scope = place;
     while(scope != null){
       if (scope instanceof PsiDocComment) return true;
