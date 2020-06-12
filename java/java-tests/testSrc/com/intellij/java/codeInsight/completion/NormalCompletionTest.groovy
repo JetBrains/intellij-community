@@ -2005,4 +2005,11 @@ class Abc {
   }
 
   void testCaseColonAfterStringConstant() { doTest() }
+
+  void testOneElementArray() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'aaa', 'aaa[0]'
+    selectItem(myItems[1])
+    checkResult()
+  }
 }

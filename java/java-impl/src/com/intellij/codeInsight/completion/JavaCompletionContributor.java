@@ -264,21 +264,21 @@ public class JavaCompletionContributor extends CompletionContributor {
         result.stopHere();
       }
 
-      List<LookupElement> referenceSuggestions = parent instanceof PsiJavaCodeReferenceElement && mayCompleteReference
+      List<LookupElement> refBasedSuggestions = parent instanceof PsiJavaCodeReferenceElement && mayCompleteReference
                                                  ? completeReference(parameters, (PsiJavaCodeReferenceElement)parent, session)
                                                  : Collections.emptyList();
       if (!smart) {
         TailType switchLabelTail = IN_SWITCH_LABEL.accepts(position)
                                    ? TailTypes.forSwitchLabel(Objects.requireNonNull(PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class)))
                                    : null;
-        session.registerBatchItems(ContainerUtil.map(referenceSuggestions, e -> switchLabelTail != null ? new IndentingDecorator(TailTypeDecorator.withTail(e, switchLabelTail)) : e));
+        session.registerBatchItems(ContainerUtil.map(refBasedSuggestions, e -> switchLabelTail != null ? new IndentingDecorator(TailTypeDecorator.withTail(e, switchLabelTail)) : e));
         result.stopHere();
       }
 
       session.flushBatchItems();
 
       if (smart) {
-        addSmartCompletionSuggestions(parameters, result, referenceSuggestions);
+        addSmartCompletionSuggestions(parameters, result, refBasedSuggestions);
       }
     }
 
@@ -573,6 +573,9 @@ public class JavaCompletionContributor extends CompletionContributor {
         }
       }
       items.add(element);
+
+      ContainerUtil.addIfNotNull(items, ArrayMemberAccess.accessFirstElement(position, element));
+
     }
     return items;
   }

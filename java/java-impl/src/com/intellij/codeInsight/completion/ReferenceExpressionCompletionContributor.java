@@ -3,7 +3,6 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
-import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.patterns.StandardPatterns;
@@ -79,8 +78,6 @@ public class ReferenceExpressionCompletionContributor {
     ElementFilter filter = getReferenceFilter(element, false);
     allRefSuggestions = ContainerUtil.filter(allRefSuggestions, item -> filter.isAcceptable(item.getObject(), element));
 
-    Set<LookupElement> base = new HashSet<>(allRefSuggestions);
-
     for (ExpectedTypeInfo info : infos) {
       for (LookupElement item : allRefSuggestions) {
         if (matchesExpectedType(item, info.getType())) {
@@ -89,19 +86,10 @@ public class ReferenceExpressionCompletionContributor {
           }
           result.consume(item);
         }
-
-        ExpressionLookupItem access = ArrayMemberAccess.accessFirstElement(element, item);
-        if (access != null) {
-          base.add(access);
-          PsiType type = access.getType();
-          if (type != null && info.getType().isAssignableFrom(type)) {
-            result.consume(access);
-          }
-        }
       }
 
       if (parameters.getInvocationCount() >= 2) {
-        chainedEtc.add(new SlowerTypeConversions(base, element, (PsiJavaCodeReferenceElement) element.getParent(),
+        chainedEtc.add(new SlowerTypeConversions(new HashSet<>(allRefSuggestions), element, (PsiJavaCodeReferenceElement) element.getParent(),
                                                  new JavaSmartCompletionParameters(parameters, info), result));
       }
     }
