@@ -80,5 +80,5 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
 
   /** Used only by [ProjectUtil.openOrImport] */
   @JvmField
-  var checkDirectoryForFileBasedProjects = true
+  internal var checkDirectoryForFileBasedProjects = true
 }

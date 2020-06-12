@@ -159,7 +159,8 @@ public final class ProjectUtil {
     }
 
     if (isValidProjectPath(file)) {
-      return ProjectManagerEx.getInstanceEx().openProject(file, options);
+      // see OpenProjectTest.`open valid existing project dir with inability to attach using OpenFileAction` test about why `runConfigurators = true` is specified here
+      return ProjectManagerEx.getInstanceEx().openProject(file, options.withRunConfigurators());
     }
 
     if (options.checkDirectoryForFileBasedProjects && Files.isDirectory(file)) {

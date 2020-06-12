@@ -347,8 +347,8 @@ public final class VfsUtil extends VfsUtilCore {
   public static @Nullable VirtualFile createDirectoryIfMissing(@NotNull String directoryPath) throws IOException {
     return createDirectoryIfMissing(LocalFileSystem.getInstance(), directoryPath);
   }
-  
-  public static @Nullable VirtualFile createDirectoryIfMissing(@NotNull VirtualFileSystem fileSystem, 
+
+  public static @Nullable VirtualFile createDirectoryIfMissing(@NotNull VirtualFileSystem fileSystem,
                                                                @NotNull String directoryPath) throws IOException {
     String path = FileUtil.toSystemIndependentName(directoryPath);
     VirtualFile file = fileSystem.refreshAndFindFileByPath(path);
@@ -409,7 +409,7 @@ public final class VfsUtil extends VfsUtilCore {
   }
 
   public static @Nullable VirtualFile getUserHomeDir() {
-    final String path = SystemProperties.getUserHome();
+    String path = SystemProperties.getUserHome();
     return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path));
   }
 

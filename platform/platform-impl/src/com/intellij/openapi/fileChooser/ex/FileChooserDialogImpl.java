@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.icons.AllIcons;
@@ -159,7 +159,9 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
   void storeSelection(@Nullable VirtualFile file) {
-    FileChooserUtil.setLastOpenedFile(myProject, file);
+    if (file != null) {
+      FileChooserUtil.setLastOpenedFile(myProject, file.toNioPath());
+    }
     if (file != null && file.getFileSystem() instanceof LocalFileSystem) {
       saveRecent(file.getPath());
     }

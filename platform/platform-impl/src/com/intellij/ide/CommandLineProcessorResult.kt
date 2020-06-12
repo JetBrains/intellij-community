@@ -3,9 +3,11 @@ package com.intellij.ide
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.Future
 
-internal data class CommandLineProcessorResult(val project: Project?, val future: Future<CliResult>) {
+@ApiStatus.Internal
+data class CommandLineProcessorResult(val project: Project?, val future: Future<CliResult>) {
   companion object {
     @JvmStatic
     fun createError(message: String): CommandLineProcessorResult {
