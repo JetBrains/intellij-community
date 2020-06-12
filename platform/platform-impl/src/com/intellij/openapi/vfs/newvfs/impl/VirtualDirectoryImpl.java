@@ -552,7 +552,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           return oldIds.length;
         }
       };
-      ContainerUtil.processSortedListsInOrder(added, existingChildren, pairComparator, true, nextInfo -> mergedIds.add(nextInfo.getId()));
+      ContainerUtil.processSortedListsInOrder(added, existingChildren, pairComparator, true, (nextInfo,__) -> mergedIds.add(nextInfo.getId()));
       myData.myChildrenIds = mergedIds.toNativeArray();
 
       if (markAllChildrenLoaded) {

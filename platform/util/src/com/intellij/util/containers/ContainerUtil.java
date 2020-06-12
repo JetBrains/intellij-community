@@ -727,16 +727,19 @@ public class ContainerUtil {
                                                    @NotNull List<? extends T> list2,
                                                    @NotNull Comparator<? super T> comparator,
                                                    boolean mergeEqualItems,
-                                                   @NotNull Consumer<? super T> processor) {
+                                                   // (element in the result, is element from the list1)
+                                                   @NotNull PairConsumer<? super T, ? super Boolean> processor) {
     int index1 = 0;
     int index2 = 0;
     while (index1 < list1.size() || index2 < list2.size()) {
       T e;
       if (index1 >= list1.size()) {
         e = list2.get(index2++);
+        processor.consume(e, false);
       }
       else if (index2 >= list2.size()) {
         e = list1.get(index1++);
+        processor.consume(e, true);
       }
       else {
         T element1 = list1.get(index1);
@@ -747,22 +750,25 @@ public class ContainerUtil {
           index2++;
           if (mergeEqualItems) {
             e = element1;
+            processor.consume(e, true);
           }
           else {
-            processor.consume(element1);
+            processor.consume(element1, true);
             e = element2;
+            processor.consume(e, false);
           }
         }
         else if (c < 0) {
           e = element1;
           index1++;
+          processor.consume(e, true);
         }
         else {
           e = element2;
           index2++;
+          processor.consume(e, false);
         }
       }
-      processor.consume(e);
     }
   }
 
@@ -772,7 +778,7 @@ public class ContainerUtil {
                                                       @NotNull Comparator<? super T> comparator,
                                                       boolean mergeEqualItems) {
     final List<T> result = new ArrayList<>(list1.size() + list2.size());
-    processSortedListsInOrder(list1, list2, comparator, mergeEqualItems, result::add);
+    processSortedListsInOrder(list1, list2, comparator, mergeEqualItems, (t, __) -> result.add(t));
     return result;
   }
 
