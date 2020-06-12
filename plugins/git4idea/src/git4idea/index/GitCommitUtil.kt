@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task.Backgroundable
 import com.intellij.openapi.project.Project
@@ -15,25 +15,40 @@ import git4idea.commands.GitLineHandler
 import git4idea.i18n.GitBundle
 import java.io.File
 
-private val LOG = Logger.getInstance("#git4idea.index.GitCommitUtil")
+fun performCommit(project: Project, roots: Collection<VirtualFile>, commitMessage: String, amend: Boolean = false,
+                  commitListener: CommitListener) {
+  CommitTask(project, roots, commitMessage, amend, commitListener).queue()
+}
 
-fun performCommit(project: Project, roots: Collection<VirtualFile>, commitMessage: String, amend: Boolean = false) {
-  object : Backgroundable(project, GitBundle.message("stage.commit.process")) {
-    override fun run(indicator: ProgressIndicator) {
-      for (root in roots) {
-        try {
-          GitCheckinEnvironment.runWithMessageFile(project, root, commitMessage) { commitMessageFile: File ->
-            doCommit(project, root, commitMessageFile, amend)
-          }
+class CommitTask(project: Project, private val roots: Collection<VirtualFile>,
+                 private val commitMessage: String, private val amend: Boolean,
+                 private val commitHandler: CommitListener) : Backgroundable(project, GitBundle.message("stage.commit.process")) {
+  private val successfulRoots = mutableSetOf<VirtualFile>()
+  private val failedRoots = mutableMapOf<VirtualFile, VcsException>()
+  override fun run(indicator: ProgressIndicator) {
+    for (root in roots) {
+      try {
+        GitCheckinEnvironment.runWithMessageFile(project, root, commitMessage) { commitMessageFile: File ->
+          doCommit(project, root, commitMessageFile, amend)
         }
-        catch (e: VcsException) {
-          LOG.error("Error while committing $root", e)
-        }
+        successfulRoots.add(root)
       }
-
-      VcsFileUtil.markFilesDirty(project, roots)
+      catch (e: VcsException) {
+        failedRoots[root] = e
+      }
+      catch (p: ProcessCanceledException) {
+        throw p
+      }
+      catch (t: Throwable) {
+        failedRoots[root] = VcsException(t)
+      }
     }
-  }.queue()
+    VcsFileUtil.markFilesDirty(project, roots)
+  }
+
+  override fun onFinished() {
+    commitHandler.commitProcessFinished(successfulRoots, failedRoots)
+  }
 }
 
 @Throws(VcsException::class)
@@ -47,4 +62,8 @@ private fun doCommit(project: Project, root: VirtualFile, commitMessageFile: Fil
   }
   handler.endOptions()
   Git.getInstance().runCommand(handler).getOutputOrThrow()
+}
+
+interface CommitListener {
+  fun commitProcessFinished(successfulRoots: Collection<VirtualFile>, failedRoots: Map<VirtualFile, VcsException>)
 }

@@ -10,22 +10,29 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.ChangesTreeDnDSupport
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
+import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.showEmptyCommitMessageConfirmation
 import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.runInEdtAsync
 import com.intellij.vcs.log.ui.frame.ProgressStripe
+import com.intellij.vcsUtil.VcsImplUtil
+import com.intellij.xml.util.XmlStringUtil
 import git4idea.GitVcs
 import git4idea.i18n.GitBundle
+import git4idea.index.CommitListener
 import git4idea.index.GitStageTracker
 import git4idea.index.GitStageTrackerListener
 import git4idea.index.actions.GitAddOperation
@@ -103,10 +110,11 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
     val rootsToCommit = state.stagedRoots
     if (rootsToCommit.isEmpty()) return
 
-    if (commitPanel.commitMessage.text.isBlank() && !showEmptyCommitMessageConfirmation()) return
+    val commitMessage = commitPanel.commitMessage.text
+    if (commitMessage.isBlank() && !showEmptyCommitMessageConfirmation()) return
 
     FileDocumentManager.getInstance().saveAllDocuments()
-    git4idea.index.performCommit(project, rootsToCommit, commitPanel.commitMessage.text, amend)
+    git4idea.index.performCommit(project, rootsToCommit, commitMessage, amend, MyCommitListener(commitMessage))
   }
 
   fun update() {
@@ -216,5 +224,22 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
   private class MyDragBean(val tree: ChangesTree, val nodes: List<GitFileStatusNode>) {
     var targetNode: ChangesBrowserNode<*>? = null
     val sourceComponent: JComponent get() = tree
+  }
+
+  private inner class MyCommitListener(private val commitMessage: String) : CommitListener {
+    private val notifier = VcsNotifier.getInstance(project)
+
+    override fun commitProcessFinished(successfulRoots: Collection<VirtualFile>, failedRoots: Map<VirtualFile, VcsException>) {
+      if (successfulRoots.isNotEmpty()) {
+        notifier.notifySuccess(GitBundle.message("stage.commit.successful", successfulRoots.joinToString {
+          "'${VcsImplUtil.getShortVcsRootName(project, it)}'"
+        }, XmlStringUtil.escapeString(commitMessage)))
+      }
+      if (failedRoots.isNotEmpty()) {
+        notifier.notifyError(GitBundle.message("stage.commit.failed", failedRoots.keys.joinToString {
+          "'${VcsImplUtil.getShortVcsRootName(project, it)}'"
+        }), failedRoots.values.joinToString(UIUtil.BR) { it.localizedMessage })
+      }
+    }
   }
 }
