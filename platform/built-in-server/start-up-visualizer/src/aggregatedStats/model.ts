@@ -22,6 +22,8 @@ export interface GroupedMetricResponse {
 }
 
 export interface DataQuery {
+  db: string
+
   fields?: Array<string | DataQueryDimension>
 
   filters?: Array<DataQueryFilter>
@@ -55,6 +57,7 @@ export interface MetricDescriptor {
 }
 
 export interface DataRequest {
+  db: string
   product: string
   project: string
   machine: Array<string>

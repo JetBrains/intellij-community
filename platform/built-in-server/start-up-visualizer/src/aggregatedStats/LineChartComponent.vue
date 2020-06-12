@@ -47,6 +47,7 @@ import {ChartSettings} from "@/aggregatedStats/ChartSettings"
 import {SortedByCategory, SortedByDate} from "@/aggregatedStats/ChartConfigurator"
 import {DataQuery, DataQueryDimension, DataRequest, encodeQuery, MetricDescriptor, Metrics} from "@/aggregatedStats/model"
 import {BaseStatChartComponent} from "@/aggregatedStats/BaseStatChartComponent"
+import {parseTimeRange, toClickhouseSql} from "@/aggregatedStats/parseDuration"
 
 const rison = require("rison-node")
 
@@ -57,6 +58,9 @@ export default class LineChartComponent extends BaseStatChartComponent<LineChart
 
   @Prop(String)
   order!: "date" | "buildNumber"
+
+  @Prop({type: String})
+  timeRange!: string
 
   @Watch("chartSettings.showScrollbarXPreview")
   showScrollbarXPreviewChanged(): void {
@@ -77,13 +81,23 @@ export default class LineChartComponent extends BaseStatChartComponent<LineChart
     this.loadDataAfterDelay()
   }
 
+  @Watch("timeRange")
+  timeRangeChanged(value: string, oldValue: string) {
+    console.info(`timeRange changed (${oldValue} => ${value})`)
+    this.loadDataAfterDelay()
+  }
+
   protected reloadData(request: DataRequest) {
+    const timeRange = parseTimeRange(this.timeRange)
+
     const dataQuery: DataQuery = {
+      db: request.db,
       fields: this.metrics,
       filters: [
         {field: "product", value: request.product},
         {field: "project", value: request.project},
         {field: "machine", value: request.machine},
+        {field: "generated_time", sql: `> ${toClickhouseSql(timeRange)}`}
       ],
     }
 
@@ -178,6 +192,7 @@ export default class LineChartComponent extends BaseStatChartComponent<LineChart
 
       const request = this.dataRequest!!
       const reportQuery: DataQuery = {
+        db: request.db,
         filters: [
           {field: "product", value: request.product},
           {field: "machine", value: request.machine},
