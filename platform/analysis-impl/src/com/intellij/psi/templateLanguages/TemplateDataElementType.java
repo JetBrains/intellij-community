@@ -25,10 +25,7 @@ import com.intellij.psi.tree.ILazyParseableElementTypeBase;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.CharTable;
 import com.intellij.util.LocalTimeCounter;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.function.Function;
@@ -114,7 +111,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
                                        @NotNull TemplateDataElementType.RangeCollector rangeCollector) {
     CharSequence templateSourceCode = createTemplateText(sourceCode, createBaseLexer(viewProvider), rangeCollector);
     if (rangeCollector instanceof RangeCollectorImpl) {
-      ((RangeCollectorImpl)rangeCollector).prepareFileForParsing(templateLanguage, templateSourceCode);
+      ((RangeCollectorImpl)rangeCollector).prepareFileForParsing(templateLanguage, sourceCode, templateSourceCode);
     }
     return createPsiFileFromSource(templateLanguage, templateSourceCode, psiFile.getManager());
   }
@@ -255,18 +252,20 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   public static abstract class RangeCollector {
 
     /**
-     * @see #addOuterRange(TextRange, boolean)
+     * Adds range corresponding to the outer element inside original source code.
+     * After building the data template tree these ranges will be used for inserting outer language elements.
+     * If it's known whether this template element adds some string to resulting text, consider using {@link #addOuterRange(TextRange, boolean)}.
      */
     public void addOuterRange(@NotNull TextRange newRange) {}
 
     /**
      * Adds range corresponding to the outer element inside original source code.
-     * After building the data template tree these ranges will be used for inserting outer language elements
+     * After building the data template tree these ranges will be used for inserting outer language elements.
      *
      * @param isInsertion <tt>true</tt> if element is expected to insert some text into template data fragment. For example, PHP's
      *                    <code><?= $myVar ?></code> are insertions, while <code><?php foo() ?></code> are not.
      */
-    public void addOuterRange(@NotNull TextRange newRange, boolean isInsertion) {}
+    public abstract void addOuterRange(@NotNull TextRange newRange, boolean isInsertion);
 
     /**
      * Adds the fragment that must be removed from the tree on the stage inserting outer elements.
@@ -290,13 +289,16 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   /**
    * Customizes template data language-specific parsing in templates.
    */
-  public interface OuterLanguageElementsPatcher {
-    LanguageExtension<OuterLanguageElementsPatcher> EXTENSION = new LanguageExtension<>("com.intellij.outerLanguageElementsPatcher");
+  public interface OuterLanguageRangePatcher {
+
+    @ApiStatus.Internal
+    LanguageExtension<OuterLanguageRangePatcher> EXTENSION = new LanguageExtension<>("com.intellij.outerLanguageRangePatcher");
 
     /**
      * @return Text to be inserted for parsing in outer element insertion ranges provided by
      * {@link RangeCollector#addOuterRange(TextRange, boolean)} where <tt>isInsertion == true</tt>
      */
-    @NotNull String getTextForOuterLanguageInsertionElement();
+    @Nullable String getTextForOuterLanguageInsertionRange(@NotNull TemplateDataElementType templateDataElementType,
+                                                           @NotNull CharSequence outerElementText);
   }
 }

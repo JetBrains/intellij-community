@@ -12,6 +12,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.templateLanguages.TemplateDataElementType.OuterLanguageRangePatcher;
 import com.intellij.util.CharTable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -80,14 +81,16 @@ class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
     assert range == null || newRange.getStartOffset() >= range.getStartOffset();
   }
 
-  void prepareFileForParsing(Language templateLanguage, CharSequence templateSourceCode) {
+  void prepareFileForParsing(@NotNull Language templateLanguage,
+                             @NotNull CharSequence originalSourceCode,
+                             @NotNull CharSequence templateSourceCode) {
     addDummyStringsToRangesToRemove(templateSourceCode);
-    TemplateDataElementType.OuterLanguageElementsPatcher
-      patcher = TemplateDataElementType.OuterLanguageElementsPatcher.EXTENSION.forLanguage(templateLanguage);
+    OuterLanguageRangePatcher
+      patcher = OuterLanguageRangePatcher.EXTENSION.forLanguage(templateLanguage);
     if (patcher != null) {
       StringBuilder builder =
         templateSourceCode instanceof StringBuilder ? (StringBuilder)templateSourceCode : new StringBuilder(templateSourceCode);
-      insertDummyStringIntoInsertionRanges(patcher.getTextForOuterLanguageInsertionElement(), builder);
+      insertDummyStringIntoInsertionRanges(patcher, originalSourceCode, builder);
     }
   }
 
@@ -111,24 +114,31 @@ class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
     }
   }
 
-  private void insertDummyStringIntoInsertionRanges(@NotNull String dummyString, @NotNull StringBuilder modifiedText) {
+  private void insertDummyStringIntoInsertionRanges(@NotNull OuterLanguageRangePatcher patcher,
+                                                    @NotNull CharSequence originalSourceCode,
+                                                    @NotNull StringBuilder modifiedText) {
     if (myOuterAndRemoveRanges.isEmpty()) return;
 
     int shift = 0;
     ListIterator<TextRange> iterator = myOuterAndRemoveRanges.listIterator();
     while (iterator.hasNext()) {
       TextRange outerElementRange = iterator.next();
-      if (outerElementRange instanceof InsertionRange) {
-        // Don't set RangeToRemove#myTextToRemove so it won't be applied to nested lazy parseables.
-        // Nested lazy parseables may add dummy string themselves.
-        iterator.add(new RangeToRemove(outerElementRange.getEndOffset(), outerElementRange.getEndOffset() + dummyString.length()));
-        modifiedText.insert(outerElementRange.getStartOffset() + shift, dummyString);
-        shift -= outerElementRange.getLength() - dummyString.length();
-      }
-      else if (outerElementRange instanceof RangeToRemove) {
+      if (outerElementRange instanceof RangeToRemove) {
         shift += outerElementRange.getLength();
       }
       else {
+        if (outerElementRange instanceof InsertionRange) {
+          String dummyString = patcher.getTextForOuterLanguageInsertionRange(
+            myTemplateDataElementType,
+            outerElementRange.subSequence(originalSourceCode));
+          if (dummyString != null) {
+            // Don't set RangeToRemove#myTextToRemove so it won't be applied to nested lazy parseables.
+            // Nested lazy parseables may add dummy string themselves.
+            iterator.add(new RangeToRemove(outerElementRange.getEndOffset(), outerElementRange.getEndOffset() + dummyString.length()));
+            modifiedText.insert(outerElementRange.getStartOffset() + shift, dummyString);
+            shift += dummyString.length();
+          }
+        }
         shift -= outerElementRange.getLength();
       }
     }
@@ -401,10 +411,9 @@ class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
       }
     }
 
-    TemplateDataElementType.OuterLanguageElementsPatcher
-      outerLanguageElementsPatcher = TemplateDataElementType.OuterLanguageElementsPatcher.EXTENSION.forLanguage(language);
-    if (outerLanguageElementsPatcher != null) {
-      insertDummyStringIntoInsertionRanges(outerLanguageElementsPatcher.getTextForOuterLanguageInsertionElement(), stringBuilder);
+    OuterLanguageRangePatcher outerLanguageRangePatcher = OuterLanguageRangePatcher.EXTENSION.forLanguage(language);
+    if (outerLanguageRangePatcher != null) {
+      insertDummyStringIntoInsertionRanges(outerLanguageRangePatcher, chars, stringBuilder);
     }
 
     ASTNode root = parser.apply(stringBuilder.toString());
