@@ -1148,7 +1148,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           List<ChildInfo> added = new ArrayList<>(scannedChildren.size());
           for (ChildInfo childInfo : scannedChildren) {
             CharSequence childName = childInfo.getName();
-            Pair<FileAttributes, String> childData = getChildData(delegate, directory, childName.toString(), childInfo.getFileAttributes(), childInfo.getSymLinkTarget());
+            Pair<FileAttributes, String> childData = getChildData(delegate, directory, childName.toString(), childInfo.getFileAttributes(), childInfo.getSymlinkTarget());
             if (childData != null) {
               ChildInfo newChild = makeChildRecord(directoryId, childName, childData, delegate, childInfo.getChildren());
               added.add(newChild);

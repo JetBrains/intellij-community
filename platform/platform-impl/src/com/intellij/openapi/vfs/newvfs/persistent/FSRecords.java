@@ -1097,7 +1097,7 @@ public final class FSRecords {
           int nameId = newChild.getNameId();
           assert nameId > 0 : newList;
           ChildInfoImpl replaced = new ChildInfoImpl(oldDup.getId(), nameId, oldDup.getFileAttributes(), oldDup.getChildren(),
-                                                 oldDup.getSymLinkTarget());
+                                                 oldDup.getSymlinkTarget());
           result.set(dupI, replaced);
         }
         i++;
@@ -1117,7 +1117,7 @@ public final class FSRecords {
           int nameId = dup.getNameId();
           assert nameId > 0 : existingList;
           ChildInfoImpl replaced = new ChildInfoImpl(oldChild.getId(), nameId, dup.getFileAttributes(), dup.getChildren(),
-                                                 dup.getSymLinkTarget());
+                                                 dup.getSymlinkTarget());
           result.set(dupI, replaced);
         }
         j++;

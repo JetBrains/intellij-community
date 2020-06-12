@@ -20,7 +20,7 @@ public interface ChildInfo {
 
   int getNameId();
 
-  String getSymLinkTarget();
+  String getSymlinkTarget();
 
   ChildInfo @Nullable("null means children are unknown") [] getChildren();
 
