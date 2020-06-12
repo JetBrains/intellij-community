@@ -6,8 +6,8 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.EventLogSystemEvents;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
-import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +27,8 @@ import java.util.concurrent.CompletableFuture;
  * <p>To record IDE events (e.g. invoked action, opened dialog) use {@link FUCounterUsageLogger}</p>
  */
 public class FUStateUsagesLogger implements UsagesCollectorConsumer {
-  public static final Object LOCK = new Object();
+  private static final Logger LOG = Logger.getInstance(FUStateUsagesLogger.class);
+  private static final Object LOCK = new Object();
 
   public static FUStateUsagesLogger create() { return new FUStateUsagesLogger(); }
 
@@ -35,12 +36,15 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
     synchronized (LOCK) {
       List<CompletableFuture<Void>> futures = new ArrayList<>();
       for (ProjectUsagesCollector usagesCollector : ProjectUsagesCollector.getExtensions(this)) {
-        PluginInfo info = PluginInfoDetectorKt.getPluginInfo(usagesCollector.getClass());
-        if (info.isDevelopedByJetBrains()) {
-          EventLogGroup group = new EventLogGroup(usagesCollector.getGroupId(), usagesCollector.getVersion());
-          Promise<? extends Set<MetricEvent>> metrics = usagesCollector.getMetrics(project, indicator);
-          futures.add(logMetricsOrError(project, group, usagesCollector.getData(project), metrics));
+        String groupId = usagesCollector.getGroupId();
+        if (!PluginInfoDetectorKt.getPluginInfo(usagesCollector.getClass()).isDevelopedByJetBrains()) {
+          LOG.warn("Skip '" + groupId + "' because its registered in a third-party plugin");
+          continue;
         }
+
+        EventLogGroup group = new EventLogGroup(groupId, usagesCollector.getVersion());
+        Promise<? extends Set<MetricEvent>> metrics = usagesCollector.getMetrics(project, indicator);
+        futures.add(logMetricsOrError(project, group, usagesCollector.getData(project), metrics));
       }
       return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
@@ -50,12 +54,15 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
     synchronized (LOCK) {
       List<CompletableFuture<Void>> futures = new ArrayList<>();
       for (ApplicationUsagesCollector usagesCollector : ApplicationUsagesCollector.getExtensions(this)) {
-        PluginInfo info = PluginInfoDetectorKt.getPluginInfo(usagesCollector.getClass());
-        if (info.isDevelopedByJetBrains()) {
-          EventLogGroup group = new EventLogGroup(usagesCollector.getGroupId(), usagesCollector.getVersion());
-          Promise<Set<MetricEvent>> metrics = Promises.resolvedPromise(usagesCollector.getMetrics());
-          futures.add(logMetricsOrError(null, group, usagesCollector.getData(), metrics));
+        String groupId = usagesCollector.getGroupId();
+        if (!PluginInfoDetectorKt.getPluginInfo(usagesCollector.getClass()).isDevelopedByJetBrains()) {
+          LOG.warn("Skip '" + groupId + "' because its registered in a third-party plugin");
+          continue;
         }
+
+        EventLogGroup group = new EventLogGroup(groupId, usagesCollector.getVersion());
+        Promise<Set<MetricEvent>> metrics = Promises.resolvedPromise(usagesCollector.getMetrics());
+        futures.add(logMetricsOrError(null, group, usagesCollector.getData(), metrics));
       }
       return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
