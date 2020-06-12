@@ -26,7 +26,6 @@
                   fieldName="INSTANCE"
                   extensions="toml"
                   fileNames="Cargo.lock;Gopkg.lock;Pipfile"/>
-        <fileTypeDetector implementation="org.toml.lang.TomlFileTypeDetector"/>
         <lang.parserDefinition language="TOML" implementationClass="org.toml.lang.parse.TomlParserDefinition"/>
         <lang.ast.factory language="TOML" implementationClass="org.toml.lang.psi.impl.TomlASTFactory"/>
         <lang.syntaxHighlighter language="TOML" implementationClass="org.toml.ide.TomlHighlighter"/>
