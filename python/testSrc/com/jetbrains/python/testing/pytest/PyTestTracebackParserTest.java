@@ -19,7 +19,7 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.traceBackParsers.LinkInTrace;
 import org.hamcrest.Matchers;
-import org.junit.Assert;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -27,6 +27,8 @@ import java.nio.charset.Charset;
 import java.util.Base64;
 import java.util.HashSet;
 import java.util.Set;
+
+import static org.junit.Assert.*;
 
 /**
  * Ensures we can parse pytest traces for links.
@@ -62,12 +64,29 @@ public final class PyTestTracebackParserTest {
    */
   @Test
   public void testLineWithLink() {
-    final LinkInTrace linkInTrace = new PyTestTracebackParser().findLinkInTrace("foo/bar.py:42 file ");
-    Assert.assertNotNull("Failed to parse line", linkInTrace);
-    Assert.assertEquals("Bad file name", "foo/bar.py", linkInTrace.getFileName());
-    Assert.assertEquals("Bad line number", 42, linkInTrace.getLineNumber());
-    Assert.assertEquals("Bad start pos", 0, linkInTrace.getStartPos());
-    Assert.assertEquals("Bad end pos", 13, linkInTrace.getEndPos());
+    ensureLinkIsCorrect(" foo/bar.py:42 file ", "foo/bar.py:42", "foo/bar.py", 42);
+    ensureLinkIsCorrect("         foo/bar.py:42 file ", "foo/bar.py:42", "foo/bar.py", 42);
+    ensureLinkIsCorrect("foo/bar.py:42 file ", "foo/bar.py:42", "foo/bar.py", 42);
+    ensureLinkIsCorrect("foo foo/bar.py:42:1 file ", "foo/bar.py:42", "foo/bar.py", 42);
+    ensureLinkIsCorrect("Error in file c:/users/foo.py:22", "c:/users/foo.py:22", "c:/users/foo.py", 22);
+  }
+
+  @Test
+  public void testNoLink() {
+    assertNull(new PyTestTracebackParser().findLinkInTrace("    "));
+    assertNull(new PyTestTracebackParser().findLinkInTrace("asdasd"));
+    assertNull(new PyTestTracebackParser().findLinkInTrace("a/b/c/d"));
+  }
+
+  private static void ensureLinkIsCorrect(@NotNull String text,
+                                          @NotNull String linkSubText,
+                                          @NotNull String fileName,
+                                          int lineNumber) {
+    final var linkInTrace = new PyTestTracebackParser().findLinkInTrace(text);
+    assertNotNull("Failed to parse line", linkInTrace);
+    assertEquals("Bad file name", fileName, linkInTrace.getFileName());
+    assertEquals("Bad line number", lineNumber, linkInTrace.getLineNumber());
+    assertEquals(linkSubText, text.substring(linkInTrace.getStartPos(), linkInTrace.getEndPos()));
   }
 
   /**
@@ -75,8 +94,8 @@ public final class PyTestTracebackParserTest {
    */
   @Test
   public void testLineNoLink() {
-    Assert.assertNull("File with no lines should not work", new PyTestTracebackParser().findLinkInTrace("foo/bar.py file "));
-    Assert.assertNull("No file name provided, but link found", new PyTestTracebackParser().findLinkInTrace(":12 file "));
+    assertNull("File with no lines should not work", new PyTestTracebackParser().findLinkInTrace("foo/bar.py file "));
+    assertNull("No file name provided, but link found", new PyTestTracebackParser().findLinkInTrace(":12 file "));
   }
 
   @Test
@@ -103,24 +122,23 @@ public final class PyTestTracebackParserTest {
       final LinkInTrace trace = new PyTestTracebackParser().findLinkInTrace(line);
       if (trace != null) {
         final boolean removeResult = requiredStrings.remove(trace.getFileName() + " - " + trace.getLineNumber());
-        Assert.assertTrue(String.format("Unexpected file found %s line %s", trace.getFileName(), trace.getLineNumber()),
-                          removeResult);
+        assertTrue(String.format("Unexpected file found %s line %s", trace.getFileName(), trace.getLineNumber()),
+                   removeResult);
       }
     }
-    Assert.assertThat("Some lines were not found", requiredStrings, Matchers.empty());
+    assertThat("Some lines were not found", requiredStrings, Matchers.empty());
   }
 
-    /**
-     * Ensures
-     * Regexp worst cases are limited to prevent freezing on very long lines
-     */
-    @Test(timeout = 5000)
-    public void testLongLines () {
-      Assert
-        .assertNull("No link should be found in numbers list", new PyTestTracebackParser().findLinkInTrace(myStringJunk));
-      Assert.assertNull("No link should be found in base64 list", new PyTestTracebackParser().findLinkInTrace(myBase64Junk));
-      Assert.assertNull("No link should be found in junk", new PyTestTracebackParser().findLinkInTrace(myStringJunkWithSpaces));
-      final LinkInTrace trace = new PyTestTracebackParser().findLinkInTrace(myStringJunkWithSpacesAndLine);
-      Assert.assertNotNull("No link found in long line", trace);
-    }
+  /**
+   * Ensures
+   * Regexp worst cases are limited to prevent freezing on very long lines
+   */
+  @Test(timeout = 5000)
+  public void testLongLines() {
+    assertNull("No link should be found in numbers list", new PyTestTracebackParser().findLinkInTrace(myStringJunk));
+    assertNull("No link should be found in base64 list", new PyTestTracebackParser().findLinkInTrace(myBase64Junk));
+    assertNull("No link should be found in junk", new PyTestTracebackParser().findLinkInTrace(myStringJunkWithSpaces));
+    final LinkInTrace trace = new PyTestTracebackParser().findLinkInTrace(myStringJunkWithSpacesAndLine);
+    assertNotNull("No link found in long line", trace);
   }
+}
