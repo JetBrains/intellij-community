@@ -30,6 +30,11 @@ class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
     myMarkupModel = markupModel;
   }
 
+  @Override
+  protected boolean keepIntervalsOnWeakReferences() {
+    return false;
+  }
+
   @NotNull
   MarkupIterator<RangeHighlighterEx> overlappingIterator(@NotNull TextRangeInterval rangeInterval, boolean onlyRenderedInGutter) {
     MarkupIterator<RangeHighlighterEx> iterator =
@@ -82,13 +87,6 @@ class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
            int layer) {
       super(rangeMarkerTree, key, start, end, greedyToLeft, greedyToRight, stickingToRight);
       myLayer = layer;
-    }
-
-    //range highlighters are strongly referenced
-    @Override
-    protected Getter<RangeHighlighterEx> createGetter(@NotNull RangeHighlighterEx interval) {
-      //noinspection unchecked
-      return (Getter<RangeHighlighterEx>)interval;
     }
 
     private void recalculateRenderFlags() {

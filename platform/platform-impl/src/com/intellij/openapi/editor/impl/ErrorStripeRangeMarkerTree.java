@@ -2,10 +2,9 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.Getter;
 import org.jetbrains.annotations.NotNull;
 
-class ErrorStripeRangeMarkerTree extends RangeMarkerTree<ErrorStripeMarkerImpl> {
+class ErrorStripeRangeMarkerTree extends HardReferencingRangeMarkerTree<ErrorStripeMarkerImpl> {
 
   ErrorStripeRangeMarkerTree(@NotNull Document document) {
     super(document);
@@ -44,9 +43,5 @@ class ErrorStripeRangeMarkerTree extends RangeMarkerTree<ErrorStripeMarkerImpl> 
       myLayer = layer;
     }
 
-    @Override
-    protected Getter<ErrorStripeMarkerImpl> createGetter(@NotNull ErrorStripeMarkerImpl interval) {
-      return interval;
-    }
   }
 }
