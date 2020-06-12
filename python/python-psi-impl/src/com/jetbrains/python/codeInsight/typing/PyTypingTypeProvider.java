@@ -3,7 +3,6 @@ package com.jetbrains.python.codeInsight.typing;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -1363,7 +1362,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @NotNull
   public static Collection<String> resolveToQualifiedNames(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
-    final Set<String> names = Sets.newLinkedHashSet();
+    final Set<String> names = new LinkedHashSet<String>();
     for (PsiElement resolved : tryResolving(expression, context)) {
       final String name = getQualifiedName(resolved);
       if (name != null) {

@@ -4,7 +4,6 @@ package com.jetbrains.python.debugger.pydev;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -502,7 +501,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
     }
 
     private Set<String> collectThreads(RemoteDebugger debugger) {
-      Set<String> result = Sets.newHashSet();
+      Set<String> result = new HashSet<String>();
       for (Map.Entry<String, RemoteDebugger> entry : myMultiProcessDebugger.myThreadRegistry.myThreadIdToDebugger.entrySet()) {
         if (entry.getValue() == debugger) {
           result.add(entry.getKey());

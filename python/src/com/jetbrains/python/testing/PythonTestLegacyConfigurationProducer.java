@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing;
 
-import com.google.common.collect.Sets;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -218,7 +217,7 @@ abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPy
 
   protected boolean isTestFolder(@NotNull final VirtualFile virtualFile, @NotNull final Project project) {
     @NonNls final String name = virtualFile.getName();
-    final HashSet<VirtualFile> roots = Sets.newHashSet();
+    final HashSet<VirtualFile> roots = new HashSet<VirtualFile>();
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     for (Module module : modules) {
       roots.addAll(PyUtil.getSourceRoots(module));

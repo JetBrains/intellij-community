@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env.python.debug;
 
-import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -37,13 +36,14 @@ import org.junit.Assert;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
-  private final Set<Pair<String, Integer>> myBreakpoints = Sets.newHashSet();
+  private final Set<Pair<String, Integer>> myBreakpoints = new HashSet<Pair<String, Integer>>();
   protected PyDebugProcess myDebugProcess;
   protected XDebugSession mySession;
   protected Semaphore myPausedSemaphore;

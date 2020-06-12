@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi.impl.blockEvaluator;
 
-import com.google.common.collect.Sets;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
@@ -49,7 +48,7 @@ public class PyBlockEvaluator {
    * @see PyEvaluationContext
    */
   public PyBlockEvaluator(@NotNull final PyEvaluationContext evaluationContext) {
-    this(Sets.newHashSet(), evaluationContext);
+    this(new HashSet<PyFile>(), evaluationContext);
   }
 
   /**
