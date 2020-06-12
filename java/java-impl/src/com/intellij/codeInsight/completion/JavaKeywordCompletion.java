@@ -7,7 +7,6 @@ import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.util.CompletionStyleUtil;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.patterns.ElementPattern;
@@ -36,7 +35,6 @@ import static com.intellij.psi.SyntaxTraverser.psiApi;
 
 public class JavaKeywordCompletion {
   public static final ElementPattern<PsiElement> AFTER_DOT = psiElement().afterLeaf(".");
-  private static final ElementPattern<PsiElement> AFTER_DOUBLE_COLON = psiElement().afterLeaf("::");
 
   static final ElementPattern<PsiElement> VARIABLE_AFTER_FINAL = psiElement().afterLeaf(PsiKeyword.FINAL).inside(PsiDeclarationStatement.class);
 
@@ -225,6 +223,10 @@ public class JavaKeywordCompletion {
 
   void addKeywords() {
     if (PsiTreeUtil.getNonStrictParentOfType(myPosition, PsiLiteralExpression.class, PsiComment.class) != null) {
+      return;
+    }
+
+    if (psiElement().afterLeaf("::").accepts(myPosition)) {
       return;
     }
 
@@ -427,15 +429,6 @@ public class JavaKeywordCompletion {
   }
 
   private void addExpressionKeywords(boolean statementPosition) {
-    if (AFTER_DOUBLE_COLON.accepts(myPosition)) {
-      PsiMethodReferenceExpression parent = PsiTreeUtil.getParentOfType(myPosition, PsiMethodReferenceExpression.class);
-      if (parent != null && canUseConstructorReference(parent)) {
-        TailType tail = !LambdaHighlightingUtil.insertSemicolon(parent.getParent()) ? TailType.SEMICOLON : TailType.NONE;
-        addKeyword(new OverridableSpace(createKeyword(PsiKeyword.NEW), tail));
-      }
-      return;
-    }
-
     if (isExpressionPosition(myPosition)) {
       PsiElement parent = myPosition.getParent();
       PsiElement grandParent = parent == null ? null : parent.getParent();
@@ -709,7 +702,6 @@ public class JavaKeywordCompletion {
 
   static void addPrimitiveTypes(Consumer<? super LookupElement> result, PsiElement position, JavaCompletionSession session) {
     if (AFTER_DOT.accepts(position) ||
-        AFTER_DOUBLE_COLON.accepts(position) ||
         psiElement().inside(psiAnnotation()).accepts(position) && !expectsClassLiteral(position)) {
       return;
     }

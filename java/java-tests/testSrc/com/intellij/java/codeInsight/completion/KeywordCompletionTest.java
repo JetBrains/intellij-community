@@ -4,8 +4,10 @@ package com.intellij.java.codeInsight.completion;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.completion.LightCompletionTestCase;
 import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -93,7 +95,21 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testDefaultInAnno() { doTest(); }
   public void testNullInMethodCall() { doTest(); }
   public void testNullInMethodCall2() { doTest(); }
-  public void testNewInMethodRefs() { doTest(1, "new", "null", "true", "false"); }
+
+  public void testNewInMethodRefs() {
+    doTest(1, "new", "null", "true", "false");
+    assertEquals("new", LookupElementPresentation.renderElement(myItems[0]).getItemText());
+    selectItem(myItems[0]);
+    checkResultByTestName();
+  }
+
+  public void testNewInMethodRefsArray() {
+    doTest(1, "new", "null", "true", "false");
+    assertEquals("Object", assertInstanceOf(myItems[0].getPsiElement(), PsiMethod.class).getName());
+    selectItem(myItems[0]);
+    checkResultByTestName();
+  }
+
   public void testNewInCast() { doTest(2, "new", "null", "true", "false"); }
   public void testNewInNegation() { doTest(1, "new", "null", "true", "false"); }
   public void testSpaceAfterInstanceof() { doTest(); }
