@@ -232,20 +232,17 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
 
   @Nullable
   private static Configuration findConfiguration(@NotNull Collection<? extends Configuration> configurations, Configuration configuration) {
-    return configurations.stream()
-      .filter(c -> {
-        if (configuration instanceof ReplaceConfiguration) {
-          return c instanceof ReplaceConfiguration &&
-                 c.getMatchOptions().getSearchPattern().equals(configuration.getMatchOptions().getSearchPattern()) &&
-                 c.getReplaceOptions().getReplacement().equals(configuration.getReplaceOptions().getReplacement());
-        }
-        else {
-          return c instanceof SearchConfiguration && c.getMatchOptions().getSearchPattern().equals(
-            configuration.getMatchOptions().getSearchPattern());
-        }
-      })
-      .findFirst()
-      .orElse(null);
+    return ContainerUtil.find(configurations, c -> {
+      if (configuration instanceof ReplaceConfiguration) {
+        return c instanceof ReplaceConfiguration &&
+               c.getMatchOptions().getSearchPattern().equals(configuration.getMatchOptions().getSearchPattern()) &&
+               c.getReplaceOptions().getReplacement().equals(configuration.getReplaceOptions().getReplacement());
+      }
+      else {
+        return c instanceof SearchConfiguration && c.getMatchOptions().getSearchPattern().equals(
+          configuration.getMatchOptions().getSearchPattern());
+      }
+    });
   }
 
   @NotNull
