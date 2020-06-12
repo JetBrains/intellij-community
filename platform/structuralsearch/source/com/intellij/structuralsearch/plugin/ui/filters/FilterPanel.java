@@ -230,6 +230,10 @@ public class FilterPanel implements FilterTable {
     showFilters();
   }
 
+  public boolean hasVisibleFilter() {
+    return myTableModel.getRowCount() > 0;
+  }
+
   private void showFilters() {
     if (myConstraint == null || myShown) {
       return;
