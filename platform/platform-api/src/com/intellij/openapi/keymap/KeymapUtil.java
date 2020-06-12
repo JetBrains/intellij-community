@@ -25,6 +25,9 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static java.awt.event.InputEvent.ALT_DOWN_MASK;
+import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
+
 public final class KeymapUtil {
 
   @NonNls private static final String CANCEL_KEY_TEXT = "Cancel";
@@ -608,6 +611,27 @@ public final class KeymapUtil {
       }
     }
     return filtered.isEmpty() ? null : new CustomShortcutSet(filtered.toArray(Shortcut.EMPTY_ARRAY));
+  }
+
+  @Nullable
+  public static CustomShortcutSet getMnemonicAsShortcut(int mnemonic) {
+    mnemonic = KeyEvent.getExtendedKeyCodeForChar(mnemonic);
+    if (mnemonic != KeyEvent.VK_UNDEFINED) {
+      KeyboardShortcut ctrlAltShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(mnemonic, ALT_DOWN_MASK | CTRL_DOWN_MASK), null);
+      KeyboardShortcut altShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(mnemonic, ALT_DOWN_MASK), null);
+      CustomShortcutSet shortcutSet;
+      if (SystemInfo.isMac) {
+        if (Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
+          shortcutSet = new CustomShortcutSet(ctrlAltShortcut, altShortcut);
+        } else {
+          shortcutSet = new CustomShortcutSet(ctrlAltShortcut);
+        }
+      } else {
+        shortcutSet = new CustomShortcutSet(altShortcut);
+      }
+      return shortcutSet;
+    }
+    return null;
   }
 
   /**

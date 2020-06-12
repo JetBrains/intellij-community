@@ -232,7 +232,7 @@ public abstract class StatusText {
     }
 
     myText += text;
-    return appendText(true, 0, text, attrs, listener);
+    return appendText(true, Math.max(0, myPrimaryColumn.fragments.size() - 1), text, attrs, listener);
   }
 
   public StatusText appendText(boolean isPrimaryColumn, int row, @NlsContexts.StatusText String text, SimpleTextAttributes attrs, ActionListener listener) {
