@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="live-sql-proto">
+    <CLASSES>
+      <root url="jar:///home/open/projects/studio-master-dev/bazel-bin/tools/base/experimental/live-sql-inspector/live_sql_java_proto.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

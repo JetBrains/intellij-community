@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="aia-proto">
+    <CLASSES>
+      <root url="jar:///home/open/projects/studio-master-dev/bazel-bin/tools/base/sdk-common/aia-manifest-jar-generator/proto.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
