@@ -455,17 +455,6 @@ public class JavaKeywordCompletion {
     }
   }
 
-  private static boolean canUseConstructorReference(PsiMethodReferenceExpression ref) {
-    PsiTypeElement qualifierType = ref.getQualifierType();
-    if (qualifierType == null) {
-      PsiElement qualifier = ref.getQualifier();
-      return qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).resolve() != null;
-    }
-
-    if (qualifierType instanceof PsiClassType) return ((PsiClassType)qualifierType).resolve() != null;
-    return qualifierType instanceof PsiArrayType;
-  }
-
   private boolean isQualifiedNewContext() {
     if (myPosition.getParent() instanceof PsiReferenceExpression) {
       PsiExpression qualifier = ((PsiReferenceExpression)myPosition.getParent()).getQualifierExpression();
