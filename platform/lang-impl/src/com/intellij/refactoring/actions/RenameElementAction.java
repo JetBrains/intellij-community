@@ -1,85 +1,108 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.actions;
 
-import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.SyntheticElement;
-import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
-import com.intellij.refactoring.rename.RenameHandlerRegistry;
+import com.intellij.refactoring.rename.Renamer;
+import com.intellij.refactoring.rename.RenamerFactory;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-public class RenameElementAction extends BaseRefactoringAction {
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static com.intellij.navigation.ChooserKt.chooseTargetPopup;
+
+public class RenameElementAction extends AnAction implements UpdateInBackground {
 
   public RenameElementAction() {
     setInjectedContext(true);
   }
 
   @Override
-  public boolean isAvailableInEditorOnly() {
-    return false;
+  public void update(@NotNull AnActionEvent e) {
+    DataContext dataContext = e.getDataContext();
+    boolean enabled = dataContext.getData(CommonDataKeys.PROJECT) != null
+                      && getAvailableRenamers(dataContext).findAny().isPresent();
+    e.getPresentation().setEnabled(enabled);
   }
 
   @Override
-  public boolean isEnabledOnElements(PsiElement @NotNull [] elements) {
+  public final void actionPerformed(@NotNull AnActionEvent e) {
+    DataContext dataContext = e.getDataContext();
+    Project project = dataContext.getData(CommonDataKeys.PROJECT);
+    if (project == null) {
+      return;
+    }
+    if (!PsiDocumentManager.getInstance(project).commitAllDocumentsUnderProgress()) {
+      return;
+    }
+
+    List<Renamer> renamers = getAvailableRenamers(dataContext).collect(Collectors.toList());
+    if (renamers.isEmpty()) {
+      String message = RefactoringBundle.getCannotRefactorMessage(
+        RefactoringBundle.message("error.wrong.caret.position.symbol.to.refactor")
+      );
+      CommonRefactoringUtil.showErrorHint(
+        project,
+        e.getData(CommonDataKeys.EDITOR),
+        message,
+        RefactoringBundle.getCannotRefactorMessage(null),
+        null
+      );
+    }
+    else if (renamers.size() == 1) {
+      renamers.get(0).performRename();
+    }
+    else {
+      chooseTargetPopup(
+        RefactoringBundle.message("what.would.you.like.to.do"),
+        renamers,
+        renamer -> renamer::getPresentableText,
+        Renamer::performRename
+      ).showInBestPositionFor(dataContext);
+    }
+  }
+
+  @NotNull
+  private static Stream<Renamer> getAvailableRenamers(@NotNull DataContext dataContext) {
+    return RenamerFactory.EP_NAME.extensions().flatMap(factory -> factory.createRenamers(dataContext).stream());
+  }
+
+  /**
+   * @deprecated no longer used since RenameElementAction doesn't extend BaseRefactoringAction anymore; use {@code false}
+   */
+  @SuppressWarnings("MethodMayBeStatic")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @Deprecated
+  public final boolean isAvailableInEditorOnly() {
+    return false;
+  }
+
+  /**
+   * @deprecated no longer used since RenameElementAction doesn't extend BaseRefactoringAction anymore; use {@link #isRenameEnabledOnElements}
+   */
+  @SuppressWarnings("MethodMayBeStatic")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @Deprecated
+  public final boolean isEnabledOnElements(PsiElement @NotNull [] elements) {
+    return isRenameEnabledOnElements(elements);
+  }
+
+  public static boolean isRenameEnabledOnElements(PsiElement @NotNull [] elements) {
     if (elements.length != 1) return false;
 
     PsiElement element = elements[0];
     return element instanceof PsiNamedElement &&
-           !(element instanceof SyntheticElement) && 
+           !(element instanceof SyntheticElement) &&
            !PsiElementRenameHandler.isVetoed(element);
-  }
-
-  @Override
-  public RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
-    return RenameHandlerRegistry.getInstance().getRenameHandler(dataContext);
-  }
-
-  @Override
-  protected boolean hasAvailableHandler(@NotNull DataContext dataContext) {
-    return isEnabledOnDataContext(dataContext);
-  }
-
-  @Override
-  protected boolean isEnabledOnDataContext(@NotNull DataContext dataContext) {
-    return RenameHandlerRegistry.getInstance().hasAvailableHandler(dataContext);
-  }
-
-  @Override
-  protected boolean isAvailableForLanguage(Language language) {
-    return true;
-  }
-
-  @Override
-  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element, @NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
-    return isEnabledOnDataContext(context);
-  }
-
-  @Override
-  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element,
-                                                        @NotNull Editor editor,
-                                                        @NotNull PsiFile file,
-                                                        @NotNull DataContext context,
-                                                        @NotNull String place) {
-    return isEnabledOnDataContext(context);
   }
 }
