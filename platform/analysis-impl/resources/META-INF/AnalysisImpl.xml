@@ -14,8 +14,8 @@
     <extensionPoint name="resolveScopeEnlarger" interface="com.intellij.psi.ResolveScopeEnlarger" dynamic="true"/>
     <extensionPoint name="resolveScopeProvider" interface="com.intellij.psi.ResolveScopeProvider" dynamic="true"/>
     <extensionPoint name="elementLookupRenderer" interface="com.intellij.codeInsight.lookup.impl.ElementLookupRenderer" dynamic="true"/>
-    <extensionPoint name="templateDataPatcher" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.psi.templateLanguages.TemplateDataPatcher"/>
+    <extensionPoint name="outerLanguageElementsPatcher" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.psi.templateLanguages.TemplateDataElementType$OuterLanguageElementsPatcher"/>
     </extensionPoint>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
