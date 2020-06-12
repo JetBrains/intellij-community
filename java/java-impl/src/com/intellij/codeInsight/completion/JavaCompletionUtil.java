@@ -563,7 +563,7 @@ public class JavaCompletionUtil {
       return Collections.singletonList(item);
     }
     if (completion instanceof PsiVariable) {
-      return Collections.singletonList(new VariableLookupItem((PsiVariable)completion).setSubstitutor(substitutor));
+      return Collections.singletonList(new VariableLookupItem((PsiVariable)completion).setSubstitutor(substitutor).qualifyIfNeeded(reference));
     }
     if (completion instanceof PsiPackage) {
       return Collections.singletonList(new PackageLookupItem((PsiPackage)completion, reference.getElement()));

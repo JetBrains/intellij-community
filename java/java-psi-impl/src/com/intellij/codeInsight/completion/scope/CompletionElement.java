@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion.scope;
 
+import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
@@ -70,7 +71,7 @@ public class CompletionElement{
                             myQualifierText);
     }
     if (myElement instanceof PsiVariable) {
-      return "#" + ((PsiVariable)myElement).getName();
+      return CompletionUtilCoreImpl.getOriginalOrSelf((PsiElement)myElement);
     }
 
     return null;

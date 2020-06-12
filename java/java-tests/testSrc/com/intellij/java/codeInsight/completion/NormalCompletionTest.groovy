@@ -605,7 +605,7 @@ public class ListUtils {
 
   void testDoubleConstant() throws Throwable {
     configure()
-    assertStringItems("XFOO")
+    assertStringItems("Intf.XFOO", "XFOO")
   }
 
   void testNotOnlyKeywordsInsideSwitch() throws Throwable {
@@ -862,7 +862,10 @@ public class ListUtils {
   }
 
   void testSameNamedVariableInNestedClasses() throws Throwable {
-    doTest()
+    configure()
+    myFixture.assertPreferredCompletionItems 0, "ffid", "Beda.this.ffid"
+    selectItem(myItems[1])
+    checkResult()
   }
 
   void testHonorUnderscoreInPrefix() throws Throwable {
