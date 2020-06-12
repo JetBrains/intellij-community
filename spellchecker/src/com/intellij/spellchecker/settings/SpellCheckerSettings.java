@@ -101,7 +101,7 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
         myOldDictionaryFoldersPaths.isEmpty() &&
         myCustomDictionariesPaths.isEmpty() &&
         myUseSingleDictionaryToSave == DEFAULT_USE_SINGLE_DICT &&
-        myDictionaryToSave.equals(DEFAULT_DICTIONARY_TO_SAVE)) {
+        myDictionaryToSave.equals(DEFAULT_DICTIONARY_TO_SAVE) && !mySettingsTransferred) {
       return null;
     }
 
