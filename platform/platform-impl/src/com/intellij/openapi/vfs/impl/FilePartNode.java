@@ -209,6 +209,8 @@ class FilePartNode {
     String prevChildName = "";
     for (int i = 0; i < children.length; i++) {
       FilePartNode child = children[i];
+      // the parent can't be an url and the child a file
+      assert this instanceof FilePartNodeRoot || myFile != null || child.myFile() == null : "this: "+this+"; myFileOrUrl: "+myFileOrUrl+"; child: "+child+"; child.myFile: "+child.myFile()+"; parent: "+parent+"; urlFromRoot: "+urlFromRoot;
       String childName = child.getName().toString();
       boolean needSeparator = !urlFromRoot.isEmpty() && !urlFromRoot.endsWith("/") && !childName.equals(JarFileSystem.JAR_SEPARATOR);
       String childUrlFromRoot = needSeparator ? urlFromRoot + "/" + childName : urlFromRoot + childName;

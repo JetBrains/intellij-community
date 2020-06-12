@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -157,7 +158,7 @@ class FilePartNodeRoot extends FilePartNode {
         if (fsRoot == null) {
           String rootPath = ContainerUtil.getLastItem(names);
           fsRoot = ManagingFS.getInstance().findRoot(rootPath, fs instanceof ArchiveFileSystem ? LocalFileSystem.getInstance() : fs);
-          if (fsRoot != null && !fsRoot.getName().equals(rootPath)) {
+          if (fsRoot != null && !FileUtil.namesEqual(fsRoot.getName(), rootPath)) {
             // ignore really weird root names, like "/" under windows
             fsRoot = null;
           }
