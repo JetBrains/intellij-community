@@ -36,6 +36,7 @@ import com.intellij.psi.filters.classes.AssignableFromContextFilter;
 import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.filters.getters.JavaMembersGetter;
+import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.index.JavaAutoModuleNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
@@ -263,15 +264,21 @@ public class JavaCompletionContributor extends CompletionContributor {
         result.stopHere();
       }
 
-      if (!smart && parent instanceof PsiJavaCodeReferenceElement && mayCompleteReference) {
-        session.registerBatchItems(completeReference(parameters, (PsiJavaCodeReferenceElement)parent, session));
+      List<LookupElement> referenceSuggestions = parent instanceof PsiJavaCodeReferenceElement && mayCompleteReference
+                                                 ? completeReference(parameters, (PsiJavaCodeReferenceElement)parent, session)
+                                                 : Collections.emptyList();
+      if (!smart) {
+        TailType switchLabelTail = IN_SWITCH_LABEL.accepts(position)
+                                   ? TailTypes.forSwitchLabel(Objects.requireNonNull(PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class)))
+                                   : null;
+        session.registerBatchItems(ContainerUtil.map(referenceSuggestions, e -> switchLabelTail != null ? new IndentingDecorator(TailTypeDecorator.withTail(e, switchLabelTail)) : e));
         result.stopHere();
       }
 
       session.flushBatchItems();
 
       if (smart) {
-        addSmartCompletionSuggestions(parameters, result);
+        addSmartCompletionSuggestions(parameters, result, referenceSuggestions);
       }
     }
 
@@ -314,21 +321,21 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static void addSmartCompletionSuggestions(CompletionParameters parameters, CompletionResultSet result) {
+  private static void addSmartCompletionSuggestions(CompletionParameters parameters,
+                                                    CompletionResultSet result,
+                                                    List<LookupElement> allRefSuggestions) {
     PsiElement position = parameters.getPosition();
     Set<ExpectedTypeInfo> infos = ContainerUtil.newHashSet(JavaSmartCompletionContributor.getExpectedTypes(parameters));
     Set<ExpectedTypeInfo> mergedInfos = new THashSet<>(infos, JavaSmartCompletionContributor.EXPECTED_TYPE_INFO_STRATEGY);
-    List<Runnable> chainedEtc = new ArrayList<>();
-    if (!SmartCastProvider.shouldSuggestCast(parameters) && position.getParent() instanceof PsiJavaCodeReferenceElement) {
-      JavaSmartCompletionContributor.addClassReferenceSuggestions(parameters, result, position, (PsiJavaCodeReferenceElement)position.getParent());
+    List<SlowerTypeConversions> chainedEtc = new ArrayList<>();
+    PsiElement parent = position.getParent();
+    if (!SmartCastProvider.shouldSuggestCast(parameters) && parent instanceof PsiJavaCodeReferenceElement) {
+      JavaSmartCompletionContributor.addClassReferenceSuggestions(parameters, result, position, (PsiJavaCodeReferenceElement)parent);
 
       if (JavaSmartCompletionContributor.INSIDE_EXPRESSION.accepts(position)) {
-        for (ExpectedTypeInfo info : mergedInfos) {
-          Runnable slowContinuation = ReferenceExpressionCompletionContributor.fillCompletionVariants(
-            new JavaSmartCompletionParameters(parameters, info),
-            e -> result.addElement(JavaSmartCompletionContributor.decorate(e, infos)));
-          ContainerUtil.addIfNotNull(chainedEtc, slowContinuation);
-        }
+        ReferenceExpressionCompletionContributor.addSmartReferenceSuggestions(
+          parameters, allRefSuggestions, mergedInfos, chainedEtc,
+          e -> result.addElement(JavaSmartCompletionContributor.decorate(e, infos)));
 
         for (ExpectedTypeInfo info : mergedInfos) {
           BasicExpressionCompletionContributor.fillCompletionVariants(new JavaSmartCompletionParameters(parameters, info), lookupElement -> {
@@ -530,50 +537,42 @@ public class JavaCompletionContributor extends CompletionContributor {
     PsiFile originalFile = parameters.getOriginalFile();
 
     boolean first = parameters.getInvocationCount() <= 1;
-    TailType switchLabelTail = IN_SWITCH_LABEL.accepts(position)
-                               ? TailTypes.forSwitchLabel(Objects.requireNonNull(PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class)))
-                               : null;
     PsiType[] expectedTypes = ExpectedTypesGetter.getExpectedTypes(parameters.getPosition(), true);
+    boolean smart = parameters.getCompletionType() == CompletionType.SMART;
     JavaCompletionProcessor.Options options =
       JavaCompletionProcessor.Options.DEFAULT_OPTIONS
         .withCheckAccess(first)
         .withFilterStaticAfterInstance(first)
-        .withShowInstanceInStaticContext(!first);
+        .withShowInstanceInStaticContext(!first && !smart);
 
+    PrefixMatcher matcher = smart ? PrefixMatcher.ALWAYS_TRUE : session.getMatcher();
     for (LookupElement element : JavaCompletionUtil.processJavaReference(position,
                                                                          ref,
                                                                          new ElementExtractorFilter(filter),
                                                                          options,
-                                                                         session.getMatcher(), parameters)) {
+                                                                         matcher, parameters)) {
       if (session.alreadyProcessed(element)) {
         continue;
       }
 
-      if (switchLabelTail != null) {
-        items.add(new IndentingDecorator(TailTypeDecorator.withTail(element, switchLabelTail)));
+      LookupItem<?> item = element.as(LookupItem.CLASS_CONDITION_KEY);
+      if (originalFile instanceof PsiJavaCodeReferenceCodeFragment &&
+          !((PsiJavaCodeReferenceCodeFragment)originalFile).isClassesAccepted() && item != null) {
+        item.setTailType(TailType.NONE);
       }
-      else {
-        LookupItem<?> item = element.as(LookupItem.CLASS_CONDITION_KEY);
-        if (originalFile instanceof PsiJavaCodeReferenceCodeFragment &&
-            !((PsiJavaCodeReferenceCodeFragment)originalFile).isClassesAccepted() && item != null) {
-          item.setTailType(TailType.NONE);
-        }
-        if (item instanceof JavaMethodCallElement) {
-          JavaMethodCallElement call = (JavaMethodCallElement)item;
-          final PsiMethod method = call.getObject();
-          if (method.getTypeParameters().length > 0) {
-            final PsiType returned = TypeConversionUtil.erasure(method.getReturnType());
-            PsiType matchingExpectation = returned == null
-                                          ? null
-                                          : ContainerUtil.find(expectedTypes, type -> type.isAssignableFrom(returned));
-            if (matchingExpectation != null) {
-              call.setInferenceSubstitutorFromExpectedType(position, matchingExpectation);
-            }
+      if (item instanceof JavaMethodCallElement) {
+        JavaMethodCallElement call = (JavaMethodCallElement)item;
+        final PsiMethod method = call.getObject();
+        if (method.getTypeParameters().length > 0) {
+          PsiType returned = TypeConversionUtil.erasure(method.getReturnType());
+          PsiType matchingExpectation = returned == null ? null : ContainerUtil.find(expectedTypes, type ->
+            type.isAssignableFrom(returned) || AssignableFromFilter.isAcceptable(method, position, type, call.getSubstitutor()));
+          if (matchingExpectation != null) {
+            call.setInferenceSubstitutorFromExpectedType(position, matchingExpectation);
           }
         }
-
-        items.add(element);
       }
+      items.add(element);
     }
     return items;
   }
