@@ -6,6 +6,7 @@ import com.intellij.ide.dnd.DnDDragStartBean
 import com.intellij.ide.dnd.DnDEvent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -104,6 +105,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
 
     if (commitPanel.commitMessage.text.isBlank() && !showEmptyCommitMessageConfirmation()) return
 
+    FileDocumentManager.getInstance().saveAllDocuments()
     git4idea.index.performCommit(project, rootsToCommit, commitPanel.commitMessage.text, amend)
   }
 
