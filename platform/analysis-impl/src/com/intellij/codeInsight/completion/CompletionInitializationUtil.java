@@ -62,7 +62,8 @@ public final class CompletionInitializationUtil {
     });
   }
 
-  private static CompletionInitializationContextImpl runContributorsBeforeCompletion(Editor editor,
+  @ApiStatus.Internal
+  public static CompletionInitializationContextImpl runContributorsBeforeCompletion(Editor editor,
                                                                                      PsiFile psiFile,
                                                                                      int invocationCount,
                                                                                      @NotNull Caret caret,
