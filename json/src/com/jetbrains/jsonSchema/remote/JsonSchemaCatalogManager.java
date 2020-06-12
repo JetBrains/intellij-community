@@ -15,6 +15,10 @@ import com.jetbrains.jsonSchema.impl.JsonCachedValues;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -122,9 +126,11 @@ public class JsonSchemaCatalogManager {
 
     List<JsonSchemaCatalogEntry> schemaCatalog = JsonCachedValues.getSchemaCatalog(catalogFile, project);
     if (schemaCatalog == null) return catalogFile instanceof HttpVirtualFile ? NO_CACHE : null;
-    String fileName = file.getName();
+
+    Path fileName = Paths.get(file.getName());
+    Path relPath = getRelPath(file, project);
     for (JsonSchemaCatalogEntry maskAndPath: schemaCatalog) {
-      if (matches(fileName, maskAndPath.getFileMasks())) {
+      if (matches(fileName, relPath, maskAndPath.getFileMasks())) {
         return maskAndPath.getUrl();
       }
     }
@@ -132,36 +138,32 @@ public class JsonSchemaCatalogManager {
     return null;
   }
 
-  private static boolean matches(@NotNull String fileName, @NotNull Collection<String> masks) {
+  @Nullable
+  private static Path getRelPath(VirtualFile file, Project project) {
+    String basePath = project.getBasePath();
+    if (basePath == null) {
+      return null;
+    }
+
+    String filePath = file.getPath();
+    if (!filePath.startsWith(basePath)) {
+      return null;
+    }
+
+    return Paths.get(basePath).relativize(Paths.get(filePath));
+  }
+
+  private static boolean matches(@NotNull Path fileName, @Nullable Path relPath, @NotNull Collection<String> masks) {
     for (String mask: masks) {
-      if (matches(fileName, mask)) return true;
+      if (matches(fileName, relPath, mask)) return true;
     }
     return false;
   }
 
-  private static boolean matches(@NotNull String fileName, @NotNull String mask) {
-    if (mask.equals(fileName)) return true;
-    int star = mask.indexOf('*');
-
-    // no star - no match
-    if (star == -1) return false;
-
-    // *.foo.json
-    if (star == 0 && fileName.startsWith(mask.substring(1))) {
-      return true;
-    }
-
-    // foobar*
-    if (star == mask.length() - 1 && fileName.endsWith(mask.substring(0, mask.length() - 1))) {
-      return true;
-    }
-
-    String beforeStar = mask.substring(0, star);
-    String afterStar = mask.substring(star + 1);
-
-    if (fileName.startsWith(beforeStar) && fileName.endsWith(afterStar)) {
-      return true;
-    }
+  private static boolean matches(@NotNull Path fileName, @Nullable Path relPath, @NotNull String mask) {
+    PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:"+mask);
+    if (matcher.matches(fileName)) return true;
+    if (relPath != null && matcher.matches(relPath)) return true;
     return false;
   }
 }
