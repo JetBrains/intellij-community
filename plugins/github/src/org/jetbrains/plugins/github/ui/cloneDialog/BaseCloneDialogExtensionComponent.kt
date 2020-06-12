@@ -126,6 +126,8 @@ internal abstract class BaseCloneDialogExtensionComponent(
   private val accountComponents = hashMapOf<GithubAccount, JLabel>()
   private val avatarsByAccount = hashMapOf<GithubAccount, Icon>()
 
+  protected val content: JComponent get() = wrapper.targetComponent
+
   init {
     val listWithSearchBundle = ListWithSearchComponent(originListModel, GHRepositoryListCellRenderer { getAccounts() })
 
@@ -181,7 +183,7 @@ internal abstract class BaseCloneDialogExtensionComponent(
       accounts.forEach(::addAccount)
     }
     else {
-      switchToLogin()
+      switchToLogin(null)
     }
   }
 
@@ -198,7 +200,7 @@ internal abstract class BaseCloneDialogExtensionComponent(
     switchToRepositories()
   }
 
-  private fun switchToLogin(account: GithubAccount? = null) {
+  protected fun switchToLogin(account: GithubAccount?) {
     wrapper.setContent(createLoginPanel(account) { switchToRepositories() })
     wrapper.repaint()
     inLoginState = true
@@ -247,7 +249,7 @@ internal abstract class BaseCloneDialogExtensionComponent(
       accountsPanel.repaint()
     }
     refillRepositories()
-    if (getAccounts().isEmpty()) switchToLogin()
+    if (getAccounts().isEmpty()) switchToLogin(null)
   }
 
   private fun loadUserDetails(account: GithubAccount,
@@ -455,6 +457,8 @@ internal abstract class BaseCloneDialogExtensionComponent(
     return IconUtil.scale(icon, null, scale)
   }
 
+  protected abstract fun createAccountMenuLoginActions(account: GithubAccount?): Collection<Action>
+
   private fun showPopupMenu() {
     val menuItems = mutableListOf<AccountMenuItem>()
     val project = ProjectManager.getInstance().defaultProject
@@ -469,7 +473,7 @@ internal abstract class BaseCloneDialogExtensionComponent(
       val showSeparatorAbove = index != 0
 
       if (user == null) {
-        accountActions += Action(GithubBundle.message("login.action"), { switchToLogin(account) })
+        accountActions += createAccountMenuLoginActions(account)
         accountActions += Action(GithubBundle.message("accounts.remove"), { authenticationManager.removeAccount(account) },
                                  showSeparatorAbove = true)
       }
@@ -486,7 +490,7 @@ internal abstract class BaseCloneDialogExtensionComponent(
 
       menuItems += Account(accountTitle, serverInfo, avatar, accountActions, showSeparatorAbove)
     }
-    menuItems += Action(GithubBundle.message("accounts.add"), { switchToLogin() }, showSeparatorAbove = true)
+    menuItems += createAccountMenuLoginActions(null)
 
     AccountsMenuListPopup(null, AccountMenuPopupStep(menuItems)).showUnderneathOf(accountsPanel)
   }

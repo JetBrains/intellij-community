@@ -11,6 +11,7 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil.ComponentStyle
 import com.intellij.util.ui.UIUtil.getRegularPanelInsets
+import com.intellij.util.ui.cloneDialog.AccountMenuItem
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
@@ -67,6 +68,18 @@ class GHECloneDialogExtension : BaseCloneDialogExtension() {
           loginPanel.isCancelVisible = getAccounts().isNotEmpty()
           loginPanel.setCancelHandler(cancelHandler)
         }
+
+      override fun createAccountMenuLoginActions(account: GithubAccount?): Collection<AccountMenuItem.Action> =
+        listOf(createLoginAction(account))
+
+      private fun createLoginAction(account: GithubAccount?): AccountMenuItem.Action {
+        val isExistingAccount = account != null
+        return AccountMenuItem.Action(
+          if (isExistingAccount) message("login.action") else message("accounts.add"),
+          { switchToLogin(account) },
+          showSeparatorAbove = !isExistingAccount
+        )
+      }
     }
 }
 
