@@ -42,6 +42,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
+import com.intellij.usages.impl.actions.RuleAction;
 import com.intellij.usages.rules.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
@@ -1094,20 +1095,20 @@ public class UsageViewImpl implements UsageViewEx {
     associatedProgress = indicator;
   }
 
-  private class MergeDupLines extends RuleAction {
+  private static class MergeDupLines extends RuleAction {
     private MergeDupLines() {
-      super(UsageViewImpl.this, UsageViewBundle.message("action.merge.same.line"), AllIcons.Toolbar.Filterdups);
+      super(UsageViewBundle.message("action.merge.same.line"), AllIcons.Toolbar.Filterdups);
       setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK)));
     }
 
     @Override
-    protected boolean getOptionValue() {
-      return getUsageViewSettings().isFilterDuplicatedLine();
+    protected boolean getOptionValue(AnActionEvent e) {
+      return getUsageViewSettings(e).isFilterDuplicatedLine();
     }
 
     @Override
-    protected void setOptionValue(boolean value) {
-      getUsageViewSettings().setFilterDuplicatedLine(value);
+    protected void setOptionValue(AnActionEvent e, boolean value) {
+      getUsageViewSettings(e).setFilterDuplicatedLine(value);
     }
   }
 

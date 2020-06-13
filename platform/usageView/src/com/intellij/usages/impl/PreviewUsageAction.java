@@ -4,23 +4,27 @@
 package com.intellij.usages.impl;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageView;
+import com.intellij.usages.impl.actions.RuleAction;
 import org.jetbrains.annotations.NotNull;
 
 class PreviewUsageAction extends RuleAction {
   PreviewUsageAction(@NotNull UsageView usageView) {
-    super(usageView, UsageViewBundle.messagePointer("preview.usages.action.text", StringUtil.capitalize(StringUtil.pluralize(usageView.getPresentation().getUsagesWord()))), AllIcons.Actions.PreviewDetails);
+    super(UsageViewBundle.messagePointer("preview.usages.action.text", StringUtil.capitalize(StringUtil.pluralize(usageView.getPresentation().getUsagesWord()))), AllIcons.Actions.PreviewDetails);
   }
 
   @Override
-  protected boolean getOptionValue() {
-    return myView.isPreviewUsages();
+  protected boolean getOptionValue(AnActionEvent e) {
+    UsageViewImpl impl = getUsageViewImpl(e);
+    return impl != null ? impl.isPreviewUsages() : false;
   }
 
   @Override
-  protected void setOptionValue(boolean value) {
-    myView.setPreviewUsages(value);
+  protected void setOptionValue(AnActionEvent e, boolean value) {
+    UsageViewImpl usageViewImpl = getUsageViewImpl(e);
+    if (usageViewImpl != null) usageViewImpl.setPreviewUsages(value);
   }
 }

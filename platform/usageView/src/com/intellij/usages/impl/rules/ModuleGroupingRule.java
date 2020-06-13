@@ -20,7 +20,7 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
-import com.intellij.usages.rules.UsageGroupingRule;
+import com.intellij.usages.rules.UsageGroupingRuleEx;
 import com.intellij.usages.rules.UsageInLibrary;
 import com.intellij.usages.rules.UsageInModule;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-class ModuleGroupingRule implements UsageGroupingRule, DumbAware {
+class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
   private final ModuleGrouper myGrouper;
   private final boolean myFlattenModules;
 
@@ -75,6 +75,11 @@ class ModuleGroupingRule implements UsageGroupingRule, DumbAware {
     }
 
     return Collections.emptyList();
+  }
+
+  @Override
+  public @Nullable String getGroupingActionId() {
+    return "UsageGrouping.Module";
   }
 
   private static class LibraryUsageGroup extends UsageGroupBase {

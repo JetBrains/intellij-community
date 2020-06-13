@@ -17,6 +17,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.SingleParentUsageGroupingRule;
+import com.intellij.usages.rules.UsageGroupingRuleEx;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class FileGroupingRule extends SingleParentUsageGroupingRule implements DumbAware {
+public class FileGroupingRule extends SingleParentUsageGroupingRule implements DumbAware, UsageGroupingRuleEx {
   private final Project myProject;
 
   public FileGroupingRule(Project project) {
@@ -39,6 +40,16 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
       return new FileUsageGroup(myProject, virtualFile);
     }
     return null;
+  }
+
+  @Override
+  public @Nullable String getGroupingActionId() {
+    return "UsageGrouping.FileStructure";
+  }
+
+  @Override
+  public boolean isGroupingActionInverted() {
+    return true;
   }
 
   public static class FileUsageGroup implements UsageGroup, TypeSafeDataProvider, NamedPresentably {
