@@ -19,8 +19,5 @@
     <applicationService serviceInterface="com.intellij.openapi.updateSettings.UpdateStrategyCustomization"
                         serviceImplementation="com.android.tools.idea.AndroidStudioUpdateStrategyCustomization"
                         overrides="true"/>
-    <applicationService serviceInterface="com.intellij.openapi.help.HelpManager"
-                        serviceImplementation="com.android.tools.idea.help.StudioHelpManagerImpl"
-                        overrides="true"/>
   </extensions>
 </idea-plugin>
