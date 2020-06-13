@@ -2,10 +2,7 @@
 package com.intellij.usages.impl;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.usageView.UsageViewBundle;
@@ -24,6 +21,7 @@ import java.util.List;
 
 public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvider {
   private final ReadWriteState myReadWriteState = new ReadWriteState();
+  private boolean readWriteActionsEnabled = true;
 
   @Override
   public UsageFilteringRule @NotNull [] getActiveRules(@NotNull Project project) {
@@ -81,9 +79,14 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
     }
   }
 
+  public void setReadWriteEnabled(boolean readWriteEnabled) {
+    this.readWriteActionsEnabled = readWriteEnabled;
+  }
+
   private class ShowReadAccessUsagesAction extends ToggleAction implements DumbAware {
     private ShowReadAccessUsagesAction() {
-      super(UsageViewBundle.messagePointer("action.show.read.access"), AllIcons.Actions.ShowReadAccess);
+      super(UsageViewBundle.messagePointer("action.show.read.access"),
+            UsageViewBundle.messagePointer("action.show.read.access.description"), AllIcons.Actions.ShowReadAccess);
     }
 
     @Override
@@ -98,11 +101,19 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
       if (project == null) return;
       project.getMessageBus().syncPublisher(RULES_CHANGED).run();
     }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      Presentation presentation = e.getPresentation();
+      presentation.setEnabled(readWriteActionsEnabled);
+    }
   }
 
   private class ShowWriteAccessUsagesAction extends ToggleAction implements DumbAware {
     private ShowWriteAccessUsagesAction() {
-      super(UsageViewBundle.messagePointer("action.show.write.access"), AllIcons.Actions.ShowWriteAccess);
+      super(UsageViewBundle.messagePointer("action.show.write.access"),
+            UsageViewBundle.messagePointer("action.show.write.access.description"), AllIcons.Actions.ShowWriteAccess);
     }
 
     @Override
@@ -116,6 +127,13 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
       Project project = e.getProject();
       if (project == null) return;
       project.getMessageBus().syncPublisher(RULES_CHANGED).run();
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      Presentation presentation = e.getPresentation();
+      presentation.setEnabled(readWriteActionsEnabled);
     }
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.find.FindManager;
 import com.intellij.icons.AllIcons;
@@ -91,7 +92,8 @@ public class UsageViewImpl implements UsageViewEx {
 
   private final UsageViewPresentation myPresentation;
   private final UsageTarget[] myTargets;
-  protected final UsageGroupingRule[] myGroupingRules;
+  protected UsageGroupingRule[] myGroupingRules;
+  protected UsageFilteringRule[] myFilteringRules;
   private final Factory<UsageSearcher> myUsageSearcherFactory;
   private final Project myProject;
 
@@ -186,7 +188,9 @@ public class UsageViewImpl implements UsageViewEx {
     Disposer.register(this, myModelTracker);
 
     myGroupingRules = getActiveGroupingRules(project, getUsageViewSettings());
-    myBuilder = new UsageNodeTreeBuilder(myTargets, myGroupingRules, getActiveFilteringRules(project), myRoot, myProject);
+    myFilteringRules = getActiveFilteringRules(project);
+
+    myBuilder = new UsageNodeTreeBuilder(myTargets, myGroupingRules, myFilteringRules, myRoot, myProject);
 
     MessageBusConnection messageBusConnection = myProject.getMessageBus().connect(this);
     messageBusConnection.subscribe(UsageFilteringRuleProvider.RULES_CHANGED, this::rulesChanged);
@@ -389,8 +393,8 @@ public class UsageViewImpl implements UsageViewEx {
       public void onDone(boolean isExcludeAction) {
         EDT.assertIsEdt();
         if (myRootPanel.hasNextOccurence()) {
-           myRootPanel.goNextOccurence();
-         }
+          myRootPanel.goNextOccurence();
+        }
       }
     };
   }
@@ -663,6 +667,27 @@ public class UsageViewImpl implements UsageViewEx {
     return list.toArray(UsageFilteringRule.EMPTY_ARRAY);
   }
 
+  protected void adjustReadWriteUsageFilter(Collection<? extends Usage> usages) {
+    boolean b = usages.stream().anyMatch(usage -> {
+      if(usage instanceof PsiElementUsage){
+        PsiElement element = ((PsiElementUsage) usage).getElement();
+        ReadWriteAccessDetector detector = ReadWriteAccessDetector.findDetector(element);
+        if(detector.isDeclarationWriteAccess(element) || detector.isDeclarationWriteAccess(element)){
+          return true;
+        }
+      }
+      return false;
+    });
+
+    for (UsageFilteringRuleProvider provider : UsageFilteringRuleProvider.EP_NAME.getExtensionList()) {
+      if (provider instanceof UsageFilteringRuleProvider){
+        ((UsageFilteringRuleProviderImpl)provider) .setReadWriteEnabled(b);
+      }
+
+    }
+  }
+
+
   protected static UsageGroupingRule @NotNull [] getActiveGroupingRules(@NotNull final Project project, @NotNull UsageViewSettings usageViewSettings) {
     final List<UsageGroupingRuleProvider> providers = UsageGroupingRuleProvider.EP_NAME.getExtensionList();
     List<UsageGroupingRule> list = new ArrayList<>(providers.size());
@@ -850,7 +875,11 @@ public class UsageViewImpl implements UsageViewEx {
     group.getTemplatePresentation().setIcon(AllIcons.Actions.GroupBy);
     group.getTemplatePresentation().setText(UsageViewBundle.messagePointer("action.group.by.title"));
     group.getTemplatePresentation().setDescription(UsageViewBundle.messagePointer("action.group.by.title"));
+    group.getTemplatePresentation().setMultipleChoice(true);
     final AnAction[] groupingActions = createGroupingActions();
+    for (AnAction a: groupingActions) {
+      a.getTemplatePresentation().setMultipleChoice(true);
+    }
     if (groupingActions.length > 0) {
       group.add(new Separator(UsageViewBundle.message("action.group.by.title")));
       group.addAll(groupingActions);
@@ -947,8 +976,12 @@ public class UsageViewImpl implements UsageViewEx {
     allUsages.sort(USAGE_COMPARATOR);
     final Set<Usage> excludedUsages = getExcludedUsages();
     reset();
-    myBuilder.setGroupingRules(getActiveGroupingRules(myProject, getUsageViewSettings()));
-    myBuilder.setFilteringRules(getActiveFilteringRules(myProject));
+    myGroupingRules = getActiveGroupingRules(myProject, getUsageViewSettings());
+    myFilteringRules = getActiveFilteringRules(myProject);
+
+    myBuilder.setGroupingRules(myGroupingRules);
+    myBuilder.setFilteringRules(myFilteringRules);
+
     for (int i = allUsages.size() - 1; i >= 0; i--) {
       Usage usage = allUsages.get(i);
       if (!usage.isValid()) {
@@ -1196,6 +1229,7 @@ public class UsageViewImpl implements UsageViewEx {
   @NotNull
   @Override
   public CompletableFuture<?> appendUsagesInBulk(@NotNull Collection<? extends Usage> usages) {
+    adjustReadWriteUsageFilter(usages);
     CompletableFuture<Object> result = new CompletableFuture<>();
     addUpdateRequest(() -> ReadAction.run(() -> {
       try {
