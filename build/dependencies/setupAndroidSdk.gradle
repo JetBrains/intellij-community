@@ -47,8 +47,8 @@ if (kotlinVersionLen == -1) {
 }
 
 ext.kotlin_version = kotlinPluginBuild.substring(0, kotlinVersionLen)
-ext.android_m2_version = "26.6.0.3"
-ext.android_sdk_version = "${osFamily}.3.6.0.0"
+ext.android_m2_version = "27.0.0.0"
+ext.android_sdk_version = "${osFamily}.4.0.0.0"
 
 dependencies {
   androidToolsBaseTemplates "org.jetbrains.intellij.deps.android.tools.base:templates:${android_m2_version}"

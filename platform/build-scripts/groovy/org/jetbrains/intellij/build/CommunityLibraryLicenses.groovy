@@ -67,7 +67,7 @@ class CommunityLibraryLicenses {
                        url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Layout Inspector", libraryName: "precompiled-layoutinspector",
                        license: "Apache 2.0", url: "http://source.android.com/"),
-    new LibraryLicense(name: "Android Layout Library", libraryName: "layoutlib-jre11-26.6.0.3.jar", license: "Apache 2.0", url: "http://source.android.com/"),
+    new LibraryLicense(name: "Android Layout Library", libraryName: "layoutlib-jre11-27.0.0.0.jar", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android libwebp library", libraryName: "libwebp.jar", license: "Apache 2.0",
                        url: "https://github.com/webmproject/libwebp"),
     new LibraryLicense(name: "Android Lint Api", libraryName: "precompiled-lint-api", license: "Apache 2.0",
