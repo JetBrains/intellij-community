@@ -22,6 +22,7 @@ import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.SingleParentUsageGroupingRule;
+import com.intellij.usages.rules.UsageGroupingRuleEx;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,7 @@ import java.io.File;
 /**
  * @author yole
  */
-public class DirectoryGroupingRule extends SingleParentUsageGroupingRule implements DumbAware {
+public class DirectoryGroupingRule extends SingleParentUsageGroupingRule implements DumbAware, UsageGroupingRuleEx {
   public static DirectoryGroupingRule getInstance(Project project) {
     return ServiceManager.getService(project, DirectoryGroupingRule.class);
   }
@@ -71,8 +72,14 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
     return new DirectoryGroup(dir);
   }
 
+  @Deprecated
   public String getActionTitle() {
     return IdeBundle.message("action.title.group.by.directory") ;
+  }
+
+  @Override
+  public @NotNull String getGroupingActionId() {
+    return "UsageGrouping.Directory";
   }
 
   private class DirectoryGroup implements UsageGroup, TypeSafeDataProvider {

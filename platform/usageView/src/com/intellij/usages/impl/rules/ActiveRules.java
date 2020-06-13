@@ -2,13 +2,16 @@
 package com.intellij.usages.impl.rules;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageGroup;
+import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.impl.FileStructureGroupRuleProvider;
 import com.intellij.usages.rules.UsageGroupingRule;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.usages.rules.UsageGroupingRuleEx;import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-
+import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,5 +51,70 @@ public final class ActiveRules {
     }
 
     return rules.toArray(UsageGroupingRule.EMPTY_ARRAY);
+  }
+
+  public static UsageGroupingRule @NotNull [] getAllRules(@NotNull Project project,
+                                                          @NotNull UsageViewSettings usageViewSettings,
+                                                          boolean supportsNonCodeRule,
+                                                          boolean supportsScopesRule,
+                                                          boolean supportsModuleRule) {
+    List<UsageGroupingRule> rules = new ArrayList<>();
+    if (supportsNonCodeRule) {
+      rules.add(new NonCodeUsageGroupingRule(project));
+    }
+    if (supportsScopesRule) {
+      rules.add(new UsageScopeGroupingRule());
+    }
+
+    rules.add(new UsageTypeGroupingRule());
+
+    if (supportsModuleRule) {
+      rules.add(new ModuleGroupingRule(project, usageViewSettings.isFlattenModules()));
+    }
+
+    rules.add(DirectoryGroupingRule.getInstance(project));
+
+    rules.add(new DirectoryStructureGroupingRule(project));
+
+    for (FileStructureGroupRuleProvider ruleProvider : FileStructureGroupRuleProvider.EP_NAME.getExtensionList()) {
+      UsageGroupingRule rule = ruleProvider.getUsageGroupingRule(project, usageViewSettings);
+      if (rule == null) continue;
+      if (!(rule instanceof UsageGroupingRuleEx))
+        rule = new FileStructureGroupingRuleExWrapper(rule);
+      rules.add(rule);
+    }
+
+    rules.add(new FileGroupingRule(project));
+
+    return rules.toArray(UsageGroupingRule.EMPTY_ARRAY);
+  }
+
+  private static class FileStructureGroupingRuleExWrapper implements UsageGroupingRuleEx {
+    private final UsageGroupingRule myGroupingRule;
+
+    private FileStructureGroupingRuleExWrapper(UsageGroupingRule rule) {
+      myGroupingRule = rule;
+    }
+
+    @Override
+    public @NotNull String getId() {
+      return myGroupingRule.getClass().getName();
+    }
+
+    @Override
+    public @Nullable String getGroupingActionId() {
+      return "UsageGrouping.FileStructure";
+    }
+
+    @Override
+    @NotNull
+    public List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
+      return myGroupingRule.getParentGroupsFor(usage, targets);
+    }
+
+    @Override
+    public int getRank() {
+      return myGroupingRule.getRank();
+    }
   }
 }
