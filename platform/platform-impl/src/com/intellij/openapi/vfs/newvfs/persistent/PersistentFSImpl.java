@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.encoding.Utf8BomOptionProvider;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
-import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.*;
@@ -300,22 +299,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       if (areChildrenLoaded(id)) return -1; // TODO: hack
     }
 
-    int nameId = FSRecords.writeAttributesToRecord(id, parentId, attributes, name.toString());
-
-    if (attributes.isSymLink()) {
-      FSRecords.storeSymlinkTarget(id, symlinkTarget);
-      if (fs instanceof Win32LocalFileSystem) {
-        fs = LocalFileSystem.getInstance();
-      }
-      if (fs instanceof LocalFileSystemImpl) {
-        VirtualFile parent = getInstance().findFileById(parentId);
-        assert parent != null : parentId + '/' + id + ": " + name + " -> " + symlinkTarget;
-        String linkPath = parent.getPath() + '/' + name;
-        ((LocalFileSystemImpl)fs).symlinkUpdated(id, parent, linkPath, symlinkTarget);
-      }
-    }
-
-    return nameId;
+    return FSRecords.writeAttributesToRecord(id, parentId, attributes, name.toString());
   }
 
   @Override
