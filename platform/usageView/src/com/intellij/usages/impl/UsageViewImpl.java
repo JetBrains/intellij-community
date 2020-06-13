@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.find.FindManager;
 import com.intellij.icons.AllIcons;
@@ -666,6 +667,27 @@ public class UsageViewImpl implements UsageViewEx {
     return list.toArray(UsageFilteringRule.EMPTY_ARRAY);
   }
 
+  protected void adjustReadWriteUsageFilter(Collection<? extends Usage> usages) {
+    boolean b = usages.stream().anyMatch(usage -> {
+      if(usage instanceof PsiElementUsage){
+        PsiElement element = ((PsiElementUsage) usage).getElement();
+        ReadWriteAccessDetector detector = ReadWriteAccessDetector.findDetector(element);
+        if(detector.isDeclarationWriteAccess(element) || detector.isDeclarationWriteAccess(element)){
+          return true;
+        }
+      }
+      return false;
+    });
+
+    for (UsageFilteringRuleProvider provider : UsageFilteringRuleProvider.EP_NAME.getExtensionList()) {
+      if (provider instanceof UsageFilteringRuleProvider){
+        ((UsageFilteringRuleProviderImpl)provider) .setReadWriteEnabled(b);
+      }
+
+    }
+  }
+
+
   protected static UsageGroupingRule @NotNull [] getActiveGroupingRules(@NotNull final Project project, @NotNull UsageViewSettings usageViewSettings) {
     final List<UsageGroupingRuleProvider> providers = UsageGroupingRuleProvider.EP_NAME.getExtensionList();
     List<UsageGroupingRule> list = new ArrayList<>(providers.size());
@@ -1207,6 +1229,7 @@ public class UsageViewImpl implements UsageViewEx {
   @NotNull
   @Override
   public CompletableFuture<?> appendUsagesInBulk(@NotNull Collection<? extends Usage> usages) {
+    adjustReadWriteUsageFilter(usages);
     CompletableFuture<Object> result = new CompletableFuture<>();
     addUpdateRequest(() -> ReadAction.run(() -> {
       try {
