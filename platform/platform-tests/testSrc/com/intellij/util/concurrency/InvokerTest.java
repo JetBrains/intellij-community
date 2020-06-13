@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static javax.swing.SwingUtilities.isEventDispatchThread;
@@ -374,9 +375,18 @@ public class InvokerTest {
   private void testThreadChanging(Invoker foreground, Invoker background, Boolean equal) {
     CountDownLatch latch = new CountDownLatch(1);
     test(foreground, latch, error
-      -> new Command.Processor(foreground, background).process(Thread::currentThread, thread
+      -> process(foreground, background, Thread::currentThread, thread
       -> countDown(latch, 0, error, "unexpected thread", ()
       -> isExpected(thread, equal))));
+  }
+
+  /**
+   * Lets the specified supplier to produce a value on the background thread
+   * and the specified consumer to accept this value on the foreground thread.
+   */
+  private static <T> void process(@NotNull Invoker background, @NotNull Invoker foreground, @NotNull Supplier<? extends T> supplier,
+                                  @NotNull Consumer<? super T> consumer) {
+    background.compute(supplier).onSuccess(value -> foreground.invoke(() -> consumer.accept(value)));
   }
 
   private static boolean isExpected(Thread thread, Boolean equal) {

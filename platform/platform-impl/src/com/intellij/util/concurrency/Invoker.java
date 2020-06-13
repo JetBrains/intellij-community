@@ -15,6 +15,7 @@ import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Obsolescent;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionException;
@@ -33,7 +34,7 @@ public abstract class Invoker implements Disposable {
   private static final int THRESHOLD = Integer.MAX_VALUE;
   private static final Logger LOG = Logger.getInstance(Invoker.class);
   private static final AtomicInteger UID = new AtomicInteger();
-  private final ConcurrentHashMap<AsyncPromise<?>, ProgressIndicatorBase> indicators = new ConcurrentHashMap<>();
+  private final Map<AsyncPromise<?>, ProgressIndicatorBase> indicators = new ConcurrentHashMap<>();
   private final AtomicInteger count = new AtomicInteger();
   private final ThreeState useReadAction;
   private final String description;
@@ -78,7 +79,7 @@ public abstract class Invoker implements Disposable {
    */
   @NotNull
   public final <T> CancellablePromise<T> compute(@NotNull Supplier<? extends T> task) {
-    return promise(new Task<>(task, null));
+    return promise(new Task<>(task));
   }
 
   /**
@@ -104,7 +105,7 @@ public abstract class Invoker implements Disposable {
    */
   @NotNull
   public final <T> CancellablePromise<T> computeLater(@NotNull Supplier<? extends T> task, int delay) {
-    return promise(new Task<>(task, null), delay);
+    return promise(new Task<>(task), delay);
   }
 
   /**
@@ -116,7 +117,7 @@ public abstract class Invoker implements Disposable {
    */
   @NotNull
   public final CancellablePromise<?> invoke(@NotNull Runnable task) {
-    return promise(new Task<>(null, task));
+    return promise(new Task<>(task));
   }
 
   /**
@@ -142,7 +143,7 @@ public abstract class Invoker implements Disposable {
    */
   @NotNull
   public final CancellablePromise<?> invokeLater(@NotNull Runnable task, int delay) {
-    return promise(new Task<>(null, task), delay);
+    return promise(new Task<>(task), delay);
   }
 
   /**
@@ -271,20 +272,41 @@ public abstract class Invoker implements Disposable {
   static final class Task<T> implements Runnable {
     final AsyncPromise<T> promise = new AsyncPromise<>();
     private final Supplier<? extends T> supplier;
-    private final Runnable runnable;
     private volatile T result;
 
-    Task(Supplier<? extends T> supplier, Runnable runnable) {
-      assert runnable != null && supplier == null || runnable == null && supplier != null;
-      this.runnable = runnable;
+    Task(@NotNull Supplier<? extends T> supplier) {
       this.supplier = supplier;
     }
+    Task(@NotNull Runnable runnable) {
+      this.supplier = new RunnableSupplier<>(runnable);
+    }
+    private static class RunnableSupplier<T> implements Supplier<T>, Obsolescent {
+      private @NotNull final Runnable myRunnable;
+
+      RunnableSupplier(@NotNull Runnable runnable) {myRunnable = runnable;}
+
+      @Override
+      public T get() {
+        myRunnable.run();
+        return null;
+      }
+
+      @Override
+      public boolean isObsolete() {
+        return myRunnable instanceof Obsolescent && ((Obsolescent)myRunnable).isObsolete();
+      }
+
+      @Override
+      public String toString() {
+        return myRunnable.toString();
+      }
+    }
+
 
     boolean canRestart(boolean disposed, int attempt) {
       LOG.debug("Task is canceled");
       if (attempt < THRESHOLD) return canInvoke(disposed);
-      Object task = supplier != null ? supplier : runnable;
-      LOG.warn("Task is always canceled: " + task);
+      LOG.warn("Task is always canceled: " + supplier);
       promise.setError("timeout");
       return false; // too many attempts to run the task
     }
@@ -299,9 +321,8 @@ public abstract class Invoker implements Disposable {
         promise.setError("disposed");
         return false; // the current invoker is disposed
       }
-      Object task = supplier != null ? supplier : runnable;
-      if (task instanceof Obsolescent) {
-        Obsolescent obsolescent = (Obsolescent)task;
+      if (supplier instanceof Obsolescent) {
+        Obsolescent obsolescent = (Obsolescent)supplier;
         if (obsolescent.isObsolete()) {
           LOG.debug("Task is obsolete");
           promise.setError("obsolete");
@@ -317,18 +338,12 @@ public abstract class Invoker implements Disposable {
 
     @Override
     public void run() {
-      if (supplier != null) {
-        result = supplier.get();
-      }
-      else {
-        runnable.run();
-      }
+      result = supplier.get();
     }
 
     @Override
     public String toString() {
-      Object task = supplier != null ? supplier : runnable;
-      return "Invoker.Task: " + task;
+      return "Invoker.Task: " + supplier;
     }
   }
 
