@@ -45,7 +45,7 @@ public class ShowSiblingsAction extends ShowImplementationsAction {
     final ListCellRenderer listRenderer = isMethod ? new MethodCellRenderer(false) : new PsiClassListCellRenderer();
     final JBPopup popup = PsiElementListNavigator
       .navigateOrCreatePopup(navigatablePsiElements, title, findUsagesTitle, listRenderer, null,
-                             objects -> showSiblings(invokedByShortcut, project, editor, file, editor != null, (PsiElement)objects[0]));
+                             objects -> showSiblings(invokedByShortcut, project, editor, file, editor != null, objects[0]));
     if (popup != null) {
       if (editor != null) {
         popup.showInBestPositionFor(editor);

@@ -258,7 +258,7 @@ public class CreateParameterForFieldIntention extends Intention {
     if (value != null && value.getValue() != null) return value.getValue();
     final CachedValue<List<GrField>> cachedValue =
       CachedValuesManager.getManager(constructor.getProject()).createCachedValue(
-        () -> CachedValueProvider.Result.create(findCandidates(constructor, clazz), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT), false);
+        () -> CachedValueProvider.Result.create(findCandidates(constructor, clazz), PsiModificationTracker.MODIFICATION_COUNT), false);
     constructor.putUserData(FIELD_CANDIDATES, cachedValue);
     return cachedValue.getValue();
   }

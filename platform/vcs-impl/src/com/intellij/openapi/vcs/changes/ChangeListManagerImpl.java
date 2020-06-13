@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.CommonBundle;
+import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -69,7 +70,7 @@ import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 import static java.util.stream.Collectors.toSet;
 
 @State(name = "ChangeListManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class ChangeListManagerImpl extends ChangeListManagerEx implements ChangeListOwner, PersistentStateComponent<Element> {
+public class ChangeListManagerImpl extends ChangeListManagerEx implements ChangeListOwner, PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(ChangeListManagerImpl.class);
 
   @Topic.ProjectLevel
@@ -96,7 +97,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
   private Factory<JComponent> myAdditionalInfo;
   private volatile boolean myShowLocalChangesInvalidated;
 
-  @NotNull private ProgressIndicator myUpdateChangesProgressIndicator = createProgressIndicator();
   private volatile String myFreezeName;
 
   @NotNull private final Set<String> myListsToBeDeletedSilently = new HashSet<>();
@@ -156,20 +156,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     }
   }
 
-  static final class ShutDownProjectListener implements ProjectManagerListener {
-    @Override
-    public void projectClosing(@NotNull Project project) {
-      ChangeListManagerImpl manager = (ChangeListManagerImpl)project.getServiceIfCreated(ChangeListManager.class);
-      if (manager == null) {
-        return;
-      }
-
-      synchronized (manager.myDataLock) {
-        manager.myUpdateChangesProgressIndicator.cancel();
-      }
-
-      manager.myUpdater.stop();
-    }
+  @Override
+  public void dispose() {
+    myUpdater.stop();
   }
 
   @Override
@@ -451,16 +440,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
   }
 
   private void updateImmediately() {
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    if (!vcsManager.hasActiveVcss()) return;
-
-    ProgressIndicator indicator = createProgressIndicator();
-    synchronized (myDataLock) {
-      myUpdateChangesProgressIndicator = indicator;
-    }
-
-    ProgressManager.getInstance().runProcess(() -> {
-      if (myProject.isDisposed()) return;
+    BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
+      final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+      if (!vcsManager.hasActiveVcss()) return;
 
       VcsDirtyScopeManagerImpl dirtyScopeManager = VcsDirtyScopeManagerImpl.getInstanceImpl(myProject);
       final VcsInvalidated invalidated = dirtyScopeManager.retrieveScopes();
@@ -499,11 +481,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
         dataHolder.notifyStart();
         myChangesViewManager.scheduleRefresh();
 
-        iterateScopes(dataHolder, scopes, indicator);
+        SensitiveProgressWrapper vcsIndicator = new SensitiveProgressWrapper(ProgressManager.getInstance().getProgressIndicator());
+        invalidated.doWhenCanceled(() -> vcsIndicator.cancel());
+        ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+          iterateScopes(dataHolder, scopes, vcsIndicator);
+        }, vcsIndicator);
 
         boolean takeChanges;
         synchronized (myDataLock) {
-          takeChanges = myUpdateException == null;
+          takeChanges = myUpdateException == null && !vcsIndicator.isCanceled();
         }
 
         // for the case of project being closed we need a read action here -> to be more consistent
@@ -563,7 +549,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
         myDelayedNotificator.changeListUpdateDone();
         myChangesViewManager.scheduleRefresh();
       }
-    }, indicator);
+    });
   }
 
   private static boolean checkScopeIsEmpty(VcsInvalidated invalidated) {
@@ -678,8 +664,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     catch (VcsException e) {
       handleUpdateException(e);
     }
-    catch (ProcessCanceledException e) {
-      throw e;
+    catch (ProcessCanceledException ignore) {
     }
     catch (Throwable t) {
       LOG.debug(t);
@@ -1491,14 +1476,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
 
     @Override
     public void removed(@NotNull BaseRevision baseRevision) {
-       myScheduler.submit(() -> {
-         AbstractVcs vcs = getVcs(baseRevision);
-         if (vcs != null) {
-           myRevisionsCache.changeRemoved(baseRevision.getPath(), vcs);
-         }
-         BackgroundTaskUtil.syncPublisher(myProject, VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision.getPath());
-       });
-     }
+      myScheduler.submit(() -> {
+        AbstractVcs vcs = getVcs(baseRevision);
+        if (vcs != null) {
+          myRevisionsCache.changeRemoved(baseRevision.getPath(), vcs);
+        }
+        BackgroundTaskUtil.syncPublisher(myProject, VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision.getPath());
+      });
+    }
 
     private void doModify(BaseRevision was, BaseRevision become) {
       myScheduler.submit(() -> {

@@ -894,7 +894,7 @@ public class PsiTreeUtil {
    * @return {@code true} if processing was not cancelled ({@code Processor.execute()} method returned {@code true} for all elements).
    */
   @Contract("null, _ -> true")
-  public static boolean processElements(@Nullable PsiElement element, @NotNull PsiElementProcessor<PsiElement> processor) {
+  public static boolean processElements(@Nullable PsiElement element, @NotNull PsiElementProcessor<? super PsiElement> processor) {
     if (element == null) return true;
     if (element instanceof PsiCompiledElement || !element.isPhysical()) {
       // DummyHolders cannot be visited by walking visitors because children/parent relationship is broken there
@@ -921,7 +921,7 @@ public class PsiTreeUtil {
     return result[0];
   }
 
-  public static boolean processElements(@NotNull PsiElementProcessor<PsiElement> processor, PsiElement @Nullable ... elements) {
+  public static boolean processElements(@NotNull PsiElementProcessor<? super PsiElement> processor, PsiElement @Nullable ... elements) {
     if (elements == null || elements.length == 0) return true;
     for (PsiElement element : elements) {
       if (!processElements(element, processor)) return false;

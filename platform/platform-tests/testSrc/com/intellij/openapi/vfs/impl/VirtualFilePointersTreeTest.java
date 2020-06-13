@@ -75,7 +75,7 @@ public class VirtualFilePointersTreeTest extends HeavyPlatformTestCase {
     VirtualFile parent = createChildDirectory(root, "parent");
     VirtualFileSystemEntry dir = (VirtualFileSystemEntry)createChildDirectory(parent, "dir");
     assertPointersUnder(dir, "inner");
-    assertTrue(innerPointer.isRecursive());
+    assertTrue(((VirtualFilePointerImpl)innerPointer).isRecursive());
   }
 
   public void testUrlsHavingOnlyStartingSlashInCommon() {

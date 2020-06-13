@@ -2,31 +2,28 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.ModuleManagerComponent
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.rd.attach
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Ignore
@@ -107,7 +104,7 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
     logExecutionTimeInMillis("Add project library at hundred modules") { addProjectLibraryToHundredModules(modules, library) }
 
     logExecutionTimeInMillis("Add module library at hundred modules") {
-      addModuleLibraryToHunredModules(modules, antLibName)
+      addModuleLibraryToHundredModules(modules, antLibName)
     }
 
     logExecutionTimeInMillis("Loop through the contentRoots of all modules") {
@@ -169,7 +166,7 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
     moduleManager.modules.forEach { ModuleRootManager.getInstance(it).contentRoots.forEach { entry -> entry.canonicalFile } }
   }
 
-  private fun addModuleLibraryToHunredModules(modules: MutableList<Module>, antLibName: String) {
+  private fun addModuleLibraryToHundredModules(modules: MutableList<Module>, antLibName: String) {
     modules.forEach { module -> ModuleRootModificationUtil.addModuleLibrary(module, antLibName, listOf(), emptyList()) }
   }
 
@@ -194,7 +191,7 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
 
   @Test
   fun `test base operations in store`()  = WriteCommandAction.runWriteCommandAction(project) {
-    if (!Registry.`is`("ide.new.project.model")) return@runWriteCommandAction
+    if (!ProjectModelRule.isWorkspaceModelEnabled) return@runWriteCommandAction
 
     val workspaceModel = WorkspaceModel.getInstance(project)
     var diff = WorkspaceEntityStorageBuilder.from(workspaceModel.entityStorage.current)
@@ -226,10 +223,8 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
     val project = logExecutionTimeInMillis<Project>("Project load") {
       PlatformTestUtil.loadAndOpenProject(projectDir)
     }
-    disposableRule.disposable.attach {
-      invokeAndWaitIfNeeded {
-        ProjectManagerEx.getInstanceEx().forceCloseProject(project)
-      }
+    disposableRule.register {
+      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     }
     return project
   }

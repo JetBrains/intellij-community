@@ -2,20 +2,32 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.workspaceModel.storage.entities.*
-import com.intellij.workspaceModel.storage.entities.LinkedListEntityId
-import com.intellij.workspaceModel.storage.entities.ModifiableLinkedListEntity
-import com.intellij.workspaceModel.storage.entities.ChildEntity
-import com.intellij.workspaceModel.storage.entities.addLinkedListEntity
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Before
 import org.junit.Test
 
 class EntityWithPersistentIdInPStorageTest {
+
+  private lateinit var builder: WorkspaceEntityStorageBuilderImpl
+
+  @Before
+  fun setUp() {
+    builder = WorkspaceEntityStorageBuilderImpl.create()
+  }
+
+  @After
+  fun tearDown() {
+    builder.assertConsistency()
+  }
+
   @Test
   fun `add remove entity`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     val foo = builder.addLinkedListEntity("foo", LinkedListEntityId("bar"))
     builder.assertConsistency()
     assertNull(foo.next.resolve(builder))
@@ -29,7 +41,6 @@ class EntityWithPersistentIdInPStorageTest {
 
   @Test
   fun `change target entity name`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     val foo = builder.addLinkedListEntity("foo", LinkedListEntityId("bar"))
     val bar = builder.addLinkedListEntity("bar", LinkedListEntityId("baz"))
     builder.assertConsistency()
@@ -43,7 +54,6 @@ class EntityWithPersistentIdInPStorageTest {
 
   @Test
   fun `change name in reference`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     val foo = builder.addLinkedListEntity("foo", LinkedListEntityId("bar"))
     val bar = builder.addLinkedListEntity("bar", LinkedListEntityId("baz"))
     val baz = builder.addLinkedListEntity("baz", LinkedListEntityId("foo"))
@@ -58,12 +68,52 @@ class EntityWithPersistentIdInPStorageTest {
 
   @Test
   fun `remove child entity with parent entity`() {
-    val builder = WorkspaceEntityStorageBuilderImpl.create()
     val parent = builder.addParentEntity("parent")
     builder.addChildEntity(parent)
     builder.assertConsistency()
     builder.removeEntity(parent)
     builder.assertConsistency()
     assertEmpty(builder.entities(ChildEntity::class.java).toList())
+  }
+
+  @Test(expected = PersistentIdAlreadyExistsException::class)
+  fun `add entity with existing persistent id`() {
+    builder.addNamedEntity("MyName")
+    builder.addNamedEntity("MyName")
+  }
+
+  @Test
+  fun `add entity with existing persistent id - restoring after exception`() {
+    try {
+      builder.addNamedEntity("MyName")
+      builder.addNamedEntity("MyName")
+    }
+    catch (e: PersistentIdAlreadyExistsException) {
+      assertOneElement(builder.entities(NamedEntity::class.java).toList())
+    }
+  }
+
+  @Test(expected = PersistentIdAlreadyExistsException::class)
+  fun `modify entity to repeat persistent id`() {
+    builder.addNamedEntity("MyName")
+    val namedEntity = builder.addNamedEntity("AnotherId")
+    builder.modifyEntity(ModifiableNamedEntity::class.java, namedEntity) {
+      this.name = "MyName"
+    }
+  }
+
+  @Test
+  fun `modify entity to repeat persistent id - restoring after exception`() {
+    try {
+      builder.addNamedEntity("MyName")
+      val namedEntity = builder.addNamedEntity("AnotherId")
+      builder.modifyEntity(ModifiableNamedEntity::class.java, namedEntity) {
+        this.name = "MyName"
+      }
+    }
+    catch (e: PersistentIdAlreadyExistsException) {
+      assertOneElement(builder.entities(NamedEntity::class.java).toList().filter { it.name == "MyName" })
+      assertOneElement(builder.entities(NamedEntity::class.java).toList().filter { it.name == "AnotherId" })
+    }
   }
 }

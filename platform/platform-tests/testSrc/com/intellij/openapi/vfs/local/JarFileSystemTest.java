@@ -17,9 +17,12 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Rule;
@@ -29,6 +32,7 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
@@ -36,8 +40,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.jar.JarFile;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assertTimestampsEqual;
 import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
@@ -222,22 +225,20 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testInvalidZip() throws IOException {
-    File testZip = tempDir.newFile("test.zip");
-    try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(testZip))) {
-      writeEntry(zip, "a");
-      writeEntry(zip, "a/b");
-      writeEntry(zip, "a/b/c.txt");
-      writeEntry(zip, "x\\y\\z.txt");
-      writeEntry(zip, "/x/f.txt");
-      writeEntry(zip, "d1/aB");
-      writeEntry(zip, "d1/ab");
-      writeEntry(zip, "D2/f1");
-      writeEntry(zip, "d2/f2");
-    }
+  public void testInvalidZip() {
+    VirtualFile vf = createJar(
+      "a"
+      , "a/b"
+      , "a/b/c.txt"
+      , "x\\y\\z.txt"
+      , "/x/f.txt"
+      , "d1/aB"
+      , "d1/ab"
+      , "D2/f1"
+      , "d2/f2");
 
-    String rootPath = FileUtil.toSystemIndependentName(testZip.getPath()) + JarFileSystem.JAR_SEPARATOR;
-    VirtualFile jarRoot = JarFileSystem.getInstance().findFileByPath(rootPath);
+    String rootPath = vf.getPath() + JarFileSystem.JAR_SEPARATOR;
+    VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(vf);
     assertNotNull(jarRoot);
     List<String> entries = new ArrayList<>();
     VfsUtilCore.visitChildrenRecursively(jarRoot, new VirtualFileVisitor<Object>() {
@@ -252,12 +253,6 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     });
     assertThat(entries).containsExactlyInAnyOrder(
       "a/", "a/b/", "a/b/c.txt", "x/", "x/y/", "x/f.txt", "x/y/z.txt", "d1/", "d1/aB", "d1/ab", "D2/", "D2/f1", "d2/", "d2/f2");
-  }
-
-  private static void writeEntry(ZipOutputStream zip, String name) throws IOException {
-    ZipEntry entry = new ZipEntry(name);
-    zip.putNextEntry(entry);
-    zip.closeEntry();
   }
 
   @Test
@@ -306,7 +301,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @NotNull
-  private static VirtualFile findByPath(String path) {
+  private static VirtualFile findByPath(@NotNull String path) {
     VirtualFile file = JarFileSystem.getInstance().findFileByPath(path);
     assertNotNull(file);
     assertPathsEqual(path, file.getPath());
@@ -324,4 +319,98 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
       return len;
     }
   }
+
+  @Test
+  public void testCrazyBackSlashesInZipEntriesMustBeTreatedAsRegularDirectorySeparators() {
+    VirtualFile vFile = createJar("src\\core\\log/", "src\\core\\log/log4sql_conf.jsp", "META-INF/MANIFEST.MF");
+    String jarPath = vFile.getPath();
+    VirtualFile manifest = findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + JarFile.MANIFEST_NAME);
+    assertNotNull(manifest);
+
+    VirtualFile jarRoot = JarFileSystem.getInstance().findFileByPath(jarPath + JarFileSystem.JAR_SEPARATOR);
+    assertNotNull(jarRoot);
+    assertNotNull(findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + "src/core/log/log4sql_conf.jsp"));
+    assertNull(jarRoot.findChild("src\\core\\log"));
+    VirtualFile src = jarRoot.findChild("src");
+    assertNotNull(src);
+    VirtualFile core = src.findChild("core");
+    assertNotNull(core);
+    VirtualFile log = core.findChild("log");
+    assertNotNull(log);
+    VirtualFile jsp = log.findChild("log4sql_conf.jsp");
+    assertNotNull(jsp);
+  }
+
+  @Test
+  public void testCrazyJarWithDuplicateFileAndDirEntriesMustNotCrashAnything() {
+    VirtualFile vFile = createJar("com", "/com/Hello.class");
+    assertNotNull(vFile);
+
+    VirtualFile jarRoot = JarFileSystem.getInstance().getRootByLocal(vFile);
+    assertNotNull(jarRoot);
+    String[] children = JarFileSystem.getInstance().list(jarRoot);
+    assertEquals("com", UsefulTestCase.assertOneElement(children));
+    assertEquals("Hello.class", UsefulTestCase.assertOneElement(JarFileSystem.getInstance().list(jarRoot.findFileByRelativePath("com"))));
+  }
+
+  @NotNull
+  private VirtualFile createJar(String @NotNull ... entryNames) {
+    String[] namesAndTexts = Arrays.stream(entryNames).flatMap(n -> Stream.of(n, null)).toArray(String[]::new);
+    File jar = IoTestUtil.createTestJar(tempDir.newFile("p.jar"), namesAndTexts);
+    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar);
+  }
+
+  @Test
+  public void testCrazyJarWithBackSlashedLongEntryMustNotCrashAnything() {
+    VirtualFile vFile = createJar("META-INF/MANIFEST.MF", "\\META-INF\\RETLD-00.00015.xml");
+
+    VirtualFile jarRoot = JarFileSystem.getInstance().getRootByLocal(vFile);
+    assertNotNull(jarRoot);
+    VirtualFile child = UsefulTestCase.assertOneElement(jarRoot.getChildren());
+    String[] children = JarFileSystem.getInstance().list(jarRoot);
+    assertEquals("META-INF", UsefulTestCase.assertOneElement(children));
+
+    child.getChildren();
+    assertNotNull(jarRoot.findFileByRelativePath("META-INF/MANIFEST.MF"));
+    assertNotNull(jarRoot.findFileByRelativePath("META-INF/RETLD-00.00015.xml"));
+  }
+
+  @Test
+  public void testJarNameCouldBePrependedWithDotDot() {
+    File jar = IoTestUtil.createTestJar(tempDir.newFile("..p.jar"));
+    VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar);
+    VirtualFile jarRoot = JarFileSystem.getInstance().getRootByLocal(vf);
+    assertNotNull(jarRoot);
+    assertNotNull(jarRoot.findFileByRelativePath(JarFile.MANIFEST_NAME));
+  }
+
+  @Test
+  public void testJarFileMustInvalidateOnDeleteLocalEntryFile() {
+    VirtualFile vf = createJar("a", "a/b");
+
+    VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(vf);
+    assertNotNull(jarRoot);
+    VirtualFile a = jarRoot.findChild("a");
+    assertNotNull(a);
+    assertTrue(a.isValid());
+    assertTrue(jarRoot.isValid());
+
+    VirtualFile local = JarFileSystem.getInstance().getLocalVirtualFileFor(jarRoot);
+    assertEquals(LocalFileSystem.getInstance(), local.getFileSystem());
+    JarFileSystemImpl.cleanupForNextTest(); // WTF, won't let delete jar otherwise
+
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable());
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        // jars must be invalidated immediately after deleting the local root
+        assertFalse(a.isValid());
+        assertFalse(jarRoot.isValid());
+      }
+    });
+    VfsTestUtil.deleteFile(local);
+    assertFalse(a.isValid());
+    assertFalse(jarRoot.isValid());
+  }
+
 }

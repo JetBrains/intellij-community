@@ -23,10 +23,7 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.*;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.debugger.ui.tree.render.ArrayRenderer;
-import com.intellij.debugger.ui.tree.render.ClassRenderer;
-import com.intellij.debugger.ui.tree.render.NodeRenderer;
-import com.intellij.debugger.ui.tree.render.PrimitiveRenderer;
+import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -138,6 +135,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     myRequestManager = new RequestManagerImpl(this);
     NodeRendererSettings.getInstance().addListener(this::reloadRenderers, myDisposable);
     NodeRenderer.EP_NAME.addChangeListener(this::reloadRenderers, myDisposable);
+    CompoundRendererProvider.EP_NAME.addChangeListener(this::reloadRenderers, myDisposable);
     reloadRenderers();
     myDebugProcessDispatcher.addListener(new DebugProcessListener() {
       @Override
@@ -1472,10 +1470,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       ReferenceType result = null;
       List<ReferenceType> types = ContainerUtil.filter(getVirtualMachineProxy().classesByName(className), ReferenceType::isPrepared);
       // first try to quickly find the equal classloader only
-      result = types.stream().filter(refType -> Objects.equals(classLoader, refType.classLoader())).findFirst().orElse(null);
+      result = ContainerUtil.find(types, refType -> Objects.equals(classLoader, refType.classLoader()));
       // now do the full visibility check
       if (result == null && classLoader != null) {
-        result = types.stream().filter(refType -> isVisibleFromClassLoader(classLoader, refType)).findFirst().orElse(null);
+        result = ContainerUtil.find(types, refType -> isVisibleFromClassLoader(classLoader, refType));
       }
       if (result == null && evaluationContext != null) {
         EvaluationContextImpl evalContext = (EvaluationContextImpl)evaluationContext;
@@ -2008,6 +2006,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         @Override
         protected void action() {
           closeProcess(false);
+          getManagerThread().processRemaining();
           doReattach();
         }
 

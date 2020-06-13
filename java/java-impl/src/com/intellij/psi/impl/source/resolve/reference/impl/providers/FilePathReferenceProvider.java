@@ -17,9 +17,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * @author cdr
- */
 public class FilePathReferenceProvider extends PsiReferenceProvider {
 
   private final boolean myEndingSlashNotAllowed;

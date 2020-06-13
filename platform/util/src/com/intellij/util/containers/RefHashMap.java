@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import gnu.trove.THashMap;
@@ -66,7 +52,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     return k1 == k2 || strategy.equals(k1, k2);
   }
 
-  private class MyMap extends THashMap<Key<K>, V> {
+  private final class MyMap extends THashMap<Key<K>, V> {
     private MyMap(int initialCapacity, float loadFactor) {
       super(initialCapacity, loadFactor, new TObjectHashingStrategy<Key<K>>() {
         @Override
@@ -214,9 +200,12 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     if (key == null) return false;
     // optimization:
     myHardKeyInstance.set((K)key);
-    boolean result = myMap.containsKey(myHardKeyInstance);
-    myHardKeyInstance.clear();
-    return result;
+    try {
+      return myMap.containsKey(myHardKeyInstance);
+    }
+    finally {
+      myHardKeyInstance.clear();
+    }
   }
 
   @Override
@@ -229,9 +218,12 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     if (key == null) return null;
     //noinspection unchecked
     myHardKeyInstance.set((K)key);
-    V result = myMap.get(myHardKeyInstance);
-    myHardKeyInstance.clear();
-    return result;
+    try {
+      return myMap.get(myHardKeyInstance);
+    }
+    finally {
+      myHardKeyInstance.clear();
+    }
   }
 
   @Override
@@ -247,9 +239,12 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     // optimization:
     //noinspection unchecked
     myHardKeyInstance.set((K)key);
-    V result = myMap.remove(myHardKeyInstance);
-    myHardKeyInstance.clear();
-    return result;
+    try {
+      return myMap.remove(myHardKeyInstance);
+    }
+    finally {
+      myHardKeyInstance.clear();
+    }
   }
 
   @Override
@@ -366,15 +361,20 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
       V ev = e.getValue();
 
       // optimization: do not recreate the key
-      myHardKeyInstance.set(e.getKey());
-      Key<K> key = myHardKeyInstance;
+      HardKey key = myHardKeyInstance;
+      boolean toRemove;
+      try {
+        key.set(e.getKey());
 
-      V hv = myMap.get(key);
-      boolean toRemove = hv == null ? ev == null && myMap.containsKey(key) : hv.equals(ev);
-      if (toRemove) {
-        myMap.remove(key);
+        V hv = myMap.get(key);
+        toRemove = hv == null ? ev == null && myMap.containsKey(key) : hv.equals(ev);
+        if (toRemove) {
+          myMap.remove(key);
+        }
       }
-      myHardKeyInstance.clear();
+      finally {
+        key.clear();
+      }
       return toRemove;
     }
 

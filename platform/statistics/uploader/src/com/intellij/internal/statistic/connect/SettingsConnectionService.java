@@ -1,123 +1,83 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.connect;
 
-import com.intellij.internal.statistic.StatisticsEventLogUtil;
-import com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger;
-import com.intellij.internal.statistic.eventLog.DataCollectorSystemEventLogger;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.jdom.Element;
-import org.jdom.JDOMException;
+import com.intellij.internal.statistic.config.EventLogConfigParserException;
+import com.intellij.internal.statistic.config.EventLogExternalSendSettings;
+import com.intellij.internal.statistic.config.EventLogExternalSettings;
+import com.intellij.internal.statistic.config.bean.EventLogSendConfiguration;
+import com.intellij.internal.statistic.eventLog.EventLogBuildType;
+import com.intellij.internal.statistic.eventLog.EventLogApplicationInfo;
+import com.intellij.internal.statistic.service.request.StatsHttpRequests;
+import com.intellij.internal.statistic.service.request.StatsResponseException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-
-import static com.intellij.internal.statistic.StatisticsStringUtil.isNotEmpty;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 public abstract class SettingsConnectionService {
-  protected static final String SERVICE_URL_ATTR_NAME = "url";
-
-  private Map<String, String> myAttributesMap;
-
-  protected String @NotNull [] getAttributeNames() {
-    return new String[]{SERVICE_URL_ATTR_NAME};
-  }
-
   @Nullable
-  private final String mySettingsUrl;
-  @Nullable
-  private final String myDefaultServiceUrl;
+  private final String myConfigUrl;
 
   @NotNull
-  private final String myUserAgent;
+  private final EventLogApplicationInfo myApplicationInfo;
 
   @Nullable
-  private final DataCollectorDebugLogger myLogger;
+  private EventLogExternalSendSettings myCachedExternalSettings;
 
-  @NotNull
-  private final DataCollectorSystemEventLogger myEventLogger;
-
-  protected SettingsConnectionService(@Nullable String settingsUrl,
-                                      @Nullable String defaultServiceUrl,
-                                      @NotNull String userAgent,
-                                      @Nullable DataCollectorDebugLogger logger,
-                                      @NotNull DataCollectorSystemEventLogger eventLogger) {
-    mySettingsUrl = settingsUrl;
-    myDefaultServiceUrl = defaultServiceUrl;
-    myUserAgent = userAgent;
-    myLogger = logger;
-    myEventLogger = eventLogger;
-  }
-
-  @SuppressWarnings("unused")
-  @Deprecated
-  @Nullable
-  public String getSettingsUrl() {
-    return mySettingsUrl;
+  protected SettingsConnectionService(@Nullable String settingsUrl, @NotNull EventLogApplicationInfo appInfo) {
+    myConfigUrl = settingsUrl;
+    myApplicationInfo = appInfo;
   }
 
   @Nullable
-  public String getDefaultServiceUrl() {
-    return myDefaultServiceUrl;
+  protected EventLogSendConfiguration getConfiguration(@NotNull EventLogBuildType type) {
+    EventLogExternalSendSettings settings = getExternalSettings();
+    return settings != null ? settings.getConfiguration(type) : null;
   }
 
-  @NotNull
-  private Map<String, String> readSettings(final String... attributes) {
-    if (mySettingsUrl == null) return Collections.emptyMap();
+  @Nullable
+  protected String getEndpointValue(@NotNull String attribute) {
+    EventLogExternalSendSettings settings = getExternalSettings();
+    return settings != null ? settings.getEndpoint(attribute) : null;
+  }
 
-    try {
-      CloseableHttpResponse response = StatisticsEventLogUtil.create(myUserAgent).execute(new HttpGet(mySettingsUrl));
-      HttpEntity entity = response.getEntity();
-      InputStream content = entity != null ? entity.getContent() : null;
-      if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK && content != null) {
-        Map<String, String> settings = new LinkedHashMap<>();
-        try {
-          Element root = StatisticsEventLogUtil.parseXml(content);
-          for (String s : attributes) {
-            String attributeValue = root.getAttributeValue(s);
-            if (isNotEmpty(attributeValue)) {
-              settings.put(s, attributeValue);
-            }
-          }
-        }
-        catch (JDOMException e) {
-          logError(e);
-        }
-        return settings;
-      }
+  @Nullable
+  protected synchronized EventLogExternalSendSettings getExternalSettings() {
+    if (myCachedExternalSettings == null && myConfigUrl != null) {
+      myCachedExternalSettings = loadSettings(myConfigUrl, myApplicationInfo.getProductVersion());
     }
-    catch (Exception e) {
+    return myCachedExternalSettings;
+  }
+
+  @Nullable
+  public EventLogExternalSendSettings loadSettings(@NotNull String configUrl, @NotNull String appVersion) {
+    try {
+      return StatsHttpRequests.request(configUrl, myApplicationInfo.getUserAgent()).send(r -> {
+        try {
+          InputStream content = r.read();
+          if (content != null) {
+            InputStreamReader reader = new InputStreamReader(content, StandardCharsets.UTF_8);
+            return EventLogExternalSettings.parseSendSettings(reader, appVersion);
+          }
+          return null;
+        }
+        catch (EventLogConfigParserException e) {
+          throw new StatsResponseException(e);
+        }
+      }).getResult();
+    }
+    catch (StatsResponseException | IOException e) {
       logError(e);
     }
-    return Collections.emptyMap();
+    return null;
   }
 
   private void logError(Exception e) {
-    if (myLogger != null) {
-      final String message = e.getMessage();
-      myLogger.warn(message != null ? message : "", e);
-    }
-
-    myEventLogger.logErrorEvent("loading.config.failed", e);
-  }
-
-  @Nullable
-  public String getServiceUrl() {
-    final String serviceUrl = getSettingValue(SERVICE_URL_ATTR_NAME);
-    return serviceUrl == null ? getDefaultServiceUrl() : serviceUrl;
-  }
-
-  @Nullable
-  protected String getSettingValue(@NotNull String attributeValue) {
-    if (myAttributesMap == null || myAttributesMap.isEmpty()) {
-      myAttributesMap = readSettings(getAttributeNames());
-    }
-    return myAttributesMap.get(attributeValue);
+    final String message = e.getMessage();
+    myApplicationInfo.getLogger().warn(message != null ? message : "", e);
+    myApplicationInfo.getEventLogger().logErrorEvent("loading.config.failed", e);
   }
 }

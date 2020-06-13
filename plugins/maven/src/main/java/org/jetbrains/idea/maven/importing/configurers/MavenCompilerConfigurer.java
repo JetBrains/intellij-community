@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.MavenDisposable;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 /**
@@ -52,7 +53,7 @@ public class MavenCompilerConfigurer extends MavenModuleConfigurer {
     VirtualFile dir = VfsUtil.findRelativeFile(mavenProject.getDirectoryFile(), "src", "main", "resources", "archetype-resources");
     if (dir != null && !configuration.isExcludedFromCompilation(dir)) {
       ExcludesConfiguration cfg = configuration.getExcludedEntriesConfiguration();
-      cfg.addExcludeEntryDescription(new ExcludeEntryDescription(dir, true, false, project));
+      cfg.addExcludeEntryDescription(new ExcludeEntryDescription(dir, true, false, MavenDisposable.getInstance(project)));
     }
   }
 }

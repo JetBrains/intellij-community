@@ -31,8 +31,10 @@ import com.intellij.psi.infos.CandidateInfo;
 import org.jetbrains.annotations.NotNull;
 
 public class ConstructorParametersFixer {
-  public static void registerFixActions(@NotNull PsiJavaCodeReferenceElement ctrRef, PsiConstructorCall constructorCall, HighlightInfo highlightInfo,
-                                         final TextRange fixRange) {
+  public static void registerFixActions(@NotNull PsiJavaCodeReferenceElement ctrRef,
+                                        @NotNull PsiConstructorCall constructorCall,
+                                        @NotNull HighlightInfo highlightInfo,
+                                        @NotNull TextRange fixRange) {
     JavaResolveResult resolved = ctrRef.advancedResolve(false);
     PsiClass aClass = (PsiClass) resolved.getElement();
     if (aClass == null) return;

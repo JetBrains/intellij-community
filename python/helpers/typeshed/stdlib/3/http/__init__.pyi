@@ -1,5 +1,9 @@
 import sys
 from enum import IntEnum
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
 
 class HTTPStatus(IntEnum):
     @property
@@ -67,3 +71,7 @@ class HTTPStatus(IntEnum):
         MISDIRECTED_REQUEST: int
     if sys.version_info >= (3, 8):
         UNAVAILABLE_FOR_LEGAL_REASONS: int
+    if sys.version_info >= (3, 9):
+        EARLY_HINTS: Literal[103]
+        IM_A_TEAPOT: Literal[418]
+        TOO_EARLY: Literal[425]

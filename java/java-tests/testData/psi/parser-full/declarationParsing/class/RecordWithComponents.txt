@@ -40,6 +40,8 @@ PsiJavaFile:RecordWithComponents.java
       <empty list>
     PsiReferenceList
       <empty list>
+    PsiReferenceList
+      <empty list>
     PsiJavaToken:LBRACE('{')
     PsiWhiteSpace('\n')
     PsiJavaToken:RBRACE('}')

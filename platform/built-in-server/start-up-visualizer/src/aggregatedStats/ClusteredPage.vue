@@ -4,7 +4,7 @@
     <el-form :inline="true" size="small">
       <el-form-item label="Period">
         <el-select v-model="timeRange" data-lpignore="true" filterable>
-          <el-option v-for='item in [{l: "All", k: "1y"}, {l: "Last 3 months", k: "3M"}, {l: "Last 4 weeks", k: "1M"}]' :key="item.k" :label="item.l" :value="item.k"/>
+          <el-option v-for='item in timeRanges' :key="item.k" :label="item.l" :value="item.k"/>
         </el-select>
       </el-form-item>
       <el-form-item label="Operator">
@@ -59,12 +59,16 @@ import ClusteredChartComponent from "./ClusteredChartComponent.vue"
 import {getModule} from "vuex-module-decorators"
 import {AppStateModule} from "@/state/state"
 import {DataRequest} from "@/aggregatedStats/model"
+import {timeRanges} from "@/aggregatedStats/parseDuration"
 
 @Component({
   components: {LineChartComponent, ClusteredChartComponent}
 })
 export default class ClusteredPage extends Vue {
   private readonly dataModule = getModule(AppStateModule, this.$store)
+
+  readonly timeRanges = timeRanges
+
   chartSettings = this.dataModule.chartSettings
 
   @Prop()

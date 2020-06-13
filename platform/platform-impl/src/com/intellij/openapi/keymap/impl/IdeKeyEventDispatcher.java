@@ -316,7 +316,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return true;
   }
 
-  private static class ReflectionHolder {
+  private static final class ReflectionHolder {
     static final Method getCachedStroke = Objects.requireNonNull(
       ReflectionUtil.getDeclaredMethod(AWTKeyStroke.class, "getCachedStroke", char.class, int.class, int.class, boolean.class));
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement.editor;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -25,6 +26,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import org.editorconfig.language.filetype.EditorConfigFileType;
+import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,7 +81,8 @@ public class EditorConfigEditorProvider implements AsyncFileEditorProvider, Dumb
     @Override
     public FileEditor build() {
       VirtualFile contextFile = EditorConfigPreviewManager.getInstance(myProject).getAssociatedPreviewFile(myFile);
-      if (contextFile != null) {
+      EditorConfigStatusListener statusListener = new EditorConfigStatusListener(myProject, myFile);
+      if (contextFile != null && CodeStyle.getSettings(myProject).getCustomSettings(EditorConfigSettings.class).ENABLED) {
         Document document =EditorFactory.getInstance().createDocument(getPreviewText(contextFile));
         final EditorConfigPreviewFile previewFile = new EditorConfigPreviewFile(myProject, contextFile, document);
         FileEditor previewEditor = createPreviewEditor(document, previewFile);
@@ -87,10 +90,13 @@ public class EditorConfigEditorProvider implements AsyncFileEditorProvider, Dumb
         final EditorConfigEditorWithPreview splitEditor = new EditorConfigEditorWithPreview(
           myFile, myProject, ecTextEditor, previewEditor);
         Disposer.register(splitEditor, previewFile);
+        Disposer.register(splitEditor, statusListener);
         return splitEditor;
       }
       else {
-        return myMainEditorProvider.createEditor(myProject, myFile);
+        FileEditor fileEditor = myMainEditorProvider.createEditor(myProject, myFile);
+        Disposer.register(fileEditor, statusListener);
+        return fileEditor;
       }
     }
 

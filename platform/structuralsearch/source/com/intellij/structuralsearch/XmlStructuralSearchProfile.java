@@ -244,7 +244,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
     return XmlPredefinedConfigurations.createPredefinedTemplates();
   }
 
-  private static class XmlPredefinedConfigurations {
+  private static final class XmlPredefinedConfigurations {
     static Configuration[] createPredefinedTemplates() {
       return new Configuration[]{
         createSearchTemplateInfo("xml tag", "<'a/>", getHtmlXml(), StdFileTypes.XML),

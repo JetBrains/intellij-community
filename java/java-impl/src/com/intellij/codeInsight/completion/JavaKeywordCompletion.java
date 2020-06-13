@@ -7,7 +7,6 @@ import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.util.CompletionStyleUtil;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.patterns.ElementPattern;
@@ -36,7 +35,6 @@ import static com.intellij.psi.SyntaxTraverser.psiApi;
 
 public class JavaKeywordCompletion {
   public static final ElementPattern<PsiElement> AFTER_DOT = psiElement().afterLeaf(".");
-  private static final ElementPattern<PsiElement> AFTER_DOUBLE_COLON = psiElement().afterLeaf("::");
 
   static final ElementPattern<PsiElement> VARIABLE_AFTER_FINAL = psiElement().afterLeaf(PsiKeyword.FINAL).inside(PsiDeclarationStatement.class);
 
@@ -225,6 +223,10 @@ public class JavaKeywordCompletion {
 
   void addKeywords() {
     if (PsiTreeUtil.getNonStrictParentOfType(myPosition, PsiLiteralExpression.class, PsiComment.class) != null) {
+      return;
+    }
+
+    if (psiElement().afterLeaf("::").accepts(myPosition)) {
       return;
     }
 
@@ -427,15 +429,6 @@ public class JavaKeywordCompletion {
   }
 
   private void addExpressionKeywords(boolean statementPosition) {
-    if (AFTER_DOUBLE_COLON.accepts(myPosition)) {
-      PsiMethodReferenceExpression parent = PsiTreeUtil.getParentOfType(myPosition, PsiMethodReferenceExpression.class);
-      if (parent != null && canUseConstructorReference(parent)) {
-        TailType tail = !LambdaHighlightingUtil.insertSemicolon(parent.getParent()) ? TailType.SEMICOLON : TailType.NONE;
-        addKeyword(new OverridableSpace(createKeyword(PsiKeyword.NEW), tail));
-      }
-      return;
-    }
-
     if (isExpressionPosition(myPosition)) {
       PsiElement parent = myPosition.getParent();
       PsiElement grandParent = parent == null ? null : parent.getParent();
@@ -460,17 +453,6 @@ public class JavaKeywordCompletion {
     if (isQualifiedNewContext()) {
       addKeyword(createKeyword(PsiKeyword.NEW));
     }
-  }
-
-  private static boolean canUseConstructorReference(PsiMethodReferenceExpression ref) {
-    PsiTypeElement qualifierType = ref.getQualifierType();
-    if (qualifierType == null) {
-      PsiElement qualifier = ref.getQualifier();
-      return qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).resolve() != null;
-    }
-
-    if (qualifierType instanceof PsiClassType) return ((PsiClassType)qualifierType).resolve() != null;
-    return qualifierType instanceof PsiArrayType;
   }
 
   private boolean isQualifiedNewContext() {
@@ -709,17 +691,23 @@ public class JavaKeywordCompletion {
 
   static void addPrimitiveTypes(Consumer<? super LookupElement> result, PsiElement position, JavaCompletionSession session) {
     if (AFTER_DOT.accepts(position) ||
-        AFTER_DOUBLE_COLON.accepts(position) ||
         psiElement().inside(psiAnnotation()).accepts(position) && !expectsClassLiteral(position)) {
       return;
     }
 
-    boolean afterNew = psiElement().afterLeaf(
-      psiElement().withText(PsiKeyword.NEW).andNot(psiElement().afterLeaf(PsiKeyword.THROW, "."))).accepts(position);
+    boolean afterNew = JavaSmartCompletionContributor.AFTER_NEW.accepts(position) &&
+                       !psiElement().afterLeaf(psiElement().afterLeaf(".")).accepts(position);
     if (afterNew) {
+      Set<PsiType> expected = ContainerUtil.map2Set(JavaSmartCompletionContributor.getExpectedTypes(position, false),
+                                                    ExpectedTypeInfo::getDefaultType);
+      boolean addAll = expected.isEmpty() || ContainerUtil.exists(expected, t ->
+        t.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || t.equalsToText(CommonClassNames.JAVA_IO_SERIALIZABLE));
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(position.getProject());
       for (String primitiveType : PRIMITIVE_TYPES) {
-        result.consume(PsiTypeLookupItem.createLookupItem(factory.createTypeFromText(primitiveType + "[]", null), null));
+        PsiType array = factory.createTypeFromText(primitiveType + "[]", null);
+        if (addAll || expected.contains(array)) {
+          result.consume(PsiTypeLookupItem.createLookupItem(array, null));
+        }
       }
       return;
     }
@@ -816,7 +804,7 @@ public class JavaKeywordCompletion {
       addKeyword(br);
     }
     else if (psiElement().inside(PsiSwitchExpression.class).accepts(myPosition) &&
-             PsiUtil.getLanguageLevel(myPosition).isAtLeast(LanguageLevel.JDK_13_PREVIEW)) {
+             PsiUtil.getLanguageLevel(myPosition).isAtLeast(LanguageLevel.JDK_14)) {
       addKeyword(TailTypeDecorator.withTail(createKeyword(PsiKeyword.YIELD), TailType.INSERT_SPACE));
     }
 

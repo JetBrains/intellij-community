@@ -139,5 +139,7 @@
     <orderEntry type="module" module-name="intellij.statsCollector.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.filePrediction" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.textmate" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.webp" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.space" scope="RUNTIME" />
   </component>
 </module>

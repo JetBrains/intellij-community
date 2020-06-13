@@ -13,6 +13,8 @@ PsiJavaFile:Record.java
       <empty list>
     PsiReferenceList
       <empty list>
+    PsiReferenceList
+      <empty list>
     PsiJavaToken:LBRACE('{')
     PsiWhiteSpace('\n')
     PsiJavaToken:RBRACE('}')

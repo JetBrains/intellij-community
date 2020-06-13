@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -22,7 +23,8 @@ import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.GHPRFileEditor
+import org.jetbrains.plugins.github.pullrequest.GHPRTimelineFileEditor
+import org.jetbrains.plugins.github.pullrequest.action.GHPRReloadStateAction
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRSubmittableTextField
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
@@ -43,7 +45,7 @@ import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 
 internal class GHPRFileEditorComponentFactory(private val project: Project,
-                                              private val editor: GHPRFileEditor,
+                                              private val editor: GHPRTimelineFileEditor,
                                               currentDetails: GHPullRequestShort) {
 
   private val uiDisposable = Disposer.newDisposable().also {
@@ -59,7 +61,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
   private val timelineModel = GHPRTimelineMergingModel()
   private val reviewThreadsModelsProvider = GHPRReviewsThreadsModelsProviderImpl(editor.reviewData, uiDisposable)
 
-  private val stateModel = GHPRStateModelImpl(project, editor.stateData, editor.changesData, currentDetails, uiDisposable)
+  private val stateModel = GHPRStateModelImpl(project, editor.stateData, editor.changesData, detailsModel, uiDisposable)
 
   init {
     editor.detailsData.loadDetails(uiDisposable) {
@@ -175,6 +177,8 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
     actionManager.getAction("Github.PullRequest.Timeline.Update").registerCustomShortcutSet(scrollPane, uiDisposable)
     val actionGroup = actionManager.getAction("Github.PullRequest.Timeline.Popup") as ActionGroup
     PopupHandler.installPopupHandler(scrollPane, actionGroup, ActionPlaces.UNKNOWN, actionManager)
+
+    PopupHandler.installPopupHandler(statePanel, DefaultActionGroup(GHPRReloadStateAction()), ActionPlaces.UNKNOWN, actionManager)
 
     return mainPanel
   }

@@ -124,7 +124,7 @@ abstract class LineLayout {
     for (BidiRun run : runs) {
       for (Chunk chunk : run.getChunks(text, 0)) {
         chunk.fragments = new ArrayList<>();
-        addFragments(run, chunk, chars, chunk.startOffset, chunk.endOffset, null, ffi);
+        addFragments(view, run, chunk, chars, chunk.startOffset, chunk.endOffset, null, ffi);
       }
     }
     return runs;
@@ -255,28 +255,44 @@ abstract class LineLayout {
       runs.add(run);
     }
   }
-  
-  private static void addFragments(BidiRun run, Chunk chunk, char[] text, int start, int end, @Nullable TabFragment tabFragment, 
-                                   FontFallbackIterator it) {
+
+  private static void addFragments(EditorView view, BidiRun run, Chunk chunk, char[] text, int start, int end,
+                                   @Nullable TabFragment tabFragment, FontFallbackIterator it) {
     assert start < end;
-    if (tabFragment == null) {
-      addFragmentsNoTabs(run, chunk, text, start, end, it);
-    }
-    else {
-      int last = start;
+    int last = start;
+    boolean specialCharsEnabled = view.getEditor().getSettings().isShowingSpecialChars();
+    if (specialCharsEnabled) {
       for (int i = start; i < end; i++) {
-        if (text[i] == '\t') {
-          assert run.level == 0;
-          addFragmentsNoTabs(run, chunk, text, last, i, it);
-          chunk.fragments.add(tabFragment);
-          last = i + 1;
+        char c = text[i];
+        if (c >= 0x80 && !SpecialCharacterFragment.isSpecialCharacter(c)) {
+          // We only enable custom representation in ASCII code.
+          // In complex Unicode texts they can be used to control the appearance of neighbour characters, and we don't want to change that.
+          specialCharsEnabled = false;
+          break;
         }
       }
-      addFragmentsNoTabs(run, chunk, text, last, end, it);
     }
+    for (int i = start; i < end; i++) {
+      char c = text[i];
+      LineFragment specialFragment = null;
+      if (c == '\t') {
+        assert run.level == 0;
+        specialFragment = tabFragment;
+      }
+      else if (specialCharsEnabled) {
+        // only BMP special chars are supported currently, so there's no need to check for surrogate pairs
+        specialFragment = SpecialCharacterFragment.create(view, c);
+      }
+      if (specialFragment != null) {
+        addFragmentsNoTabs(run, chunk, text, last, i, it);
+        chunk.fragments.add(specialFragment);
+        last = i + 1;
+      }
+    }
+    addFragmentsNoTabs(run, chunk, text, last, end, it);
     assert !chunk.fragments.isEmpty();
   }
-  
+
   private static void addFragmentsNoTabs(BidiRun run, Chunk chunk, char[] text, int start, int end, FontFallbackIterator it) {
     if (start < end) {
       it.start(text, start, end);
@@ -626,7 +642,7 @@ abstract class LineLayout {
         if (fontType != currentFontType || !color.equals(currentColor)) {
           int tokenStart = it.getStartOffset();
           if (tokenStart > currentStart) {
-            addFragments(run, this, chars, currentStart - start, tokenStart - start, view.getTabFragment(), ffi);
+            addFragments(view, run, this, chars, currentStart - start, tokenStart - start, view.getTabFragment(), ffi);
           }
           currentStart = tokenStart;
           currentColor = color;
@@ -635,7 +651,7 @@ abstract class LineLayout {
         it.advance();
       }
       if (end > currentStart) {
-        addFragments(run, this, chars, currentStart - start, end - start, view.getTabFragment(), ffi);
+        addFragments(view, run, this, chars, currentStart - start, end - start, view.getTabFragment(), ffi);
       }
       view.getSizeManager().textLayoutPerformed(start, end);
       assert !fragments.isEmpty();

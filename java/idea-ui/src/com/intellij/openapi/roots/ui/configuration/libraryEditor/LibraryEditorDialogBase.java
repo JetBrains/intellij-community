@@ -17,7 +17,7 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.impl.ModuleLibraryTable;
+import com.intellij.openapi.roots.impl.ModuleLibraryTableBase;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -70,7 +70,7 @@ public abstract class LibraryEditorDialogBase extends DialogWrapper {
     }
     if (shouldCheckName(newName)) {
       final LibraryTable.ModifiableModel tableModifiableModel = getTableModifiableModel();
-      if (tableModifiableModel != null && !(tableModifiableModel instanceof ModuleLibraryTable)) {
+      if (tableModifiableModel != null && !(tableModifiableModel instanceof ModuleLibraryTableBase)) {
         if (newName == null) {
           Messages.showErrorDialog(JavaUiBundle.message("library.name.not.specified.error", newName), JavaUiBundle.message("library.name.not.specified.title"));
           return false;

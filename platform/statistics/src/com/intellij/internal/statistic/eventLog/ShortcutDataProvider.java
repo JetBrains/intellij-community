@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 
 import static java.awt.event.KeyEvent.*;
 
+@ApiStatus.Internal
 public final class ShortcutDataProvider {
   @Nullable
   public static String getActionEventText(@Nullable AnActionEvent event) {

@@ -4,9 +4,11 @@ package com.intellij.ui;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 
-public class MutableCollectionComboBoxModel<T> extends CollectionComboBoxModel<T> {
+public class MutableCollectionComboBoxModel<T> extends CollectionComboBoxModel<T> implements MutableComboBoxModel<T> {
+
   public MutableCollectionComboBoxModel(@NotNull List<T> items) {
     super(items);
   }
@@ -43,5 +45,27 @@ public class MutableCollectionComboBoxModel<T> extends CollectionComboBoxModel<T
     if (getSelected() != null && !contains(getSelected())) {
       setSelectedItem(isEmpty() ? null : getElementAt(index0 == 0 ? 0 : index0 - 1));
     }
+  }
+
+  @Override
+  public void addElement(T item) {
+    add(item);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public void removeElement(Object obj) {
+    T item = ((T) obj);
+    remove(item);
+  }
+
+  @Override
+  public void insertElementAt(T item, int index) {
+    add(index, item);
+  }
+
+  @Override
+  public void removeElementAt(int index) {
+    remove(index);
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.JavaValuePresentation;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.ArrayElementDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
@@ -250,6 +251,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     }
 
     // plugins registered renderers come after that
+    CompoundRendererProvider.EP_NAME.extensions().map(CompoundRendererProvider::createRenderer).forEach(allRenderers::add);
     allRenderers.addAll(NodeRenderer.EP_NAME.getExtensionList());
 
     // now all predefined stuff
@@ -354,24 +356,15 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     else if(rendererId.equals(EnumerationChildrenRenderer.UNIQUE_ID)) {
       return new EnumerationChildrenRenderer();
     }
-    else if(rendererId.equals(ToStringRenderer.UNIQUE_ID)) {
+    else if (rendererId.equals(ToStringRenderer.UNIQUE_ID)) {
       return myToStringRenderer;
     }
-    else if(rendererId.equals(CompoundNodeRenderer.UNIQUE_ID) || rendererId.equals(REFERENCE_RENDERER)) {
+    else if (rendererId.equals(CompoundReferenceRenderer.UNIQUE_ID) ||
+             rendererId.equals(CompoundReferenceRenderer.UNIQUE_ID_OLD) ||
+             rendererId.equals(REFERENCE_RENDERER)) {
       return createCompoundReferenceRenderer("unnamed", CommonClassNames.JAVA_LANG_OBJECT, null, null);
     }
-    else if (rendererId.equals(CompoundTypeRenderer.UNIQUE_ID)) {
-      return createCompoundTypeRenderer("unnamed", CommonClassNames.JAVA_LANG_OBJECT, null, null);
-    }
     return null;
-  }
-
-  public CompoundTypeRenderer createCompoundTypeRenderer(
-    @NonNls final String rendererName, @NonNls final String className, final ValueLabelRenderer labelRenderer, final ChildrenRenderer childrenRenderer
-  ) {
-    CompoundTypeRenderer renderer = new CompoundTypeRenderer(this, rendererName, labelRenderer, childrenRenderer);
-    renderer.setClassName(className);
-    return renderer;
   }
 
   public CompoundReferenceRenderer createCompoundReferenceRenderer(
@@ -379,6 +372,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     ) {
     CompoundReferenceRenderer renderer = new CompoundReferenceRenderer(this, rendererName, labelRenderer, childrenRenderer);
     renderer.setClassName(className);
+    renderer.setIsApplicableChecker(type -> DebuggerUtilsAsync.instanceOf(type, renderer.getClassName()));
     return renderer;
   }
 
@@ -575,6 +569,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
             createLabelRenderer(" size = ", "size()", null),
             createExpressionArrayChildrenRenderer("toArray()", "!isEmpty()", arrayRenderer));
       setClassName(CommonClassNames.JAVA_UTIL_LIST);
+      setIsApplicableChecker(type -> DebuggerUtilsAsync.instanceOf(type, getClassName()));
     }
 
     @Override

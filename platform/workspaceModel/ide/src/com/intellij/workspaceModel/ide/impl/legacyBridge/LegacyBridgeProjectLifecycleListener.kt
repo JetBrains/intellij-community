@@ -7,7 +7,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.ExternalModuleListStorage
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectServiceContainerCustomizer
+import com.intellij.openapi.project.impl.ProjectServiceContainerCustomizer
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.ModifiableModelCommitterService

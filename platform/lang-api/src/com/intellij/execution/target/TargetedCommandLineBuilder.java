@@ -77,6 +77,14 @@ public class TargetedCommandLineBuilder extends UserDataHolderBase {
     }
   }
 
+  public void addParameterAt(int index, @NotNull String parameter) {
+    addParameterAt(index, TargetValue.fixed(parameter));
+  }
+
+  public void addParameterAt(int index, @NotNull TargetValue<String> parameter) {
+    myParameters.add(index, parameter);
+  }
+
   public void addEnvironmentVariable(String name, TargetValue<String> value) {
     myEnvironment.put(name, value);
   }

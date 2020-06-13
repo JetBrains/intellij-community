@@ -4,7 +4,6 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.module.impl.ModuleManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
@@ -16,9 +15,9 @@ import com.intellij.util.io.exists
 import com.intellij.util.io.outputStream
 import com.intellij.util.isEmpty
 import com.intellij.util.write
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jdom.Element
+import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import java.nio.file.Path
 import kotlin.collections.component1
 import kotlin.collections.component2
@@ -44,7 +43,7 @@ internal fun normalizeDefaultProjectElement(defaultProject: Project, element: El
         writeProfileSettings(schemeDir, componentName, component)
       }
 
-      ModuleManagerImpl.COMPONENT_NAME -> {
+      JpsProjectLoader.MODULE_MANAGER_COMPONENT -> {
         iterator.remove()
       }
     }
@@ -81,15 +80,18 @@ private fun convertProfiles(profileIterator: MutableIterator<Element>, component
   }
 }
 
-internal fun moveComponentConfiguration(defaultProject: Project, element: Element, storagePathResolver: (storagePath: String) -> String, fileResolver: (name: String) -> Path) {
+internal fun moveComponentConfiguration(defaultProject: Project,
+                                        element: Element,
+                                        storagePathResolver: (storagePath: String) -> String,
+                                        fileResolver: (name: String) -> Path) {
   val componentElements = element.getChildren("component")
   if (componentElements.isEmpty()) {
     return
   }
 
-  val storageNameToComponentNames = Object2ObjectOpenHashMap<String, MutableSet<String>>()
-  val workspaceComponentNames = ObjectOpenHashSet(listOf("GradleLocalSettings"))
-  val ignoredComponentNames = ObjectOpenHashSet<String>()
+  val storageNameToComponentNames = HashMap<String, MutableSet<String>>()
+  val workspaceComponentNames = HashSet(listOf("GradleLocalSettings"))
+  val ignoredComponentNames = HashSet<String>()
   storageNameToComponentNames.put("workspace.xml", workspaceComponentNames)
 
   fun processComponents(aClass: Class<*>) {
@@ -123,7 +125,7 @@ internal fun moveComponentConfiguration(defaultProject: Project, element: Elemen
   }
 
   // fileResolver may return the same file for different storage names (e.g. for IPR project)
-  val storagePathToComponentStates = Object2ObjectOpenHashMap<Path, MutableList<Element>>()
+  val storagePathToComponentStates = HashMap<Path, MutableList<Element>>()
   val iterator = componentElements.iterator()
   cI@ for (componentElement in iterator) {
     iterator.remove()

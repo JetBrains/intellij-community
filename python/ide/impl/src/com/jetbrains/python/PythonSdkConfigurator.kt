@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python
 
 import com.intellij.concurrency.SensitiveProgressWrapper
@@ -33,7 +33,7 @@ import com.jetbrains.python.sdk.pipenv.detectAndSetupPipEnv
 /**
  * @author vlan
  */
-class PythonSdkConfigurator : DirectoryProjectConfigurator {
+internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
   companion object {
     private val BALLOON_NOTIFICATIONS = NotificationGroup("Python interpreter configuring", NotificationDisplayType.BALLOON, true)
     private val LOGGER = Logger.getInstance(PythonSdkConfigurator::class.java)
@@ -69,10 +69,12 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     }
   }
 
-  override fun configureProject(project: Project, baseDir: VirtualFile, moduleRef: Ref<Module>, newProject: Boolean) {
+  override fun configureProject(project: Project, baseDir: VirtualFile, moduleRef: Ref<Module>, isNewProject: Boolean) {
     val sdk = project.pythonSdk
-    LOGGER.debug { "Input: $sdk, $newProject" }
-    if (sdk != null || newProject) return
+    LOGGER.debug { "Input: $sdk, $isNewProject" }
+    if (sdk != null || isNewProject) {
+      return
+    }
 
     StartupManager.getInstance(project).runWhenProjectIsInitialized {
       ProgressManager.getInstance().run(

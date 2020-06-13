@@ -51,13 +51,13 @@ class Data extends Base {
   fun testUpdateableAll() {
     doTest("updateable", 3,
            "updateableArray", "updateableIntFirst", "updateableIntSecond", "updateableLong", "updateableObject",
-           "updateableString", "nonUpdateableStringFirst", "nonUpdateableType", "nonUpdateableStringSecond")
+           "updateableString", "nonUpdateableStringFirst", "nonUpdateableStringSecond", "nonUpdateableType")
   }
 
   fun testAll() {
     doTest("", 5, "other",
            "updateableArray", "updateableIntFirst", "updateableIntSecond", "updateableLong", "updateableObject",
-           "updateableString", "nonUpdateableStringFirst", "nonUpdateableType", "nonUpdateableStringSecond")
+           "updateableString", "nonUpdateableStringFirst", "nonUpdateableStringSecond", "nonUpdateableType")
   }
 
   fun testUpdateableBase() {

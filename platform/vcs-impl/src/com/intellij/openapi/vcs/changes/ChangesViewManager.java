@@ -337,7 +337,7 @@ public class ChangesViewManager implements ChangesViewEx,
         myChangesViewManager.myState.groupingKeys = myView.getGroupingSupport().getGroupingKeys();
         scheduleRefresh();
       });
-      ChangesDnDSupport.install(myProject, myView);
+      ChangesViewDnDSupport.install(myProject, myView, this);
 
       myChangesPanel.getToolbarActionGroup().addAll(createChangesToolbarActions(myView.getTreeExpander()));
       myChangesPanel.setToolbarHorizontal(commitWorkflowManager.isNonModal() && isToolbarHorizontalSetting.asBoolean());
@@ -706,7 +706,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
         invokeLaterIfNeeded(() -> {
           if (myDisposed) return;
-          indicator.checkCanceled();
+          if (canBeCancelled) indicator.checkCanceled();
 
           for (ChangesViewModifier extension : ChangesViewModifier.KEY.getExtensions(myProject)) {
             extension.modifyTreeModelBuilder(treeModelBuilder);
@@ -856,8 +856,8 @@ public class ChangesViewManager implements ChangesViewEx,
       if (attachedObject instanceof ShelvedChangeListDragBean) {
         ChangesViewToolWindowPanel panel = ((ChangesViewManager)getInstance(myProject)).initToolWindowPanel();
         ShelveChangesManager.unshelveSilentlyWithDnd(myProject, (ShelvedChangeListDragBean)attachedObject,
-                                                     ChangesDnDSupport.getDropRootNode(panel.myView, event),
-                                                     !ChangesDnDSupport.isCopyAction(event));
+                                                     ChangesTreeDnDSupport.getDropRootNode(panel.myView, event),
+                                                     !ChangesTreeDnDSupport.isCopyAction(event));
       }
     }
 

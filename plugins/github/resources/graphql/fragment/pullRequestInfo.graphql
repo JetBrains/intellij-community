@@ -34,5 +34,7 @@ fragment pullRequestInfo on PullRequest {
       login
     }
     isFork
+    url
+    sshUrl
   }
 }

@@ -103,8 +103,8 @@ class NormalCompletionTest extends NormalCompletionTestCase {
   void testDisplayDefaultValueInAnnotationMethods() {
     configure()
     LookupElementPresentation presentation = renderElement(myItems[0])
-    assert "myBool" == presentation.itemText
-    assert presentation.tailText == " default false"
+    assert "myInt" == presentation.itemText
+    assert presentation.tailText == " default 42"
     assert presentation.tailFragments[0].grayed
     assert !presentation.typeText
     assert !presentation.itemTextBold
@@ -605,7 +605,7 @@ public class ListUtils {
 
   void testDoubleConstant() throws Throwable {
     configure()
-    assertStringItems("XFOO")
+    assertStringItems("Intf.XFOO", "XFOO")
   }
 
   void testNotOnlyKeywordsInsideSwitch() throws Throwable {
@@ -862,7 +862,10 @@ public class ListUtils {
   }
 
   void testSameNamedVariableInNestedClasses() throws Throwable {
-    doTest()
+    configure()
+    myFixture.assertPreferredCompletionItems 0, "ffid", "Beda.this.ffid"
+    selectItem(myItems[1])
+    checkResult()
   }
 
   void testHonorUnderscoreInPrefix() throws Throwable {
@@ -1273,6 +1276,8 @@ public class ListUtils {
     myFixture.addClass("package foo; public class XInternalTimerServiceController {}")
     myFixture.configureByText "a.java", """
 class XInternalError {}
+
+@interface Anno { Class value(); }
 
 @Anno(XInternal<caret>)
 """
@@ -1984,6 +1989,27 @@ class Abc {
     checkGetClassPresent("class C implements Unresolved {{ getCl<caret>x }}")
     checkGetClassPresent("class C extends Unresolved implements Runnable {{ getCl<caret>x }}")
     checkGetClassPresent("class C extends Unresolved1 implements Unresolved2 {{ getCl<caret>x }}")
+  }
 
+  void testSuggestInverseOfDefaultAnnoParamValueForBoolean() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems(0, 'smth = true', 'value = false')
+
+    def smthDefault = myItems.find { it.lookupString == 'smth = false' }
+    def presentation = LookupElementPresentation.renderElement(smthDefault)
+    assert presentation.tailText == ' (default)'
+    assert presentation.tailFragments[0].grayed
+
+    myFixture.type('\n')
+    checkResult()
+  }
+
+  void testCaseColonAfterStringConstant() { doTest() }
+
+  void testOneElementArray() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'aaa', 'aaa[0]'
+    selectItem(myItems[1])
+    checkResult()
   }
 }

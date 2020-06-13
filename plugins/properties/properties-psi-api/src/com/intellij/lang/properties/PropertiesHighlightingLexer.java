@@ -21,9 +21,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.lang.properties.parsing.PropertiesLexer;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 
-/**
- * @author cdr
- */
 public class PropertiesHighlightingLexer extends LayeredLexer{
   public PropertiesHighlightingLexer() {
     super(new PropertiesLexer());

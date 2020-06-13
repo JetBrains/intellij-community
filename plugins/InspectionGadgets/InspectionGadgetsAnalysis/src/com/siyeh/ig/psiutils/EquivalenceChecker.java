@@ -485,10 +485,7 @@ public class EquivalenceChecker {
     final Match conditionEq = expressionsMatch(condition1, condition2);
     final Match thenEq = statementsMatch(thenBranch1, thenBranch2);
     final Match elseEq = statementsMatch(elseBranch1, elseBranch2);
-    if (conditionEq == EXACT_MATCH && thenEq == EXACT_MATCH && elseEq == EXACT_MATCH) {
-      return EXACT_MATCH;
-    }
-    return EXACT_MISMATCH;
+    return conditionEq.combine(thenEq).combine(elseEq);
   }
 
   protected Match expressionStatementsMatch(@NotNull PsiExpressionStatement statement1, @NotNull PsiExpressionStatement statement2) {

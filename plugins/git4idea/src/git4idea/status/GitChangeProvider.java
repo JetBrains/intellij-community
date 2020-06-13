@@ -4,8 +4,8 @@ package git4idea.status;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.Topic;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitUtil;
@@ -29,6 +30,8 @@ import java.util.*;
  */
 public final class GitChangeProvider implements ChangeProvider {
   static final Logger LOG = Logger.getInstance("#GitStatus");
+  public static final Topic<ChangeProviderListener> TOPIC = Topic.create("GitChangeProvider Progress", ChangeProviderListener.class);
+  private volatile boolean isRefreshInProgress = false;
 
   @NotNull private final Project project;
 
@@ -41,6 +44,9 @@ public final class GitChangeProvider implements ChangeProvider {
                          @NotNull ChangelistBuilder builder,
                          @NotNull ProgressIndicator progress,
                          @NotNull ChangeListManagerGate addGate) throws VcsException {
+    BackgroundTaskUtil.syncPublisher(project, TOPIC).progressStarted();
+    isRefreshInProgress = true;
+
     LOG.debug("initial dirty scope: ", dirtyScope);
     appendNestedVcsRootsToDirt((VcsModifiableDirtyScope)dirtyScope);
     LOG.debug("after adding nested vcs roots to dirt: ", dirtyScope);
@@ -91,18 +97,16 @@ public final class GitChangeProvider implements ChangeProvider {
           builder.processUnversionedFile(path);
           holder.markPathProcessed(path);
         }
+
+        BackgroundTaskUtil.syncPublisher(project, TOPIC).repositoryUpdated(repo);
       }
       holder.feedBuilder(dirtyScope, builder);
 
       VcsDirtyScopeManager.getInstance(project).filePathsDirty(newDirtyPaths, null);
     }
-    catch (ProcessCanceledException pce) {
-      if(pce.getCause() != null) throw new VcsException(pce.getCause().getMessage(), pce.getCause());
-      else throw new VcsException("Cannot get changes from Git", pce);
-    }
-    catch (VcsException e) {
-      LOG.info(e);
-      throw e;
+    finally {
+      isRefreshInProgress = false;
+      BackgroundTaskUtil.syncPublisher(project, TOPIC).progressStopped();
     }
   }
 
@@ -194,5 +198,15 @@ public final class GitChangeProvider implements ChangeProvider {
   @Override
   public boolean isModifiedDocumentTrackingRequired() {
     return true;
+  }
+
+  public boolean isRefreshInProgress() {
+    return isRefreshInProgress;
+  }
+
+  public interface ChangeProviderListener {
+    void repositoryUpdated(@NotNull GitRepository repository);
+    default void progressStarted() {}
+    default void progressStopped() {}
   }
 }

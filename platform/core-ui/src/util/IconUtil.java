@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.icons.AllIcons;
@@ -18,6 +18,7 @@ import com.intellij.ui.icons.CompositeIcon;
 import com.intellij.ui.icons.CopyableIcon;
 import com.intellij.ui.scale.*;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +40,7 @@ import static com.intellij.ui.scale.ScaleType.USR_SCALE;
  * @author max
  * @author Konstantin Bulenkov
  */
+@ApiStatus.NonExtendable
 public class IconUtil {
   private static final Key<Boolean> PROJECT_WAS_EVER_INITIALIZED = Key.create("iconDeferrer:projectWasEverInitialized");
 
@@ -352,7 +354,7 @@ public class IconUtil {
     }
   }
 
-  private static class CropIcon implements Icon {
+  private static final class CropIcon implements Icon {
     private final Icon mySrc;
     private final Rectangle myCrop;
 
@@ -600,7 +602,7 @@ public class IconUtil {
     return createImageIcon((Image)img);
   }
 
-  private static class ColorFilter extends RGBImageFilter {
+  private static final class ColorFilter extends RGBImageFilter {
     private final float[] myBase;
     private final boolean myKeepGray;
 
@@ -692,7 +694,7 @@ public class IconUtil {
 
   @NotNull
   public static Icon textToIcon(@NotNull final String text, @NotNull final Component component, final float fontSize) {
-    class MyIcon extends JBScalableIcon {
+    final class MyIcon extends JBScalableIcon {
       private @NotNull final String myText;
       private Font myFont;
       private FontMetrics myMetrics;

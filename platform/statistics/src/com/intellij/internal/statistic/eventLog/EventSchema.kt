@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.beans.MetricEvent
+import com.intellij.internal.statistic.eventLog.EventLogSystemEvents.SYSTEM_EVENTS
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension
 import com.intellij.internal.statistic.utils.PluginInfo
@@ -27,7 +28,9 @@ abstract class EventField<T> {
   infix fun with(data: T): EventPair<T> = EventPair(this, data)
 }
 
-data class EventPair<T>(val field: EventField<T>, val data: T)
+data class EventPair<T>(val field: EventField<T>, val data: T) {
+   internal fun addData(featureUsageData: FeatureUsageData) = field.addData(featureUsageData, data)
+}
 
 data class StringEventField(override val name: String): EventField<String?>() {
   var customRuleId: String? = null
@@ -147,20 +150,14 @@ abstract class ObjectDescription {
 }
 
 class ObjectEventData(private vararg val values: EventPair<*>) {
-  fun buildObjectData(allowedFields: Array<out EventField<*>>): HashMap<String, Any> {
-    val map = hashMapOf<String, Any>()
+  fun buildObjectData(allowedFields: Array<out EventField<*>>): Map<String, Any> {
+    val data = FeatureUsageData()
     for (eventPair in values) {
       val eventField = eventPair.field
       if (eventField !in allowedFields) throw IllegalArgumentException("Field ${eventField.name} is not in allowed object fields")
-      var data = eventPair.data
-      if (data is ObjectEventData && eventField is ObjectEventField) {
-        data = data.buildObjectData(eventField.fields)
-      }
-      if (data != null) {
-        map[eventField.name] = data
-      }
+      eventPair.addData(data)
     }
-    return map
+    return data.build()
   }
 }
 
@@ -328,9 +325,14 @@ class EventLogGroup(val id: String, val version: Int) {
   }
 
   internal fun validateEventId(eventId: String) {
-    if (registeredEventIds.isNotEmpty() && eventId !in registeredEventIds) {
+    if (!isEventIdValid(eventId)) {
       throw IllegalArgumentException("Trying to report unregistered event ID $eventId to group $id")
     }
+  }
+
+  private fun isEventIdValid(eventId: String): Boolean {
+    if (SYSTEM_EVENTS.contains(eventId)) return true
+    return registeredEventIds.isEmpty() || eventId in registeredEventIds
   }
 }
 

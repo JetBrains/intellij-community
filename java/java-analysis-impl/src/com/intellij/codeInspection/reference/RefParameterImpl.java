@@ -99,7 +99,7 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
     final RefJavaUtil refUtil = RefJavaUtil.getInstance();
     final UParameter parameter = getUastElement();
     if (parameter != null) {
-      List<UAnnotation> annotations = ((UAnnotated)parameter).getUAnnotations();
+      List<UAnnotation> annotations = parameter.getUAnnotations();
       refUtil.addReferencesTo(parameter, this, annotations.toArray(UElementKt.EMPTY_ARRAY));
       UTypeReferenceExpression typeReference = parameter.getTypeReference();
       refUtil.addReferencesTo(parameter, this, typeReference);

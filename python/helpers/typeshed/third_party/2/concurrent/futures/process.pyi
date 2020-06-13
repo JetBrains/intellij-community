@@ -4,7 +4,10 @@ import sys
 
 EXTRA_QUEUED_CALLS: Any
 
-if sys.version_info >= (3,):
+if sys.version_info >= (3, 7):
+    from ._base import BrokenExecutor
+    class BrokenProcessPool(BrokenExecutor): ...
+elif sys.version_info >= (3,):
     class BrokenProcessPool(RuntimeError): ...
 
 if sys.version_info >= (3, 7):

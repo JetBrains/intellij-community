@@ -1,26 +1,14 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.cache;
 
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.BitUtil;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 /**
  * Constants used in Java stubs; may differ from ones used in a .class file format.
@@ -43,10 +31,12 @@ public final class ModifierFlags {
   public static final int PACKAGE_LOCAL_MASK = 0x1000;
   public static final int OPEN_MASK = 0x2000;
   public static final int TRANSITIVE_MASK = 0x4000;
+  public static final int SEALED_MASK = 0x8000;
+  public static final int NON_SEALED_MASK = 0x10000;
 
-  public static final TObjectIntHashMap<String> NAME_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<>();
-  public static final TIntObjectHashMap<String> MODIFIER_FLAG_TO_NAME_MAP = new TIntObjectHashMap<>();
-  public static final TObjectIntHashMap<IElementType> KEYWORD_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<>();
+  public static final Object2IntMap<String> NAME_TO_MODIFIER_FLAG_MAP = new Object2IntOpenHashMap<>();
+  public static final Int2ObjectMap<String> MODIFIER_FLAG_TO_NAME_MAP = new Int2ObjectOpenHashMap<>();
+  public static final Object2IntMap<IElementType> KEYWORD_TO_MODIFIER_FLAG_MAP = new Object2IntOpenHashMap<>();
   static {
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.PUBLIC, PUBLIC_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.PRIVATE, PRIVATE_MASK);
@@ -63,9 +53,11 @@ public final class ModifierFlags {
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.PACKAGE_LOCAL, PACKAGE_LOCAL_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.OPEN, OPEN_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.TRANSITIVE, TRANSITIVE_MASK);
+    NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.SEALED, SEALED_MASK);
+    NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.NON_SEALED, NON_SEALED_MASK);
 
-    for (Object name : NAME_TO_MODIFIER_FLAG_MAP.keys()) {
-      MODIFIER_FLAG_TO_NAME_MAP.put(NAME_TO_MODIFIER_FLAG_MAP.get((String)name), (String)name);
+    for (Object name : NAME_TO_MODIFIER_FLAG_MAP.keySet()) {
+      MODIFIER_FLAG_TO_NAME_MAP.put(NAME_TO_MODIFIER_FLAG_MAP.getInt(name), (String)name);
     }
 
     KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.PUBLIC_KEYWORD, PUBLIC_MASK);
@@ -82,10 +74,12 @@ public final class ModifierFlags {
     KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.STRICTFP_KEYWORD, STRICTFP_MASK);
     KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.OPEN_KEYWORD, OPEN_MASK);
     KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.TRANSITIVE_KEYWORD, TRANSITIVE_MASK);
+    KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.SEALED_KEYWORD, SEALED_MASK);
+    KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.NON_SEALED_KEYWORD, NON_SEALED_MASK);
   }
 
   public static boolean hasModifierProperty(String name, int mask) {
-    int flag = NAME_TO_MODIFIER_FLAG_MAP.get(name);
+    int flag = NAME_TO_MODIFIER_FLAG_MAP.getInt(name);
     assert flag != 0 : name;
     return BitUtil.isSet(mask, flag);
   }

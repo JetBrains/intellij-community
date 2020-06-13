@@ -22,7 +22,7 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
 ) : DialogWrapper(commitEditingData.project, true) {
   private val originalHEAD = commitEditingData.repository.info.currentRevision
   private val commitEditor = createCommitEditor()
-  private var whenOk: (String) -> Unit = {}
+  private var onOk: (String) -> Unit = {}
 
   init {
     Disposer.register(disposable, commitEditor)
@@ -32,8 +32,8 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
     this.title = title
   }
 
-  fun show(whenOk: (newMessage: String) -> Unit) {
-    this.whenOk = whenOk
+  fun show(onOk: (newMessage: String) -> Unit) {
+    this.onOk = onOk
     show()
   }
 
@@ -87,6 +87,6 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
   override fun doOKAction() {
     super.doOKAction()
 
-    whenOk(commitEditor.comment)
+    onOk(commitEditor.comment)
   }
 }

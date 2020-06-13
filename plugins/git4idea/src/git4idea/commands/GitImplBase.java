@@ -136,6 +136,11 @@ public abstract class GitImplBase implements Git {
       GitExecutable executable = handler.getExecutable();
       try {
         version = GitExecutableManager.getInstance().identifyVersion(executable);
+
+        if (version.getType() == GitVersion.Type.WSL1 &&
+            !Registry.is("git.allow.wsl1.executables")) {
+          throw new GitNotInstalledException(GitBundle.message("executable.error.git.not.installed"), null);
+        }
       }
       catch (ProcessCanceledException e) {
         throw e;
@@ -333,7 +338,6 @@ public abstract class GitImplBase implements Git {
         && progressIndicator != null
         && !progressIndicator.getModalityState().dominates(ModalityState.NON_MODAL)) {
       GitExecutableProblemsNotifier.getInstance(project).notifyExecutionError(e);
-      if (e instanceof ProcessCanceledException) throw (ProcessCanceledException)e;
       throw new ProcessCanceledException(e);
     }
     else {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.modules;
 
 import com.intellij.openapi.module.Module;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class CircularModuleDependenciesDetector {
+public final class CircularModuleDependenciesDetector {
   @NotNull
   private static <T extends ModuleRootModel> Graph<T> createGraphGenerator(@NotNull Map<Module, T> models) {
     return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<T>() {

@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
@@ -269,7 +270,9 @@ public class FileUtilHeavyTest {
       Path dir = Files.createDirectory(fs.getPath("dir"));
       Path file1 = Files.createFile(fs.getPath("dir", "file1"));
       Path file2 = Files.createFile(fs.getPath("dir", "file2"));
-      assertThat(Files.list(dir)).containsExactlyInAnyOrder(file1, file2);
+      try (Stream<Path> stream = Files.list(dir)) {
+        assertThat(stream).containsExactlyInAnyOrder(file1, file2);
+      }
 
       FileUtil.delete(dir);
       assertThat(dir).doesNotExist();

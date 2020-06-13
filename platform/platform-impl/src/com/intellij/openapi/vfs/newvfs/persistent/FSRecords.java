@@ -14,6 +14,9 @@ import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
@@ -40,10 +43,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.*;
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -1008,13 +1009,14 @@ public final class FSRecords {
       ListResult toSave;
       // optimization: if the children were never changed after list(), do not check for duplicates again
       if (result.childrenWereChangedSinceLastList()) {
-        ListResult reloadedChildren = doLoadChildren(parentId);
-        toSave = childrenConvertor.apply(reloadedChildren);
+        children = doLoadChildren(parentId);
+        toSave = childrenConvertor.apply(children);
       }
       else {
         toSave = result;
       }
 
+      updateSymlinksForNewChildren(parentId, children, toSave);
       doSaveChildren(parentId, toSave);
       return toSave;
     }
@@ -1029,6 +1031,33 @@ public final class FSRecords {
     }
     finally {
       w.unlock();
+    }
+  }
+
+  private static void updateSymlinksForNewChildren(int parentId, @NotNull ListResult oldChildren, @NotNull ListResult newChildren) {
+    // find children which are added to the list and call updateSymlinkInfoForNewChild() on them (once)
+    ContainerUtil.processSortedListsInOrder(oldChildren.children, newChildren.children, Comparator.comparingInt(ChildInfo::getId), true,
+                                            (childInfo, isOldInfo) -> {
+                                              if (!isOldInfo) {
+                                                updateSymlinkInfoForNewChild(parentId, childInfo);
+                                              }
+                                            });
+  }
+
+  private static void updateSymlinkInfoForNewChild(int parentId, @NotNull ChildInfo info) {
+    FileAttributes attributes = info.getFileAttributes();
+    if (attributes != null && attributes.isSymLink()) {
+      int id = info.getId();
+      String symlinkTarget = info.getSymlinkTarget();
+      storeSymlinkTarget(id, symlinkTarget);
+      CharSequence name = info.getName();
+      LocalFileSystem fs = LocalFileSystem.getInstance();
+      if (fs instanceof LocalFileSystemImpl) {
+        VirtualFile parent = PersistentFS.getInstance().findFileById(parentId);
+        assert parent != null : parentId + '/' + id + ": " + name + " -> " + symlinkTarget;
+        String linkPath = parent.getPath() + '/' + name;
+        ((LocalFileSystemImpl)fs).symlinkUpdated(id, parent, linkPath, symlinkTarget);
+      }
     }
   }
 
@@ -1059,7 +1088,7 @@ public final class FSRecords {
   @NotNull
   static ListResult mergeByName(@NotNull ListResult existingList,
                                 @NotNull ListResult newList,
-                                @NotNull TObjectHashingStrategy<CharSequence> hashingStrategy) {
+                                @NotNull TObjectHashingStrategy<? super CharSequence> hashingStrategy) {
     List<? extends ChildInfo> newChildren = newList.children;
     List<? extends ChildInfo> oldChildren = existingList.children;
     if (oldChildren.isEmpty()) return newList;
@@ -1097,7 +1126,7 @@ public final class FSRecords {
           int nameId = newChild.getNameId();
           assert nameId > 0 : newList;
           ChildInfoImpl replaced = new ChildInfoImpl(oldDup.getId(), nameId, oldDup.getFileAttributes(), oldDup.getChildren(),
-                                                 oldDup.getSymLinkTarget());
+                                                 oldDup.getSymlinkTarget());
           result.set(dupI, replaced);
         }
         i++;
@@ -1117,7 +1146,7 @@ public final class FSRecords {
           int nameId = dup.getNameId();
           assert nameId > 0 : existingList;
           ChildInfoImpl replaced = new ChildInfoImpl(oldChild.getId(), nameId, dup.getFileAttributes(), dup.getChildren(),
-                                                 dup.getSymLinkTarget());
+                                                 dup.getSymlinkTarget());
           result.set(dupI, replaced);
         }
         j++;

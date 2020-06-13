@@ -3,8 +3,7 @@ package com.intellij.codeInsight.actions
 
 import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
-import com.intellij.codeInsight.actions.ReaderMode.READ_ONLY_FILES
-import com.intellij.codeInsight.actions.ReaderMode.UNMODIFIED_MODULE_FILES
+import com.intellij.codeInsight.actions.ReaderMode.*
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceManager
@@ -25,46 +24,32 @@ class ReaderModeConfigurable(val project: Project) : BoundSearchableConfigurable
   private val cdLigatures get() = CheckboxDescriptor(LangBundle.message("checkbox.ligatures"), settings::showLigatures)
   private val cdLineSpacing get() = CheckboxDescriptor(LangBundle.message("checkbox.line.spacing"), settings::increaseLineSpacing)
   private val cdWarnings get() = CheckboxDescriptor(LangBundle.message("checkbox.hide.warnings"), settings::hideWarnings)
-  private val cdEnabled get() = CheckboxDescriptor(LangBundle.message("checkbox.reader.mode.enabled"), settings::enabled)
+  private val cdEnabled get() = CheckboxDescriptor(LangBundle.message("checkbox.reader.mode.toggle"), settings::enabled)
 
   override fun createPanel(): DialogPanel {
     return panel {
       lateinit var enabled: CellBuilder<JBCheckBox>
       row {
-        enabled = checkBox(cdEnabled)
+        enabled = checkBox(cdEnabled).comment(LangBundle.message("checkbox.reader.mode.toggle.comment"))
       }
-      titledRow(LangBundle.message("titled.border.mode")) {
-        row {
-          radioButton(LangBundle.message("radio.reader.mode.readonly"),
-                      { return@radioButton settings.mode == READ_ONLY_FILES },
-                      { settings.mode = READ_ONLY_FILES })
-            .enableIf(enabled.selected)
-        }
-        row {
-          radioButton(LangBundle.message("radio.reader.unmodified.modules"),
-                      { return@radioButton settings.mode == UNMODIFIED_MODULE_FILES },
-                      { settings.mode = UNMODIFIED_MODULE_FILES })
-            .enableIf(enabled.selected)
-        }
-      }.enableIf(enabled.selected)
       titledRow(LangBundle.message("titled.border.reader.mode.settings")) {
+        row {
+          checkBox(cdRenderedDocs).enableIf(enabled.selected)
+        }
+        row {
+          checkBox(cdInlays).enableIf(enabled.selected)
+        }
         row {
           checkBox(cdBreadcrumbs).enableIf(enabled.selected)
         }
         row {
-          checkBox(cdRenderedDocs).enableIf(enabled.selected)
+          checkBox(cdWarnings).enableIf(enabled.selected)
         }
         row {
           checkBox(cdLigatures).enableIf(enabled.selected)
         }
         row {
           checkBox(cdLineSpacing).enableIf(enabled.selected)
-        }
-        row {
-          checkBox(cdInlays).enableIf(enabled.selected)
-        }
-        row {
-          checkBox(cdWarnings).enableIf(enabled.selected)
         }
       }.enableIf(enabled.selected)
     }
@@ -77,7 +62,7 @@ class ReaderModeConfigurable(val project: Project) : BoundSearchableConfigurable
 }
 
 enum class ReaderMode {
-  READ_ONLY_FILES, UNMODIFIED_MODULE_FILES
+  LIBRARIES, READ_ONLY, LIBRARIES_AND_READ_ONLY
 }
 
 @State(name = "ReaderModeSettings", storages = [Storage("editor.xml")])
@@ -99,7 +84,7 @@ class ReaderModeSettings : PersistentStateComponent<ReaderModeSettings.State> {
     var showInlayHints: Boolean = true,
     var hideWarnings: Boolean = true,
     var enabled: Boolean = false,
-    var mode: ReaderMode = READ_ONLY_FILES
+    var mode: ReaderMode = LIBRARIES_AND_READ_ONLY
   )
 
   var showBreadcrumbs: Boolean

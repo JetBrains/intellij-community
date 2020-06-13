@@ -10,7 +10,7 @@ import org.jetbrains.jps.model.serialization.JpsSerializationManager;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-public class JpsModelLoaderImpl implements JpsModelLoader {
+public final class JpsModelLoaderImpl implements JpsModelLoader {
   private static final Logger LOG = Logger.getInstance(JpsModelLoaderImpl.class);
   private final String myProjectPath;
   private final String myGlobalOptionsPath;

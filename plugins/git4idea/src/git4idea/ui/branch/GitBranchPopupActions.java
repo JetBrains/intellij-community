@@ -391,7 +391,7 @@ public class GitBranchPopupActions {
                                                              GitBundle.message("branches.rename.branch", currentBranchName),
                                                              currentBranchName,
                                                              false, false,
-                                                             false, GitBranchOperationType.RENAME).showAndGetOptions();
+                                                             false, false, GitBranchOperationType.RENAME).showAndGetOptions();
         if (options != null) {
           GitBrancher brancher = GitBrancher.getInstance(project);
           brancher.renameBranch(currentBranchName, options.getName(), repositories);

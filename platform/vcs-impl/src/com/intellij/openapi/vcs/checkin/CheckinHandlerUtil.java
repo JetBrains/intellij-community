@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class CheckinHandlerUtil {
+public final class CheckinHandlerUtil {
   public static List<VirtualFile> filterOutGeneratedAndExcludedFiles(@NotNull Collection<? extends VirtualFile> files, @NotNull Project project) {
     ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(project);
     List<VirtualFile> result = new ArrayList<>(files.size());

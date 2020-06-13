@@ -211,7 +211,12 @@ public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassH
   }
 
   public boolean satisfies(@NotNull PsiElement element, @NotNull ResolveState state) {
-    final String name = PsiUtilCore.getName(element);
+    String name = PsiUtilCore.getName(element);
+    if (element instanceof PsiMethod &&
+        ((PsiMethod)element).isConstructor() &&
+        myElement.getParent() instanceof PsiMethodReferenceExpression) {
+      name = PsiKeyword.NEW;
+    }
     if (name != null && StringUtil.isNotEmpty(name) && myMatcher.value(name)) {
       if (myFilter.isClassAcceptable(element.getClass()) && myFilter.isAcceptable(new CandidateInfo(element, state.get(PsiSubstitutor.KEY)), myElement)) {
         return true;

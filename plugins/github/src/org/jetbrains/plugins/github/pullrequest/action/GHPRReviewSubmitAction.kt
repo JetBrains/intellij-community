@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
@@ -20,30 +19,29 @@ import com.intellij.ui.EditorTextField
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.HorizontalBox
-import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JButtonAction
-import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.util.ui.*
 import icons.GithubIcons
+import net.miginfocom.layout.CC
+import net.miginfocom.layout.LC
+import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
+import org.jetbrains.plugins.github.ui.GHHtmlErrorPanel
+import org.jetbrains.plugins.github.ui.GHSimpleErrorPanelModel
 import org.jetbrains.plugins.github.ui.InlineIconButton
-import org.jetbrains.plugins.github.util.GithubUIUtil
+import org.jetbrains.plugins.github.util.errorOnEdt
 import org.jetbrains.plugins.github.util.successOnEdt
-import java.awt.Component
 import java.awt.FlowLayout
 import java.awt.Font
 import java.awt.event.ActionListener
 import javax.swing.*
-import javax.swing.border.Border
 
 class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.message("pull.request.review.submit.action.description")) {
 
   override fun update(e: AnActionEvent) {
-    val dataProvider = e.getData(GHPRActionKeys.ACTION_DATA_CONTEXT)?.pullRequestDataProvider
+    val dataProvider = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
     val reviewData = dataProvider?.reviewData
     val details = dataProvider?.detailsData?.loadedDetails
     e.presentation.isVisible = true
@@ -79,8 +77,7 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val dataContext = e.getRequiredData(GHPRActionKeys.ACTION_DATA_CONTEXT)
-    val dataProvider = dataContext.pullRequestDataProvider
+    val dataProvider = e.getRequiredData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
     val details = dataProvider.detailsData.loadedDetails ?: return
     val reviewDataProvider = dataProvider.reviewData
     val pendingReviewFuture = reviewDataProvider.loadPendingReview()
@@ -98,7 +95,8 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
       cancelRunnable?.invoke()
     }
 
-    val container = createPopupComponent(reviewDataProvider, dataContext.submitReviewCommentDocument, cancelActionListener, pendingReview,
+    val container = createPopupComponent(reviewDataProvider, reviewDataProvider.submitReviewCommentDocument,
+                                         cancelActionListener, pendingReview,
                                          details.viewerDidAuthor)
     val popup = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(container.component, container.preferredFocusableComponent)
@@ -120,6 +118,7 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
     return object : ComponentContainer {
 
       private val editor = createEditor(document)
+      private val errorModel = GHSimpleErrorPanelModel(GithubBundle.message("pull.request.review.submit.error"))
 
       private val approveButton = if (!viewerIsAuthor) JButton(GithubBundle.message("pull.request.review.submit.approve.button")).apply {
         addActionListener(createSubmitButtonActionListener(GHPullRequestReviewEvent.APPROVE))
@@ -152,6 +151,13 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
         }.successOnEdt {
           cancelActionListener.actionPerformed(e)
           runWriteAction { document.setText("") }
+        }.errorOnEdt {
+          errorModel.error = it
+          editor.isEnabled = true
+          approveButton?.isEnabled = true
+          rejectButton?.isEnabled = true
+          commentButton.isEnabled = true
+          discardButton?.isEnabled = true
         }
       }
 
@@ -173,13 +179,13 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
       }
 
       override fun getComponent(): JComponent {
-        val title = JLabel(GithubBundle.message("pull.request.review.submit.review")).apply {
+        val titleLabel = JLabel(GithubBundle.message("pull.request.review.submit.review")).apply {
           font = font.deriveFont(font.style or Font.BOLD)
         }
         val titlePanel = HorizontalBox().apply {
           border = JBUI.Borders.empty(4, 4, 4, 4)
 
-          add(title)
+          add(titleLabel)
           if (pendingReview != null) {
             val commentsCount = pendingReview.comments.totalCount!!
             add(Box.createRigidArea(JBDimension(5, 0)))
@@ -194,18 +200,31 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
           })
         }
 
+        val errorPanel = GHHtmlErrorPanel.create(errorModel, SwingConstants.LEFT).apply {
+          border = JBUI.Borders.empty(4)
+        }
+
         val buttonsPanel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)).apply {
-          border = JBUI.Borders.empty(8, 4, 4, 4)
+          border = JBUI.Borders.empty(4)
 
           if (!viewerIsAuthor) add(approveButton)
           if (!viewerIsAuthor) add(rejectButton)
           add(commentButton)
         }
 
-        return BorderLayoutPanel().andTransparent().withPreferredSize(300, 130)
-          .addToCenter(editor)
-          .addToTop(titlePanel)
-          .addToBottom(buttonsPanel)
+        return JPanel(MigLayout(LC().gridGap("0", "0")
+                                  .insets("0", "0", "0", "0")
+                                  .fill().flowY().noGrid())).apply {
+          isOpaque = false
+          preferredSize = JBDimension(450, 165)
+
+          add(titlePanel, CC().growX())
+          add(editor, CC().growX().growY()
+            .gap("0", "0", "0", "0"))
+          add(errorPanel, CC().minHeight("${UI.scale(32)}").growY().growPrioY(0).hideMode(3)
+            .gap("0", "0", "0", "0"))
+          add(buttonsPanel, CC().alignX("right"))
+        }
       }
 
       private fun createEditor(document: Document) = EditorTextField(document, null, FileTypes.PLAIN_TEXT).apply {
@@ -228,20 +247,10 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
     }
   }
 
-  override fun createButtonBorder(button: JButton): Border {
-    return JBUI.Borders.empty(0, if (UIUtil.isUnderDefaultMacTheme()) 6 else 4)
-  }
-
   override fun createButton(): JButton {
     return object : JButton() {
       override fun isDefaultButton(): Boolean {
         return getClientProperty(PROP_DEFAULT) as? Boolean ?: super.isDefaultButton()
-      }
-    }.also {
-      GithubUIUtil.overrideUIDependentProperty(it) {
-        border = object : DarculaButtonPainter() {
-          override fun getBorderInsets(c: Component) = JBUI.insets(0)
-        }
       }
     }
   }

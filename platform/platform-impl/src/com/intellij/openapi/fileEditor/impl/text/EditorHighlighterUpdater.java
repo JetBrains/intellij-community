@@ -1,6 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl.text;
 
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -69,6 +73,23 @@ public class EditorHighlighterUpdater {
         checkUpdateHighlighters(extension.key, true);
       }
     }, parentDisposable);
+
+    connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        if (pluginDescriptor.getPluginId() == null) return;
+        IdeaPluginDescriptor loadedPluginDescriptor = PluginManagerCore.getPlugin(pluginDescriptor.getPluginId());
+        if (loadedPluginDescriptor == null) return;
+        ClassLoader pluginClassLoader = loadedPluginDescriptor.getPluginClassLoader();
+        if (myFile != null && pluginClassLoader instanceof PluginClassLoader) {
+          FileType fileType = myFile.getFileType();
+          if (fileType.getClass().getClassLoader() == pluginClassLoader ||
+              (fileType instanceof LanguageFileType && ((LanguageFileType) fileType).getClass().getClassLoader() == pluginClassLoader)) {
+            myEditor.setHighlighter(createHighlighter(true));
+          }
+        }
+      }
+    });
   }
 
   private <T> void updateHighlightersOnExtensionsChange(@NotNull Disposable parentDisposable, @NotNull ExtensionPointName<KeyedLazyInstance<T>> epName) {
@@ -104,7 +125,7 @@ public class EditorHighlighterUpdater {
 
   public void updateHighlightersAsync() {
     ReadAction
-      .nonBlocking(() -> createHighlighter())
+      .nonBlocking(() -> createHighlighter(false))
       .expireWith(myProject)
       .expireWhen(() -> (myFile != null && !myFile.isValid()) || myEditor.isDisposed())
       .coalesceBy(EditorHighlighterUpdater.class, myEditor)
@@ -113,8 +134,8 @@ public class EditorHighlighterUpdater {
   }
 
   @NotNull
-  protected EditorHighlighter createHighlighter() {
-    EditorHighlighter highlighter = myFile != null
+  protected EditorHighlighter createHighlighter(boolean forceEmpty) {
+    EditorHighlighter highlighter = myFile != null && !forceEmpty
                                     ? EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myFile)
                                     : new EmptyEditorHighlighter(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(HighlighterColors.TEXT));
     highlighter.setText(myEditor.getDocument().getImmutableCharSequence());
@@ -133,7 +154,7 @@ public class EditorHighlighterUpdater {
 
   private void updateHighlightersSynchronously() {
     if (!myProject.isDisposed() && !myEditor.isDisposed()) {
-      myEditor.setHighlighter(createHighlighter());
+      myEditor.setHighlighter(createHighlighter(false));
     }
   }
 

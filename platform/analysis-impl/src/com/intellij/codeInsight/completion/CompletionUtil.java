@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.completion;
 
@@ -32,7 +32,7 @@ import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.List;
 
-public class CompletionUtil {
+public final class CompletionUtil {
 
   private static final CompletionData ourGenericCompletionData = new CompletionData() {
     {
@@ -111,7 +111,7 @@ public class CompletionUtil {
   @SuppressWarnings("unused") // used in Rider
   public static String findIdentifierPrefix(@NotNull Document document, int offset, ElementPattern<Character> idPart,
                                             ElementPattern<Character> idStart) {
-    final String text = document.getText();
+    final CharSequence text = document.getImmutableCharSequence();
     return findInText(offset, 0, idPart, idStart, text);
   }
 

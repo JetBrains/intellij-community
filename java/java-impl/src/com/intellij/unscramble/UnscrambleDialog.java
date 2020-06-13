@@ -41,9 +41,6 @@ import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.ar;
 
-/**
- * @author cdr
- */
 public class UnscrambleDialog extends DialogWrapper {
   @NonNls private static final String PROPERTY_LOG_FILE_HISTORY_URLS = "UNSCRAMBLE_LOG_FILE_URL";
   @NonNls private static final String PROPERTY_LOG_FILE_LAST_URL = "UNSCRAMBLE_LOG_FILE_LAST_URL";
@@ -137,7 +134,7 @@ public class UnscrambleDialog extends DialogWrapper {
     int index = 0;
     if (selectedUnscrambler != null) {
       for (int i = 0; i < count; i++) {
-        final UnscrambleSupport unscrambleSupport = (UnscrambleSupport)myUnscrambleChooser.getItemAt(i);
+        final UnscrambleSupport unscrambleSupport = myUnscrambleChooser.getItemAt(i);
         if (unscrambleSupport != null && Comparing.strEqual(unscrambleSupport.getPresentableName(), selectedUnscrambler.getPresentableName())) {
           index = i;
           break;

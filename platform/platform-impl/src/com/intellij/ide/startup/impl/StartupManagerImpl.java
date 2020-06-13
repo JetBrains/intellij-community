@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.impl.ProjectManagerExImplKt;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -40,7 +41,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -121,8 +121,9 @@ public class StartupManagerImpl extends StartupManagerEx {
     return postStartupActivitiesPassed == ALL_PASSED;
   }
 
-  public final @NotNull Future<?> projectOpened(@Nullable ProgressIndicator indicator) {
-    if (indicator != null && ApplicationManager.getApplication().isInternal()) {
+  public final void projectOpened(@Nullable ProgressIndicator indicator) {
+    Application app = ApplicationManager.getApplication();
+    if (indicator != null && app.isInternal()) {
       indicator.setText(IdeBundle.message("startup.indicator.text.running.startup.activities"));
     }
 
@@ -132,17 +133,24 @@ public class StartupManagerImpl extends StartupManagerEx {
       indicator.checkCanceled();
     }
 
-    Future<?> future = AppExecutorUtil.getAppExecutorService().submit(() -> {
-      if (myProject.isDisposed()) {
-        return;
-      }
-
-      BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, this::runPostStartupActivities);
-    });
-
     LoadingState phase = DumbService.isDumb(myProject) ? LoadingState.PROJECT_OPENED : LoadingState.INDEXING_FINISHED;
     StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, phase);
-    return future;
+
+    if (app.isUnitTestMode() && !app.isDispatchThread()) {
+      BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, this::runPostStartupActivities);
+    }
+    else {
+      AppExecutorUtil.getAppExecutorService().execute(() -> {
+        if (!myProject.isDisposed()) {
+          BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, this::runPostStartupActivities);
+        }
+      });
+
+      if (app.isUnitTestMode()) {
+        LOG.assertTrue(app.isDispatchThread());
+        ProjectManagerExImplKt.waitAndProcessInvocationEventsInIdeEventQueue(this);
+      }
+    }
   }
 
   private void runStartUpActivities(@Nullable ProgressIndicator indicator) {
@@ -234,21 +242,27 @@ public class StartupManagerImpl extends StartupManagerEx {
 
     if (!myProject.isDisposed() && !ApplicationManager.getApplication().isUnitTestMode()) {
       scheduleBackgroundPostStartupActivities();
+      //noinspection TestOnlyProblems
+      addActivityEpListener(myProject);
     }
+  }
 
+  @TestOnly
+  public static void addActivityEpListener(@NotNull Project project) {
     StartupActivity.POST_STARTUP_ACTIVITY.addExtensionPointListener(new ExtensionPointListener<StartupActivity>() {
       @Override
       public void extensionAdded(@NotNull StartupActivity extension, @NotNull PluginDescriptor pluginDescriptor) {
+        StartupManagerImpl startupManager = ((StartupManagerImpl)getInstance(project));
         if (DumbService.isDumbAware(extension)) {
-          runActivity(new AtomicBoolean(), extension, pluginDescriptor, ProgressIndicatorProvider.getGlobalProgressIndicator());
+          startupManager.runActivity(new AtomicBoolean(), extension, pluginDescriptor, ProgressIndicatorProvider.getGlobalProgressIndicator());
         }
         else {
-          DumbService.getInstance(myProject).unsafeRunWhenSmart(() -> {
-            runActivity(null, extension, pluginDescriptor, ProgressIndicatorProvider.getGlobalProgressIndicator());
+          DumbService.getInstance(project).unsafeRunWhenSmart(() -> {
+            startupManager.runActivity(null, extension, pluginDescriptor, ProgressIndicatorProvider.getGlobalProgressIndicator());
           });
         }
       }
-    }, myProject);
+    }, project);
   }
 
   private static void dumbUnawarePostActivitiesPassed(@NotNull AtomicReference<Activity> edtActivity, int count) {
@@ -410,32 +424,23 @@ public class StartupManagerImpl extends StartupManagerEx {
     catch (ProcessCanceledException e) {
       throw e;
     }
-    catch (Throwable ex) {
-      LOG.error(ex);
+    catch (Throwable e) {
+      LOG.error(e);
     }
   }
 
   @Override
   public void runWhenProjectIsInitialized(@NotNull Runnable action) {
-    checkNonDefaultProject();
-
-    GuiUtils.invokeLaterIfNeeded(() -> {
-      // in tests that simulate project opening, post-startup activities could have been run already
-      // then we should act as if the project was initialized
-      if (myStartupActivitiesPassed && (myProject.isOpen() || myProject.isDefault() || (postStartupActivityPassed() && ApplicationManager.getApplication().isUnitTestMode()))) {
-        action.run();
-        return;
-      }
-
+    if (DumbService.isDumbAware(action)) {
       runAfterOpened(() -> {
-        if (DumbService.isDumbAware(action)) {
-          runActivity(action);
-        }
-        else {
-          DumbService.getInstance(myProject).unsafeRunWhenSmart(action);
-        }
+        GuiUtils.invokeLaterIfNeeded(action, ModalityState.NON_MODAL, myProject.getDisposed());
       });
-    }, ModalityState.NON_MODAL, myProject.getDisposed());
+    }
+    else {
+      runAfterOpened(() -> {
+        DumbService.getInstance(myProject).unsafeRunWhenSmart(action);
+      });
+    }
   }
 
   @Override

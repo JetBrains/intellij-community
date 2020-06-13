@@ -85,7 +85,7 @@ class A {
     }
   }
 
-  private long getJavaStructureCount() { fixture.psiManager.modificationTracker.javaStructureModificationCount }
+  private long getJavaStructureCount() { fixture.psiManager.modificationTracker.modificationCount }
 
-  private long getOutOfCodeBlockCount() { fixture.psiManager.modificationTracker.outOfCodeBlockModificationCount }
+  private long getOutOfCodeBlockCount() { fixture.psiManager.modificationTracker.modificationCount }
 }

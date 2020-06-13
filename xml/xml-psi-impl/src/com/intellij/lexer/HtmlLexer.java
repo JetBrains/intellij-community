@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lexer;
 
 import com.intellij.lang.HtmlInlineScriptTokenTypesProvider;
@@ -9,28 +9,13 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Maxim.Mossienko
  */
 public class HtmlLexer extends BaseHtmlLexer {
-  private static final IElementType ourInlineStyleElementType;
-
   public static final String INLINE_STYLE_NAME = "css-ruleset-block";
-
-  static {
-    List<EmbeddedTokenTypesProvider> extensions = EmbeddedTokenTypesProvider.EXTENSION_POINT_NAME.getExtensionList();
-    IElementType inlineStyleElementType = null;
-    for (EmbeddedTokenTypesProvider extension : extensions) {
-      if (INLINE_STYLE_NAME.equals(extension.getName())) {
-        inlineStyleElementType = extension.getElementType();
-        break;
-      }
-    }
-    ourInlineStyleElementType = inlineStyleElementType;
-  }
 
   private IElementType myTokenType;
   private int myTokenStart;
@@ -46,6 +31,12 @@ public class HtmlLexer extends BaseHtmlLexer {
   public void advance() {
     myTokenType = null;
     super.advance();
+  }
+
+  private static @Nullable IElementType getInlineStyleElementType() {
+    EmbeddedTokenTypesProvider provider =
+      EmbeddedTokenTypesProvider.EXTENSION_POINT_NAME.findFirstSafe(p -> INLINE_STYLE_NAME.equals(p.getName()));
+    return provider != null ? provider.getElementType() : null;
   }
 
   @Override
@@ -64,10 +55,15 @@ public class HtmlLexer extends BaseHtmlLexer {
           IElementType currentStylesheetElementType = getCurrentStylesheetElementType();
           tokenType = currentStylesheetElementType == null ? XmlTokenType.XML_DATA_CHARACTERS : currentStylesheetElementType;
         }
-      } else if (ourInlineStyleElementType!=null && isStartOfEmbeddmentAttributeValue(tokenType) && hasSeenAttribute()) {
-        tokenType = ourInlineStyleElementType;
       }
-    } else if (hasSeenScript()) {
+      else if (isStartOfEmbeddmentAttributeValue(tokenType) && hasSeenAttribute()) {
+        IElementType styleElementType = getInlineStyleElementType();
+        if (styleElementType != null) {
+          tokenType = styleElementType;
+        }
+      }
+    }
+    else if (hasSeenScript()) {
       if (hasSeenTag() && isStartOfEmbeddmentTagContent(tokenType)) {
         Language scriptLanguage = getScriptLanguage();
         if (scriptLanguage == null || LanguageUtil.isInjectableLanguage(scriptLanguage)) {

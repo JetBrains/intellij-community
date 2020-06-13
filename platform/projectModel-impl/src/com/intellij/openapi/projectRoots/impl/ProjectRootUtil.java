@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProjectRootUtil {
+public final class ProjectRootUtil {
   private static final Logger LOG = Logger.getInstance(ProjectRootUtil.class);
 
   private ProjectRootUtil() {

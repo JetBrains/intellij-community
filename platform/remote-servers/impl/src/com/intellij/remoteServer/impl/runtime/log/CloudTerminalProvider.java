@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.impl.runtime.log;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -33,7 +33,7 @@ public abstract class CloudTerminalProvider {
 
   public abstract boolean isTtySupported();
 
-  private static class DummyInstanceHolder {
+  private static final class DummyInstanceHolder {
     static final CloudTerminalProvider INSTANCE = new ConsoleTerminalProvider();
   }
 }

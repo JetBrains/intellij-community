@@ -138,7 +138,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     mySaveQueue = new MavenMergingUpdateQueue("Maven save queue", SAVE_DELAY, !isUnitTestMode(), this);
     myProgressListener = ServiceManager.getService(myProject, SyncViewManager.class);
     MavenRehighlighter.install(project, this);
-    Disposer.register(project, this::projectClosed);
+    Disposer.register(this, this::projectClosed);
   }
 
   @Override
@@ -411,7 +411,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
     myWatcher = new MavenProjectsManagerWatcher(myProject, this, myProjectsTree, getGeneralSettings(), myReadingProcessor);
 
-    myImportingQueue = new MavenMergingUpdateQueue(getClass().getName() + ": Importing queue", IMPORT_DELAY, !isUnitTestMode(), myProject);
+    myImportingQueue = new MavenMergingUpdateQueue(getClass().getName() + ": Importing queue", IMPORT_DELAY, !isUnitTestMode(), this);
 
     myImportingQueue.makeUserAware(myProject);
     myImportingQueue.makeDumbAware(myProject);

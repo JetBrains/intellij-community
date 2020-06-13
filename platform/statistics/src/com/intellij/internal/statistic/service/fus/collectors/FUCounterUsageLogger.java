@@ -66,7 +66,7 @@ public class FUCounterUsageLogger {
   private static final String[] GENERAL_GROUPS = new String[]{
     "event.log", "performance", "ui.dialogs", "ui.settings",
     "toolwindow", "intentions", "run.configuration.exec",
-    "productivity", "completion.postfix", "notifications"
+    "productivity", "completion.postfix", "notifications", "settings.changes"
   };
 
   private static final Logger LOG = Logger.getInstance(FUCounterUsageLogger.class);
@@ -134,7 +134,10 @@ public class FUCounterUsageLogger {
       FeatureUsageLogger.INSTANCE.log(group, EventLogSystemEvents.COLLECTOR_REGISTERED);
     }
     for (FeatureUsagesCollector collector : instantiateCounterCollectors()) {
-      FeatureUsageLogger.INSTANCE.log(collector.getGroup(), EventLogSystemEvents.COLLECTOR_REGISTERED);
+      EventLogGroup group = collector.getGroup();
+      if (group != null) {
+        FeatureUsageLogger.INSTANCE.log(group, EventLogSystemEvents.COLLECTOR_REGISTERED);
+      }
     }
   }
 

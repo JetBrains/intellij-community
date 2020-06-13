@@ -8,45 +8,49 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
+import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.layout.*
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
-import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
-import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.ui.util.DialogValidationUtils
-import org.jetbrains.plugins.github.ui.util.Validator
+import org.jetbrains.plugins.github.i18n.GithubBundle.message
+import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.notBlank
 import org.jetbrains.plugins.github.util.completionOnEdt
 import org.jetbrains.plugins.github.util.errorOnEdt
 import org.jetbrains.plugins.github.util.submitIOTask
-import java.awt.event.ActionListener
 import java.util.concurrent.CompletableFuture
 import javax.swing.JTextField
 
-class GithubLoginPanel(executorFactory: GithubApiRequestExecutor.Factory,
-                       isAccountUnique: (name: String, server: GithubServerPath) -> Boolean,
-                       isDialogMode: Boolean = true) : Wrapper() {
-  private var clientName: String = GHSecurityUtil.DEFAULT_CLIENT_NAME
+internal typealias UniqueLoginPredicate = (login: String, server: GithubServerPath) -> Boolean
+
+internal fun GithubLoginPanel.setTokenUi() = setToken(null)
+internal fun GithubLoginPanel.setPasswordUi() = setCredentials(null, null, true)
+
+internal class GithubLoginPanel(
+  executorFactory: GithubApiRequestExecutor.Factory,
+  isAccountUnique: UniqueLoginPredicate
+) : Wrapper() {
+
   private val serverTextField = ExtendableTextField(GithubServerPath.DEFAULT_HOST, 0)
   private var tokenAcquisitionError: ValidationInfo? = null
 
   private lateinit var currentUi: GithubCredentialsUI
-  private var passwordUi = GithubCredentialsUI.PasswordUI(serverTextField, clientName, ::switchToTokenUI, executorFactory, isAccountUnique,
-                                                          isDialogMode)
-  private var tokenUi = GithubCredentialsUI.TokenUI(executorFactory, isAccountUnique, serverTextField, ::switchToPasswordUI, isDialogMode)
+  private var passwordUi = GithubCredentialsUI.PasswordUI(serverTextField, executorFactory, isAccountUnique)
+  private var tokenUi = GithubCredentialsUI.TokenUI(serverTextField, executorFactory, isAccountUnique)
 
   private val progressIcon = AnimatedIcon.Default()
   private val progressExtension = ExtendableTextComponent.Extension { progressIcon }
 
+  var footer: LayoutBuilder.() -> Unit
+    get() = tokenUi.footer
+    set(value) {
+      passwordUi.footer = value
+      tokenUi.footer = value
+      applyUi(currentUi)
+    }
+
   init {
     applyUi(passwordUi)
-  }
-
-  private fun switchToPasswordUI() {
-    applyUi(passwordUi)
-  }
-
-  private fun switchToTokenUI() {
-    applyUi(tokenUi)
   }
 
   private fun applyUi(ui: GithubCredentialsUI) {
@@ -56,40 +60,42 @@ class GithubLoginPanel(executorFactory: GithubApiRequestExecutor.Factory,
     tokenAcquisitionError = null
   }
 
-  fun getPreferredFocus() = currentUi.getPreferredFocus()
+  fun createSwitchUiLink(): LinkLabel<*> {
+    fun switchUiText(): String = if (currentUi == passwordUi) message("login.use.token") else message("login.use.credentials")
+    fun nextUi(): GithubCredentialsUI = if (currentUi == passwordUi) tokenUi else passwordUi
+
+    return LinkLabel<Any?>(switchUiText(), null) { link, _ ->
+      applyUi(nextUi())
+      link.text = switchUiText()
+    }
+  }
+
+  fun getPreferredFocus() =
+    serverTextField.takeIf { it.isEditable && it.text.isBlank() }
+    ?: currentUi.getPreferredFocus()
 
   fun doValidateAll(): List<ValidationInfo> {
-    return listOf(DialogValidationUtils.chain(
-      DialogValidationUtils.chain(
-        { DialogValidationUtils.notBlank(serverTextField, GithubBundle.message("credentials.server.cannot.be.empty")) },
-        serverPathValidator(serverTextField)),
-      currentUi.getValidator()),
-                  { tokenAcquisitionError })
-      .mapNotNull { it() }
+    val uiError =
+      notBlank(serverTextField, message("credentials.server.cannot.be.empty"))
+      ?: validateServerPath(serverTextField)
+      ?: currentUi.getValidator().invoke()
+
+    return listOfNotNull(uiError, tokenAcquisitionError)
   }
 
-  private fun serverPathValidator(textField: JTextField): Validator {
-    return {
-      val text = textField.text
-      try {
-        GithubServerPath.from(text)
-        null
-      }
-      catch (e: Exception) {
-        ValidationInfo(GithubBundle.message("credentials.server.path.invalid", text, e.message.orEmpty()), textField)
-      }
+  private fun validateServerPath(field: JTextField): ValidationInfo? =
+    try {
+      GithubServerPath.from(field.text)
+      null
     }
-  }
+    catch (e: Exception) {
+      ValidationInfo(message("credentials.server.path.invalid"), field)
+    }
 
   private fun setBusy(busy: Boolean) {
-    if (busy) {
-      if (!serverTextField.extensions.contains(progressExtension))
-        serverTextField.addExtension(progressExtension)
-    }
-    else {
-      serverTextField.removeExtension(progressExtension)
-    }
+    serverTextField.apply { if (busy) addExtension(progressExtension) else removeExtension(progressExtension) }
     serverTextField.isEnabled = !busy
+
     currentUi.setBusy(busy)
   }
 
@@ -100,26 +106,20 @@ class GithubLoginPanel(executorFactory: GithubApiRequestExecutor.Factory,
     val server = getServer()
     val executor = currentUi.createExecutor()
 
-    return service<ProgressManager>().submitIOTask(progressIndicator) {
-      currentUi.acquireLoginAndToken(server, executor, it)
-    }.completionOnEdt(progressIndicator.modalityState) {
-      setBusy(false)
-    }.errorOnEdt(progressIndicator.modalityState) {
-      tokenAcquisitionError = currentUi.handleAcquireError(it)
-    }
+    return service<ProgressManager>()
+      .submitIOTask(progressIndicator) { currentUi.acquireLoginAndToken(server, executor, it) }
+      .completionOnEdt(progressIndicator.modalityState) { setBusy(false) }
+      .errorOnEdt(progressIndicator.modalityState) { setError(it) }
   }
 
-  fun getServer(): GithubServerPath = GithubServerPath.from(
-    serverTextField.text.trim())
+  fun getServer(): GithubServerPath = GithubServerPath.from(serverTextField.text.trim())
 
-  fun setServer(path: String, editable: Boolean = true) {
-    serverTextField.apply {
-      text = path
-      isEditable = editable
-    }
+  fun setServer(path: String, editable: Boolean) {
+    serverTextField.text = path
+    serverTextField.isEditable = editable
   }
 
-  fun setCredentials(login: String? = null, password: String? = null, editableLogin: Boolean = true) {
+  fun setCredentials(login: String?, password: String?, editableLogin: Boolean) {
     if (login != null) {
       passwordUi.setLogin(login, editableLogin)
       tokenUi.setFixedLogin(if (editableLogin) null else login)
@@ -128,32 +128,12 @@ class GithubLoginPanel(executorFactory: GithubApiRequestExecutor.Factory,
     applyUi(passwordUi)
   }
 
-  fun setToken(token: String? = null) {
+  fun setToken(token: String?) {
     if (token != null) tokenUi.setToken(token)
     applyUi(tokenUi)
   }
 
   fun setError(exception: Throwable) {
     tokenAcquisitionError = currentUi.handleAcquireError(exception)
-  }
-
-  fun setLoginListener(listener: ActionListener) {
-    passwordUi.setLoginAction(listener)
-    tokenUi.setLoginAction(listener)
-  }
-
-  fun setCancelListener(listener: ActionListener) {
-    passwordUi.setCancelAction(listener)
-    tokenUi.setCancelAction(listener)
-  }
-
-  fun setLoginButtonVisible(visible: Boolean) {
-    passwordUi.setLoginButtonVisible(visible)
-    tokenUi.setLoginButtonVisible(visible)
-  }
-
-  fun setCancelButtonVisible(visible: Boolean) {
-    passwordUi.setCancelButtonVisible(visible)
-    tokenUi.setCancelButtonVisible(visible)
   }
 }

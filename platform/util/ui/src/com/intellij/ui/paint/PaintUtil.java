@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.paint;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,7 +28,7 @@ import static com.intellij.ui.scale.ScaleType.USR_SCALE;
  * @see ScaleType
  * @author tav
  */
-public class PaintUtil {
+public final class PaintUtil {
   /**
    * Defines which of the {@link Math} rounding method should be applied when converting to the device space.
    */

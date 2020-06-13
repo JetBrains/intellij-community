@@ -61,7 +61,7 @@ public class ProjectTemplateList extends JPanel {
           myTextLabel.setDisabledIcon(IconLoader.getDisabledIcon(icon));
         }
         myTextLabel.setEnabled(myList.isEnabled());
-        myTextLabel.setBorder(JBUI.Borders.empty(3, 3, 3, 3));
+        myTextLabel.setBorder(JBUI.Borders.empty(3));
       }
     };
     myList.setCellRenderer(renderer);
@@ -76,9 +76,9 @@ public class ProjectTemplateList extends JPanel {
     if (template != null) {
       String description = template.getDescription();
       if (StringUtil.isNotEmpty(description)) {
-        description = "<html><body><font " +
+        description = "<html><body><font " + //NON-NLS
                       (SystemInfo.isMac ? "" : "face=\"Verdana\" size=\"-1\"") + '>' + description +
-                      "</font></body></html>";
+                      "</font></body></html>"; //NON-NLS
         myDescriptionPane.setText(description);
       }
     }
@@ -130,7 +130,7 @@ public class ProjectTemplateList extends JPanel {
     });
   }
 
-  public JBList getList() {
+  public JBList<ProjectTemplate> getList() {
     return myList;
   }
 
@@ -144,9 +144,9 @@ public class ProjectTemplateList extends JPanel {
 
   @TestOnly
   boolean setSelectedTemplate(@NotNull String name) {
-    ListModel model1 = myList.getModel();
+    ListModel<ProjectTemplate> model1 = myList.getModel();
     for (int j = 0; j < model1.getSize(); j++) {
-      if (name.equals(((ProjectTemplate)model1.getElementAt(j)).getName())) {
+      if (name.equals(model1.getElementAt(j).getName())) {
         myList.setSelectedIndex(j);
         return true;
       }

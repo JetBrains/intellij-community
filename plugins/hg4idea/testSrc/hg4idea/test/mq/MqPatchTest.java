@@ -15,7 +15,6 @@
  */
 package hg4idea.test.mq;
 
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EmptyConsumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -72,7 +71,7 @@ public class MqPatchTest extends HgPlatformTest {
     myMqPatchDir = myHgRepository.getHgDir().findChild("patches");
   }
 
-  public void testMqPatchInfoAfterQImport() throws Exception {
+  public void testMqPatchInfoAfterQImport() {
     cd(myRepository);
     HgQImportCommand importCommand = new HgQImportCommand(myHgRepository);
     importCommand.executeInCurrentThread("tip");
@@ -101,9 +100,8 @@ public class MqPatchTest extends HgPlatformTest {
     return HgMqAdditionalPatchReader.readMqPatchInfo(myRepository, getFileByPatchName(patchName));
   }
 
-  private TimedVcsCommit getLastRevisionDetails() throws VcsException {
-    return (TimedVcsCommit)ContainerUtil.getFirstItem(HgHistoryUtil.readAllHashes(myProject, myRepository, EmptyConsumer.getInstance(),
-                                                                  Arrays.asList("-r", "tip")));
+  private TimedVcsCommit getLastRevisionDetails() {
+    return ContainerUtil.getFirstItem(HgHistoryUtil.readAllHashes(myProject, myRepository, EmptyConsumer.getInstance(), Arrays.asList("-r", "tip")));
   }
 
   private File getFileByPatchName(@NotNull String patchName) {

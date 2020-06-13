@@ -40,9 +40,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * @author cdr
- */
 public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   private final SmartPsiFileRange myReferencePointer;
 

@@ -34,14 +34,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class FunctionalExpressionCompletionProvider extends CompletionProvider<CompletionParameters> {
+public class FunctionalExpressionCompletionProvider {
   static final Key<Boolean> LAMBDA_ITEM = Key.create("LAMBDA_ITEM");
   static final Key<Boolean> METHOD_REF_ITEM = Key.create("METHOD_REF_ITEM");
 
@@ -54,13 +53,6 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
 
   static boolean isFunExprItem(LookupElement item) {
     return item.getUserData(LAMBDA_ITEM) != null || item.getUserData(METHOD_REF_ITEM) != null;
-  }
-
-  @Override
-  protected void addCompletions(@NotNull CompletionParameters parameters,
-                                @NotNull ProcessingContext context,
-                                @NotNull CompletionResultSet result) {
-    addFunctionalVariants(parameters, true, result.getPrefixMatcher(), result);
   }
 
   static void addFunctionalVariants(@NotNull CompletionParameters parameters, boolean addInheritors, PrefixMatcher matcher, Consumer<? super LookupElement> result) {

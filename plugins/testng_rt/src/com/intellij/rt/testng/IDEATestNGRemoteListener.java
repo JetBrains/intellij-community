@@ -387,26 +387,32 @@ public class IDEATestNGRemoteListener {
       return testNameFromAnnotation == null || testNameFromAnnotation.length() == 0 ? method.getMethodName() : testNameFromAnnotation;
     }
 
+    @Override
     public Object[] getParameters() {
       return myResult.getParameters();
     }
 
+    @Override
     public String getMethodName() {
       return myResult.getMethod().getMethodName();
     }
 
+    @Override
     public String getDisplayMethodName() {
       return myTestName;
     }
 
+    @Override
     public String getClassName() {
       return myResult.getMethod().getTestClass().getName();
     }
 
+    @Override
     public long getDuration() {
       return myResult.getEndMillis() - myResult.getStartMillis();
     }
 
+    @Override
     public List<String> getTestHierarchy() {
       final List<String> hierarchy;
       final XmlTest xmlTest = myResult.getTestClass().getXmlTest();
@@ -418,21 +424,25 @@ public class IDEATestNGRemoteListener {
       return hierarchy;
     }
 
+    @Override
     public String getFileName() {
       final XmlTest xmlTest = myResult.getTestClass().getXmlTest();
       return xmlTest != null ? xmlTest.getSuite().getFileName() : null;
     }
 
+    @Override
     public String getXmlTestName() {
       final XmlTest xmlTest = myResult.getTestClass().getXmlTest();
       return xmlTest != null ? xmlTest.getName() : null;
     }
 
 
+    @Override
     public Throwable getThrowable() {
       return myResult.getThrowable();
     }
 
+    @Override
     public List<Integer> getIncludeMethods() {
       IClass testClass = myResult.getTestClass();
       if (testClass == null) return null;

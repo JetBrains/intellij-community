@@ -5,13 +5,13 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_13;
 
 public class JavaTextBlockIndentGuidePerformanceTest extends LightDaemonAnalyzerTestCase {
   @NotNull
@@ -35,7 +35,7 @@ public class JavaTextBlockIndentGuidePerformanceTest extends LightDaemonAnalyzer
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_13;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_14;
   }
 
   private static String createCodeBlocks(int n, int nLines) {

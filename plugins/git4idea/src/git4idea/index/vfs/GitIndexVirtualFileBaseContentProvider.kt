@@ -18,10 +18,10 @@ class GitIndexVirtualFileBaseContentProvider(private val project: Project) : Vcs
   override fun getBaseRevision(file: VirtualFile): VcsBaseContentProvider.BaseContent? {
     val indexFile = file as? GitIndexVirtualFile ?: return null
 
-    val status = GitStageTracker.getInstance(project).status(indexFile)
-    if (status?.has(ContentVersion.HEAD) == false) return null
+    val status = GitStageTracker.getInstance(project).status(indexFile) ?: return null
+    if (!status.has(ContentVersion.HEAD)) return null
 
-    val headPath = status?.path(ContentVersion.HEAD) ?: indexFile.filePath()
+    val headPath = status.path(ContentVersion.HEAD)
     val currentRevisionNumber = currentRevisionNumber(indexFile.root) ?: return null
     return createBaseContent(project, GitContentRevision.createRevision(headPath, currentRevisionNumber, project))
   }

@@ -12,7 +12,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -320,11 +319,7 @@ public class CommonDataflow {
     if (expressionToAnalyze == null) return null;
     Object computed = ExpressionUtils.computeConstantExpression(expressionToAnalyze);
     if (computed != null) return computed;
-    DataflowResult dataflowResult = getDataflowResult(expressionToAnalyze);
-    if (dataflowResult != null) {
-      return ContainerUtil.getOnlyItem(dataflowResult.getExpressionValues(expressionToAnalyze));
-    }
-    return null;
+    return DfConstantType.getConstantOfType(getDfType(expressionToAnalyze), Object.class);
   }
 
   private static class CommonDataflowVisitor extends StandardInstructionVisitor {

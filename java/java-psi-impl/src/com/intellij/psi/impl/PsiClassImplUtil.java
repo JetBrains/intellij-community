@@ -34,7 +34,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -286,9 +289,9 @@ public class PsiClassImplUtil {
   }
 
   public static boolean isMainOrPremainMethod(@NotNull PsiMethod method) {
-    if (!PsiType.VOID.equals(method.getReturnType())) return false;
     String name = method.getName();
     if (!("main".equals(name) || "premain".equals(name) || "agentmain".equals(name))) return false;
+    if (!PsiType.VOID.equals(method.getReturnType())) return false;
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
     MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
@@ -1098,12 +1101,14 @@ public class PsiClassImplUtil {
     }
 
     FileIndexFacade fileIndex = ServiceManager.getService(file1.getProject(), FileIndexFacade.class);
+    FileIndexFacade fileIndex2 = ServiceManager.getService(file2.getProject(), FileIndexFacade.class);
     VirtualFile vfile1 = file1.getViewProvider().getVirtualFile();
     VirtualFile vfile2 = file2.getViewProvider().getVirtualFile();
     boolean lib1 = fileIndex.isInLibraryClasses(vfile1);
-    boolean lib2 = fileIndex.isInLibraryClasses(vfile2);
+    boolean lib2 = fileIndex2.isInLibraryClasses(vfile2);
 
-    return (fileIndex.isInSource(vfile1) || lib1) && (fileIndex.isInSource(vfile2) || lib2);
+    //if copy from another project, fileIndex of correct project should be requested
+    return (fileIndex.isInSource(vfile1) || lib1) && (fileIndex2.isInSource(vfile2) || lib2);
   }
 
   @NotNull

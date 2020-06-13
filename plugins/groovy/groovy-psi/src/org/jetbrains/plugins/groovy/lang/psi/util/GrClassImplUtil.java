@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,7 +48,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProc
 /**
  * @author Maxim.Medvedev
  */
-public class GrClassImplUtil {
+public final class GrClassImplUtil {
   private static final Logger LOG = Logger.getInstance(GrClassImplUtil.class);
 
   private GrClassImplUtil() {
@@ -126,7 +126,7 @@ public class GrClassImplUtil {
       List<PsiMethod> list = new ArrayList<>();
       getAllMethodsInner(grType, list, new HashSet<>());
       return CachedValueProvider.Result
-        .create(list.toArray(PsiMethod.EMPTY_ARRAY), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, grType);
+        .create(list.toArray(PsiMethod.EMPTY_ARRAY), PsiModificationTracker.MODIFICATION_COUNT, grType);
     });
   }
 
@@ -540,7 +540,7 @@ public class GrClassImplUtil {
   public static Set<MethodSignature> getDuplicatedSignatures(@NotNull PsiClass clazz) {
     return CachedValuesManager.getCachedValue(clazz, () -> {
       PsiElementFactory factory = JavaPsiFacade.getInstance(clazz.getProject()).getElementFactory();
-      MostlySingularMultiMap<MethodSignature, PsiMethod> signatures = MostlySingularMultiMap.newMap();
+      MostlySingularMultiMap<MethodSignature, PsiMethod> signatures = new MostlySingularMultiMap<>();
       for (PsiMethod method : clazz.getMethods()) {
         MethodSignature signature = method.getSignature(factory.createRawSubstitutor(method));
         signatures.add(signature, method);
@@ -559,7 +559,7 @@ public class GrClassImplUtil {
 
   public static GrAccessorMethod findSetter(GrField field) {
     return CachedValuesManager.getCachedValue(field, () -> CachedValueProvider.Result.create(
-      doGetSetter(field), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT
+      doGetSetter(field), PsiModificationTracker.MODIFICATION_COUNT
     ));
   }
 
@@ -578,7 +578,7 @@ public class GrClassImplUtil {
 
   public static GrAccessorMethod[] findGetters(GrField field) {
     return CachedValuesManager.getCachedValue(field, () -> CachedValueProvider.Result.create(
-      doGetGetters(field), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT
+      doGetGetters(field), PsiModificationTracker.MODIFICATION_COUNT
     ));
   }
 

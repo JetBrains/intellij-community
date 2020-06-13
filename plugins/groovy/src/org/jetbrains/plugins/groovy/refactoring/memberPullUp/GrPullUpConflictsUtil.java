@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.memberPullUp;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -31,7 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class GrPullUpConflictsUtil {
+public final class GrPullUpConflictsUtil {
   private GrPullUpConflictsUtil() {}
 
   public static MultiMap<PsiElement, String> checkConflicts(MemberInfoBase<? extends GrMember>[] infos,

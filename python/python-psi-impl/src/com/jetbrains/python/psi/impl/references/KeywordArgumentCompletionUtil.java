@@ -1,44 +1,23 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl.references;
 
-import static com.jetbrains.python.psi.PyUtil.as;
-
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.PyCallable;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyNamedParameter;
-import com.jetbrains.python.psi.PyParameter;
-import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.PyStarArgument;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
-import com.jetbrains.python.psi.PySubscriptionExpression;
-import com.jetbrains.python.psi.PyTypedElement;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyKeywordArgumentProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
-import com.jetbrains.python.psi.types.PyCallableParameter;
-import com.jetbrains.python.psi.types.PyCallableType;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeUtil;
-import com.jetbrains.python.psi.types.TypeEvalContext;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.*;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 public class KeywordArgumentCompletionUtil {
   public static void collectFunctionArgNames(PyElement element,
@@ -56,9 +35,14 @@ public class KeywordArgumentCompletionUtil {
             calleeType = context.getType(implicit);
           }
         }
+        Set<String> namedArgsAlready = StreamEx.of(callExpr.getArgumentList().getArguments())
+          .select(PyKeywordArgument.class)
+          .map(PyKeywordArgument::getKeyword)
+          .toSet();
         final List<LookupElement> extra = PyTypeUtil.toStream(calleeType)
           .select(PyCallableType.class)
           .flatMap(type -> collectParameterNamesFromType(type, callExpr, context).stream())
+          .filter(it -> !namedArgsAlready.contains(it))
           .map(name -> PyUtil.createNamedParameterLookup(name, element.getContainingFile(), addEquals))
           .toList();
 
@@ -75,7 +59,8 @@ public class KeywordArgumentCompletionUtil {
     if (type.isCallable()) {
       final List<PyCallableParameter> parameters = type.getParameters(context);
       if (parameters != null) {
-        for (PyCallableParameter parameter : parameters) {
+        int indexOfPySlashParameter = getIndexOfPySlashParameter(parameters);
+        for (PyCallableParameter parameter : parameters.subList(indexOfPySlashParameter + 1, parameters.size())) {
           if (parameter.isKeywordContainer() || parameter.isPositionalContainer()) {
             continue;
           }
@@ -102,6 +87,10 @@ public class KeywordArgumentCompletionUtil {
     return result.getElement();
   }
 
+  private static int getIndexOfPySlashParameter(@NotNull List<PyCallableParameter> parameters) {
+    return ContainerUtil.indexOf(parameters, parameter -> parameter.getParameter() instanceof PySlashParameter);
+  }
+
   private static void addKeywordArgumentVariantsForFunction(@NotNull final PyCallExpression callExpr,
                                                             @NotNull final PyFunction function,
                                                             @NotNull final List<String> ret,
@@ -114,8 +103,12 @@ public class KeywordArgumentCompletionUtil {
     boolean needSelf = function.getContainingClass() != null && function.getModifier() != PyFunction.Modifier.STATICMETHOD;
     final KwArgParameterCollector collector = new KwArgParameterCollector(needSelf, ret);
 
+    List<PyCallableParameter> parameters = function.getParameters(context);
+    int indexOfPySlashParameter = getIndexOfPySlashParameter(parameters);
+
     StreamEx
-      .of(function.getParameters(context))
+      .of(parameters)
+      .skip(indexOfPySlashParameter + 1)
       .map(PyCallableParameter::getParameter)
       .nonNull()
       .forEach(parameter -> parameter.accept(collector));

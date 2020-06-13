@@ -47,7 +47,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
@@ -68,21 +68,21 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.PathKt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeProjectLifecycleListener;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
 import java.io.IOException;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 import static com.intellij.testFramework.RunAll.runAll;
@@ -96,7 +96,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private static PsiManager ourPsiManager;
   private static boolean ourAssertionsInTestDetected;
   private static VirtualFile ourSourceRoot;
-  private static TestCase ourTestCase;
   private static LightProjectDescriptor ourProjectDescriptor;
   private static SdkLeakTracker myOldSdks;
 
@@ -134,11 +133,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       ourPsiManager = PsiManager.getInstance(getProject());
     }
     return ourPsiManager;
-  }
-
-  @NotNull
-  public static TestApplicationManager initApplication() {
-    return TestApplicationManager.getInstance();
   }
 
   public static TestApplicationManager getApplication() {
@@ -235,7 +229,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       Timings.getStatistics();
     }
 
-    TestApplicationManager testAppManager = initApplication();
+    TestApplicationManager testAppManager = TestApplicationManager.getInstance();
 
     EdtTestUtil.runInEdtAndWait(() -> {
       super.setUp();
@@ -261,23 +255,24 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return new SimpleLightProjectDescriptor(getModuleTypeId(), getProjectJDK());
   }
 
-  @NotNull
-  public static Pair.NonNull<Project, Module> doSetup(@NotNull LightProjectDescriptor descriptor,
-                                                      LocalInspectionTool @NotNull [] localInspectionTools,
-                                                      @NotNull Disposable parentDisposable) {
-    assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.", ourTestCase);
-    IdeaLogger.ourErrorsOccurred = null;
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  public static @NotNull Pair.NonNull<Project, Module> doSetup(@NotNull LightProjectDescriptor descriptor,
+                                                               LocalInspectionTool @NotNull [] localInspectionTools,
+                                                               @NotNull Disposable parentDisposable) {
+    Application app = ApplicationManager.getApplication();
+    Ref<Boolean> reusedProject = new Ref<>(true);
+    app.invokeAndWait(() -> {
+      IdeaLogger.ourErrorsOccurred = null;
+      app.assertIsDispatchThread();
 
-    myOldSdks = new SdkLeakTracker();
+      myOldSdks = new SdkLeakTracker();
 
-    boolean reusedProject = true;
-    if (ourProject == null || ourProjectDescriptor == null || !ourProjectDescriptor.equals(descriptor)) {
-      initProject(descriptor);
-      reusedProject = false;
-    }
+      if (ourProject == null || ourProjectDescriptor == null || !ourProjectDescriptor.equals(descriptor)) {
+        initProject(descriptor);
+        reusedProject.set(false);
+      }
 
-    descriptor.registerSdk(parentDisposable);
+      descriptor.registerSdk(parentDisposable);
+    });
 
     Project project = ourProject;
     try {
@@ -287,50 +282,57 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       setProject(null);
       throw e;
     }
-    if (reusedProject) {
-      // clear all caches, reindex
-      WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), false, true));
-    }
 
-    MessageBusConnection connection = project.getMessageBus().connect(parentDisposable);
-    connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
-      @Override
-      public void moduleAdded(@NotNull Project project, @NotNull Module module) {
-        fail("Adding modules is not permitted in light tests.");
+    Ref<Pair.NonNull<Project, Module>> result = new Ref<>();
+    app.invokeAndWait(() -> {
+      if (reusedProject.get()) {
+        // clear all caches, reindex
+        WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), false, true));
       }
+
+      MessageBusConnection connection = project.getMessageBus().connect(parentDisposable);
+      connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
+        @Override
+        public void moduleAdded(@NotNull Project project, @NotNull Module module) {
+          fail("Adding modules is not permitted in light tests.");
+        }
+      });
+
+      clearUncommittedDocuments(project);
+
+      InspectionsKt.configureInspections(localInspectionTools, project, parentDisposable);
+
+      assertFalse(PsiManager.getInstance(project).isDisposed());
+      Boolean passed = null;
+      try {
+        passed = StartupManagerEx.getInstanceEx(project).startupActivityPassed();
+      }
+      catch (Exception ignored) {
+      }
+
+      assertTrue("open: " + project.isOpen() +
+                 "; disposed:" + project.isDisposed() +
+                 "; startup passed:" + passed +
+                 "; all open projects: " + Arrays.asList(ProjectManager.getInstance().getOpenProjects()), project.isInitialized());
+
+      CodeStyle.setTemporarySettings(project, CodeStyle.createTestSettings());
+
+      FileDocumentManager manager = FileDocumentManager.getInstance();
+      if (manager instanceof FileDocumentManagerImpl) {
+        Document[] unsavedDocuments = manager.getUnsavedDocuments();
+        manager.saveAllDocuments();
+        app.runWriteAction(((FileDocumentManagerImpl)manager)::dropAllUnsavedDocuments);
+
+        assertEmpty("There are unsaved documents", Arrays.asList(unsavedDocuments));
+      }
+
+      // startup activities
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+
+      ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
+      result.set(Pair.createNonNull(project, ourModule));
     });
-
-    clearUncommittedDocuments(project);
-
-    InspectionsKt.configureInspections(localInspectionTools, project, parentDisposable);
-
-    assertFalse(PsiManager.getInstance(project).isDisposed());
-    Boolean passed = null;
-    try {
-      passed = StartupManagerEx.getInstanceEx(project).startupActivityPassed();
-    }
-    catch (Exception ignored) {
-
-    }
-    assertTrue("open: " + project.isOpen() +
-               "; disposed:" + project.isDisposed() +
-               "; startup passed:" + passed +
-               "; all open projects: " + Arrays.asList(ProjectManager.getInstance().getOpenProjects()), project.isInitialized());
-
-    CodeStyle.setTemporarySettings(project, CodeStyle.createTestSettings());
-
-    final FileDocumentManager manager = FileDocumentManager.getInstance();
-    if (manager instanceof FileDocumentManagerImpl) {
-      Document[] unsavedDocuments = manager.getUnsavedDocuments();
-      manager.saveAllDocuments();
-      ApplicationManager.getApplication().runWriteAction(((FileDocumentManagerImpl)manager)::dropAllUnsavedDocuments);
-
-      assertEmpty("There are unsaved documents", Arrays.asList(unsavedDocuments));
-    }
-    UIUtil.dispatchAllInvocationEvents(); // startup activities
-
-    ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
-    return Pair.createNonNull(project, ourModule);
+    return result.get();
   }
 
   protected void enableInspectionTools(InspectionProfileEntry @NotNull ... tools) {
@@ -372,7 +374,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       },
       () -> {
         if (project != null) {
-          doTearDown(project, null);
+          TestApplicationManagerKt.tearDownProjectAndApp(project);
         }
       },
       () -> {
@@ -408,15 +410,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         }
       }
     );
-  }
-
-  public static void doTearDown(@NotNull Project project, @Nullable TestApplicationManager testAppManager) {
-    try {
-      TestApplicationManagerKt.tearDownProjectAndApp(project, testAppManager);
-    }
-    finally {
-      ourTestCase = null;
-    }
   }
 
   static void checkAssertions() throws Exception {
@@ -646,14 +639,14 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       assertEquals(project, ourModule.getProject());
 
       @SuppressWarnings("ConstantConditions")
-      File ioFile = new File(project.getProjectFilePath());
-      if (ioFile.exists()) {
-        File dir = ioFile.getParentFile();
-        if (dir.getName().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
-          FileUtil.delete(dir);
+      Path ioFile = Paths.get(project.getProjectFilePath());
+      if (Files.exists(ioFile)) {
+        Path dir = ioFile.getParent();
+        if (dir.getFileName().toString().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
+          PathKt.delete(dir);
         }
         else {
-          FileUtil.delete(ioFile);
+          PathKt.delete(ioFile);
         }
       }
     }

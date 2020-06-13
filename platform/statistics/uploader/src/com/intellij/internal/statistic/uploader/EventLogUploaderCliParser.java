@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-public class EventLogUploaderCliParser {
+public final class EventLogUploaderCliParser {
 
   @NotNull
   public static Map<String, String> parseOptions(String[] args) {
@@ -30,6 +30,8 @@ public class EventLogUploaderCliParser {
   }
 
   private static boolean requireValue(String arg) {
-    return !EventLogUploaderOptions.INTERNAL_OPTION.equals(arg) && !EventLogUploaderOptions.TEST_OPTION.equals(arg);
+    return !EventLogUploaderOptions.INTERNAL_OPTION.equals(arg) &&
+           !EventLogUploaderOptions.TEST_OPTION.equals(arg) &&
+           !EventLogUploaderOptions.EAP_OPTION.equals(arg);
   }
 }

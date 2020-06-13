@@ -5,11 +5,13 @@ import com.intellij.ide.caches.CachesInvalidator;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -347,13 +349,17 @@ public class VcsProjectLog implements Disposable {
     }
   }
 
-  public static class InitLogStartupActivity implements StartupActivity {
+  static final class InitLogStartupActivity implements StartupActivity {
+    public InitLogStartupActivity() {
+      Application app = ApplicationManager.getApplication();
+      if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
+        throw ExtensionNotApplicableException.INSTANCE;
+      }
+    }
+
     @Override
     public void runActivity(@NotNull Project project) {
-      if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-
       VcsProjectLog projectLog = getInstance(project);
-
       projectLog.subscribeToMappingsAndPluginsChanges();
       projectLog.createLogInBackground(false);
     }
@@ -404,7 +410,6 @@ public class VcsProjectLog implements Disposable {
     void logCreated(@NotNull VcsLogManager manager);
 
     @CalledInAwt
-    default void logDisposed(@NotNull VcsLogManager manager) {
-    }
+    void logDisposed(@NotNull VcsLogManager manager);
   }
 }

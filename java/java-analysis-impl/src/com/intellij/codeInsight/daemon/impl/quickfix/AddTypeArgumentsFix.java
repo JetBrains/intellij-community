@@ -67,7 +67,7 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
   }
 
   @Nullable
-  public static PsiExpression addTypeArguments(PsiExpression expression, PsiType toType) {
+  public static PsiExpression addTypeArguments(@NotNull PsiExpression expression, @Nullable PsiType toType) {
     if (!PsiUtil.isLanguageLevel5OrHigher(expression)) return null;
 
     PsiExpression orig = expression;
@@ -113,10 +113,11 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
           if (methodExpression.getQualifierExpression() == null) {
             final PsiExpression qualifierExpression;
             final PsiClass containingClass = method.getContainingClass();
-            LOG.assertTrue(containingClass != null);
+            if (containingClass == null) return null; // not actual method but some copy in DummyHolder, ignore
             if (method.hasModifierProperty(PsiModifier.STATIC)) {
               qualifierExpression = factory.createReferenceExpression(containingClass);
-            } else {
+            }
+            else {
               qualifierExpression = RefactoringChangeUtil.createThisExpression(method.getManager(), null);
             }
             methodExpression.setQualifierExpression(qualifierExpression);

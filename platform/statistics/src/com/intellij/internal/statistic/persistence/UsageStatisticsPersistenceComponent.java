@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.persistence;
 
 import com.intellij.ide.ConsentOptionsProvider;
-import com.intellij.internal.statistic.configurable.SendPeriod;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -20,7 +19,6 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
 
   private boolean isAllowedForEAP = true;
   private boolean isShowNotification = true;
-  private @NotNull SendPeriod myPeriod = SendPeriod.DAILY;
 
   private static final String LAST_TIME_ATTR = "time";
   private static final String IS_ALLOWED_ATTR = "allowed";
@@ -82,15 +80,6 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
       element.setAttribute(IS_ALLOWED_EAP_ATTR, "false");
     }
     return element;
-  }
-
-  @NotNull
-  public SendPeriod getPeriod() {
-    return myPeriod;
-  }
-
-  public void setPeriod(@NotNull SendPeriod period) {
-    myPeriod = period;
   }
 
   public void setAllowed(boolean allowed) {

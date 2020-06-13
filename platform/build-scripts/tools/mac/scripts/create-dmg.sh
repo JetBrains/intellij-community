@@ -69,7 +69,7 @@ function usage() {
 	echo "  --no-internet-enable"
 	echo "      disable automatic mount&copy"
 	echo "  --format"
-	echo "      specify the final image format (default is UDZO)"
+	echo "      specify the final image format (default is ULFO)"
 	echo "  --add-file target_name file|folder x y"
 	echo "      add additional file or folder (can be used multiple times)"
 	echo "  --disk-image-size x"
@@ -93,7 +93,7 @@ WINW=500
 WINH=350
 ICON_SIZE=128
 TEXT_SIZE=16
-FORMAT="UDZO"
+FORMAT="ULFO"
 ADD_FILE_SOURCES=()
 ADD_FILE_TARGETS=()
 IMAGEKEY=""
@@ -189,6 +189,8 @@ while test "${1:0:1}" = "-"; do
 		IMAGEKEY="-imagekey zlib-level=9";;
 	UDBZ)
 		IMAGEKEY="-imagekey bzip2-level=9";;
+	ULFO)
+		IMAGEKEY="-imagekey lzfse-level=9";;
 	esac
 done
 

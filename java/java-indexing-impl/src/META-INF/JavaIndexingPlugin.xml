@@ -78,5 +78,6 @@
     <referencesSearch implementation="com.intellij.psi.impl.search.JavaRecordComponentSearcher"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.java.JavaBinaryPlusExpressionIndex"/>
     <indexingFlavor filetype="JAVA" implementationClass="com.intellij.index.JavaFileIndexingFlavor"/>
+    <indexingFlavor filetype="kotlin_builtins" implementationClass="com.intellij.index.KtBuiltInFileIndexingFlavorProvider"/>
   </extensions>
 </idea-plugin>

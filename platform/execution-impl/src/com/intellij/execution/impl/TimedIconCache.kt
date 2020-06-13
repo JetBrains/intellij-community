@@ -23,7 +23,6 @@ internal class TimedIconCache {
   private val idToInvalid = THashMap<String, Boolean>()
   private val iconCheckTimes = ObjectLongHashMap<String>()
   private val iconCalcTime = ObjectLongHashMap<String>()
-  private val idToSettings = THashMap<String, RunnerAndConfigurationSettings>()
 
   private val lock = ReentrantReadWriteLock()
 
@@ -32,28 +31,23 @@ internal class TimedIconCache {
       idToIcon.remove(id)
       iconCheckTimes.remove(id)
       iconCalcTime.remove(id)
-      idToSettings.remove(id)
     }
   }
 
-  fun get(id: String, settings: RunnerAndConfigurationSettings, project: Project): Icon {
+  fun get(id: String, settings: RunnerAndConfigurationSettings, project: Project, runManagerImpl: RunManagerImpl): Icon {
     return lock.read { idToIcon.get(id) } ?: lock.write {
       idToIcon.get(id)?.let {
         return it
       }
 
-      lock.write { 
-        idToSettings[id] = settings 
-      }
-
-      val icon = deferIcon(id, settings.configuration.icon, project.hashCode() xor settings.hashCode(), project)
+      val icon = deferIcon(id, settings.configuration.icon, project.hashCode() xor settings.hashCode(), project, runManagerImpl)
 
       set(id, icon)
       icon
     }
   }
 
-  private fun deferIcon(id: String, baseIcon: Icon?, hash: Int, project: Project): Icon {
+  private fun deferIcon(id: String, baseIcon: Icon?, hash: Int, project: Project, runManagerImpl: RunManagerImpl): Icon {
     return IconDeferrer.getInstance().deferAutoUpdatable(baseIcon, hash) {
       if (project.isDisposed) {
         return@deferAutoUpdatable null
@@ -65,7 +59,7 @@ internal class TimedIconCache {
 
       val startTime = System.currentTimeMillis()
       val iconToValid = try {
-        calcIcon(id, project)
+        calcIcon(id, baseIcon, runManagerImpl)
       }
       catch (e: ProcessCanceledException) {
         return@deferAutoUpdatable null
@@ -84,12 +78,12 @@ internal class TimedIconCache {
     return false
   }
 
-  private fun calcIcon(id: String, project: Project): Pair<Icon, Boolean> {
-    val settings = idToSettings[id]
-    if (settings == null) return AllIcons.Actions.Help to false
+  private fun calcIcon(id: String, baseIcon: Icon?, runManagerImpl: RunManagerImpl): Pair<Icon, Boolean> {
+    val settings = runManagerImpl.getConfigurationById(id)
+    if (settings == null) return (baseIcon ?: AllIcons.Actions.Help) to false
 
     try {
-      BackgroundTaskUtil.runUnderDisposeAwareIndicator(project, Runnable {
+      BackgroundTaskUtil.runUnderDisposeAwareIndicator(runManagerImpl.project, Runnable {
         settings.checkSettings()
       })
       return ProgramRunnerUtil.getConfigurationIcon(settings, false) to false
@@ -98,7 +92,7 @@ internal class TimedIconCache {
       return ProgramRunnerUtil.getConfigurationIcon(settings, false) to false
     }
     catch (ignored: RuntimeConfigurationException) {
-      val invalid = !DumbService.isDumb(project)
+      val invalid = !DumbService.isDumb(runManagerImpl.project)
       return ProgramRunnerUtil.getConfigurationIcon(settings, invalid) to invalid
     }
   }
@@ -113,7 +107,6 @@ internal class TimedIconCache {
       idToIcon.clear()
       iconCheckTimes.clear()
       iconCalcTime.clear()
-      idToSettings.clear()
     }
   }
 

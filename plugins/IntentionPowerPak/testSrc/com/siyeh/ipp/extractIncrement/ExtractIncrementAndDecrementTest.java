@@ -54,6 +54,6 @@ public class ExtractIncrementAndDecrementTest extends IPPTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_13;
+    return JAVA_14;
   }
 }

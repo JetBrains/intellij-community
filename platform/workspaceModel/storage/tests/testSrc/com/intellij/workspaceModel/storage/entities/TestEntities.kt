@@ -8,13 +8,16 @@ import com.intellij.workspaceModel.storage.impl.indices.VirtualFileUrlNullablePr
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileUrlProperty
 import com.intellij.workspaceModel.storage.impl.references.ManyToOne
 import com.intellij.workspaceModel.storage.impl.references.MutableManyToOne
-import com.intellij.workspaceModel.storage.impl.references.OneToMany
 
 internal data class SampleEntitySource(val name: String) : EntitySource
 
-internal object MySource : EntitySource
+internal object MySource : EntitySource {
+  override fun toString(): String = "MySource"
+}
 
-internal object AnotherSource : EntitySource
+internal object AnotherSource : EntitySource {
+  override fun toString(): String = "AnotherSource"
+}
 
 // ---------------------------------------
 
@@ -41,16 +44,14 @@ internal class ModifiableSampleEntity : ModifiableWorkspaceEntityBase<SampleEnti
   var stringProperty: String by EntityDataDelegation()
   var stringListProperty: List<String> by EntityDataDelegation()
   var fileProperty: VirtualFileUrl by EntityDataDelegation()
-
 }
 
-internal fun WorkspaceEntityStorageBuilder.addSampleEntity(stringProperty: String,
-                                                           source: EntitySource = SampleEntitySource("test"),
-                                                           booleanProperty: Boolean = false,
-                                                           stringListProperty: MutableList<String> = ArrayList(),
-                                                           virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl(),
-                                                           fileProperty: VirtualFileUrl = virtualFileManager.fromUrl(
-                                                          "file:///tmp")): SampleEntity {
+internal fun WorkspaceEntityStorageDiffBuilder.addSampleEntity(stringProperty: String,
+                                                               source: EntitySource = SampleEntitySource("test"),
+                                                               booleanProperty: Boolean = false,
+                                                               stringListProperty: MutableList<String> = ArrayList(),
+                                                               virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl(),
+                                                               fileProperty: VirtualFileUrl = virtualFileManager.fromUrl("file:///tmp")): SampleEntity {
   return addEntity(ModifiableSampleEntity::class.java, source) {
     this.booleanProperty = booleanProperty
     this.stringProperty = stringProperty
@@ -168,145 +169,6 @@ internal fun WorkspaceEntityStorageBuilder.addPersistentIdEntity(data: String,
     this.data = data
   }
 }
-
-internal class ChildEntityData : WorkspaceEntityData<ChildEntity>() {
-  lateinit var childProperty: String
-  var dataClass: DataClass? = null
-  override fun createEntity(snapshot: WorkspaceEntityStorage): ChildEntity {
-    return ChildEntity(childProperty, dataClass).also { addMetaData(it, snapshot) }
-  }
-}
-
-internal class ChildEntity(
-  val childProperty: String,
-  val dataClass: DataClass?
-) : WorkspaceEntityBase() {
-  val parent: ParentEntity by ManyToOne.NotNull(ParentEntity::class.java)
-}
-
-internal class NoDataChildEntityData : WorkspaceEntityData<NoDataChildEntity>() {
-  lateinit var childProperty: String
-  override fun createEntity(snapshot: WorkspaceEntityStorage): NoDataChildEntity {
-    return NoDataChildEntity(childProperty).also { addMetaData(it, snapshot) }
-  }
-}
-
-internal class NoDataChildEntity(
-  val childProperty: String
-) : WorkspaceEntityBase() {
-  val parent: ParentEntity by ManyToOne.NotNull(ParentEntity::class.java)
-}
-
-internal class ChildChildEntityData : WorkspaceEntityData<ChildChildEntity>() {
-  override fun createEntity(snapshot: WorkspaceEntityStorage): ChildChildEntity {
-    return ChildChildEntity().also { addMetaData(it, snapshot) }
-  }
-}
-
-internal class ChildChildEntity : WorkspaceEntityBase() {
-  val parent1: ParentEntity by ManyToOne.NotNull(ParentEntity::class.java)
-  val parent2: ChildEntity by ManyToOne.NotNull(ChildEntity::class.java)
-}
-
-internal class ParentEntityData : WorkspaceEntityData<ParentEntity>() {
-  lateinit var parentProperty: String
-  override fun createEntity(snapshot: WorkspaceEntityStorage): ParentEntity {
-    return ParentEntity(parentProperty).also { addMetaData(it, snapshot) }
-  }
-}
-
-internal class ParentEntity(
-  val parentProperty: String
-) : WorkspaceEntityBase() {
-
-  val children: Sequence<ChildEntity> by OneToMany(
-    ChildEntity::class.java, false)
-
-  val noDataChildren: Sequence<NoDataChildEntity> by OneToMany(
-    NoDataChildEntity::class.java, false)
-
-  val optionalChildren: Sequence<ChildWithOptionalParentEntity> by OneToMany(
-    ChildWithOptionalParentEntity::class.java, true)
-}
-
-internal data class DataClass(val stringProperty: String, val parent: EntityReference<ParentEntity>)
-
-internal class ChildWithOptionalParentEntityData : WorkspaceEntityData<ChildWithOptionalParentEntity>() {
-  lateinit var childProperty: String
-  override fun createEntity(snapshot: WorkspaceEntityStorage): ChildWithOptionalParentEntity {
-    return ChildWithOptionalParentEntity(childProperty).also { addMetaData(it, snapshot) }
-  }
-}
-
-internal class ChildWithOptionalParentEntity(
-  val childProperty: String
-) : WorkspaceEntityBase() {
-  val optionalParent: ParentEntity? by ManyToOne.Nullable(ParentEntity::class.java)
-}
-
-internal class ModifiableChildWithOptionalParentEntity : ModifiableWorkspaceEntityBase<ChildWithOptionalParentEntity>() {
-  var optionalParent: ParentEntity? by MutableManyToOne.Nullable(ChildWithOptionalParentEntity::class.java, ParentEntity::class.java)
-  var childProperty: String by EntityDataDelegation()
-}
-
-internal class ModifiableChildEntity : ModifiableWorkspaceEntityBase<ChildEntity>() {
-  var childProperty: String by EntityDataDelegation()
-  var dataClass: DataClass? by EntityDataDelegation()
-  var parent: ParentEntity by MutableManyToOne.NotNull(ChildEntity::class.java, ParentEntity::class.java)
-}
-
-internal class ModifiableNoDataChildEntity : ModifiableWorkspaceEntityBase<NoDataChildEntity>() {
-  var childProperty: String by EntityDataDelegation()
-  var parent: ParentEntity by MutableManyToOne.NotNull(NoDataChildEntity::class.java, ParentEntity::class.java)
-}
-
-internal class ModifiableChildChildEntity : ModifiableWorkspaceEntityBase<ChildChildEntity>() {
-  var parent1: ParentEntity by MutableManyToOne.NotNull(ChildChildEntity::class.java, ParentEntity::class.java)
-  var parent2: ChildEntity by MutableManyToOne.NotNull(ChildChildEntity::class.java, ChildEntity::class.java)
-}
-
-internal class ModifiableParentEntity : ModifiableWorkspaceEntityBase<ParentEntity>() {
-  var parentProperty: String by EntityDataDelegation()
-}
-
-internal fun WorkspaceEntityStorageBuilder.addParentEntity(parentProperty: String = "parent",
-                                                           source: EntitySource = SampleEntitySource("test")) =
-  addEntity(ModifiableParentEntity::class.java, source) {
-    this.parentProperty = parentProperty
-  }
-
-internal fun WorkspaceEntityStorageBuilder.addChildWithOptionalParentEntity(parentEntity: ParentEntity?,
-                                                                            childProperty: String = "child",
-                                                                            source: SampleEntitySource = SampleEntitySource("test")) =
-  addEntity(ModifiableChildWithOptionalParentEntity::class.java, source) {
-    this.optionalParent = parentEntity
-    this.childProperty = childProperty
-  }
-
-internal fun WorkspaceEntityStorageBuilder.addChildEntity(parentEntity: ParentEntity = addParentEntity(),
-                                                          childProperty: String = "child",
-                                                          dataClass: DataClass? = null,
-                                                          source: EntitySource = SampleEntitySource("test")) =
-  addEntity(ModifiableChildEntity::class.java, source) {
-    this.parent = parentEntity
-    this.childProperty = childProperty
-    this.dataClass = dataClass
-  }
-
-internal fun WorkspaceEntityStorageBuilder.addNoDataChildEntity(parentEntity: ParentEntity = addParentEntity(),
-                                                                childProperty: String = "child",
-                                                                source: SampleEntitySource = SampleEntitySource("test")) =
-  addEntity(ModifiableNoDataChildEntity::class.java, source) {
-    this.parent = parentEntity
-    this.childProperty = childProperty
-  }
-
-internal fun WorkspaceEntityStorageBuilder.addChildChildEntity(parent1: ParentEntity, parent2: ChildEntity) =
-  addEntity(ModifiableChildChildEntity::class.java, SampleEntitySource("test")) {
-    this.parent1 = parent1
-    this.parent2 = parent2
-  }
-
 
 internal class VFUEntityData : WorkspaceEntityData<VFUEntity>() {
   lateinit var data: String

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.base;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 import org.jetbrains.plugins.groovy.template.expressions.ParameterNameExpression;
 import org.jetbrains.plugins.groovy.template.expressions.StringParameterNameExpression;
 
-public class IntentionUtils {
+public final class IntentionUtils {
 
   private static final Logger LOG = Logger.getInstance(IntentionUtils.class);
 

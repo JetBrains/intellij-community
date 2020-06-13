@@ -22,14 +22,14 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import java.util.HashMap;
+import com.intellij.util.containers.Stack;
 import com.siyeh.ig.psiutils.SynchronizationUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Stack;
 
 class VariableAccessVisitor extends JavaRecursiveElementWalkingVisitor {
 
@@ -87,8 +87,9 @@ class VariableAccessVisitor extends JavaRecursiveElementWalkingVisitor {
       return;
     }
     if (m_inInitializer) {
+      return;
     }
-    else if (m_inSynchronizedContextCount > 0) {
+    if (m_inSynchronizedContextCount > 0) {
       m_synchronizedAccesses.add((PsiField)element);
     }
     else if (ref.getParent() instanceof PsiSynchronizedStatement) {
@@ -123,8 +124,9 @@ class VariableAccessVisitor extends JavaRecursiveElementWalkingVisitor {
       return;
     }
     if (m_inInitializer) {
+      return;
     }
-    else if (m_inSynchronizedContextCount > 0) {
+    if (m_inSynchronizedContextCount > 0) {
       m_synchronizedAccesses.add(field);
     }
     else {

@@ -17,7 +17,6 @@ package com.jetbrains.python.documentation.docstrings;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -32,10 +31,7 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class PyDocstringGenerator {
   public static final String TRIPLE_DOUBLE_QUOTES = "\"\"\"";
@@ -221,7 +217,7 @@ public class PyDocstringGenerator {
     if (myParametersPrepared) {
       return;
     }
-    final Set<Pair<String, Boolean>> withoutType = Sets.newHashSet();
+    final Set<Pair<String, Boolean>> withoutType = new HashSet<Pair<String, Boolean>>();
     final Map<Pair<String, Boolean>, String> paramTypes = Maps.newHashMap();
     for (DocstringParam param : myAddedParams) {
       if (param.getType() == null) {
@@ -241,7 +237,7 @@ public class PyDocstringGenerator {
     //}
     final DocStringFormat format = myDocStringFormat;
     final ArrayList<DocstringParam> filtered = new ArrayList<>();
-    final Set<Pair<String, Boolean>> processed = Sets.newHashSet();
+    final Set<Pair<String, Boolean>> processed = new HashSet<Pair<String, Boolean>>();
     for (DocstringParam param : myAddedParams) {
       final Pair<String, Boolean> paramCoordinates = Pair.create(param.getName(), param.isReturnValue());
       if (processed.contains(paramCoordinates)) {

@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.ui.tree.TreeUtil.EMPTY_TREE_PATH;
 
-public class TreePathUtil {
+public final class TreePathUtil {
   /**
    * @param parent    the parent path or {@code null} to indicate the root
    * @param component the last path component

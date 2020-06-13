@@ -28,19 +28,20 @@ import org.junit.runner.notification.RunListener;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /** @noinspection UnusedDeclaration*/
-public class JUnit4IdeaTestRunner implements IdeaTestRunner {
+public class JUnit4IdeaTestRunner implements IdeaTestRunner<Description> {
   private JUnit4TestListener myTestsListener;
-  private ArrayList myListeners;
+  private ArrayList<String> myListeners;
 
-  public void createListeners(ArrayList listeners, int count) {
+  @Override
+  public void createListeners(ArrayList<String> listeners, int count) {
     myListeners = listeners;
     myTestsListener = new JUnit4TestListener();
   }
 
+  @Override
   public int startRunnerWithArgs(String[] args, String name, int count, boolean sendTree) {
     try {
       final Request request = JUnit4TestRunnerUtil.buildRequest(args, name, sendTree);
@@ -54,15 +55,15 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
 
       if (sendTree) {
         do {
-          ((JUnit4TestListener)myTestsListener).sendTree(description);
+          myTestsListener.sendTree(description);
         }
         while (--count > 0);
       }
 
       final JUnitCore runner = new JUnitCore();
       runner.addListener(myTestsListener);
-      for (Iterator iterator = myListeners.iterator(); iterator.hasNext();) {
-        final IDEAJUnitListener junitListener = (IDEAJUnitListener)Class.forName((String)iterator.next()).newInstance();
+      for (String listener : myListeners) {
+        final IDEAJUnitListener junitListener = Class.forName(listener).asSubclass(IDEAJUnitListener.class).getConstructor().newInstance();
         runner.addListener(new MyCustomRunListenerWrapper(junitListener, description.getDisplayName()));
       }
       final Result result = runner.run(testRunner);
@@ -102,19 +103,18 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
     final String filterDescription = filter.describe();
     if (filterDescription != null) {
       boolean isMethodFilter = filterDescription.startsWith("Method");
-      if (isMethodFilter && canCompress(description)) return (Description)description.getChildren().get(0);
+      if (isMethodFilter && canCompress(description)) return description.getChildren().get(0);
       try {
         final Description failedTestsDescription = Description.createSuiteDescription(filterDescription, null);
         if (filterDescription.startsWith("Tests") || filterDescription.startsWith("Ignored")) {
-          for (Iterator iterator = description.getChildren().iterator(); iterator.hasNext(); ) {
-            final Description childDescription = (Description)iterator.next();
+          for (final Description childDescription : description.getChildren()) {
             if (filter.shouldRun(childDescription)) {
               failedTestsDescription.addChild(childDescription);
             }
           }
           description = failedTestsDescription;
         } else  if (isMethodFilter && canCompress(failedTestsDescription)) {
-          description = (Description)failedTestsDescription.getChildren().get(0);
+          description = failedTestsDescription.getChildren().get(0);
         }
       }
       catch (NoSuchMethodError e) {
@@ -137,16 +137,17 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
       field = ClassRequest.class.getDeclaredField("testClass");
     }
     field.setAccessible(true);
-    final Description methodDescription = Description.createSuiteDescription((Class)field.get(request));
-    for (Iterator iterator = description.getChildren().iterator(); iterator.hasNext();) {
-      methodDescription.addChild((Description)iterator.next());
+    final Description methodDescription = Description.createSuiteDescription((Class<?>)field.get(request));
+    for (Description value : description.getChildren()) {
+      methodDescription.addChild(value);
     }
     description = methodDescription;
     return description;
   }
 
 
-  public Object getTestToStart(String[] args, String name) {
+  @Override
+  public Description getTestToStart(String[] args, String name) {
     final Request request = JUnit4TestRunnerUtil.buildRequest(args, name, false);
     if (request == null) return null;
     final Runner testRunner = request.getRunner();
@@ -161,18 +162,20 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
     }
   }
 
-  public List getChildTests(Object description) {
-    return ((Description)description).getChildren();
+  @Override
+  public List<Description> getChildTests(Description description) {
+    return description.getChildren();
   }
 
-  public String getTestClassName(Object child) {
-    return ((Description)child).getClassName();
+  @Override
+  public String getTestClassName(Description child) {
+    return child.getClassName();
   }
 
-  public String getStartDescription(Object child) {
-    final Description description = (Description)child;
-    final String methodName = description.getMethodName();
-    return methodName != null ? description.getClassName() + "," + methodName : description.getClassName();
+  @Override
+  public String getStartDescription(Description child) {
+    final String methodName = child.getMethodName();
+    return methodName != null ? child.getClassName() + "," + methodName : child.getClassName();
   }
 
   private static class MyCustomRunListenerWrapper extends RunListener {
@@ -185,24 +188,29 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
       myDisplayName = displayName;
     }
 
-    public void testStarted(Description description) throws Exception {
+    @Override
+    public void testStarted(Description description) {
       mySuccess = true;
       myJunitListener.testStarted(JUnit4ReflectionUtil.getClassName(description), JUnit4ReflectionUtil.getMethodName(description));
     }
 
-    public void testFailure(Failure failure) throws Exception {
+    @Override
+    public void testFailure(Failure failure) {
       mySuccess = ComparisonFailureData.isAssertionError(failure.getException().getClass());
     }
 
+    @Override
     public void testAssumptionFailure(Failure failure) {
       mySuccess = false;
     }
 
-    public void testIgnored(Description description) throws Exception {
+    @Override
+    public void testIgnored(Description description) {
       mySuccess = false;
     }
 
-    public void testFinished(Description description) throws Exception {
+    @Override
+    public void testFinished(Description description) {
       final String className = JUnit4ReflectionUtil.getClassName(description);
       final String methodName = JUnit4ReflectionUtil.getMethodName(description);
       if (myJunitListener instanceof IDEAJUnitListenerEx) {
@@ -212,13 +220,15 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
       }
     }
 
-    public void testRunStarted(Description description) throws Exception {
+    @Override
+    public void testRunStarted(Description description) {
       if (myJunitListener instanceof IDEAJUnitListenerEx) {
         ((IDEAJUnitListenerEx)myJunitListener).testRunStarted(description.getDisplayName());
       }
     }
 
-    public void testRunFinished(Result result) throws Exception {
+    @Override
+    public void testRunFinished(Result result) {
       if (myJunitListener instanceof IDEAJUnitListenerEx) {
         ((IDEAJUnitListenerEx)myJunitListener).testRunFinished(myDisplayName);
       }

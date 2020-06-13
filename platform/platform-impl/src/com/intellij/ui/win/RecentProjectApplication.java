@@ -2,8 +2,9 @@
 package com.intellij.ui.win;
 
 import com.intellij.ide.CliResult;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.application.ApplicationStarterBase;
-import com.intellij.platform.PlatformProjectOpenProcessor;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +26,7 @@ final class RecentProjectApplication extends ApplicationStarterBase {
   @NotNull
   @Override
   protected Future<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) {
-    PlatformProjectOpenProcessor.openExistingProject(Paths.get(args.get(1)).normalize());
+    ProjectManagerEx.getInstanceEx().openProject(Paths.get(args.get(1)).normalize(), new OpenProjectTask());
     return CompletableFuture.completedFuture(CliResult.OK);
   }
 }

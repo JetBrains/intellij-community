@@ -34,7 +34,8 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import java.util.*;
 
 /**
- * @author dsl
+ * This class isn't used in the new implementation of project model, which is based on {@link com.intellij.workspaceModel.ide Workspace Model}.
+ * It shouldn't be used directly, its interface {@link ModuleRootModel} should be used instead.
  */
 @ApiStatus.Internal
 public class RootModelImpl extends RootModelBase implements ModifiableRootModel {

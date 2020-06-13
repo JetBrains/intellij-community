@@ -28,7 +28,7 @@ import java.util.function.Consumer;
 
 import static com.intellij.openapi.util.Pair.pair;
 
-public class VfsImplUtil {
+public final class VfsImplUtil {
   private static final Logger LOG = Logger.getInstance(VfsImplUtil.class);
 
   private static final String FILE_SEPARATORS = "/" + (File.separatorChar == '/' ? "" : File.separator);
@@ -167,7 +167,7 @@ public class VfsImplUtil {
    * <code>
    *  FileDocumentManager.getInstance().saveDocument(document);
    *  runExternalToolToChangeFile(virtualFile.getPath()) // changes file externally in milliseconds, probably without changing file's length
-   *  VfsUtil.markDirtyAndRefresh(true, true, true, virtualFile); // might be replace with {@link #forceSyncRefresh(VirtualFile)}
+   *  VfsUtil.markDirtyAndRefresh(true, true, true, virtualFile); // might be replaced with {@link #forceSyncRefresh(VirtualFile)}
    * </code>
    */
   public static void forceSyncRefresh(@NotNull VirtualFile file) {
@@ -236,20 +236,9 @@ public class VfsImplUtil {
           for (VFileEvent event : events) {
             if (!(event.getFileSystem() instanceof LocalFileSystem)) continue;
 
-            if (event instanceof VFileCreateEvent) continue;  // new files don't affect existing handlers (and getFile() is costly)
-
-            if (event instanceof VFilePropertyChangeEvent &&
-                !VirtualFile.PROP_NAME.equals(((VFilePropertyChangeEvent)event).getPropertyName())) {
-              continue;
-            }
+            if (!(event instanceof VFileContentChangeEvent)) continue;
 
             String path = event.getPath();
-            if (event instanceof VFilePropertyChangeEvent) {
-              path = ((VFilePropertyChangeEvent)event).getOldPath();
-            }
-            else if (event instanceof VFileMoveEvent) {
-              path = ((VFileMoveEvent)event).getOldPath();
-            }
 
             VirtualFile file = event.getFile();
             if (file == null || !file.isDirectory()) {
@@ -329,5 +318,64 @@ public class VfsImplUtil {
       InvalidationState state = invalidate(null, localPath);
       if (state == null) throw new IllegalArgumentException(localPath + " not in " + ourHandlerCache.keySet());
     }
+  }
+
+  /**
+   * check whether {@code event} (in LocalFileSystem) affects some jars and if so, generate appropriate additional JarFileSystem-events and corresponding after-event-actions.
+   * For example, "delete/change/move '/tmp/x.jar'" event should generate "delete jar:///tmp/x.jar!/" events.
+   */
+  @NotNull
+  public static List<VFileDeleteEvent> getJarInvalidationEvents(@NotNull VFileEvent event, @NotNull List<? super Runnable> outApplyActions) {
+    if (!(event instanceof VFileDeleteEvent ||
+          event instanceof VFileMoveEvent ||
+          event instanceof VFilePropertyChangeEvent && VirtualFile.PROP_NAME.equals(((VFilePropertyChangeEvent)event).getPropertyName()))) {
+      return Collections.emptyList();
+    }
+    String path;
+    if (event instanceof VFilePropertyChangeEvent) {
+      path = ((VFilePropertyChangeEvent)event).getOldPath();
+    }
+    else if (event instanceof VFileMoveEvent) {
+      path = ((VFileMoveEvent)event).getOldPath();
+    }
+    else {
+      path = event.getPath();
+    }
+
+    VirtualFile file = event.getFile();
+    if (file == null) {
+      return Collections.emptyList();
+    }
+    Collection<String> jarPaths = ourDominatorsMap.get(path);
+    if (jarPaths == null) {
+      jarPaths = Collections.singletonList(path);
+    }
+    List<VFileDeleteEvent> events = new ArrayList<>(jarPaths.size());
+    for (String jarPath : jarPaths) {
+      Pair<ArchiveFileSystem, ArchiveHandler> handlerPair = ourHandlerCache.get(jarPath);
+      if (handlerPair == null) {
+        continue;
+      }
+      ArchiveFileSystem fileSystem = handlerPair.first;
+      NewVirtualFile root = ManagingFS.getInstance().findRoot(fileSystem.composeRootPath(jarPath), fileSystem);
+      if (root != null) {
+        VFileDeleteEvent jarDeleteEvent = new VFileDeleteEvent(event.getRequestor(), root, event.isFromRefresh());
+        Runnable runnable = () -> {
+          Pair<ArchiveFileSystem, ArchiveHandler> pair = ourHandlerCache.remove(jarPath);
+          if (pair != null) {
+            pair.second.dispose();
+            forEachDirectoryComponent(jarPath, containingDirectoryPath -> {
+              Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);
+              if (handlers != null && handlers.remove(jarPath) && handlers.isEmpty()) {
+                ourDominatorsMap.remove(containingDirectoryPath);
+              }
+            });
+          }
+        };
+        events.add(jarDeleteEvent);
+        outApplyActions.add(runnable);
+      }
+    }
+    return events;
   }
 }

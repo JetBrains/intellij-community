@@ -89,6 +89,11 @@ class CommunityRepositoryModules {
     plugin("intellij.laf.macos") {
       bundlingRestrictions.supportedOs = [OsFamily.MACOS]
     },
+    plugin("intellij.webp"){
+      withResource("lib/libwebp/linux", "lib/libwebp/linux")
+      withResource("lib/libwebp/mac", "lib/libwebp/mac")
+      withResource("lib/libwebp/win", "lib/libwebp/win")
+    },
     plugin("intellij.laf.win10") {
       bundlingRestrictions.supportedOs = [OsFamily.WINDOWS]
     },
@@ -361,10 +366,6 @@ class CommunityRepositoryModules {
       withResourceFromModule("intellij.android.core", "lib/sampleData", "lib/sampleData")
       withResourceArchive("../android/annotations", "lib/androidAnnotations.jar")
 
-      withResourceFromModule("intellij.android.adt.ui", "lib/libwebp/linux", "lib/libwebp/linux")
-      withResourceFromModule("intellij.android.adt.ui", "lib/libwebp/mac", "lib/libwebp/mac")
-      withResourceFromModule("intellij.android.adt.ui", "lib/libwebp/win", "lib/libwebp/win")
-
       // here go some differences from original Android Studio layout
       def getSingleFile = { BuildContext context, String projectLibName ->
         List<File> libFiles = context.project.libraryCollection
@@ -423,9 +424,7 @@ class CommunityRepositoryModules {
       withModule("intellij.javaFX", mainJarName)
       withModule("intellij.javaFX.jps")
       withModule("intellij.javaFX.common")
-      //todo[nik] move to module libraries
       withModule("intellij.javaFX.sceneBuilder", "rt/sceneBuilderBridge.jar")
-      withProjectLibrary("SceneBuilderKit", "rt/java8")
     }
   }
 

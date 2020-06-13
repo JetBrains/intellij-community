@@ -468,9 +468,11 @@ public final class SearchUtil {
       return;
     }
     if (filter == null || filter.length() == 0) {
+      textRenderer.setDynamicSearchMatchHighlighting(false);
       textRenderer.append(text, new SimpleTextAttributes(background, foreground, JBColor.RED, style));
     }
     else {
+      textRenderer.setDynamicSearchMatchHighlighting(true);
       //markup
       ObjectOpenHashSet<String> quoted = new ObjectOpenHashSet<>();
       filter = processFilter(quoteStrictOccurrences(text, filter), quoted);

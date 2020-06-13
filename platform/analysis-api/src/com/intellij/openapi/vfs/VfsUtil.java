@@ -345,8 +345,13 @@ public final class VfsUtil extends VfsUtilCore {
   }
 
   public static @Nullable VirtualFile createDirectoryIfMissing(@NotNull String directoryPath) throws IOException {
+    return createDirectoryIfMissing(LocalFileSystem.getInstance(), directoryPath);
+  }
+
+  public static @Nullable VirtualFile createDirectoryIfMissing(@NotNull VirtualFileSystem fileSystem,
+                                                               @NotNull String directoryPath) throws IOException {
     String path = FileUtil.toSystemIndependentName(directoryPath);
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+    VirtualFile file = fileSystem.refreshAndFindFileByPath(path);
     if (file != null) {
       return file;
     }
@@ -356,7 +361,7 @@ public final class VfsUtil extends VfsUtilCore {
       return null;
     }
 
-    VirtualFile parent = createDirectoryIfMissing(path.substring(0, pos));
+    VirtualFile parent = createDirectoryIfMissing(fileSystem, path.substring(0, pos));
     if (parent == null) {
       return null;
     }
@@ -366,7 +371,7 @@ public final class VfsUtil extends VfsUtilCore {
     if (child != null && child.isDirectory()) {
       return child;
     }
-    return parent.createChildDirectory(LocalFileSystem.getInstance(), dirName);
+    return parent.createChildDirectory(fileSystem, dirName);
   }
 
   public static @NotNull List<VirtualFile> collectChildrenRecursively(@NotNull VirtualFile root) {
@@ -404,7 +409,7 @@ public final class VfsUtil extends VfsUtilCore {
   }
 
   public static @Nullable VirtualFile getUserHomeDir() {
-    final String path = SystemProperties.getUserHome();
+    String path = SystemProperties.getUserHome();
     return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path));
   }
 

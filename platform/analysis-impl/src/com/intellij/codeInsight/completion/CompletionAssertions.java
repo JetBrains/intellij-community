@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * @author peter
  */
-class CompletionAssertions {
+final class CompletionAssertions {
 
   static void assertCommitSuccessful(Editor editor, PsiFile psiFile) {
     Document document = editor.getDocument();

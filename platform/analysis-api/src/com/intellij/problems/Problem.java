@@ -19,9 +19,6 @@ package com.intellij.problems;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
- */
 public interface Problem {
   @NotNull
   VirtualFile getVirtualFile();

@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ProjectModelElement
@@ -18,6 +19,10 @@ import kotlin.reflect.KProperty
 
 val EMPTY_STATE: ExternalStateComponent = ExternalStateComponent()
 
+/**
+ * This class isn't used in the new implementation of project model, which is based on [Workspace Model][com.intellij.workspaceModel.ide].
+ * It shouldn't be used directly, its interface [ExternalSystemModulePropertyManager] should be used instead.
+ */
 @Suppress("DEPRECATION")
 @State(name = "ExternalSystem")
 class ExternalSystemModulePropertyManagerImpl(private val module: Module) : ExternalSystemModulePropertyManager(),

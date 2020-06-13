@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit.menuBar;
 
+import com.intellij.ide.RecentProjectListActionProvider;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
@@ -39,7 +40,15 @@ class RecentFileActionGroup extends ActionGroup implements DumbAware, AlwaysVisi
       return AnAction.EMPTY_ARRAY;
     }
     List<VirtualFile> recentFiles = getRecentFiles(project);
-    List<OpenFileAction> actions = ContainerUtil.map(recentFiles, file -> new OpenFileAction(file));
+    final List<AnAction> actions = new ArrayList<>();
+    actions.addAll(ContainerUtil.map(recentFiles, file -> new OpenFileAction(file)));
+    List<AnAction> recentProjectsActions = RecentProjectListActionProvider.getInstance().getActions(false);
+    if (!recentProjectsActions.isEmpty()) {
+      if (!actions.isEmpty()) {
+        actions.add(Separator.create());
+      }
+      actions.addAll(recentProjectsActions);
+    }
     return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 

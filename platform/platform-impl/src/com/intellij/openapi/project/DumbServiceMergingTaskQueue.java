@@ -155,7 +155,7 @@ public class DumbServiceMergingTaskQueue {
     }
   }
 
-  public static class QueuedDumbModeTask implements AutoCloseable {
+  static class QueuedDumbModeTask implements AutoCloseable {
     private final DumbModeTask myTask;
     private final ProgressIndicatorEx myIndicator;
 
@@ -171,15 +171,15 @@ public class DumbServiceMergingTaskQueue {
     }
 
     @NotNull
-    public ProgressIndicatorEx getIndicator() {
+    ProgressIndicatorEx getIndicator() {
       return myIndicator;
     }
 
-    public void executeTask() {
+    void executeTask() {
       executeTask(null);
     }
 
-    public void executeTask(@Nullable ProgressIndicator customIndicator) {
+    void executeTask(@Nullable ProgressIndicator customIndicator) {
       //this is the cancellation check
       myIndicator.checkCanceled();
       myIndicator.setIndeterminate(true);
@@ -200,8 +200,12 @@ public class DumbServiceMergingTaskQueue {
       myTask.performInDumbMode(customIndicator);
     }
 
-    public void registerStageStarted(@NotNull IdeActivity activity) {
+    void registerStageStarted(@NotNull IdeActivity activity) {
       activity.stageStarted(myTask.getClass());
+    }
+
+    String getInfoString() {
+      return String.valueOf(myTask);
     }
   }
 }

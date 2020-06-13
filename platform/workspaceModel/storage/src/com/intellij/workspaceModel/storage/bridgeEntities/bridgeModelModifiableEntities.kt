@@ -223,6 +223,7 @@ class ModifiableFacetEntity : ModifiableWorkspaceEntityBase<FacetEntity>() {
   var name: String by EntityDataDelegation()
   var facetType: String by EntityDataDelegation()
   var configurationXmlTag: String? by EntityDataDelegation()
+  var moduleId: ModuleId by EntityDataDelegation()
 
   var module: ModuleEntity by MutableManyToOne.NotNull(FacetEntity::class.java, ModuleEntity::class.java)
   var underlyingFacet: FacetEntity? by MutableOneToOneChild.Nullable(FacetEntity::class.java, FacetEntity::class.java, true)
@@ -236,6 +237,7 @@ fun WorkspaceEntityStorageDiffBuilder.addFacetEntity(name: String, facetType: St
     this.configurationXmlTag = configurationXmlTag
     this.module = module
     this.underlyingFacet = underlyingFacet
+    this.moduleId = module.persistentId()
   }
 
 class ModifiableArtifactEntity : ModifiableWorkspaceEntityBase<ArtifactEntity>() {
@@ -267,9 +269,9 @@ class ModifiableArtifactPropertiesEntity : ModifiableWorkspaceEntityBase<Artifac
   var propertiesXmlTag: String? by EntityDataDelegation()
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addArtifactPropertisEntity(artifact: ArtifactEntity,
-                                                                 providerType: String,
-                                                                 propertiesXmlTag: String?, source: EntitySource) = addEntity(
+fun WorkspaceEntityStorageDiffBuilder.addArtifactPropertiesEntity(artifact: ArtifactEntity,
+                                                                  providerType: String,
+                                                                  propertiesXmlTag: String?, source: EntitySource) = addEntity(
   ModifiableArtifactPropertiesEntity::class.java, source) {
   this.artifact = artifact
   this.providerType = providerType

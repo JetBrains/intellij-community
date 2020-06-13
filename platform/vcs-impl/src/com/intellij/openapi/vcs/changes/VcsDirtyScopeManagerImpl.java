@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -37,6 +38,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
 
   @NotNull private DirtBuilder myDirtBuilder = new DirtBuilder();
   @Nullable private DirtBuilder myDirtInProgress;
+  @Nullable private ActionCallback myRefreshInProgress;
 
   private boolean myReady;
   private final Object LOCK = new Object();
@@ -86,16 +88,18 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     }
 
     boolean wasReady;
+    ActionCallback ongoingRefresh;
     synchronized (LOCK) {
       wasReady = myReady;
       if (wasReady) {
         myDirtBuilder.markEverythingDirty();
       }
+      ongoingRefresh = myRefreshInProgress;
     }
+    if (ongoingRefresh != null) ongoingRefresh.setRejected();
 
     if (wasReady) {
       ChangeListManager.getInstance(myProject).scheduleUpdate();
-      myProject.getMessageBus().syncPublisher(VcsDirtyScopeManagerListener.VCS_DIRTY_SCOPE_UPDATED).everythingDirty();
     }
   }
 
@@ -105,6 +109,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
       myReady = false;
       myDirtBuilder = new DirtBuilder();
       myDirtInProgress = null;
+      myRefreshInProgress = null;
     }
   }
 
@@ -154,7 +159,6 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     if (hasSomethingDirty) {
       ChangeListManager.getInstance(myProject).scheduleUpdate();
     }
-    myProject.getMessageBus().syncPublisher(VcsDirtyScopeManagerListener.VCS_DIRTY_SCOPE_UPDATED).filePathsDirty(filesConverted, dirsConverted);
   }
 
   @Override
@@ -203,6 +207,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
    */
   @Nullable
   public VcsInvalidated retrieveScopes() {
+    ActionCallback callback = new ActionCallback();
     DirtBuilder dirtBuilder;
     synchronized (LOCK) {
       if (!myReady) return null;
@@ -211,18 +216,20 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
       dirtBuilder = myDirtBuilder;
       myDirtInProgress = dirtBuilder;
       myDirtBuilder = new DirtBuilder();
+      myRefreshInProgress = callback;
     }
-    return calculateInvalidated(dirtBuilder);
+    return calculateInvalidated(dirtBuilder, callback);
   }
 
   public void changesProcessed() {
     synchronized (LOCK) {
       myDirtInProgress = null;
+      myRefreshInProgress = null;
     }
   }
 
   @NotNull
-  private VcsInvalidated calculateInvalidated(@NotNull DirtBuilder dirt) {
+  private VcsInvalidated calculateInvalidated(@NotNull DirtBuilder dirt, @NotNull ActionCallback callback) {
     boolean isEverythingDirty = dirt.isEverythingDirty();
     if (isEverythingDirty) {
       VcsRoot[] roots = getVcsManager(myProject).getAllVcsRoots();
@@ -234,7 +241,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
       scope.pack();
     }
 
-    return new VcsInvalidated(scopes, isEverythingDirty);
+    return new VcsInvalidated(scopes, isEverythingDirty, callback);
   }
 
   @NotNull

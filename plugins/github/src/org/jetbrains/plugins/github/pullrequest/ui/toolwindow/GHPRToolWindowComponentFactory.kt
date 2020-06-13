@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -24,7 +23,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
-import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanel
+import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.BorderLayout
@@ -35,7 +34,6 @@ import kotlin.properties.Delegates
 internal class GHPRToolWindowComponentFactory(private val project: Project,
                                               private val remoteUrl: GitRemoteUrlCoordinates,
                                               private val parentDisposable: Disposable) {
-
   private val dataContextRepository = GHPRDataContextRepository.getInstance(project)
 
   @CalledInAwt
@@ -48,7 +46,6 @@ internal class GHPRToolWindowComponentFactory(private val project: Project,
   }
 
   private inner class Controller(private val panel: JPanel) {
-
     private var selectedAccount: GithubAccount? = null
     private var requestExecutor: GithubApiRequestExecutor? = null
 
@@ -59,12 +56,11 @@ internal class GHPRToolWindowComponentFactory(private val project: Project,
 
     init {
       ApplicationManager.getApplication().messageBus.connect(parentDisposable)
-        .subscribe(GithubAccountManager.ACCOUNT_TOKEN_CHANGED_TOPIC,
-                   object : AccountTokenChangedListener {
-                     override fun tokenChanged(account: GithubAccount) {
-                       invokeLater { update() }
-                     }
-                   })
+        .subscribe(GithubAccountManager.ACCOUNT_TOKEN_CHANGED_TOPIC, object : AccountTokenChangedListener {
+          override fun tokenChanged(account: GithubAccount) {
+            ApplicationManager.getApplication().invokeLater(Runnable { update() }, project.disposed)
+          }
+        })
       update()
     }
 
@@ -201,14 +197,14 @@ internal class GHPRToolWindowComponentFactory(private val project: Project,
         future = dataContextRepository.acquireContext(remoteUrl, account, requestExecutor)
       }
 
-      return GHLoadingPanel.create(loadingModel,
-                                   { GHPRComponentFactory(project).createComponent(loadingModel.result!!, uiDisposable) }, uiDisposable,
-                                   errorPrefix = GithubBundle.message("cannot.load.data.from.github"),
-                                   errorHandler = GHLoadingErrorHandlerImpl(project, account) {
+      return GHLoadingPanelFactory(loadingModel, null, GithubBundle.message("cannot.load.data.from.github"),
+                                   GHLoadingErrorHandlerImpl(project, account) {
                                      val contextRepository = dataContextRepository
                                      contextRepository.clearContext(remoteUrl)
                                      loadingModel.future = contextRepository.acquireContext(remoteUrl, account, requestExecutor)
-                                   })
+                                   }).create { _, result ->
+        GHPRComponentFactory(project).createComponent(result, uiDisposable)
+      }
     }
   }
 }

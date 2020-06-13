@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.concurrency.JobLauncher;
@@ -28,7 +28,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntSortedSets;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -331,7 +331,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
       })
       .forEach(events::add);
     List<CharSequence> names = ContainerUtil.map(events, e -> ((VFileCreateEvent)e).getChildName());
-    temp.removeChildren(new TIntHashSet(), names);
+    temp.removeChildren(IntSortedSets.EMPTY_SET, names);
   }
 
   private void eventsForDeleting(List<? super VFileEvent> events, VirtualDirectoryImpl temp) {

@@ -1,40 +1,42 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.MethodInvocator;
 import org.imgscalr.Scalr;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImageOp;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Provides access (or converter) to {@code java.awt.image.MultiResolutionImage} available since JDK 9.
  *
  * @author tav
  */
-@ApiStatus.Experimental
 public final class MultiResolutionImageProvider {
   /**
    * An accessor to the {@code MultiResolutionImage}'s resolution variants methods.
    */
   public static class Accessor {
-    private static final Class MRI_CLASS;
+    private static final Class<?> MRI_CLASS;
     private static final MethodInvocator GET_RESOLUTION_VARIANTS_METHOD;
     private static final MethodInvocator GET_RESOLUTION_VARIANT_METHOD;
 
     private final Image myMRImage;
 
     static {
-      Class cls = null;
+      Class<?> cls = null;
       MethodInvocator m1 = null;
       MethodInvocator m2 = null;
       if (SystemInfoRt.IS_AT_LEAST_JAVA9) {
@@ -71,6 +73,7 @@ public final class MultiResolutionImageProvider {
     /**
      * @see {@code java.awt.image.MultiResolutionImage.getResolutionVariant}
      */
+    @SuppressWarnings("unused")
     public Image getResolutionVariant(double width, double height) {
       if (!isMultiResolutionImage(myMRImage)) {
         if (!checkSize(myMRImage)) {
@@ -86,12 +89,12 @@ public final class MultiResolutionImageProvider {
   /**
    * A converter from {@link JBHiDPIScaledImage} to {@code MultiResolutionImage}.
    */
-  private static class Converter {
-    private static final Constructor BMRI_CLASS_CTOR;
+  private static final class Converter {
+    private static final Constructor<?> BMRI_CLASS_CTOR;
 
     static {
-      Class cls = null;
-      Constructor ctor = null;
+      Class<?> cls = null;
+      Constructor<?> ctor = null;
       if (SystemInfoRt.IS_AT_LEAST_JAVA9) {
         try {
           cls = Class.forName("java.awt.image.BaseMultiResolutionImage");
@@ -153,7 +156,7 @@ public final class MultiResolutionImageProvider {
    * If the provided image is not {@code JBHiDPIScaledImage} the returned {@code MultiResolutionImage} will
    * default to the provided image's single resolution variant.
    */
-  @Nullable
+  @Contract("null -> null; !null -> !null")
   public static Image convertFromJBImage(@Nullable Image jbImage) {
     if (jbImage == null) return null;
 
@@ -162,6 +165,56 @@ public final class MultiResolutionImageProvider {
       new IllegalArgumentException("the image has illegal size 0x0").printStackTrace();
     }
     return Converter.convert(jbImage);
+  }
+
+  /**
+   * Converts the provided icon with {@link JBHiDPIScaledImage} to an {@link ImageIcon} with {@code MultiResolutionImage}.
+   * If the provided icon's image is not {@code JBHiDPIScaledImage} the returned icon's {@code MultiResolutionImage} will
+   * default to the provided image's single resolution variant.
+   */
+  @Contract("null, _ -> null; !null, _ -> !null")
+  public static Icon convertFromJBIcon(@Nullable Icon jbIcon, @Nullable ScaleContext ctx) {
+    if (jbIcon == null) return null;
+
+    Image image = Objects.requireNonNull(IconLoader.toImage(jbIcon, ctx));
+    image = convertFromJBImage(image);
+    return new ImageIcon(image);
+  }
+
+  /**
+   * Returns the max-size resolution variant image of the provided {@code MultiResolutionImage}.
+   * If the provided image is not {@code MultiResolutionImage} then returns same image.
+   */
+  @Contract("null -> null; !null -> !null")
+  public static Image getMaxSizeResolutionVariant(@Nullable Image mrImage) {
+    if (isMultiResolutionImage(mrImage)) {
+      List<Image> variants = getAccessor(mrImage).getResolutionVariants();
+      int width = mrImage.getWidth(null);
+      for (Image img : variants) {
+        if (img.getWidth(null) >= width) {
+          mrImage = img;
+        }
+      }
+    }
+    return mrImage;
+  }
+
+  /**
+   * Converts from the provided icon with {@code MultiResolutionImage} to an icon with {@link JBHiDPIScaledImage}.
+   * If the provided icon's image is not {@code MultiResolutionImage} then returns same icon.
+   */
+  @Contract("null, _ -> null; !null, _ -> !null")
+  public static Icon convertFromMRIcon(@Nullable Icon mrIcon, @Nullable ScaleContext ctx) {
+    if (mrIcon == null) return null;
+
+    if (ctx == null) ctx = ScaleContext.create();
+    Image image = Objects.requireNonNull(IconLoader.toImage(mrIcon, ctx));
+    if (isMultiResolutionImage(image)) {
+      return mrIcon;
+    }
+    image = getMaxSizeResolutionVariant(image);
+    image = ImageUtil.ensureHiDPI(image, ctx);
+    return new JBImageIcon(image);
   }
 
   /**

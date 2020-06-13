@@ -2,24 +2,13 @@
 
 package com.intellij.openapi.editor.highlighter;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 
 public interface HighlighterClient {
   Project getProject();
 
-  /**
-   * @deprecated use {@link #fireHighlighterChanged(int, int)}
-   */
-  @Deprecated
-  default void repaint(int start, int end) {
-    fireHighlighterChanged(start, end);
-  }
-
-  void fireHighlighterChanged(int start, int end);
-
-  void addHighlighterClientListener(HighlighterClientListener listener, Disposable parentDisposable);
+  void repaint(int start, int end);
 
   Document getDocument();
 }

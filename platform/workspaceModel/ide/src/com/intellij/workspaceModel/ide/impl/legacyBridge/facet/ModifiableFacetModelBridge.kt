@@ -28,7 +28,7 @@ internal class ModifiableFacetModelBridge(private val initialStorage: WorkspaceE
                                           private val diff: WorkspaceEntityStorageDiffBuilder,
                                           moduleBridge: ModuleBridge,
                                           private val facetManager: FacetManagerBridge)
-  : FacetModelViaWorkspaceModel(moduleBridge), ModifiableFacetModel {
+  : FacetModelBridge(moduleBridge), ModifiableFacetModel {
   private val listeners: MutableList<ModifiableFacetModel.Listener> = ContainerUtil.createLockFreeCopyOnWriteList()
 
   init {

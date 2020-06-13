@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.IllegalEnvVarException;
@@ -86,7 +87,7 @@ public class GeneralCommandLine implements UserDataHolder {
   private final Map<String, String> myEnvParams = new MyTHashMap();
   private ParentEnvironmentType myParentEnvironmentType = ParentEnvironmentType.CONSOLE;
   private final ParametersList myProgramParams = new ParametersList();
-  private Charset myCharset = EncodingManager.getInstance().getDefaultConsoleEncoding();
+  private Charset myCharset = defaultCharset();
   private boolean myRedirectErrorStream;
   private File myInputFile;
   private Map<Object, Object> myUserData;
@@ -117,6 +118,10 @@ public class GeneralCommandLine implements UserDataHolder {
     myRedirectErrorStream = original.myRedirectErrorStream;
     myInputFile = original.myInputFile;
     myUserData = null;  // user data should not be copied over
+  }
+
+  private static Charset defaultCharset() {
+    return LoadingState.COMPONENTS_LOADED.isOccurred() ? EncodingManager.getInstance().getDefaultConsoleEncoding() : Charset.defaultCharset();
   }
 
   @NotNull

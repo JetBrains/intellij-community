@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
@@ -12,6 +13,9 @@ import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewCom
 import java.util.concurrent.CompletableFuture
 
 interface GHPRReviewDataProvider {
+
+  val submitReviewCommentDocument: Document
+
   @CalledInAwt
   fun loadPendingReview(): CompletableFuture<GHPullRequestPendingReview?>
 

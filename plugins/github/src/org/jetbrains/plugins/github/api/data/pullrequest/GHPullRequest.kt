@@ -26,13 +26,15 @@ class GHPullRequest(id: String,
                     val baseRepository: Repository?,
                     val headRefName: String,
                     val headRefOid: String,
-                    val headRepository: Repository?)
+                    val headRepository: HeadRepository?)
   : GHPullRequestShort(id, url, number, title, state, author, createdAt, assignees, labels, viewerDidAuthor) {
 
   @JsonIgnore
   val reviewRequests = reviewRequests.nodes
 
-  class Repository(val owner: Owner, val isFork: Boolean)
+  open class Repository(val owner: Owner, val isFork: Boolean)
+
+  class HeadRepository(owner: Owner, isFork: Boolean, val url: String, val sshUrl: String) : Repository(owner, isFork)
 
   class Owner(val login: String)
 }

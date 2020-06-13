@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.workspaceModel.ide.WorkspaceModel
 import org.junit.Assert
 import org.junit.ClassRule
 import org.junit.Rule

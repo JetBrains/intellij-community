@@ -15,12 +15,19 @@ enum class MergeOption(@NonNls val option: String,
 
   fun isOptionSuitable(option: MergeOption): Boolean {
     return when (this) {
-      NO_FF -> option != SQUASH && option != FF_ONLY
-      SQUASH -> option == SQUASH || option == NO_COMMIT
-      COMMIT_MESSAGE -> option != SQUASH && option != NO_COMMIT
+      NO_FF -> option !in NO_FF_INCOMPATIBLE
+      FF_ONLY -> option !in FF_ONLY_INCOMPATIBLE
+      SQUASH -> option !in SQUASH_INCOMPATIBLE
+      COMMIT_MESSAGE -> option !in COMMIT_MSG_INCOMPATIBLE
       NO_COMMIT -> option != COMMIT_MESSAGE
       NO_VERIFY -> true
-      FF_ONLY -> option != NO_FF
     }
+  }
+
+  companion object {
+    private val NO_FF_INCOMPATIBLE = listOf(FF_ONLY, SQUASH)
+    private val FF_ONLY_INCOMPATIBLE = listOf(NO_FF, SQUASH, COMMIT_MESSAGE)
+    private val SQUASH_INCOMPATIBLE = listOf(NO_FF, FF_ONLY, COMMIT_MESSAGE)
+    private val COMMIT_MSG_INCOMPATIBLE = listOf(FF_ONLY, SQUASH, NO_COMMIT)
   }
 }

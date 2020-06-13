@@ -49,9 +49,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author cdr
- */
 public class ResourceBundleStructureViewComponent extends PropertiesGroupingStructureViewComponent {
   private final static Logger LOG = Logger.getInstance(ResourceBundleStructureViewComponent.class);
 

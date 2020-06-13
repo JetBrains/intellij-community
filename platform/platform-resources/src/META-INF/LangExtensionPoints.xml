@@ -284,7 +284,6 @@
     </extensionPoint>
 
     <extensionPoint name="psi.declarationProvider" dynamic="true" interface="com.intellij.model.psi.PsiSymbolDeclarationProvider"/>
-    <extensionPoint name="pom.declarationSearcher" interface="com.intellij.pom.PomDeclarationSearcher" dynamic="true"/>
 
     <extensionPoint name="statistician" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.statistics.Statistician"/>

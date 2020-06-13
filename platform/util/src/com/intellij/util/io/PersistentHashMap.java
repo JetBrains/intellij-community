@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 /** Thread-safe implementation of persistent hash map (PHM). The implementation works in the following (generic) way:<ul>
  <li> Particular key is translated via myEnumerator into an int. </li>
@@ -157,6 +158,10 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
                             int version,
                             @Nullable StorageLockContext lockContext,
                             @NotNull PersistentHashMapValueStorage.CreationTimeOptions options) throws IOException {
+    // it's important to initialize it as early as possible
+    myIsReadOnly = isReadOnly();
+    if (myIsReadOnly) options = options.setReadOnly();
+
     myEnumerator = PersistentEnumeratorDelegate.createDefaultEnumerator(checkDataFiles(file),
                                                                         keyDescriptor,
                                                                         initialSize,
@@ -165,8 +170,6 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
 
     myStorageFile = file;
     myKeyDescriptor = keyDescriptor;
-    myIsReadOnly = isReadOnly();
-    if (myIsReadOnly) options = options.setReadOnly();
 
     final PersistentEnumeratorBase.@NotNull RecordBufferHandler<PersistentEnumeratorBase<?>> recordHandler = myEnumerator.getRecordHandler();
     myParentValueRefOffset = recordHandler.getRecordBuffer(myEnumerator).length;
@@ -929,9 +932,11 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
     Path parentFile = fileFromDirectory.getParent();
     if (parentFile == null) return ArrayUtil.EMPTY_FILE_ARRAY;
     Path fileName = fileFromDirectory.getFileName();
-    return Files.list(parentFile).filter(p -> {
-      return p.getFileName().toString().startsWith(fileName.toString());
-    }).map(p -> p.toFile()).toArray(File[]::new);
+    try (Stream<Path> children = Files.list(parentFile)) {
+      return children.filter(p -> {
+        return p.getFileName().toString().startsWith(fileName.toString());
+      }).map(p -> p.toFile()).toArray(File[]::new);
+    }
   }
 
   private void newCompact(@NotNull PersistentHashMapValueStorage newStorage) throws IOException {

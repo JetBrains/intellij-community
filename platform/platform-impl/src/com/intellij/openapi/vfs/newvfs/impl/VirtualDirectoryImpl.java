@@ -31,6 +31,7 @@ import com.intellij.util.text.CharSequenceHashingStrategy;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -551,7 +552,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           return oldIds.length;
         }
       };
-      ContainerUtil.processSortedListsInOrder(added, existingChildren, pairComparator, true, nextInfo -> mergedIds.add(nextInfo.getId()));
+      ContainerUtil.processSortedListsInOrder(added, existingChildren, pairComparator, true, (nextInfo,__) -> mergedIds.add(nextInfo.getId()));
       myData.myChildrenIds = mergedIds.toNativeArray();
 
       if (markAllChildrenLoaded) {
@@ -601,7 +602,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   // optimization: faster than forEach(this::removeChild)
-  public void removeChildren(@NotNull TIntHashSet idsToRemove, @NotNull List<? extends CharSequence> namesToRemove) {
+  public void removeChildren(@NotNull IntSet idsToRemove, @NotNull List<? extends CharSequence> namesToRemove) {
     boolean caseSensitive = getFileSystem().isCaseSensitive();
     synchronized (myData) {
       // remove from array by merging two sorted lists

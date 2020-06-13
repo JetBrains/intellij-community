@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInsight;
 
 import com.intellij.codeInsight.daemon.DaemonBundle;
@@ -43,7 +43,7 @@ import java.util.*;
 /**
  * @author Max Medvedev
  */
-public class GroovyMarkerTypes {
+public final class GroovyMarkerTypes {
   static final MarkerType OVERRIDING_PROPERTY_TYPE = new MarkerType("OVERRIDING_PROPERTY_TYPE", psiElement -> {
     final PsiElement parent = psiElement.getParent();
     if (!(parent instanceof GrField)) return null;
@@ -90,7 +90,7 @@ public class GroovyMarkerTypes {
       if (superMethods.isEmpty()) return;
       final PsiMethod[] supers = superMethods.toArray(PsiMethod.EMPTY_ARRAY);
       boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(supers);
-      PsiElementListNavigator.openTargets(e, supers, 
+      PsiElementListNavigator.openTargets(e, supers,
                                           DaemonBundle.message("navigation.title.super.method", field.getName()),
                                           DaemonBundle.message("navigation.findUsages.title.super.method", field.getName()),
                                           new MethodCellRenderer(showMethodNames));
@@ -266,7 +266,7 @@ public class GroovyMarkerTypes {
         PsiElementListNavigator.openTargets(e, overridings, methodsUpdater.getCaption(overridings.length),
                                             "Overriding Methods of " + method.getName(),
                                             renderer, methodsUpdater);
-        
+
       }
     });
 

@@ -33,6 +33,7 @@ import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.diagnostic.IndexingJobStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory;
 import com.intellij.util.indexing.roots.IndexableFilesProvider;
+import com.intellij.util.indexing.roots.SdkIndexableFilesProvider;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.progress.ConcurrentTasksProgressManager;
 import com.intellij.util.progress.SubTaskProgressIndicator;
@@ -41,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 
 public final class UnindexedFilesUpdater extends DumbModeTask {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesUpdater.class);
@@ -113,7 +115,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
 
     projectIndexingHistory.getTimes().setScanFilesStart(Instant.now());
 
-    List<IndexableFilesProvider> orderedProviders = myIndex.getOrderedIndexableFilesProviders(myProject);
+    List<IndexableFilesProvider> orderedProviders = getOrderedProviders();
 
     Map<IndexableFilesProvider, List<VirtualFile>> providerToFiles = collectIndexableFilesConcurrently(myProject, indicator, orderedProviders);
 
@@ -132,6 +134,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     }
 
     if (totalFiles == 0 || SystemProperties.getBooleanProperty("idea.indexes.pretendNoFiles", false)) {
+      FileBasedIndexInfrastructureExtension.EP_NAME.extensions().forEach(ex -> ex.noFilesFoundToProcessIndexingProject(myProject, indicator));
       return;
     }
 
@@ -184,7 +187,28 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
 
     if (trackResponsiveness) snapshot.logResponsivenessSinceCreation("Unindexed files update");
 
+    FileBasedIndexInfrastructureExtension.EP_NAME.extensions().forEach(ex -> ex.noFilesFoundToProcessIndexingProject(myProject, indicator));
     myIndex.dumpIndexStatistics();
+  }
+
+  /**
+   * Returns providers of files. Since LAB-22 (Smart Dumb Mode) is not implemented yet, the order of the providers is not strictly specified.
+   * For shared indexes it is a good idea to index JDKs in the last turn (because they likely have shared index available)
+   * so this method moves all SDK providers to the end.
+   */
+  @NotNull
+  private List<IndexableFilesProvider> getOrderedProviders() {
+    List<IndexableFilesProvider> originalOrderedProviders = myIndex.getOrderedIndexableFilesProviders(myProject);
+
+    List<IndexableFilesProvider> orderedProviders = new ArrayList<>();
+    originalOrderedProviders.stream()
+      .filter(p -> !(p instanceof SdkIndexableFilesProvider))
+      .collect(Collectors.toCollection(() -> orderedProviders));
+
+    originalOrderedProviders.stream()
+      .filter(p -> p instanceof SdkIndexableFilesProvider)
+      .collect(Collectors.toCollection(() -> orderedProviders));
+    return orderedProviders;
   }
 
   @NotNull
@@ -287,7 +311,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
    * It may change during execution of the IDE depending on other activities' load.
    */
   public static int getNumberOfIndexingThreads() {
-    int threadsCount = Registry.intValue("caches.indexerThreadsCount.restartRequired");
+    int threadsCount = Registry.intValue("caches.indexerThreadsCount");
     if (threadsCount <= 0) {
       int coresToLeaveForOtherActivity = ApplicationManager.getApplication().isCommandLine() ? 0 : 1;
       threadsCount = Math.max(1, Math.min(Runtime.getRuntime().availableProcessors() - coresToLeaveForOtherActivity, DEFAULT_MAX_INDEXER_THREADS));
@@ -300,7 +324,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
    */
   public static int getMaxNumberOfIndexingThreads() {
     // Change of the registry option requires IDE restart.
-    int threadsCount = Registry.intValue("caches.indexerThreadsCount.restartRequired");
+    int threadsCount = Registry.intValue("caches.indexerThreadsCount");
     if (threadsCount <= 0) {
       return DEFAULT_MAX_INDEXER_THREADS;
     }

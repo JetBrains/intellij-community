@@ -103,13 +103,13 @@ public class InferencePerformanceTest extends LightDaemonAnalyzerTestCase {
                       "    public static final class Foo { }\n" +
                       "\n" +
                       "\n" +
-                      "    public static final Function<Snippet, Snippet> _snippet = (Function<Snippet, Snippet>) (snippet -> {\n" +
+                      "    public static final Function<Snippet, Snippet> _snippet = snippet -> {\n" +
                       "        Foo foo = new Foo();\n" +
                       "\n" +
                       "        return new Builder().\n" +
                       "                $chain$" +
                       "                .build();\n" +
-                      "    });\n" +
+                      "    };\n" +
                       "\n" +
                       "}";
     int count = 70;

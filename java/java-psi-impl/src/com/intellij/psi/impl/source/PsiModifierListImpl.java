@@ -47,6 +47,8 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
     NAME_TO_KEYWORD_TYPE_MAP.put(DEFAULT, JavaTokenType.DEFAULT_KEYWORD);
     NAME_TO_KEYWORD_TYPE_MAP.put(OPEN, JavaTokenType.OPEN_KEYWORD);
     NAME_TO_KEYWORD_TYPE_MAP.put(TRANSITIVE, JavaTokenType.TRANSITIVE_KEYWORD);
+    NAME_TO_KEYWORD_TYPE_MAP.put(SEALED, JavaTokenType.SEALED_KEYWORD);
+    NAME_TO_KEYWORD_TYPE_MAP.put(NON_SEALED, JavaTokenType.NON_SEALED_KEYWORD);
 
     KEYWORD_TYPE_TO_NAME_MAP = new THashMap<>();
     for (String name : NAME_TO_KEYWORD_TYPE_MAP.keySet()) {
@@ -189,7 +191,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
   public boolean hasExplicitModifier(@NotNull String name) {
     PsiModifierListStub stub = getGreenStub();
     if (stub != null) {
-      return BitUtil.isSet(stub.getModifiersMask(), ModifierFlags.NAME_TO_MODIFIER_FLAG_MAP.get(name));
+      return BitUtil.isSet(stub.getModifiersMask(), ModifierFlags.NAME_TO_MODIFIER_FLAG_MAP.getInt(name));
     }
 
     final CompositeElement tree = (CompositeElement)getNode();

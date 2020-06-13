@@ -14,11 +14,11 @@ class GHPRReloadDetailsAction
                   AllIcons.Actions.Refresh) {
 
   override fun update(e: AnActionEvent) {
-    val selection = e.getData(GHPRActionKeys.ACTION_DATA_CONTEXT)?.pullRequestDataProvider
+    val selection = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
     e.presentation.isEnabled = selection != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.getRequiredData(GHPRActionKeys.ACTION_DATA_CONTEXT).pullRequestDataProvider.detailsData.reloadDetails()
+    e.getRequiredData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER).detailsData.reloadDetails()
   }
 }

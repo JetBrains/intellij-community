@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.logging;
 
-import com.siyeh.InspectionGadgetsBundle;
+import com.intellij.codeInspection.miscGenerics.RedundantArrayForVarargsCallInspection;
+import com.intellij.java.JavaBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
-import com.siyeh.ig.logging.RedundantObjectArrayCreationInLoggingInspection;
 
 public class RedundantObjectArrayCreationInLoggingInspectionTest extends IGQuickFixesTestCase {
 
@@ -11,8 +11,9 @@ public class RedundantObjectArrayCreationInLoggingInspectionTest extends IGQuick
   protected void setUp() throws Exception {
     super.setUp();
     myDefaultHint = String.format("Fix all '%s' problems in file",
-                                  InspectionGadgetsBundle.message("redundant.object.array.creation.in.logging"));
-    myFixture.enableInspections(new RedundantObjectArrayCreationInLoggingInspection());
+                                  JavaBundle.message("inspection.redundant.array.creation.display.name"));
+    myFixture.configureByFile("logging/redundant_object_array_creation_in_logging/Logger.java");
+    myFixture.enableInspections(new RedundantArrayForVarargsCallInspection());
   }
 
   public void testObjectArrayCreationInLoggingDebug() { doTest(); }

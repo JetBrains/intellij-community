@@ -17,6 +17,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor;
 import com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -32,6 +33,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -82,6 +84,23 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
                PsiTreeUtil.getParentOfType(element, PsiDocComment.class) != null;
       }
     });
+  }
+
+  @Override
+  public @NotNull Result checkAutoPopup(char charTyped, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    int offset = editor.getCaretModel().getOffset();
+    if (charTyped == ' ' &&
+        StringUtil.endsWith(editor.getDocument().getImmutableCharSequence(), 0, offset, PsiKeyword.NEW)) {
+      AutoPopupController.getInstance(project).scheduleAutoPopup(editor, CompletionType.BASIC, f -> {
+        PsiElement leaf = f.findElementAt(offset - PsiKeyword.NEW.length());
+        return leaf instanceof PsiKeyword &&
+               leaf.textMatches(PsiKeyword.NEW) &&
+               !PsiJavaPatterns.psiElement().insideStarting(PsiJavaPatterns.psiExpressionStatement()).accepts(leaf);
+      });
+      return Result.STOP;
+    }
+
+    return super.checkAutoPopup(charTyped, project, editor, file);
   }
 
   @NotNull

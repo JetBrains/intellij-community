@@ -20,7 +20,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
-public class RecordUtil {
+public final class RecordUtil {
   private static final String DEPRECATED_ANNOTATION_NAME = "Deprecated";
   private static final String DEPRECATED_TAG = "@deprecated";
 
@@ -63,7 +63,7 @@ public class RecordUtil {
   public static int packModifierList(@NotNull LighterAST tree, @NotNull LighterASTNode modList) {
     int packed = 0;
     for (final LighterASTNode child : tree.getChildren(modList)) {
-      packed |= ModifierFlags.KEYWORD_TO_MODIFIER_FLAG_MAP.get(child.getTokenType());
+      packed |= ModifierFlags.KEYWORD_TO_MODIFIER_FLAG_MAP.getInt(child.getTokenType());
     }
     return packed;
   }

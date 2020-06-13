@@ -117,6 +117,11 @@ public class TextMergeRequestImpl extends TextMergeRequest {
     }
   }
 
+  @Override
+  public void resultRetargeted() {
+    onAssigned(false);
+  }
+
   private void onAssigned(boolean assigned) {
     myOutput.onAssigned(assigned);
     for (DocumentContent content : myContents) {

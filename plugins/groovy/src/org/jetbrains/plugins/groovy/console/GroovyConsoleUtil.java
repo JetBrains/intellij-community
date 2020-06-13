@@ -12,7 +12,7 @@ import static org.jetbrains.plugins.groovy.console.GroovyConsoleUtilKt.getApplic
 import static org.jetbrains.plugins.groovy.console.GroovyConsoleUtilKt.sdkVersionIfHasNeededDependenciesToRunConsole;
 import static org.jetbrains.plugins.groovy.util.ModuleChooserUtil.formatModuleVersion;
 
-public class GroovyConsoleUtil {
+public final class GroovyConsoleUtil {
 
   @NotNull
   public static String getDisplayGroovyVersion(@NotNull Module module) {

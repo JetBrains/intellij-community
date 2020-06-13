@@ -39,7 +39,7 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.impl.VcsLogManager.findLogProviders;
 import static java.util.Collections.singletonList;
 
-public class VcsLogUtil {
+public final class VcsLogUtil {
   public static final int MAX_SELECTED_COMMITS = 1000;
   public static final int FULL_HASH_LENGTH = 40;
   public static final int SHORT_HASH_LENGTH = 8;

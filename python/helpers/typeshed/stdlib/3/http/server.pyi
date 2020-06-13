@@ -27,8 +27,6 @@ class BaseHTTPRequestHandler(socketserver.StreamRequestHandler):
     path: str
     request_version: str
     headers: email.message.Message
-    rfile: BinaryIO
-    wfile: BinaryIO
     server_version: str
     sys_version: str
     error_message_format: str

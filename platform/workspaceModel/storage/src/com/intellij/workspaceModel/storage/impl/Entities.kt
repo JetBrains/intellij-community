@@ -103,9 +103,7 @@ internal data class EntityId(val arrayId: Int, val clazz: Int) {
 
 interface SoftLinkable {
   fun getLinks(): Set<PersistentEntityId<*>>
-  fun updateLink(oldLink: PersistentEntityId<*>,
-                 newLink: PersistentEntityId<*>,
-                 affectedIds: MutableList<Pair<PersistentEntityId<*>, PersistentEntityId<*>>>): Boolean
+  fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean
 }
 
 abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
@@ -154,8 +152,8 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
 
   override fun toString(): String {
     val fields = this.javaClass.declaredFields.toList().onEach { it.isAccessible = true }
-      .joinToString(separator = ", ") { f -> "${f.name}= ${f.get(this)}" }
-    return "${this::class.simpleName}($fields)"
+      .joinToString(separator = ", ") { f -> "${f.name}=${f.get(this)}" }
+    return "${this::class.simpleName}($fields, id=${this.id})"
   }
 
   /**
@@ -167,8 +165,7 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
     abstract fun persistentId(): PersistentEntityId<*>
   }
 
-  abstract class WithPersistentId<E : WorkspaceEntity> : WorkspaceEntityData<E>() {
-  }
+  abstract class WithPersistentId<E : WorkspaceEntity> : WorkspaceEntityData<E>()
 }
 
 fun WorkspaceEntityData<*>.persistentId(snapshot: WorkspaceEntityStorage): PersistentEntityId<*>? = when (this) {

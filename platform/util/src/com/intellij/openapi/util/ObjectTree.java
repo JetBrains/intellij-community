@@ -9,6 +9,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +26,8 @@ final class ObjectTree {
 
   // identity used here to prevent problems with hashCode/equals overridden by not very bright minds
   private final Set<Disposable> myRootObjects = new ReferenceOpenHashSet<>(); // guarded by treeLock
-  private final Map<Disposable, ObjectNode> myObject2NodeMap = ContainerUtil.newIdentityTroveMap(); // guarded by treeLock
+  // guarded by treeLock
+  private final Map<Disposable, ObjectNode> myObject2NodeMap = new Reference2ObjectOpenHashMap<>();
   // Disposable to trace or boolean marker (if trace unavailable)
   private final Map<Disposable, Object> myDisposedObjects = ContainerUtil.createWeakMap(100, 0.5f, ContainerUtil.identityStrategy()); // guarded by treeLock
 

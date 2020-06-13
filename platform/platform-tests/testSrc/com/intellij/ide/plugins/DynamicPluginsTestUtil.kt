@@ -15,7 +15,6 @@ import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Supplier
-import kotlin.math.abs
 
 internal fun loadDescriptorInTest(dir: Path, disabledPlugins: Set<PluginId> = emptySet(), isBundled: Boolean = false): IdeaPluginDescriptorImpl {
   assertThat(dir).exists()
@@ -54,14 +53,14 @@ internal fun loadPluginWithText(pluginBuilder: PluginBuilder, loader: ClassLoade
     loadPlugin(descriptor)
   }
   catch (e: Exception) {
-    unloadPlugin(descriptor, false)
+    unloadPlugin(descriptor)
     throw e
   }
 
   return Disposable {
     descriptor = loadDescriptorInTest(plugin.parent.parent)
     val canBeUnloaded = DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)
-    unloadPlugin(descriptor, false)
+    unloadPlugin(descriptor)
 
     assertThat(canBeUnloaded).isTrue()
   }

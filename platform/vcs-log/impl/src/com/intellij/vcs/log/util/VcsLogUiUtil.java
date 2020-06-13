@@ -47,7 +47,7 @@ import java.util.function.Predicate;
 
 import static com.intellij.vcs.log.ui.AbstractVcsLogUi.LOG_HIGHLIGHTER_FACTORY_EP;
 
-public class VcsLogUiUtil {
+public final class VcsLogUiUtil {
   @NotNull
   public static JComponent installProgress(@NotNull JComponent component,
                                            @NotNull VcsLogData logData,

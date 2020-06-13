@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jdkEx;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -18,7 +18,7 @@ import java.util.List;
  * @author tav
  */
 @ApiStatus.Experimental
-public class JdkEx {
+public final class JdkEx {
   @SuppressWarnings("unused")
   @NotNull
   public static InputEventEx getInputEventEx() {
@@ -60,7 +60,7 @@ public class JdkEx {
   }
 
   // lazy init
-  private static class MyCustomDecorMethods {
+  private static final class MyCustomDecorMethods {
     public static final MyMethod SET_HAS_CUSTOM_DECORATION =
       MyMethod.create(Window.class, "setHasCustomDecoration");
     public static final MyMethod SET_CUSTOM_DECORATION_HITTEST_SPOTS =

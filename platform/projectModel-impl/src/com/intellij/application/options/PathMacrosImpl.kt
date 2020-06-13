@@ -7,7 +7,6 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.containers.ContainerUtil
-import gnu.trove.THashSet
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader.PathVariablesSerializer
 import org.jetbrains.jps.model.serialization.PathMacroUtil
@@ -33,7 +32,7 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
 
     const val IGNORED_MACRO_ELEMENT = "ignoredMacro"
     const val MAVEN_REPOSITORY = "MAVEN_REPOSITORY"
-    private val SYSTEM_MACROS: MutableSet<String> = THashSet()
+    private val SYSTEM_MACROS: MutableSet<String> = HashSet()
 
     @JvmStatic
     fun getInstanceEx() = getInstance() as PathMacrosImpl

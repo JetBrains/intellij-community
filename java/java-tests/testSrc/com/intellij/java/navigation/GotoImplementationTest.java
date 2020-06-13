@@ -23,9 +23,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author cdr
- */
 public class GotoImplementationTest extends JavaCodeInsightTestCase {
 
   private static Collection<PsiElement> getClassImplementations(final PsiClass psiClass) {

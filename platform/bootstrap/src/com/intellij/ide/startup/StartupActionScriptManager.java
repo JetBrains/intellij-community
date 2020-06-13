@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.startup;
 
 import com.intellij.openapi.application.PathManager;
@@ -17,10 +17,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author cdr
- */
-public class StartupActionScriptManager {
+public final class StartupActionScriptManager {
   public static final String STARTUP_WIZARD_MODE = "StartupWizardMode";
   public static final String ACTION_SCRIPT_FILE = "action.script";
 

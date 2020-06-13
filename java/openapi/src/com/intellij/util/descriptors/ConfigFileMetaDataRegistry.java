@@ -22,4 +22,5 @@ public interface ConfigFileMetaDataRegistry extends ConfigFileMetaDataProvider {
 
   void registerMetaData(ConfigFileMetaData @NotNull ... metaData);
 
+  void unregisterMetaData(@NotNull ConfigFileMetaData metaData);
 }

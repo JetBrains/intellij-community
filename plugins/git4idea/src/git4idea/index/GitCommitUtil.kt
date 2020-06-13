@@ -7,12 +7,12 @@ import com.intellij.openapi.progress.Task.Backgroundable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.checkin.GitCheckinEnvironment
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.i18n.GitBundle
-import git4idea.repo.GitRepositoryManager
 import java.io.File
 
 private val LOG = Logger.getInstance("#git4idea.index.GitCommitUtil")
@@ -25,12 +25,13 @@ fun performCommit(project: Project, roots: Collection<VirtualFile>, commitMessag
           GitCheckinEnvironment.runWithMessageFile(project, root, commitMessage) { commitMessageFile: File ->
             doCommit(project, root, commitMessageFile, amend)
           }
-          GitRepositoryManager.getInstance(project).getRepositoryForRoot(root)?.repositoryFiles?.refresh()
         }
         catch (e: VcsException) {
           LOG.error("Error while committing $root", e)
         }
       }
+
+      VcsFileUtil.markFilesDirty(project, roots)
     }
   }.queue()
 }

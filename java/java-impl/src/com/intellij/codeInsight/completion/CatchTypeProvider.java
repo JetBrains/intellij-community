@@ -23,7 +23,6 @@ import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -34,15 +33,12 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 /**
  * @author peter
  */
-class CatchTypeProvider extends CompletionProvider<CompletionParameters> {
+class CatchTypeProvider {
   static final ElementPattern<PsiElement> CATCH_CLAUSE_TYPE = psiElement().insideStarting(
     psiElement(PsiTypeElement.class).withParent(
       psiElement(PsiCatchSection.class)));
 
-  @Override
-  protected void addCompletions(@NotNull final CompletionParameters parameters,
-                                @NotNull final ProcessingContext context,
-                                @NotNull final CompletionResultSet result) {
+  static void addCompletions(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiTryStatement.class);
     final PsiCodeBlock tryBlock = tryStatement == null ? null : tryStatement.getTryBlock();
     if (tryBlock == null) return;

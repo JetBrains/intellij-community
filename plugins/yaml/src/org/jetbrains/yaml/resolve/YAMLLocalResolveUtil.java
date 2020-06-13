@@ -1,11 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.resolve;
 
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.psi.YAMLAlias;
 import org.jetbrains.yaml.psi.YAMLAnchor;
@@ -13,7 +11,7 @@ import org.jetbrains.yaml.psi.YamlRecursivePsiElementVisitor;
 
 import java.util.*;
 
-public class YAMLLocalResolveUtil {
+public final class YAMLLocalResolveUtil {
   private YAMLLocalResolveUtil() {}
 
   /**
@@ -37,7 +35,7 @@ public class YAMLLocalResolveUtil {
   @NotNull
   private static YAMLAliasResolveResult getResolveData(@NotNull PsiFile file) {
     return CachedValuesManager.getCachedValue(file, () -> {
-      Map<YAMLAlias, YAMLAnchor> resolveMap = new THashMap<>();
+      Map<YAMLAlias, YAMLAnchor> resolveMap = new HashMap<>();
       Map<String, YAMLAnchor> defMap = new HashMap<>();
 
       // store first definitions: need for completion
@@ -58,7 +56,7 @@ public class YAMLLocalResolveUtil {
           }
         }
       });
-      Set<YAMLAnchor> firstDefs = new THashSet<>(firstDefMap.values());
+      Set<YAMLAnchor> firstDefs = new HashSet<>(firstDefMap.values());
       YAMLAliasResolveResult result = new YAMLAliasResolveResult(resolveMap, firstDefs);
       return CachedValueProvider.Result.create(result, file);
     });

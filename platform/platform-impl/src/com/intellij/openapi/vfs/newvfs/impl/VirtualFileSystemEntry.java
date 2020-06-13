@@ -74,7 +74,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     myId = -42;
   }
 
-  void registerLink(VirtualFileSystem fs) {
+  void registerLink(@NotNull VirtualFileSystem fs) {
     if (fs instanceof LocalFileSystemImpl && is(VFileProperty.SYMLINK) && isValid()) {
       ((LocalFileSystemImpl)fs).symlinkUpdated(myId, myParent, getPath(), getCanonicalPath());
     }
@@ -103,7 +103,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public VirtualDirectoryImpl getParent() {
-    VirtualDirectoryImpl changedParent = mySegment.vfsData.getChangedParent(myId);
+    VirtualDirectoryImpl changedParent = mySegment.getChangedParent(myId);
     return changedParent != null ? changedParent : myParent;
   }
 
@@ -336,7 +336,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     parent.removeChild(this);
 
     VirtualDirectoryImpl directory = (VirtualDirectoryImpl)newParent;
-    mySegment.vfsData.changeParent(myId, directory);
+    mySegment.changeParent(myId, directory);
     directory.addChild(this);
     updateLinkStatus();
     ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
@@ -429,7 +429,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   @Override
-  public boolean isRecursiveOrCircularSymLink() {
+  public boolean isRecursiveOrCircularSymlink() {
     if (!is(VFileProperty.SYMLINK)) return false;
     NewVirtualFile resolved = getCanonicalFile();
     // invalid symlink

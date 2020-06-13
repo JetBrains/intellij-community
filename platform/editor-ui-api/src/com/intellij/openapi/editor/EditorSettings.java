@@ -171,4 +171,7 @@ public interface EditorSettings {
   }
 
   void setLanguageSupplier(@Nullable Supplier<? extends Language> languageSupplier);
+
+  boolean isShowingSpecialChars();
+  void setShowingSpecialChars(boolean value);
 }

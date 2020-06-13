@@ -12,14 +12,17 @@ public class IDEATestNGConfigurationListener implements IConfigurationListener {
     myListener = listener;
   }
 
+  @Override
   public void onConfigurationSuccess(ITestResult itr) {
     myListener.onConfigurationSuccess(itr, !myStarted);
   }
 
+  @Override
   public void onConfigurationFailure(ITestResult itr) {
     myListener.onConfigurationFailure(itr, !myStarted);
   }
 
+  @Override
   public void onConfigurationSkip(ITestResult itr) {
     myListener.onConfigurationSkip(itr);
   }

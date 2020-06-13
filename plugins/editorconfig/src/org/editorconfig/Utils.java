@@ -65,6 +65,10 @@ public class Utils {
     return currentSettings != null && currentSettings.getCustomSettings(EditorConfigSettings.class).ENABLED;
   }
 
+  public static boolean isEnabled(@NotNull Project project) {
+    return isEnabled(CodeStyle.getSettings(project));
+  }
+
   public static boolean isFullIntellijSettingsSupport() {
     return
       ourIsFullSettingsSupportEnabledInTest ||

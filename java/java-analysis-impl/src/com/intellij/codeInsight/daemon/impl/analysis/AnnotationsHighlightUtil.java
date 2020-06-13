@@ -44,10 +44,8 @@ public class AnnotationsHighlightUtil {
                                           @Nullable RefCountHolder refCountHolder) {
     PsiAnnotation annotation = PsiTreeUtil.getParentOfType(pair, PsiAnnotation.class);
     if (annotation == null) return null;
-    PsiJavaCodeReferenceElement annotationNameReferenceElement = annotation.getNameReferenceElement();
-    if (annotationNameReferenceElement == null) return null;
-    PsiElement annotationClass = annotationNameReferenceElement.resolve();
-    if (!(annotationClass instanceof PsiClass && ((PsiClass)annotationClass).isAnnotationType())) return null;
+    PsiClass annotationClass = annotation.resolveAnnotationType();
+    if (annotationClass == null) return null;
     PsiReference ref = pair.getReference();
     if (ref == null) return null;
     PsiMethod method = (PsiMethod)ref.resolve();
@@ -395,34 +393,45 @@ public class AnnotationsHighlightUtil {
     return null;
   }
 
+  @Nullable
   private static HighlightInfo annotationError(@NotNull PsiAnnotation annotation, @NotNull String message) {
-    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotation).descriptionAndTooltip(message).create();
     LocalQuickFixAndIntentionActionOnPsiElement fix =
       QuickFixFactory.getInstance().createDeleteFix(annotation, JavaAnalysisBundle.message("intention.text.remove.annotation"));
+    return annotationError(annotation, message, fix);
+  }
+
+  @Nullable
+  private static HighlightInfo annotationError(@NotNull final PsiAnnotation annotation,
+                                               @NotNull final String message,
+                                               @NotNull final IntentionAction fix) {
+    final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+      .range(annotation)
+      .descriptionAndTooltip(message)
+      .create();
     QuickFixAction.registerQuickFixAction(info, fix);
     return info;
   }
 
+  @Nullable
   private static HighlightInfo checkReferenceTarget(@NotNull PsiAnnotation annotation, @Nullable PsiJavaCodeReferenceElement ref) {
     if (ref == null) return null;
-    PsiElement refTarget = ref.resolve();
+    final PsiElement refTarget = ref.resolve();
     if (refTarget == null) return null;
 
-    String message = null;
     if (!(refTarget instanceof PsiClass)) {
-      message = JavaErrorBundle.message("annotation.not.allowed.ref");
-    }
-    else {
-      PsiElement parent = ref.getParent();
-      if (parent instanceof PsiJavaCodeReferenceElement) {
-        PsiElement qualified = ((PsiJavaCodeReferenceElement)parent).resolve();
-        if (qualified instanceof PsiMember && ((PsiMember)qualified).hasModifierProperty(PsiModifier.STATIC)) {
-          message = JavaErrorBundle.message("annotation.not.allowed.static");
-        }
-      }
+      return annotationError(annotation, JavaErrorBundle.message("annotation.not.allowed.ref"));
     }
 
-    return message != null ? annotationError(annotation, message) : null;
+    final PsiElement parent = ref.getParent();
+    if (parent instanceof PsiJavaCodeReferenceElement) {
+      final PsiElement qualified = ((PsiJavaCodeReferenceElement)parent).resolve();
+      if (qualified instanceof PsiMember && ((PsiMember)qualified).hasModifierProperty(PsiModifier.STATIC)) {
+        return annotationError(annotation,
+                               JavaErrorBundle.message("annotation.not.allowed.static"),
+                               new MoveAnnotationOnStaticMemberQualifyingTypeFix(annotation));
+      }
+    }
+    return null;
   }
 
   @Contract("null->null; !null->!null")

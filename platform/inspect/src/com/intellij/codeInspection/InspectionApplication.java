@@ -78,6 +78,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
   public boolean myRunWithEditorSettings;
   boolean myRunGlobalToolsOnly;
   boolean myAnalyzeChanges;
+  boolean myPathProfiling;
   private int myVerboseLevel;
   private final Map<String, List<Range>> diffMap = new ConcurrentHashMap<>();
   private final MultiMap<Pair<String, Integer>, String> originalWarnings = MultiMap.createConcurrent();
@@ -87,6 +88,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
 
   public boolean myErrorCodeRequired = true;
   public String myScopePattern;
+  Map<Path, Long> myCompleteProfile;
 
   public void startup() {
     if (myProjectPath == null) {
@@ -113,6 +115,14 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     if (myErrorCodeRequired) {
       ApplicationManagerEx.getApplicationEx().exit(true, true);
     }
+  }
+
+  public void enablePathProfiling() {
+    myPathProfiling = true;
+  }
+
+  public Map<Path, Long> getPathProfile() {
+    return myCompleteProfile;
   }
 
   public void execute() throws Exception {
@@ -194,7 +204,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       }
     }
 
-    Project project = ProjectUtil.openOrImport(projectPath, null, false);
+    Project project = ProjectUtil.openOrImport(projectPath);
     if (project == null) {
       reportError("Unable to open project");
       gracefulExit();
@@ -275,6 +285,9 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     final InspectionManagerBase im = (InspectionManagerBase)InspectionManager.getInstance(project);
     GlobalInspectionContextEx context = (GlobalInspectionContextEx)im.createNewGlobalContext();
     context.setExternalProfile(myInspectionProfile);
+    if (myPathProfiling) {
+      context.startPathProfiling();
+    }
     im.setProfile(myInspectionProfile.getName());
     return context;
   }
@@ -338,6 +351,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
                                               myRunWithEditorSettings ? null : inspectionProfile.getName(),
                                               inspectionProfile);
     inspectionsResults.add(descriptionsFile);
+    saveProfile(context);
     // convert report
     if (reportConverter != null) {
       try {
@@ -350,6 +364,19 @@ public final class InspectionApplication implements CommandLineInspectionProgres
         printHelp();
       }
     }
+  }
+
+  private void saveProfile(GlobalInspectionContextEx context) {
+    if (!myPathProfiling) return;
+    Map<Path, Long> profile = context.getPathProfile();
+    Map<Path, Long> completeProfile = new HashMap<>();
+    profile.forEach((path, millis) -> {
+      while (path != null) {
+        completeProfile.merge(path, millis, Long::sum);
+        path = path.getParent();
+      }
+    });
+    myCompleteProfile = completeProfile;
   }
 
   private @NotNull AnalysisScope runAnalysisOnCodeWithoutChanges(Project project,

@@ -4,8 +4,9 @@ package com.intellij.openapi.roots.impl.libraries
 import com.intellij.openapi.components.StateSplitterEx
 import com.intellij.openapi.util.Pair
 import org.jdom.Element
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 class LibraryStateSplitter : StateSplitterEx() {
   override fun splitState(state: Element): MutableList<Pair<Element, String>> = splitState(
-    state, LibraryImpl.LIBRARY_NAME_ATTR)
+    state, JpsLibraryTableSerializer.NAME_ATTRIBUTE)
 }

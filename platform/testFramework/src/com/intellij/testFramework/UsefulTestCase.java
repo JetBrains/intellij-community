@@ -38,6 +38,8 @@ import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.jdom.Element;
@@ -47,6 +49,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.ComparisonFailure;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -57,14 +60,12 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 
-/**
- * @author peter
- */
 public abstract class UsefulTestCase extends TestCase {
   public static final boolean IS_UNDER_TEAMCITY = System.getenv("TEAMCITY_VERSION") != null;
   public static final String TEMP_DIR_MARKER = "unitTest_";
@@ -72,13 +73,9 @@ public abstract class UsefulTestCase extends TestCase {
 
   private static final String ORIGINAL_TEMP_DIR = FileUtil.getTempDirectory();
 
-  private static final Map<String, Long> TOTAL_SETUP_COST_MILLIS = new HashMap<>();
-  private static final Map<String, Long> TOTAL_TEARDOWN_COST_MILLIS = new HashMap<>();
+  private static final Object2LongOpenHashMap<String> TOTAL_SETUP_COST_MILLIS = new Object2LongOpenHashMap<>();
+  private static final Object2LongOpenHashMap<String> TOTAL_TEARDOWN_COST_MILLIS = new Object2LongOpenHashMap<>();
 
-  static {
-    IdeaForkJoinWorkerThreadFactory.setupPoisonFactory();
-    Logger.setFactory(TestLoggerFactory.class);
-  }
   protected static final Logger LOG = Logger.getInstance(UsefulTestCase.class);
 
   @NotNull
@@ -91,7 +88,11 @@ public abstract class UsefulTestCase extends TestCase {
 
   private static final String DEFAULT_SETTINGS_EXTERNALIZED;
   private static final CodeInsightSettings defaultSettings = new CodeInsightSettings();
+
   static {
+    IdeaForkJoinWorkerThreadFactory.setupPoisonFactory();
+    Logger.setFactory(TestLoggerFactory.class);
+
     // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
     System.setProperty("apple.awt.UIElement", "true");
 
@@ -122,7 +123,6 @@ public abstract class UsefulTestCase extends TestCase {
    *   }
    * }
    * </pre>
-   *
    */
   protected void addSuppressedException(@NotNull Throwable e) {
     List<Throwable> list = mySuppressedExceptions;
@@ -132,7 +132,6 @@ public abstract class UsefulTestCase extends TestCase {
     list.add(e);
   }
   private List<Throwable> mySuppressedExceptions;
-
 
   public UsefulTestCase() {
   }
@@ -206,7 +205,7 @@ public abstract class UsefulTestCase extends TestCase {
             }
           }
           else {
-            FileUtil.delete(new File(myTempDir));
+            FileUtil.delete(Paths.get(myTempDir));
           }
         }
       },
@@ -312,6 +311,12 @@ public abstract class UsefulTestCase extends TestCase {
       .run();
   }
 
+  /**
+   * Test root disposable is used for add an activity on test {@link #tearDown()}
+   *
+   * @see #disposeOnTearDown(Disposable)
+   * @see #tearDown()
+   */
   @NotNull
   public Disposable getTestRootDisposable() {
     return myTestRootDisposable;
@@ -360,10 +365,19 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
     if (runInDispatchThread()) {
-      EdtTestUtilKt.runInEdtAndWait(() -> {
-        runnable.run();
-        return null;
-      });
+      // reduce stack trace
+      Application app = ApplicationManager.getApplication();
+      if (app == null) {
+        if (SwingUtilities.isEventDispatchThread()) {
+          runnable.run();
+        }
+        else {
+          SwingUtilities.invokeAndWait(runnable);
+        }
+      }
+      else {
+        app.invokeAndWait(runnable);
+      }
     }
     else {
       runnable.run();
@@ -409,26 +423,23 @@ public abstract class UsefulTestCase extends TestCase {
    *
    * @param cost setup cost in milliseconds
    */
-  private void logPerClassCost(long cost, @NotNull Map<String, Long> costMap) {
-    Class<?> superclass = getClass().getSuperclass();
-    Long oldCost = costMap.get(superclass.getName());
-    long newCost = oldCost == null ? cost : oldCost + cost;
-    costMap.put(superclass.getName(), newCost);
+  private void logPerClassCost(long cost, @NotNull Object2LongOpenHashMap<String> costMap) {
+    costMap.addTo(getClass().getSuperclass().getName(), cost);
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   static void logSetupTeardownCosts() {
     System.out.println("Setup costs");
     long totalSetup = 0;
-    for (Map.Entry<String, Long> entry : TOTAL_SETUP_COST_MILLIS.entrySet()) {
-      System.out.printf("  %s: %d ms%n", entry.getKey(), entry.getValue());
-      totalSetup += entry.getValue();
+    for (Object2LongMap.Entry<String> entry : TOTAL_SETUP_COST_MILLIS.object2LongEntrySet()) {
+      System.out.printf("  %s: %d ms%n", entry.getKey(), entry.getLongValue());
+      totalSetup += entry.getLongValue();
     }
     System.out.println("Teardown costs");
     long totalTeardown = 0;
-    for (Map.Entry<String, Long> entry : TOTAL_TEARDOWN_COST_MILLIS.entrySet()) {
-      System.out.printf("  %s: %d ms%n", entry.getKey(), entry.getValue());
-      totalTeardown += entry.getValue();
+    for (Object2LongMap.Entry<String> entry : TOTAL_TEARDOWN_COST_MILLIS.object2LongEntrySet()) {
+      System.out.printf("  %s: %d ms%n", entry.getKey(), entry.getLongValue());
+      totalTeardown += entry.getLongValue();
     }
     System.out.printf("Total overhead: setup %d ms, teardown %d ms%n", totalSetup, totalTeardown);
     System.out.printf("##teamcity[buildStatisticValue key='ideaTests.totalSetupMs' value='%d']%n", totalSetup);
@@ -460,7 +471,7 @@ public abstract class UsefulTestCase extends TestCase {
   /**
    * If you want a more shorter name than runInEdtAndWait.
    */
-  protected final void edt(@NotNull ThrowableRunnable<Throwable> runnable) {
+  protected static void edt(@NotNull ThrowableRunnable<Throwable> runnable) {
     EdtTestUtil.runInEdtAndWait(runnable);
   }
 
@@ -470,8 +481,8 @@ public abstract class UsefulTestCase extends TestCase {
       return "<empty>";
     }
 
-    final StringBuilder builder = new StringBuilder();
-    for (final Object o : collection) {
+    StringBuilder builder = new StringBuilder();
+    for (Object o : collection) {
       if (o instanceof THashSet) {
         builder.append(new TreeSet<>((THashSet<?>)o));
       }
@@ -1123,7 +1134,7 @@ public abstract class UsefulTestCase extends TestCase {
     });
   }
 
-  protected class TestDisposable implements Disposable {
+  protected final class TestDisposable implements Disposable {
     private volatile boolean myDisposed;
 
     public TestDisposable() {

@@ -45,7 +45,7 @@ import java.util.regex.Pattern;
 /**
  * Compiles the handlers for usability
  */
-public class PatternCompiler {
+public final class PatternCompiler {
 
   private static final Logger LOG = Logger.getInstance(PatternCompiler.class);
   private static String ourLastSearchPlan;
@@ -75,7 +75,9 @@ public class PatternCompiler {
     try {
       final List<PsiElement> elements = compileByAllPrefixes(project, options, result, context, prefixes, checkForErrors);
       final CompiledPattern pattern = context.getPattern();
-      checkForUnknownVariables(pattern, elements);
+      if (checkForErrors) {
+        checkForUnknownVariables(pattern, elements);
+      }
       pattern.setNodes(elements);
       if (checkForErrors) {
         profile.checkSearchPattern(pattern);
@@ -524,9 +526,9 @@ public class PatternCompiler {
 
     final PsiElement[] patternElements;
     try {
-      PatternContextInfo contextInfo = new PatternContextInfo(PatternTreeContext.Block,
-                                                              options.getPatternContext(),
-                                                              constraint != null ? constraint.getContextConstraint() : null);
+      final PatternContextInfo contextInfo = new PatternContextInfo(PatternTreeContext.Block,
+                                                                    options.getPatternContext(),
+                                                                    constraint != null ? constraint.getContextConstraint() : null);
       patternElements = MatcherImplUtil.createTreeFromText(buf.toString(), contextInfo, options.getFileType(),
                                                            options.getDialect(), project, false);
       if (patternElements.length == 0 && checkForErrors) throw new MalformedPatternException();
@@ -567,8 +569,9 @@ public class PatternCompiler {
                                           SubstitutionHandler handler, Set<String> variableNames, MatchOptions matchOptions,
                                           boolean checkForErrors)
     throws MalformedPatternException {
-    if (constraint.getScriptCodeConstraint()!= null && constraint.getScriptCodeConstraint().length() > 2) {
-      final String script = StringUtil.unquoteString(constraint.getScriptCodeConstraint());
+    final String scriptCodeConstraint = constraint.getScriptCodeConstraint();
+    if (scriptCodeConstraint.length() > 2) {
+      final String script = StringUtil.unquoteString(scriptCodeConstraint);
       if (checkForErrors) {
         final String problem = ScriptSupport.checkValidScript(script, matchOptions);
         if (problem != null) {

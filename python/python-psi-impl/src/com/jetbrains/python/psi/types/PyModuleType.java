@@ -2,7 +2,6 @@
 package com.jetbrains.python.psi.types;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -32,10 +31,7 @@ import com.jetbrains.python.psi.resolve.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 
 import static com.jetbrains.python.psi.PyUtil.inSameFile;
@@ -151,7 +147,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       return;
     }
 
-    final Set<String> seen = Sets.newHashSet();
+    final Set<String> seen = new HashSet<String>();
     if (!processImplicitlyImportedByImportElements(anchor, footHold,
                                                    importElements, name -> filter.test(name) && seen.add(name),
                                                    resultProcessor)) {

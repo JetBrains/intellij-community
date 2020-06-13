@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Vector;
 import java.util.function.Supplier;
 
-public class LeakHunter {
+public final class LeakHunter {
   @TestOnly
   public static void checkProjectLeak() {
     checkLeak(allRoots(), ProjectImpl.class, project -> !project.isDefault() && !project.isLight());

@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.Arrays;
 
 public abstract class LogConsoleImpl extends LogConsoleBase {
@@ -54,7 +55,7 @@ public abstract class LogConsoleImpl extends LogConsoleBase {
     try {
       try {
         @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-        FileInputStream inputStream = new FileInputStream(file);
+        InputStream inputStream = Files.newInputStream(file.toPath());
         //do not skip forward
         if (file.length() >= skippedContents) {
           long skipped = 0;
@@ -66,7 +67,7 @@ public abstract class LogConsoleImpl extends LogConsoleBase {
       }
       catch (FileNotFoundException ignored) {
         if (FileUtilRt.createIfNotExists(file)) {
-          return new BufferedReader(new InputStreamReader(new FileInputStream(file), charset));
+          return new BufferedReader(new InputStreamReader(Files.newInputStream(file.toPath()), charset));
         }
         return null;
       }
@@ -97,7 +98,7 @@ public abstract class LogConsoleImpl extends LogConsoleBase {
     if (myOldSnapshot.rolloverDetected(snapshot)) {
       reader.close();
       //noinspection IOResourceOpenedButNotSafelyClosed
-      reader = new BufferedReader(new InputStreamReader(new FileInputStream(myFile), myCharset));
+      reader = new BufferedReader(new InputStreamReader(Files.newInputStream(myFile.toPath()), myCharset));
     }
     myOldSnapshot = snapshot;
     return reader;
@@ -111,7 +112,7 @@ public abstract class LogConsoleImpl extends LogConsoleBase {
       this.length = myFile.length();
 
       byte[] bytes = new byte[20];
-      try (FileInputStream stream = new FileInputStream(myFile)) {
+      try (InputStream stream = Files.newInputStream(myFile.toPath())) {
         //noinspection ResultOfMethodCallIgnored
         stream.read(bytes);
       }

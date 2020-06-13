@@ -4,6 +4,7 @@ package com.intellij.ide.plugins;
 import com.intellij.CommonBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.notification.Notification;
@@ -153,9 +154,26 @@ public abstract class PluginManagerMain {
       }
 
       String pluginDescriptorUrl = plugin.getUrl();
-      if (!isEmptyOrSpaces(pluginDescriptorUrl)) {
-        sb.append("<h4>Plugin homepage</h4>").append(composeHref(pluginDescriptorUrl));
+      try {
+        List<String> marketplacePlugins = MarketplaceRequests.getInstance().getMarketplaceCachedPlugins();
+        if (marketplacePlugins != null){
+          if (marketplacePlugins.contains(plugin.getPluginId().getIdString())){
+            // Prevent the link to the marketplace from showing to external plugins
+            setPluginHomePage(pluginDescriptorUrl, sb);
+          }
+        } else {
+          // There are no marketplace plugins in the cache, but we should show the title anyway.
+          setPluginHomePage(pluginDescriptorUrl, sb);
+          // will get the marketplace plugins ids next time
+          ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            try {
+              MarketplaceRequests.getInstance().getMarketplacePlugins(null);
+            }
+            catch (IOException ignore) {}
+          });
+        }
       }
+      catch (IOException ignore) {}
 
       String size = plugin instanceof PluginNode ? ((PluginNode)plugin).getSize() : null;
       if (!isEmptyOrSpaces(size)) {
@@ -164,6 +182,12 @@ public abstract class PluginManagerMain {
     }
 
     setTextValue(sb, filter, descriptionTextArea);
+  }
+
+  private static void setPluginHomePage(String pluginDescriptorUrl, StringBuilder sb){
+    if (!isEmptyOrSpaces(pluginDescriptorUrl)) {
+      sb.append("<h4>Plugin homepage</h4>").append(composeHref(pluginDescriptorUrl));
+    }
   }
 
   private static void setTextValue(@Nullable StringBuilder text, @Nullable String filter, JEditorPane pane) {

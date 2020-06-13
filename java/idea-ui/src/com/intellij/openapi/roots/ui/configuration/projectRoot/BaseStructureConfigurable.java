@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.facet.Facet;
 import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -153,27 +154,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   }
 
   protected void addCollapseExpandActions(final List<? super AnAction> result) {
-    final TreeExpander expander = new TreeExpander() {
-      @Override
-      public void expandAll() {
-        TreeUtil.expandAll(myTree);
-      }
-
-      @Override
-      public boolean canExpand() {
-        return true;
-      }
-
-      @Override
-      public void collapseAll() {
-        TreeUtil.collapseAll(myTree, 0);
-      }
-
-      @Override
-      public boolean canCollapse() {
-        return true;
-      }
-    };
+    final TreeExpander expander = new DefaultTreeExpander(myTree);
     final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
     result.add(actionsManager.createExpandAllAction(expander, myTree));
     result.add(actionsManager.createCollapseAllAction(expander, myTree));

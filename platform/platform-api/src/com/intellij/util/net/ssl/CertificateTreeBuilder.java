@@ -10,7 +10,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -78,7 +77,7 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
   }
 
   public List<X509Certificate> getCertificates() {
-    return ContainerUtil.map(myCertificates.values(), (Function<CertificateWrapper, X509Certificate>)wrapper -> wrapper.getCertificate());
+    return ContainerUtil.map(myCertificates.values(), wrapper -> wrapper.getCertificate());
   }
 
   public boolean isEmpty() {

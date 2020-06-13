@@ -59,8 +59,8 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
       entryName = entryName.substring(0, entryName.length() - 1);
       isDirectory = true;
     }
-    if (StringUtil.startsWithChar(entryName, '/')) {
-      entryName = StringUtil.trimStart(entryName, "/");
+    if (StringUtil.startsWithChar(entryName, '/') || StringUtil.startsWithChar(entryName, '\\')) {
+      entryName = entryName.substring(1);
     }
 
     EntryInfo info = map.get(entryName);
@@ -71,7 +71,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
     if (".".equals(path.second)) {
       return parentInfo;
     }
-    long fileStamp = IGNORE_TIMESTAMPS ? DEFAULT_TIMESTAMP : getEntryFileStamp();
+    long fileStamp = IGNORE_TIMESTAMPS ? entry.getCrc() : getEntryFileStamp();
     info = store(map, parentInfo, path.second, isDirectory, entry.getSize(), fileStamp, path.third);
     return info;
   }
@@ -174,7 +174,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
   }
 
   protected abstract long getEntryFileStamp();
-  
+
   @NotNull
   protected abstract ResourceHandle<ZipFile> acquireZipHandle() throws IOException;
 

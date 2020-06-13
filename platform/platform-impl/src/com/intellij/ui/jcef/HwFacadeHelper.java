@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
 import com.intellij.jdkEx.JdkEx;
@@ -17,8 +17,8 @@ import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.image.VolatileImage;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -43,7 +43,7 @@ public class HwFacadeHelper {
   private VolatileImage myBackBuffer;
 
   // [tav] todo: export visible browser bounds from jcef instead
-  private static class JCEFAccessor {
+  private static final class JCEFAccessor {
     private static FieldAccessor<CefApp, HashSet<CefClient>> clientsField;
     private static FieldAccessor<CefClient, HashMap<Integer, CefBrowser>> browsersField;
     private static CefApp ourCefApp;

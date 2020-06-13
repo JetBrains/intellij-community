@@ -15,13 +15,8 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
 import com.intellij.refactoring.suggested.range
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
-import com.jetbrains.python.psi.PyFunction
-import com.jetbrains.python.psi.PyParameter
-import com.jetbrains.python.psi.PySingleStarParameter
-import com.jetbrains.python.psi.PySlashParameter
+import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.ParamHelper
-import com.jetbrains.python.psi.types.PyCallableParameter
-import com.jetbrains.python.psi.types.TypeEvalContext
 
 internal class PySuggestedRefactoringStateChanges(support: PySuggestedRefactoringSupport) : SuggestedRefactoringStateChanges(support) {
 
@@ -38,8 +33,11 @@ internal class PySuggestedRefactoringStateChanges(support: PySuggestedRefactorin
   }
 
   override fun guessParameterIdByMarkers(markerRange: TextRange, prevState: SuggestedRefactoringState): Any? {
-    return super.guessParameterIdByMarkers(markerRange, prevState)
-           ?: findStateChanges(prevState.declaration).guessParameterIdByMarker(markerRange, prevState)
+    return super.guessParameterIdByMarkers(markerRange, prevState) ?:
+           // findStateChanges(prevState.declaration) can't be used here since !prevState.declaration.isValid
+           sequenceOf(ChangeSignatureStateChanges(this), RenameStateChanges)
+             .mapNotNull { it.guessParameterIdByMarker(markerRange, prevState) }
+             .firstOrNull()
   }
 
   private fun findStateChanges(declaration: PsiElement): StateChangesInternal {
@@ -109,7 +107,7 @@ internal class PySuggestedRefactoringStateChanges(support: PySuggestedRefactorin
 
     private fun createSignatureData(function: PyFunction): SuggestedRefactoringSupport.Signature? {
       val name = function.name ?: return null
-      val parametersData = createParametersData(function) ?: return null
+      val parametersData = function.parameterList.parameters.map { createParameterData(it) ?: return null }
       return SuggestedRefactoringSupport.Signature.create(name, PyTypingTypeProvider.ANY, parametersData, null)
     }
 
@@ -125,18 +123,14 @@ internal class PySuggestedRefactoringStateChanges(support: PySuggestedRefactorin
         ?.textRange
     }
 
-    private fun createParametersData(function: PyFunction): List<SuggestedRefactoringSupport.Parameter>? {
-      val context = TypeEvalContext.codeAnalysis(function.project, function.containingFile)
-      return function.getParameters(context).map { createParameterData(it) ?: return null }
-    }
-
     private fun getChildRange(element: PsiElement, type: IElementType): TextRange? = element.node.findChildByType(type)?.textRange
 
-    private fun createParameterData(parameter: PyCallableParameter): SuggestedRefactoringSupport.Parameter? {
-      val name = when (parameter.parameter) {
+    private fun createParameterData(parameter: PyParameter): SuggestedRefactoringSupport.Parameter? {
+      val name = when (parameter) {
         is PySlashParameter -> PySlashParameter.TEXT
         is PySingleStarParameter -> PySingleStarParameter.TEXT
-        else -> ParamHelper.getNameInSignature(parameter)
+        is PyNamedParameter -> ParamHelper.getNameInSignature(parameter)
+        else -> return null
       }
 
       return SuggestedRefactoringSupport.Parameter(

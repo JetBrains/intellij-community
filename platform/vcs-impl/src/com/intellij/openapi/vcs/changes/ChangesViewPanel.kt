@@ -13,19 +13,24 @@ import com.intellij.ui.IdeBorderFactory.createBorder
 import com.intellij.ui.JBColor
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.ui.SideBorder
-import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.EditSourceOnDoubleClickHandler.isToggleEvent
 import com.intellij.util.OpenSourceUtil.openSourcesFrom
 import com.intellij.util.Processor
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
+import javax.swing.JTree
 import javax.swing.SwingConstants
 import kotlin.properties.Delegates.observable
 
 private class ChangesViewPanel(project: Project) : BorderLayoutPanel() {
   val changesView: ChangesListView = ChangesListView(project, false).apply {
-    treeExpander = ChangesViewTreeExpander(this)
+    treeExpander = object : DefaultTreeExpander(this) {
+      override fun collapseAll(tree: JTree, keepSelectionLevel: Int) {
+        super.collapseAll(tree, 2)
+        TreeUtil.expand(tree, 1)
+      }
+    }
     doubleClickHandler = Processor { e ->
       if (isToggleEvent(this, e)) return@Processor false
 
@@ -69,12 +74,5 @@ private class ChangesViewPanel(project: Project) : BorderLayoutPanel() {
       centerPanel.border = createBorder(JBColor.border(), SideBorder.LEFT)
       addToLeft(toolbar.component)
     }
-  }
-}
-
-private class ChangesViewTreeExpander(private val tree: Tree) : DefaultTreeExpander(tree) {
-  override fun collapseAll() {
-    TreeUtil.collapseAll(tree, 2)
-    TreeUtil.expand(tree, 1)
   }
 }

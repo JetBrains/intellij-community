@@ -1,45 +1,35 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.ex;
 
-import static java.awt.event.InputEvent.ALT_DOWN_MASK;
-import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
-
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PausesStat;
 import com.intellij.util.containers.ContainerUtil;
-import java.awt.Component;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -48,12 +38,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
-import javax.swing.JComponent;
-import javax.swing.KeyStroke;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import static java.awt.event.InputEvent.ALT_DOWN_MASK;
+import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 
 public final class ActionUtil {
   private static final Logger LOG = Logger.getInstance(ActionUtil.class);
@@ -240,7 +227,7 @@ public final class ActionUtil {
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(process, progressTitle, true, project);
   }
 
-  public static class ActionPauses {
+  public static final class ActionPauses {
     public static final PausesStat STAT = new PausesStat("AnAction.update()");
   }
 
@@ -478,23 +465,7 @@ public final class ActionUtil {
 
   @Nullable
   public static ShortcutSet getMnemonicAsShortcut(@NotNull AnAction action) {
-    int mnemonic = KeyEvent.getExtendedKeyCodeForChar(action.getTemplatePresentation().getMnemonic());
-    if (mnemonic != KeyEvent.VK_UNDEFINED) {
-      KeyboardShortcut ctrlAltShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(mnemonic, ALT_DOWN_MASK | CTRL_DOWN_MASK), null);
-      KeyboardShortcut altShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(mnemonic, ALT_DOWN_MASK), null);
-      CustomShortcutSet shortcutSet;
-      if (SystemInfo.isMac) {
-        if (Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
-          shortcutSet = new CustomShortcutSet(ctrlAltShortcut, altShortcut);
-        } else {
-          shortcutSet = new CustomShortcutSet(ctrlAltShortcut);
-        }
-      } else {
-        shortcutSet = new CustomShortcutSet(altShortcut);
-      }
-      return shortcutSet;
-    }
-    return null;
+    return KeymapUtil.getMnemonicAsShortcut(action.getTemplatePresentation().getMnemonic());
   }
 
   private static class ActionUpdateData {

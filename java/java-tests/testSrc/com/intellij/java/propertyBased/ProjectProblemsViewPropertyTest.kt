@@ -82,7 +82,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
 
         changedFiles.add(fileToChange.virtualFile)
 
-        val expected = findFilesWithBrokenUsages(relatedFiles, members)
+        val expected = findFilesWithProblems(relatedFiles, members)
         assertContainsElements(actual, expected)
 
         i++
@@ -207,7 +207,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
           else -> null
         }
       }
-      val collector = MemberUsageCollector(name, member.containingFile, usageExtractor)
+      val collector = MemberUsageCollector(name, myProject, usageExtractor)
       PsiSearchHelper.getInstance(myProject).processAllFilesWithWord(name, scope, collector, true)
       val memberUsages = collector.collectedUsages ?: return null
       usages.addAll(memberUsages)
@@ -231,7 +231,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     return possibleOverride == JavaOverridingMethodsSearcher.findOverridingMethod(overrideClass, target, targetClass)
   }
 
-  private fun findFilesWithBrokenUsages(relatedFiles: Set<VirtualFile>, members: List<ScopedMember>): Set<VirtualFile> {
+  private fun findFilesWithProblems(relatedFiles: Set<VirtualFile>, members: List<ScopedMember>): Set<VirtualFile> {
     val psiManager = PsiManager.getInstance(myProject)
     val filesWithErrors = mutableSetOf<VirtualFile>()
     for (file in relatedFiles) {
@@ -298,18 +298,21 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     val virtualFile = psiFile.virtualFile
     val filesWithProblems = mutableSetOf<VirtualFile>()
     for (inlay in reportedChanges.values) {
+      var selectedEditor = FileEditorManager.getInstance(myProject).selectedEditor
+      (selectedEditor as TextEditor).editor.caretModel.moveToOffset(0)
       clickOnInlay(inlay)
-      val openedFile = FileEditorManager.getInstance(myProject).selectedEditor!!.file!!
+      selectedEditor = FileEditorManager.getInstance(myProject).selectedEditor
+      val openedFile = selectedEditor!!.file!!
       if (openedFile != virtualFile) {
         filesWithProblems.add(openedFile)
         openEditor(virtualFile)
-        continue
       }
-      val usageView = UsageViewManager.getInstance(myProject).selectedUsageView!!
-      for (usage in usageView.usages) {
-        val usageFile = (usage as UsageInfo2UsageAdapter).usageInfo.virtualFile!!
-        assertNotEquals(usageFile, virtualFile)
-        filesWithProblems.add(usageFile)
+      else if ((selectedEditor as TextEditor).editor.caretModel.offset == 0) {
+        val usageView = UsageViewManager.getInstance(myProject).selectedUsageView!!
+        for (usage in usageView.usages) {
+          val usageFile = (usage as UsageInfo2UsageAdapter).usageInfo.virtualFile!!
+          if (usageFile != virtualFile) filesWithProblems.add(usageFile)
+        }
       }
     }
     return filesWithProblems
@@ -324,11 +327,11 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
       val presentation = constrainedPresentations[0]
       val rootPresentation = presentation.root
       val settingsOnClickPresentation = (rootPresentation.content as SequencePresentation).presentations[1] as OnClickPresentation
-      val usagesHoverPresentation = settingsOnClickPresentation.presentation as OnHoverPresentation
-      usagesHoverPresentation.mouseMoved(click, point)
-      val delegatePresentation = usagesHoverPresentation.presentation as DynamicDelegatePresentation
-      val usagesClickPresentation = delegatePresentation.delegate as OnClickPresentation
-      usagesClickPresentation.mouseClicked(click, point)
+      val problemsHoverPresentation = settingsOnClickPresentation.presentation as OnHoverPresentation
+      problemsHoverPresentation.mouseMoved(click, point)
+      val delegatePresentation = problemsHoverPresentation.presentation as DynamicDelegatePresentation
+      val problemsClickPresentation = delegatePresentation.delegate as OnClickPresentation
+      problemsClickPresentation.mouseClicked(click, point)
     }
   }
 

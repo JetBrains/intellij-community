@@ -1,21 +1,22 @@
 import sys
-from typing import Any, Iterable, List, Optional, Protocol, Tuple, Type, Union
+from typing import Any, Iterable, List, Optional, Tuple, Type
 from types import TracebackType
 from _types import FileDescriptorLike
 
 
-PIPE_BUF: int
-POLLERR: int
-POLLHUP: int
-POLLIN: int
-POLLMSG: int
-POLLNVAL: int
-POLLOUT: int
-POLLPRI: int
-POLLRDBAND: int
-POLLRDNORM: int
-POLLWRBAND: int
-POLLWRNORM: int
+if sys.platform != "win32":
+    PIPE_BUF: int
+    POLLERR: int
+    POLLHUP: int
+    POLLIN: int
+    POLLMSG: int
+    POLLNVAL: int
+    POLLOUT: int
+    POLLPRI: int
+    POLLRDBAND: int
+    POLLRDNORM: int
+    POLLWRBAND: int
+    POLLWRNORM: int
 
 class poll:
     def __init__(self) -> None: ...

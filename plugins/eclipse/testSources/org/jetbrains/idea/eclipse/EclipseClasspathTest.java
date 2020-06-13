@@ -7,7 +7,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.module.impl.ModuleManagerImpl;
+import com.intellij.openapi.module.impl.ModuleManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
@@ -63,7 +63,7 @@ public class EclipseClasspathTest extends JavaProjectTestCase {
     final Element classpathElement = JDOMUtil.load(fileText);
 
     final Module module = WriteCommandAction.runWriteCommandAction(null, (Computable<Module>)() -> {
-      String imlPath = path + "/" + EclipseProjectFinder.findProjectName(path) + ModuleManagerImpl.IML_EXTENSION;
+      String imlPath = path + "/" + EclipseProjectFinder.findProjectName(path) + ModuleManagerEx.IML_EXTENSION;
       return ModuleManager.getInstance(project).newModule(imlPath, StdModuleTypes.JAVA.getId());
     });
 

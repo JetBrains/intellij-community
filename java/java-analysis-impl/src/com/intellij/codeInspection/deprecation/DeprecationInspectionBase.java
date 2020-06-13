@@ -145,7 +145,7 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
   private static boolean areElementsInSameOutermostClass(PsiElement refElement, PsiElement elementToHighlight) {
     PsiClass outermostClass = CachedValuesManager.getCachedValue(
       refElement,
-      () -> new CachedValueProvider.Result<>(PsiUtil.getTopLevelClass(refElement), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT)
+      () -> new CachedValueProvider.Result<>(PsiUtil.getTopLevelClass(refElement), PsiModificationTracker.MODIFICATION_COUNT)
     );
     return outermostClass != null && outermostClass == PsiUtil.getTopLevelClass(elementToHighlight);
   }

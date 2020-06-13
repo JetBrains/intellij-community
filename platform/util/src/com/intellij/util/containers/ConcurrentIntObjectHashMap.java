@@ -209,7 +209,7 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    * never be used in index calculations because of table bounds.
    */
   static int spread(int h) {
-    return (int)((h ^ (h >>> 16)) & HASH_BITS);
+    return (h ^ (h >>> 16)) & HASH_BITS;
   }
 
   /**

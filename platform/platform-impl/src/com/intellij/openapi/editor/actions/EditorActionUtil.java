@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.editor.actions;
 
@@ -34,7 +34,7 @@ import java.awt.event.MouseEvent;
 
 import static java.lang.Character.*;
 
-public class EditorActionUtil {
+public final class EditorActionUtil {
   protected static final Object EDIT_COMMAND_GROUP = Key.create("EditGroup");
   public static final Object DELETE_COMMAND_GROUP = Key.create("DeleteGroup");
 
@@ -43,7 +43,7 @@ public class EditorActionUtil {
 
   /**
    * Tries to change given editor's viewport position in vertical dimension by the given number of visual lines.
-   * 
+   *
    * @param editor     target editor which viewport position should be changed
    * @param lineShift  defines viewport position's vertical change length
    * @param columnShift  defines viewport position's horizontal change length
@@ -64,7 +64,7 @@ public class EditorActionUtil {
     if (!moveCaret) {
       return;
     }
-    
+
     Rectangle viewRectangle = getVisibleArea(editor);
     int lineNumber = editor.getCaretModel().getVisualPosition().line;
     VisualPosition startPos = editor.xyToVisualPosition(new Point(0, viewRectangle.y));
@@ -102,10 +102,10 @@ public class EditorActionUtil {
     int caretOffset = editor.getCaretModel().getOffset();
     int newCaretOffset = indentLine(project, editor, lineNumber, indent, caretOffset);
     editor.getCaretModel().moveToOffset(newCaretOffset);
-  }  
-  
+  }
+
   // This method avoid moving caret directly, so it's suitable for invocation in bulk mode.
-  // It does calculate (and returns) target caret position. 
+  // It does calculate (and returns) target caret position.
   public static int indentLine(Project project, @NotNull Editor editor, int lineNumber, int indent, int caretOffset) {
     return EditorCoreUtil.indentLine(project, editor, lineNumber, indent, caretOffset, shouldUseSmartTabs(project, editor));
   }
@@ -544,7 +544,7 @@ public class EditorActionUtil {
 
   /**
    * Moves caret to visual line end.
-   * 
+   *
    * @param editor target editor
    * @param isWithSelection whether selection should be set from original caret position to its target position
    * @param ignoreTrailingWhitespace if {@code true}, line end will be determined while ignoring trailing whitespace, unless caret is
@@ -694,7 +694,7 @@ public class EditorActionUtil {
 
       int caret = caretModel.getOffset();
       final FoldRegion collapsedUnderCaret = editor.getFoldingModel().getCollapsedRegionAtOffset(caret);
-      if (collapsedUnderCaret != null && collapsedUnderCaret.shouldNeverExpand() && 
+      if (collapsedUnderCaret != null && collapsedUnderCaret.shouldNeverExpand() &&
           Boolean.TRUE.equals(collapsedUnderCaret.getUserData(FoldingModelImpl.SELECT_REGION_ON_CARET_NEARBY))) {
         if (caret > collapsedUnderCaret.getStartOffset() && columnShift > 0) {
           caretModel.moveToOffset(collapsedUnderCaret.getEndOffset());

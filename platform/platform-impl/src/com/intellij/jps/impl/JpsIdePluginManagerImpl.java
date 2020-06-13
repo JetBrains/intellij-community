@@ -1,7 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jps.impl;
 
-import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -25,6 +30,8 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer;
 import org.jetbrains.jps.model.serialization.module.UnknownSourceRootPropertiesSerializer;
 import org.jetbrains.jps.plugin.JpsPluginManager;
+import org.jetbrains.jps.service.JpsServiceManager;
+import org.jetbrains.jps.service.impl.JpsServiceManagerImpl;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -39,13 +46,18 @@ import java.util.function.Predicate;
 public final class JpsIdePluginManagerImpl extends JpsPluginManager {
   private final List<PluginDescriptor> myExternalBuildPlugins = new CopyOnWriteArrayList<>();
   private final AtomicInteger myModificationStamp = new AtomicInteger(0);
+  private final boolean myFullyLoaded;
 
   public JpsIdePluginManagerImpl() {
-    ExtensionsArea rootArea = Extensions.getRootArea();
-    if (rootArea == null) {
+    Application application = ApplicationManager.getApplication();
+    myFullyLoaded = application != null;
+    if (!myFullyLoaded) {
+      //this may happen e.g. in tests if some test is executed before Application is initialized; in that case the created instance won't be cached
+      //and will be reinitialized next time
       return;
     }
 
+    ExtensionsArea rootArea = application.getExtensionArea();
     //todo[nik] get rid of this check: currently this class is used in intellij.platform.jps.build tests instead of JpsPluginManagerImpl because intellij.platform.ide.impl module is added to classpath via testFramework
     if (rootArea.hasExtensionPoint(JpsPluginBean.EP_NAME)) {
       final Ref<Boolean> initial = new Ref<>(Boolean.TRUE);
@@ -91,6 +103,11 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     }
   }
 
+  @Override
+  public boolean isFullyLoaded() {
+    return myFullyLoaded;
+  }
+
   private void handlePluginRemoved(@NotNull PluginDescriptor pluginDescriptor) {
     if (!myExternalBuildPlugins.contains(pluginDescriptor)) return;
 
@@ -114,6 +131,10 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     }
     myExternalBuildPlugins.remove(pluginDescriptor);
     myModificationStamp.incrementAndGet();
+    JpsServiceManager jpsServiceManager = JpsServiceManager.getInstance();
+    if (jpsServiceManager instanceof JpsServiceManagerImpl) {
+      ((JpsServiceManagerImpl)jpsServiceManager).cleanupExtensionCache();
+    }
   }
 
   private void handlePluginAdded(@NotNull PluginDescriptor pluginDescriptor) {
@@ -232,6 +253,9 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
 
   @Override
   public int getModificationStamp() {
+    if (!myFullyLoaded && myModificationStamp.get() == 0 && ApplicationManager.getApplication() != null) {
+      myModificationStamp.compareAndSet(0, 1);
+    }
     return myModificationStamp.get();
   }
 

@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform;
 
 import com.intellij.facet.ui.ValidationResult;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -19,8 +18,6 @@ import javax.swing.*;
  * @author yole
  */
 public interface DirectoryProjectGenerator<T> {
-  ExtensionPointName<DirectoryProjectGenerator> EP_NAME = ExtensionPointName.create("com.intellij.directoryProjectGenerator");
-
   @Nullable
   @Nls(capitalization = Nls.Capitalization.Sentence)
   default String getDescription() {
@@ -68,10 +65,10 @@ public interface DirectoryProjectGenerator<T> {
   @Nullable
   Icon getLogo();
 
-  void generateProject(@NotNull final Project project,
-                       @NotNull final VirtualFile baseDir,
-                       @NotNull final T settings,
-                       @NotNull final Module module);
+  void generateProject(@NotNull Project project,
+                       @NotNull VirtualFile baseDir,
+                       @NotNull T settings,
+                       @NotNull Module module);
 
   @NotNull
   ValidationResult validate(@NotNull String baseDirPath);

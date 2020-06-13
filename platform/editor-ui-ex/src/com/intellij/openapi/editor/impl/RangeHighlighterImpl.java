@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
@@ -27,7 +26,7 @@ import java.awt.*;
  * Implementation of the markup element for the editor and document.
  * @author max
  */
-class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx, Getter<RangeHighlighterEx> {
+class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx {
   @SuppressWarnings({"InspectionUsingGrayColors", "UseJBColor"})
   private static final Color NULL_COLOR = new Color(0, 0, 0); // must be new instance to work as a sentinel
   private static final Key<Boolean> VISIBLE_IF_FOLDED = Key.create("visible.folded");
@@ -441,11 +440,6 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     if (!isValid()) return;
     // we store highlighters in MarkupModel
     getMarkupModel().removeHighlighter(this);
-  }
-
-  @Override
-  public RangeHighlighterImpl get() {
-    return this;
   }
 
   @Override

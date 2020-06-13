@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.serialization.runConfigurations;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class JpsRunConfigurationSerializer {
+public final class JpsRunConfigurationSerializer {
   private static final Logger LOG = Logger.getInstance(JpsRunConfigurationSerializer.class);
 
   public static void loadRunConfigurations(@NotNull JpsProject project, @Nullable Element runManagerTag) {

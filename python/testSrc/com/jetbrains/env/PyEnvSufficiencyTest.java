@@ -2,16 +2,12 @@
 package com.jetbrains.env;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Sets;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.testFramework.UsefulTestCase.assertEmpty;
 
@@ -24,7 +20,7 @@ public class PyEnvSufficiencyTest extends PyEnvTestCase {
     if (UsefulTestCase.IS_UNDER_TEAMCITY && SETTINGS.isEnvConfiguration()) {
       checkStaging();
 
-      Set<String> tags = Sets.newHashSet();
+      Set<String> tags = new HashSet<String>();
       List<String> roots = getPythonRoots();
       if (roots.size() == 0) {
         return;         // not on env agent

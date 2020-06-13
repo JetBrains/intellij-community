@@ -238,7 +238,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
 
     @Override
     public void visitPyDictLiteralExpression(PyDictLiteralExpression node) {
-      checkLiteral((PsiElement)node);
+      checkLiteral(node);
     }
 
     @Override

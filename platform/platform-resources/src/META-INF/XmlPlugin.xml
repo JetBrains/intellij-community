@@ -338,10 +338,6 @@
 
     <elementDescriptionProvider implementation="com.intellij.refactoring.util.XmlNonCodeSearchElementDescriptionProvider"/>
 
-    <referenceProviderType key="Uri references provider"
-                           implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider"/>
-    <referenceProviderType key="Schema references provider"
-                           implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider"/>
     <multiHostInjector implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.XsdRegExpInjector"/>
     <lang.parserDefinition language="XsdRegExp" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.providers.XsdRegExpParserDefinition"/>
 
@@ -596,6 +592,7 @@
     <editorFactoryListener implementation="com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer$MyEditorFactoryListener"/>
     <psi.symbolReferenceProvider hostLanguage="XML"
                                  hostElementClass="com.intellij.psi.xml.XmlNamedReferenceHost"
+                                 anyReferenceClass="true"
                                  targetClass="com.intellij.model.Symbol"
                                  implementationClass="com.intellij.xml.impl.XmlNamedReferenceProvider"/>
     <notificationWhitelist groupIds="URL does not respond notification"/>

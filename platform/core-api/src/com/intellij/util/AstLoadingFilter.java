@@ -63,7 +63,7 @@ import java.util.function.Supplier;
  * <p/>
  * Note that tree access won't result in an exception when the tree was already loaded.
  */
-public class AstLoadingFilter {
+public final class AstLoadingFilter {
 
   private static final Logger LOG = Logger.getInstance(AstLoadingFilter.class);
   private static final FrequentErrorLogger ourErrorLogger = FrequentErrorLogger.newInstance(LOG);

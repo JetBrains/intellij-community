@@ -24,9 +24,6 @@ import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.impl.source.tree.PsiCommentImpl;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
-*/
 public class CommentLiteralEscaper extends LiteralTextEscaper<PsiCommentImpl> {
   public CommentLiteralEscaper(PsiCommentImpl host) {
     super(host);

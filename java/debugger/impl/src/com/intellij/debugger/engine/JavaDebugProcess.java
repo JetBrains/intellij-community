@@ -70,11 +70,11 @@ public class JavaDebugProcess extends XDebugProcess {
   private final JvmSmartStepIntoActionHandler mySmartStepIntoActionHandler;
 
   private static final JavaBreakpointHandlerFactory[] ourDefaultBreakpointHandlerFactories = {
-    JavaBreakpointHandler.JavaLineBreakpointHandler::new,
-    JavaBreakpointHandler.JavaExceptionBreakpointHandler::new,
-    JavaBreakpointHandler.JavaFieldBreakpointHandler::new,
-    JavaBreakpointHandler.JavaMethodBreakpointHandler::new,
-    JavaBreakpointHandler.JavaWildcardBreakpointHandler::new
+    process -> new JavaBreakpointHandler.JavaLineBreakpointHandler(process),
+    process -> new JavaBreakpointHandler.JavaExceptionBreakpointHandler(process),
+    process -> new JavaBreakpointHandler.JavaFieldBreakpointHandler(process),
+    process -> new JavaBreakpointHandler.JavaMethodBreakpointHandler(process),
+    process -> new JavaBreakpointHandler.JavaWildcardBreakpointHandler(process)
   };
 
   public static JavaDebugProcess create(@NotNull final XDebugSession session, @NotNull final DebuggerSession javaSession) {

@@ -108,6 +108,8 @@ class CustomMethodHandlers {
               (args, memState, factory, method) -> enumName(args.myQualifier, memState, method.getReturnType()))
     .register(staticCall(JAVA_UTIL_COLLECTIONS, "emptyList", "emptySet", "emptyMap").parameterCount(0),
               (args, memState, factory, method) -> getEmptyCollectionConstant(method))
+    .register(exactInstanceCall(JAVA_LANG_CLASS, "getName", "getSimpleName").parameterCount(0),
+              (args, memState, factory, method) -> className(memState, args.myQualifier, method.getName(), method.getReturnType()))
     .register(anyOf(
       staticCall(JAVA_UTIL_COLLECTIONS, "singleton", "singletonList", "singletonMap"),
       staticCall(JAVA_UTIL_LIST, "of"),
@@ -357,5 +359,19 @@ class CustomMethodHandlers {
     } else return TOP;
     LongRangeSet intersection = fromLowerBound.intersect(fromUpperBound);
     return DfTypes.intRangeClamped(intersection);
+  }
+
+  private static @NotNull DfType className(DfaMemoryState memState,
+                                           DfaValue qualifier,
+                                           String name,
+                                           PsiType stringType) {
+    PsiClassType type = DfConstantType.getConstantOfType(memState.getDfType(qualifier), PsiClassType.class);
+    if (type != null) {
+      PsiClass psiClass = type.resolve();
+      if (psiClass != null) {
+        return DfTypes.constant(name.equals("getSimpleName") ? psiClass.getName() : psiClass.getQualifiedName(), stringType);
+      }
+    }
+    return TOP;
   }
 }

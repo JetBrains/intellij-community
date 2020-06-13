@@ -23,9 +23,8 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.impl.ModuleLibraryTable;
+import com.intellij.openapi.roots.impl.ModuleLibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
@@ -87,8 +86,8 @@ public class LibraryEditingUtil {
         final Library library = ((LibraryOrderEntry)orderEntry).getLibrary();
         if (library == null) continue;
 
-        if (library instanceof LibraryImpl) {
-          final Library source = ((LibraryImpl)library).getSource();
+        if (library instanceof LibraryEx) {
+          final Library source = ((LibraryEx)library).getSource();
           result.add(source != null ? source : library);
         } else {
           result.add(library);
@@ -97,8 +96,8 @@ public class LibraryEditingUtil {
     }
     return library -> {
       if (result.contains(library)) return false;
-      if (library instanceof LibraryImpl) {
-        final Library source = ((LibraryImpl)library).getSource();
+      if (library instanceof LibraryEx) {
+        final Library source = ((LibraryEx)library).getSource();
         if (source != null && result.contains(source)) return false;
       }
       PersistentLibraryKind<?> kind = ((LibraryEx)library).getKind();
@@ -146,7 +145,7 @@ public class LibraryEditingUtil {
 
   public static LibraryTablePresentation getLibraryTablePresentation(@NotNull Project project, @NotNull String level) {
     if (level.equals(LibraryTableImplUtil.MODULE_LEVEL)) {
-      return ModuleLibraryTable.MODULE_LIBRARY_TABLE_PRESENTATION;
+      return ModuleLibraryTableBase.MODULE_LIBRARY_TABLE_PRESENTATION;
     }
     final LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(level, project);
     LOG.assertTrue(table != null, level);

@@ -203,6 +203,9 @@
     <extensionPoint qualifiedName="com.intellij.debugger.nodeRenderer"
                     interface="com.intellij.debugger.ui.tree.render.NodeRenderer" dynamic="true"/>
 
+    <extensionPoint qualifiedName="com.intellij.debugger.compoundRendererProvider"
+                    interface="com.intellij.debugger.ui.tree.render.CompoundRendererProvider" dynamic="true"/>
+
     <extensionPoint qualifiedName="com.intellij.debugger.javaDebugAware"
                     interface="com.intellij.debugger.engine.JavaDebugAware" dynamic="true"/>
 
@@ -253,7 +256,7 @@
     <!--<extensionPoint qualifiedName="com.intellij.expectedTypesProvider" interface="com.intellij.codeInsight.ExpectedTypesProviderExtension"/>-->
 
     <extensionPoint qualifiedName="com.intellij.library.javaSourceRootDetector" interface="com.intellij.openapi.roots.libraries.ui.RootDetector" dynamic="true"/>
-    
+
     <!-- See com.intellij.execution.filters.ExceptionFilter -->
     <extensionPoint qualifiedName="com.intellij.jvm.exceptionFilter" interface="com.intellij.execution.filters.JvmExceptionOccurrenceFilter" dynamic="true"/>
 
@@ -389,7 +392,7 @@
 
     <applicationService serviceInterface="com.intellij.openapi.projectRoots.DefaultJdkConfigurator"
                         serviceImplementation="com.intellij.openapi.projectRoots.impl.DefaultJdkConfiguratorImpl"/>
-    
+
     <applicationService serviceInterface="com.intellij.facet.ui.FacetEditorsFactory"
                         serviceImplementation="com.intellij.facet.impl.ui.FacetEditorsFactoryImpl"/>
 
@@ -521,8 +524,6 @@
 
     <moduleConfigurationEditorProvider implementation="com.intellij.openapi.roots.ui.configuration.DefaultModuleEditorsProvider"
                                        order="first"/>
-
-    <postStartupActivity implementation="com.intellij.compiler.impl.CleanStaleModuleOutputsActivity"/>
 
     <postStartupActivity implementation="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileSelectionListener$MyStartupActivity"/>
 
@@ -728,32 +729,32 @@
     <postStartupActivity implementation="com.intellij.execution.RunConfigurationsUnknownJdkContributorRefresher" />
     <registryKey key="jdk.auto.runConfigurations" defaultValue="false" restartRequired="true"
                  description="Check missing JDK references in shared run configurations"/>
-    <registryKey key="java.refactoring.extractMethod.newImplementation" 
+    <registryKey key="java.refactoring.extractMethod.newImplementation"
                  defaultValue="true"
                  description="Enable experimental extract method implementation"/>
-    <registryKey key="java.refactoring.extractMethod.inplace" 
+    <registryKey key="java.refactoring.extractMethod.inplace"
                  defaultValue="false"
                  description="Enable experimental extract method inplace mode"/>
     <debugger.asyncStackTraceProvider
         implementation="com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint$CaptureAsyncStackTraceProvider"/>
 
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$BooleanRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$ByteRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$CharacterRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$ShortRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$IntegerRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$LongRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$FloatRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$DoubleRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.ColorObjectRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.IconObjectRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.GraphicsObjectRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.BinaryRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.TimestampRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.ByteArrayAsStringRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.FileObjectRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.StackTraceElementObjectRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.ClassObjectRenderer"/>
+    <debugger.compoundRendererProvider implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$BooleanRenderer"/>
+    <debugger.compoundRendererProvider implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$ByteRenderer"/>
+    <debugger.compoundRendererProvider implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$CharacterRenderer"/>
+    <debugger.compoundRendererProvider implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$ShortRenderer"/>
+    <debugger.compoundRendererProvider implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$IntegerRenderer"/>
+    <debugger.compoundRendererProvider implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$LongRenderer"/>
+    <debugger.compoundRendererProvider implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$FloatRenderer"/>
+    <debugger.compoundRendererProvider implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$DoubleRenderer"/>
+    <debugger.compoundRendererProvider implementation="com.intellij.debugger.ui.tree.render.ColorObjectRenderer"/>
+    <debugger.compoundRendererProvider implementation="com.intellij.debugger.ui.tree.render.IconObjectRenderer"/>
+    <debugger.compoundRendererProvider implementation="com.intellij.debugger.ui.tree.render.GraphicsObjectRenderer"/>
+    <debugger.compoundRendererProvider implementation="com.intellij.debugger.ui.tree.render.BinaryRenderer"/>
+    <debugger.compoundRendererProvider implementation="com.intellij.debugger.ui.tree.render.TimestampRenderer"/>
+    <debugger.compoundRendererProvider implementation="com.intellij.debugger.ui.tree.render.ByteArrayAsStringRenderer"/>
+    <debugger.compoundRendererProvider implementation="com.intellij.debugger.ui.tree.render.FileObjectRenderer"/>
+    <debugger.compoundRendererProvider implementation="com.intellij.debugger.ui.tree.render.StackTraceElementObjectRenderer"/>
+    <debugger.compoundRendererProvider implementation="com.intellij.debugger.ui.tree.render.ClassObjectRenderer"/>
 
     <debugger.nodeNameAdjuster implementation="com.intellij.debugger.ui.impl.watch.FieldOuterLocalNameAdjuster"/>
 
@@ -967,7 +968,6 @@
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaVariableProcessor" id="javaVariable"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaModuleProcessor"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameAliasingPomTargetProcessor"/>
-    <referenceProviderType key="Class Reference Provider" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider"/>
     <findUsagesHandlerFactory implementation="com.intellij.find.findUsages.JavaFindUsagesHandlerFactory" id="java" order="last, before default"/>
     <updateAddedFileProcessor implementation="com.intellij.psi.impl.file.JavaUpdateAddedFileProcessor"/>
     <rename.inplace.resolveSnapshotProvider language="JAVA" implementationClass="com.intellij.refactoring.rename.inplace.JavaResolveSnapshotProvider"/>
@@ -1222,12 +1222,8 @@
     <lookup.charFilter implementation="com.intellij.codeInsight.completion.JavaCharFilter" id="java"/>
     <completion.contributor language="JAVA" id="javaMethodHandle" order="last, before javaLegacy"
                             implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.JavaMethodHandleCompletionContributor"/>
-    <completion.contributor language="JAVA" id="javaReflection" order="last, before javaLegacy"
+    <completion.contributor language="JAVA" id="javaReflection" order="before javaLegacy, before javaClassReference"
                             implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionCompletionContributor"/>
-    <completion.contributor language="JAVA" id="javaSmart" order="last, before default"
-                            implementationClass="com.intellij.codeInsight.completion.JavaSmartCompletionContributor"/>
-    <completion.contributor language="JAVA" id="smartNull" order="last, before javaSmart"
-                            implementationClass="com.intellij.codeInsight.completion.NullSmartCompletionContributor"/>
     <completion.contributor language="JAVA" id="javadoc" order="last, before javaLegacy, before wordCompletion"
                             implementationClass="com.intellij.codeInsight.completion.JavaDocCompletionContributor"/>
     <completion.contributor language="JVM" id="javaClassName" order="last, before default"
@@ -1937,6 +1933,14 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.UnrollLoopAction</className>
+      <category>Java/Control Flow</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.CollapseIntoLoopAction</className>
+      <category>Java/Control Flow</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.MoveIntoIfBranchesAction</className>
       <category>Java/Control Flow</category>
     </intentionAction>
     <intentionAction>

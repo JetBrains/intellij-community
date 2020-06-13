@@ -27,5 +27,6 @@
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="library" name="jackson" level="project" />
   </component>
 </module>

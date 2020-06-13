@@ -3,10 +3,18 @@ import socket
 import sys
 import types
 
+if sys.version_info >= (3, 8):
+    from typing import SupportsIndex
+
 # https://docs.python.org/3/library/multiprocessing.html#address-formats
 _Address = Union[str, Tuple[str, int]]
 
 class _ConnectionBase:
+    if sys.version_info >= (3, 8):
+        def __init__(self, handle: SupportsIndex, readable: bool = ..., writable: bool = ...) -> None: ...
+    else:
+        def __init__(self, handle: int, readable: bool = ..., writable: bool = ...) -> None: ...
+
     @property
     def closed(self) -> bool: ...  # undocumented
     @property

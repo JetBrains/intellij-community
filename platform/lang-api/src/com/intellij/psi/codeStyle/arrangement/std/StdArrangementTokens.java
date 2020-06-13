@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.arrangement.std;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -21,7 +21,7 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.En
  *
  * @author Denis Zhdanov
  */
-public class StdArrangementTokens {
+public final class StdArrangementTokens {
 
   private static final Map<String, StdArrangementSettingsToken>  TOKENS_BY_ID = new HashMap<>();
 
@@ -104,7 +104,7 @@ public class StdArrangementTokens {
     return result;
   }
 
-  public static class General {
+  public static final class General {
     @NotNull public static final ArrangementSettingsToken TYPE  = token("TYPE", "arrangement.settings.text.general.type", StdArrangementTokenType.GENERAL);
     @NotNull public static final ArrangementSettingsToken MODIFIER = token("MODIFIER", "arrangement.settings.text.general.modifier", StdArrangementTokenType.GENERAL);
     @NotNull public static final ArrangementSettingsToken ORDER = token("ORDER", "arrangement.settings.text.general.order", StdArrangementTokenType.GENERAL);
@@ -114,7 +114,7 @@ public class StdArrangementTokens {
     }
   }
 
-  public static class Section {
+  public static final class Section {
     @NotNull public static final ArrangementSettingsToken START_SECTION = token("SECTION_START", StdArrangementTokenType.ENTRY_TYPE);
     @NotNull public static final ArrangementSettingsToken END_SECTION = token("SECTION_END", StdArrangementTokenType.ENTRY_TYPE);
 
@@ -123,7 +123,7 @@ public class StdArrangementTokens {
     }
   }
 
-  public static class Regexp {
+  public static final class Regexp {
     @NotNull public static final StdArrangementSettingsToken NAME = token("NAME", "arrangement.settings.text.general.name",
                                                                           StdArrangementTokenType.REG_EXP);
 
@@ -136,7 +136,7 @@ public class StdArrangementTokens {
     private Regexp() {
     }
   }
-  public static class EntryType {
+  public static final class EntryType {
     @NotNull public static final ArrangementSettingsToken CLASS           = invertible("CLASS", StdArrangementTokenType.ENTRY_TYPE);
     @NotNull public static final ArrangementSettingsToken ANONYMOUS_CLASS = invertible("ANONYMOUS_CLASS",
                                                                                        StdArrangementTokenType.ENTRY_TYPE);
@@ -170,7 +170,7 @@ public class StdArrangementTokens {
       return TOKENS.getValue();
     }
   }
-  public static class Modifier {
+  public static final class Modifier {
     @NotNull public static final ArrangementSettingsToken PUBLIC          = invertible("PUBLIC", StdArrangementTokenType.MODIFIER);
     @NotNull public static final ArrangementSettingsToken PROTECTED       = invertible("PROTECTED", StdArrangementTokenType.MODIFIER);
     @NotNull public static final ArrangementSettingsToken PRIVATE         = invertible("PRIVATE", StdArrangementTokenType.MODIFIER);
@@ -198,7 +198,7 @@ public class StdArrangementTokens {
       return TOKENS.getValue();
     }
   }
-  public static class Grouping {
+  public static final class Grouping {
     @NotNull public static final ArrangementSettingsToken GETTERS_AND_SETTERS                     =
       token("GETTERS_AND_SETTERS", "arrangement.settings.groups.getters.and.setters.together", StdArrangementTokenType.GROUPING);
     @NotNull public static final ArrangementSettingsToken OVERRIDDEN_METHODS                      =
@@ -211,7 +211,7 @@ public class StdArrangementTokens {
     private Grouping() {
     }
   }
-  public static class Order {
+  public static final class Order {
     @NotNull public static final ArrangementSettingsToken KEEP    = token("KEEP", "arrangement.settings.order.type.keep",
                                                                           StdArrangementTokenType.ORDER);
     @NotNull public static final ArrangementSettingsToken BY_NAME = token("BY_NAME", "arrangement.settings.order.type.by.name",

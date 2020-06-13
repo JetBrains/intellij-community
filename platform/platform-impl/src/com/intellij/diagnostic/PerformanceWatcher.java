@@ -480,6 +480,7 @@ public final class PerformanceWatcher implements Disposable {
         cleanup(dir);
         reportDir = new File(myLogDir, dir.getName() + getFreezePlaceSuffix() + "-" + TimeUnit.MILLISECONDS.toSeconds(durationMs) + "sec");
         if (!dir.renameTo(reportDir)) {
+          LOG.warn("Unable to create freeze folder " + reportDir);
           reportDir = dir;
         }
         String message = "UI was frozen for " + durationMs + "ms, details saved to " + reportDir;
@@ -519,7 +520,10 @@ public final class PerformanceWatcher implements Disposable {
 
       if (!ContainerUtil.isEmpty(stacktraceCommonPart)) {
         StackTraceElement element = stacktraceCommonPart.get(0);
-        return "-" + StringUtil.getShortName(element.getClassName()) + "." + element.getMethodName();
+        return "-" +
+               FileUtil.sanitizeFileName(StringUtil.getShortName(element.getClassName())) +
+               "." +
+               FileUtil.sanitizeFileName(element.getMethodName());
       }
       return "";
     }

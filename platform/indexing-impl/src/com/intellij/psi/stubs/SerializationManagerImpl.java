@@ -10,14 +10,12 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.StubFileElementType;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.io.DataEnumeratorEx;
-import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.InMemoryDataEnumerator;
-import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.DataOutputStream;
 import java.io.*;
 import java.nio.file.Path;
 import java.util.List;
@@ -65,7 +63,21 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
 
   @NotNull
   private DataEnumeratorEx<String> openNameStorage() throws IOException {
-    return myFile == null ? new InMemoryDataEnumerator<>() : new PersistentStringEnumerator(myFile, true);
+    if (myFile == null) {
+      return new InMemoryDataEnumerator<>();
+    }
+    Boolean lastValue = null;
+    if (myUnmodifiable) {
+      lastValue = PersistentHashMapValueStorage.CreationTimeOptions.READONLY.get();
+      PersistentHashMapValueStorage.CreationTimeOptions.READONLY.set(Boolean.TRUE);
+    }
+    try {
+      return new PersistentStringEnumerator(myFile, true);
+    } finally {
+      if (myUnmodifiable) {
+        PersistentHashMapValueStorage.CreationTimeOptions.READONLY.set(lastValue);
+      }
+    }
   }
 
   @Override
@@ -225,7 +237,14 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     //noinspection SynchronizeOnThis
     synchronized (this) {
       IStubElementType.dropRegisteredTypes();
-      myStubSerializationHelper.dropRegisteredSerializers();
+      StubSerializationHelper helper = myStubSerializationHelper;
+      if (helper != null) {
+        helper.dropRegisteredSerializers();
+      }
+      else {
+        // has been corrupted previously
+        nameStorageCrashed();
+      }
       mySerializersLoaded = false;
     }
   }

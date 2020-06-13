@@ -446,7 +446,7 @@ public class SimplifiableAssertionInspection extends BaseInspection {
         final PsiMethod patternMethod = JavaPsiFacade.getElementFactory(containingClass.getProject())
           .createMethodFromText("public static void assertNotEquals(long a, long b){}", containingClass);
         return new CachedValueProvider.Result<>(containingClass.findMethodBySignature(patternMethod, true),
-                                                PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+                                                PsiModificationTracker.MODIFICATION_COUNT);
       });
       return primitiveOverload != null;
     }

@@ -3,11 +3,9 @@ package org.jetbrains.plugins.javaFX.sceneBuilder;
 
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.PathUtil;
-import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 
@@ -26,7 +24,7 @@ import java.util.stream.Collectors;
 class SceneBuilderUtil {
   private static final Logger LOG = Logger.getInstance(SceneBuilderUtil.class);
 
-  static final String SCENE_BUILDER_VERSION = "11.0.2";
+  static final String SCENE_BUILDER_VERSION = "11.0.5";
   static final String JAVAFX_VERSION = "11.0.1";
   static final String SCENE_BUILDER_KIT_FULL_NAME = "scenebuilderkit-" + SCENE_BUILDER_VERSION + ".jar";
 
@@ -40,10 +38,6 @@ class SceneBuilderUtil {
     "javafx-web",
   };
   private static URLClassLoader ourLoader = createClassLoader();
-
-  private static boolean isJava8() {
-    return JavaVersion.current().feature == 8;
-  }
 
   static SceneBuilder create(URL url, Project project, EditorCallback editorCallback) throws Exception {
     //noinspection unchecked
@@ -65,18 +59,7 @@ class SceneBuilderUtil {
     try {
       final Path javaFxJar = Paths.get(PathUtil.getJarPathForClass(SceneBuilderUtil.class));
       boolean isDevMode = Files.isDirectory(javaFxJar);
-      final Path sceneBuilder;
-      if (isJava8()) {
-        if (isDevMode) {
-          sceneBuilder = Paths.get(PluginPathManager.getPluginHomePath("javaFX")).resolve("lib/SceneBuilderKit-8.2.0.jar");
-        }
-        else {
-          sceneBuilder = getJarPath("rt/java8/SceneBuilderKit-8.2.0.jar", javaFxJar);
-        }
-      }
-      else {
-        sceneBuilder = getSceneBuilder11Path();
-      }
+      final Path sceneBuilder = getSceneBuilder11Path();
       final Path sceneBuilderImpl = getJarPath(isDevMode ? "intellij.javaFX.sceneBuilder" : "rt/sceneBuilderBridge.jar", javaFxJar);
 
       try {

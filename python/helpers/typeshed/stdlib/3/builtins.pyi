@@ -9,8 +9,12 @@ from typing import (
     ItemsView, KeysView, ValuesView, ByteString, Optional, AnyStr, Type, Text,
     Protocol,
 )
-from abc import abstractmethod, ABCMeta
+from abc import ABCMeta
 from ast import mod, AST
+from io import (
+    _OpenBinaryMode, _OpenTextMode, _OpenBinaryModeUpdating, _OpenBinaryModeWriting, _OpenBinaryModeReading,
+    TextIOWrapper, FileIO, BufferedRandom, BufferedReader, BufferedWriter
+)
 from types import TracebackType, CodeType
 import sys
 
@@ -291,6 +295,9 @@ _str_base = object
 
 
 
+class _FormatMapMapping(Protocol):
+    def __getitem__(self, __key: str) -> Any: ...
+
 class str(Sequence[str], _str_base):
     @overload
     def __init__(self, o: object = ...) -> None: ...
@@ -308,7 +315,7 @@ class str(Sequence[str], _str_base):
     def expandtabs(self, tabsize: int = ...) -> str: ...
     def find(self, sub: Text, __start: Optional[int] = ..., __end: Optional[int] = ...) -> int: ...
     def format(self, *args: object, **kwargs: object) -> str: ...
-    def format_map(self, map: Mapping[str, Any]) -> str: ...
+    def format_map(self, map: _FormatMapMapping) -> str: ...
     def index(self, sub: Text, __start: Optional[int] = ..., __end: Optional[int] = ...) -> int: ...
     def isalnum(self) -> bool: ...
     def isalpha(self) -> bool: ...
@@ -329,6 +336,9 @@ class str(Sequence[str], _str_base):
     def lstrip(self, __chars: Optional[str] = ...) -> str: ...
     def partition(self, __sep: str) -> Tuple[str, str, str]: ...
     def replace(self, __old: str, __new: str, __count: int = ...) -> str: ...
+    if sys.version_info >= (3, 9):
+        def removeprefix(self, __prefix: str) -> str: ...
+        def removesuffix(self, __suffix: str) -> str: ...
     def rfind(self, sub: Text, __start: Optional[int] = ..., __end: Optional[int] = ...) -> int: ...
     def rindex(self, sub: Text, __start: Optional[int] = ..., __end: Optional[int] = ...) -> int: ...
     def rjust(self, __width: int, __fillchar: str = ...) -> str: ...
@@ -412,6 +422,9 @@ class bytes(ByteString):
     def lstrip(self, __bytes: Optional[bytes] = ...) -> bytes: ...
     def partition(self, __sep: bytes) -> Tuple[bytes, bytes, bytes]: ...
     def replace(self, __old: bytes, __new: bytes, __count: int = ...) -> bytes: ...
+    if sys.version_info >= (3, 9):
+        def removeprefix(self, __prefix: bytes) -> bytes: ...
+        def removesuffix(self, __suffix: bytes) -> bytes: ...
     def rfind(self, sub: Union[bytes, int], start: Optional[int] = ..., end: Optional[int] = ...) -> int: ...
     def rindex(self, sub: Union[bytes, int], start: Optional[int] = ..., end: Optional[int] = ...) -> int: ...
     def rjust(self, __width: int, __fillchar: bytes = ...) -> bytes: ...
@@ -498,6 +511,9 @@ class bytearray(MutableSequence[int], ByteString):
     def lower(self) -> bytearray: ...
     def lstrip(self, __bytes: Optional[bytes] = ...) -> bytearray: ...
     def partition(self, __sep: bytes) -> Tuple[bytearray, bytearray, bytearray]: ...
+    if sys.version_info >= (3, 9):
+        def removeprefix(self, __prefix: bytes) -> bytearray: ...
+        def removesuffix(self, __suffix: bytes) -> bytearray: ...
     def replace(self, __old: bytes, __new: bytes, __count: int = ...) -> bytearray: ...
     def rfind(self, __sub: Union[bytes, int], __start: Optional[int] = ..., __end: Optional[int] = ...) -> int: ...
     def rindex(self, __sub: Union[bytes, int], __start: Optional[int] = ..., __end: Optional[int] = ...) -> int: ...
@@ -965,12 +981,99 @@ def next(__i: Iterator[_T], default: _VT) -> Union[_T, _VT]: ...
 def oct(__number: Union[int, _SupportsIndex]) -> str: ...
 
 if sys.version_info >= (3, 6):
-    def open(file: Union[str, bytes, int, _PathLike[Any]], mode: str = ..., buffering: int = ..., encoding: Optional[str] = ...,
-             errors: Optional[str] = ..., newline: Optional[str] = ..., closefd: bool = ...,
-             opener: Optional[Callable[[str, int], int]] = ...) -> IO[Any]: ...
-def open(file: Union[str, bytes, int], mode: str = ..., buffering: int = ..., encoding: Optional[str] = ...,
-         errors: Optional[str] = ..., newline: Optional[str] = ..., closefd: bool = ...,
-         opener: Optional[Callable[[str, int], int]] = ...) -> IO[Any]: ...
+    # Changed in version 3.6: Support added to accept objects implementing os.PathLike.
+    _OpenFile = Union[str, bytes, int, _PathLike[Any]]
+else:
+    _OpenFile = Union[str, bytes, int]
+_Opener = Callable[[str, int], int]
+
+# Text mode: always returns a TextIOWrapper
+@overload
+def open(
+    file: _OpenFile,
+    mode: _OpenTextMode = ...,
+    buffering: int = ...,
+    encoding: Optional[str] = ...,
+    errors: Optional[str] = ...,
+    newline: Optional[str] = ...,
+    closefd: bool = ...,
+    opener: Optional[_Opener] = ...,
+) -> TextIOWrapper: ...
+
+# Unbuffered binary mode: returns a FileIO
+@overload
+def open(
+    file: _OpenFile,
+    mode: _OpenBinaryMode,
+    buffering: Literal[0],
+    encoding: None = ...,
+    errors: None = ...,
+    newline: None = ...,
+    closefd: bool = ...,
+    opener: Optional[_Opener] = ...,
+) -> FileIO: ...
+
+# Buffering is on: return BufferedRandom, BufferedReader, or BufferedWriter
+@overload
+def open(
+    file: _OpenFile,
+    mode: _OpenBinaryModeUpdating,
+    buffering: Literal[-1, 1] = ...,
+    encoding: None = ...,
+    errors: None = ...,
+    newline: None = ...,
+    closefd: bool = ...,
+    opener: Optional[_Opener] = ...,
+) -> BufferedRandom: ...
+@overload
+def open(
+    file: _OpenFile,
+    mode: _OpenBinaryModeWriting,
+    buffering: Literal[-1, 1] = ...,
+    encoding: None = ...,
+    errors: None = ...,
+    newline: None = ...,
+    closefd: bool = ...,
+    opener: Optional[_Opener] = ...,
+) -> BufferedWriter: ...
+@overload
+def open(
+    file: _OpenFile,
+    mode: _OpenBinaryModeReading,
+    buffering: Literal[-1, 1] = ...,
+    encoding: None = ...,
+    errors: None = ...,
+    newline: None = ...,
+    closefd: bool = ...,
+    opener: Optional[_Opener] = ...,
+) -> BufferedReader: ...
+
+# Buffering cannot be determined: fall back to BinaryIO
+@overload
+def open(
+    file: _OpenFile,
+    mode: _OpenBinaryMode,
+    buffering: int,
+    encoding: None = ...,
+    errors: None = ...,
+    newline: None = ...,
+    closefd: bool = ...,
+    opener: Optional[_Opener] = ...,
+) -> BinaryIO: ...
+
+# Fallback if mode is not specified
+@overload
+def open(
+    file: _OpenFile,
+    mode: str,
+    buffering: int = ...,
+    encoding: Optional[str] = ...,
+    errors: Optional[str] = ...,
+    newline: Optional[str] = ...,
+    closefd: bool = ...,
+    opener: Optional[_Opener] = ...,
+) -> IO[Any]: ...
+
 
 def ord(__c: Union[Text, bytes]) -> int: ...
 class _Writer(Protocol):
@@ -980,6 +1083,12 @@ def print(
 ) -> None: ...
 
 
+_E = TypeVar("_E", contravariant=True)
+_M = TypeVar("_M", contravariant=True)
+class _SupportsPow2(Protocol[_E, _T_co]):
+    def __pow__(self, __other: _E) -> _T_co: ...
+class _SupportsPow3(Protocol[_E, _M, _T_co]):
+    def __pow__(self, __other: _E, __modulo: _M) -> _T_co: ...
 if sys.version_info >= (3, 8):
     @overload
     def pow(base: int, exp: int, mod: None = ...) -> Any: ...  # returns int or float depending on whether exp is non-negative
@@ -987,6 +1096,10 @@ if sys.version_info >= (3, 8):
     def pow(base: int, exp: int, mod: int) -> int: ...
     @overload
     def pow(base: float, exp: float, mod: None = ...) -> float: ...
+    @overload
+    def pow(base: _SupportsPow2[_E, _T_co], exp: _E) -> _T_co: ...
+    @overload
+    def pow(base: _SupportsPow3[_E, _M, _T_co], exp: _E, mod: _M) -> _T_co: ...
 else:
     @overload
     def pow(__base: int, __exp: int, __mod: None = ...) -> Any: ...  # returns int or float depending on whether exp is non-negative
@@ -994,6 +1107,10 @@ else:
     def pow(__base: int, __exp: int, __mod: int) -> int: ...
     @overload
     def pow(__base: float, __exp: float, __mod: None = ...) -> float: ...
+    @overload
+    def pow(__base: _SupportsPow2[_E, _T_co], __exp: _E) -> _T_co: ...
+    @overload
+    def pow(__base: _SupportsPow3[_E, _M, _T_co], __exp: _E, __mod: _M) -> _T_co: ...
 def quit(code: object = ...) -> NoReturn: ...
 @overload
 def reversed(__object: Sequence[_T]) -> Iterator[_T]: ...
@@ -1027,6 +1144,16 @@ else:
     @overload
     def sum(__iterable: Iterable[_T], __start: _S) -> Union[_T, _S]: ...
 def vars(__object: Any = ...) -> Dict[str, Any]: ...
+# Some overloads to better support zipping heterogeneous tuples
+@overload
+def zip(*iterables: Tuple[_T1, _T2]) -> Tuple[Tuple[_T1, ...], Tuple[_T2, ...]]: ...  # type: ignore
+@overload
+def zip(*iterables: Tuple[_T1, _T2, _T3]) -> Tuple[Tuple[_T1, ...], Tuple[_T2, ...], Tuple[_T3, ...]]: ...  # type: ignore
+@overload
+def zip(*iterables: Tuple[_T1, _T2, _T3, _T4]) -> Tuple[Tuple[_T1, ...], Tuple[_T2, ...], Tuple[_T3, ...], Tuple[_T4, ...]]: ...  # type: ignore
+@overload
+def zip(*iterables: Tuple[_T1, _T2, _T3, _T4, _T5]) -> Tuple[Tuple[_T1, ...], Tuple[_T2, ...], Tuple[_T3, ...], Tuple[_T4, ...], Tuple[_T5, ...]]: ...  # type: ignore
+
 @overload
 def zip(__iter1: Iterable[_T1]) -> Iterator[Tuple[_T1]]: ...
 @overload
@@ -1104,10 +1231,10 @@ if sys.version_info >= (3, 5):
         value: Any
 class SyntaxError(_StandardError):
     msg: str
-    lineno: int
+    lineno: Optional[int]
     offset: Optional[int]
     text: Optional[str]
-    filename: str
+    filename: Optional[str]
 class SystemError(_StandardError): ...
 class TypeError(_StandardError): ...
 class ValueError(_StandardError): ...

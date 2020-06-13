@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcsUtil;
 
 import com.intellij.openapi.application.ReadAction;
@@ -30,7 +30,7 @@ import static com.intellij.vcsUtil.VcsUtil.isFileUnderVcs;
 /**
  * <p>{@link VcsUtil} extension that needs access to the {@code intellij.platform.vcs.impl} module.</p>
  */
-public class VcsImplUtil {
+public final class VcsImplUtil {
 
   private static final Logger LOG = Logger.getInstance(VcsImplUtil.class);
 

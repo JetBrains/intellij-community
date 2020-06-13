@@ -86,20 +86,17 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    final Project project = holder.getManager().getProject();
     if (myConfigurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
 
+    final Project project = holder.getProject();
     final InspectionProfileImpl profile =
       (mySessionProfile != null) ? mySessionProfile : InspectionProfileManager.getInstance(project).getCurrentProfile();
-    final List<Configuration> configurations =
-      ContainerUtil.filter(myConfigurations, x -> profile.isToolEnabled(HighlightDisplayKey.find(x.getUuid().toString())));
-    if (configurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
-    for (Configuration configuration : configurations) {
+    for (Configuration configuration : myConfigurations) {
       register(configuration);
     }
 
     final Map<Configuration, Matcher> compiledOptions =
-      SSBasedInspectionCompiledPatternsCache.getInstance(project).getCompiledOptions(configurations);
+      SSBasedInspectionCompiledPatternsCache.getInstance(project).getCompiledOptions(myConfigurations);
     if (compiledOptions.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
 
     final PairProcessor<MatchResult, Configuration> processor = (matchResult, configuration) -> {

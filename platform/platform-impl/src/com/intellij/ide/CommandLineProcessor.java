@@ -21,8 +21,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.platform.CommandLineProjectOpenProcessor;
+import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.PlatformUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,8 +46,10 @@ public final class CommandLineProcessor {
 
   private CommandLineProcessor() { }
 
-  private static @NotNull CommandLineProcessorResult doOpenFileOrProject(Path file, boolean shouldWait) {
-    OpenProjectTask openProjectOptions = new OpenProjectTask();
+  // public for testing
+  @ApiStatus.Internal
+  public static @NotNull CommandLineProcessorResult doOpenFileOrProject(@NotNull Path file, boolean shouldWait) {
+    OpenProjectTask openProjectOptions = PlatformProjectOpenProcessor.createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, null);
     // do not check for .ipr files in specified directory (@develar: it is existing behaviour, I am not fully sure that it is correct)
     openProjectOptions.checkDirectoryForFileBasedProjects = false;
     Project project = ProjectUtil.openOrImport(file, openProjectOptions);
@@ -58,19 +62,19 @@ public final class CommandLineProcessor {
   }
 
   private static @NotNull CommandLineProcessorResult doOpenFile(@NotNull Path ioFile, int line, int column, boolean tempProject, boolean shouldWait) {
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(ioFile.toString()));
-    assert file != null;
-
     Project[] projects = tempProject ? new Project[0] : ProjectUtil.getOpenProjects();
-    if (PlatformUtils.isDataGrip() && !tempProject && projects.length == 0) {
-      RecentProjectsManager recentProjectsManager = RecentProjectsManager.getInstance();
-      if (recentProjectsManager.willReopenProjectOnStart() &&
-          recentProjectsManager.reopenLastProjectsOnStart()) {
+    if (!tempProject && projects.length == 0 && PlatformUtils.isDataGrip()) {
+      RecentProjectsManager recentProjectManager = RecentProjectsManager.getInstance();
+      if (recentProjectManager.willReopenProjectOnStart() && recentProjectManager.reopenLastProjectsOnStart()) {
         projects = ProjectUtil.getOpenProjects();
       }
     }
+
+    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(ioFile.toString()));
+    assert file != null;
+
     if (projects.length == 0) {
-      Project project = CommandLineProjectOpenProcessor.getInstance().openProjectAndFile(file, line, column, tempProject);
+      Project project = CommandLineProjectOpenProcessor.getInstance().openProjectAndFile(ioFile, line, column, tempProject);
       if (project == null) {
         return CommandLineProcessorResult.createError("No project found to open file in");
       }

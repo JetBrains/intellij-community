@@ -4,13 +4,17 @@ package com.intellij.codeInsight.daemon.problems.pass;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.JavaLensProvider;
+import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.daemon.problems.Problem;
 import com.intellij.codeInsight.hints.BlockConstrainedPresentation;
 import com.intellij.codeInsight.hints.BlockConstraints;
 import com.intellij.codeInsight.hints.BlockInlayRenderer;
 import com.intellij.codeInsight.hints.presentation.*;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.SmartHashMap;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.*;
@@ -21,20 +25,26 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.pom.Navigatable;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 import java.util.*;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 
 public class ProjectProblemPassUtils {
@@ -49,48 +59,54 @@ public class ProjectProblemPassUtils {
                                                     @NotNull PresentationFactory factory,
                                                     int offset,
                                                     @NotNull PsiMember member,
-                                                    @NotNull Set<PsiElement> brokenUsages) {
+                                                    @NotNull Set<Problem> relatedProblems) {
     int column = offset - document.getLineStartOffset(document.getLineNumber(offset));
     int columnWidth = EditorUtil.getPlainSpaceWidth(editor);
-    SpacePresentation usagesOffset = new SpacePresentation(column * columnWidth, 0);
-    InlayPresentation textPresentation = factory.smallText(JavaBundle.message("project.problems.broken.usages", brokenUsages.size()));
+    SpacePresentation problemsOffset = new SpacePresentation(column * columnWidth, 0);
+    InlayPresentation textPresentation = factory.smallText(JavaBundle.message("project.problems.hint.text", relatedProblems.size()));
     InlayPresentation errorTextPresentation = new AttributesTransformerPresentation(textPresentation, __ ->
       editor.getColorsScheme().getAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES));
-    InlayPresentation usagesPresentation = factory.referenceOnHover(errorTextPresentation, (e, p) -> showUsages(member, brokenUsages));
+    InlayPresentation problemsPresentation = factory.referenceOnHover(errorTextPresentation, (e, p) -> showProblems(member, relatedProblems));
 
     JPopupMenu popupMenu = new JPopupMenu();
     JMenuItem item = new JMenuItem(JavaBundle.message("project.problems.settings"));
     item.addActionListener(e -> JavaLensProvider.openSettings(JavaLanguage.INSTANCE, project));
     popupMenu.add(item);
 
-    InlayPresentation withSettings = factory.onClick(usagesPresentation, MouseButton.Right, (e, __) -> {
+    InlayPresentation withSettings = factory.onClick(problemsPresentation, MouseButton.Right, (e, __) -> {
       popupMenu.show(e.getComponent(), e.getX(), e.getY());
       return Unit.INSTANCE;
     });
 
-    return factory.seq(usagesOffset, withSettings);
+    return factory.seq(problemsOffset, withSettings);
   }
 
-  private static void showUsages(@NotNull PsiMember member, @NotNull Set<PsiElement> brokenUsages) {
+  private static void showProblems(@NotNull PsiMember member, @NotNull Set<Problem> relatedProblems) {
     Project project = member.getProject();
-    if (brokenUsages.size() == 1) {
-      PsiElement usage = brokenUsages.iterator().next();
-      if (usage instanceof Navigatable) ((Navigatable)usage).navigate(true);
+    if (relatedProblems.size() == 1) {
+      Problem problem = relatedProblems.iterator().next();
+      PsiElement reportedElement = problem.getReportedElement();
+      VirtualFile fileWithProblem = reportedElement.getContainingFile().getVirtualFile();
+      TextRange elementRange = reportedElement.getTextRange();
+      int offset = elementRange != null ? elementRange.getStartOffset() : -1;
+      PsiNavigationSupport.getInstance().createNavigatable(project, fileWithProblem, offset).navigate(true);
     }
     else {
-      String memberName = Objects.requireNonNull(member.getName());
+      String memberName = UsageViewUtil.getLongName(member);
 
       UsageViewPresentation presentation = new UsageViewPresentation();
       String title = JavaBundle.message("project.problems.window.title", memberName);
-      presentation.setCodeUsagesString(title);
+      presentation.setCodeUsagesString(JavaBundle.message("project.problems.title"));
       presentation.setTabName(title);
       presentation.setTabText(title);
 
-      PsiElement[] primary = new PsiElement[]{member};
-      Usage[] usages = ContainerUtil.map2Array(brokenUsages, new Usage[brokenUsages.size()],
-                                               e -> UsageInfoToUsageConverter.convert(primary, new UsageInfo(e)));
+      Usage[] usages = ContainerUtil.map2Array(relatedProblems, new Usage[relatedProblems.size()], e -> {
+        PsiElement reportedElement = e.getReportedElement();
+        UsageInfo usageInfo = new UsageInfo(e.getContext());
+        return new BrokenUsage(usageInfo, reportedElement);
+      });
 
-      UsageTarget[] usageTargets = new UsageTarget[]{new BrokenUsageTargetAdapter(member)};
+      UsageTarget[] usageTargets = new UsageTarget[]{new RelatedProblemTargetAdapter(member)};
       UsageViewManager usageViewManager = UsageViewManager.getInstance(project);
       usageViewManager.showUsages(usageTargets, usages, presentation);
     }
@@ -120,7 +136,14 @@ public class ProjectProblemPassUtils {
 
   static @NotNull HighlightInfo createHighlightInfo(@NotNull Editor editor,
                                                     @NotNull PsiElement identifier,
-                                                    @NotNull Set<PsiElement> brokenUsages) {
+                                                    @NotNull Set<Problem> relatedProblems) {
+    ShowRelatedProblemsAction relatedProblemsAction = new ShowRelatedProblemsAction(relatedProblems);
+    return createHighlightInfo(editor, identifier, relatedProblemsAction);
+  }
+
+  private static @NotNull HighlightInfo createHighlightInfo(@NotNull Editor editor,
+                                                            @NotNull PsiElement identifier,
+                                                            @NotNull IntentionAction action) {
     Color textColor = editor.getColorsScheme().getAttributes(CodeInsightColors.WEAK_WARNING_ATTRIBUTES).getEffectColor();
     TextAttributes attributes = new TextAttributes(null, null, textColor, null, Font.PLAIN);
 
@@ -130,7 +153,7 @@ public class ProjectProblemPassUtils {
       .descriptionAndTooltip(JavaBundle.message("project.problems.fix.description", identifier.getText()))
       .createUnconditionally();
 
-    QuickFixAction.registerQuickFixAction(info, new ShowBrokenUsagesAction(brokenUsages));
+    QuickFixAction.registerQuickFixAction(info, action);
     return info;
   }
 
@@ -151,7 +174,7 @@ public class ProjectProblemPassUtils {
   }
 
   static boolean hintsEnabled() {
-    return JavaLensProvider.getSettings().isShowBrokenUsages();
+    return JavaLensProvider.getSettings().isShowRelatedProblems();
   }
 
   public static @NotNull Map<PsiMember, Inlay<?>> getInlays(@NotNull Editor editor) {
@@ -177,10 +200,32 @@ public class ProjectProblemPassUtils {
           info.myInlay = inlayModel.addBlockElement(memberOffset, true, true, BlockInlayPriority.PROBLEMS, renderer);
           Disposer.dispose(inlay);
         }
+
+        PsiElement identifier = getIdentifier(member);
+        if (identifier != null) {
+          HighlightInfo oldHighlightInfo = info.myHighlightInfo;
+          if (!identifier.getTextRange().equalsToRange(oldHighlightInfo.getActualStartOffset(), oldHighlightInfo.getActualEndOffset())) {
+            IntentionAction action = getRegisteredAction(oldHighlightInfo);
+            if (action != null) {
+              HighlightInfo newHighlightInfo = createHighlightInfo(editor, identifier, action);
+              UpdateHighlightersUtil.setHighlightersToEditor(member.getProject(), editor.getDocument(), 0,
+                                                             member.getContainingFile().getTextLength(),
+                                                             Collections.singletonList(newHighlightInfo), editor.getColorsScheme(), -1);
+              info.myHighlightInfo = newHighlightInfo;
+            }
+          }
+        }
+
         editorInfos.put(member, info);
       }
     });
     return editorInfos;
+  }
+
+  private static @Nullable IntentionAction getRegisteredAction(@NotNull HighlightInfo highlightInfo) {
+    List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> actionRanges = highlightInfo.quickFixActionRanges;
+    if (actionRanges == null || actionRanges.size() != 1) return null;
+    return actionRanges.get(0).first.getAction();
   }
 
   static void updateInfos(@NotNull Editor editor, @NotNull Map<PsiMember, EditorInfo> infos) {
@@ -209,10 +254,17 @@ public class ProjectProblemPassUtils {
     document.putUserData(PREV_MODIFICATION_COUNT, timestamp);
   }
 
+  @Nullable
+  static PsiElement getIdentifier(@NotNull PsiMember psiMember) {
+    PsiNameIdentifierOwner identifierOwner = tryCast(psiMember, PsiNameIdentifierOwner.class);
+    if (identifierOwner == null) return null;
+    return identifierOwner.getNameIdentifier();
+  }
+
   static class EditorInfo {
 
     Inlay<?> myInlay;
-    final HighlightInfo myHighlightInfo;
+    HighlightInfo myHighlightInfo;
 
     EditorInfo(@NotNull Inlay<?> inlay, @NotNull HighlightInfo info) {
       myInlay = inlay;
@@ -234,12 +286,12 @@ public class ProjectProblemPassUtils {
     }
   }
 
-  private static class ShowBrokenUsagesAction extends BaseElementAtCaretIntentionAction {
+  private static class ShowRelatedProblemsAction extends BaseElementAtCaretIntentionAction {
 
-    private final Set<PsiElement> myBrokenUsages;
+    private final Set<Problem> myRelatedProblems;
 
-    private ShowBrokenUsagesAction(Set<PsiElement> usages) {
-      myBrokenUsages = usages;
+    private ShowRelatedProblemsAction(Set<Problem> relatedProblems) {
+      myRelatedProblems = relatedProblems;
     }
 
     @Override
@@ -251,7 +303,7 @@ public class ProjectProblemPassUtils {
     public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
       PsiMember member = PsiTreeUtil.getParentOfType(element, PsiMember.class);
       if (member == null) return;
-      showUsages(member, myBrokenUsages);
+      showProblems(member, myRelatedProblems);
     }
 
     @Override

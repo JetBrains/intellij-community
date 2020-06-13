@@ -7,11 +7,13 @@ import com.intellij.internal.IconsLoadTime.StatData;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.icons.ImageType;
+import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ui.TestScaleHelper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.awt.image.ImageFilter;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -30,7 +32,8 @@ import static org.junit.Assume.assumeTrue;
 @HardwareAgentRequired
 public class IconsLoadTimePerformanceTest {
   private static final Logger LOG = Logger.getInstance(IconsLoadTimePerformanceTest.class);
-  private static final int SVG_ICON_AVERAGE_LOAD_TIME_EXPECTED = 30; // ms
+  private static final int SVG_ICON_AVERAGE_LOAD_TIME_EXPECTED_NO_CACHE = 100; // ms
+  private static final int SVG_ICON_AVERAGE_LOAD_TIME_EXPECTED_CACHE = 50; // ms
   private static final int SVG_ICON_QUORUM_COUNT = 50;
 
   // a list of icons for which we have SVG versions
@@ -39,6 +42,7 @@ public class IconsLoadTimePerformanceTest {
   @Before
   public void setState() {
     TestScaleHelper.setSystemProperty("idea.measure.icon.load.time", "true");
+    TestScaleHelper.setSystemProperty("idea.ui.icons.svg.disk.cache", "false");
   }
 
   @After
@@ -48,13 +52,26 @@ public class IconsLoadTimePerformanceTest {
   }
 
   @Test
-  public void loadIcons() throws ClassNotFoundException, IOException {
+  public void test() throws IOException, ClassNotFoundException {
+    TestScaleHelper.setSystemProperty("idea.ui.icons.svg.disk.cache", "false");
+    loadIcons(SVG_ICON_AVERAGE_LOAD_TIME_EXPECTED_NO_CACHE);
+
+    TestScaleHelper.setSystemProperty("idea.ui.icons.svg.disk.cache", "true");
+    loadIcons(SVG_ICON_AVERAGE_LOAD_TIME_EXPECTED_CACHE);
+  }
+
+  public void loadIcons(int expectedTime) throws ClassNotFoundException, IOException {
     assertNotNull(Class.forName(IconsLoadTime.class.getName())); // force static init
 
     try (BufferedReader br = Files.newBufferedReader(Paths.get(ICONS_LIST_PATH))) {
       String iconPath;
       while ((iconPath = br.readLine()) != null) {
-        ImageLoader.loadFromUrl(new File(PlatformTestUtil.getCommunityPath() + "/" + iconPath).toURI().toURL());
+        ImageLoader.loadFromUrl(
+          new File(PlatformTestUtil.getCommunityPath() + "/" + iconPath).toURI().toURL(),
+          true,
+          false, // do not use global cache
+          new ImageFilter[]{},
+          ScaleContext.create());
       }
     }
     StatData svgData = IconsLoadTime.getStatData(false, ImageType.SVG);
@@ -66,6 +83,6 @@ public class IconsLoadTimePerformanceTest {
                svgData.count >= SVG_ICON_QUORUM_COUNT);
 
     assertTiming("SVG icon load time raised to " + String.format("%.02fms", svgData.averageTime),
-                 SVG_ICON_AVERAGE_LOAD_TIME_EXPECTED, (int)svgData.averageTime);
+                 expectedTime, (int)svgData.averageTime);
   }
 }

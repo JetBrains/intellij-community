@@ -5,9 +5,9 @@ import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.WithoutOwnBeforeRunSteps;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.ui.FragmentedSettings;
 import com.intellij.execution.ui.RunConfigurationFragmentedEditor;
 import com.intellij.execution.ui.RunnerAndConfigurationSettingsEditor;
 import com.intellij.icons.AllIcons;
@@ -194,7 +194,8 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     SettingsEditor<?> configurationEditor = settings.getConfiguration().getConfigurationEditor();
     //noinspection unchecked
     return configurationEditor instanceof RunConfigurationFragmentedEditor<?>
-           ? new RunnerAndConfigurationSettingsEditor(settings, (RunConfigurationFragmentedEditor<FragmentedSettings>)configurationEditor)
+           ? new RunnerAndConfigurationSettingsEditor(settings,
+                                                      (RunConfigurationFragmentedEditor<RunConfigurationBase<?>>)configurationEditor)
            : new ConfigurationSettingsEditorWrapper(settings, (SettingsEditor<RunConfiguration>)configurationEditor);
   }
 }

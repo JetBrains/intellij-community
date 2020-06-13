@@ -21,6 +21,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.moduleMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
@@ -124,13 +125,11 @@ internal class ModuleOrderEntryBridge(
   private var productionOnTestVar = moduleDependencyItem.productionOnTest
 
   override fun getModule(): Module? {
-    // TODO It's better to resolve modules via id when it'll be possible
-    val moduleManager = ModuleManager.getInstance(ownerModuleBridge.project) as ModuleManagerComponentBridge
-    val module = moduleManager.findModuleByName(moduleName) ?: {
-      getRootModel().storage.resolve(moduleDependencyItem.module)?.let {
-        moduleManager.findUncommittedModuleByName(it.name)
-      }
-    }.invoke()
+    val storage = getRootModel().storage
+    val moduleEntity = storage.resolve(moduleDependencyItem.module)
+    val module = moduleEntity?.let {
+      storage.moduleMap.getDataByEntity(it)
+    }
     return getRootModel().accessor.getModule(module, moduleName)
   }
 
@@ -290,7 +289,7 @@ internal class LibraryOrderEntryBridge(
     val libraryDependencyItemCopy = libraryDependencyItem.copy(library = libraryId)
 
     val moduleLibraryCopy = moduleLibrary?.let {
-      val libraryTable = rootModel.moduleLibraryTable as ModifiableModuleLibraryTableBridgeBridge
+      val libraryTable = rootModel.moduleLibraryTable as ModifiableModuleLibraryTableBridge
       libraryTable.createLibraryCopy(it as LibraryBridgeImpl)
     }
     return LibraryOrderEntryBridge(rootModel as ModuleRootModelBridge, index, libraryDependencyItemCopy, moduleLibraryCopy, null)

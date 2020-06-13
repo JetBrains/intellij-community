@@ -179,7 +179,7 @@
       <reference id="Vcs.Log.ResumeIndexing"/>
       <reference id="Vcs.Log.GoToRef"/>
     </group>
-    <group id="Vcs.Log.Diff.Preview.Location" popup="true">
+    <group id="Vcs.Log.Diff.Preview.Location" popup="true" class="com.intellij.vcs.log.ui.actions.DiffPreviewLocationActionGroup">
       <reference id="Vcs.Log.MoveDiffPreviewToBottom"/>
       <reference id="Vcs.Log.MoveDiffPreviewToRight"/>
     </group>
@@ -252,8 +252,7 @@
       <reference ref="Vcs.Log.ShowChangesFromParents"/>
       <reference ref="Vcs.Log.ShowOnlyAffectedChanges"/>
       <reference ref="Vcs.Log.ShowDiffPreview"/>
-      <reference ref="Vcs.Log.MoveDiffPreviewToBottom"/>
-      <reference ref="Vcs.Log.MoveDiffPreviewToRight"/>
+      <reference ref="Vcs.Log.Diff.Preview.Location"/>
       <separator/>
       <reference ref="Vcs.Log.Refresh"/>
       <reference ref="Vcs.Log.OpenAnotherTab"/>
@@ -276,8 +275,6 @@
       <reference id="Vcs.Log.Refresh"/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
       <reference id="Vcs.Log.ShowDiffPreview"/>
-      <reference ref="Vcs.Log.MoveDiffPreviewToBottom"/>
-      <reference ref="Vcs.Log.MoveDiffPreviewToRight"/>
       <reference id="Vcs.FileHistory.ContextMenu"/>
       <reference id="Vcs.FileHistory.Toolbar"/>
       <reference id="VcsHistoryActionsGroup"/>

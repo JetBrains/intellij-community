@@ -760,6 +760,7 @@ public final class JDOMUtil {
     return e.hasAttributes() ? e.getAttributes() : Collections.emptyList();
   }
 
+  @Contract("_, !null -> !null; !null, _ -> !null")
   public static @Nullable Element merge(@Nullable Element to, @Nullable Element from) {
     if (from == null) {
       return to;
@@ -809,6 +810,18 @@ public final class JDOMUtil {
       to.setAttribute(attribute);
     }
     return to;
+  }
+
+  public static @Nullable Element reduceChildren(@NotNull String name, @NotNull Element parent) {
+    List<Element> children = parent.getChildren(name);
+    Iterator<Element> it = children.iterator();
+    if (!it.hasNext()) return null;
+    Element accumulator = it.next();
+    while (it.hasNext()) {
+      merge(accumulator, it.next());
+      it.remove();
+    }
+    return accumulator;
   }
 
   /**

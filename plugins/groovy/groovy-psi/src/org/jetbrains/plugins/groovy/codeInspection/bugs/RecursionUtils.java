@@ -39,6 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 @SuppressWarnings({"OverlyComplexClass"})
+final
 class RecursionUtils {
 
   private RecursionUtils() {

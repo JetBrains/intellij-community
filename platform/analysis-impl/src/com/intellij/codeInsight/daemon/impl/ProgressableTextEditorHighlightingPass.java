@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -32,9 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * @author cdr
- */
 public abstract class ProgressableTextEditorHighlightingPass extends TextEditorHighlightingPass {
   private volatile boolean myFinished;
   private volatile long myProgressLimit;
@@ -149,14 +145,6 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
         myNextChunkThreshold += Math.max(1, myProgressLimit / 100);
         myHighlightInfoProcessor.progressIsAdvanced(myHighlightingSession, getEditor(), progress);
       }
-    }
-  }
-
-  void waitForHighlightInfosApplied() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    HighlightingSessionImpl session = (HighlightingSessionImpl)myHighlightingSession;
-    if (session != null) {
-      session.waitForHighlightInfosApplied();
     }
   }
 

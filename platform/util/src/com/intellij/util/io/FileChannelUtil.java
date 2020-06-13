@@ -11,7 +11,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.channels.FileChannel;
 
-class FileChannelUtil {
+final class FileChannelUtil {
   private static final Logger LOG = Logger.getInstance(FileChannelUtil.class);
 
   private static final Class<?> sunNioChFileChannelImpl = setupFileChannelImpl();

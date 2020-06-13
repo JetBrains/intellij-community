@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.internal.statistic.StatisticsStringUtil.split;
 
-public class EventLogUploader {
+public final class EventLogUploader {
   private static final int WAIT_FOR_IDE_MS = 2000;
 
   public static void main(String[] args) {
@@ -127,11 +127,15 @@ public class EventLogUploader {
                                                             DataCollectorSystemEventLogger eventLogger) {
     String url = options.get(EventLogUploaderOptions.URL_OPTION);
     String productCode = options.get(EventLogUploaderOptions.PRODUCT_OPTION);
+    String productVersion = options.get(EventLogUploaderOptions.PRODUCT_VERSION_OPTION);
     String userAgent = options.get(EventLogUploaderOptions.USER_AGENT_OPTION);
     if (url != null && productCode != null) {
       boolean isInternal = options.containsKey(EventLogUploaderOptions.INTERNAL_OPTION);
       boolean isTest = options.containsKey(EventLogUploaderOptions.TEST_OPTION);
-      return new EventLogExternalApplicationInfo(url, productCode, userAgent, isInternal, isTest, logger, eventLogger);
+      boolean isEAP = options.containsKey(EventLogUploaderOptions.EAP_OPTION);
+      return new EventLogExternalApplicationInfo(
+        url, productCode, productVersion, userAgent, isInternal, isTest, isEAP, logger, eventLogger
+      );
     }
     return null;
   }

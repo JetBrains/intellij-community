@@ -1,0 +1,24 @@
+<html>
+<body>
+Reports the implementations of <code>InvocationHandler.invoke</code> that do not proxy standard
+<code>Object</code> methods like <code>hashCode()</code>, <code>equals()</code>, and <code>toString().
+Failing to handle these methods might cause unexpected problems upon calling them on a proxy instance.
+<p>
+  Example:
+</p>
+<pre>
+  Runnable myProxy = (Runnable) Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),
+      new Class[] {Runnable.class}, (proxy, method, params) -> {
+        System.out.println("Hello World!");
+        return null;
+      });
+</pre>
+<p>
+  The code snippet above is designed to only proxy the <code>Runnable.run()</code> method. However, the calls to Object’s 
+  virtual methods are dispatched as well, which may lead to problems like <code>NullPointerException</code> on trying 
+  to add <code>myProxy</code> to a <code>HashSet</code>.
+</p>
+<!-- tooltip end -->
+<p><small>New in 2020.2</small>
+</body>
+</html>

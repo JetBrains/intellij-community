@@ -1,29 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.foundation;
 
-import static com.intellij.ui.mac.foundation.Foundation.createSelector;
-import static com.intellij.ui.mac.foundation.Foundation.executeOnMainThread;
-import static com.intellij.ui.mac.foundation.Foundation.getObjcClass;
-import static com.intellij.ui.mac.foundation.Foundation.invoke;
-import static com.intellij.ui.mac.foundation.Foundation.nsString;
-import static com.intellij.ui.mac.foundation.Foundation.toStringViaUTF8;
-
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.sun.jna.Pointer;
-import java.awt.AWTEvent;
-import java.awt.ActiveEvent;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dialog;
-import java.awt.EventQueue;
-import java.awt.Frame;
-import java.awt.MenuComponent;
-import java.awt.Toolkit;
-import java.awt.Window;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import sun.awt.AWTAccessor;
+
+import javax.swing.*;
+import javax.swing.text.JTextComponent;
+import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.InvocationTargetException;
@@ -31,18 +21,13 @@ import java.lang.reflect.Method;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.swing.JComponent;
-import javax.swing.JList;
-import javax.swing.SwingUtilities;
-import javax.swing.text.JTextComponent;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import sun.awt.AWTAccessor;
+
+import static com.intellij.ui.mac.foundation.Foundation.*;
 
 /**
  * @author pegov
  */
-public class MacUtil {
+public final class MacUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.foundation.MacUtil");
   public static final String MAC_NATIVE_WINDOW_SHOWING = "MAC_NATIVE_WINDOW_SHOWING";
 

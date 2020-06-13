@@ -21,7 +21,7 @@ import com.jetbrains.python.psi.PyElementType;
  * User : ktisha
  */
 public class PyDocstringTokenTypes {
-  public static final PyElementType DOC_REFERENCE = new PyElementType("DOC_REFERENCE", PyDocReferenceExpression::new);
+  public static final PyElementType DOC_REFERENCE = new PyElementType("DOC_REFERENCE", node -> new PyDocReferenceExpression(node));
   public static final PyElementType DOTS = new PyElementType("DOTS");
 
   private PyDocstringTokenTypes() {

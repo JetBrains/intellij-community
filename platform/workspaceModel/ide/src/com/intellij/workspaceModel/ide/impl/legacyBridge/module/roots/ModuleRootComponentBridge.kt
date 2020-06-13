@@ -18,8 +18,8 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.VirtualFileUrl
 import com.intellij.workspaceModel.storage.impl.DisposableCachedValue
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.CompilerModuleExtensionBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
@@ -31,13 +31,11 @@ class ModuleRootComponentBridge(
 
   private val orderRootsCache =  OrderRootsCache(currentModule)
 
-  internal val newModuleLibraries = mutableListOf<LibraryBridgeImpl>()
-
   private val modelValue = DisposableCachedValue(
     { moduleBridge.entityStorage },
     CachedValue { storage ->
       RootModelBridgeImpl(
-        moduleEntityId = moduleBridge.moduleEntityId,
+        moduleEntity = storage.findModuleEntity(moduleBridge),
         storage = storage,
         moduleLibraryTable = moduleLibraryTable,
         itemUpdater = null,
@@ -99,7 +97,7 @@ class ModuleRootComponentBridge(
   override fun getModifiableModel(): ModifiableRootModel = getModifiableModel(RootConfigurationAccessor.DEFAULT_INSTANCE)
   override fun getModifiableModel(accessor: RootConfigurationAccessor): ModifiableRootModel = ModifiableRootModelBridge(
     WorkspaceEntityStorageBuilder.from(moduleBridge.entityStorage.current),
-    moduleBridge, moduleBridge.moduleEntityId,
+    moduleBridge,
     moduleBridge.entityStorage.current, accessor)
 
   /**
@@ -118,16 +116,18 @@ class ModuleRootComponentBridge(
    * Different serializers will be used ExternalModuleImlFileEntitiesSerializer and ModuleImlFileEntitiesSerializer
    * which leads to store settings in different folders. For example, the content root will not be recognized as belonging
    * to the module because entitySource is different (ModuleImlFileEntitiesSerializer#saveModuleEntities).
+   *
+   * Also this method is used in Project Structure dialog to ensure that changes made in {@link ModifiableModuleModel} after creation
+   * of this {@link ModifiableRootModel} are available in its storage and references in its {@link OrderEntry} can be resolved properly.
    */
-  override fun getModifiableModelForExternalSystem(accessor: RootConfigurationAccessor): ModifiableRootModel = ModifiableRootModelBridge(
+  override fun getModifiableModelForMultiCommit(accessor: RootConfigurationAccessor): ModifiableRootModel = ModifiableRootModelBridge(
     (moduleBridge.diff as? WorkspaceEntityStorageBuilder) ?: WorkspaceEntityStorageBuilder.from(moduleBridge.entityStorage.current),
-    moduleBridge, moduleBridge.moduleEntityId,
+    moduleBridge,
     moduleBridge.entityStorage.current, accessor)
 
   fun getModifiableModel(diff: WorkspaceEntityStorageBuilder,
                          accessor: RootConfigurationAccessor): ModifiableRootModel = ModifiableRootModelBridge(diff,
                                                                                                                moduleBridge,
-                                                                                                               moduleBridge.moduleEntityId,
                                                                                                                moduleBridge.entityStorage.current,
                                                                                                                accessor)
 

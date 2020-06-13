@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -28,11 +14,11 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.SoftFactoryMap;
 import com.intellij.util.xml.highlighting.ResolvingElementQuickFix;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -41,7 +27,7 @@ import java.util.Map;
  *
  * @author peter
  */
-public class DomResolveConverter<T extends DomElement> extends ResolvingConverter<T>{
+public final class DomResolveConverter<T extends DomElement> extends ResolvingConverter<T>{
   private static final Map<Class<? extends DomElement>, DomResolveConverter> ourCache =
     ConcurrentFactoryMap.createMap(key -> new DomResolveConverter(key));
   private final boolean myAttribute;
@@ -56,9 +42,9 @@ public class DomResolveConverter<T extends DomElement> extends ResolvingConverte
       return CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<Map<String, DomElement>>() {
         @Override
         public Result<Map<String, DomElement>> compute() {
-          final Map<String, DomElement> map = new THashMap<>();
+          final Map<String, DomElement> map = new HashMap<>();
           visitDomElement(scope, map);
-          return new Result<>(map, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+          return new Result<>(map, PsiModificationTracker.MODIFICATION_COUNT);
         }
 
         private void visitDomElement(DomElement element, final Map<String, DomElement> map) {
@@ -136,7 +122,7 @@ public class DomResolveConverter<T extends DomElement> extends ResolvingConverte
   @Override
   public LocalQuickFix[] getQuickFixes(final ConvertContext context) {
     final DomElement element = context.getInvocationElement();
-    final GenericDomValue value = ((GenericDomValue)element).createStableCopy();
+    final GenericDomValue value = element.createStableCopy();
     final String newName = value.getStringValue();
     if (newName == null) return LocalQuickFix.EMPTY_ARRAY;
     final DomElement scope = value.getManager().getResolvingScope(value);

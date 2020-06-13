@@ -1,28 +1,13 @@
-<idea-plugin version="2">
+<idea-plugin>
     <id>com.jetbrains.space</id>
     <name>Space</name>
-    <version>0.1.dev</version>
-    <vendor email="support@jetbrains.com" url="jetbrains.com">JetBrains</vendor>
 
     <description>
         <![CDATA[
             Lets you connect your IDE to your organization in <a href="https://jetbrains.com/space/">JetBrains Space</a> so you can view and clone project repositories.
         ]]>
     </description>
-
-    <change-notes><![CDATA[
-<ul>
-<li>Share a project on Space directly from the IntelliJ-based IDE</li>
-<li>Configure the method of clonning HTTP/SSH. HTTP is set by default</li>
-<li>UI improvements</li>
-</ul>
-		]]>
-
-    </change-notes>
-
-    <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
-    <idea-version since-build="201"
-                  until-build="202.*"/>
+    <vendor>JetBrains</vendor>
 
     <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
          on how to target different products -->
@@ -34,6 +19,8 @@
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="circlet.settings.CircletSettings"/>
         <applicationService serviceImplementation="circlet.components.CircletUserAvatarProvider"/>
+        <applicationService serviceImplementation="circlet.components.CircletWorkspaceComponent"/>
+
 
         <applicationConfigurable
             groupId="tools"
@@ -42,7 +29,7 @@
             instance="circlet.settings.CircletSettingsPanel"/>
 
         <toolWindow id="Space Automation"
-                    icon="CircletIcons.mainToolWindowIcon"
+                    icon="SpaceIcons.MainToolwindow"
                     anchor="right"
                     canCloseContents="true"
                     factoryClass="circlet.tools.CircletToolWindowFactory"/>
@@ -53,10 +40,10 @@
         <projectService serviceImplementation="circlet.plugins.pipelines.services.execution.CircletTaskRunner"/>
         <projectService serviceImplementation="circlet.plugins.pipelines.ui.CircletToolWindowService"/>
         <projectService serviceImplementation="circlet.vcs.CircletProjectContext"/>
-<!--        <runLineMarkerContributor-->
-<!--            language="kotlin"-->
-<!--            id="circletScriptRunLineMarkerProvider"-->
-<!--            implementationClass="circlet.plugins.pipelines.services.CircletScriptRunLineMarkerProvider"/>-->
+        <runLineMarkerContributor
+            language="kotlin"
+            id="circletScriptRunLineMarkerProvider"
+            implementationClass="circlet.plugins.pipelines.services.CircletScriptRunLineMarkerProvider"/>
 
         <configurationType implementation="circlet.plugins.pipelines.services.run.CircletRunConfigurationType"/>
 
@@ -67,22 +54,12 @@
 
     </extensions>
 
-    <application-components>
-        <component>
-            <implementation-class>circlet.components.CircletApplicationComponent</implementation-class>
-        </component>
-
-        <component>
-            <implementation-class>circlet.components.CircletWorkspaceComponent</implementation-class>
-        </component>
-    </application-components>
-
     <actions>
         <group id="circlet.actions.MainToolbarActionGroup">
             <separator/>
             <action id="circlet.actions.CircletMainToolBarAction"
                     class="circlet.actions.CircletMainToolBarAction"
-                    icon="CircletIcons.mainIcon"
+                    icon="SpaceIcons.MainToolwindow"
                     text="Space Toolbar Menu">
             </action>
             <add-to-group group-id="NavBarToolBar" anchor="last"/>
@@ -105,7 +82,7 @@
         <group id="circlet.vcs.OpenIssues" class="circlet.vcs.OpenIssues" text="Open Issues..."/>
         <!--        <group id="circlet.vcs.OpenProjects" class="circlet.vcs.OpenProjects" text="Open Projects..."/>-->
 
-        <group text="Space" id="CircletGroup" popup="true" icon="CircletIcons.mainIcon">
+        <group text="Space" id="CircletGroup" popup="true" icon="SpaceIcons.Main">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
             <reference id="circlet.vcs.clone.CircletCloneAction"/>
             <separator/>

@@ -117,7 +117,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
   @Override
   public PsiMember getPotentiallyApplicableMember() {
     return CachedValuesManager.getCachedValue(this, () -> CachedValueProvider.Result
-      .create(getPotentiallyApplicableMemberInternal(), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, this));
+      .create(getPotentiallyApplicableMemberInternal(), PsiModificationTracker.MODIFICATION_COUNT, this));
   }
 
   private PsiMember getPotentiallyApplicableMemberInternal() {

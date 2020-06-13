@@ -253,18 +253,29 @@ public class ListPluginComponent extends JPanel {
   }
 
   private void createTag() {
-    if (myPlugin.getProductCode() != null) {
-      String tag = ContainerUtil.getFirstItem(PluginManagerConfigurable.getTags(myPlugin));
-      if (tag == null) {
-        return;
+    String tag = null;
+
+    if (myPlugin.getProductCode() == null) {
+      if (myMarketplace && !LicensePanel.isEA2Product(myPlugin.getPluginId().getIdString())) {
+        List<String> tags = ((PluginNode)myPlugin).getTags();
+        if (tags != null && tags.contains(Tags.Paid.name())) {
+          tag = Tags.Paid.name();
+        }
       }
-
-      TagComponent component = new TagComponent(tag);
-      //noinspection unchecked
-      component.setListener(mySearchListener, component);
-
-      myLayout.setTagComponent(PluginManagerConfigurable.setTinyFont(component));
     }
+    else {
+      tag = ContainerUtil.getFirstItem(PluginManagerConfigurable.getTags(myPlugin));
+    }
+
+    if (tag == null) {
+      return;
+    }
+
+    TagComponent component = new TagComponent(tag);
+    //noinspection unchecked
+    component.setListener(mySearchListener, component);
+
+    myLayout.setTagComponent(PluginManagerConfigurable.setTinyFont(component));
   }
 
   private void setTagTooltip(@Nullable String text) {

@@ -18,9 +18,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * @author cdr
- */
 public class PropertiesGroupingStructureViewComponent extends StructureViewComponent {
 
   protected PropertiesGroupingStructureViewComponent(Project project,

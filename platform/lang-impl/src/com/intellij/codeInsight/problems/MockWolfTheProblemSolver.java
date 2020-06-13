@@ -13,14 +13,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author cdr
- */
 public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
   private WolfTheProblemSolver myDelegate;
 
   @Override
-  public boolean isProblemFile(VirtualFile virtualFile) {
+  public boolean isProblemFile(@NotNull VirtualFile virtualFile) {
     return myDelegate != null && myDelegate.isProblemFile(virtualFile);
   }
 
@@ -40,7 +37,7 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
   }
 
   @Override
-  public boolean hasSyntaxErrors(final VirtualFile file) {
+  public boolean hasSyntaxErrors(final @NotNull VirtualFile file) {
     return myDelegate != null && myDelegate.hasSyntaxErrors(file);
   }
 
@@ -55,7 +52,7 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
   }
 
   @Override
-  public void queue(VirtualFile suspiciousFile) {
+  public void queue(@NotNull VirtualFile suspiciousFile) {
     if (myDelegate != null) myDelegate.queue(suspiciousFile);
   }
 
@@ -65,16 +62,19 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
   }
 
   @Override
-  public Problem convertToProblem(VirtualFile virtualFile, int line, int column, String[] message) {
+  public Problem convertToProblem(@NotNull VirtualFile virtualFile, int line, int column, String @NotNull [] message) {
     return myDelegate == null ? null : myDelegate.convertToProblem(virtualFile, line, column, message);
   }
 
-  public void setDelegate(final WolfTheProblemSolver delegate) {
+  void setDelegate(@NotNull WolfTheProblemSolver delegate) {
+    if (myDelegate != null) {
+      throw new IllegalStateException();
+    }
     myDelegate = delegate;
   }
 
   @Override
-  public void reportProblems(final VirtualFile file, Collection<? extends Problem> problems) {
+  public void reportProblems(final @NotNull VirtualFile file, @NotNull Collection<? extends Problem> problems) {
     if (myDelegate != null) myDelegate.reportProblems(file,problems);
   }
 

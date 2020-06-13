@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,7 +19,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.IntFunction;
 
-public class IOUtil {
+public final class IOUtil {
   @SuppressWarnings("SpellCheckingInspection") public static final boolean BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER =
     SystemProperties.getBooleanProperty("idea.bytebuffers.use.native.byte.order", true);
 

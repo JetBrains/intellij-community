@@ -363,7 +363,9 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     val adapter = picoContainer.getComponentAdapter(interfaceClass)
     if (adapter == null) {
       checkCanceledIfNotInClassInit()
-      checkContainerNotDisposedCompletely(interfaceClass, ProgressManager.getGlobalProgressIndicator())
+      if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
+        throwContainerIsAlreadyDisposed(interfaceClass, ProgressManager.getGlobalProgressIndicator())
+      }
       return null
     }
 
@@ -401,6 +403,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     val key = serviceClass.name
     val adapter = picoContainer.getServiceAdapter(key) as? ServiceComponentAdapter
     val indicator = ProgressManager.getGlobalProgressIndicator()
+
     if (adapter != null) {
       if (createIfNeeded && containerState.get() == ContainerState.DISPOSE_COMPLETED) {
         adapter.throwAlreadyDisposedError(this, indicator)
@@ -409,7 +412,14 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     }
 
     checkCanceledIfNotInClassInit()
-    checkContainerNotDisposedCompletely(serviceClass, indicator)
+
+    // if container is fully disposed, all adapters maybe removed
+    if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
+      if (!createIfNeeded) {
+        return null
+      }
+      throwContainerIsAlreadyDisposed(serviceClass, indicator)
+    }
 
     if (parent != null) {
       val result = parent.doGetService(serviceClass, createIfNeeded)
@@ -431,15 +441,13 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     return result
   }
 
-  private fun checkContainerNotDisposedCompletely(interfaceClass: Class<*>, indicator: @Nullable ProgressIndicator?) {
-    if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
-      val error = AlreadyDisposedException("Cannot create ${interfaceClass.name} because container is already disposed: ${toString()}")
-      if (indicator == null) {
-        throw error
-      }
-      else {
-        throw ProcessCanceledException(error)
-      }
+  private fun throwContainerIsAlreadyDisposed(interfaceClass: Class<*>, indicator: @Nullable ProgressIndicator?) {
+    val error = AlreadyDisposedException("Cannot create ${interfaceClass.name} because container is already disposed: ${toString()}")
+    if (indicator == null) {
+      throw error
+    }
+    else {
+      throw ProcessCanceledException(error)
     }
   }
 

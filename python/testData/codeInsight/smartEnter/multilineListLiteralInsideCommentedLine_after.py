@@ -1,0 +1,4 @@
+xs = [
+    # comment
+    # <caret>
+]

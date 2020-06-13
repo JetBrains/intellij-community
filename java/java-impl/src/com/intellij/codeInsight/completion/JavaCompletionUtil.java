@@ -543,7 +543,7 @@ public class JavaCompletionUtil {
     }
 
     if (reference instanceof PsiMethodReferenceExpression && completion instanceof PsiMethod && ((PsiMethod)completion).isConstructor()) {
-      return Collections.singletonList(JavaLookupElementBuilder.forMethod((PsiMethod)completion, "new", PsiSubstitutor.EMPTY, null));
+      return Collections.singletonList(createConstructorReferenceItem((PsiMethod)completion, (PsiMethodReferenceExpression)reference));
     }
 
     PsiSubstitutor substitutor = completionElement.getSubstitutor();
@@ -563,13 +563,22 @@ public class JavaCompletionUtil {
       return Collections.singletonList(item);
     }
     if (completion instanceof PsiVariable) {
-      return Collections.singletonList(new VariableLookupItem((PsiVariable)completion).setSubstitutor(substitutor));
+      return Collections.singletonList(new VariableLookupItem((PsiVariable)completion).setSubstitutor(substitutor).qualifyIfNeeded(reference));
     }
     if (completion instanceof PsiPackage) {
       return Collections.singletonList(new PackageLookupItem((PsiPackage)completion, reference.getElement()));
     }
 
     return Collections.singletonList(LookupItemUtil.objectToLookupItem(completion));
+  }
+
+  @NotNull
+  private static LookupElement createConstructorReferenceItem(@NotNull PsiMethod completion, @NotNull PsiMethodReferenceExpression context) {
+    LookupElementBuilder item = JavaLookupElementBuilder
+      .forMethod(completion, "new", PsiSubstitutor.EMPTY, null)
+      .withPresentableText("new")
+      .bold();
+    return LambdaHighlightingUtil.insertSemicolon(context.getParent()) ? TailTypeDecorator.withTail(item, TailType.SEMICOLON) : item;
   }
 
   public static boolean hasAccessibleConstructor(@NotNull PsiType type, @NotNull PsiElement place) {
@@ -825,7 +834,7 @@ public class JavaCompletionUtil {
         boolean insertAdditionalSemicolon = true;
         PsiElement leaf = context.getFile().findElementAt(context.getStartOffset());
         PsiElement composite = leaf == null ? null : leaf.getParent();
-        if (composite instanceof PsiMethodReferenceExpression && LambdaHighlightingUtil.insertSemicolon(composite.getParent())) {
+        if (composite instanceof PsiMethodReferenceExpression && !LambdaHighlightingUtil.insertSemicolon(composite.getParent())) {
           insertAdditionalSemicolon = false;
         }
         else if (composite instanceof PsiReferenceExpression) {
@@ -836,7 +845,7 @@ public class JavaCompletionUtil {
           if (parent instanceof PsiLambdaExpression && !LambdaHighlightingUtil.insertSemicolonAfter((PsiLambdaExpression)parent)) {
             insertAdditionalSemicolon = false;
           }
-          if (parent instanceof PsiMethodReferenceExpression && LambdaHighlightingUtil.insertSemicolon(parent.getParent())) {
+          if (parent instanceof PsiMethodReferenceExpression && !LambdaHighlightingUtil.insertSemicolon(parent.getParent())) {
             insertAdditionalSemicolon = false;
           }
         }

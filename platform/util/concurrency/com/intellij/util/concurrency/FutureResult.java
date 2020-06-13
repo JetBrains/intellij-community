@@ -22,14 +22,14 @@ public class FutureResult<T> implements Future<T> {
   public synchronized void set(@Nullable T result) {
     assertNotSet();
 
-    myValue = Pair.create((Object)result, true);
+    myValue = Pair.create(result, true);
     mySema.release();
   }
 
   public synchronized void setException(@NotNull Throwable e) {
     assertNotSet();
 
-    myValue = Pair.create((Object)e, false);
+    myValue = Pair.create(e, false);
     mySema.release();
   }
 

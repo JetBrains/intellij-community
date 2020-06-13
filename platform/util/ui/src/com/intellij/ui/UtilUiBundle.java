@@ -11,7 +11,7 @@ import java.util.ResourceBundle;
 
 import static com.intellij.BundleUtil.loadLanguageBundle;
 
-public class UtilUiBundle {
+public final class UtilUiBundle {
   private static final String BUNDLE = "messages.UtilUiBundle";
   private static ResourceBundle ourBundle;
 

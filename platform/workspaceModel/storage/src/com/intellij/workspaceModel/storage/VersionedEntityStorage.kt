@@ -173,7 +173,7 @@ open class VersionedEntityStorageImpl(initialStorage: WorkspaceEntityStorage) : 
   }
 }
 
-abstract class VersionedStorageChanged(val versionedStorage: VersionedEntityStorage) : EventObject(versionedStorage) {
+abstract class VersionedStorageChanged(versionedStorage: VersionedEntityStorage) : EventObject(versionedStorage) {
   abstract val storageBefore: WorkspaceEntityStorage
   abstract val storageAfter: WorkspaceEntityStorage
 

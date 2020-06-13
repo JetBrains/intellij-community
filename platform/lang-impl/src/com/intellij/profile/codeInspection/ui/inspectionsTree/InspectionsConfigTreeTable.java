@@ -6,6 +6,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ScopeToolState;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -28,6 +29,7 @@ import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.Alarm;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.IconTableCellRenderer;
@@ -275,15 +277,20 @@ public class InspectionsConfigTreeTable extends TreeTable {
       final InspectionConfigTreeNode treeNode = (InspectionConfigTreeNode)node;
       final List<HighlightDisplayKey> inspectionsKeys = InspectionsAggregationUtil.getInspectionsKeys(treeNode);
       if (column == SEVERITIES_COLUMN) {
-        final MultiColoredHighlightSeverityIconSink sink = new MultiColoredHighlightSeverityIconSink();
-        for (final HighlightDisplayKey selectedInspectionsNode : inspectionsKeys) {
-          final String toolId = selectedInspectionsNode.toString();
-          if (mySettings.getInspectionProfile().getTools(toolId, mySettings.getProject()).isEnabled()) {
-            sink.put(mySettings.getInspectionProfile().getToolDefaultState(toolId, mySettings.getProject()),
-                     mySettings.getInspectionProfile().getNonDefaultTools(toolId, mySettings.getProject()));
-          }
+        if (treeNode instanceof InspectionConfigTreeNode.Group) {
+          return EmptyIcon.ICON_0;
         }
-        return sink.constructIcon(mySettings.getInspectionProfile());
+        else {
+          final MultiColoredHighlightSeverityIconSink sink = new MultiColoredHighlightSeverityIconSink();
+          for (final HighlightDisplayKey selectedInspectionsNode : inspectionsKeys) {
+            final String toolId = selectedInspectionsNode.toString();
+            if (mySettings.getInspectionProfile().getTools(toolId, mySettings.getProject()).isEnabled()) {
+              sink.put(mySettings.getInspectionProfile().getToolDefaultState(toolId, mySettings.getProject()),
+                       mySettings.getInspectionProfile().getNonDefaultTools(toolId, mySettings.getProject()));
+            }
+          }
+          return sink.constructIcon(mySettings.getInspectionProfile());
+        }
       }
       if (column == IS_ENABLED_COLUMN) {
         return isEnabled(inspectionsKeys);
@@ -438,15 +445,27 @@ public class InspectionsConfigTreeTable extends TreeTable {
       }
 
       boolean allScopesHasMixedSeverity = true;
+      boolean allErrors = true;
+      boolean hasError = false;
       for (HighlightSeverity severity : computedSeverities.values()) {
-        if (!severity.equals(ScopesAndSeveritiesTable.MIXED_FAKE_SEVERITY)) {
-          allScopesHasMixedSeverity = false;
-          break;
-        }
+        allScopesHasMixedSeverity = allScopesHasMixedSeverity && severity.equals(ScopesAndSeveritiesTable.MIXED_FAKE_SEVERITY);
+        hasError = hasError || severity.equals(HighlightSeverity.ERROR);
+        allErrors = allErrors && severity.equals(HighlightSeverity.ERROR);
       }
-      return allScopesHasMixedSeverity
-             ? ScopesAndSeveritiesTable.MIXED_FAKE_LEVEL.getIcon()
-             : new MultiScopeSeverityIcon(computedSeverities, myDefaultScopeName, inspectionProfile);
+
+      if (allScopesHasMixedSeverity) {
+        return ScopesAndSeveritiesTable.MIXED_FAKE_LEVEL.getIcon();
+      }
+
+      if (computedSeverities.size() == 1) {
+        HighlightSeverity severity = computedSeverities.values().iterator().next();
+        return HighlightDisplayLevel.find(severity).getIcon();
+      }
+      else {
+        return allErrors ? HighlightDisplayLevel.ERROR.getIcon() :
+               hasError ? AllIcons.General.InspectionsMixed:
+               HighlightDisplayLevel.WARNING.getIcon();
+      }
     }
 
     @Nullable

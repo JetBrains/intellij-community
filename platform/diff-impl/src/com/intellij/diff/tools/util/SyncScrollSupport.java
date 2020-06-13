@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util;
 
 import com.intellij.diff.util.Range;
@@ -22,7 +22,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
-public class SyncScrollSupport {
+public final class SyncScrollSupport {
   public interface SyncScrollable {
     @CalledInAwt
     boolean isSyncScrollEnabled();

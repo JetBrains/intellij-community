@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.jna.JnaLoader;
@@ -30,9 +30,10 @@ import java.util.Set;
 /**
  * @version 11.1
  */
-public class FileSystemUtil {
+public final class FileSystemUtil {
   static final String FORCE_USE_NIO2_KEY = "idea.io.use.nio2";
   private static final String COARSE_TIMESTAMP_KEY = "idea.io.coarse.ts";
+  private static final boolean DO_NOT_RESOLVE_SYMLINKS = SystemProperties.is("idea.symlinks.no.resolve");
 
   private static final Logger LOG = Logger.getInstance(FileSystemUtil.class);
 
@@ -222,7 +223,7 @@ public class FileSystemUtil {
   // thanks to SVNKit for the idea of platform-specific offsets
   private static class JnaUnixMediatorImpl implements Mediator {
     @SuppressWarnings({"OctalInteger", "SpellCheckingInspection"})
-    private static class LibC {
+    private static final class LibC {
       static final int S_MASK = 0177777;
       static final int S_IFMT = 0170000;
       static final int S_IFLNK = 0120000;  // symbolic link
@@ -240,13 +241,13 @@ public class FileSystemUtil {
     }
 
     @SuppressWarnings("SpellCheckingInspection")
-    private static class UnixLibC {
+    private static final class UnixLibC {
       static native int lstat(String path, Pointer stat);
       static native int stat(String path, Pointer stat);
     }
 
     @SuppressWarnings("SpellCheckingInspection")
-    private static class LinuxLibC {
+    private static final class LinuxLibC {
       static native int __lxstat64(int ver, String path, Pointer stat);
       static native int __xstat64(int ver, String path, Pointer stat);
     }
@@ -313,6 +314,9 @@ public class FileSystemUtil {
           }
           mode = getModeFlags(buffer) & LibC.S_MASK;
         }
+        if (DO_NOT_RESOLVE_SYMLINKS) {
+          isSymlink = false;
+        }
 
         boolean isDirectory = (mode & LibC.S_IFMT) == LibC.S_IFDIR;
         boolean isSpecial = !isDirectory && (mode & LibC.S_IFMT) != LibC.S_IFREG;
@@ -333,7 +337,7 @@ public class FileSystemUtil {
     @Override
     public String resolveSymLink(@NotNull final String path) throws IOException {
       try {
-        return new File(path).getCanonicalPath();
+        return DO_NOT_RESOLVE_SYMLINKS ? path : new File(path).getCanonicalPath();
       }
       catch (IOException e) {
         String message = e.getMessage();

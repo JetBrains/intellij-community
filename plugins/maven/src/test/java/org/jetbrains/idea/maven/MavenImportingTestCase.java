@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -18,16 +19,15 @@ import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.RunAll;
-import com.intellij.util.PathUtil;
-import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.idea.maven.execution.*;
 import org.jetbrains.idea.maven.model.MavenArtifact;
@@ -62,16 +62,18 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    new RunAll(
+    RunAll.runAll(
       () -> WriteAction.runAndWait(() -> JavaAwareProjectJdkTableImpl.removeInternalJdkInTests()),
       () -> Messages.setTestDialog(TestDialog.DEFAULT),
       () -> removeFromLocalRepository("test"),
       () -> ExternalSystemTestCase.deleteBuildSystemDirectory(),
-      () -> myProjectsManager = null,
-      () -> myProjectsTree = null,
-      () -> myProjectResolver = null,
+      () -> {
+        myProjectsManager = null;
+        myProjectsTree = null;
+        myProjectResolver = null;
+      },
       () -> super.tearDown()
-    ).run();
+    );
   }
 
   @Override
@@ -174,10 +176,8 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     assertEquals(testOutput, getAbsolutePath(e.getCompilerOutputUrlForTests()));
   }
 
-  private static String getAbsolutePath(String path) {
-    path = VfsUtil.urlToPath(path);
-    path = PathUtil.getCanonicalPath(path);
-    return FileUtil.toSystemIndependentName(path);
+  private static @NotNull String getAbsolutePath(@Nullable String path) {
+    return path == null ? "" : FileUtil.toSystemIndependentName(FileUtil.toCanonicalPath(VirtualFileManager.extractPath(path)));
   }
 
   protected void assertProjectOutput(String module) {
@@ -388,7 +388,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     readProjects(files, profiles);
 
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
       myProjectsManager.waitForResolvingCompletion();
       myProjectsManager.scheduleImportInTests(files);
       myProjectsManager.importProjects();
@@ -415,7 +415,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     myProjectsManager.initForTests();
     myProjectsTree = myProjectsManager.getProjectsTreeForTests();
     myProjectResolver = new MavenProjectResolver(myProjectsTree);
-    if (enableEventHandling) myProjectsManager.enableAutoImportInTests();
+    if (enableEventHandling) {
+      myProjectsManager.enableAutoImportInTests();
+    }
   }
 
   protected void scheduleResolveAll() {
@@ -423,7 +425,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void waitForReadingCompletion() {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
         myProjectsManager.waitForReadingCompletion();
       }
@@ -447,7 +449,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void resolveDependenciesAndImport() {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
       myProjectsManager.waitForResolvingCompletion();
       myProjectsManager.performScheduledImportInTests();
     });
@@ -456,7 +458,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected void resolveFoldersAndImport() {
     myProjectsManager.scheduleFoldersResolveForAllProjects();
     myProjectsManager.waitForFoldersResolvingCompletion();
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> myProjectsManager.performScheduledImportInTests());
+    ApplicationManager.getApplication().invokeAndWait(() -> myProjectsManager.performScheduledImportInTests());
   }
 
   protected void resolvePlugins() {
@@ -487,7 +489,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected void executeGoal(String relativePath, String goal) {
     VirtualFile dir = myProjectRoot.findFileByRelativePath(relativePath);
 
-    MavenRunnerParameters rp = new MavenRunnerParameters(true, dir.getPath(), (String)null, Arrays.asList(goal), Collections.emptyList());
+    MavenRunnerParameters rp = new MavenRunnerParameters(true, dir.getPath(), (String)null, Collections.singletonList(goal), Collections.emptyList());
     MavenRunnerSettings rs = new MavenRunnerSettings();
     MavenExecutor e = new MavenExternalExecutor(myProject, rp, getMavenGeneralSettings(), rs, new SoutMavenConsole());
 

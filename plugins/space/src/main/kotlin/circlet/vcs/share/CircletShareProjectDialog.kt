@@ -1,22 +1,29 @@
 package circlet.vcs.share
 
-import circlet.client.*
 import circlet.client.api.*
-import circlet.components.*
-import com.intellij.openapi.*
-import com.intellij.openapi.project.*
-import com.intellij.openapi.rd.*
-import com.intellij.openapi.ui.*
-import com.intellij.ui.*
-import com.intellij.ui.components.*
-import com.intellij.ui.components.panels.*
+import circlet.client.repoService
+import circlet.components.circletWorkspace
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.Disposer
+import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.layout.*
-import com.intellij.util.containers.*
-import com.intellij.util.ui.*
-import libraries.coroutines.extra.*
-import runtime.*
-import runtime.json.*
-import java.util.concurrent.*
+import com.intellij.util.containers.addIfNotNull
+import com.intellij.util.ui.AsyncProcessIcon
+import com.intellij.util.ui.JBUI
+import libraries.coroutines.extra.LifetimeSource
+import libraries.coroutines.extra.launch
+import libraries.coroutines.extra.usingSource
+import runtime.RpcException
+import runtime.Ui
+import runtime.json.jsonObjectText
+import runtime.message
+import java.util.concurrent.CancellationException
 import javax.swing.*
 
 class CircletShareProjectDialog(project: Project) : DialogWrapper(project, true) {
@@ -63,7 +70,7 @@ class CircletShareProjectDialog(project: Project) : DialogWrapper(project, true)
         title = "Share Project on Space"
         setOKButtonText("Share")
         init()
-        disposable.attachChild(Disposable { lifetime.terminate() })
+        Disposer.register(disposable, Disposable { lifetime.terminate() })
 
         shareProjectVM.projectsListState.forEach(lifetime) { projectListState ->
             when (projectListState) {

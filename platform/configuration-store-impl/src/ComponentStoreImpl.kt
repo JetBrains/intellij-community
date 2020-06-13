@@ -28,7 +28,6 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
 import com.intellij.util.ThreeState
-import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.XmlSerializerUtil
 import kotlinx.coroutines.CancellationException
@@ -202,7 +201,7 @@ abstract class ComponentStoreImpl : IComponentStore {
             continue
           }
         }
-
+        var modificationCountChanged = false
         if (info.isModificationTrackingSupported) {
           currentModificationCount = info.currentModificationCount
           if (currentModificationCount == info.lastModificationCount) {
@@ -211,9 +210,12 @@ abstract class ComponentStoreImpl : IComponentStore {
               continue
             }
           }
+          else {
+            modificationCountChanged = true
+          }
         }
 
-        commitComponent(session, info, name)
+        commitComponent(session, info, name, modificationCountChanged)
         info.updateModificationCount(currentModificationCount)
       }
       catch (e: Throwable) {
@@ -243,7 +245,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     val stateSpec = getStateSpec(component)
     LOG.debug { "saveComponent is called for ${stateSpec.name}" }
     val saveManager = createSaveSessionProducerManager()
-    commitComponent(saveManager, ComponentInfoImpl(component, stateSpec), null)
+    commitComponent(saveManager, ComponentInfoImpl(component, stateSpec), null, false)
     val absolutePath = Paths.get(storageManager.expandMacros(findNonDeprecated(getStorageSpecs(component, stateSpec, StateStorageOperation.WRITE)).path)).toAbsolutePath().toString()
     Disposer.newDisposable().use {
       VfsRootAccess.allowRootAccess(it, absolutePath)
@@ -260,7 +262,10 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   open fun createSaveSessionProducerManager() = SaveSessionProducerManager()
 
-  private fun commitComponent(session: SaveSessionProducerManager, info: ComponentInfo, componentName: String?) {
+  private fun commitComponent(session: SaveSessionProducerManager,
+                              info: ComponentInfo,
+                              componentName: String?,
+                              modificationCountChanged: Boolean) {
     val component = info.component
     @Suppress("DEPRECATION")
     if (component is com.intellij.openapi.util.JDOMExternalizable) {
@@ -304,6 +309,12 @@ abstract class ComponentStoreImpl : IComponentStore {
         if (!stateRequested) {
           stateRequested = true
           state = (info.component as PersistentStateComponent<*>).state
+        }
+
+        if (modificationCountChanged && stateSpec.reportStatistic && state != null) {
+          LOG.runAndLogException {
+            FeatureUsageSettingsEvents.logConfigurationChanged(effectiveComponentName, state, project)
+          }
         }
 
         setStateToSaveSessionProducer(state, info, effectiveComponentName, sessionProducer)
@@ -566,7 +577,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       return emptySet()
     }
 
-    val componentNames = SmartHashSet<String>()
+    val componentNames = HashSet<String>()
     for (storage in changedStorages) {
       LOG.runAndLogException {
         // we must update (reload in-memory storage data) even if non-reloadable component will be detected later
@@ -575,7 +586,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       }
     }
 
-    if (componentNames.isEmpty) {
+    if (componentNames.isEmpty()) {
       return emptySet()
     }
 

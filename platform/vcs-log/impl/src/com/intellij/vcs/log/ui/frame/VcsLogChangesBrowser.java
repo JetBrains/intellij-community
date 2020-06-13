@@ -21,8 +21,7 @@ import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
 import com.intellij.openapi.vcs.changes.ui.browser.ChangesFilterer;
 import com.intellij.openapi.vcs.changes.ui.browser.FilterableChangesBrowser;
-import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.GuiUtils;
@@ -37,7 +36,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.index.IndexedDetails;
-import com.intellij.vcs.log.history.FileHistoryKt;
 import com.intellij.vcs.log.history.FileHistoryUtil;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.MergedChange;
@@ -46,8 +44,7 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
-import com.intellij.vcsUtil.VcsFileUtil;
-import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,6 +56,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import static com.intellij.diff.util.DiffUserDataKeysEx.*;
+import static com.intellij.openapi.vcs.history.VcsDiffUtil.getRevisionTitle;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES;
@@ -66,7 +64,7 @@ import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_ONLY_AFFECTE
 /**
  * Change browser for commits in the Log. For merge commits, can display changes to commits parents in separate groups.
  */
-public class VcsLogChangesBrowser extends FilterableChangesBrowser {
+public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   @NotNull public static final DataKey<Boolean> HAS_AFFECTED_FILES = DataKey.create("VcsLogChangesBrowser.HasAffectedFiles");
   @NotNull private final Project myProject;
   @NotNull private final MainVcsLogUiProperties myUiProperties;
@@ -215,7 +213,7 @@ public class VcsLogChangesBrowser extends FilterableChangesBrowser {
 
           if (detail.getParents().size() > 1) {
             for (int i = 0; i < detail.getParents().size(); i++) {
-              THashSet<Change> changesSet = ContainerUtil.newIdentityTroveSet(detail.getChanges(i));
+              Set<Change> changesSet = new ReferenceOpenHashSet<>(detail.getChanges(i));
               myChangesToParents.put(new CommitId(detail.getParents().get(i), detail.getRoot()), changesSet);
             }
           }
@@ -354,7 +352,7 @@ public class VcsLogChangesBrowser extends FilterableChangesBrowser {
     if (!(userObject instanceof Change)) return null;
     Change change = (Change)userObject;
 
-    Map<Key, Object> context = new HashMap<>();
+    Map<Key<?>, Object> context = new HashMap<>();
     if (!(change instanceof MergedChange)) {
       putRootTagIntoChangeContext(change, context);
     }
@@ -364,7 +362,7 @@ public class VcsLogChangesBrowser extends FilterableChangesBrowser {
   @Nullable
   public static ChangeDiffRequestChain.Producer createDiffRequestProducer(@NotNull Project project,
                                                                           @NotNull Change change,
-                                                                          @NotNull Map<Key, Object> context,
+                                                                          @NotNull Map<Key<?>, Object> context,
                                                                           boolean forDiffPreview) {
     if (change instanceof MergedChange) {
       MergedChange mergedChange = (MergedChange)change;
@@ -377,13 +375,13 @@ public class VcsLogChangesBrowser extends FilterableChangesBrowser {
     }
 
     if (forDiffPreview) {
-      putFilePathsIntoChangeContext(change, context);
+      VcsDiffUtil.putFilePathsIntoChangeContext(change, context);
     }
 
     return ChangeDiffRequestProducer.create(project, change, context);
   }
 
-  private void putRootTagIntoChangeContext(@NotNull Change change, @NotNull Map<Key, Object> context) {
+  private void putRootTagIntoChangeContext(@NotNull Change change, @NotNull Map<Key<?>, Object> context) {
     CommitId parentId = null;
     for (CommitId commitId : myChangesToParents.keySet()) {
       if (myChangesToParents.get(commitId).contains(change)) {
@@ -398,7 +396,7 @@ public class VcsLogChangesBrowser extends FilterableChangesBrowser {
     }
   }
 
-  private static void putFilePathsIntoMergedChangeContext(@NotNull MergedChange change, @NotNull Map<Key, Object> context) {
+  private static void putFilePathsIntoMergedChangeContext(@NotNull MergedChange change, @NotNull Map<Key<?>, Object> context) {
     ContentRevision centerRevision = change.getAfterRevision();
     ContentRevision leftRevision = change.getSourceChanges().get(0).getBeforeRevision();
     ContentRevision rightRevision = change.getSourceChanges().get(1).getBeforeRevision();
@@ -408,41 +406,6 @@ public class VcsLogChangesBrowser extends FilterableChangesBrowser {
     context.put(VCS_DIFF_CENTER_CONTENT_TITLE, getRevisionTitle(centerRevision, centerFile, null));
     context.put(VCS_DIFF_RIGHT_CONTENT_TITLE, getRevisionTitle(rightRevision, rightFile, centerFile));
     context.put(VCS_DIFF_LEFT_CONTENT_TITLE, getRevisionTitle(leftRevision, leftFile, centerFile == null ? rightFile : centerFile));
-  }
-
-  private static void putFilePathsIntoChangeContext(@NotNull Change change, @NotNull Map<Key, Object> context) {
-    ContentRevision afterRevision = change.getAfterRevision();
-    ContentRevision beforeRevision = change.getBeforeRevision();
-    FilePath aFile = afterRevision == null ? null : afterRevision.getFile();
-    FilePath bFile = beforeRevision == null ? null : beforeRevision.getFile();
-    context.put(VCS_DIFF_RIGHT_CONTENT_TITLE, getRevisionTitle(afterRevision, aFile, null));
-    context.put(VCS_DIFF_LEFT_CONTENT_TITLE, getRevisionTitle(beforeRevision, bFile, aFile));
-  }
-
-  @NotNull
-  private static String getRevisionTitle(@Nullable ContentRevision revision,
-                                         @Nullable FilePath file,
-                                         @Nullable FilePath baseFile) {
-    return getShortHash(revision) +
-           (file == null || FileHistoryKt.FILE_PATH_HASHING_STRATEGY.equals(baseFile, file)
-            ? ""
-            : " (" + getRelativeFileName(baseFile, file) + ")");
-  }
-
-  @NotNull
-  private static String getShortHash(@Nullable ContentRevision revision) {
-    if (revision == null) return "";
-    VcsRevisionNumber revisionNumber = revision.getRevisionNumber();
-    if (revisionNumber instanceof ShortVcsRevisionNumber) return ((ShortVcsRevisionNumber)revisionNumber).toShortString();
-    return revisionNumber.asString();
-  }
-
-  @NotNull
-  private static String getRelativeFileName(@Nullable FilePath baseFile, @NotNull FilePath file) {
-    if (baseFile == null || !baseFile.getName().equals(file.getName())) return file.getName();
-    FilePath aParentPath = baseFile.getParentPath();
-    if (aParentPath == null) return file.getName();
-    return VcsFileUtil.relativePath(aParentPath.getIOFile(), file.getIOFile());
   }
 
   private class ChangesBrowserParentNode extends ChangesBrowserNode<String> {

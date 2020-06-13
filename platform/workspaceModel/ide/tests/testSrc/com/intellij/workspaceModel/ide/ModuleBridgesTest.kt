@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.ProjectTopics.PROJECT_ROOTS
 import com.intellij.configurationStore.StoreUtil
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteActionAndWait
@@ -12,13 +13,12 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.rd.attach
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.OrderEntryUtil
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -29,15 +29,15 @@ import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.util.ui.UIUtil
-import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.VirtualFileUrlManager
-import com.intellij.workspaceModel.storage.toVirtualFileUrl
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
+import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
+import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.storage.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.toVirtualFileUrl
 import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.jps.model.module.UnknownSourceRootType
 import org.jetbrains.jps.model.module.UnknownSourceRootTypeProperties
@@ -238,7 +238,7 @@ class ModuleBridgesTest {
         moduleManager.disposeModule(module)
       }
 
-      val moduleDirUrl = File(project.basePath).toVirtualFileUrl(virtualFileManager)
+      val moduleDirUrl = virtualFileManager.fromPath(project.basePath!!)
       val projectModel = WorkspaceModel.getInstance(project)
 
       projectModel.updateProjectModel {
@@ -316,7 +316,7 @@ class ModuleBridgesTest {
       val moduleManager = ModuleManager.getInstance(project)
 
       val dir = File(project.basePath, "dir")
-      val moduleDirUrl = File(project.basePath).toVirtualFileUrl(virtualFileManager)
+      val moduleDirUrl = virtualFileManager.fromPath(project.basePath!!)
       val projectModel = WorkspaceModel.getInstance(project)
 
       val projectLocation = project.configLocation!!
@@ -392,10 +392,10 @@ class ModuleBridgesTest {
   fun `test module libraries loaded from cache`() {
     val builder = WorkspaceEntityStorageBuilder.create()
 
-    val tempDir = temporaryDirectoryRule.newPath().toFile()
+    val tempDir = temporaryDirectoryRule.newPath()
 
-    val iprFile = File(tempDir, "testProject.ipr")
-    val configLocation = iprFile.asConfigLocation(virtualFileManager)
+    val iprFile = tempDir.resolve("testProject.ipr")
+    val configLocation = toConfigLocation(iprFile, virtualFileManager)
     val source = JpsFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
     val moduleEntity = builder.addModuleEntity(name = "test", dependencies = emptyList(), source = source)
     val moduleLibraryEntity = builder.addLibraryEntity(
@@ -412,9 +412,10 @@ class ModuleBridgesTest {
     }
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
-      val project = ProjectManager.getInstance().createProject("testProject", iprFile.path)!!
-      invokeAndWaitIfNeeded { PlatformTestUtil.openProject(project) }
-      disposableRule.disposable.attach { invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().forceCloseProject(project) } }
+      val project = PlatformTestUtil.loadAndOpenProject(iprFile)
+      Disposer.register(disposableRule.disposable, Disposable {
+        PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+      })
 
       val module = ModuleManager.getInstance(project).findModuleByName("test")
 
@@ -434,22 +435,23 @@ class ModuleBridgesTest {
   fun `test libraries are loaded from cache`() {
     val builder = WorkspaceEntityStorageBuilder.create()
 
-    val tempDir = temporaryDirectoryRule.newPath().toFile()
+    val tempDir = temporaryDirectoryRule.newPath()
 
-    val iprFile = File(tempDir, "testProject.ipr")
-    val jarUrl = File(tempDir, "a.jar").toVirtualFileUrl(virtualFileManager)
+    val iprFile = tempDir.resolve("testProject.ipr")
+    val jarUrl = tempDir.resolve("a.jar").toVirtualFileUrl(virtualFileManager)
     builder.addLibraryEntity(
       name = "my_lib",
       tableId = LibraryTableId.ProjectLibraryTableId,
       roots = listOf(LibraryRoot(jarUrl, LibraryRootTypeId("CLASSES"), LibraryRoot.InclusionOptions.ROOT_ITSELF)),
       excludedRoots = emptyList(),
-      source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(iprFile.asConfigLocation(virtualFileManager))
+      source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(toConfigLocation(iprFile, virtualFileManager))
     )
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
-      val project = ProjectManager.getInstance().createProject("testProject", iprFile.path)!!
-      invokeAndWaitIfNeeded { PlatformTestUtil.openProject(project) }
-      disposableRule.disposable.attach { invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().forceCloseProject(project) } }
+      val project = PlatformTestUtil.loadAndOpenProject(iprFile)
+      Disposer.register(disposableRule.disposable, Disposable {
+        PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+      })
 
       val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
       invokeAndWaitIfNeeded { UIUtil.dispatchAllInvocationEvents() }
@@ -662,9 +664,8 @@ class ModuleBridgesTest {
 internal fun createEmptyTestProject(temporaryDirectory: TemporaryDirectory, disposableRule: DisposableRule): Project {
   val projectDir = temporaryDirectory.newPath("project")
   val project = WorkspaceModelInitialTestContent.withInitialContent(WorkspaceEntityStorageBuilder.create()) {
-    ProjectManager.getInstance().createProject("testProject", projectDir.resolve("testProject.ipr").toString())!!
+    PlatformTestUtil.loadAndOpenProject(projectDir.resolve("testProject.ipr"))
   }
-  invokeAndWaitIfNeeded { PlatformTestUtil.openProject(project) }
-  disposableRule.disposable.attach { invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().forceCloseProject(project) } }
+  disposableRule.disposable.attach { PlatformTestUtil.forceCloseProjectWithoutSaving(project) }
   return project
 }

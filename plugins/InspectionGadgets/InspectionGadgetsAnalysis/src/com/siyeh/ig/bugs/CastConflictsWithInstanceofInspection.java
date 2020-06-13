@@ -64,59 +64,16 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
         return;
       }
       final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(expression.getOperand());
-      checkConflictingInstanceof(operand, castType, expression);
-    }
-
-    @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final String methodName = methodExpression.getReferenceName();
-      if (!"cast".equals(methodName)) {
-        return;
-      }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
-      final String qualifiedName = containingClass.getQualifiedName();
-      if (!"java.lang.Class".equals(qualifiedName)) {
-        return;
-      }
-      final PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(methodExpression.getQualifierExpression());
-      if (!(qualifier instanceof PsiClassObjectAccessExpression)) {
-        return;
-      }
-      final PsiClassObjectAccessExpression classObjectAccessExpression = (PsiClassObjectAccessExpression)qualifier;
-      final PsiTypeElement operand = classObjectAccessExpression.getOperand();
-      final PsiType castType = operand.getType();
-      if (!(castType instanceof PsiClassType)) {
-        return;
-      }
-      final PsiExpressionList argumentList = expression.getArgumentList();
-      final PsiExpression[] arguments = argumentList.getExpressions();
-      if (arguments.length != 1) {
-        return;
-      }
-      final PsiExpression argument = PsiUtil.skipParenthesizedExprDown(arguments[0]);
-      checkConflictingInstanceof(argument, operand, expression);
-    }
-
-    private void checkConflictingInstanceof(PsiExpression expression, PsiTypeElement castTypeElement, PsiExpression anchor) {
-      if (!(expression instanceof PsiReferenceExpression)) return;
-      PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
-      PsiType castType = castTypeElement.getType();
-      PsiInstanceOfExpression conflictingInstanceof = InstanceOfUtils.getConflictingInstanceof(castType, referenceExpression, anchor);
+      if (!(operand instanceof PsiReferenceExpression)) return;
+      PsiReferenceExpression referenceExpression = (PsiReferenceExpression)operand;
+      PsiType castType1 = castType.getType();
+      PsiInstanceOfExpression conflictingInstanceof = InstanceOfUtils.getConflictingInstanceof(castType1, referenceExpression, expression);
       if (conflictingInstanceof == null) return;
       PsiTypeElement instanceofTypeElement = conflictingInstanceof.getCheckType();
       if (instanceofTypeElement == null) return;
-      PsiType psiType = TypeConstraint.fromDfType(CommonDataflow.getDfType(expression)).getPsiType(expression.getProject());
-      if (psiType != null && castType.isAssignableFrom(psiType)) return;
-      registerError(anchor, referenceExpression, castTypeElement, instanceofTypeElement);
+      PsiType psiType = TypeConstraint.fromDfType(CommonDataflow.getDfType(operand)).getPsiType(operand.getProject());
+      if (psiType != null && castType1.isAssignableFrom(psiType)) return;
+      registerError(expression, referenceExpression, castType, instanceofTypeElement);
     }
   }
 

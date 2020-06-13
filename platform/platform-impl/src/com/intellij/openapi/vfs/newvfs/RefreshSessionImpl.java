@@ -190,12 +190,13 @@ class RefreshSessionImpl extends RefreshSession {
     }
   }
 
-  private void fireEventsInWriteAction(List<? extends VFileEvent> events, @Nullable List<? extends AsyncFileListener.ChangeApplier> appliers) {
+  private void fireEventsInWriteAction(@NotNull List<? extends VFileEvent> events,
+                                       @Nullable List<? extends AsyncFileListener.ChangeApplier> appliers) {
     final VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
 
     manager.fireBeforeRefreshStart(myIsAsync);
     try {
-      AsyncEventSupport.processEvents(events, appliers);
+      AsyncEventSupport.processEventsFromRefresh(events, appliers);
     }
     catch (AssertionError e) {
       if (FileStatusMap.CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING.equals(e.getMessage())) {

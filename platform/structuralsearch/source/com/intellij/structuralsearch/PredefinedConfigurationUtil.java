@@ -7,7 +7,7 @@ import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
 import org.jetbrains.annotations.NonNls;
 
-public class PredefinedConfigurationUtil {
+public final class PredefinedConfigurationUtil {
 
   /**
    * @deprecated this creates a Java template, which is most likely not what you need. Use

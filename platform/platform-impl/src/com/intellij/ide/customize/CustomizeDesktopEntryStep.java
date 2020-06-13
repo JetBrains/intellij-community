@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.customize;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CreateDesktopEntryAction;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.IconLoader;
@@ -24,7 +25,7 @@ public class CustomizeDesktopEntryStep extends AbstractCustomizeWizardStep {
   }
 
   private final JCheckBox myCreateEntryCheckBox = new JCheckBox(ActionsBundle.message("action.CreateDesktopEntry.description"));
-  private final JCheckBox myGlobalEntryCheckBox = new JCheckBox("For all users (requires superuser privileges)");
+  private final JCheckBox myGlobalEntryCheckBox = new JCheckBox(ApplicationBundle.message("desktop.entry.system.wide"));
 
   public CustomizeDesktopEntryStep(String iconPath) {
     setLayout(new BorderLayout());

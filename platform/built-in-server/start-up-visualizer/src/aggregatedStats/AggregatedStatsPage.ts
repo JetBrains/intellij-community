@@ -7,6 +7,7 @@ import {DataRequest, expandMachineAsFilterValue, InfoResponse, MachineGroup} fro
 import {debounce} from "debounce"
 import LineChartComponent from "@/aggregatedStats/LineChartComponent.vue"
 import ClusteredChartComponent from "@/aggregatedStats/ClusteredChartComponent.vue"
+import {timeRanges} from "./parseDuration"
 import {Location} from "vue-router"
 import {Notification} from "element-ui"
 import ClusteredPage from "@/aggregatedStats/ClusteredPage.vue"
@@ -27,6 +28,7 @@ Object.seal(projectNameToTitle)
 })
 export default class AggregatedStatsPage extends Vue {
   private readonly dataModule = getModule(AppStateModule, this.$store)
+  readonly timeRanges = timeRanges
 
   private lastInfoResponse: InfoResponse | null = null
 
@@ -40,6 +42,8 @@ export default class AggregatedStatsPage extends Vue {
 
   projectNameToTitle = projectNameToTitle
 
+  timeRange: String = "3M"
+
   private loadDataAfterDelay = debounce(() => {
     this.loadData()
   }, 1000)
@@ -48,7 +52,7 @@ export default class AggregatedStatsPage extends Vue {
 
   loadData() {
     this.isFetching = true
-    loadJson(`${this.chartSettings.serverUrl}/api/v1/info`, null)
+    loadJson(`${this.chartSettings.serverUrl}/api/v1/info?db=ij`, null)
       .then((data: InfoResponse | null) => {
         if (data == null) {
           this.isFetching = false
@@ -181,7 +185,12 @@ export default class AggregatedStatsPage extends Vue {
   }
 
   private requestDataReloading(product: string, machine: Array<string>, project: string) {
-    this.dataRequest = Object.seal({product, machine: expandMachineAsFilterValue(product, machine, this.lastInfoResponse!!), project})
+    this.dataRequest = Object.seal({
+      db: "ij",
+      product,
+      machine: expandMachineAsFilterValue(product, machine, this.lastInfoResponse!!),
+      project
+    })
   }
 
   @Watch("chartSettings.selectedMachine")

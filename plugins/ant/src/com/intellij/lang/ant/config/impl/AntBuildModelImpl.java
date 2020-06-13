@@ -184,7 +184,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
               if (includedFile == null) {
                 // if not resolved yet, it's possible that the file will be created later,
                 // thus we need to recalculate the cached value
-                dependencies.add(PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+                dependencies.add(PsiModificationTracker.MODIFICATION_COUNT);
               }
             }
           }

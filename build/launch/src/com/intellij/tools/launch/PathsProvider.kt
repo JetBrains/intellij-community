@@ -8,6 +8,7 @@ interface PathsProvider {
   val productId: String
   val projectRootFolder: File
   val communityRootFolder: File
+  val outputRootFolder: File
 
   val tempFolder: File
     get() = TeamCityHelper.tempDirectory ?: projectRootFolder.resolve("out").resolve("tmp")

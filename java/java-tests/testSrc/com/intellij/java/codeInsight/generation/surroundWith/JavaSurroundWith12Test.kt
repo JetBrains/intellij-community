@@ -13,7 +13,7 @@ import com.intellij.util.containers.ContainerUtil
 class JavaSurroundWith13Test : LightJavaCodeInsightTestCase() {
   private val BASE_PATH = "/codeInsight/generation/surroundWith/java13/"
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = JavaFoldingTestCase.JAVA_13
+  override fun getProjectDescriptor(): LightProjectDescriptor = JavaFoldingTestCase.JAVA_14
 
   fun testCaseBlockWithIf() = doTest(JavaWithIfSurrounder())
   fun testCaseResultWithIf() = doTest(JavaWithIfSurrounder())

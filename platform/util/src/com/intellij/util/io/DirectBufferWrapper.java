@@ -4,6 +4,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -11,6 +12,7 @@ import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 
+@ApiStatus.Internal
 abstract class DirectBufferWrapper extends ByteBufferWrapper {
   // Fixes IDEA-222358 Linux native memory leak. Please do not replace to BoundedTaskExecutor
   private static final ExecutorService ourAllocator =

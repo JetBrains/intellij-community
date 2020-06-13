@@ -1,0 +1,213 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.siyeh.ig.bugs;
+
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.instructions.FinishElementInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
+import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
+import one.util.streamex.EntryStream;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
+
+public class SuspiciousInvocationHandlerImplementationInspection extends AbstractBaseJavaLocalInspectionTool {
+  private static final String HANDLER_CLASS = "java.lang.reflect.InvocationHandler";
+  private static final String[] HANDLER_ARGUMENT_TYPES =
+    {CommonClassNames.JAVA_LANG_OBJECT, "java.lang.reflect.Method", CommonClassNames.JAVA_LANG_OBJECT + "[]"};
+  private static final CallMatcher INVOKE = CallMatcher.instanceCall(HANDLER_CLASS, "invoke").parameterTypes(HANDLER_ARGUMENT_TYPES);
+
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    return new JavaElementVisitor() {
+      @Override
+      public void visitMethod(PsiMethod method) {
+        if (INVOKE.methodMatches(method)) {
+          check(method);
+        }
+        if (method.getReturnType() instanceof PsiClassType) {
+          PsiParameterList list = method.getParameterList();
+          if (list.getParametersCount() == 3) {
+            PsiParameter[] parameters = list.getParameters();
+            if (EntryStream.zip(parameters, HANDLER_ARGUMENT_TYPES).allMatch((p, t) -> TypeUtils.typeEquals(t, p.getType())) &&
+                SyntaxTraverser.psiTraverser(holder.getFile()).filter(PsiMethodReferenceExpression.class)
+                  .filter(ref -> ref.isReferenceTo(method) && TypeUtils.typeEquals(HANDLER_CLASS, ref.getFunctionalInterfaceType()))
+                  .first() != null) {
+              check(method);
+            }
+          }
+        }
+      }
+
+      @Override
+      public void visitLambdaExpression(PsiLambdaExpression lambda) {
+        if (lambda.getParameterList().getParametersCount() != 3) return;
+        PsiType type = lambda.getFunctionalInterfaceType();
+        if (!InheritanceUtil.isInheritor(type, HANDLER_CLASS)) return;
+        check(lambda);
+      }
+
+      private void check(PsiParameterListOwner method) {
+        PsiElement body = method.getBody();
+        if (body == null) return;
+        PsiParameter methodParameter = method.getParameterList().getParameter(1);
+        if (methodParameter == null) return;
+        if (body instanceof PsiCodeBlock && !ControlFlowUtils.containsReturn(body)) return;
+        if (!VariableAccessUtils.variableIsUsed(methodParameter, body)) {
+          holder.registerProblem(Objects.requireNonNull(methodParameter.getNameIdentifier()),
+                                 JavaAnalysisBundle.message("suspicious.invocation.handler.implementation.method.unused.message"));
+          return;
+        }
+        InvocationHandlerAnalysisRunner runner = new InvocationHandlerAnalysisRunner(holder, body, methodParameter);
+        DfaVariableValue methodName = runner.myDfaMethodName;
+        if (methodName == null) return;
+        Map<String, Map<PsiExpression, DfType>> returnMap = new TreeMap<>();
+        RunnerResult result = runner.analyzeMethod(body, new StandardInstructionVisitor() {
+          @Override
+          protected void checkReturnValue(@NotNull DfaValue value,
+                                          @NotNull PsiExpression expression,
+                                          @NotNull PsiParameterListOwner context,
+                                          @NotNull DfaMemoryState state) {
+            if (context != method) return;
+            String name = DfConstantType.getConstantOfType(state.getDfType(methodName), String.class);
+            if (name == null) {
+              runner.cancel();
+              return;
+            }
+            DfType type = state.getDfType(value);
+            if (type instanceof DfPrimitiveType) {
+              type = DfTypes.typedObject(((DfPrimitiveType)type).getPsiType().getBoxedType(body), Nullability.NOT_NULL);
+            }
+            returnMap.computeIfAbsent(name, k -> new HashMap<>()).merge(expression, type, DfType::join);
+          }
+        });
+        if (result != RunnerResult.OK) return;
+        Set<PsiExpression> reportedAnchors = new HashSet<>();
+        returnMap.forEach((name, map) -> {
+          DfType reduced = map.values().stream().reduce(DfTypes.BOTTOM, DfType::join);
+          PsiType wantedType = getWantedType(body, name);
+          if (wantedType == null) return;
+          TypeConstraint wantedConstraint = TypeConstraints.exact(wantedType);
+          if (reduced.meet(wantedConstraint.asDfType().meet(DfTypes.NOT_NULL_OBJECT)) != DfTypes.BOTTOM &&
+              DfaNullability.fromDfType(reduced) != DfaNullability.NULLABLE) {
+            return;
+          }
+          map.forEach((expression, type) -> {
+            if (reportedAnchors.contains(expression)) return;
+            String message = null;
+            TypeConstraint constraint = TypeConstraint.fromDfType(type);
+            if (wantedConstraint.meet(constraint) == TypeConstraints.BOTTOM) {
+              message = JavaAnalysisBundle.message("suspicious.invocation.handler.implementation.type.mismatch.message", name,
+                                                   wantedConstraint.getPresentationText(null), constraint.getPresentationText(null));
+            }
+            DfaNullability nullability = DfaNullability.fromDfType(type);
+            if (nullability == DfaNullability.NULL) {
+              message = name.equals("toString") ?
+                        JavaAnalysisBundle.message("suspicious.invocation.handler.implementation.null.returned.for.toString.message") :
+                        JavaAnalysisBundle.message("suspicious.invocation.handler.implementation.null.returned.message", name);
+            }
+            if (message != null) {
+              reportedAnchors.add(expression);
+              holder.registerProblem(expression, message);
+            }
+          });
+        });
+      }
+
+      private @Nullable PsiType getWantedType(PsiElement body, String name) {
+        switch (name) {
+          case "equals":
+            return PsiType.BOOLEAN.getBoxedType(body);
+          case "hashCode":
+            return PsiType.INT.getBoxedType(body);
+          case "toString":
+            return PsiType.getJavaLangString(body.getManager(), body.getResolveScope());
+          default:
+            return null;
+        }
+      }
+    };
+  }
+
+  private static class InvocationHandlerAnalysisRunner extends DataFlowRunner {
+    private final PsiElement myBody;
+    private DfaVariableValue myDfaMethodName;
+    private DfaVariableValue myDfaMethodDeclaringClass;
+    private PsiType myStringType;
+    private PsiType myObjectType;
+    private PsiType myClassType;
+
+    InvocationHandlerAnalysisRunner(@NotNull ProblemsHolder holder,
+                                    PsiElement body,
+                                    PsiParameter methodParameter) {
+      super(holder.getProject(), body);
+      myBody = body;
+      PsiClass methodClass = PsiUtil.resolveClassInClassTypeOnly(methodParameter.getType());
+      if (methodClass == null) return;
+      PsiMethod[] getNameMethods = methodClass.findMethodsByName("getName", false);
+      if (getNameMethods.length != 1) return;
+      PsiMethod getNameMethod = getNameMethods[0];
+      if (!getNameMethod.getParameterList().isEmpty()) return;
+      PsiMethod[] getDeclaringClassMethods = methodClass.findMethodsByName("getDeclaringClass", false);
+      if (getDeclaringClassMethods.length != 1) return;
+      PsiMethod getDeclaringClassMethod = getDeclaringClassMethods[0];
+      if (!getDeclaringClassMethod.getParameterList().isEmpty()) return;
+      myClassType = getDeclaringClassMethod.getReturnType();
+      myStringType = getNameMethod.getReturnType();
+      myObjectType = PsiType.getJavaLangObject(methodClass.getManager(), methodClass.getResolveScope());
+      if (myClassType == null || myStringType == null) return;
+      DfaValueFactory factory = getFactory();
+      DfaVariableValue dfaMethod = factory.getVarFactory().createVariableValue(methodParameter);
+      myDfaMethodName = (DfaVariableValue)new DfaExpressionFactory.GetterDescriptor(getNameMethod).createValue(factory, dfaMethod);
+      myDfaMethodDeclaringClass =
+        (DfaVariableValue)new DfaExpressionFactory.GetterDescriptor(getDeclaringClassMethod).createValue(factory, dfaMethod);
+    }
+
+    @Override
+    protected @NotNull List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
+                                                                                @NotNull Collection<? extends DfaMemoryState> memStates,
+                                                                                @NotNull ControlFlow flow) {
+      if (psiBlock != myBody) {
+        return super.createInitialInstructionStates(psiBlock, memStates, flow);
+      }
+      List<DfaInstructionState> result = new ArrayList<>();
+      DfaValueFactory factory = getFactory();
+      Instruction instruction = flow.getInstruction(0);
+      for (Instruction inst : flow.getInstructions()) {
+        if (inst instanceof FinishElementInstruction) {
+          Set<DfaVariableValue> flush = ((FinishElementInstruction)inst).getVarsToFlush();
+          flush.remove(myDfaMethodDeclaringClass);
+          flush.remove(myDfaMethodName);
+          flush.remove(myDfaMethodName.getQualifier());
+        }
+      }
+      for (DfaMemoryState state : memStates) {
+        state.applyCondition(myDfaMethodDeclaringClass.eq(factory.getConstant(myObjectType, myClassType)));
+        for (String methodName : Arrays.asList("hashCode", "equals", "toString")) {
+          DfaMemoryState methodSpecificState = state.createCopy();
+          methodSpecificState.applyCondition(myDfaMethodName.eq(factory.getConstant(methodName, myStringType)));
+          result.add(new DfaInstructionState(instruction, methodSpecificState));
+        }
+      }
+      return result;
+    }
+  }
+}

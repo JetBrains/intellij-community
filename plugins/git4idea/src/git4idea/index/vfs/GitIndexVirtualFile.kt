@@ -2,8 +2,8 @@
 package git4idea.index.vfs
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -64,6 +64,7 @@ class GitIndexVirtualFile(private val project: Project,
   override fun getLength(): Long = cachedData.get()?.length ?: 0
   override fun getTimeStamp(): Long = 0
   override fun getModificationStamp(): Long = modificationStamp
+  override fun getFileType(): FileType = filePath.virtualFile?.fileType ?: super.getFileType()
   override fun refresh(asynchronous: Boolean, recursive: Boolean, postRunnable: Runnable?) {
     refresher.refresh(listOf(this), asynchronous, postRunnable)
   }

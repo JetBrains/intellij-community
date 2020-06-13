@@ -151,6 +151,7 @@ class DistributionJARsBuilder {
       addModule("intellij.platform.util.text.matching", "util.jar")
       addModule("intellij.platform.util.collections", "util.jar")
       addModule("intellij.platform.util.strings", "util.jar")
+      addModule("intellij.platform.util.diagnostic", "util.jar")
       addModule("intellij.platform.util.ui")
       addModule("intellij.platform.util.ex")
       addModule("intellij.platform.rd.community")
@@ -167,6 +168,7 @@ class DistributionJARsBuilder {
       addModule("intellij.spellchecker")
       addModule("intellij.platform.statistics")
       addModule("intellij.platform.statistics.uploader")
+      addModule("intellij.platform.statistics.config")
       addModule("intellij.platform.statistics.devkit")
 
       addModule("intellij.relaxng", "intellij-xml.jar")

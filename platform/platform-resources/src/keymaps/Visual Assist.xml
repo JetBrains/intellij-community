@@ -51,4 +51,5 @@
   <action id="Diff.PrevChange" />
   <action id="WD.UploadCurrentRemoteFileAction" />
   <action id="AddToFavoritesPopup" />
+  <action id="EditorAddCaretPerSelectedLine"/>
 </keymap>

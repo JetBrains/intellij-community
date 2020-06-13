@@ -73,12 +73,9 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
            isPsiModificationCount(dependency);
   }
 
-  @SuppressWarnings("deprecation")
   private static boolean isPsiModificationCount(@NotNull Object dependency) {
     return dependency instanceof PsiModificationTracker ||
-           dependency == PsiModificationTracker.MODIFICATION_COUNT ||
-           dependency == PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT ||
-           dependency == PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT;
+           dependency == PsiModificationTracker.MODIFICATION_COUNT;
   }
 
   private boolean isVeryPhysical(@NotNull PsiElement dependency) {
@@ -115,11 +112,10 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
     return super.isDependencyOutOfDate(dependency, oldTimeStamp);
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   protected long getTimeStamp(@NotNull Object dependency) {
     if (dependency instanceof PsiDirectory) {
-      return myManager.getModificationTracker().getOutOfCodeBlockModificationCount();
+      return myManager.getModificationTracker().getModificationCount();
     }
 
     if (dependency instanceof PsiElement) {
@@ -131,12 +127,6 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
 
     if (dependency == PsiModificationTracker.MODIFICATION_COUNT || dependency == PSI_MOD_COUNT_OPTIMIZATION) {
       return myManager.getModificationTracker().getModificationCount();
-    }
-    if (dependency == PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT) {
-      return myManager.getModificationTracker().getOutOfCodeBlockModificationCount();
-    }
-    if (dependency == PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT) {
-      return myManager.getModificationTracker().getJavaStructureModificationCount();
     }
 
     return super.getTimeStamp(dependency);

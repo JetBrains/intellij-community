@@ -47,5 +47,6 @@
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="library" scope="TEST" name="jcef" level="project" />
   </component>
 </module>

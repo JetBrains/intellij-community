@@ -75,4 +75,8 @@ public interface PsiKeyword extends PsiJavaToken {
   String YIELD = "yield";
 
   String RECORD = "record";
+
+  String SEALED = "sealed";
+  String PERMITS = "permits";
+  String NON_SEALED = "non-sealed";
 }

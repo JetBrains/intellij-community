@@ -197,9 +197,14 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
       return !(callExpression instanceof PsiNewExpression && qualifier != null);
     }
 
-    final int offset = parameters.length - calledParametersCount;
-    if (expressions.length > calledParametersCount || offset < 0) {
-      return false;
+    final int offset = parameters.length > 0 && ExpressionUtils.isReferenceTo(qualifier, parameters[0]) ? 1 : 0;
+    if (parameters.length != expressions.length + offset) return false;
+
+    if (psiMethod.isVarArgs()) {
+      if (expressions.length < calledParametersCount - 1) return false;
+    }
+    else {
+      if (expressions.length != calledParametersCount) return false;
     }
 
     for (int i = 0; i < expressions.length; i++) {
@@ -208,28 +213,14 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
       }
     }
 
-    if (offset == 0) {
-      if (qualifier != null) {
-        final boolean[] parameterUsed = new boolean[] {false};
-        qualifier.accept(new JavaRecursiveElementWalkingVisitor() {
-          @Override
-          public void visitElement(@NotNull PsiElement element) {
-            if (parameterUsed[0]) return;
-            super.visitElement(element);
-          }
-
-          @Override
-          public void visitReferenceExpression(PsiReferenceExpression expression) {
-            super.visitReferenceExpression(expression);
-            parameterUsed[0] |= ArrayUtil.find(parameters, expression.resolve()) >= 0;
-          }
-        });
-        return !parameterUsed[0];
-      }
-      return true;
+    if (offset == 0 && qualifier != null) {
+      return SyntaxTraverser.psiTraverser(qualifier)
+        .filter(PsiReferenceExpression.class)
+        .map(PsiReferenceExpression::resolve)
+        .filter(target -> ArrayUtil.find(parameters, target) >= 0)
+        .first() == null;
     }
-
-    return ExpressionUtils.isReferenceTo(qualifier, parameters[0]);
+    return true;
   }
 
   @Nullable

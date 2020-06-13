@@ -21,9 +21,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.siyeh.ig.style.MissortedModifiersInspection;
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection;
 
-/**
- * @author cdr
- */
 public class CreateConstructorParameterFromFieldTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected void setUp() throws Exception {

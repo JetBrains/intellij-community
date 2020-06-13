@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.problems
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
@@ -10,8 +11,7 @@ import com.intellij.util.Processor
 import com.intellij.util.text.StringSearcher
 import gnu.trove.TIntProcedure
 
-open class MemberUsageCollector(targetName: String,
-                                private val targetFile: PsiFile,
+open class MemberUsageCollector(targetName: String, project: Project,
                                 private val usageExtractor: (PsiFile, Int) -> PsiElement?) : Processor<PsiFile> {
 
   private val maxFilesToProcess = Registry.intValue("ide.unused.symbol.calculation.maxFilesToSearchUsagesIn", 10)
@@ -20,7 +20,7 @@ open class MemberUsageCollector(targetName: String,
   private var filesVisited = 0
   private var filesSize = 0L
 
-  private val fileIndexFacade = FileIndexFacade.getInstance(targetFile.project)
+  private val fileIndexFacade = FileIndexFacade.getInstance(project)
   private val searcher = StringSearcher(targetName, true, true, false)
 
   private val usages: MutableList<PsiElement> = mutableListOf()
@@ -30,7 +30,7 @@ open class MemberUsageCollector(targetName: String,
     get() = if (tooManyUsages) null else usages
 
   override fun process(psiFile: PsiFile): Boolean {
-    if (psiFile == targetFile || !fileIndexFacade.isInSource(psiFile.virtualFile)) return true
+    if (!fileIndexFacade.isInSource(psiFile.virtualFile)) return true
     if (!isCheapEnoughToProcess(psiFile)) {
       tooManyUsages = true
       return false

@@ -218,7 +218,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     String path = "/afterNew";
 
     configureByFile(path + "/before14.java");
-    //select();
+    select();
     checkResultByFile(path + "/after14.java");
   }
 
@@ -234,7 +234,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     String path = "/afterNew";
 
     configureByFile(path + "/before16.java");
-    //select();
+    select();
     checkResultByFile(path + "/after16.java");
   }
 

@@ -1,25 +1,20 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.xml.bind.annotation.*;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-public class LogEntry {
-
+public final class LogEntry {
   public static final LogEntry EMPTY = new LogEntry.Builder().setRevision(-1).setHasChildren(false).build();
 
   private final long myRevision;
-  @Nullable private final Date myDate;
+  private final @Nullable Date myDate;
   private final String myMessage;
   private final String myAuthor;
-  @NotNull private final Map<String, LogEntryPath> myChangedPaths;
+  private final @NotNull Map<String, LogEntryPath> myChangedPaths;
   private final boolean myHasChildren;
 
   public LogEntry(@NotNull LogEntry.Builder builder) {
@@ -31,19 +26,15 @@ public class LogEntry {
     myHasChildren = builder.hasChildren();
   }
 
-  @NotNull
-  private static Map<String, LogEntryPath> toImmutable(@NotNull List<LogEntryPath.Builder> paths) {
-    ContainerUtil.ImmutableMapBuilder<String, LogEntryPath> builder = ContainerUtil.immutableMapBuilder();
-
+  private static @NotNull Map<String, LogEntryPath> toImmutable(@NotNull List<LogEntryPath.Builder> paths) {
+    Map<String, LogEntryPath> result = new HashMap<>();
     for (LogEntryPath.Builder path : paths) {
-      builder.put(path.getPath(), path.build());
+      result.put(path.getPath(), path.build());
     }
-
-    return builder.build();
+    return Collections.unmodifiableMap(result);
   }
 
-  @NotNull
-  public Map<String, LogEntryPath> getChangedPaths() {
+  public @NotNull Map<String, LogEntryPath> getChangedPaths() {
     return myChangedPaths;
   }
 
@@ -51,8 +42,7 @@ public class LogEntry {
     return myAuthor;
   }
 
-  @Nullable
-  public Date getDate() {
+  public @Nullable Date getDate() {
     return myDate;
   }
 
@@ -92,8 +82,7 @@ public class LogEntry {
     @XmlElement(name = "logentry")
     private final List<LogEntry.Builder> childEntries = new ArrayList<>();
 
-    @NotNull
-    public List<LogEntry.Builder> getChildEntries() {
+    public @NotNull List<LogEntry.Builder> getChildEntries() {
       return childEntries;
     }
 
@@ -101,32 +90,27 @@ public class LogEntry {
       return !childEntries.isEmpty();
     }
 
-    @NotNull
-    public Builder setRevision(long revision) {
+    public @NotNull Builder setRevision(long revision) {
       this.revision = revision;
       return this;
     }
 
-    @NotNull
-    public Builder setAuthor(String author) {
+    public @NotNull Builder setAuthor(String author) {
       this.author = author;
       return this;
     }
 
-    @NotNull
-    public Builder setDate(Date date) {
+    public @NotNull Builder setDate(Date date) {
       this.date = date;
       return this;
     }
 
-    @NotNull
-    public Builder setMessage(String message) {
+    public @NotNull Builder setMessage(String message) {
       this.message = message;
       return this;
     }
 
-    @NotNull
-    public Builder setHasChildren(boolean hasChildren) {
+    public @NotNull Builder setHasChildren(boolean hasChildren) {
       // probably LogEntry interface will be changed and child entries will be specified explicitly later, but for now just use such "fake"
       // implementation for setting "hasChildren" value
       childEntries.clear();
@@ -136,14 +120,12 @@ public class LogEntry {
       return this;
     }
 
-    @NotNull
-    public Builder addPath(@NotNull LogEntryPath.Builder path) {
+    public @NotNull Builder addPath(@NotNull LogEntryPath.Builder path) {
       changedPaths.add(path);
       return this;
     }
 
-    @NotNull
-    public LogEntry build() {
+    public @NotNull LogEntry build() {
       return new LogEntry(this);
     }
   }

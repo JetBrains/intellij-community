@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
+import java.util.List;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.psiutils.ParenthesesUtils.getParentSkipParentheses;
@@ -263,7 +265,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
 
   static boolean hasSimpleNextCall(PsiVariable iterator, PsiElement context) {
     if (context == null) return false;
-    final IteratorNextVisitor visitor = new IteratorNextVisitor(iterator);
+    final IteratorNextVisitor visitor = new IteratorNextVisitor(iterator, context);
     context.accept(visitor);
     return visitor.hasSimpleNextCall();
   }
@@ -616,9 +618,11 @@ public class ForCanBeForeachInspection extends BaseInspection {
     private int numCallsToIteratorNext = 0;
     private boolean iteratorUsed = false;
     private final PsiVariable iterator;
+    private final PsiElement context;
 
-    private IteratorNextVisitor(PsiVariable iterator) {
+    private IteratorNextVisitor(PsiVariable iterator, PsiElement context) {
       this.iterator = iterator;
+      this.context = context;
     }
 
     @Override
@@ -629,7 +633,8 @@ public class ForCanBeForeachInspection extends BaseInspection {
         @NonNls final String methodName = methodExpression.getReferenceName();
         if (HardcodedMethodConstants.NEXT.equals(methodName)) {
           final PsiExpression qualifier = methodExpression.getQualifierExpression();
-          if (ExpressionUtils.isReferenceTo(qualifier, iterator)) {
+          if (ExpressionUtils.isReferenceTo(qualifier, iterator)
+              && !isInsidePsiStatements(methodExpression, Arrays.asList(PsiTryStatement.class, PsiLoopStatement.class))) {
             numCallsToIteratorNext++;
             return;
           }
@@ -650,6 +655,18 @@ public class ForCanBeForeachInspection extends BaseInspection {
 
     boolean hasSimpleNextCall() {
       return numCallsToIteratorNext == 1 && !iteratorUsed;
+    }
+
+    private boolean isInsidePsiStatements(@NotNull PsiExpression methodExpression, @NotNull List<Class<? extends PsiStatement>> psiStatements) {
+      PsiElement parent = methodExpression.getParent();
+      while (parent != null) {
+        if (parent.equals(context)) return false;
+        final PsiElement p = parent;
+        if (psiStatements.stream().anyMatch(ps -> ps.isInstance(p))) return true;
+        if (parent instanceof PsiFile) return false;
+        parent = parent.getParent();
+      }
+      return false;
     }
   }
 

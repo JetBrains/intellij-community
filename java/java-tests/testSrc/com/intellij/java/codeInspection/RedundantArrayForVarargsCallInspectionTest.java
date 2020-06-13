@@ -21,9 +21,6 @@ import com.intellij.codeInspection.miscGenerics.RedundantArrayForVarargsCallInsp
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author cdr
- */
 public class RedundantArrayForVarargsCallInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected String getTestDataPath() {

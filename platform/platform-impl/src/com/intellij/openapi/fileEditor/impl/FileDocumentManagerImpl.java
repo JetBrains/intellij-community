@@ -4,6 +4,8 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.AppTopics;
 import com.intellij.CommonBundle;
 import com.intellij.application.options.CodeStyle;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
@@ -104,8 +106,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
       }
       final Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
       Project project = currentCommand == null ? null : CommandProcessor.getInstance().getCurrentCommandProject();
-      if (project == null)
+      if (project == null) {
         project = ProjectUtil.guessProjectForFile(getFile(document));
+      }
       String lineSeparator = CodeStyle.getProjectOrDefaultSettings(project).getLineSeparator();
       document.putUserData(LINE_SEPARATOR_KEY, lineSeparator);
 
@@ -117,7 +120,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
   };
 
   public FileDocumentManagerImpl() {
-    InvocationHandler handler = (proxy, method, args) -> {
+    InvocationHandler handler = (__, method, args) -> {
+      if (method.getDeclaringClass() != FileDocumentManagerListener.class) {
+        // only FileDocumentManagerListener methods should be called on this proxy
+        throw new UnsupportedOperationException(method.toString());
+      }
       multiCast(method, args);
       return null;
     };
@@ -126,6 +133,13 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
     myMultiCaster = (FileDocumentManagerListener)Proxy.newProxyInstance(loader, new Class[]{FileDocumentManagerListener.class}, handler);
 
     BinaryFileTypeDecompilers.getInstance().addExtensionPointChangeListener(this::clearCachedDocumentsForBinaryFiles, null);
+    // remove VirtualFiles sitting in the DocumentImpl.rmTreeQueue reference queue which could retain plugin-registered FS in their VirtualDirectoryImpl.myFs
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        DocumentImpl.processQueue();
+      }
+    });
   }
 
   static final class MyProjectCloseHandler implements ProjectCloseHandler {
@@ -868,7 +882,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
 
   /** @deprecated another dirty Rider hack; don't use */
   @Deprecated
-  @SuppressWarnings("ALL")
   public static boolean ourConflictsSolverEnabled = true;
 
   protected void cacheDocument(@NotNull VirtualFile file, @NotNull Document document) {

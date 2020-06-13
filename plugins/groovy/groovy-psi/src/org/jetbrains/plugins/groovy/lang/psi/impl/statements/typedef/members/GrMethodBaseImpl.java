@@ -135,7 +135,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
       }
     }
 
-    return (GrTypeElement)findChildByType(TokenSets.TYPE_ELEMENTS);
+    return findChildByType(TokenSets.TYPE_ELEMENTS);
   }
 
   @Override

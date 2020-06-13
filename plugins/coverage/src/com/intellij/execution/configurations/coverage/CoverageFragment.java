@@ -91,11 +91,10 @@ public class CoverageFragment<T extends RunConfigurationBase<?>> extends NestedG
     comboBox.setRenderer(SimpleListCellRenderer.create("", CoverageRunner::getPresentableName));
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(comboBox, BorderLayout.WEST);
-    LabeledComponent<?> component = LabeledComponent.create(panel, JavaCoverageBundle.message("run.configuration.choose.coverage.runner"),
-                                                                                                            BorderLayout.WEST);
+    LabeledComponent<?> component = LabeledComponent.create(panel, JavaCoverageBundle.message("run.configuration.choose.coverage.runner"), BorderLayout.WEST);
     return new SettingsEditorFragment<>("coverage.runner", JavaCoverageBundle.message("coverage.settings.runner"), null, component,
-                                        (t, component1) -> comboBox.setItem(configuration.getCoverageRunner()),
-                                        (t, component1) -> configuration.setCoverageRunner(comboBox.getItem()),
-                                        t -> configuration.getCoverageRunner() != null);
+                                        (t, c) -> comboBox.setItem(configuration.getCoverageRunner()),
+                                        (t, c) -> configuration.setCoverageRunner(comboBox.getItem()),
+                                        t -> false);
   }
 }

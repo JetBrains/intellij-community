@@ -29,6 +29,7 @@ raiseExceptions: bool
 logThreads: bool
 logMultiprocessing: bool
 logProcesses: bool
+_srcfile: Optional[str]
 
 def currentframe() -> FrameType: ...
 

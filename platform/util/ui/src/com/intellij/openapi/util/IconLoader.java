@@ -15,6 +15,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.ScaleContextSupport;
 import com.intellij.util.*;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FixedHashMap;
 import com.intellij.util.ui.*;
@@ -59,7 +60,7 @@ public final class IconLoader {
   /**
    * This cache contains mapping between icons and disabled icons.
    */
-  private static final ConcurrentMap<Icon, Icon> ourIcon2DisabledIcon = ContainerUtil.createConcurrentWeakMap(200, 0.75f, Math.min(Runtime.getRuntime().availableProcessors(), 4), ContainerUtil.canonicalStrategy());
+  private static final ConcurrentMap<Icon, Icon> ourIcon2DisabledIcon = CollectionFactory.createConcurrentWeakMap(200, 0.75f, Math.min(Runtime.getRuntime().availableProcessors(), 4));
 
   private static volatile boolean STRICT_GLOBAL;
 
@@ -433,6 +434,14 @@ public final class IconLoader {
    */
   @NotNull
   public static Icon getDisabledIcon(@NotNull Icon icon) {
+    return getDisabledIcon(icon, null);
+  }
+
+  /**
+   * Same as {@link #getDisabledIcon(Icon)} with an ancestor component for HiDPI-awareness.
+   */
+  @NotNull
+  public static Icon getDisabledIcon(@NotNull Icon icon, @Nullable Component ancestor) {
     if (!ourIsActivated) {
       return icon;
     }
@@ -442,7 +451,7 @@ public final class IconLoader {
     Icon disabledIcon = ourIcon2DisabledIcon.get(icon);
     if (disabledIcon == null) {
       disabledIcon = ConcurrencyUtil.cacheOrGet(ourIcon2DisabledIcon, icon,
-           filterIcon(icon, UIUtil::getGrayFilter/* returns laf-aware instance */, null)); // [tav] todo: lack ancestor
+        filterIcon(icon, UIUtil::getGrayFilter/* returns laf-aware instance */, ancestor));
     }
     return disabledIcon;
   }
@@ -547,7 +556,7 @@ public final class IconLoader {
   @ApiStatus.Internal
   @NotNull
   public static Icon getMenuBarIcon(@NotNull Icon icon, boolean dark) {
-    if (icon instanceof RetrievableIcon) {
+    while (icon instanceof RetrievableIcon) {
       icon = ((RetrievableIcon)icon).retrieveIcon();
     }
     if (icon instanceof MenuBarIconProvider) {

@@ -39,10 +39,11 @@
 
         <myService serviceImplementation="foo.MyRunnable" os="mac"/>
 
-        <myService serviceImplementation="foo.MyRunnable" timeUnit="seconds" integerNullable="<error descr="Cannot convert empty string to target class 'java.lang.Integer'"></error>" intProperty="42"/>
+        <myService serviceImplementation="foo.MyRunnable" timeUnit="seconds" integerNullable="<error descr="Cannot convert empty string to target class 'java.lang.Integer'"></error>" intPropertyForClass="42" forClass="true"/>
         <myService serviceImplementation="foo.MyRunnable" timeUnit="<error descr="Cannot resolve 'INVALID_VALUE' in java.util.concurrent.TimeUnit">INVALID_VALUE</error>"
                    integerNullable="<error descr="Cannot convert string 'INVALID_VALUE' to target class 'java.lang.Integer'">INVALID_VALUE</error>"
-                   intProperty="<error descr="Cannot convert string 'INVALID_VALUE' to target class 'java.lang.Integer'">INVALID_VALUE</error>"
+                   intPropertyForClass="<error descr="Cannot convert string 'INVALID_VALUE' to target class 'java.lang.Integer'">INVALID_VALUE</error>"
+                   forClass="<error descr="Cannot resolve symbol 'INVALID_VALUE'">INVALID_VALUE</error>"
         />
 
         <myPlugin.foo.bar implementation="java.util.ArrayList" os="<error descr="Unknown enum value 'INVALID_VALUE'">INVALID_VALUE</error>"/>

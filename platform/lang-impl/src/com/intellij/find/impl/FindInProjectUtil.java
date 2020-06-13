@@ -61,7 +61,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
-public class FindInProjectUtil {
+public final class FindInProjectUtil {
   private static final int USAGES_PER_READ_ACTION = 100;
 
   private FindInProjectUtil() {}
@@ -165,7 +165,7 @@ public class FindInProjectUtil {
   /* filter can have form "*.js, !*_min.js", latter means except matched by *_min.js */
   @NotNull
   public static Condition<CharSequence> createFileMaskCondition(@Nullable String filter) throws PatternSyntaxException {
-    if (filter == null) {
+    if (StringUtil.isEmpty(filter)) {
       return Conditions.alwaysTrue();
     }
 

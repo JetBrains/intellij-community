@@ -37,6 +37,8 @@ import java.util.Map;
 /**
  * @author anna
  */
+//return from lambda is processed inside visitReturnStatement
+@SuppressWarnings("UnsafeReturnStatementVisitor")
 class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   private final PsiElement myStatement;
   private final TypeMigrationLabeler myLabeler;

@@ -51,8 +51,9 @@ cp -r "info.plist" "$ROOT/lib/bundles/kotlin/"
 cp -r "snippets" "$ROOT/lib/bundles/kotlin/"
 cp -r "syntaxes" "$ROOT/lib/bundles/kotlin/"
 
-cd ../..
+cd $ROOT
 
-
-# end
 rm -rf $ROOT/temp
+
+echo "Applying patch"
+git apply $ROOT/bundles.patch

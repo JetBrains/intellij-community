@@ -51,7 +51,7 @@ public class JBDimension extends Dimension {
   }
 
   public JBDimension(int width, int height, boolean preScaled) {
-    this((double)width, (double)height, preScaled);
+    this(width, (double)height, preScaled);
   }
 
   private JBDimension(double width, double height, boolean preScaled) {

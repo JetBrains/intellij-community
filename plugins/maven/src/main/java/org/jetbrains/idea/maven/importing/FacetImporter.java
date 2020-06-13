@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.facet.*;
@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectChanges;
@@ -170,7 +169,7 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
     String tail = tailBuff.toString();
     String result = FileUtil.isAbsolute(tail) ? tail : new File(p.getDirectory(), tail).getPath();
 
-    return FileUtil.toSystemIndependentName(PathUtil.getCanonicalPath(result));
+    return FileUtil.toSystemIndependentName(FileUtil.toCanonicalPath(result));
   }
 
   protected String getTargetExtension(MavenProject p) {

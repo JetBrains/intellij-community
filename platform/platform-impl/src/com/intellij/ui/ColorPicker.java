@@ -631,8 +631,8 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
           int my = myWheel.y + myWheel.height / 2;
           double s;
           double h;
-          s = Math.sqrt((double)((x - mx) * (x - mx) + (y - my) * (y - my))) / (myWheel.height / 2);
-          h = -Math.atan2((double)(y - my), (double)(x - mx)) / (2 * Math.PI);
+          s = Math.sqrt((x - mx) * (x - mx) + (y - my) * (y - my)) / (myWheel.height / 2);
+          h = -Math.atan2(y - my, x - mx) / (2 * Math.PI);
           if (h < 0) h += 1.0;
           if (s > 1) s = 1.0;
 
@@ -649,8 +649,8 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
           int my = myWheel.y + myWheel.height / 2;
           double s;
           double h;
-          s = Math.sqrt((double)((x - mx) * (x - mx) + (y - my) * (y - my))) / (myWheel.height / 2);
-          h = -Math.atan2((double)(y - my), (double)(x - mx)) / (2 * Math.PI);
+          s = Math.sqrt((x - mx) * (x - mx) + (y - my) * (y - my)) / (myWheel.height / 2);
+          h = -Math.atan2(y - my, x - mx) / (2 * Math.PI);
           if (h < 0) h += 1.0;
           if (s <= 1) {
             setHSBValue((float)h, (float)s, myBrightness, myOpacity);

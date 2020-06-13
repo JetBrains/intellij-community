@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.cache.CodeStyleCachingService;
@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
@@ -23,7 +24,7 @@ import java.util.function.Consumer;
  * Utility class for miscellaneous code style settings retrieving methods.
  */
 @SuppressWarnings("unused") // Contains API methods which may be used externally
-public class CodeStyle {
+public final class CodeStyle {
 
   private CodeStyle() {
   }
@@ -86,6 +87,10 @@ public class CodeStyle {
     }
 
     if (!file.isPhysical()) {
+      PsiFile originalFile = file.getUserData(PsiFileFactory.ORIGINAL_FILE);
+      if (originalFile != null && originalFile.isPhysical()) {
+        return getSettings(originalFile);
+      }
       return getSettings(project);
     }
     CodeStyleSettings cachedSettings = CodeStyleCachingService.getInstance(project).tryGetSettings(file);

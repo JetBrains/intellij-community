@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.doc.TaskPsiElement;
 import com.intellij.tasks.impl.TaskManagerImpl;
@@ -37,7 +38,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
   public static final int PAGE_SIZE = 20;
 
   public GotoTaskAction() {
-    getTemplatePresentation().setText("Open Task...");
+    getTemplatePresentation().setText(TaskBundle.messagePointer("open.task.action.menu.text"));
     getTemplatePresentation().setIcon(IconUtil.getAddIcon());
   }
 

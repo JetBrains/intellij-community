@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
+import com.intellij.ide.RecentProjectsManager
+import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
@@ -31,12 +33,14 @@ class CustomDecorationPath(val frame: JFrame, onBoundsChanged: () -> Unit) : Sel
   private fun checkOpenedProjects() {
     val instance = ProjectManager.getInstance()
     project?.let { pr ->
-      multipleSameNamed = instance.openProjects.any { it != pr && it.name == pr.name }
+      val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
+      val recentSame = LinkedHashSet(recentProjectManager.getRecentPaths()).any { recentProjectManager.getProjectName(it) == pr.name && pr.basePath != it}
+      multipleSameNamed = instance.openProjects.any { it != pr && it.name == pr.name } || recentSame
     }
   }
 
   private val titleChangeListener = PropertyChangeListener{
-    updateProjectName()
+    updateProject()
   }
 
   fun setActive(value: Boolean) {
@@ -46,7 +50,7 @@ class CustomDecorationPath(val frame: JFrame, onBoundsChanged: () -> Unit) : Sel
   }
 
   fun getListenerBounds(): List<RelativeRectangle> {
-    return if (!isClipped) {
+    return if (!toolTipNeeded) {
       emptyList()
     }
     else {

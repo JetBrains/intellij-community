@@ -108,14 +108,14 @@ class HTTPPasswordMgr:
     def find_user_password(self, realm: str, authuri: str) -> Tuple[Optional[str], Optional[str]]: ...
 
 class HTTPPasswordMgrWithDefaultRealm(HTTPPasswordMgr):
-    def add_password(self, realm: str, uri: Union[str, Sequence[str]],
+    def add_password(self, realm: Optional[str], uri: Union[str, Sequence[str]],
                      user: str, passwd: str) -> None: ...
-    def find_user_password(self, realm: str, authuri: str) -> Tuple[Optional[str], Optional[str]]: ...
+    def find_user_password(self, realm: Optional[str], authuri: str) -> Tuple[Optional[str], Optional[str]]: ...
 
 class HTTPPasswordMgrWithPriorAuth(HTTPPasswordMgrWithDefaultRealm):
     def add_password(
         self,
-        realm: str,
+        realm: Optional[str],
         uri: Union[str, Sequence[str]],
         user: str,
         passwd: str,

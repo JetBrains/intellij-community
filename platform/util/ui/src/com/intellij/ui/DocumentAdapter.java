@@ -8,8 +8,6 @@ import javax.swing.event.DocumentListener;
 
 /**
  * Delegates all changes to {@link #textChanged(DocumentEvent)}.
- *
- * @author cdr
  */
 public abstract class DocumentAdapter implements DocumentListener {
   @Override

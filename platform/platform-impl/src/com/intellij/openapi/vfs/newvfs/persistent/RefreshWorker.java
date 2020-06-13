@@ -203,7 +203,7 @@ public class RefreshWorker {
     }
 
     for (ChildInfo record : newKids) {
-      myHelper.scheduleCreation(dir, record.getName().toString(), record.getFileAttributes(), record.getSymLinkTarget(), () -> checkCancelled(dir));
+      myHelper.scheduleCreation(dir, record.getName().toString(), record.getFileAttributes(), record.getSymlinkTarget(), () -> checkCancelled(dir));
     }
 
     for (Pair<VirtualFile, FileAttributes> pair : updatedMap) {
@@ -280,7 +280,7 @@ public class RefreshWorker {
     }
 
     for (ChildInfo record : newKids) {
-      myHelper.scheduleCreation(dir, record.getName().toString(), record.getFileAttributes(), record.getSymLinkTarget(), () -> checkCancelled(dir));
+      myHelper.scheduleCreation(dir, record.getName().toString(), record.getFileAttributes(), record.getSymlinkTarget(), () -> checkCancelled(dir));
     }
 
     return !isDirectoryChanged(dir, cached, wanted);

@@ -1,24 +1,24 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.segments;
 
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 import java.io.Reader;
 
-public class PushReader {
+public final class PushReader {
   private final Reader mySource;
-  private final TIntArrayList myReadAhead = new TIntArrayList();
+  private final IntArrayList myReadAhead = new IntArrayList();
   @NonNls
-  protected static final String INTERNAL_ERROR_UNEXPECTED_END_OF_PIPE = "Unexpected end of pipe";
+  private static final String INTERNAL_ERROR_UNEXPECTED_END_OF_PIPE = "Unexpected end of pipe";
 
   public PushReader(final Reader source) {
     mySource = source;
   }
 
   public int next() throws IOException {
-    return myReadAhead.isEmpty() ? mySource.read() : myReadAhead.remove(myReadAhead.size() - 1);
+    return myReadAhead.isEmpty() ? mySource.read() : myReadAhead.removeInt(myReadAhead.size() - 1);
   }
 
   public void pushBack(final char[] chars) {
@@ -44,7 +44,7 @@ public class PushReader {
     final char[] chars = new char[charCount];
     int offset = 0;
     for (; offset < chars.length && offset < myReadAhead.size(); offset++)
-      chars[offset] = (char)myReadAhead.remove(myReadAhead.size() - 1);
+      chars[offset] = (char)myReadAhead.removeInt(myReadAhead.size() - 1);
 
     while (offset < chars.length) {
       int bytesRead = mySource.read(chars, offset, chars.length - offset);

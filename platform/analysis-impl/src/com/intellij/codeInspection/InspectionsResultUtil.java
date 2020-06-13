@@ -63,6 +63,7 @@ public final class InspectionsResultUtil {
           xmlWriter.startNode("inspection");
           final String shortName = toolWrapper.getShortName();
           xmlWriter.addAttribute("shortName", shortName);
+          xmlWriter.addAttribute("defaultSeverity", toolWrapper.getDefaultLevel().getSeverity().getName());
           xmlWriter.addAttribute("displayName", toolWrapper.getDisplayName());
           final boolean toolEnabled = profile.isToolEnabled(HighlightDisplayKey.find(shortName));
           xmlWriter.addAttribute("enabled", Boolean.toString(toolEnabled));

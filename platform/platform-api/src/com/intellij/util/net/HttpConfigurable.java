@@ -33,7 +33,6 @@ import com.intellij.util.proxy.PropertiesEncryptionSupport;
 import com.intellij.util.proxy.SharedProxyConfig;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
-import it.unimi.dsi.fastutil.objects.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -68,8 +67,8 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public boolean KEEP_PROXY_PASSWORD;
   public transient String LAST_ERROR;
 
-  private final Object2ObjectMap<CommonProxy.HostInfo, ProxyInfo> myGenericPasswords = new Object2ObjectOpenHashMap<>();
-  private final Set<CommonProxy.HostInfo> myGenericCancelled = new ObjectOpenHashSet<>();
+  private final Map<CommonProxy.HostInfo, ProxyInfo> myGenericPasswords = new HashMap<>();
+  private final Set<CommonProxy.HostInfo> myGenericCancelled = new HashSet<>();
 
   public String PROXY_EXCEPTIONS;
   public boolean USE_PAC_URL;
@@ -169,12 +168,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   private void correctPasswords(@NotNull HttpConfigurable to) {
     synchronized (myLock) {
-      for (ObjectIterator<Object2ObjectMap.Entry<CommonProxy.HostInfo, ProxyInfo>> iterator = Object2ObjectMaps.fastIterator(to.myGenericPasswords); iterator.hasNext(); ) {
-        Object2ObjectMap.Entry<CommonProxy.HostInfo, ProxyInfo> entry = iterator.next();
-        if (!entry.getValue().isStore()) {
-          iterator.remove();
-        }
-      }
+      to.myGenericPasswords.values().removeIf(it -> !it.isStore());
     }
   }
 

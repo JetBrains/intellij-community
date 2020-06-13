@@ -72,16 +72,15 @@ import com.intellij.structuralsearch.plugin.replace.ui.ReplaceCommand;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.filters.FilterPanel;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
+import com.intellij.util.IconUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.textCompletion.TextCompletionUtil;
+import com.intellij.util.ui.JBRectangle;
 import com.intellij.util.ui.TextTransferable;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nls;
@@ -122,6 +121,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   public static final Key<String> STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID = Key.create("STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID");
   public static final Key<Runnable> STRUCTURAL_SEARCH_ERROR_CALLBACK = Key.create("STRUCTURAL_SEARCH_ERROR_CALLBACK");
   private static final Key<Configuration> STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION = Key.create("STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION");
+  public static final Key<Boolean> TEST_STRUCTURAL_SEARCH_DIALOG = Key.create("TEST_STRUCTURAL_SEARCH_DIALOG");
 
   private final SearchContext mySearchContext;
   Editor myEditor;
@@ -153,6 +153,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   private boolean myUseLastConfiguration;
   private final boolean myEditConfigOnly;
   private boolean myDoingOkAction;
+  private boolean myFilterIsShowing;
 
   // components
   final FileTypeChooser myFileTypeChooser = new FileTypeChooser();
@@ -693,9 +694,20 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     presentation.setIcon(AllIcons.General.Settings);
     presentation.setText(SSRBundle.message("tools.button"));
 
+    final Icon modified = IconUtil.cropIcon(AllIcons.General.Modified, new JBRectangle(3, 3, 7, 7));
+    final LayeredIcon filterModifiedIcon = new LayeredIcon(2);
+    filterModifiedIcon.setIcon(AllIcons.General.Filter, 0);
+    filterModifiedIcon.setIcon(modified, 1, SwingConstants.SOUTH_EAST);
     final AnAction filterAction = new DumbAwareToggleAction(SSRBundle.message("filter.button"),
                                                             SSRBundle.message("filter.button.description"),
-                                                            AllIcons.General.Filter) {
+                                                            filterModifiedIcon) {
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        super.update(e);
+        final Presentation presentation = e.getPresentation();
+        presentation.setIcon(myFilterIsShowing ? filterModifiedIcon : AllIcons.General.Filter);
+      }
 
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
@@ -773,13 +785,13 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
   @Override
   public void show() {
-    StructuralSearchPlugin.getInstance(getProject()).setDialog(this);
     if (!myUseLastConfiguration) {
       setTextFromContext();
     }
     final PropertiesComponent properties = PropertiesComponent.getInstance();
     setFilterPanelVisible(properties.getBoolean(FILTERS_VISIBLE_STATE, true));
     super.show();
+    StructuralSearchPlugin.getInstance(getProject()).setDialog(this);
   }
 
   private void startTemplate() {
@@ -923,7 +935,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       return;
     }
     final Document document = editor.getDocument();
-    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    final PsiFile file = ReadAction.compute(() -> PsiDocumentManager.getInstance(project).getPsiFile(document));
     if (file == null) {
       return;
     }
@@ -1353,6 +1365,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         else{
           myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
         }
+        myFilterIsShowing = myFilterPanel.hasVisibleFilter();
         if (isFilterPanelVisible()) {
           myConfiguration.setCurrentVariableName(variableName);
         }

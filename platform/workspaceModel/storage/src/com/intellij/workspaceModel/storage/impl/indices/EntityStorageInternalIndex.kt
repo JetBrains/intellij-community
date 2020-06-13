@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.storage.impl.indices
 
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.workspaceModel.storage.impl.EntityId
+import com.intellij.workspaceModel.storage.impl.containers.copy
 
 open class EntityStorageInternalIndex<T> private constructor(
   internal open val index: BidirectionalMap<EntityId, T>
@@ -19,6 +20,7 @@ open class EntityStorageInternalIndex<T> private constructor(
   }
 
   class MutableEntityStorageInternalIndex<T> private constructor(
+    // Do not write to [index] directly! Create a method in this index and call [startWrite] before write.
     override var index: BidirectionalMap<EntityId, T>
   ) : EntityStorageInternalIndex<T>(index) {
 
@@ -29,6 +31,16 @@ open class EntityStorageInternalIndex<T> private constructor(
       index.remove(id)
       if (entitySource == null) return
       index[id] = entitySource
+    }
+
+    internal fun clear() {
+      startWrite()
+      index.clear()
+    }
+
+    internal fun copyFrom(another: EntityStorageInternalIndex<T>) {
+      startWrite()
+      this.index.putAll(another.index)
     }
 
     private fun startWrite() {
@@ -50,11 +62,5 @@ open class EntityStorageInternalIndex<T> private constructor(
       }
     }
   }
-}
-
-internal fun <A, B> BidirectionalMap<A, B>.copy(): BidirectionalMap<A, B> {
-  val copy = BidirectionalMap<A, B>()
-  keys.forEach { key -> this[key]?.also { value -> copy[key] = value } }
-  return copy
 }
 

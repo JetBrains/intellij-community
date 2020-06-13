@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.SmartList;
 import kotlin.Unit;
@@ -153,7 +152,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
 
   private static int getAnchorOffset(PsiElement element) {
     for (PsiElement child : element.getChildren()) {
-      if (!(child instanceof PsiDocComment) && !(child instanceof PsiWhiteSpace)) {
+      if (!(child instanceof PsiComment) && !(child instanceof PsiWhiteSpace)) {
         return child.getTextRange().getStartOffset();
       }
     }

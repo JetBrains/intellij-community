@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class VFileMoveEvent extends VFileEvent {
+public final class VFileMoveEvent extends VFileEvent {
   private final VirtualFile myFile;
   private final VirtualFile myOldParent;
   private final VirtualFile myNewParent;

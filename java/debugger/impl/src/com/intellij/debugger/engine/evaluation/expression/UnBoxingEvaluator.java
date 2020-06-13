@@ -9,14 +9,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+
+import static java.util.concurrent.CompletableFuture.completedFuture;
 
 /**
  * @author Eugene Zhuravlev
@@ -84,18 +88,32 @@ public class UnBoxingEvaluator implements Evaluator {
   public static CompletableFuture<PrimitiveValue> getInnerPrimitiveValue(@Nullable ObjectReference value, boolean now) {
     if (value != null) {
       ReferenceType type = value.referenceType();
-      Field valueField = type.fieldByName("value");
-      if (valueField != null) {
-        return DebuggerUtilsAsync.getValue(value, valueField, now)
-          .thenApply(primitiveValue -> {
-            if (primitiveValue instanceof PrimitiveValue) {
-              LOG.assertTrue(type.name().equals(PsiJavaParserFacadeImpl.getPrimitiveType(primitiveValue.type().name()).getBoxedTypeName()));
-              return (PrimitiveValue)primitiveValue;
-            }
-            return null;
-          });
-      }
+      return fields(type, now)
+        .thenCompose(fields -> {
+          Field valueField = ContainerUtil.find(fields, f -> "value".equals(f.name()));
+          if (valueField != null) {
+            return getValue(value, valueField, now)
+              .thenApply(primitiveValue -> {
+                if (primitiveValue instanceof PrimitiveValue) {
+                  LOG.assertTrue(
+                    type.name().equals(PsiJavaParserFacadeImpl.getPrimitiveType(primitiveValue.type().name()).getBoxedTypeName()));
+                  return (PrimitiveValue)primitiveValue;
+                }
+                return null;
+              });
+          }
+          return completedFuture(null);
+        });
     }
-    return CompletableFuture.completedFuture(null);
+    return completedFuture(null);
+  }
+
+  // TODO: need to make normal async join
+  private static CompletableFuture<List<Field>> fields(ReferenceType type, boolean now) {
+    return now ? completedFuture(type.fields()) : DebuggerUtilsAsync.fields(type);
+  }
+
+  private static CompletableFuture<Value> getValue(ObjectReference ref, Field field, boolean now) {
+    return now ? completedFuture(ref.getValue(field)) : DebuggerUtilsAsync.getValue(ref, field);
   }
 }

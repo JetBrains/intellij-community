@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.notification.Notification;
@@ -8,12 +8,10 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 
-import java.text.MessageFormat;
-
 /**
  * @author irengrig
  */
-public class ReadonlyStatusIsVisibleActivationCheck {
+public final class ReadonlyStatusIsVisibleActivationCheck {
   public static void check(final Project project, final String vcsName) {
     if (SystemInfo.isUnix && "root".equals(System.getenv("USER"))) {
       String message = VcsBundle.message("message.read.only.status.title", vcsName);

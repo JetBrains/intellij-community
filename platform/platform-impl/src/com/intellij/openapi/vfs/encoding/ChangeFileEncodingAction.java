@@ -30,9 +30,6 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Objects;
 
-/**
- * @author cdr
-*/
 public class ChangeFileEncodingAction extends AnAction implements DumbAware, LightEditCompatible {
   private final boolean allowDirectories;
 

@@ -626,7 +626,7 @@ public class DataFlowRunner {
     private long myMergeStart, myFlowTime, myLVATime, myMergeTime, myProcessTime;
 
     TimeStats() {
-      this(ApplicationManager.getApplication().isInternal() || ApplicationManager.getApplication().isEAP());
+      this(ApplicationManager.getApplication().isInternal());
     }
 
     public TimeStats(boolean record) {

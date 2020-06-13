@@ -14,6 +14,8 @@ PsiJavaFile:OtherMembers.java
       <empty list>
     PsiReferenceList
       <empty list>
+    PsiReferenceList
+      <empty list>
     PsiWhiteSpace(' ')
     PsiJavaToken:LBRACE('{')
     PsiWhiteSpace('\n  ')
@@ -88,6 +90,8 @@ PsiJavaFile:OtherMembers.java
         <empty list>
       PsiReferenceList
         <empty list>
+      PsiReferenceList
+        <empty list>
       PsiWhiteSpace(' ')
       PsiJavaToken:LBRACE('{')
       PsiJavaToken:RBRACE('}')
@@ -99,6 +103,8 @@ PsiJavaFile:OtherMembers.java
       PsiWhiteSpace(' ')
       PsiIdentifier:I('I')
       PsiTypeParameterList
+        <empty list>
+      PsiReferenceList
         <empty list>
       PsiReferenceList
         <empty list>

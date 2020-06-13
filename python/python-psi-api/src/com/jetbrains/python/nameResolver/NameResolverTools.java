@@ -21,14 +21,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiCacheKey;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -51,7 +48,7 @@ public final class NameResolverTools {
    * Cache: pair [qualified element name, class name (may be null)] by any psi element.
    */
   private static final PsiCacheKey<Pair<String, String>, PyElement> QUALIFIED_AND_CLASS_NAME =
-    PsiCacheKey.create(NameResolverTools.class.getName(), new QualifiedAndClassNameObtainer(), PsiModificationTracker.MODIFICATION_COUNT);
+    PsiCacheKey.create(NameResolverTools.class.getName(), new QualifiedAndClassNameObtainer());
 
   private NameResolverTools() {
 

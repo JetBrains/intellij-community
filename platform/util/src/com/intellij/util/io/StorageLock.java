@@ -128,7 +128,7 @@ public class StorageLock {
     return myIndex2Storage.get(index);
   }
 
-  ByteBufferWrapper get(Integer key, boolean read) throws IOException {
+  ByteBufferWrapper get(Integer key, boolean read, boolean readOnly) {
     ByteBufferWrapper wrapper;
     try {         // fast path
       mySegmentsAccessLock.lock();
@@ -151,7 +151,7 @@ public class StorageLock {
       }
 
       long started = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
-      wrapper = createValue(key, read);
+      wrapper = createValue(key, read, readOnly);
 
       if (IOStatistics.DEBUG) {
         long finished = System.currentTimeMillis();
@@ -207,7 +207,7 @@ public class StorageLock {
   }
 
   @NotNull
-  private ByteBufferWrapper createValue(Integer key, boolean read) {
+  private ByteBufferWrapper createValue(Integer key, boolean read, boolean readOnly) {
     final int storageIndex = key & FILE_INDEX_MASK;
     PagedFileStorage owner = getRegisteredPagedFileStorageByIndex(storageIndex);
     assert owner != null: "No storage for index " + storageIndex;
@@ -219,7 +219,9 @@ public class StorageLock {
     }
 
     int min = (int)Math.min(ownerLength - off, owner.myPageSize);
-    ByteBufferWrapper wrapper = ByteBufferWrapper.readWriteDirect(owner.getFile(), off, min);
+    ByteBufferWrapper wrapper = readOnly
+                                ? ByteBufferWrapper.readOnlyDirect(owner.getFile(), off, min)
+                                : ByteBufferWrapper.readWriteDirect(owner.getFile(), off, min);
     Throwable oome = null;
     while (true) {
       try {

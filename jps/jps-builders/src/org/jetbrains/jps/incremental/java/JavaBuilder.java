@@ -54,8 +54,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -1167,10 +1166,16 @@ public class JavaBuilder extends ModuleLevelBuilder {
         if (line.startsWith(ExternalJavacManager.STDOUT_LINE_PREFIX)) {
           //noinspection UseOfSystemOutOrSystemErr
           System.out.println(line);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(line);
+          }
         }
         else if (line.startsWith(ExternalJavacManager.STDERR_LINE_PREFIX)) {
           //noinspection UseOfSystemOutOrSystemErr
           System.err.println(line);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(line);
+          }
         }
         else if (line.contains("\\bjava.lang.OutOfMemoryError\\b")) {
           myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "OutOfMemoryError: insufficient memory"));

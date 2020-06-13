@@ -4,7 +4,7 @@ package com.intellij.serialization
 import com.amazon.ion.IonReader
 import com.amazon.ion.IonType
 import com.amazon.ion.system.IonReaderBuilder
-import com.intellij.util.containers.ObjectIntHashMap
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import java.lang.reflect.Type
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
@@ -18,7 +18,7 @@ private const val ID_FIELD_NAME = "@id"
 
 internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Binding {
   private lateinit var bindings: Array<Binding>
-  private lateinit var nameToBindingIndex: ObjectIntHashMap<String>
+  private lateinit var nameToBindingIndex: Object2IntOpenHashMap<String>
   private lateinit var properties: List<MutableAccessor>
 
   private val propertyMapping: Lazy<NonDefaultConstructorInfo?> = lazy {
@@ -31,7 +31,8 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
   override fun init(originalType: Type, context: BindingInitializationContext) {
     val list = context.propertyCollector.collect(beanClass)
     properties = list
-    val nameToBindingIndex = ObjectIntHashMap<String>(list.size)
+    val nameToBindingIndex = Object2IntOpenHashMap<String>(list.size)
+    nameToBindingIndex.defaultReturnValue(-1)
     bindings = Array(list.size) { index ->
       val accessor = list.get(index)
       val binding = context.bindingProducer.getNestedBinding(accessor)
@@ -122,13 +123,13 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
           return@readStruct
         }
 
-        val bindingIndex = nameToBindingIndex.get(fieldName)
+        val bindingIndex = nameToBindingIndex.getInt(fieldName)
         if (bindingIndex == -1) {
           LOG.error("Cannot find binding (fieldName=$fieldName, valueType=${reader.type}, beanClass=${beanClass.name}")
           return@readStruct
         }
 
-        val binding = bindings[bindingIndex]
+        val binding = bindings.get(bindingIndex)
         try {
           initArgs[argIndex] = binding.deserialize(subReadContext, hostObject)
         }
@@ -239,16 +240,16 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
         return@readStruct
       }
 
-      val bindingIndex = nameToBindingIndex.get(fieldName)
+      val bindingIndex = nameToBindingIndex.getInt(fieldName)
       // ignore unknown field
       if (bindingIndex == -1) {
         context.errors.unknownFields.add(ReadError("Unknown field (fieldName=$fieldName, beanClass=${beanClass.name})"))
         return@readStruct
       }
 
-      val binding = bindings[bindingIndex]
+      val binding = bindings.get(bindingIndex)
       try {
-        binding.deserialize(instance, accessors[bindingIndex], context)
+        binding.deserialize(instance, accessors.get(bindingIndex), context)
       }
       catch (e: SerializationException) {
         throw e

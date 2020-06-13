@@ -32,6 +32,8 @@ import com.intellij.pom.Navigatable;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -75,7 +77,21 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
     fireEvent(EventType.INIT);
 
-    rediff(true);
+    new UiNotifyConnector(getComponent(), new Activatable() {
+      private boolean wasNotShownYet = true;
+
+      @Override
+      public void showNotify() {
+        rediff(wasNotShownYet);
+        wasNotShownYet = false;
+      }
+
+      @Override
+      public void hideNotify() {
+        abortRediff();
+      }
+    });
+
     return components;
   }
 
@@ -111,7 +127,10 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
     if (isDisposed()) return;
 
     abortRediff();
-    myTaskAlarm.addRequest(this::rediff, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+
+    if (getComponent().isShowing()) {
+      myTaskAlarm.addRequest(this::rediff, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+    }
   }
 
   @CalledInAwt

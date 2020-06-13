@@ -34,6 +34,11 @@ public interface ILazyParseableElementTypeBase {
    */
   ASTNode parseContents(@NotNull ASTNode chameleon);
 
+  /**
+   * @return whether it's safe during lazy parsing to reuse tokens that were previously collapsed into a single token of this
+   * type via {@link com.intellij.lang.PsiBuilder.Marker#collapse}. This can increase lazy-parsing speed
+   * (by not having to run the lexer again), but requires additional memory to store the tokens.
+   */
   default boolean reuseCollapsedTokens() {
     return false;
   }

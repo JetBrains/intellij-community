@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author cdr
- */
 public interface ControlFlow {
   ControlFlow EMPTY = new ControlFlowImpl();
 

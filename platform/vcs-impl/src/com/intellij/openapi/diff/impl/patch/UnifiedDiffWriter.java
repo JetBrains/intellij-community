@@ -18,7 +18,7 @@ import java.io.Writer;
 import java.text.MessageFormat;
 import java.util.*;
 
-public class UnifiedDiffWriter {
+public final class UnifiedDiffWriter {
   @NonNls private static final String INDEX_SIGNATURE = "Index: {0}{1}";
   @NonNls public static final String ADDITIONAL_PREFIX = "IDEA additional info:";
   @NonNls public static final String ADD_INFO_HEADER = "Subsystem: ";

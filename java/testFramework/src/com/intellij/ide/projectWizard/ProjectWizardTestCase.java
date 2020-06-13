@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.actions.ImportModuleAction;
@@ -157,13 +157,14 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   private static class CancelWizardException extends RuntimeException {
   }
 
-  private void runWizard(@Nullable Consumer<? super Step> adjuster) {
+  private void runWizard(@Nullable java.util.function.Consumer<? super Step> adjuster) {
     while (true) {
       ModuleWizardStep currentStep = myWizard.getCurrentStepObject();
       if (adjuster != null) {
         try {
-          adjuster.consume(currentStep);
-        } catch (CancelWizardException e) {
+          adjuster.accept(currentStep);
+        }
+        catch (CancelWizardException e) {
           myWizard.doCancelAction();
           return;
         }
@@ -190,7 +191,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     UIUtil.dispatchAllInvocationEvents(); // to make default selection applied
   }
 
-  protected Project createProject(Consumer<? super Step> adjuster) throws IOException {
+  protected Project createProject(java.util.function.Consumer<? super Step> adjuster) throws IOException {
     createWizard(null);
     runWizard(adjuster);
     myCreatedProject = NewProjectUtil.createFromWizard(myWizard);
@@ -219,7 +220,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     return importFrom(path, getProject(), null, provider);
   }
 
-  protected Module importProjectFrom(String path, Consumer<? super Step> adjuster, ProjectImportProvider... providers) {
+  protected Module importProjectFrom(String path, java.util.function.Consumer<? super Step> adjuster, ProjectImportProvider... providers) {
     Module module = importFrom(path, null, adjuster, providers);
     if (module != null) {
       myCreatedProject = module.getProject();
@@ -228,12 +229,13 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   }
 
   private Module importFrom(String path,
-                            @Nullable Project project, Consumer<? super Step> adjuster,
-                            final ProjectImportProvider... providers) {
+                            @Nullable Project project,
+                            java.util.function.Consumer<? super Step> adjuster,
+                            ProjectImportProvider... providers) {
     return computeInWriteSafeContext(() -> doImportModule(path, project, adjuster, providers));
   }
 
-  private Module doImportModule(String path, @Nullable Project project, Consumer<? super Step> adjuster, ProjectImportProvider[] providers) {
+  private Module doImportModule(String path, @Nullable Project project, java.util.function.Consumer<? super Step> adjuster, ProjectImportProvider[] providers) {
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     assertNotNull("Can't find " + path, file);
     assertTrue(providers[0].canImport(file, project));

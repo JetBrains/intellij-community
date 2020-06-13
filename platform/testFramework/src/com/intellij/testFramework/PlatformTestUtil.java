@@ -23,11 +23,11 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl;
-import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
+import com.intellij.model.psi.PsiSymbolReferenceService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
@@ -44,7 +44,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.paths.WebReference;
+import com.intellij.openapi.paths.UrlReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Queryable;
@@ -54,7 +54,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
-import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
@@ -632,7 +631,9 @@ public final class PlatformTestUtil {
   }
 
   public static void forceCloseProjectWithoutSaving(@NotNull Project project) {
-    ProjectManagerEx.getInstanceEx().forceCloseProject(project);
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      ProjectManagerEx.getInstanceEx().forceCloseProject(project);
+    });
   }
 
   public static void saveProject(@NotNull Project project) {
@@ -867,20 +868,16 @@ public final class PlatformTestUtil {
     }
   }
 
-  public static @NotNull List<WebReference> collectWebReferences(@NotNull PsiElement element) {
-    List<WebReference> refs = new ArrayList<>();
+  public static @NotNull List<UrlReference> collectUrlReferences(@NotNull PsiElement element) {
+    List<UrlReference> result = new SmartList<>();
     element.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        for (PsiReference ref : element.getReferences()) {
-          if (ref instanceof WebReference) {
-            refs.add((WebReference)ref);
-          }
-        }
+        result.addAll(PsiSymbolReferenceService.getService().getReferences(element, UrlReference.class));
         super.visitElement(element);
       }
     });
-    return refs;
+    return result;
   }
 
   @SuppressWarnings("unchecked")
@@ -1100,14 +1097,7 @@ public final class PlatformTestUtil {
   }
 
   public static @NotNull Project loadAndOpenProject(@NotNull Path path) {
-    OpenProjectTask options = new OpenProjectTask();
-    // in tests it is caller responsibility to refresh VFS (because often not only the project file must be refreshed, but the whole dir - so, no need to refresh several times)
-    options.isRefreshVfsNeeded = false;
-    Project project = PlatformProjectOpenProcessor.openExistingProject(path, options);
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      dispatchAllInvocationEventsInIdeEventQueue();
-    }
-    return Objects.requireNonNull(project);
+    return Objects.requireNonNull(ProjectManagerEx.getInstanceEx().openProject(path, FixtureRuleKt.createTestOpenProjectOptions()));
   }
 
   public static void openProject(@NotNull Project project) {

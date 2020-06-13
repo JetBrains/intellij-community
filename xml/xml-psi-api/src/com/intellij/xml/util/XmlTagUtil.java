@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
 import com.intellij.lang.ASTNode;
@@ -12,20 +12,18 @@ import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ArrayUtilRt;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author peter
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
-public class XmlTagUtil extends XmlTagUtilBase {
-  private static final TObjectIntHashMap<String> ourCharacterEntities = new TObjectIntHashMap<>();
+public final class XmlTagUtil extends XmlTagUtilBase {
+  private static final Object2IntMap<String> ourCharacterEntities = new Object2IntOpenHashMap<>();
 
   static {
     ourCharacterEntities.put("lt", '<');
@@ -84,13 +82,11 @@ public class XmlTagUtil extends XmlTagUtilBase {
   }
 
   public static String[] getCharacterEntityNames() {
-    List<String> list = new ArrayList<>();
-    ourCharacterEntities.forEachKey(list::add);
-    return ArrayUtilRt.toStringArray(list);
+    return ArrayUtilRt.toStringArray(ourCharacterEntities.keySet());
   }
 
   public static char getCharacterByEntityName(String entityName) {
-    return (char)ourCharacterEntities.get(entityName);
+    return (char)ourCharacterEntities.getInt(entityName);
   }
 
   @Nullable

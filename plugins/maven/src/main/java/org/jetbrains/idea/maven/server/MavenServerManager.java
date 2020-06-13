@@ -29,6 +29,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import org.apache.lucene.search.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.MavenDisposable;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
@@ -164,7 +165,7 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
   private MavenServerConnector registerNewConnector(Project project, MavenWorkspaceSettings settings, Sdk jdk) {
     Integer debugPort = getDebugPort(project);
     MavenServerConnector connector = new MavenServerConnector(project, this, settings, jdk, debugPort);
-    registerDisposable(project, connector);
+    Disposer.register(MavenDisposable.getInstance(project), connector);
     myServerConnectors.put(project, connector);
     return connector;
   }
@@ -189,19 +190,9 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
     }
     Sdk jdk = ProjectRootManager.getInstance(project).getProjectSdk();
     if (jdk == null) {
-      MavenLog.LOG.warn("cannot find JDK for project " + project);
       jdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     }
     return jdk;
-  }
-
-  private void registerDisposable(Project project, MavenServerConnector connector) {
-    if (project.isDefault()) {
-      Disposer.register(this, connector);
-    }
-    else {
-      Disposer.register(project, connector);
-    }
   }
 
   private boolean compatibleParameters(MavenServerConnector connector, Sdk jdk, MavenWorkspaceSettings settings) {

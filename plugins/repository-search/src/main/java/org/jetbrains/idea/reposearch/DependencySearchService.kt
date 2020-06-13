@@ -1,5 +1,6 @@
 package org.jetbrains.idea.reposearch
 
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.progress.ProgressIndicatorProvider
@@ -48,22 +49,26 @@ class DependencySearchService(private val myProject: Project) {
   }
 
   fun updateProviders() {
-    remoteProviders.clear()
-    localProviders.clear()
-    for (f in DependencySearchProvidersFactory.EXTENSION_POINT_NAME.extensionList) {
-      if (!f.isApplicable(myProject)) {
-        continue
-      }
+    ReadAction.nonBlocking {
+      remoteProviders.clear()
+      localProviders.clear()
+      if (myProject.isDisposed) return@nonBlocking;
+      for (f in DependencySearchProvidersFactory.EXTENSION_POINT_NAME.extensionList) {
+        if (!f.isApplicable(myProject)) {
+          continue
+        }
 
-      for (provider in f.getProviders(myProject)) {
-        if (provider.isLocal) {
-          localProviders.add(provider)
-        }
-        else {
-          remoteProviders.add(provider)
+        for (provider in f.getProviders(myProject)) {
+          if (provider.isLocal) {
+            localProviders.add(provider)
+          }
+          else {
+            remoteProviders.add(provider)
+          }
         }
       }
-    }
+    }.executeSynchronously()
+
   }
 
   private fun performSearch(cacheKey: String,

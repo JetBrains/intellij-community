@@ -61,7 +61,7 @@ public class DocumentEventImpl extends DocumentEvent {
     myIsWholeDocReplaced = getDocument().getTextLength() != 0 && wholeTextReplaced;
     assert initialStartOffset >= 0 : initialStartOffset;
     assert initialOldLength >= 0 : initialOldLength;
-    assert moveOffset == offset || myOldLength == 0 || myNewLength == 0;
+    assert moveOffset == offset || myOldLength == 0 || myNewLength == 0 : this;
   }
 
   @Override

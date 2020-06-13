@@ -29,9 +29,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author cdr
- */
 public class ReuseVariableDeclarationFix implements IntentionAction {
   private final PsiLocalVariable myVariable;
 

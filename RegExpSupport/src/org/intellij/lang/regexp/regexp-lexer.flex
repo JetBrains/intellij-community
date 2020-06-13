@@ -253,7 +253,7 @@ BACK_REFERENCES_GROUP = [1-9][0-9]{0,2}
 
   {ESCAPE}  {LBRACE}            { return (allowDanglingMetacharacters != TRUE) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
   {ESCAPE}  {RBRACE}            { return (allowDanglingMetacharacters == FALSE) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
-  {ESCAPE}  {RBRACKET}          { return (allowDanglingMetacharacters != TRUE) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
+  {ESCAPE}  {RBRACKET}          { return (allowDanglingMetacharacters == FALSE) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
   {ESCAPE}  {META2}             { return RegExpTT.ESC_CHARACTER; }
 }
 {ESCAPE}  {META1}             { return RegExpTT.ESC_CHARACTER; }

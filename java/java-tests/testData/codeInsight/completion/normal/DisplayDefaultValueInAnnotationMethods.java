@@ -1,6 +1,6 @@
 @interface Anno {
   String myString() default "unknown";
-  boolean myBool() default false;
+  int myInt() default 42;
 }
 
 @Anno(<caret>)

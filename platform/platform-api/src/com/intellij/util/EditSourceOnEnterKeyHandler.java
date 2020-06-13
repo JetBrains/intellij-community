@@ -14,7 +14,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
-public class EditSourceOnEnterKeyHandler{
+public final class EditSourceOnEnterKeyHandler{
   public static void install(@NotNull JTree tree) {
     tree.addKeyListener(
       new KeyAdapter() {

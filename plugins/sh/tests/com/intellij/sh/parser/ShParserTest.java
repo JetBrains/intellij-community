@@ -16,6 +16,7 @@ public class ShParserTest extends ParsingTestCase {
 
   public void testTrickyStrings() { doTest(true); }
   public void testStrings()       { doTest(true); }
+  public void testStrings2()      { doTest(true); }
   public void testShebang()       { doTest(true); }
   public void testFirst()         { doTest(true); }
   public void testLines()         { doTest(true); }
@@ -42,5 +43,7 @@ public class ShParserTest extends ParsingTestCase {
   public void testRegex()         { doTest(true); }
   public void testRegex2()        { doTest(true); }
   public void testRedirection()   { doTest(true); }
+  public void testRedirection2()  { doTest(true); }
   public void testSource()        { doTest(true); }
+  public void testRedirectErrors(){ doTest(true); }
 }

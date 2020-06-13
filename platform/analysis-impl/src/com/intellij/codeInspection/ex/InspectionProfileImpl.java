@@ -458,7 +458,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     }
 
     if (myBaseProfile != null) {
-      myBaseProfile.initInspectionTools(project);
+      myBaseProfile.initInspectionTools(myBaseProfile.getProfileManager() instanceof ProjectInspectionProfileManager ? project : null);
     }
 
     List<InspectionToolWrapper<?, ?>> tools;

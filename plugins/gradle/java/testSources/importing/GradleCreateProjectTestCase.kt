@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.ide.impl.NewProjectUtil
@@ -6,10 +6,13 @@ import com.intellij.ide.projectWizard.NewProjectWizard
 import com.intellij.ide.projectWizard.ProjectTypeStep
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
-import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.model.project.ProjectData
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.findProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getSettings
@@ -18,6 +21,7 @@ import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil.convertLineSeparators
 import com.intellij.testFramework.PlatformTestUtil
 import org.jetbrains.concurrency.AsyncPromise
@@ -45,7 +49,7 @@ abstract class GradleCreateProjectTestCase : GradleImportingTestCase() {
   }
 
   fun deleteProject(projectInfo: ProjectInfo) {
-    invokeAndWaitIfNeeded {
+    ApplicationManager.getApplication().invokeAndWait {
       runWriteAction {
         for (module in projectInfo.modules) {
           val root = module.root
@@ -115,31 +119,32 @@ abstract class GradleCreateProjectTestCase : GradleImportingTestCase() {
   }
 
   private fun createProject(directory: String, configure: (ModuleWizardStep) -> Unit): Project {
-    val project = invokeAndWaitIfNeeded {
-      val wizard = createWizard(null, directory)
-      wizard.runWizard(configure)
-      NewProjectUtil.createFromWizard(wizard, null)
+    return waitForProjectReload(alsoWaitForPreview = true) {
+      invokeAndWaitIfNeeded {
+        val wizard = createWizard(null, directory)
+        wizard.runWizard(configure)
+        wizard.disposeIfNeeded()
+        NewProjectUtil.createFromWizard(wizard, null)
+      }
     }
-    waitForImportCompletion(project)
-    return project
   }
 
   private fun createModule(directory: String, project: Project, configure: (ModuleWizardStep) -> Unit) {
-    invokeAndWaitIfNeeded {
-      val wizard = createWizard(project, directory)
-      wizard.runWizard(configure)
-      NewModuleAction().createModuleFromWizard(project, null, wizard)
+    waitForProjectReload {
+      ApplicationManager.getApplication().invokeAndWait {
+        val wizard = createWizard(project, directory)
+        wizard.runWizard(configure)
+        wizard.disposeIfNeeded()
+        NewModuleAction().createModuleFromWizard(project, null, wizard)
+      }
     }
-    waitForImportCompletion(project)
   }
 
   private fun createWizard(project: Project?, directory: String): AbstractProjectWizard {
     val modulesProvider = project?.let { DefaultModulesProvider(it) } ?: ModulesProvider.EMPTY_MODULES_PROVIDER
-    val projectWizard = NewProjectWizard(project, modulesProvider, directory).also {
+    return NewProjectWizard(project, modulesProvider, directory).also {
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
     }
-    Disposer.register(testRootDisposable, Disposable { invokeAndWaitIfNeeded { Disposer.dispose(projectWizard.disposable) } })
-    return projectWizard
   }
 
   private fun AbstractProjectWizard.runWizard(configure: ModuleWizardStep.() -> Unit) {
@@ -155,13 +160,6 @@ abstract class GradleCreateProjectTestCase : GradleImportingTestCase() {
     if (!doFinishAction()) {
       throw RuntimeException("$currentStepObject is not validated")
     }
-  }
-
-  private fun waitForImportCompletion(project: Project) {
-    val promise = AsyncPromise<Any>()
-    val connection = project.messageBus.connect()
-    connection.subscribe(ProjectDataImportListener.TOPIC, ProjectDataImportListener { promise.setResult(null) })
-    invokeAndWaitIfNeeded { PlatformTestUtil.waitForPromise(promise, TimeUnit.MINUTES.toMillis(1)) }
   }
 
   fun assertSettingsFileContent(projectInfo: ProjectInfo) {
@@ -250,5 +248,53 @@ abstract class GradleCreateProjectTestCase : GradleImportingTestCase() {
     @Parameterized.Parameters(name = "with Gradle-{0}")
     @JvmStatic
     fun tests(): Collection<Array<out String>> = arrayListOf(arrayOf(BASE_GRADLE_VERSION))
+
+
+    /**
+     * @param alsoWaitForPreview waits for double project reload (preview reload + project reload) if it is true
+     * @param action or some async calls have to produce project reload
+     *  for example invokeLater { refreshProject(project, spec) }
+     * @throws java.lang.AssertionError if import is failed or isn't started
+     */
+    @JvmStatic
+    fun <R> waitForProjectReload(alsoWaitForPreview: Boolean, action: ThrowableComputable<R, Throwable>): R {
+      return waitForProjectReload(alsoWaitForPreview) { action.compute() }
+    }
+
+
+    fun <R> waitForProjectReload(alsoWaitForPreview: Boolean = false, action: () -> R): R {
+      val projectReloadPromise = AsyncPromise<Any?>()
+      val executionListenerDisposable = Disposer.newDisposable()
+      val executionListener = object : ExternalSystemTaskNotificationListenerAdapter() {
+        override fun onEnd(id: ExternalSystemTaskId) = Disposer.dispose(executionListenerDisposable)
+        override fun onSuccess(id: ExternalSystemTaskId) {
+          val project = id.findProject()!!
+          if (alsoWaitForPreview) {
+            getProjectDataServicesPromise(project).onProcessed {
+              getProjectDataServicesPromise(project).onProcessed {
+                projectReloadPromise.setResult(null)
+              }
+            }
+          }
+          else {
+            getProjectDataServicesPromise(project).onProcessed {
+              projectReloadPromise.setResult(null)
+            }
+          }
+        }
+      }
+      ExternalSystemProgressNotificationManager.getInstance()
+        .addNotificationListener(executionListener, executionListenerDisposable)
+      val result = action()
+      ApplicationManager.getApplication().invokeAndWait { PlatformTestUtil.waitForPromise(projectReloadPromise, TimeUnit.MINUTES.toMillis(1)) }
+      return result
+    }
+
+    private fun getProjectDataServicesPromise(project: Project): AsyncPromise<Any?> {
+      val promise = AsyncPromise<Any?>()
+      val connection = project.messageBus.connect()
+      connection.subscribe(ProjectDataImportListener.TOPIC, ProjectDataImportListener { promise.setResult(null) })
+      return promise
+    }
   }
 }

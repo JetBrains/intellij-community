@@ -1,0 +1,13 @@
+<idea-plugin implementation-detail="true">
+  <id>intellij.webp</id>
+  <vendor>JetBrains</vendor>
+  <depends>com.intellij.modules.lang</depends>
+  <name>Webp Support</name>
+  <description><![CDATA[
+    <p>Provides support for webp images format.</p>
+    ]]></description>
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType name="Image" extensions="webp"/>
+    <applicationInitializedListener implementation="com.android.tools.adtui.webp.WebpMetadata"/>
+  </extensions>
+</idea-plugin>

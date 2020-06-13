@@ -58,7 +58,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       @Override
       public void modificationCountChanged() {
         myClassCache.clear();
-        final long now = modificationTracker.getJavaStructureModificationCount();
+        final long now = modificationTracker.getModificationCount();
         if (lastTimeSeen != now) {
           lastTimeSeen = now;
           myPackageCache.clear();
@@ -100,7 +100,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       return null;
     }
 
-    List<PsiElementFinder> finders = finders();
+    List<PsiElementFinder> finders = filteredFinders();
     Condition<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
 
     for (PsiElementFinder finder : finders) {
@@ -167,7 +167,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     if (shouldUseSlowResolve()) {
       return Arrays.asList(findClassesInDumbMode(qualifiedName, scope));
     }
-    List<PsiElementFinder> finders = finders();
+    List<PsiElementFinder> finders = filteredFinders();
     Condition<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
 
     List<PsiClass> result = null;
@@ -196,11 +196,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private boolean shouldUseSlowResolve() {
     DumbService dumbService = DumbService.getInstance(getProject());
     return dumbService.isDumb() && dumbService.isAlternativeResolveEnabled();
-  }
-
-  @NotNull
-  private List<PsiElementFinder> finders() {
-    return PsiElementFinder.EP.getPoint(myProject).getExtensionList();
   }
 
   @Override
@@ -242,7 +237,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
   @NotNull
   private List<PsiElementFinder> filteredFinders() {
-    return DumbService.getInstance(getProject()).filterByDumbAwareness(finders());
+    return DumbService.getInstance(getProject()).filterByDumbAwareness(PsiElementFinder.EP.getPoint(myProject).getExtensionList());
   }
 
   @Override

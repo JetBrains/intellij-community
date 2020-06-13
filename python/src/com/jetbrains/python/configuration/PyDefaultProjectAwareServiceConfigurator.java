@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.configuration;
 
 import com.intellij.openapi.application.Application;
@@ -12,8 +12,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectConfigurator;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.ReSTService;
-import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceModuleConfigurator;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareService;
+import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceModuleConfigurator;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.packaging.PyPackageRequirementsSettings;
 import com.jetbrains.python.testing.TestRunnerService;
@@ -26,9 +26,9 @@ import java.util.List;
  * Configures {@link PyDefaultProjectAwareService}s
  * for new project.
  */
-public final class PyDefaultProjectAwareServiceConfigurator implements DirectoryProjectConfigurator {
+final class PyDefaultProjectAwareServiceConfigurator implements DirectoryProjectConfigurator {
   @Override
-  public void configureProject(@NotNull Project project, @NotNull VirtualFile baseDir, @NotNull Ref<Module> moduleRef, boolean newProject) {
+  public void configureProject(@NotNull Project project, @NotNull VirtualFile baseDir, @NotNull Ref<Module> moduleRef, boolean isNewProject) {
     final Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode()) {
       return;
@@ -36,7 +36,7 @@ public final class PyDefaultProjectAwareServiceConfigurator implements Directory
 
     for (final Module module : ModuleManager.getInstance(project).getModules()) {
       if (ModuleType.get(module) instanceof PythonModuleTypeBase) {
-        updateServices(module, newProject);
+        updateServices(module, isNewProject);
         break;
       }
     }

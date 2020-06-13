@@ -9,8 +9,10 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.Computable;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,8 +25,15 @@ public class ShortenCommandLineModeCombo extends ComboBox<ShortenCommandLine> {
   public ShortenCommandLineModeCombo(Project project,
                                      JrePathEditor pathEditor,
                                      ModuleDescriptionsComboBox component) {
+    this(project, pathEditor, () -> component.getSelectedModule(), listener -> component.addActionListener(listener));
+  }
+
+  public ShortenCommandLineModeCombo(Project project,
+                                     JrePathEditor pathEditor,
+                                     Computable<? extends Module> component,
+                                     Consumer<? super ActionListener> listenerConsumer) {
     myProject = project;
-    initModel(null, pathEditor, component.getSelectedModule());
+    initModel(null, pathEditor, component.compute());
     setRenderer(new ColoredListCellRenderer<ShortenCommandLine>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends ShortenCommandLine> list,
@@ -33,7 +42,7 @@ public class ShortenCommandLineModeCombo extends ComboBox<ShortenCommandLine> {
                                            boolean selected,
                                            boolean hasFocus) {
         if (value == null) {
-          ShortenCommandLine defaultMode = ShortenCommandLine.getDefaultMethod(myProject, getJdkRoot(pathEditor, component.getSelectedModule()));
+          ShortenCommandLine defaultMode = ShortenCommandLine.getDefaultMethod(myProject, getJdkRoot(pathEditor, component.compute()));
           append("user-local default: " + defaultMode.getPresentableName()).append(" - " + defaultMode.getDescription(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
         else {
@@ -43,10 +52,10 @@ public class ShortenCommandLineModeCombo extends ComboBox<ShortenCommandLine> {
     });
     ActionListener updateModelListener = e -> {
       ShortenCommandLine item = getSelectedItem();
-      initModel(item, pathEditor, component.getSelectedModule());
+      initModel(item, pathEditor, component.compute());
     };
     pathEditor.addActionListener(updateModelListener);
-    component.addActionListener(updateModelListener);
+    listenerConsumer.consume(updateModelListener);
   }
 
   private void initModel(ShortenCommandLine preselection, JrePathEditor pathEditor, Module module) {

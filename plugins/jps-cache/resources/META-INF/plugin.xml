@@ -11,6 +11,12 @@
   <depends>Git4Idea</depends>
   <depends>com.intellij.modules.java</depends>
 
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.jetbrains.jpsServerAuthExtension"
+                    interface="com.intellij.jps.cache.client.JpsServerAuthExtension"
+                    dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.jps.cache.loader.JpsOutputLoaderManager"/>
     <notificationWhitelist groupIds="Compile Output Loader;Compile Output Loader Status"/>

@@ -1,7 +1,7 @@
 package com.intellij.tools.launch
 
 interface LauncherOptions {
-  val platformPrefix: String
+  val platformPrefix: String?
   val xmx: Int get() = 800
   val debugPort: Int get() = -1
   val debugSuspendOnStart: Boolean get() = false

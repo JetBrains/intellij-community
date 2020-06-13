@@ -48,7 +48,7 @@ public class PyStringFormatCompletionContributor extends CompletionContributor {
       }
     };
 
-  private static final PsiElementPattern.Capture<PyStringLiteralExpression> FORMAT_STRING_CAPTURE =
+  public static final PsiElementPattern.Capture<PyStringLiteralExpression> FORMAT_STRING_CAPTURE =
     psiElement(PyStringLiteralExpression.class)
       .withParent(psiElement(PyReferenceExpression.class).with(FORMAT_CALL_PATTERN_CONDITION))
       .withSuperParent(2, PyCallExpression.class);

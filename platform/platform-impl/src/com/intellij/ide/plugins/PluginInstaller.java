@@ -110,7 +110,8 @@ public final class PluginInstaller {
   public static boolean uninstallDynamicPlugin(@Nullable JComponent parentComponent, IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
     boolean uninstalledWithoutRestart = parentComponent != null
       ? DynamicPlugins.unloadPluginWithProgress(null, parentComponent, (IdeaPluginDescriptorImpl)pluginDescriptor, false, isUpdate)
-      : DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl)pluginDescriptor, false, isUpdate);
+      : DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl)pluginDescriptor,
+                                    new DynamicPlugins.UnloadPluginOptions().withUpdate(isUpdate).withWaitForClassloaderUnload(true));
 
     if (uninstalledWithoutRestart) {
       try {
@@ -290,19 +291,17 @@ public final class PluginInstaller {
     return false;
   }
 
-  @Nullable
-  public static IdeaPluginDescriptorImpl installAndLoadDynamicPlugin(@NotNull File file,
-                                                                     @Nullable Component parent,
-                                                                     IdeaPluginDescriptorImpl pluginDescriptor) {
+  public static boolean installAndLoadDynamicPlugin(@NotNull File file,
+                                                    @Nullable Component parent,
+                                                    IdeaPluginDescriptorImpl pluginDescriptor) {
     File targetFile = installWithoutRestart(file, pluginDescriptor, parent);
     if (targetFile != null) {
       IdeaPluginDescriptorImpl targetDescriptor = PluginManager.loadDescriptor(targetFile.toPath(), PluginManagerCore.PLUGIN_XML);
       if (targetDescriptor != null) {
-        DynamicPlugins.loadPlugin(targetDescriptor);
-        return targetDescriptor;
+        return DynamicPlugins.loadPlugin(targetDescriptor);
       }
     }
-    return null;
+    return true;
   }
 
   private static void checkInstalledPluginDependencies(@NotNull InstalledPluginsTableModel model,

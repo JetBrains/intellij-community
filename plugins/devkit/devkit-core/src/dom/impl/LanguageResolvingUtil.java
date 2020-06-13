@@ -56,12 +56,12 @@ final class LanguageResolvingUtil {
           languageClass = JavaPsiFacade.getInstance(project).findClass(Language.class.getName(), librariesScope);
         }
         if (languageClass == null) {
-          return Result.create(Collections.emptyList(), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+          return Result.create(Collections.emptyList(), PsiModificationTracker.MODIFICATION_COUNT);
         }
 
         GlobalSearchScope allScope = projectProductionScope.union(ProjectScope.getLibrariesScope(project));
         Collection<PsiClass> allInheritors = new HashSet<>(ClassInheritorsSearch.search(languageClass, allScope, true).findAll());
-        return Result.create(allInheritors, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        return Result.create(allInheritors, PsiModificationTracker.MODIFICATION_COUNT);
       });
     if (allLanguages.isEmpty()) {
       return new SmartList<>();

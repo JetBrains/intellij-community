@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.psi.PsiClass;
@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult;
 import java.util.Collection;
 import java.util.Collections;
 
-public class GrThisReferenceResolver {
+public final class GrThisReferenceResolver {
 
   @Nullable("null if ref is not actually 'this' reference")
   public static Collection<GroovyResolveResult> resolveThisExpression(@NotNull GrReferenceExpression ref) {

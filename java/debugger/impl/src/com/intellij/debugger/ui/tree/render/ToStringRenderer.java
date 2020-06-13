@@ -37,6 +37,13 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
 
   public ToStringRenderer() {
     super(DEFAULT_NAME, true);
+    setIsApplicableChecker(type -> {
+      // do not render 'String' objects for performance reasons
+      if (!(type instanceof ReferenceType) || JAVA_LANG_STRING.equals(type.name())) {
+        return CompletableFuture.completedFuture(false);
+      }
+      return overridesToStringAsync(type);
+    });
   }
 
   @Override
@@ -117,32 +124,6 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
       return true;
     }
     return OnDemandRenderer.super.isOnDemand(evaluationContext, valueDescriptor);
-  }
-
-  @Override
-  public boolean isApplicable(Type type) {
-    if (!(type instanceof ReferenceType)) {
-      return false;
-    }
-
-    if (JAVA_LANG_STRING.equals(type.name())) {
-      return false; // do not render 'String' objects for performance reasons
-    }
-
-    return overridesToString(type);
-  }
-
-  @Override
-  public CompletableFuture<Boolean> isApplicableAsync(Type type) {
-    if (!(type instanceof ReferenceType)) {
-      return CompletableFuture.completedFuture(false);
-    }
-
-    if (JAVA_LANG_STRING.equals(type.name())) {
-      return CompletableFuture.completedFuture(false); // do not render 'String' objects for performance reasons
-    }
-
-    return overridesToStringAsync(type);
   }
 
   private static boolean overridesToString(Type type) {

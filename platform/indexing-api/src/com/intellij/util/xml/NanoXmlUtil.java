@@ -21,7 +21,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.Properties;
 
-public class NanoXmlUtil {
+public final class NanoXmlUtil {
   private static final Logger LOG = Logger.getInstance(NanoXmlUtil.class);
 
   private NanoXmlUtil() {

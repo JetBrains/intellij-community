@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.util.Comparing;
@@ -12,7 +13,7 @@ import java.util.prefs.Preferences;
  * todo: in one year the migration code could be removed
  * @author Eugene Zhuravlev
  */
-public class Prefs {
+public final class Prefs {
 
   public static void put(String key, String value) {
     Preferences.userRoot().remove(key); // remove from old location

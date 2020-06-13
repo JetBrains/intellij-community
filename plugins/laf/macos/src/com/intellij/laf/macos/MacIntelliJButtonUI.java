@@ -3,7 +3,10 @@ package com.intellij.laf.macos;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.ui.Gray;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.UIUtilities;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -47,22 +50,24 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
 
         float lw = LW(g2);
         float arc = ARC.getFloat();
-        Insets i = DarculaButtonUI.isSmallComboButton(c) ? JBUI.insets(1) : c.getInsets();
+        Insets i = DarculaButtonUI.isSmallVariant(c) ? JBUI.insets(1) : c.getInsets();
 
-        // Draw background
-        Shape outerRect = new RoundRectangle2D.Float(i.left, i.top, w - (i.left + i.right), h - (i.top + i.bottom), arc, arc);
-        g2.setPaint(getBackgroundPaint(c));
-        g2.fill(outerRect);
+        if (b.isContentAreaFilled()) {
+          // Draw background
+          Shape outerRect = new RoundRectangle2D.Float(i.left, i.top, w - (i.left + i.right), h - (i.top + i.bottom), arc, arc);
+          g2.setPaint(getBackgroundPaint(c));
+          g2.fill(outerRect);
 
-        // Draw  outline
-        Path2D outline = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-        outline.append(outerRect, false);
-        outline.append(new RoundRectangle2D.Float(i.left + lw, i.top + lw,
-                                                  w - lw * 2 - (i.left + i.right),
-                                                  h - lw * 2 - (i.top + i.bottom),
-                                                  arc - lw, arc - lw), false);
-        g2.setPaint(getBorderPaint(c));
-        g2.fill(outline);
+          // Draw  outline
+          Path2D outline = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+          outline.append(outerRect, false);
+          outline.append(new RoundRectangle2D.Float(i.left + lw, i.top + lw,
+                                                    w - lw * 2 - (i.left + i.right),
+                                                    h - lw * 2 - (i.top + i.bottom),
+                                                    arc - lw, arc - lw), false);
+          g2.setPaint(getBorderPaint(c));
+          g2.fill(outline);
+        }
 
         paintContents(g2, b);
       }
@@ -117,11 +122,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
       return new Dimension(icon.getIconWidth(), icon.getIconHeight());
     }
     else {
-      Insets i = c.getInsets();
-      return new Dimension(DarculaButtonUI.getComboAction(c) != null ?
-                           prefSize.width :
-                           Math.max(DarculaButtonUI.HORIZONTAL_PADDING.get() * 2 + prefSize.width, DarculaButtonUI.MINIMUM_BUTTON_WIDTH.get() + i.left + i.right),
-                           Math.max(prefSize.height, getMinimumHeight() + i.top + i.bottom));
+      return super.getDarculaButtonSize(c, prefSize);
     }
   }
 

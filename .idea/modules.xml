@@ -696,6 +696,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/service-container/intellij.platform.serviceContainer.iml" filepath="$PROJECT_DIR$/platform/service-container/intellij.platform.serviceContainer.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/smRunner/intellij.platform.smRunner.iml" filepath="$PROJECT_DIR$/platform/smRunner/intellij.platform.smRunner.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/statistics/intellij.platform.statistics.iml" filepath="$PROJECT_DIR$/platform/statistics/intellij.platform.statistics.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/statistics/config/intellij.platform.statistics.config.iml" filepath="$PROJECT_DIR$/platform/statistics/config/intellij.platform.statistics.config.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/statistics/devkit/intellij.platform.statistics.devkit.iml" filepath="$PROJECT_DIR$/platform/statistics/devkit/intellij.platform.statistics.devkit.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/statistics/envTests/intellij.platform.statistics.envTests.iml" filepath="$PROJECT_DIR$/platform/statistics/envTests/intellij.platform.statistics.envTests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/statistics/uploader/intellij.platform.statistics.uploader.iml" filepath="$PROJECT_DIR$/platform/statistics/uploader/intellij.platform.statistics.uploader.iml" />
@@ -717,6 +718,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/util/intellij.platform.util.iml" filepath="$PROJECT_DIR$/platform/util/intellij.platform.util.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util-class-loader/intellij.platform.util.classLoader.iml" filepath="$PROJECT_DIR$/platform/util-class-loader/intellij.platform.util.classLoader.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/collections/intellij.platform.util.collections.iml" filepath="$PROJECT_DIR$/platform/util/collections/intellij.platform.util.collections.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/util/diagnostic/intellij.platform.util.diagnostic.iml" filepath="$PROJECT_DIR$/platform/util/diagnostic/intellij.platform.util.diagnostic.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util-ex/intellij.platform.util.ex.iml" filepath="$PROJECT_DIR$/platform/util-ex/intellij.platform.util.ex.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util-rt/intellij.platform.util.rt.iml" filepath="$PROJECT_DIR$/platform/util-rt/intellij.platform.util.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/strings/intellij.platform.util.strings.iml" filepath="$PROJECT_DIR$/platform/util/strings/intellij.platform.util.strings.iml" />
@@ -781,6 +783,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/settings-repository/intellij.settingsRepository.iml" filepath="$PROJECT_DIR$/plugins/settings-repository/intellij.settingsRepository.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/settings-repository/intellij.settingsRepository.tests.iml" filepath="$PROJECT_DIR$/plugins/settings-repository/intellij.settingsRepository.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/sh/intellij.sh.iml" filepath="$PROJECT_DIR$/plugins/sh/intellij.sh.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/space/intellij.space.iml" filepath="$PROJECT_DIR$/plugins/space/intellij.space.iml" />
       <module fileurl="file://$PROJECT_DIR$/spellchecker/intellij.spellchecker.iml" filepath="$PROJECT_DIR$/spellchecker/intellij.spellchecker.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stats-collector/intellij.statsCollector.iml" filepath="$PROJECT_DIR$/plugins/stats-collector/intellij.statsCollector.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stats-collector/completion-ranker/intellij.statsCollector.completionRanker.iml" filepath="$PROJECT_DIR$/plugins/stats-collector/completion-ranker/intellij.statsCollector.completionRanker.iml" />
@@ -818,6 +821,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/hg4idea/intellij.vcs.hg.iml" filepath="$PROJECT_DIR$/plugins/hg4idea/intellij.vcs.hg.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/svn4idea/intellij.vcs.svn.iml" filepath="$PROJECT_DIR$/plugins/svn4idea/intellij.vcs.svn.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/svn4idea/intellij.vcs.svn.tests.iml" filepath="$PROJECT_DIR$/plugins/svn4idea/intellij.vcs.svn.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/webp/intellij.webp.iml" filepath="$PROJECT_DIR$/plugins/webp/intellij.webp.iml" />
       <module fileurl="file://$PROJECT_DIR$/xml/openapi/intellij.xml.iml" filepath="$PROJECT_DIR$/xml/openapi/intellij.xml.iml" />
       <module fileurl="file://$PROJECT_DIR$/xml/xml-analysis-api/intellij.xml.analysis.iml" filepath="$PROJECT_DIR$/xml/xml-analysis-api/intellij.xml.analysis.iml" />
       <module fileurl="file://$PROJECT_DIR$/xml/xml-analysis-impl/intellij.xml.analysis.impl.iml" filepath="$PROJECT_DIR$/xml/xml-analysis-impl/intellij.xml.analysis.impl.iml" />

@@ -6,9 +6,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
-/**
- * @author cdr
- */
 public class GuardBlockTest extends BasePlatformTestCase {
   private RangeMarker createGuard(final int start, final int end) {
     final Document document = myFixture.getEditor().getDocument();

@@ -5,8 +5,8 @@ package com.intellij.rt.junit;
 import java.util.ArrayList;
 import java.util.List;
 
-public interface IdeaTestRunner {
-  void createListeners(ArrayList listeners, int count);
+public interface IdeaTestRunner<T> {
+  void createListeners(ArrayList<String> listeners, int count);
 
   /**
    * @return -2 internal failure
@@ -15,16 +15,16 @@ public interface IdeaTestRunner {
    */
   int startRunnerWithArgs(String[] args, String name, int count, boolean sendTree);
 
-  Object getTestToStart(String[] args, String name);
-  List getChildTests(Object description);
-  String getStartDescription(Object child);
+  T getTestToStart(String[] args, String name);
+  List<T> getChildTests(T description);
+  String getStartDescription(T child);
 
-  String getTestClassName(Object child);
+  String getTestClassName(T child);
 
   class Repeater {
-    public static int startRunnerWithArgs(IdeaTestRunner testRunner,
+    public static int startRunnerWithArgs(IdeaTestRunner<?> testRunner,
                                           String[] args,
-                                          ArrayList listeners,
+                                          ArrayList<String> listeners,
                                           String name,
                                           int count,
                                           boolean sendTree) {
@@ -33,8 +33,8 @@ public interface IdeaTestRunner {
         return testRunner.startRunnerWithArgs(args, name, count, sendTree);
       }
       else {
+        boolean success = true;
         if (count > 0) {
-          boolean success = true;
           int i = 0;
           while (i++ < count) {
             final int result = testRunner.startRunnerWithArgs(args, name, count, sendTree);
@@ -48,7 +48,6 @@ public interface IdeaTestRunner {
           return success ? 0 : -1;
         }
         else {
-          boolean success = true;
           while (true) {
             int result = testRunner.startRunnerWithArgs(args, name, count, sendTree);
             if (result == -2) {

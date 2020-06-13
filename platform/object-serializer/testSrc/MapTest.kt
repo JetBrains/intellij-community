@@ -1,13 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization
 
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import gnu.trove.THashMap
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
 import java.io.ByteArrayOutputStream
 import java.util.*
+import kotlin.collections.HashMap
 
 class MapTest {
   @Rule
@@ -26,8 +26,8 @@ class MapTest {
     @Suppress("unused")
     class TestBean {
       @JvmField
-      val a: MutableMap<String, String> = THashMap()
-      val b: MutableMap<String, String> = THashMap()
+      val a: MutableMap<String, String> = HashMap()
+      val b: MutableMap<String, String> = HashMap()
     }
 
     serializer.write(TestBean(), ByteArrayOutputStream())
@@ -59,7 +59,7 @@ class MapTest {
   fun `parametrized type as map value`() {
     class TestBean {
       @JvmField
-      val map: MutableMap<String, Set<String>> = THashMap()
+      val map: MutableMap<String, Set<String>> = HashMap()
     }
 
     val bean = TestBean()
@@ -72,7 +72,7 @@ class MapTest {
   fun `empty map`() {
     class TestBean {
       @JvmField
-      val map: MutableMap<String, Set<String>> = THashMap()
+      val map: MutableMap<String, Set<String>> = HashMap()
     }
 
     val bean = TestBean()
@@ -99,8 +99,8 @@ class MapTest {
 
 private class TestMapBean {
   @JvmField
-  val map: MutableMap<String, String> = THashMap()
+  val map: MutableMap<String, String> = HashMap()
 
   @JvmField
-  val beanMap: MutableMap<TestMapBean, TestMapBean> = THashMap()
+  val beanMap: MutableMap<TestMapBean, TestMapBean> = HashMap()
 }

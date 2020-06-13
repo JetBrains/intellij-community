@@ -9,7 +9,8 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
-import org.jetbrains.plugins.github.pullrequest.GHPRVirtualFile
+import org.jetbrains.plugins.github.pullrequest.GHPRDiffVirtualFile
+import org.jetbrains.plugins.github.pullrequest.GHPRTimelineVirtualFile
 import java.util.*
 
 internal class GHPRFilesManagerImpl(private val project: Project,
@@ -20,21 +21,32 @@ internal class GHPRFilesManagerImpl(private val project: Project,
 
   private val filesEventDispatcher = EventDispatcher.create(FileListener::class.java)
 
-  private val files = ContainerUtil.createWeakMap<GHPRIdentifier, GHPRVirtualFile>()
+  private val files = ContainerUtil.createWeakMap<GHPRIdentifier, GHPRTimelineVirtualFile>()
+  private val diffFiles = ContainerUtil.createWeakMap<GHPRIdentifier, GHPRDiffVirtualFile>()
 
-  override fun createAndOpenFile(pullRequest: GHPRIdentifier, requestFocus: Boolean) {
+  override fun createAndOpenTimelineFile(pullRequest: GHPRIdentifier, requestFocus: Boolean) {
     files.getOrPut(SimpleGHPRIdentifier(pullRequest)) {
-      GHPRVirtualFile(id, project, repository, pullRequest)
+      GHPRTimelineVirtualFile(id, project, repository, pullRequest)
     }.let {
       filesEventDispatcher.multicaster.onBeforeFileOpened(it)
       FileEditorManager.getInstance(project).openFile(it, requestFocus)
     }
   }
 
-  override fun findFile(pullRequest: GHPRIdentifier): GHPRVirtualFile? = files[SimpleGHPRIdentifier(pullRequest)]
+  override fun createAndOpenDiffFile(pullRequest: GHPRIdentifier, requestFocus: Boolean) {
+    diffFiles.getOrPut(SimpleGHPRIdentifier(pullRequest)) {
+      GHPRDiffVirtualFile(id, project, repository, pullRequest)
+    }.let {
+      FileEditorManager.getInstance(project).openFile(it, requestFocus)
+    }
+  }
 
-  override fun updateFilePresentation(details: GHPullRequestShort) {
-    val file = findFile(details)
+  override fun findTimelineFile(pullRequest: GHPRIdentifier): GHPRTimelineVirtualFile? = files[SimpleGHPRIdentifier(pullRequest)]
+
+  override fun findDiffFile(pullRequest: GHPRIdentifier): GHPRDiffVirtualFile? = diffFiles[SimpleGHPRIdentifier(pullRequest)]
+
+  override fun updateTimelineFilePresentation(details: GHPullRequestShort) {
+    val file = findTimelineFile(details)
     if (file != null) {
       file.details = details
       // TODO: clear cached icons at com.intellij.util.IconUtil.getIcon
@@ -43,20 +55,20 @@ internal class GHPRFilesManagerImpl(private val project: Project,
     }
   }
 
-  override fun addBeforeFileOpenedListener(disposable: Disposable, listener: (file: GHPRVirtualFile) -> Unit) {
+  override fun addBeforeTimelineFileOpenedListener(disposable: Disposable, listener: (file: GHPRTimelineVirtualFile) -> Unit) {
     filesEventDispatcher.addListener(object : FileListener {
-      override fun onBeforeFileOpened(file: GHPRVirtualFile) = listener(file)
+      override fun onBeforeFileOpened(file: GHPRTimelineVirtualFile) = listener(file)
     }, disposable)
   }
 
   override fun dispose() {
     for ((_, file) in files) {
       FileEditorManager.getInstance(project).closeFile(file)
-      file.valid = false
+      file.isValid = false
     }
   }
 
   private interface FileListener : EventListener {
-    fun onBeforeFileOpened(file: GHPRVirtualFile)
+    fun onBeforeFileOpened(file: GHPRTimelineVirtualFile)
   }
 }

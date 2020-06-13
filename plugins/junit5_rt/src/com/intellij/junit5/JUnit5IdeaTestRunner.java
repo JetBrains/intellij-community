@@ -19,6 +19,8 @@ import com.intellij.rt.execution.junit.IDEAJUnitListener;
 import com.intellij.rt.execution.junit.IDEAJUnitListenerEx;
 import com.intellij.rt.junit.IdeaTestRunner;
 import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.engine.UniqueId;
+import org.junit.platform.engine.support.descriptor.EngineDescriptor;
 import org.junit.platform.launcher.*;
 import org.junit.platform.launcher.core.LauncherFactory;
 
@@ -27,13 +29,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class JUnit5IdeaTestRunner implements IdeaTestRunner {
+public class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier> {
   private final List<JUnit5TestExecutionListener> myExecutionListeners = new ArrayList<>();
-  private ArrayList myListeners;
+  private ArrayList<String> myListeners;
   private Launcher myLauncher;
 
   @Override
-  public void createListeners(ArrayList listeners, int count) {
+  public void createListeners(ArrayList<String> listeners, int count) {
     myListeners = listeners;
     do {
       JUnit5TestExecutionListener currentListener = new JUnit5TestExecutionListener();
@@ -81,9 +83,9 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
   }
 
   private TestPlan myForkedTestPlan;
-  private static final Object FAKE_ROOT = new Object();
+  private static final TestIdentifier FAKE_ROOT = TestIdentifier.from(new EngineDescriptor(UniqueId.forEngine("FAKE_ENGINE"), "FAKE ENGINE"));
   @Override
-  public Object getTestToStart(String[] args, String name) {
+  public TestIdentifier getTestToStart(String[] args, String name) {
     final LauncherDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, new String[1]);
     myForkedTestPlan = LauncherFactory.create().discover(discoveryRequest);
     final Set<TestIdentifier> roots = myForkedTestPlan.getRoots();
@@ -96,26 +98,26 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
   }
 
   @Override
-  public List getChildTests(Object description) {
+  public List<TestIdentifier> getChildTests(TestIdentifier description) {
     if (description == FAKE_ROOT) {
       return myForkedTestPlan.getRoots()
         .stream()
         .flatMap(root -> myForkedTestPlan.getChildren(root).stream())
         .collect(Collectors.toList());
     }
-    return new ArrayList<>(myForkedTestPlan.getChildren((TestIdentifier)description));
+    return new ArrayList<>(myForkedTestPlan.getChildren(description));
   }
 
   /**
    * {@link com.intellij.execution.junit.TestClass#getForkMode()} 
    */
   @Override
-  public String getStartDescription(Object child) {
-    if (!myForkedTestPlan.getParent((TestIdentifier)child).isPresent()) {
+  public String getStartDescription(TestIdentifier child) {
+    if (!myForkedTestPlan.getParent(child).isPresent()) {
       //if fork mode is "repeat", then the only child is the corresponding class
-      child = myForkedTestPlan.getChildren((TestIdentifier)child).iterator().next();
+      child = myForkedTestPlan.getChildren(child).iterator().next();
     }
-    final TestIdentifier testIdentifier = (TestIdentifier)child;
+    final TestIdentifier testIdentifier = child;
     final String className = JUnit5TestExecutionListener.getClassName(testIdentifier);
     final String methodSignature = JUnit5TestExecutionListener.getMethodSignature(testIdentifier);
     if (methodSignature != null) {
@@ -125,7 +127,7 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
   }
 
   @Override
-  public String getTestClassName(Object child) {
+  public String getTestClassName(TestIdentifier child) {
     return child.toString();
   }
 

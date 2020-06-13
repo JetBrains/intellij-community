@@ -33,7 +33,7 @@ import javax.swing.tree.TreePath
 
 class ChangesBrowserIgnoredFilesNode(val project: Project,
                                      files: List<FilePath>,
-                                     private val myUpdatingMode: Boolean) : ChangesBrowserSpecificFilePathsNode(
+                                     private val myUpdatingMode: Boolean) : ChangesBrowserSpecificFilePathsNode<Any>(
   ChangesBrowserNode.IGNORED_FILES_TAG, files, { if (!project.isDisposed) IgnoredViewDialog(project).show() }) {
 
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {

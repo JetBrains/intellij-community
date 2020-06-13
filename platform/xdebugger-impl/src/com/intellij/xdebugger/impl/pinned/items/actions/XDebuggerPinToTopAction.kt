@@ -2,12 +2,9 @@
 package com.intellij.xdebugger.impl.pinned.items.actions
 
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
-import com.intellij.xdebugger.impl.pinned.items.PinToTopMemberValue
-import com.intellij.xdebugger.impl.pinned.items.PinToTopParentValue
-import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager
+import com.intellij.xdebugger.impl.pinned.items.*
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
@@ -57,7 +54,7 @@ class XDebuggerPinToTopAction : XDebuggerTreeActionBase() {
             return
         }
         presentation.isVisible = true
-        presentation.isEnabled = (node.parent as? XValueNodeImpl)?.valueContainer is PinToTopParentValue && valueContainer.canBePinned()
+        presentation.isEnabled = node.canBePinned()
         presentation.icon = if (pinToTopManager.isItemPinned(node)) PlatformDebuggerImplIcons.PinToTop.UnpinnedItem else PlatformDebuggerImplIcons.PinToTop.PinnedItem
         presentation.text = if (pinToTopManager.isItemPinned(node)) XDebuggerBundle.message("xdebugger.unpin.action") else XDebuggerBundle.message("xdebugger.pin.to.top.action")
 
@@ -66,30 +63,21 @@ class XDebuggerPinToTopAction : XDebuggerTreeActionBase() {
     override fun perform(node: XValueNodeImpl?, nodeName: String, e: AnActionEvent) {
         node ?: return
         val project = e.project ?: return
-        val nodeValue = node.valueContainer as? PinToTopMemberValue ?: return
-        if (!nodeValue.canBePinned()) {
-            return
-        }
-        val parentType = ((node.parent as? XValueNodeImpl)?.valueContainer as? PinToTopParentValue)?.getTypeName()
 
-        if (parentType.isNullOrEmpty()) {
+        if (!node.canBePinned())
             return
-        }
 
-        if (XDebuggerPinToTopManager.getInstance(project).isItemPinned(node)) {
-            removePrioritizedItem(parentType, nodeName, project)
+        val pinToTopManager = XDebuggerPinToTopManager.getInstance(project)
+
+        val pinInfo = node.getPinInfo()
+            ?: return
+
+        if (node.isPinned(pinToTopManager)) {
+            pinToTopManager.removeItemInfo(pinInfo)
         } else {
-            addPrioritizedItem(parentType, nodeName, project)
+            pinToTopManager.addItemInfo(pinInfo)
         }
 
         XDebuggerUtilImpl.rebuildTreeAndViews(node.tree)
-    }
-
-    private fun addPrioritizedItem(parentType: String, nodeName: String, project: Project) {
-        XDebuggerPinToTopManager.getInstance(project).addItemInfo(parentType, nodeName)
-    }
-
-    private fun removePrioritizedItem(parentType: String, nodeName: String, project: Project) {
-        XDebuggerPinToTopManager.getInstance(project).removeItemInfo(parentType, nodeName)
     }
 }

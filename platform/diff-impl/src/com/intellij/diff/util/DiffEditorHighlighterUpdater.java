@@ -25,10 +25,12 @@ public class DiffEditorHighlighterUpdater extends EditorHighlighterUpdater {
 
   @NotNull
   @Override
-  protected EditorHighlighter createHighlighter() {
-    EditorHighlighter highlighter = DiffUtil.createEditorHighlighter(myProject, myContent);
-    if (highlighter != null) {
-      return highlighter;
+  protected EditorHighlighter createHighlighter(boolean forceEmpty) {
+    if (!forceEmpty) {
+      EditorHighlighter highlighter = DiffUtil.createEditorHighlighter(myProject, myContent);
+      if (highlighter != null) {
+        return highlighter;
+      }
     }
     return DiffUtil.createEmptyEditorHighlighter();
   }

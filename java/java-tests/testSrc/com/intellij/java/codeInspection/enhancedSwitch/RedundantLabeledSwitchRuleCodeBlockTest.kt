@@ -3,7 +3,6 @@ package com.intellij.java.codeInspection.enhancedSwitch
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.enhancedSwitch.RedundantLabeledSwitchRuleCodeBlockInspection
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
@@ -14,9 +13,7 @@ class RedundantLabeledSwitchRuleCodeBlockTest  : LightJavaCodeInsightFixtureTest
     super.setUp()
     myFixture.enableInspections(RedundantLabeledSwitchRuleCodeBlockInspection())
   }
-
-  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_13
-
+  
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/redundantLabeledSwitchRuleCodeBlock"
 
   fun testInExpression() = doTest()

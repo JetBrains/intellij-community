@@ -392,7 +392,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
    * Updates tab icon for the specified {@code file}. The {@code file}
    * should be opened in the myEditor, otherwise the method throws an assertion.
    */
-  private void updateFileIcon(@NotNull VirtualFile file) {
+  protected void updateFileIcon(@NotNull VirtualFile file) {
     Set<EditorsSplitters> all = getAllSplitters();
     for (EditorsSplitters each : all) {
       each.updateFileIcon(file);

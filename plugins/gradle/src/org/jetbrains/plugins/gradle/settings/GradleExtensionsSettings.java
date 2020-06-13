@@ -331,8 +331,13 @@ public class GradleExtensionsSettings {
   public static GradleProject getRootProject(@NotNull PsiElement element) {
     final PsiFile containingFile = element.getContainingFile().getOriginalFile();
     final Project project = containingFile.getProject();
+    return getInstance(project).getRootGradleProject(getRootProjectPath(element));
+  }
+
+  @Nullable
+  public static String getRootProjectPath(@NotNull PsiElement element) {
+    final PsiFile containingFile = element.getContainingFile().getOriginalFile();
     final Module module = ModuleUtilCore.findModuleForFile(containingFile);
-    final String rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
-    return getInstance(project).getRootGradleProject(rootProjectPath);
+    return ExternalSystemApiUtil.getExternalRootProjectPath(module);
   }
 }

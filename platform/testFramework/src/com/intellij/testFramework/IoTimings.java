@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author peter
  */
-class IoTimings {
+final class IoTimings {
   private static final int WARM_UP_PROBES = 2;
   private static final int IO_PROBES = 42;
 

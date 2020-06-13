@@ -30,7 +30,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 /**
 * @author peter
 */
-class SameSignatureCallParametersProvider extends CompletionProvider<CompletionParameters> {
+class SameSignatureCallParametersProvider {
   static final PsiElementPattern.Capture<PsiElement> IN_CALL_ARGUMENT =
     psiElement().afterLeaf("(").withParent(
       psiElement(PsiReferenceExpression.class).withParent(
@@ -46,15 +46,8 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
         }
       });
 
-  @Override
-  protected void addCompletions(@NotNull CompletionParameters parameters,
-                                @NotNull ProcessingContext context,
-                                @NotNull CompletionResultSet result) {
-    addSignatureItems(parameters, result);
-  }
-
-  void addSignatureItems(@NotNull CompletionParameters parameters, @NotNull Consumer<? super LookupElement> result) {
-    final PsiCall methodCall = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiCall.class);
+  void addSignatureItems(@NotNull PsiElement position, @NotNull Consumer<? super LookupElement> result) {
+    final PsiCall methodCall = PsiTreeUtil.getParentOfType(position, PsiCall.class);
     assert methodCall != null;
     Set<Pair<PsiMethod, PsiSubstitutor>> candidates = getCallCandidates(methodCall);
 

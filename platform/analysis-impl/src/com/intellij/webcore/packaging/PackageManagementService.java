@@ -156,6 +156,7 @@ public abstract class PackageManagementService {
   public interface Listener {
     /**
      * Fired when the installation of the specified package is started.
+     * Called from the caller thread.
      *
      * @param packageName the name of the package being installed.
      */
@@ -163,7 +164,9 @@ public abstract class PackageManagementService {
 
     /**
      * Fired when the installation of the specified package has been completed (successfully or unsuccessfully).
-     *  @param packageName the name of the installed package.
+     * Called from the caller thread.
+     *
+     * @param packageName the name of the installed package.
      * @param errorDescription null if the package has been installed successfully, error message otherwise.
      */
     void operationFinished(String packageName, @Nullable ErrorDescription errorDescription);

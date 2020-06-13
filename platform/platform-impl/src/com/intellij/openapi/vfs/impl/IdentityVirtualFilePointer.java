@@ -18,17 +18,15 @@ package com.intellij.openapi.vfs.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
- */
 class IdentityVirtualFilePointer extends VirtualFilePointerImpl implements VirtualFilePointer, Disposable {
   private final VirtualFile myFile;
   private final String myUrl;
-  private volatile int useCount;
 
-  IdentityVirtualFilePointer(VirtualFile file, @NotNull String url) {
+  IdentityVirtualFilePointer(VirtualFile file, @NotNull String url, VirtualFilePointerListener listener) {
+    super(listener);
     myFile = file;
     myUrl = url;
   }
@@ -59,11 +57,6 @@ class IdentityVirtualFilePointer extends VirtualFilePointerImpl implements Virtu
   @Override
   public boolean isValid() {
     return myFile == null || myFile.isValid();
-  }
-
-  @Override
-  int incrementUsageCount(int delta) {
-    return useCount += delta;
   }
 
   @Override

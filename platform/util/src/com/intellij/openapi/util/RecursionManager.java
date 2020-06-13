@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,9 +55,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author peter
  */
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
-public class RecursionManager {
+public final class RecursionManager {
   private static final Logger LOG = Logger.getInstance(RecursionManager.class);
-  private static final ThreadLocal<CalculationStack> ourStack = ThreadLocal.withInitial(CalculationStack::new);
+  private static final ThreadLocal<CalculationStack> ourStack = ThreadLocal.withInitial(() -> new CalculationStack());
   private static final AtomicBoolean ourAssertOnPrevention = new AtomicBoolean();
   private static final AtomicBoolean ourAssertOnMissedCache = new AtomicBoolean();
 
@@ -134,7 +133,7 @@ public class RecursionManager {
       @NotNull
       @Override
       public List<Key> currentStack() {
-        ArrayList<Key> result = new ArrayList<>();
+        List<Key> result = new ArrayList<>();
         for (MyKey pair : ourStack.get().progressMap.keySet()) {
           if (pair.guardId.equals(id)) {
             //noinspection unchecked
@@ -225,12 +224,12 @@ public class RecursionManager {
     }
   }
 
-  private static class CalculationStack {
+  private static final class CalculationStack {
     private int reentrancyCount;
     private int depth;
     private int firstLoopStart = Integer.MAX_VALUE; // outermost recursion-prevented frame depth; memoized values are dropped on its change.
     private final LinkedHashMap<MyKey, StackFrame> progressMap = new LinkedHashMap<>();
-    private final Map<MyKey, Throwable> preventions = ContainerUtil.newIdentityTroveMap();
+    private final Map<MyKey, Throwable> preventions = new IdentityHashMap<>();
     private final Map<MyKey, MemoizedValue> intermediateCache = ContainerUtil.createSoftKeySoftValueMap();
     private int enters;
     private int exits;
@@ -396,7 +395,7 @@ public class RecursionManager {
     void addPrevention(int stamp, MyKey prevented) {
       reentrancyStamp = stamp;
       if (preventionsInside == null) {
-        preventionsInside = new THashSet<>();
+        preventionsInside = new HashSet<>();
       }
       preventionsInside.add(prevented);
     }

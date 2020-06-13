@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.remote
 
 import com.intellij.openapi.module.Module
@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.remote.CredentialsType
 import com.intellij.remote.ext.RemoteCredentialsHandler
 import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.TestApplicationManager
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
@@ -17,7 +18,7 @@ class PyProjectSynchronizerProviderTest : LightPlatformTestCase() {
   override fun setUp() {
     super.setUp()
 
-    initApplication()
+    TestApplicationManager.getInstance()
   }
 
   fun `test get synchronizer for local SDK`() {

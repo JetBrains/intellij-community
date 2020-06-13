@@ -1,37 +1,38 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.ui
 
+import com.intellij.ide.BrowserUtil.browse
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.ui.components.JBLabel
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextField
-import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.UIUtil
-import git4idea.i18n.GitBundle
+import com.intellij.util.ui.UIUtil.getRegularPanelInsets
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.util.GHAccessTokenCreator
 import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
+import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil.DEFAULT_CLIENT_NAME
+import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil.buildNewTokenUrl
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.exceptions.GithubParseException
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils
 import org.jetbrains.plugins.github.ui.util.Validator
-import java.awt.event.ActionListener
-import java.awt.event.KeyEvent
 import java.net.UnknownHostException
 import java.util.function.Supplier
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JPasswordField
+import javax.swing.JTextField
+import javax.swing.event.DocumentEvent
 
-sealed class GithubCredentialsUI {
-  abstract fun getPanel(): JPanel
+internal sealed class GithubCredentialsUI {
   abstract fun getPreferredFocus(): JComponent
   abstract fun getValidator(): Validator
   abstract fun createExecutor(): GithubApiRequestExecutor
@@ -42,36 +43,28 @@ sealed class GithubCredentialsUI {
   abstract fun handleAcquireError(error: Throwable): ValidationInfo
   abstract fun setBusy(busy: Boolean)
 
-  protected val loginButton = JButton(GitBundle.message("login.dialog.button.login")).apply { isVisible = false }
-  protected val cancelButton = JButton(Messages.getCancelButton()).apply { isVisible = false }
+  var footer: LayoutBuilder.() -> Unit = { }
 
-  open fun setLoginAction(actionListener: ActionListener) {
-    loginButton.addActionListener(actionListener)
-    loginButton.setMnemonic('l')
-  }
+  fun getPanel(): JPanel =
+    panel {
+      centerPanel()
+      footer()
+    }.apply {
+      // Border is required to have more space - otherwise there could be issues with focus ring.
+      // `getRegularPanelInsets()` is used to simplify border calculation for dialogs where this panel is used.
+      border = JBEmptyBorder(getRegularPanelInsets())
+    }
 
-  fun setCancelAction(actionListener: ActionListener) {
-    cancelButton.addActionListener(actionListener)
-    cancelButton.setMnemonic('c')
-  }
+  protected abstract fun LayoutBuilder.centerPanel()
 
-  fun setLoginButtonVisible(visible: Boolean) {
-    loginButton.isVisible = visible
-  }
+  internal class PasswordUI(
+    private val serverTextField: ExtendableTextField,
+    private val executorFactory: GithubApiRequestExecutor.Factory,
+    private val isAccountUnique: UniqueLoginPredicate
+  ) : GithubCredentialsUI() {
 
-  fun setCancelButtonVisible(visible: Boolean) {
-    cancelButton.isVisible = visible
-  }
-
-  internal class PasswordUI(private val serverTextField: ExtendableTextField,
-                            private val clientName: String,
-                            switchUi: () -> Unit,
-                            private val executorFactory: GithubApiRequestExecutor.Factory,
-                            private val isAccountUnique: (login: String, server: GithubServerPath) -> Boolean,
-                            private val dialogMode: Boolean) : GithubCredentialsUI() {
     private val loginTextField = JBTextField()
     private val passwordField = JPasswordField()
-    private val switchUiLink = LinkLabel.create(GithubBundle.message("login.use.token"), switchUi)
 
     fun setLogin(login: String, editable: Boolean = true) {
       loginTextField.text = login
@@ -82,29 +75,13 @@ sealed class GithubCredentialsUI {
       passwordField.text = password
     }
 
-    override fun setLoginAction(actionListener: ActionListener) {
-      super.setLoginAction(actionListener)
-      passwordField.setEnterPressedAction(actionListener)
-      loginTextField.setEnterPressedAction(actionListener)
-      serverTextField.setEnterPressedAction(actionListener)
-    }
-
-    override fun getPanel(): JPanel = panel {
-      buildTitleAndLinkRow(this, dialogMode, switchUiLink)
+    override fun LayoutBuilder.centerPanel() {
       row(GithubBundle.message("credentials.server.field")) { serverTextField(pushX, growX) }
       row(GithubBundle.message("credentials.login.field")) { loginTextField(pushX, growX) }
       row(GithubBundle.message("credentials.password.field")) {
         passwordField(comment = GithubBundle.message("credentials.password.not.saved"),
                       constraints = *arrayOf(pushX, growX))
       }
-      row("") {
-        cell {
-          loginButton()
-          cancelButton()
-        }
-      }
-    }.apply {
-      border = JBEmptyBorder(UIUtil.getRegularPanelInsets())
     }
 
     override fun getPreferredFocus() = if (loginTextField.isEditable && loginTextField.text.isEmpty()) loginTextField else passwordField
@@ -131,7 +108,7 @@ sealed class GithubCredentialsUI {
                                       indicator: ProgressIndicator): Pair<String, String> {
       val login = loginTextField.text.trim()
       if (!isAccountUnique(login, server)) throw LoginNotUniqueException(login)
-      val token = GHAccessTokenCreator(server, executor, indicator).createMaster(clientName).token
+      val token = GHAccessTokenCreator(server, executor, indicator).createMaster(DEFAULT_CLIENT_NAME).token
       return login to token
     }
 
@@ -152,41 +129,37 @@ sealed class GithubCredentialsUI {
     override fun setBusy(busy: Boolean) {
       loginTextField.isEnabled = !busy
       passwordField.isEnabled = !busy
-      switchUiLink.isEnabled = !busy
     }
   }
 
-  internal class TokenUI(val factory: GithubApiRequestExecutor.Factory,
-                         val isAccountUnique: (name: String, server: GithubServerPath) -> Boolean,
-                         private val serverTextField: ExtendableTextField,
-                         switchUi: () -> Unit,
-                         private val dialogMode: Boolean) : GithubCredentialsUI() {
+  internal class TokenUI(
+    private val serverTextField: ExtendableTextField,
+    val factory: GithubApiRequestExecutor.Factory,
+    val isAccountUnique: UniqueLoginPredicate
+  ) : GithubCredentialsUI() {
 
     private val tokenTextField = JBTextField()
-    private val switchUiLink = LinkLabel.create(GithubBundle.message("login.use.credentials"), switchUi)
     private var fixedLogin: String? = null
 
     fun setToken(token: String) {
       tokenTextField.text = token
     }
 
-    override fun getPanel() = panel {
-      buildTitleAndLinkRow(this, dialogMode, switchUiLink)
+    override fun LayoutBuilder.centerPanel() {
       row(GithubBundle.message("credentials.server.field")) { serverTextField(pushX, growX) }
       row(GithubBundle.message("credentials.token.field")) {
-        tokenTextField(
-          comment = GithubBundle.message("login.insufficient.scopes", GHSecurityUtil.MASTER_SCOPES),
-          constraints = *arrayOf(pushX, growX))
-      }
-      row("") {
         cell {
-          loginButton()
-          cancelButton()
+          tokenTextField(
+            comment = GithubBundle.message("login.insufficient.scopes", GHSecurityUtil.MASTER_SCOPES),
+            constraints = *arrayOf(pushX, growX)
+          )
+          button(GithubBundle.message("credentials.button.generate")) { browseNewTokenUrl() }
+            .enableIf(serverTextField.serverValid)
         }
       }
-    }.apply {
-      border = JBEmptyBorder(UIUtil.getRegularPanelInsets())
     }
+
+    private fun browseNewTokenUrl() = browse(buildNewTokenUrl(serverTextField.tryParseServer()!!))
 
     override fun getPreferredFocus() = tokenTextField
 
@@ -225,38 +198,28 @@ sealed class GithubCredentialsUI {
 
     override fun setBusy(busy: Boolean) {
       tokenTextField.isEnabled = !busy
-      switchUiLink.isEnabled = !busy
     }
 
     fun setFixedLogin(fixedLogin: String?) {
       this.fixedLogin = fixedLogin
     }
-
-    override fun setLoginAction(actionListener: ActionListener) {
-      super.setLoginAction(actionListener)
-      tokenTextField.setEnterPressedAction(actionListener)
-      serverTextField.setEnterPressedAction(actionListener)
-    }
   }
 }
 
-private fun buildTitleAndLinkRow(layoutBuilder: LayoutBuilder,
-                                 dialogMode: Boolean,
-                                 linkLabel: LinkLabel<*>) {
-  layoutBuilder.row {
-    cell(isFullWidth = true) {
-      if (!dialogMode) {
-        val jbLabel = JBLabel(GithubBundle.message("login.to.github"), UIUtil.ComponentStyle.LARGE).apply {
-          font = JBFont.label().biggerOn(5.0f)
-        }
-        jbLabel()
-      }
-      JLabel(" ")(pushX, growX) // just to be able to align link to the right
-      linkLabel()
-    }
-  }
-}
+private val JTextField.serverValid: ComponentPredicate
+  get() = object : ComponentPredicate() {
+    override fun invoke(): Boolean = tryParseServer() != null
 
-private fun JComponent.setEnterPressedAction(actionListener: ActionListener) {
-  registerKeyboardAction(actionListener, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED)
-}
+    override fun addListener(listener: (Boolean) -> Unit) =
+      document.addDocumentListener(object : DocumentAdapter() {
+        override fun textChanged(e: DocumentEvent) = listener(tryParseServer() != null)
+      })
+  }
+
+private fun JTextField.tryParseServer(): GithubServerPath? =
+  try {
+    GithubServerPath.from(text.trim())
+  }
+  catch (e: GithubParseException) {
+    null
+  }

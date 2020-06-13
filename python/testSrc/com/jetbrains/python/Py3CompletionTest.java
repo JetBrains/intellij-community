@@ -2,6 +2,7 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.module.Module;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
@@ -63,6 +64,14 @@ public class Py3CompletionTest extends PyTestCase {
     myFixture.configureByFile(testName + ".py");
     myFixture.completeBasic();
     myFixture.checkResultByFile(testName + ".after.py");
+  }
+
+  public void doNegativeTest() {
+    final String testName = getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    LookupElement[] variants = myFixture.completeBasic();
+    assertNotNull("Expected no completion variants, but one item was auto-completed", variants);
+    assertEmpty(variants);
   }
 
   private void doMultiFileTest() {
@@ -406,6 +415,61 @@ public class Py3CompletionTest extends PyTestCase {
     myFixture.configureByFile("a.py");
     myFixture.completeBasicAllCarets(null);
     myFixture.checkResultByFile(getTestName(true) + "/a.after.py");
+  }
+
+  // PY-42700
+  public void testFStringLikeCompletionInOrdinaryStringLiterals() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-42700
+  public void testFStringLikeCompletionPreservesParenthesesForCallables() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-42700
+  public void testFStringLikeCompletionNotAvailableBefore36() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doNegativeTest);
+  }
+
+  // PY-42700
+  public void testFStringLikeCompletionNotAvailableInByteLiterals() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doNegativeTest);
+  }
+
+  // PY-42700
+  public void testFStringLikeCompletionNotAvailableInUnicodeLiterals() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doNegativeTest);
+  }
+
+  // PY-42700
+  public void testFStringLikeCompletionNotAvailableInStrFormatCalls() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doNegativeTest);
+  }
+
+  // PY-42700
+  public void testFStringLikeCompletionNotAvailableAfterEscapedOpeningBrace() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doNegativeTest);
+  }
+
+  // PY-42700
+  public void testFStringLikeCompletionAvailableAfterOpeningBraceFollowingEscapedOne() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-42700
+  public void testFStringLikeCompletionDoesNotDuplicateClosingBrace() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-42700
+  public void testFStringLikeCompletionOnMultipleCaretsDoesNotDuplicatePrefix() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-42700
+  public void testFStringLikeCompletionDoesNotWorkInStringWithInjections() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doNegativeTest);
   }
 
   @Override

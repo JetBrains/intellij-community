@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.api;
 
 import com.intellij.openapi.util.Pair;
@@ -18,7 +18,7 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
 /**
  * @author Eugene Zhuravlev
  */
-public class CmdlineProtoUtil {
+public final class CmdlineProtoUtil {
 
   public static CmdlineRemoteProto.Message.ControllerMessage createUpToDateCheckRequest(String project,
                                                                                         List<? extends TargetTypeBuildScope> scopes,

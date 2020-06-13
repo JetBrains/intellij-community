@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
@@ -25,11 +26,15 @@ import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 
 import java.util.List;
 
-public class MavenRehighlighter {
+public class MavenRehighlighter implements Disposable {
   private final MergingUpdateQueue queue;
 
   public MavenRehighlighter(@NotNull Project project) {
-    queue = new MergingUpdateQueue(getClass().getSimpleName(), 1000, true, MergingUpdateQueue.ANY_COMPONENT, project, null, true);
+    queue = new MergingUpdateQueue(getClass().getSimpleName(), 1000, true, MergingUpdateQueue.ANY_COMPONENT, this, null, true);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   public static void install(@NotNull Project project, @NotNull MavenProjectsManager projectsManager) {

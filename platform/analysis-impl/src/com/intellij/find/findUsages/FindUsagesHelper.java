@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class FindUsagesHelper {
+public final class FindUsagesHelper {
   private static final Logger LOG = Logger.getInstance(FindUsagesHelper.class);
   /**
    * @deprecated use {@code processUsagesInText(PsiElement, Collection<String>, GlobalSearchScope, boolean, Processor<? super UsageInfo>} instead.

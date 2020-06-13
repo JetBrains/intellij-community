@@ -34,7 +34,7 @@ import java.util.zip.ZipOutputStream;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class IoTestUtil {
+public final class IoTestUtil {
   public static final boolean isSymLinkCreationSupported = SystemInfo.isUnix || SystemInfo.isWinVistaOrNewer && canCreateSymlinks();
 
   private IoTestUtil() { }
@@ -204,7 +204,7 @@ public class IoTestUtil {
   }
 
   @NotNull
-  public static File createTestJar(File jarFile) {
+  public static File createTestJar(@NotNull File jarFile) {
     return createTestJar(jarFile, JarFile.MANIFEST_NAME, "");
   }
 
@@ -224,7 +224,7 @@ public class IoTestUtil {
   }
 
   @NotNull
-  public static File createTestJar(@NotNull File jarFile, @NotNull Collection<Pair<String, byte[]>> namesAndContents) {
+  public static File createTestJar(@NotNull File jarFile, @NotNull Collection<? extends Pair<String, byte[]>> namesAndContents) {
     try (ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(jarFile))) {
       for (Pair<String, byte[]> p : namesAndContents) {
         String name = p.first;

@@ -13,4 +13,5 @@ interface GHPRViewController {
 
   fun openPullRequestTimeline(id: GHPRIdentifier, requestFocus: Boolean)
 
+  fun openPullRequestDiff(id: GHPRIdentifier, requestFocus: Boolean)
 }

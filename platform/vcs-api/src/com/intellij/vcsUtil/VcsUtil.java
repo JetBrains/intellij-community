@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.Function;
 import com.intellij.util.ThrowableConvertor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +40,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
+@ApiStatus.NonExtendable
 public class VcsUtil {
   protected static final char[] ourCharsToBeChopped = {'/', '\\'};
   private static final Logger LOG = Logger.getInstance(VcsUtil.class);

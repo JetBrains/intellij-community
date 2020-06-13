@@ -1,16 +1,18 @@
 package circlet.plugins.pipelines.services
 
-import circlet.plugins.pipelines.utils.*
-import circlet.tools.*
-import circlet.utils.*
-import circlet.vcs.*
-import com.intellij.openapi.application.*
-import com.intellij.openapi.components.*
-import com.intellij.openapi.progress.*
-import com.intellij.openapi.project.*
+import circlet.plugins.pipelines.utils.DslFileFinder
+import circlet.tools.spaceKtsToolwindow
+import circlet.utils.LifetimedDisposable
+import circlet.utils.LifetimedDisposableImpl
+import circlet.vcs.PostStartupActivity
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.*
-import libraries.klogging.*
-import runtime.reactive.*
+import libraries.klogging.logger
+import runtime.reactive.Property
+import runtime.reactive.mutableProperty
 
 private val log = logger<SpaceKtsFileDetector>()
 
@@ -55,6 +57,10 @@ class SpaceKtsFileDetector(val project: Project) : LifetimedDisposable by Lifeti
         refreshScript()
 
         LocalFileSystem.getInstance().addVirtualFileListener(fileListener)
+
+        lifetime.add {
+            LocalFileSystem.getInstance().removeVirtualFileListener(fileListener)
+        }
 
         _dslFile.forEach(lifetime) { file ->
             project.spaceKtsToolwindow?.setAvailable(file != null, null)

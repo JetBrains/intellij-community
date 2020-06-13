@@ -4,6 +4,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -13,21 +14,26 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.EnumSet;
+import java.util.Set;
 
 import static com.intellij.util.io.FileChannelUtil.unInterruptible;
 
+@ApiStatus.Internal
 public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
   private static final Logger LOG = Logger.getInstance(ReadWriteDirectBufferWrapper.class);
+  private final boolean myReadOnly;
 
-  protected ReadWriteDirectBufferWrapper(Path file, final long offset, final long length) {
+  protected ReadWriteDirectBufferWrapper(Path file, long offset, long length, boolean readOnly) {
     super(file, offset, length);
     assert length <= Integer.MAX_VALUE : length;
+    myReadOnly = readOnly;
   }
 
   @Override
   protected ByteBuffer create() throws IOException {
-    try (FileContext context = new FileContext(myFile)) {
-      FileChannel channel = context.file;
+    try (FileContext context = new FileContext(myFile, myReadOnly)) {
+      FileChannel channel = context.myFile;
       assert channel != null;
       ByteBuffer buffer = ByteBuffer.allocateDirect((int)myLength);
       channel.read(buffer, myPosition);
@@ -36,17 +42,21 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
   }
 
   static class FileContext implements AutoCloseable {
-    final FileChannel file;
+    private final FileChannel myFile;
+    private final boolean myReadOnly;
 
-    FileContext(Path path) throws IOException {
-      file = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<FileChannel, IOException>() {
+    FileContext(Path path, boolean readOnly) throws IOException {
+      myFile = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<FileChannel, IOException>() {
         boolean parentWasCreated;
 
         @Nullable
         @Override
         public FileChannel execute(boolean finalAttempt) throws IOException {
           try {
-            return unInterruptible(FileChannel.open(path, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE));
+            Set<StandardOpenOption> options = myReadOnly
+                                              ? EnumSet.of(StandardOpenOption.READ)
+                                              : EnumSet.of(StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+            return unInterruptible(FileChannel.open(path, options));
           }
           catch (NoSuchFileException ex) {
             Path parentFile = path.getParent();
@@ -64,16 +74,12 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
           }
         }
       });
+      myReadOnly = readOnly;
     }
 
     @Override
     public void close() {
-      try {
-        if (file != null) file.close();
-      }
-      catch (IOException ex) {
-        LOG.error(ex);
-      }
+      IOUtil.closeSafe(LOG, myFile);
     }
   }
 
@@ -82,7 +88,7 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
     if (buffer != null && isDirty()) {
       try {
         if (fileContext == null) {
-          fileContext = new FileContext(myFile);
+          fileContext = new FileContext(myFile, myReadOnly);
         }
         doFlush(fileContext, buffer);
       }
@@ -94,7 +100,7 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
   }
 
   private void doFlush(FileContext fileContext, ByteBuffer buffer) throws IOException {
-    FileChannel channel = fileContext.file;
+    FileChannel channel = fileContext.myFile;
     assert channel != null;
     buffer.rewind();
     channel.write(buffer, myPosition);
@@ -105,12 +111,17 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
   public void flush() {
     ByteBuffer buffer = getCachedBuffer();
     if (buffer != null && isDirty()) {
-      try (FileContext context = new FileContext(myFile)) {
+      try (FileContext context = new FileContext(myFile, myReadOnly)) {
         doFlush(context, buffer);
       }
       catch (IOException e) {
         LOG.error(e);
       }
     }
+  }
+
+  @Override
+  protected boolean isReadOnly() {
+    return myReadOnly;
   }
 }

@@ -4,8 +4,9 @@ package com.intellij.openapi.roots
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.ModifiableModuleModel
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import org.assertj.core.api.Assertions.assertThat
@@ -75,7 +76,7 @@ class ModuleModelTest {
       assertThat(model.modules).containsExactly(module)
       assertThat(model.getModuleToBeRenamed("a")).isNull()
       assertThat(model.getActualName(module)).isEqualTo("b")
-      if (Registry.`is`("ide.new.project.model")) {
+      if (ProjectModelRule.isWorkspaceModelEnabled) {
         //in the old model newly added module doesn't get the new name until commit; it looks like a bug
         assertThat(model.findModuleByName("a")).isNull()
         assertThat(model.findModuleByName("b")).isEqualTo(module)
@@ -232,6 +233,71 @@ class ModuleModelTest {
     }
     assertThat(ModuleRootManager.getInstance(a).dependencies.single()).isEqualTo(b)
     assertThat(ModuleRootManager.getInstance(b).dependencies.single()).isEqualTo(a)
+  }
+
+  @Test
+  fun `rename module referenced from modifiable model`() {
+    val a = projectModel.createModule("a")
+    val b = projectModel.createModule("b")
+    ModuleRootModificationUtil.addDependency(a, b)
+    val moduleModel = createModifiableModuleModel()
+    val modelA = createModifiableModel(a, ModifiableModuleModelAccessor(moduleModel))
+    moduleModel.renameModule(b, "c")
+    val moduleEntry = dropModuleSourceEntry(modelA, 1).single() as ModuleOrderEntry
+    assertThat(moduleEntry.module).isEqualTo(b)
+
+    runWriteActionAndWait { ModifiableModelCommitter.multiCommit(listOf(modelA), moduleModel) }
+    val moduleManager = projectModel.moduleManager
+    assertThat(moduleManager.modules).containsExactlyInAnyOrder(a, b)
+    val committedEntry = dropModuleSourceEntry(ModuleRootManager.getInstance(a), 1).single() as ModuleOrderEntry
+    assertThat(committedEntry.module).isEqualTo(b)
+    assertThat(committedEntry.moduleName).isEqualTo("c")
+  }
+
+  @Test
+  fun `rename newly created module referenced from modifiable model`() {
+    val moduleModel = createModifiableModuleModel()
+    val a = projectModel.createModule("a", moduleModel)
+    val b = projectModel.createModule("b", moduleModel)
+    val modelA = runReadAction { ModuleRootManagerEx.getInstanceEx(a).getModifiableModelForMultiCommit(ModifiableModuleModelAccessor(moduleModel)) }
+    modelA.addModuleOrderEntry(b)
+    moduleModel.renameModule(b, "c")
+    val moduleEntry = dropModuleSourceEntry(modelA, 1).single() as ModuleOrderEntry
+    assertThat(moduleEntry.module).isEqualTo(b)
+
+    runWriteActionAndWait { ModifiableModelCommitter.multiCommit(listOf(modelA), moduleModel) }
+    val moduleManager = projectModel.moduleManager
+    assertThat(moduleManager.modules).containsExactlyInAnyOrder(a, b)
+    val committedEntry = dropModuleSourceEntry(ModuleRootManager.getInstance(a), 1).single() as ModuleOrderEntry
+    assertThat(committedEntry.module).isEqualTo(b)
+    assertThat(committedEntry.moduleName).isEqualTo("c")
+  }
+
+  @Test
+  fun `rename module after creating modifiable root model for it`() {
+    val moduleModel = createModifiableModuleModel()
+    val a = projectModel.createModule("a", moduleModel)
+    val rootModel = runReadAction {
+      ModuleRootManagerEx.getInstanceEx(a).getModifiableModelForMultiCommit(ModifiableModuleModelAccessor(moduleModel))
+    }
+    val root = projectModel.baseProjectDir.newVirtualDirectory("root")
+    rootModel.addContentEntry(root)
+    moduleModel.renameModule(a, "b")
+    val root2 = projectModel.baseProjectDir.newVirtualDirectory("root2")
+    rootModel.addContentEntry(root2)
+    assertThat(rootModel.module).isEqualTo(a)
+    assertThat(rootModel.contentRoots).containsExactly(root, root2)
+
+    runWriteActionAndWait { ModifiableModelCommitter.multiCommit(listOf(rootModel), moduleModel) }
+    val moduleManager = projectModel.moduleManager
+    assertThat(moduleManager.modules).containsExactly(a)
+    assertThat(ModuleRootManager.getInstance(a).contentRoots).containsExactly(root, root2)
+  }
+
+  class ModifiableModuleModelAccessor(private val moduleModel: ModifiableModuleModel) : RootConfigurationAccessor() {
+    override fun getModule(module: Module?, moduleName: String): Module? {
+      return module ?: moduleModel.findModuleByName(moduleName)
+    }
   }
 
   private fun createModifiableModuleModel(): @NotNull ModifiableModuleModel {

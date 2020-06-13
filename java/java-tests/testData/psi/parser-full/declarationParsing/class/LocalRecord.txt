@@ -13,6 +13,8 @@ PsiJavaFile:LocalRecord.java
       <empty list>
     PsiReferenceList
       <empty list>
+    PsiReferenceList
+      <empty list>
     PsiWhiteSpace(' ')
     PsiJavaToken:LBRACE('{')
     PsiWhiteSpace('\n  ')
@@ -56,6 +58,8 @@ PsiJavaFile:LocalRecord.java
                 PsiWhiteSpace(' ')
                 PsiIdentifier:s('s')
               PsiJavaToken:RPARENTH(')')
+            PsiReferenceList
+              <empty list>
             PsiReferenceList
               <empty list>
             PsiReferenceList

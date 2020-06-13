@@ -42,7 +42,7 @@ final class InclusionProvider implements CachedValueProvider<PsiElement[]> {
     if (result == null) {
       IdempotenceChecker.logTrace("InclusionProvider recursion prevented");
     }
-    return Result.create(result == null ? PsiElement.EMPTY_ARRAY : result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+    return Result.create(result == null ? PsiElement.EMPTY_ARRAY : result, PsiModificationTracker.MODIFICATION_COUNT);
   }
 
   private static XmlTag[] extractXpointer(@NotNull XmlTag rootTag, @Nullable final String xpointer) {

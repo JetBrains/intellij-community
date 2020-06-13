@@ -11,7 +11,7 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.module.impl.ModuleManagerImpl;
+import com.intellij.openapi.module.impl.ModuleManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -72,7 +72,7 @@ public class EclipseImlTest extends JavaProjectTestCase {
     }
 
     String moduleImlPath = new File(path) + File.separator + EclipseProjectFinder
-      .findProjectName(path) + ModuleManagerImpl.IML_EXTENSION;
+      .findProjectName(path) + ModuleManagerEx.IML_EXTENSION;
 
     final Element classpathElement = JDOMUtil.load(fileText);
     final Module module = WriteCommandAction.runWriteCommandAction(null, (Computable<Module>)() -> ModuleManager.getInstance(project)

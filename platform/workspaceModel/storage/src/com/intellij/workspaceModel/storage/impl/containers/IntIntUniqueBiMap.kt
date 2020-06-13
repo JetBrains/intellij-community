@@ -130,6 +130,7 @@ sealed class IntIntUniqueBiMap {
     return result
   }
 
+  @Suppress("PropertyName")
   @PublishedApi
   internal val `access$key2Value`: Int2IntMap
     get() = key2Value

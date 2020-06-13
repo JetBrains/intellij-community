@@ -21,29 +21,29 @@ import java.util.*;
 public class SubtypesHierarchyTreeStructure extends HierarchyTreeStructure {
   private final String myCurrentScopeType;
 
-  protected SubtypesHierarchyTreeStructure(final Project project, final HierarchyNodeDescriptor descriptor, String currentScopeType) {
+  protected SubtypesHierarchyTreeStructure(@NotNull Project project, @NotNull HierarchyNodeDescriptor descriptor, String currentScopeType) {
     super(project, descriptor);
     myCurrentScopeType = currentScopeType;
   }
 
-  public SubtypesHierarchyTreeStructure(Project project, PsiClass psiClass, String currentScopeType) {
+  public SubtypesHierarchyTreeStructure(@NotNull Project project, @NotNull PsiClass psiClass, String currentScopeType) {
     super(project, new TypeHierarchyNodeDescriptor(project, null, psiClass, true));
     myCurrentScopeType = currentScopeType;
   }
 
   @Override
-  protected final Object @NotNull [] buildChildren(@NotNull final HierarchyNodeDescriptor descriptor) {
-    final Object element = ((TypeHierarchyNodeDescriptor)descriptor).getPsiClass();
+  protected final Object @NotNull [] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
+    Object element = ((TypeHierarchyNodeDescriptor)descriptor).getPsiClass();
     if (!(element instanceof PsiClass)) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
-    final PsiClass psiClass = (PsiClass)element;
+    PsiClass psiClass = (PsiClass)element;
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName())) {
       return new Object[]{JavaBundle.message("node.hierarchy.java.lang.object")};
     }
     if (psiClass instanceof PsiAnonymousClass) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     if (psiClass.hasModifierProperty(PsiModifier.FINAL)) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
-    final SearchScope searchScope = psiClass.getUseScope().intersectWith(getSearchScope(myCurrentScopeType, psiClass));
-    final List<PsiClass> classes = new ArrayList<>(searchInheritors(psiClass, searchScope));
-    final List<HierarchyNodeDescriptor> descriptors = new ArrayList<>(classes.size());
+    SearchScope searchScope = psiClass.getUseScope().intersectWith(getSearchScope(myCurrentScopeType, psiClass));
+    List<PsiClass> classes = new ArrayList<>(searchInheritors(psiClass, searchScope));
+    List<HierarchyNodeDescriptor> descriptors = new ArrayList<>(classes.size());
     for (PsiClass aClass : classes) {
       descriptors.add(new TypeHierarchyNodeDescriptor(myProject, descriptor, aClass, false));
     }
@@ -57,7 +57,7 @@ public class SubtypesHierarchyTreeStructure extends HierarchyTreeStructure {
   @NotNull
   private static Collection<PsiClass> searchInheritors(@NotNull PsiClass psiClass, @NotNull SearchScope searchScope) {
     if (psiClass.isAnnotationType()) {
-      final Set<PsiClass> result = new HashSet<>();
+      Set<PsiClass> result = new HashSet<>();
 
       AnnotatedElementsSearch.searchPsiClasses(psiClass, searchScope).forEach(processorResult -> {
         if (processorResult.isAnnotationType()) {

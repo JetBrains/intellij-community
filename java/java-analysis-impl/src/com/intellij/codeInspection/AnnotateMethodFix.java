@@ -27,9 +27,6 @@ import java.util.function.Consumer;
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
 
-/**
- * @author cdr
- */
 public class AnnotateMethodFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance(AnnotateMethodFix.class);
 

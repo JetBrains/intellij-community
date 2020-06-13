@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.application.PathMacros
@@ -15,8 +16,10 @@ import junit.framework.AssertionFailedError
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.util.JpsPathUtil
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import java.io.File
+import java.nio.file.Path
 
 internal val sampleDirBasedProjectFile = File(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/sampleProject")
 internal val sampleFileBasedProjectFile = File(PathManagerEx.getCommunityHomePath(),
@@ -40,7 +43,7 @@ internal fun copyAndLoadProject(originalProjectFile: File, virtualFileManager: V
   FileUtil.copyDir(originalProjectDir, projectDir)
   val originalBuilder = WorkspaceEntityStorageBuilder.create()
   val projectFile = if (originalProjectFile.isFile) File(projectDir, originalProjectFile.name) else projectDir
-  val configLocation = projectFile.asConfigLocation(virtualFileManager)
+  val configLocation = toConfigLocation(projectFile.toPath(), virtualFileManager)
   val serializers = loadProject(configLocation, originalBuilder, virtualFileManager) as JpsProjectSerializersImpl
   val loadedProjectData = LoadedProjectData(originalBuilder.toStorage(), serializers, configLocation, originalProjectDir)
   serializers.checkConsistency(loadedProjectData.projectDirUrl, loadedProjectData.storage, virtualFileManager)
@@ -157,7 +160,7 @@ internal fun assertDirectoryMatches(actualDir: File, expectedDir: File, filesToI
 internal fun createProjectSerializers(projectDir: File, virtualFileManager: VirtualFileUrlManager): JpsProjectSerializersImpl {
   val reader = CachingJpsFileContentReader(VfsUtilCore.pathToUrl(projectDir.systemIndependentPath))
   val externalStoragePath = projectDir.toPath().resolve("cache")
-  return JpsProjectEntitiesLoader.createProjectSerializers(projectDir.asConfigLocation(virtualFileManager), reader, externalStoragePath, true, virtualFileManager) as JpsProjectSerializersImpl
+  return JpsProjectEntitiesLoader.createProjectSerializers(toConfigLocation(projectDir.toPath(), virtualFileManager), reader, externalStoragePath, true, virtualFileManager) as JpsProjectSerializersImpl
 }
 
 fun JpsProjectSerializersImpl.checkConsistency(projectBaseDirUrl: String, storage: WorkspaceEntityStorage, virtualFileManager: VirtualFileUrlManager) {
@@ -198,7 +201,7 @@ fun JpsProjectSerializersImpl.checkConsistency(projectBaseDirUrl: String, storag
 
   val allSources = storage.entitiesBySource { true }
   val urlsFromSources = allSources.keys.filterIsInstance<JpsFileEntitySource>().mapTo(HashSet()) { getNonNullActualFileUrl(it) }
-  assertEquals(urlsFromSources.sorted(), fileSerializersByUrl.entrySet().filterNot { it.value.all { isSerializerWithoutEntities(it)} }.map { it.key }.sorted())
+  assertEquals(urlsFromSources.sorted(), fileSerializersByUrl.entrySet().filterNot { entry -> entry.value.all { isSerializerWithoutEntities(it)} }.map { it.key }.sorted())
 
   val fileIdFromEntities = allSources.keys.filterIsInstance(JpsFileEntitySource.FileInDirectory::class.java).mapTo(HashSet()) { it.fileNameId }
   val unregisteredIds = fileIdFromEntities - fileIdToFileName.keys.toSet()
@@ -207,9 +210,16 @@ fun JpsProjectSerializersImpl.checkConsistency(projectBaseDirUrl: String, storag
   assertTrue("There are stale mapping for some fileNameId: ${staleIds.joinToString { "$it -> ${fileIdToFileName.get(it)}" }}", staleIds.isEmpty())
 }
 
-internal fun File.asConfigLocation(virtualFileManager: VirtualFileUrlManager): JpsProjectConfigLocation =
-  if (FileUtil.extensionEquals(name, "ipr")) JpsProjectConfigLocation.FileBased(toVirtualFileUrl(virtualFileManager))
-  else JpsProjectConfigLocation.DirectoryBased(toVirtualFileUrl(virtualFileManager))
+internal fun File.asConfigLocation(virtualFileManager: VirtualFileUrlManager): JpsProjectConfigLocation = toConfigLocation(toPath(), virtualFileManager)
+
+internal fun toConfigLocation(file: Path, virtualFileManager: VirtualFileUrlManager): JpsProjectConfigLocation {
+  if (FileUtil.extensionEquals(file.fileName.toString(), "ipr")) {
+    return JpsProjectConfigLocation.FileBased(file.toVirtualFileUrl(virtualFileManager))
+  }
+  else {
+    return JpsProjectConfigLocation.DirectoryBased(file.toVirtualFileUrl(virtualFileManager))
+  }
+}
 
 internal class JpsFileContentWriterImpl : JpsFileContentWriter {
   val urlToComponents = LinkedHashMap<String, LinkedHashMap<String, Element?>>()

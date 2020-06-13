@@ -33,7 +33,6 @@ public class MavenGeneralSettings implements Cloneable {
   private boolean nonRecursive = false;
 
   private boolean alwaysUpdateSnapshots = false;
-  private boolean updateIndicesOnProjectOpen = true;
 
   private String threads;
 
@@ -292,15 +291,6 @@ public class MavenGeneralSettings implements Cloneable {
     changed();
   }
 
-  public boolean isUpdateIndicesOnProjectOpen() {
-    return updateIndicesOnProjectOpen;
-  }
-
-  public void setUpdateIndicesOnProjectOpen(boolean updateIndicesOnProjectOpen) {
-    this.updateIndicesOnProjectOpen = updateIndicesOnProjectOpen;
-    changed();
-  }
-
   public boolean isNonRecursive() {
     return nonRecursive;
   }
@@ -330,7 +320,6 @@ public class MavenGeneralSettings implements Cloneable {
     if (outputLevel != that.outputLevel) return false;
     if (pluginUpdatePolicy != that.pluginUpdatePolicy) return false;
     if (alwaysUpdateSnapshots != that.alwaysUpdateSnapshots) return false;
-    if (updateIndicesOnProjectOpen != that.updateIndicesOnProjectOpen) return false;
     if (printErrorStackTraces != that.printErrorStackTraces) return false;
     if (usePluginRegistry != that.usePluginRegistry) return false;
     if (workOffline != that.workOffline) return false;

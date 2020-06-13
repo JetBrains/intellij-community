@@ -55,7 +55,7 @@ public class GetInvocation implements Invocation {
       handler.putUserData(DOM_VALUE_KEY, value = cachedValuesManager.createCachedValue(() -> {
         List<Pair<Converter, Object>> list = ContainerUtil.createLockFreeCopyOnWriteList();
         return CachedValueProvider.Result
-          .create(list, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, domManager, ProjectRootManager.getInstance(project));
+          .create(list, PsiModificationTracker.MODIFICATION_COUNT, domManager, ProjectRootManager.getInstance(project));
       }, false));
     }
 

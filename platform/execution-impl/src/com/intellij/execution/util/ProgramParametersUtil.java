@@ -8,7 +8,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
-public class ProgramParametersUtil {
+public final class ProgramParametersUtil {
   public static void configureConfiguration(SimpleProgramParameters parameters, CommonProgramRunConfigurationParameters configuration) {
     new ProgramParametersConfigurator().configureConfiguration(parameters, configuration);
   }

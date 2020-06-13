@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.compound;
 
 import com.intellij.execution.DefaultExecutionTarget;
@@ -20,7 +20,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-public class ConfigurationSelectionUtil {
+public final class ConfigurationSelectionUtil {
   @NotNull
   public static String getDisplayText(@NotNull RunConfiguration configuration, @Nullable ExecutionTarget target) {
     return configuration.getType().getDisplayName() + " '" + configuration.getName() +

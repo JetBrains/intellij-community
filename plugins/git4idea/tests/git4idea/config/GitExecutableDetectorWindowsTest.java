@@ -178,7 +178,7 @@ public class GitExecutableDetectorWindowsTest {
       protected String getPath() {
         return StringUtil.join(PATH.split(";"), s -> convertPath(s), ";");
       }
-    }.detect();
+    }.detect(null);
   }
 
   private File testRoot;

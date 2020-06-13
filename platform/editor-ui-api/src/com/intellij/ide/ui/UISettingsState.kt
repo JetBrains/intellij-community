@@ -56,8 +56,6 @@ class UISettingsState : BaseState() {
 
   @get:OptionTag("REUSE_NOT_MODIFIED_TABS")
   var reuseNotModifiedTabs by property(false)
-  @get:OptionTag("ANIMATE_WINDOWS")
-  var animateWindows by property(true)
   @get:OptionTag("SHOW_TOOL_WINDOW_NUMBERS")
   var showToolWindowsNumbers by property(true)
 
@@ -76,8 +74,6 @@ class UISettingsState : BaseState() {
   var showMemoryIndicator by property(false)
   @get:OptionTag("SHOW_WRITE_THREAD_INDICATOR")
   var showWriteThreadIndicator by property(false)
-  @get:OptionTag("ALLOW_MERGE_BUTTONS")
-  var allowMergeButtons by property(true)
   @get:OptionTag("SHOW_MAIN_TOOLBAR")
   var showMainToolbar by property(false)
   @get:OptionTag("SHOW_STATUS_BAR")
@@ -88,8 +84,6 @@ class UISettingsState : BaseState() {
   var showNavigationBar by property(true)
   @get:OptionTag("SHOW_NAVIGATION_BAR_MEMBERS")
   var showMembersInNavigationBar by property(true)
-  @get:OptionTag("CYCLE_SCROLLING")
-  var cycleScrolling by property(true)
   @get:OptionTag("SELECTED_TABS_LAYOUT_INFO_ID")
   var selectedTabsLayoutInfoId by string(null)
   @get:OptionTag("SCROLL_TAB_LAYOUT_IN_EDITOR")
@@ -106,8 +100,6 @@ class UISettingsState : BaseState() {
   var showFileIconInTabs by property(true)
   @get:OptionTag("HIDE_KNOWN_EXTENSION_IN_TABS")
   var hideKnownExtensionInTabs by property(false)
-  @get:OptionTag("SHOW_ICONS_IN_QUICK_NAVIGATION")
-  var showIconInQuickNavigation by property(true)
   var showTreeIndentGuides by property(false)
   var compactTreeIndents by property(false)
 
@@ -147,8 +139,6 @@ class UISettingsState : BaseState() {
   var alphaModeRatio by property(0.5f)
   @get:OptionTag("OVERRIDE_NONIDEA_LAF_FONTS")
   var overrideLafFonts by property(false)
-  @get:OptionTag("SHOW_ICONS_IN_MENUS")
-  var showIconsInMenus by property(true)
   // IDEADEV-33409, should be disabled by default on MacOS
   @get:OptionTag("DISABLE_MNEMONICS")
   var disableMnemonics by property(SystemInfo.isMac)
@@ -160,8 +150,6 @@ class UISettingsState : BaseState() {
   var maxLookupWidth by property(500)
   @get:OptionTag("MAX_LOOKUP_LIST_HEIGHT")
   var maxLookupListHeight by property(11)
-  @get:OptionTag("HIDE_NAVIGATION_ON_FOCUS_LOSS")
-  var hideNavigationOnFocusLoss by property(true)
   @get:OptionTag("DND_WITH_PRESSED_ALT_ONLY")
   var dndWithPressedAltOnly by property(false)
   @get:OptionTag("DEFAULT_AUTOSCROLL_TO_SOURCE")

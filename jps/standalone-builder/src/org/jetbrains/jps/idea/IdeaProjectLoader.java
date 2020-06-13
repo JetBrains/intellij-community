@@ -9,10 +9,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-/**
- * @author max
- */
-public class IdeaProjectLoader {
+public final class IdeaProjectLoader {
   /**
    * This method is still used in some *.gant scripts via jps-build-script-dependencies-bootstrap library
    */
@@ -29,7 +26,6 @@ public class IdeaProjectLoader {
 
       home = home.getParentFile();
     }
-
 
     throw new IllegalArgumentException("Cannot guess project home from '" + uri + "'");
   }

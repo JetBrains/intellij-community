@@ -91,4 +91,14 @@ class GetClass {
       }
     }
   }
+  
+  void testGetSimpleName(Object obj) {
+    if (obj.getClass() == Integer.class || obj.getClass() == Long.class) {
+      Class<?> cls = obj.getClass();
+      if (<warning descr="Condition 'cls.getSimpleName().startsWith(\"X\")' is always 'false'">cls.getSimpleName().startsWith("X")</warning>) {}
+      if (cls.getSimpleName().startsWith("I")) {
+        System.out.println((<warning descr="Casting 'obj' to 'Long' will produce 'ClassCastException' for any non-null value">Long</warning>)obj);
+      }
+    }
+  }
 }

@@ -245,13 +245,13 @@ public final class PluginDownloader {
         return false;
       }
       IdeaPluginDescriptorImpl installedPluginDescriptor = PluginDescriptorLoader.tryLoadFullDescriptor((IdeaPluginDescriptorImpl)installedPlugin);
-      if (installedPluginDescriptor == null || !DynamicPlugins.unloadPlugin(installedPluginDescriptor, false, true)) {
+      if (installedPluginDescriptor == null || !DynamicPlugins.unloadPlugin(installedPluginDescriptor,
+                                                                            new DynamicPlugins.UnloadPluginOptions().withUpdate(true).withWaitForClassloaderUnload(true))) {
         return false;
       }
     }
 
-    PluginInstaller.installAndLoadDynamicPlugin(myFile, ownerComponent, descriptorImpl);
-    return true;
+    return PluginInstaller.installAndLoadDynamicPlugin(myFile, ownerComponent, descriptorImpl);
   }
 
   private @NotNull File downloadPlugin(@NotNull ProgressIndicator indicator) throws IOException {

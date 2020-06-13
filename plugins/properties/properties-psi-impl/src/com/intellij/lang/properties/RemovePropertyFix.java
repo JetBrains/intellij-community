@@ -7,15 +7,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author cdr
- */
 class RemovePropertyFix implements IntentionAction {
   private final SmartPsiElementPointer<Property> myProperty;
 

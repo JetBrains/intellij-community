@@ -171,12 +171,9 @@ public class AnnotationTargetUtil {
    */
   public static @Nullable TargetType findAnnotationTarget(@NotNull PsiAnnotation annotation, TargetType @NotNull ... types) {
     if (types.length != 0) {
-      PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
-      if (ref != null) {
-        PsiElement annotationType = ref.resolve();
-        if (annotationType instanceof PsiClass) {
-          return findAnnotationTarget((PsiClass)annotationType, types);
-        }
+      PsiClass annotationType = annotation.resolveAnnotationType();
+      if (annotationType != null) {
+        return findAnnotationTarget(annotationType, types);
       }
     }
 

@@ -52,7 +52,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.
 /**
  * @author Maxim.Medvedev
  */
-public class GrClosureSignatureUtil {
+public final class GrClosureSignatureUtil {
   private static final Logger LOG = Logger.getInstance(GrClosureSignatureUtil.class);
 
   private GrClosureSignatureUtil() {
@@ -567,7 +567,7 @@ public class GrClosureSignatureUtil {
       return null;
     }
 
-    final HashMap<GrExpression, Pair<PsiParameter, PsiType>> result = new HashMap<>();
+    final Map<GrExpression, Pair<PsiParameter, PsiType>> result = new HashMap<>();
     for (int i = 0; i < argInfos.length; i++) {
       ArgInfo<PsiElement> info = argInfos[i];
       if (info == null) continue;

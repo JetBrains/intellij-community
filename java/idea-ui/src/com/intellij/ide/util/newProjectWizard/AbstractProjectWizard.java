@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.newProjectWizard;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -28,6 +28,7 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.nio.file.Paths;
 
 /**
  * @author Dmitry Avdeev
@@ -62,7 +63,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
   private static WizardContext initContext(@Nullable Project project, @Nullable String defaultPath, Disposable parentDisposable) {
     WizardContext context = new WizardContext(project, parentDisposable);
     if (defaultPath != null) {
-      context.setProjectFileDirectory(defaultPath, true);
+      context.setProjectFileDirectory(Paths.get(defaultPath), true);
       context.setProjectName(defaultPath.substring(FileUtil.toSystemIndependentName(defaultPath).lastIndexOf("/") + 1));
     }
    return context;

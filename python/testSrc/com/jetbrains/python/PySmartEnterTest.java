@@ -117,6 +117,96 @@ public class PySmartEnterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-25001
+  public void testMultilineListLiteralInsideItem() {
+    doTest();
+  }
+
+  // PY-25001
+  public void testMultilineListLiteralAfterItem() {
+    doTest();
+  }
+
+  // PY-25001
+  public void testMultilineListLiteralInsideMultilineItem() {
+    doTest();
+  }
+
+  // PY-25001
+  public void testMultilineListLiteralOnLastLineOfMultilineItem() {
+    doTest();
+  }
+
+  // PY-25001
+  public void testMultilineListLiteralInsideCommentFollowingItem() {
+    doTest();
+  }
+
+  // PY-25001
+  public void testMultilineListLiteralEmptyLine() {
+    doTest();
+  }
+
+  // PY-25001
+  public void testMultilineListLiteralInsideCommentedLine() {
+    doTest();
+  }
+
+  // PY-25001
+  public void testMultilineListLiteralItemFollowedByComment() {
+    doTest();
+  }
+
+  // PY-25001
+  public void testMultilineListLiteralItemFollowsOpeningBracket() {
+    doTest();
+  }
+
+  // PY-25001
+  public void testMultilineSetLiteral() {
+    doTest();
+  }
+
+  // PY-25001
+  public void testMultilineTupleLiteralLastElement() {
+    doTest();
+  }
+
+  // PY-25001
+  public void testMultilineTupleLiteralIntermediateElement() {
+    doTest();
+  }
+
+  // PY-25001
+  public void testMultilineDictLiteralAfterKeyWithoutColon() {
+    doTest();
+  }
+
+  // PY-25001
+  public void testMultilineDictLiteralInsideKeyWithoutColon() {
+    doTest();
+  }
+
+  // PY-25001
+  public void testMultilineDictLiteralAfterKeyWithColonButNoValue() {
+    doTest();
+  }
+
+  // PY-25001
+  public void testMultilineDictLiteralValueOnSameLine() {
+    doTest();
+  }
+
+  // PY-25001
+  public void testMultilineDictLiteralValueOnOtherLine() {
+    doTest();
+  }
+
+  // PY-25001
+  public void testMultilineDictAfterUnpacking() {
+    doTest();
+  }
+
   public void testDocRest() {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     boolean oldStubOnEnter = codeInsightSettings.JAVADOC_STUB_ON_ENTER;

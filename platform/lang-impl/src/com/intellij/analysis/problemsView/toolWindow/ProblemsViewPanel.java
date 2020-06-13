@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow;
 
+import com.intellij.ide.DefaultTreeExpander;
+import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option;
@@ -25,6 +27,7 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
+import com.intellij.util.SingleAlarm;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -40,7 +43,6 @@ import java.util.Comparator;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.application.ModalityState.stateForComponent;
-import static com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive;
 import static com.intellij.ui.ColorUtil.toHtmlColor;
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static com.intellij.ui.scale.JBUIScale.scale;
@@ -57,7 +59,27 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
   private final JPanel myPanel;
   private final ActionToolbar myToolbar;
   private final Insets myToolbarInsets = JBUI.insetsRight(1);
-  private final JTree myTree;
+  private final Tree myTree;
+  private final TreeExpander myTreeExpander;
+  private final SingleAlarm mySelectionAlarm = new SingleAlarm(() -> {
+    OpenFileDescriptor descriptor = getSelectedDescriptor();
+    updateAutoscroll(descriptor);
+    updatePreview(descriptor);
+  }, 50, stateForComponent(this), this);
+  private final SingleAlarm myUpdateAlarm = new SingleAlarm(() -> {
+    ToolWindow window = ProblemsView.getToolWindow(getProject());
+    if (window == null) return;
+    ContentManager manager = window.getContentManagerIfCreated();
+    if (manager == null) return;
+    Content content = manager.getContent(this);
+    if (content == null) return;
+
+    Root root = myTreeModel.getRoot();
+    int count = root == null ? 0 : root.getProblemsCount();
+    content.setDisplayName(getContentDisplayName(count));
+    Icon icon = getToolWindowIcon(count);
+    if (icon != null) window.setIcon(icon);
+  }, 50, stateForComponent(this), this);
 
   private final Option myAutoscrollToSource = new Option() {
     @Override
@@ -68,7 +90,7 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
     @Override
     public void setSelected(boolean selected) {
       myState.setAutoscrollToSource(selected);
-      updateAutoscroll(getSelectedDescriptor());
+      if (selected) updateAutoscroll(getSelectedDescriptor());
     }
   };
   private final Option myShowPreview = new Option() {
@@ -142,15 +164,12 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
     myTree.setRootVisible(false);
     myTree.getSelectionModel().setSelectionMode(SINGLE_TREE_SELECTION);
     myTree.addTreeSelectionListener(new RestoreSelectionListener());
-    myTree.addTreeSelectionListener(event -> {
-      OpenFileDescriptor descriptor = getSelectedDescriptor();
-      updateAutoscroll(descriptor);
-      updatePreview(descriptor);
-    });
+    myTree.addTreeSelectionListener(event -> mySelectionAlarm.cancelAndRequest());
     new TreeSpeedSearch(myTree);
     EditSourceOnDoubleClickHandler.install(myTree);
     EditSourceOnEnterKeyHandler.install(myTree);
     PopupHandler.installPopupHandler(myTree, "ProblemsView.ToolWindow.TreePopup", ActionPlaces.POPUP);
+    myTreeExpander = new DefaultTreeExpander(myTree);
 
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("ProblemsView.ToolWindow.Toolbar");
     myToolbar = ActionManager.getInstance().createActionToolbar(getClass().getName(), group, false);
@@ -174,6 +193,7 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
   @Override
   public @Nullable Object getData(@NotNull String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) return getProject();
+    if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) return getTreeExpander();
     OpenFileDescriptor descriptor = getSelectedDescriptor();
     if (descriptor != null) {
       if (CommonDataKeys.NAVIGATABLE.is(dataId)) return descriptor;
@@ -187,20 +207,7 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
   abstract @NotNull String getDisplayName();
 
   final void updateToolWindowContent() {
-    invokeLaterIfProjectAlive(getProject(), () -> {
-      ToolWindow window = ProblemsView.getToolWindow(getProject());
-      if (window == null) return;
-      ContentManager manager = window.getContentManagerIfCreated();
-      if (manager == null) return;
-      Content content = manager.getContent(this);
-      if (content == null) return;
-
-      Root root = myTreeModel.getRoot();
-      int count = root == null ? 0 : root.getProblemsCount();
-      content.setDisplayName(getContentDisplayName(count));
-      Icon icon = getToolWindowIcon(count);
-      if (icon != null) window.setIcon(icon);
-    });
+    myUpdateAlarm.cancelAndRequest();
   }
 
   @Nullable Icon getToolWindowIcon(int count) {
@@ -235,8 +242,16 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
     return myTreeModel;
   }
 
-  final @NotNull JTree getTree() {
+  final @NotNull Tree getTree() {
     return myTree;
+  }
+
+  final @NotNull ProblemsViewPreview getPreview() {
+    return myPreview;
+  }
+
+  @Nullable TreeExpander getTreeExpander() {
+    return myTreeExpander;
   }
 
   void orientationChangedTo(boolean vertical) {
@@ -294,8 +309,7 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
   }
 
   private void updatePreview(@Nullable OpenFileDescriptor descriptor) {
-    Document document = descriptor == null ? null : ProblemsView.getDocument(getProject(), descriptor.getFile());
-    Editor editor = myPreview.preview(document, document != null && isNotNullAndSelected(getShowPreview()));
+    Editor editor = myPreview.preview(descriptor, isNotNullAndSelected(getShowPreview()));
     if (editor != null && descriptor != null) {
       invokeLater(() -> {
         if (editor.getComponent().isShowing()) {

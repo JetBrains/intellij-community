@@ -113,7 +113,7 @@ public class JavaTextBlockIndentGuideTest extends BaseIndentGuideTest {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_13;
+    return JAVA_14;
   }
 
   private void doTest(@NotNull String text) {

@@ -52,9 +52,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author cdr
- */
 class SliceUtil {
   static boolean processUsagesFlownDownTo(@NotNull PsiElement expression,
                                           @NotNull Processor<? super SliceUsage> processor,
@@ -116,7 +113,7 @@ class SliceUtil {
     }
     if (expression instanceof PsiVariable) {
       PsiVariable variable = (PsiVariable)expression;
-      Collection<PsiExpression> values = DfaUtil.getCachedVariableValues(variable, original);
+      Collection<PsiExpression> values = DfaUtil.getVariableValues(variable, original);
       PsiExpression initializer = variable.getInitializer();
       if (values.isEmpty() && initializer != null) {
         values = Collections.singletonList(initializer);

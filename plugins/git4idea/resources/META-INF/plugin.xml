@@ -1,8 +1,8 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin>
   <name>Git</name>
   <id>Git4Idea</id>
   <description>
-      <![CDATA[
+    <![CDATA[
       Provides integration with <a href="http://git-scm.com/">Git</a>.
         <ul>
         <li>Check out your source code from a Git repository</li>
@@ -45,6 +45,7 @@
     <action id="Git.Uncommit" class="git4idea.reset.GitUncommitAction"/>
     <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction"/>
     <action id="Git.Squash.Commits" class="git4idea.rebase.log.squash.GitSquashLogAction"/>
+    <action id="Git.Drop.Commits" class="git4idea.rebase.log.drop.GitDropLogAction"/>
     <action id="Git.Rename.Local.Branch" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$RenameLocalBranch"/>
     <action id="Git.Checkout.Branch" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$CheckoutSelectedBranchAction"/>
     <action id="Git.Log.Hide.Branches" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$HideBranchesAction"
@@ -155,6 +156,7 @@
       <reference id="Git.Reword.Commit"/>
       <reference id="Git.Fixup.To.Commit" />
       <reference id="Git.Squash.Into.Commit" />
+      <reference id="Git.Drop.Commits"/>
       <reference id="Git.Squash.Commits" />
       <reference id="Git.Interactive.Rebase"/>
       <separator/>
@@ -204,6 +206,91 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="git.execute.with.mediator" defaultValue="true"
+                 description="Use wrapper executable on Windows to support soft Git process cancellation."/>
+    <registryKey key="git.blocking.read" defaultValue="true"
+                 description="Use blocking mode for git process output reader."/>
+    <registryKey key="git.allow.stderr.to.stdout.mixing" defaultValue="false"
+                 description="Enables legacy hack for git integration, when some messages from stderr are handled as if they came from stdout."/>
+    <registryKey key="git.execution.trace" defaultValue="0"
+                 description="Bitmask to control git logging of the commands executed by the IDE. Specified as int.\n
+                              (0)  00000 - logging disabled\n
+                              (31) 11111 - all categories enabled\n
+                              (29) 11101 - the one you might want\n
+                              (1)  00001 - GIT_TRACE\n
+                              (2)  00010 - GIT_TRACE_PACK_ACCESS\n
+                              (4)  00100 - GIT_TRACE_PACKET\n
+                              (8)  01000 - GIT_TRACE_PERFOMANCE\n
+                              (16) 10000 - GIT_TRACE_SETUP"/>
+    <registryKey key="git.file.history.full" defaultValue="true"
+                 description="Adds &quot;--full-history --simplify-merges&quot; to git log arguments when retrieving history for a file.
+                              This may sometimes result in empty merges being shown in the file history.
+                              However, skipping this arguments hides some side branches if the end result is the same."/>
+    <registryKey key="git.diff.renameLimit" defaultValue="1"
+                 description="Sets diff.renameLimit configuration variable value.\n
+                              Essentially this variable tells Git the maximal size of commit for which to perform rename detection.
+                              Zero value means detecting renames in all commits.
+                              Setting this value too high (or zero) may lead to increased memory consumption by a Git process and longer execution time.\n
+                              This variable only used when reading git commits for indexing.
+                              Value from git configuration (1000 by default) is used for other purposes (eg for displaying changes in changes view)."/>
+    <registryKey key="git.refresh.vfs.total" defaultValue="false"
+                 description="If set to true, the whole Git repository root will be refreshed after performing a Git operation.
+                              Otherwise only the affected files will be refreshed.
+                              Affects only a subset of Git operations.
+                              The option is needed to debug possible &quot;incomplete VFS refresh&quot; reports, if they appear."/>
+    <registryKey key="git.force.commit.using.staging.area" defaultValue="true"
+                 description="When enabled, perform all git commits by updating staging area. If disabled, use 'git commit --only' when possible."/>
+    <registryKey key="git.clone.recurse.submodules" defaultValue="true"
+                 description="When enabled, Checkout from Git calls 'git clone --recurse-submodules', i.e. clones the main repository with all submodules if there are any."/>
+    <registryKey key="git.read.content.with.textconv" defaultValue="false"
+                 description="Apply 'textconv' transformations when reading file content from git. (overrides &quot;git.read.content.with.filters&quot; option)"/>
+    <registryKey key="git.read.content.with.filters" defaultValue="true"
+                 description="Apply 'filters' transformations when reading file content from git."/>
+    <registryKey key="git.log.fix.merge.commits.parents.order" defaultValue="false" restartRequired="true"
+                 description="Find merge commits where a remote branch was merged into local before pushing
+                              and fix parents order for such commits in order to display them more naturally in the commits graph."/>
+    <registryKey key="git.log.use.index.for.picked.commits.highlighting" defaultValue="true"
+                 description="Find cherry-picked commits not only looking at patches using 'git cherry'
+                              but also by matching commit author, author time and &quot;cherry picked from commit &lt;hash&gt;&quot; suffix."/>
+    <registryKey key="git.log.fast.picked.commits.highlighting" defaultValue="false"
+                 description="Find cherry-picked commits not looking at patches using 'git cherry'
+                              but by matching commit author, author time and commit message. This allows to find commits that were cherry-picked with conflicts
+                              and without adding &quot;cherry picked from commit &lt;hash&gt;&quot; suffix. Requires &quot;git.log.use.index.for.picked.commits.highlighting&quot; set to true."/>
+    <registryKey key="git.parallel.fetch.threads" defaultValue="-3"
+                 description="Number of threads to call git fetch in parallel.\n
+                              Set to 1 to execute sequentially.\n
+                              Set to -1 to use the number of CPU cores.\n
+                              Set to -2 to start as many threads, as there are repositories in the project.\n
+                              Set to -3 to start as many threads, as there are repositories, but not more than 2 * number of cores.\n
+                              By default, SSH supports up to 10 multiplexed connections, thus number of threads will be limited by 10 despite this value."/>
+    <registryKey key="git.use.schannel.on.windows" defaultValue="true"
+                 description="Force git to use Windows certificate store to very SSL connections. Git 2.14 and above is required"/>
+    <registryKey key="git.use.shell.script.on.windows" defaultValue="true"
+                 description="Use workaround for Native SSH support in Git. Batch file cannot properly handle arguments with newlines when used as SSH_ASKPASS."/>
+    <registryKey key="git.use.setsid.for.native.ssh" defaultValue="true"
+                 description="Wrap 'git' process with 'setsid' for remote operations.
+                              This fixes issue with SSH_ASKPASS if IDE is executed from terminal or under DM/WM that pass system TTY from Xorg to GUI applications."/>
+    <registryKey key="git.use.setsid.wait.for.wsl.ssh" defaultValue="true"
+                 description="Wrap 'git' process with 'setsid -w' for remote operations with WSL executable."/>
+    <registryKey key="git.use.push.force.with.lease" defaultValue="true"
+                 description="Use '--force-with-lease' to push from IDE instead of '--force'"/>
+    <registryKey key="git.use.no.optional.locks" defaultValue="true"
+                 description="Use 'GIT_OPTIONAL_LOCKS' env variable to avoid taking unnecessary locks in git. Ex: to avoid 'git status' to interfere with 'git rebase' process in terminal."/>
+    <registryKey key="git.process.ignored" defaultValue="true"
+                 description="Process and highlight Git ignored files."/>
+    <registryKey key="git.update.incoming.outgoing.info" defaultValue="true"
+                 description="Update branches info that have incoming/outgoing commits in the Branches popup."/>
+    <registryKey key="git.merge.conflicts.toolwindow" defaultValue="false"
+                 description="Show dedicated toolwindow for git merge conflicts"/>
+    <registryKey key="git.update.project.info.as.log" defaultValue="true"
+                 description="If enabled, Update Project for Git is followed by the list of commits, instead of the list of updated files."/>
+    <registryKey key="git.enable.stage" defaultValue="false"
+                 description="Show tool window with staging area."/>
+    <registryKey key="git.shelve.load.base.in.batches" defaultValue="1000"
+                 description="If set to a value > 0, load base contents for shelving in batches: by reading the given number of files at once. If set to -1, contents are loaded as usual, one by one."/>
+    <registryKey key="git.allow.wsl1.executables" defaultValue="false"
+                 description="If set to false, IDE will ignore configured WSL1 executables. See IDEA-242469"/>
+
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
     <checkoutProvider implementation="git4idea.checkout.GitCheckoutProvider" order="first"/>
@@ -242,7 +329,7 @@
     <projectService serviceImplementation="git4idea.changes.GitCommittedChangeListProvider"/>
     <projectService serviceImplementation="git4idea.update.GitUpdateEnvironment"/>
     <projectService serviceImplementation="git4idea.config.GitVcsSettings" configurationSchemaKey="versionControl.git"/>
-    <projectService serviceImplementation="git4idea.config.GitRebaseSettings"/>
+    <projectService serviceImplementation="git4idea.config.GitMergeSettings"/>
     <projectService serviceImplementation="git4idea.config.GitSharedSettings" />
     <projectService serviceImplementation="git4idea.rebase.interactive.GitRewordedCommitMessageProvider"/>
     <projectService serviceInterface="git4idea.branch.GitBrancher"

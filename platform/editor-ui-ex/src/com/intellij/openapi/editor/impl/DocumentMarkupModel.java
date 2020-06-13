@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentMap;
  *
  * @author yole
  */
-public class DocumentMarkupModel {
+public final class DocumentMarkupModel {
   private static final Key<MarkupModelEx> MARKUP_MODEL_KEY = Key.create("DocumentMarkupModel.MarkupModel");
   private static final Key<ConcurrentMap<Project, MarkupModelImpl>> MARKUP_MODEL_MAP_KEY = Key.create("DocumentMarkupModel.MarkupModelMap");
 
@@ -89,7 +89,7 @@ public class DocumentMarkupModel {
     return markupModelMap;
   }
 
-  static void removeMarkupModel(@NotNull Document document, @NotNull Project project) {
+  public static void removeMarkupModel(@NotNull Document document, @NotNull Project project) {
     MarkupModelImpl removed = getMarkupModelMap(document).remove(project);
     if (removed != null) {
       removed.dispose();

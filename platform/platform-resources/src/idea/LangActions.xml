@@ -773,7 +773,7 @@
     </group>>
 
     <group id="UsageView.Popup">
-      <action id="UsageView.Rerun" class="com.intellij.usages.actions.RerunSearchAction" icon="AllIcons.Actions.Rerun" use-shortcut-of="Rerun"/>
+      <action id="UsageView.Rerun" class="com.intellij.usages.actions.RerunSearchAction" icon="AllIcons.Actions.Refresh" use-shortcut-of="Rerun"/>
       <separator/>
       <reference ref="EditSource"/>
       <reference ref="TreeNodeExclusion"/>
@@ -1072,6 +1072,7 @@
       <add-to-group anchor="first" group-id="TestTreePopupMenu"/>
     </group>
     <group id="RunTestGroup">
+      <add-to-group group-id="RunMenu" anchor="after" relative-to-action="DebugMainMenu"/>
     </group>
 
     <action id="DumpLookupElementWeights" class="com.intellij.internal.DumpLookupElementWeights">

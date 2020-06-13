@@ -1,10 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl
 
+import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
 
 internal open class ImmutableEntitiesBarrel internal constructor(
-  override val entities: List<ImmutableEntityFamily<out WorkspaceEntity>?>
+  override val entityFamilies: List<ImmutableEntityFamily<out WorkspaceEntity>?>
 ) : EntitiesBarrel() {
   companion object {
     val EMPTY = ImmutableEntitiesBarrel(emptyList())
@@ -12,12 +14,12 @@ internal open class ImmutableEntitiesBarrel internal constructor(
 }
 
 internal class MutableEntitiesBarrel private constructor(
-  override var entities: MutableList<EntityFamily<out WorkspaceEntity>?>
+  override var entityFamilies: MutableList<EntityFamily<out WorkspaceEntity>?>
 ) : EntitiesBarrel() {
   fun remove(id: Int, clazz: Int) {
     val entityFamily = getMutableEntityFamily(clazz)
     entityFamily.remove(id)
-    if (entityFamily.isEmpty()) entities[clazz] = null
+    if (entityFamily.isEmpty()) entityFamilies[clazz] = null
   }
 
   fun getEntityDataForModification(id: EntityId): WorkspaceEntityData<*> {
@@ -41,7 +43,7 @@ internal class MutableEntitiesBarrel private constructor(
   }
 
   fun toImmutable(): ImmutableEntitiesBarrel {
-    val friezedEntities = entities.map { family ->
+    val friezedEntities = entityFamilies.map { family ->
       when (family) {
         is MutableEntityFamily<*> -> family.toImmutable()
         is ImmutableEntityFamily<*> -> family
@@ -54,48 +56,59 @@ internal class MutableEntitiesBarrel private constructor(
   private fun getMutableEntityFamily(unmodifiableEntityId: Int): MutableEntityFamily<*> {
     fillEmptyFamilies(unmodifiableEntityId)
 
-    val entityFamily = entities[unmodifiableEntityId] ?: run {
+    val entityFamily = entityFamilies[unmodifiableEntityId] ?: run {
       val emptyEntityFamily = MutableEntityFamily.createEmptyMutable()
-      entities[unmodifiableEntityId] = emptyEntityFamily
+      entityFamilies[unmodifiableEntityId] = emptyEntityFamily
       emptyEntityFamily
     }
     return when (entityFamily) {
       is MutableEntityFamily<*> -> entityFamily
       is ImmutableEntityFamily<*> -> {
         val newMutable = entityFamily.toMutable()
-        entities[unmodifiableEntityId] = newMutable
+        entityFamilies[unmodifiableEntityId] = newMutable
         newMutable
       }
     }
   }
 
   internal fun fillEmptyFamilies(unmodifiableEntityId: Int) {
-    while (entities.size <= unmodifiableEntityId) entities.add(null)
+    while (entityFamilies.size <= unmodifiableEntityId) entityFamilies.add(null)
   }
 
   companion object {
-    fun from(original: ImmutableEntitiesBarrel): MutableEntitiesBarrel = MutableEntitiesBarrel(ArrayList(original.entities))
+    fun from(original: ImmutableEntitiesBarrel): MutableEntitiesBarrel = MutableEntitiesBarrel(ArrayList(original.entityFamilies))
     fun create() = MutableEntitiesBarrel(ArrayList())
   }
 }
 
 internal sealed class EntitiesBarrel {
-  internal abstract val entities: List<EntityFamily<out WorkspaceEntity>?>
+  internal abstract val entityFamilies: List<EntityFamily<out WorkspaceEntity>?>
 
-  open operator fun get(clazz: Int): EntityFamily<out WorkspaceEntity>? = entities.getOrNull(clazz)
+  open operator fun get(clazz: Int): EntityFamily<out WorkspaceEntity>? = entityFamilies.getOrNull(clazz)
 
-  fun size() = entities.size
+  fun size() = entityFamilies.size
 
   fun assertConsistency() {
-    entities.forEachIndexed { i, family ->
+    val persistentIds = HashSet<PersistentEntityId<*>>()
+    entityFamilies.forEachIndexed { i, family ->
       val clazz = i.findEntityClass<WorkspaceEntity>()
+      val hasPersistentId = WorkspaceEntityWithPersistentId::class.java.isAssignableFrom(clazz)
       family?.assertConsistency { entityData ->
+        // Assert correctness of the class
         val immutableClass = ClassConversion.entityDataToEntity(entityData.javaClass)
         assert(clazz == immutableClass) {
           """EntityFamily contains entity data of wrong type:
             | - EntityFamily class:   $clazz
             | - entityData class:     $immutableClass
           """.trimMargin()
+        }
+
+        // Assert unique of persistent id
+        if (hasPersistentId) {
+          val persistentId = entityData.persistentId(WorkspaceEntityStorageImpl.EMPTY)
+          assert(persistentId != null) { "Persistent id expected for $clazz" }
+          assert(persistentId !in persistentIds) { "Duplicated persistent ids: $persistentId" }
+          persistentIds.add(persistentId!!)
         }
       }
     }

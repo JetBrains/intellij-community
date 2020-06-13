@@ -15,7 +15,7 @@ class TestModuleExtension : ModuleExtension, PersistentStateComponentWithModific
   private var myState: State? = State()
 
   override fun getStateModificationCount(): Long {
-    return myState!!.getModificationCount()
+    return myState!!.modificationCount
   }
 
   constructor() {

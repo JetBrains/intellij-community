@@ -32,6 +32,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -124,9 +125,23 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
       }
       final PsiModifierList modifierList = (PsiModifierList)element;
       @NonNls final String text = String.join(" ", getSortedModifiers(modifierList));
-      final PsiMethod method = JavaPsiFacade.getElementFactory(project).createMethodFromText(text + " void x() {}", modifierList);
-      final PsiModifierList newModifierList = method.getModifierList();
-      new CommentTracker().replaceAndRestoreComments(modifierList, newModifierList);
+      PsiModifierList newModifierList = createNewModifierList(modifierList, text);
+      if (newModifierList != null) {
+        new CommentTracker().replaceAndRestoreComments(modifierList, newModifierList);
+      }
+    }
+
+    @Nullable
+    private PsiModifierList createNewModifierList(@NotNull PsiModifierList oldModifierList, @NotNull String newModifiersText) {
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(oldModifierList.getProject());
+      if (oldModifierList.getParent() instanceof PsiRequiresStatement) {
+        String text = "requires " + newModifiersText + " x;";
+        PsiRequiresStatement statement = (PsiRequiresStatement) factory.createModuleStatementFromText(text, oldModifierList);
+        return statement.getModifierList();
+      } else {
+        PsiMethod method = factory.createMethodFromText(newModifiersText + " void x() {}", oldModifierList);
+        return method.getModifierList();
+      }
     }
   }
 
@@ -205,6 +220,12 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
     public void visitField(@NotNull PsiField field) {
       super.visitField(field);
       checkForMissortedModifiers(field);
+    }
+
+    @Override
+    public void visitRequiresStatement(PsiRequiresStatement statement) {
+      super.visitRequiresStatement(statement);
+      checkForMissortedModifiers(statement);
     }
 
     private void checkForMissortedModifiers(PsiModifierListOwner listOwner) {
@@ -289,6 +310,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
       s_modifierOrder.put(PsiModifier.SYNCHRONIZED, Integer.valueOf(9));
       s_modifierOrder.put(PsiModifier.NATIVE, Integer.valueOf(10));
       s_modifierOrder.put(PsiModifier.STRICTFP, Integer.valueOf(11));
+      s_modifierOrder.put(PsiModifier.TRANSITIVE, Integer.valueOf(12));
     }
 
     @Override

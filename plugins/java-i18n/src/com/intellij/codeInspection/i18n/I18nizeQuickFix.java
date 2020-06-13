@@ -35,9 +35,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * @author cdr
- */
 public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler, HighPriorityAction {
   private static final Logger LOG = Logger.getInstance(I18nizeQuickFix.class);
   private static final Set<String> AUXILIARY_WORDS = ContainerUtil.immutableSet("is", "not", "the", "of", "and", "a", "an");

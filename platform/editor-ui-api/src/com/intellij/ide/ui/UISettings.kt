@@ -10,6 +10,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.scale.JBUIScale
@@ -18,6 +19,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Transient
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.RenderingHints
@@ -47,17 +49,11 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       notRoamableOptions.state.editorAAType = value
     }
 
-  var allowMergeButtons: Boolean
-    get() = state.allowMergeButtons
-    set(value) {
-      state.allowMergeButtons = value
-    }
+  val allowMergeButtons: Boolean
+    get() = Registry.`is`("ide.allow.merge.buttons")
 
-  var animateWindows: Boolean
-    get() = state.animateWindows
-    set(value) {
-      state.animateWindows = value
-    }
+  val animateWindows: Boolean
+    get() = Registry.`is`("ide.animate.toolwindows")
 
   @Deprecated("use StatusBarWidgetSettings#isEnabled(MemoryUsagePanel.WIDGET_ID)")
   var showMemoryIndicator: Boolean
@@ -84,11 +80,8 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.hideToolStripes = value
     }
 
-  var hideNavigationOnFocusLoss: Boolean
-    get() = state.hideNavigationOnFocusLoss
-    set(value) {
-      state.hideNavigationOnFocusLoss = value
-    }
+  val hideNavigationOnFocusLoss: Boolean
+    get() = Registry.`is`("ide.hide.navigation.on.focus.loss")
 
   var reuseNotModifiedTabs: Boolean
     get() = state.reuseNotModifiedTabs
@@ -138,11 +131,8 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
   val closeTabButtonOnTheRight: Boolean
     get() = state.closeTabButtonOnTheRight
 
-  var cycleScrolling: Boolean
-    get() = state.cycleScrolling
-    set(value) {
-      state.cycleScrolling = value
-    }
+  val cycleScrolling: Boolean
+    get() = Registry.`is`("ide.cycle.scrolling")
 
   var navigateToPreview: Boolean
     get() = state.navigateToPreview
@@ -195,11 +185,8 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.showMainMenu = value
     }
 
-  var showIconInQuickNavigation: Boolean
-    get() = state.showIconInQuickNavigation
-    set(value) {
-      state.showIconInQuickNavigation = value
-    }
+  val showIconInQuickNavigation: Boolean
+    get() = Registry.`is`("ide.show.icons.in.quick.navigation")
 
   var showTreeIndentGuides: Boolean
     get() = state.showTreeIndentGuides
@@ -214,6 +201,8 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var moveMouseOnDefaultButton: Boolean
+    @ScheduledForRemoval(inVersion = "2020.3")
+    @Deprecated("Use registry key 'ide.settings.move.mouse.on.default.button'")
     get() = state.moveMouseOnDefaultButton
     set(value) {
       state.moveMouseOnDefaultButton = value
@@ -225,11 +214,8 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.showMainToolbar = value
     }
 
-  var showIconsInMenus: Boolean
-    get() = state.showIconsInMenus
-    set(value) {
-      state.showIconsInMenus = value
-    }
+  val showIconsInMenus: Boolean
+    get() = Registry.`is`("ide.show.icons.in.menus")
 
   var sortLookupElementsLexicographically: Boolean
     get() = state.sortLookupElementsLexicographically
@@ -489,14 +475,19 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     val shadowInstance: UISettings
       get() = instanceOrNull ?: UISettings(NotRoamableUiSettings())
 
-    @JvmField
-    val FORCE_USE_FRACTIONAL_METRICS = SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", SystemInfo.isMacOSCatalina)
+    @JvmStatic
+    val PREFERRED_FRACTIONAL_METRICS_VALUE: Any
+      get() {
+        return if (!Registry.`is`("ide.disable.fractionalMetrics", false)
+                   && SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", SystemInfo.isMacOSCatalina))
+          RenderingHints.VALUE_FRACTIONALMETRICS_ON
+        else
+          RenderingHints.VALUE_FRACTIONALMETRICS_OFF
+      }
 
     @JvmStatic
     fun setupFractionalMetrics(g2d: Graphics2D) {
-      if (FORCE_USE_FRACTIONAL_METRICS) {
-        g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON)
-      }
+      g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, PREFERRED_FRACTIONAL_METRICS_VALUE)
     }
 
     /**
@@ -657,6 +648,10 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
     if (state.ideAAType == AntialiasingType.SUBPIXEL && !AntialiasingType.canUseSubpixelAAForIDE()) {
       state.ideAAType = AntialiasingType.GREYSCALE;
+    }
+    if (state.moveMouseOnDefaultButton) {
+      Registry.get("ide.settings.move.mouse.on.default.button").setValue(true)
+      state.moveMouseOnDefaultButton = false
     }
   }
 

@@ -153,18 +153,14 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     List<SettingsEditorFragment<Settings, ?>> list = ContainerUtil.filter(fragments, fragment -> fragment.getCommandLinePosition() > 0);
     if (list.isEmpty()) return;
     fragments.removeAll(list);
-    JPanel panel = new JPanel(new GridBagLayout());
-    panel.setBorder(JBUI.Borders.emptyBottom(5));
-    GridBagConstraints c = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0);
+    CommandLinePanel panel = new CommandLinePanel(ContainerUtil.map(list, fragment -> fragment.createEditor()));
     for (SettingsEditorFragment<Settings, ?> fragment : list) {
-      panel.add(fragment.createEditor(), c.clone());
-      c.gridx++;
+      fragment.addSettingsEditorListener(editor -> panel.markForRebuild());
     }
     addLine(panel);
   }
 
   private static class ToggleFragmentAction extends ToggleAction {
-
     private final SettingsEditorFragment<?, ?> myFragment;
 
     private ToggleFragmentAction(SettingsEditorFragment<?, ?> fragment) {

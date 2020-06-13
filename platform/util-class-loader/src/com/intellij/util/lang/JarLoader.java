@@ -143,7 +143,7 @@ class JarLoader extends Loader {
     try {
       ClasspathCache.LoaderDataBuilder loaderDataBuilder = new ClasspathCache.LoaderDataBuilder();
       Enumeration<? extends ZipEntry> entries = zipFile.entries();
-      
+
       while (entries.hasMoreElements()) {
         ZipEntry entry = entries.nextElement();
         String name = entry.getName();

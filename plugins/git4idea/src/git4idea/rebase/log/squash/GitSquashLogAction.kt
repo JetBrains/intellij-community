@@ -21,9 +21,9 @@ internal class GitSquashLogAction : GitMultipleCommitEditingAction() {
     val selectedCommitDetails = getOrLoadDetails(commitEditingData.project, commitEditingData.logData, commitEditingData.selectedCommitList)
     val dialog = GitNewCommitMessageActionDialog(
       commitEditingData,
-      selectedCommitDetails.joinToString("\n".repeat(3)) { it.fullMessage },
-      GitBundle.getString("rebase.log.squash.new.message.dialog.title"),
-      GitBundle.getString("rebase.log.squash.new.message.dialog.label")
+      originMessage = selectedCommitDetails.joinToString("\n".repeat(3)) { it.fullMessage },
+      title = GitBundle.getString("rebase.log.squash.new.message.dialog.title"),
+      dialogLabel = GitBundle.getString("rebase.log.squash.new.message.dialog.label")
     )
     dialog.show { newMessage ->
       squashInBackground(commitEditingData, selectedCommitDetails, newMessage)

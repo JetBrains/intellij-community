@@ -3,36 +3,33 @@ asyncio.Future._exception
 asyncio.Future._loop
 asyncio.Future._tb_logger
 asyncio.Task.__init__
-asyncio.constants.DEBUG_STACK_DEPTH
-asyncio.constants.SENDFILE_FALLBACK_READBUFFER_SIZE
-asyncio.constants.SSL_HANDSHAKE_TIMEOUT
-asyncio.exceptions
+asyncio.Task._wakeup
+asyncio.base_futures  # Added in Python 3.6
+asyncio.base_tasks  # Added in Python 3.6
+asyncio.exceptions  # Added in Python 3.8
+asyncio.format_helpers  # Added in Python 3.7
 asyncio.futures.Future._callbacks
 asyncio.futures.Future._exception
 asyncio.futures.Future._loop
 asyncio.futures.Future._tb_logger
 asyncio.futures._TracebackLogger.__init__
-asyncio.protocols.BufferedProtocol
 asyncio.runners
+asyncio.staggered  # Added in Python 3.8
 asyncio.tasks.Task.__init__
+asyncio.tasks.Task._wakeup
+asyncio.threads  # Added in Python 3.9
+asyncio.trsock  # Added in Python 3.8
 bdb.GENERATOR_AND_COROUTINE_FLAGS
 builtins.str.maketrans
 cmath.log
 codecs.StreamRecoder.seek
 collections.Reversible
 collections.UserString.maketrans
+contextlib._GeneratorContextManager.__init__
 ctypes.CDLL.__init__
-decimal.Decimal.as_integer_ratio
-gettext.NullTranslations.npgettext
-gettext.NullTranslations.pgettext
-gettext.dnpgettext
-gettext.dpgettext
-gettext.npgettext
-gettext.pgettext
+fractions.Fraction.__new__  # private _normalize param was made keyword-only in Python 3.6
 importlib.metadata
 importlib.resources
-io.BufferedRandom.read1
-io.BufferedReader.read1
 io.StringIO.readline
 ipaddress._BaseNetwork.__init__
 json.dump
@@ -42,24 +39,27 @@ json.loads
 mmap.ACCESS_DEFAULT
 multiprocessing.context.BaseContext.reducer
 multiprocessing.shared_memory
+nntplib._NNTPBase.starttls
 os.DirEntry
 os.utime
+plistlib.Dict.__init__
 pyexpat.XMLParserType.ExternalEntityParserCreate
 smtpd.SMTPChannel.__init__
 smtpd.SMTPServer.__init__
-socket.NETLINK_CRYPTO
 sre_compile.dis
-subprocess.check_output
-tracemalloc.Filter.__init__
+ssl.SSLSocket.__init__
 typing.AbstractSet.isdisjoint
 typing.Coroutine.cr_await
 typing.Coroutine.cr_code
 typing.Coroutine.cr_frame
 typing.Coroutine.cr_running
+typing.Generator.__new__
 typing.Generator.gi_code
 typing.Generator.gi_frame
 typing.Generator.gi_running
 typing.Generator.gi_yieldfrom
+typing.GenericMeta.__new__
+typing.IO.closed  # Incorrect definition in CPython, fixed in bpo-39493
 typing.Mapping.get
 typing.MutableMapping.pop
 typing.MutableMapping.setdefault
@@ -70,14 +70,20 @@ typing.MutableSequence.remove
 typing.MutableSet.add
 typing.MutableSet.discard
 typing.MutableSet.remove
-typing.Protocol
+typing.NamedTuple.__new__
+typing.NamedTuple._asdict
+typing.NamedTuple._make
+typing.NamedTuple._replace
 typing.Sequence.count
 typing.Sequence.index
-typing.Type
 typing.runtime_checkable
 unittest.async_case
+unittest.case._AssertLogsContext.__init__
 uuid.UUID.int
-uuid.getnode
+xml.etree.ElementTree.TreeBuilder.start  # Discrepancy between Python and C modules, fixed in bpo-39495
+xml.etree.cElementTree.Element.__bool__
+xml.etree.cElementTree.Element.copy
+xml.etree.cElementTree.TreeBuilder.start  # bpo-39495
 xml.etree.cElementTree.XMLPullParser
 xml.parsers.expat.XMLParserType.ExternalEntityParserCreate
 zipfile.ZipFile.open

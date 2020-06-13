@@ -423,6 +423,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon InlineVariablesHover = load("/general/inlineVariablesHover.svg");
     /** 16x16 */ public static final @NotNull Icon InspectionsError = load("/general/inspectionsError.svg");
     /** 16x16 */ public static final @NotNull Icon InspectionsEye = load("/general/inspectionsEye.svg");
+    /** 16x16 */ public static final @NotNull Icon InspectionsMixed = load("/general/inspectionsMixed.svg");
     /** 16x16 */ public static final @NotNull Icon InspectionsOK = load("/general/inspectionsOK.svg");
     /** 16x16 */ public static final @NotNull Icon InspectionsPause = load("/general/inspectionsPause.svg");
     /** 16x16 */ public static final @NotNull Icon InspectionsPowerSaveMode = load("/general/inspectionsPowerSaveMode.svg");
@@ -548,6 +549,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon IncomingChangesOn = load("/ide/incomingChangesOn.svg");
     /** 12x12 */ public static final @NotNull Icon Link = load("/ide/link.svg");
     /** 16x16 */ public static final @NotNull Icon LocalScope = load("/ide/localScope.svg");
+    /** 16x16 */ public static final @NotNull Icon LocalScopeAction = load("/ide/localScopeAction.svg");
 
     public final static class Macro {
       /** 16x16 */ public static final @NotNull Icon Recording_1 = load("/ide/macro/recording_1.svg");
@@ -1062,6 +1064,8 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon ToolWindowModuleDependencies = load("/toolwindows/toolWindowModuleDependencies.svg");
     /** 13x13 */ public static final @NotNull Icon ToolWindowPalette = load("/toolwindows/toolWindowPalette.svg");
     /** 13x13 */ public static final @NotNull Icon ToolWindowPreview = load("/toolwindows/toolWindowPreview.png");
+    /** 13x13 */ public static final @NotNull Icon ToolWindowProblems = load("/toolwindows/toolWindowProblems.svg");
+    /** 13x13 */ public static final @NotNull Icon ToolWindowProblemsEmpty = load("/toolwindows/toolWindowProblemsEmpty.svg");
     /** 13x13 */ public static final @NotNull Icon ToolWindowProfiler = load("/toolwindows/toolWindowProfiler.svg");
     /** 13x13 */ public static final @NotNull Icon ToolWindowProject = load("/toolwindows/toolWindowProject.svg");
     /** 13x13 */ public static final @NotNull Icon ToolWindowRun = load("/toolwindows/toolWindowRun.svg");

@@ -15,7 +15,7 @@ internal class MarkdownCodeFenceGeneratingProvider(private val pluginCacheProvid
     return pluginCacheProviders
       .filter { it.isApplicable(language) }.stream()
       .findFirst()
-      .map { it.generateHtml(codeFenceRawContent) }
+      .map { it.generateHtml(language, codeFenceRawContent) }
       .orElse(codeFenceContent)
   }
 

@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,7 +13,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,7 +30,7 @@ import static java.util.Objects.hash;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 
-public class ChangesUtil {
+public final class ChangesUtil {
   private static final Key<Boolean> INTERNAL_OPERATION_KEY = Key.create("internal vcs operation");
 
   public static final TObjectHashingStrategy<FilePath> CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY = new TObjectHashingStrategy<FilePath>() {
@@ -246,14 +244,18 @@ public class ChangesUtil {
     });
   }
 
-  @Nullable
-  public static String getProjectRelativePath(@NotNull Project project, @Nullable File fileName) {
-    if (fileName == null) return null;
-    VirtualFile baseDir = project.getBaseDir();
-    if (baseDir == null) return fileName.toString();
-    String relativePath = FileUtil.getRelativePath(VfsUtilCore.virtualToIoFile(baseDir), fileName);
-    if (relativePath != null) return relativePath;
-    return fileName.toString();
+  public static @Nullable String getProjectRelativePath(@NotNull Project project, @Nullable File fileName) {
+    if (fileName == null) {
+      return null;
+    }
+
+    String baseDir = project.getBasePath();
+    if (baseDir == null) {
+      return fileName.toString();
+    }
+
+    String relativePath = FileUtil.getRelativePath(new File(baseDir), fileName);
+    return relativePath == null ? fileName.toString() : relativePath;
   }
 
   public static boolean isTextConflictingChange(@NotNull Change change) {

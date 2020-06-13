@@ -7,7 +7,7 @@
 import {Component, Prop, Watch} from "vue-property-decorator"
 import {DataQuery, DataQueryFilter, DataRequest, encodeQuery, GroupedMetricResponse} from "@/aggregatedStats/model"
 import {ClusteredChartManager} from "@/aggregatedStats/ClusteredChartManager"
-import {DurationParseResult, parseDuration, toClickhouseSql} from "@/aggregatedStats/parseDuration"
+import {DurationParseResult, parseTimeRange, toClickhouseSql} from "@/aggregatedStats/parseDuration"
 import {BaseStatChartComponent} from "@/aggregatedStats/BaseStatChartComponent"
 import {DEFAULT_AGGREGATION_OPERATOR} from "@/aggregatedStats/ChartSettings"
 
@@ -15,6 +15,9 @@ const rison = require("rison-node")
 
 @Component
 export default class ClusteredChartComponent extends BaseStatChartComponent<ClusteredChartManager> {
+  @Prop({type: String})
+  timeRange!: string
+
   @Watch("chartSettings.aggregationOperator")
   aggregationOperatorChanged() {
     this.loadDataAfterDelay()
@@ -31,9 +34,6 @@ export default class ClusteredChartComponent extends BaseStatChartComponent<Clus
     this.loadDataAfterDelay()
   }
 
-  @Prop({type: String})
-  timeRange!: string
-
   protected reloadData(request: DataRequest) {
     const chartSettings = this.chartSettings
     let aggregator: string = chartSettings.aggregationOperator || DEFAULT_AGGREGATION_OPERATOR
@@ -44,13 +44,7 @@ export default class ClusteredChartComponent extends BaseStatChartComponent<Clus
     }
 
     // server will cache request, so, `now` here can lead to cached response, but it is ok because data collected each several hours, so, cache cleared in any case
-    let timeRange = this.timeRange
-    if (timeRange == null || timeRange == "all") {
-      timeRange = "1y"
-    } else if (timeRange === "lastMonth") {
-      timeRange = "1M"
-    }
-    const duration = parseDuration(timeRange)
+    const timeRange = parseTimeRange(this.timeRange)
 
     const filters: Array<DataQueryFilter> = [
       {field: "product", value: request.product},
@@ -59,11 +53,12 @@ export default class ClusteredChartComponent extends BaseStatChartComponent<Clus
         field: "machine",
         value: request.machine
       },
-      {field: "generated_time", sql: `> ${toClickhouseSql(duration)}`}
+      {field: "generated_time", sql: `> ${toClickhouseSql(timeRange)}`}
     ]
 
-    const interval = getClickHouseIntervalByDuration(duration)
+    const interval = getClickHouseIntervalByDuration(timeRange)
     const dataQuery: DataQuery = {
+      db: request.db,
       fields: this.metrics,
       aggregator,
       dimensions: [
@@ -80,14 +75,14 @@ export default class ClusteredChartComponent extends BaseStatChartComponent<Clus
 
     this.loadData(`${chartSettings.serverUrl}/api/v1/groupedMetrics/${encodeQuery(dataQuery)}`, (data: GroupedMetricResponse, chartManager: ClusteredChartManager) => {
       let intervalCount = 0
-      if (duration.years != null) {
-        intervalCount = duration.years
+      if (timeRange.years != null) {
+        intervalCount = timeRange.years
       }
-      else if (duration.months != null) {
-        intervalCount = duration.months
+      else if (timeRange.months != null) {
+        intervalCount = timeRange.months
       }
-      else if (duration.weeks != null) {
-        intervalCount = duration.weeks
+      else if (timeRange.weeks != null) {
+        intervalCount = timeRange.weeks
       }
 
       // 1 year or 1 month - show as 4 quarters / 4 weeks

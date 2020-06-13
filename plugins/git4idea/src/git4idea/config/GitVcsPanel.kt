@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.EnumComboBoxModel
@@ -93,39 +94,40 @@ internal class GitVcsPanel(private val project: Project) :
   private lateinit var supportedBranchUpLabel: JLabel
 
   private val pathSelector: VcsExecutablePathSelector by lazy {
-    VcsExecutablePathSelector("Git", disposable!!, Consumer { path ->
-      object : Task.Modal(project, GitBundle.getString("git.executable.version.progress.title"), true) {
-        private val modalityState = ModalityState.stateForComponent(pathSelector.mainPanel)
-        val errorNotifier = InlineErrorNotifierFromSettings(
-          GitExecutableInlineComponent(pathSelector.errorComponent, modalityState, null),
-          modalityState, disposable!!
-        )
+    VcsExecutablePathSelector("Git", disposable!!, Consumer { path -> testExecutable(path) })
+  }
 
-        private lateinit var gitVersion: GitVersion
+  private fun testExecutable(pathToGit: String) {
+    val modalityState = ModalityState.stateForComponent(pathSelector.mainPanel)
+    val errorNotifier = InlineErrorNotifierFromSettings(
+      GitExecutableInlineComponent(pathSelector.errorComponent, modalityState, null),
+      modalityState, disposable!!
+    )
+
+    object : Task.Modal(project, GitBundle.getString("git.executable.version.progress.title"), true) {
+      private lateinit var gitVersion: GitVersion
 
       override fun run(indicator: ProgressIndicator) {
         val executableManager = GitExecutableManager.getInstance()
-        val pathToGit = path ?: executableManager.detectedExecutable
         val executable = executableManager.getExecutable(pathToGit)
         executableManager.dropVersionCache(executable)
         gitVersion = executableManager.identifyVersion(executable)
       }
 
-        override fun onThrowable(error: Throwable) {
-          val problemHandler = findGitExecutableProblemHandler(project)
-          problemHandler.showError(error, errorNotifier)
-        }
+      override fun onThrowable(error: Throwable) {
+        val problemHandler = findGitExecutableProblemHandler(project)
+        problemHandler.showError(error, errorNotifier)
+      }
 
-        override fun onSuccess() {
-          if (gitVersion.isSupported) {
-            errorNotifier.showMessage(GitBundle.message("git.executable.version.is", gitVersion.presentation))
-          }
-          else {
-            showUnsupportedVersionError(project, gitVersion, errorNotifier)
-          }
+      override fun onSuccess() {
+        if (gitVersion.isSupported) {
+          errorNotifier.showMessage(GitBundle.message("git.executable.version.is", gitVersion.presentation))
         }
-      }.queue()
-    })
+        else {
+          showUnsupportedVersionError(project, gitVersion, errorNotifier)
+        }
+      }
+    }.queue()
   }
 
   private inner class InlineErrorNotifierFromSettings(inlineComponent: InlineComponent,
@@ -133,9 +135,9 @@ internal class GitVcsPanel(private val project: Project) :
                                                       disposable: Disposable) :
     InlineErrorNotifier(inlineComponent, modalityState, disposable) {
     @CalledInAny
-    override fun showError(text: String, description: String?, fixOption: ErrorNotifier.FixOption) {
+    override fun showError(text: String, description: String?, fixOption: ErrorNotifier.FixOption?) {
       if (fixOption is ErrorNotifier.FixOption.Configure) {
-        showError(text)
+        super.showError(text, description, null)
       }
       else {
         super.showError(text, description, fixOption)
@@ -144,7 +146,7 @@ internal class GitVcsPanel(private val project: Project) :
 
     override fun resetGitExecutable() {
       super.resetGitExecutable()
-      GitExecutableManager.getInstance().detectedExecutable // populate cache
+      GitExecutableManager.getInstance().getDetectedExecutable(project) // populate cache
       invokeAndWaitIfNeeded(modalityState) {
         resetPathSelector()
       }
@@ -178,15 +180,17 @@ internal class GitVcsPanel(private val project: Project) :
           applicationSettings.setPathToGit(currentPath)
           projectSettings.pathToGit = null
         }
+
         validateExecutableOnceAfterClose()
         updateBranchUpdateInfoRow()
+        VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
       }
   }
 
   private fun resetPathSelector() {
     val projectSettingsPathToGit = projectSettings.pathToGit
     val detectedExecutable = try {
-      GitExecutableManager.getInstance().detectedExecutable
+      GitExecutableManager.getInstance().getDetectedExecutable(project)
     }
     catch (e: ProcessCanceledException) {
       GitExecutableDetector.getDefaultExecutable()

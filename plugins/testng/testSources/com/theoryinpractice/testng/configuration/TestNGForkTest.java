@@ -39,14 +39,14 @@ public class TestNGForkTest {
       new TestNGForkedSplitter(tempFile.getCanonicalPath(), Collections.singletonList(tempFile.getCanonicalPath())) {
         private boolean myStarted = false;
         @Override
-        protected int startChildFork(List args, File workingDir, String classpath, List moduleOptions, String repeatCount) throws IOException {
+        protected int startChildFork(List<String> args, File workingDir, String classpath, List<String> moduleOptions, String repeatCount) throws IOException {
           Assert.assertEquals(dynamicClasspath, myDynamicClasspath);
           Assert.assertArrayEquals(vmParams, myVMParameters.toArray());
           Assert.assertEquals(workingDirFromFile, workingDir.getName());
           Assert.assertEquals(classpathFromFile, classpath);
           Assert.assertEquals(moduleExpectedOptions, moduleOptions);
           Assert.assertEquals(1, args.size());
-          final String generatedSuite = FileUtil.loadFile(new File((String)args.get(0)));
+          final String generatedSuite = FileUtil.loadFile(new File(args.get(0)));
           Assert.assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                               "<!DOCTYPE suite SYSTEM \"http://testng.org/testng-1.0.dtd\">\n" +
                               "<suite name=\"Default Suite\">\n" +

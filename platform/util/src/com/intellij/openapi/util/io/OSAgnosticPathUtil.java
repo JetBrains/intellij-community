@@ -16,7 +16,7 @@ import java.util.Comparator;
  * <p><strong>Warning:</strong> the methods are by definition less strict, and in some cases may produce incorrect results.
  * Unless you're certain you need the relaxed handling, prefer {@link java.nio.file NIO2} instead.</p>
  */
-public class OSAgnosticPathUtil {
+public final class OSAgnosticPathUtil {
   private OSAgnosticPathUtil() { }
 
   /**

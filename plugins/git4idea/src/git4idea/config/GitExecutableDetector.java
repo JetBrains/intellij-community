@@ -10,13 +10,17 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThreeState;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static git4idea.config.GitExecutableManager.runUnderProgressIfNeeded;
 
 /**
  * Tries to detect the path to Git executable.
@@ -39,8 +43,46 @@ public class GitExecutableDetector {
 
   private static final String WIN_EXECUTABLE = GIT_EXE;
 
+  @NotNull private final Object DETECTED_EXECUTABLE_LOCK = new Object();
+  @NotNull private final Map<WSLDistribution, String> myWslExecutables = new ConcurrentHashMap<>(); // concurrent to read without lock
+  @Nullable private volatile String myDetectedExecutable;
+  private boolean myDetectionComplete;
+
   @Nullable
-  public String detect() {
+  public String detect(@Nullable WSLDistribution distribution) {
+    return runUnderProgressIfNeeded(null, GitBundle.message("git.executable.detect.progress.title"), () -> {
+      synchronized (DETECTED_EXECUTABLE_LOCK) {
+        if (!myDetectionComplete) {
+          myDetectedExecutable = runDetect();
+          myDetectionComplete = true;
+        }
+        return getExecutable(distribution);
+      }
+    });
+  }
+
+  public void clear() {
+    synchronized (DETECTED_EXECUTABLE_LOCK) {
+      myWslExecutables.clear();
+      myDetectedExecutable = null;
+      myDetectionComplete = false;
+    }
+  }
+
+  @Nullable
+  public String getExecutable(@Nullable WSLDistribution projectWslDistribution) {
+    if (projectWslDistribution != null) {
+      String exec = myWslExecutables.get(projectWslDistribution);
+      if (exec != null) return exec;
+    }
+
+    return myDetectedExecutable;
+  }
+
+  @Nullable
+  private String runDetect() {
+    detectAvailableWsl();
+
     File gitExecutableFromPath = PathEnvironmentVariableUtil.findInPath(SystemInfo.isWindows ? GIT_EXE : GIT, getPath(), null);
     if (gitExecutableFromPath != null) return gitExecutableFromPath.getAbsolutePath();
 
@@ -123,13 +165,25 @@ public class GitExecutableDetector {
   }
 
   @Nullable
-  private static String checkWsl() {
-    if (!GitExecutableManager.supportWslExecutable()) return null;
+  private String checkWsl() {
+    if (myWslExecutables.size() == 1) {
+      return myWslExecutables.values().iterator().next();
+    }
+    return null;
+  }
+
+  private void detectAvailableWsl() {
+    if (!GitExecutableManager.supportWslExecutable()) return;
 
     List<WSLDistribution> distributions = WSLUtil.getAvailableDistributions();
-    if (distributions.size() != 1) return null;
+    for (WSLDistribution distribution : distributions) {
+      String path = checkWslDistribution(distribution);
+      if (path != null) myWslExecutables.put(distribution, path);
+    }
+  }
 
-    WSLDistribution distribution = distributions.get(0);
+  @Nullable
+  private static String checkWslDistribution(@NotNull WSLDistribution distribution) {
     if (WSLUtil.isWsl1(distribution) != ThreeState.NO) return null;
 
     File root = distribution.getUNCRoot();

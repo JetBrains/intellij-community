@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.html.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.SortedList;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
@@ -18,8 +19,7 @@ import java.util.LinkedList;
 
 // Algorithm described on https://www.w3.org/TR/html51/sections.html#creating-an-outline
 // One of the implementations: http://hoyois.github.com/html5outliner/ (https://github.com/hoyois/html5outliner)
-class Html5SectionsProcessor {
-
+final class Html5SectionsProcessor {
   private static class SectionHolder {
     private final XmlTag myTag;
     private final LinkedList<Section> myChildren = new LinkedList<>();
@@ -268,7 +268,7 @@ class Html5SectionsProcessor {
       int minIndex = HEADER_ELEMENTS.length;
 
       for (XmlTag subTag : header.getSubTags()) {
-        final int index = ArrayUtil.indexOf(HEADER_ELEMENTS, StringUtil.toLowerCase(subTag.getLocalName()));
+        int index = ArrayUtilRt.indexOf(HEADER_ELEMENTS, StringUtil.toLowerCase(subTag.getLocalName()), 0, HEADER_ELEMENTS.length);
         if (index < minIndex) {
           minIndex = index;
           if (minIndex == 0) break;
@@ -283,7 +283,7 @@ class Html5SectionsProcessor {
       return minIndex + 1;
     }
 
-    final int index = ArrayUtil.indexOf(HEADER_ELEMENTS, StringUtil.toLowerCase(header.getLocalName()));
+    int index = ArrayUtilRt.indexOf(HEADER_ELEMENTS, StringUtil.toLowerCase(header.getLocalName()), 0, HEADER_ELEMENTS.length);
     if (index < 0) throw new IllegalArgumentException(header.getName());
     return index + 1;
   }

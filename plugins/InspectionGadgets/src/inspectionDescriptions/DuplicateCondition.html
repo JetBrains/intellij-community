@@ -1,13 +1,26 @@
 <html>
 <body>
-Reports on any duplicate conditions among different branches of an
-<b>if</b> statement. While it may rarely be the
-desired semantics, duplicate conditions usually represent programmer oversight.
-<!-- tooltip end -->
-<p>
-Use the checkbox below to let this inspection ignore conditions which may produce side effects.
-Unchecking this checkbox may lead to some false-positives, e.g. when the same method call returns different values on subsequent invocations.
-<p>
+Reports duplicate conditions in &amp;&amp; and || expressions
+and branches of an if statement.
+While sometimes intended, in most cases this is an oversight.
 
+<p>
+  To ignore conditions that may produce side effects, use the <b>Ignore conditions with side effects</b> checkbox.
+Clearing this checkbox may lead to false-positives, for example, when the same method returns different values on subsequent invocations.
+</p>
+
+<p>
+<b>Examples:</b><br>
+<ul>
+  <li>
+    <code>boolean result = digit1 != digit2 || digit1 != digit2;</code>
+  </li>
+  <li>
+    <code>if (iterator.next() != null || iterator.next() != null)</code><br>
+    &nbsp&nbsp<code>System.out.println("Got it");</code><br>
+    <code>}</code><br>
+    <code>// Due to possible side effects of iterator.next(), the warning will only be issued if the Ignore conditions with side effects option is disabled.</code><br>
+  </li>
+</ul>
 </body>
 </html>

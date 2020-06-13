@@ -2,15 +2,10 @@
 package git4idea.index
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
 import com.intellij.util.NotNullFunction
-import git4idea.GitVcs
 import git4idea.i18n.GitBundle
 import git4idea.index.ui.GitStagePanel
 import org.jetbrains.annotations.Nls

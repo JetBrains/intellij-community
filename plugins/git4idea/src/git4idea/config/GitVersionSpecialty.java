@@ -276,6 +276,13 @@ public enum GitVersionSpecialty {
     public boolean existsIn (@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(2, 18, 0, 0));
     }
+  },
+
+  NO_VERIFY_SUPPORTED {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 24, 0, 0));
+    }
   };
 
   public abstract boolean existsIn(@NotNull GitVersion version);

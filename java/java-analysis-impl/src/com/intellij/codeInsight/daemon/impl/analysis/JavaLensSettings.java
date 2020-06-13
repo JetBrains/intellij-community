@@ -4,12 +4,12 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 public class JavaLensSettings {
   private boolean showUsages;
   private boolean showImplementations;
-  private boolean showBrokenUsages = true;
+  private boolean showRelatedProblems = true;
 
-  public JavaLensSettings(boolean showUsages, boolean showImplementations, boolean showBrokenUsages) {
+  public JavaLensSettings(boolean showUsages, boolean showImplementations, boolean showRelatedProblems) {
     this.showUsages = showUsages;
     this.showImplementations = showImplementations;
-    this.showBrokenUsages = showBrokenUsages;
+    this.showRelatedProblems = showRelatedProblems;
   }
 
   public JavaLensSettings() {
@@ -31,12 +31,12 @@ public class JavaLensSettings {
     this.showImplementations = showImplementations;
   }
 
-  public boolean isShowBrokenUsages() {
-    return showBrokenUsages;
+  public boolean isShowRelatedProblems() {
+    return showRelatedProblems;
   }
 
-  public void setShowBrokenUsages(boolean showBrokenUsages) {
-    this.showBrokenUsages = showBrokenUsages;
+  public void setShowRelatedProblems(boolean showRelatedProblems) {
+    this.showRelatedProblems = showRelatedProblems;
   }
 
   @Override
@@ -46,7 +46,7 @@ public class JavaLensSettings {
 
     JavaLensSettings settings = (JavaLensSettings)o;
 
-    if (showUsages != settings.showUsages || showBrokenUsages != settings.showBrokenUsages) return false;
+    if (showUsages != settings.showUsages || showRelatedProblems != settings.showRelatedProblems) return false;
     return showImplementations == settings.showImplementations;
   }
 
@@ -54,7 +54,7 @@ public class JavaLensSettings {
   public int hashCode() {
     int result = showUsages ? 1 : 0;
     result = 31 * result + (showImplementations ? 1 : 0);
-    result = 31 * result + (showBrokenUsages ? 1 : 0);
+    result = 31 * result + (showRelatedProblems ? 1 : 0);
     return result;
   }
 }

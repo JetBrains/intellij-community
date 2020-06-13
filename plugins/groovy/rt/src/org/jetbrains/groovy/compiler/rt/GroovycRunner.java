@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 
-public class GroovycRunner {
+public final class GroovycRunner {
 
   public static void main(String[] args) {
     System.exit(intMain(args));

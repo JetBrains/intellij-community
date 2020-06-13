@@ -230,17 +230,17 @@ public abstract class ArchiveHandler {
    */
   @NotNull
   protected Trinity<String, String, String> splitPathAndFix(@NotNull String entryName) {
-    int p = entryName.lastIndexOf('/');
+    int slashP = entryName.lastIndexOf('/');
     // There are crazy jar files with backslash-containing entries inside (IDEA-228441)
     // Under Windows we can't create files with backslash in the name
     // and although in Unix we can, we prefer not to, to maintain consistency to avoid subtle bugs when the code which confuses file separators with slashes
-    p = Math.max(p, entryName.lastIndexOf('\\'));
+    int p = Math.max(slashP, entryName.lastIndexOf('\\'));
 
     String parentName = p > 0 ? entryName.substring(0, p) : "";
     String shortName = p > 0 ? entryName.substring(p + 1) : entryName;
     String fixedParent = parentName.replace('\\', '/');
     //noinspection StringEquality
-    if (fixedParent != parentName) {
+    if (fixedParent != parentName || slashP == -1 && p != -1) {
       parentName = fixedParent;
       entryName = parentName + '/' + shortName;
     }

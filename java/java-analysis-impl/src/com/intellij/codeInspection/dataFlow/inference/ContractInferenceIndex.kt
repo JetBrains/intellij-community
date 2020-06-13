@@ -3,7 +3,11 @@ package com.intellij.codeInspection.dataFlow.inference
 
 import com.intellij.lang.LighterAST
 import com.intellij.lang.LighterASTNode
+import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.impl.source.JavaLightStubBuilder
 import com.intellij.psi.impl.source.JavaLightTreeUtil
@@ -12,6 +16,7 @@ import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.psi.impl.source.tree.JavaElementType.*
 import com.intellij.psi.impl.source.tree.LightTreeUtil
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
+import com.intellij.psi.stubs.StubTextInconsistencyException
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.gist.GistManager
@@ -32,7 +37,8 @@ private fun indexFile(tree: LighterAST): Map<Int, MethodData> {
   return visitor.result
 }
 
-internal data class ClassData(val hasSuper : Boolean, val hasPureInitializer : Boolean, val fieldModifiers : Map<String, LighterASTNode?>)
+internal data class ClassData(val hasSuper : Boolean, val hasPureInitializer : Boolean, val isFinal : Boolean, 
+                              val fieldModifiers : Map<String, LighterASTNode?>)
 
 private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeWalkingVisitor(tree) {
   var methodIndex = 0
@@ -56,10 +62,19 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
 
   private fun calcClassData(aClass: LighterASTNode) : ClassData {
     var hasSuper = aClass.tokenType == ANONYMOUS_CLASS
+    var isFinal = aClass.tokenType == ANONYMOUS_CLASS
     val fieldModifiers = HashMap<String, LighterASTNode?>()
     val initializers = ArrayList<LighterASTNode>()
     for (child in tree.getChildren(aClass)) {
       when(child.tokenType) {
+        JavaTokenType.RECORD_KEYWORD, JavaTokenType.ENUM_KEYWORD -> isFinal = true
+        MODIFIER_LIST -> {
+          isFinal = LightTreeUtil.firstChildOfType(tree, child, JavaTokenType.FINAL_KEYWORD) != null
+        }
+        ENUM_CONSTANT -> {
+          // We rely that enum constants go after ENUM_KEYWORD
+          isFinal = isFinal && LightTreeUtil.firstChildOfType(tree, child, ENUM_CONSTANT_INITIALIZER) == null
+        }
         EXTENDS_LIST -> {
           if (LightTreeUtil.firstChildOfType(tree, child, JAVA_CODE_REFERENCE) != null) {
             hasSuper = true
@@ -101,10 +116,11 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
         if (!pureInitializer) break
       }
     }
-    return ClassData(hasSuper, pureInitializer, fieldModifiers)
+    return ClassData(hasSuper, pureInitializer, isFinal, fieldModifiers)
   }
   
-  private fun getInferenceMode(method: LighterASTNode): JavaSourceInference.InferenceMode {
+  private fun getInferenceMode(method: LighterASTNode, clsData: ClassData?): JavaSourceInference.InferenceMode {
+    if (clsData?.isFinal == true) return JavaSourceInference.InferenceMode.ENABLED
     // PsiUtil#canBeOverridden logic on LighterAST
     val ctor = LightTreeUtil.firstChildOfType(tree, method, TYPE) == null
     if (ctor) return JavaSourceInference.InferenceMode.ENABLED
@@ -113,19 +129,14 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
     val isFinal = LightTreeUtil.firstChildOfType(tree, modifiers, JavaTokenType.FINAL_KEYWORD) != null
     val isPrivate = LightTreeUtil.firstChildOfType(tree, modifiers, JavaTokenType.PRIVATE_KEYWORD) != null
     if (isStatic || isFinal || isPrivate) return JavaSourceInference.InferenceMode.ENABLED
-    val aClass = tree.getParent(method)
-    if (aClass?.tokenType == ANONYMOUS_CLASS) return JavaSourceInference.InferenceMode.ENABLED
-    val classModifiers = LightTreeUtil.firstChildOfType(tree, aClass, MODIFIER_LIST)
-    if (LightTreeUtil.firstChildOfType(tree, classModifiers, JavaTokenType.FINAL_KEYWORD) != null) {
-      return JavaSourceInference.InferenceMode.ENABLED
-    }
     return JavaSourceInference.InferenceMode.PARAMETERS
   }
 
   private fun calcData(method: LighterASTNode): MethodData? {
     val body = LightTreeUtil.firstChildOfType(tree, method, CODE_BLOCK) ?: return null
     val parameterNames = getParameterNames(tree, method)
-    val inferenceMode = getInferenceMode(method)
+    val clsData = classData[tree.getParent(method)]
+    val inferenceMode = getInferenceMode(method, clsData)
     if (inferenceMode == JavaSourceInference.InferenceMode.PARAMETERS && parameterNames.isEmpty()) {
       return null
     }
@@ -134,7 +145,6 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
     if (inferenceMode == JavaSourceInference.InferenceMode.PARAMETERS) {
       return createData(body, emptyList(), null, null, notNullParams)
     }
-    val clsData = classData[tree.getParent(method)]
     val fieldMap = clsData?.fieldModifiers ?: emptyMap()
     // Constructor which has super classes may implicitly call impure super constructor, so don't infer purity for subclasses
     val ctor = LightTreeUtil.firstChildOfType(tree, method, TYPE) == null
@@ -184,22 +194,53 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
   }
 }
 
+fun handleInconsistency(method: PsiMethodImpl, cachedData: MethodData, e: RuntimeException): RuntimeException {
+  if (e is ProcessCanceledException) return e
+
+  val file = method.containingFile
+  val gistMap = gist.getFileData(file)
+  GistManager.getInstance().invalidateData(file.viewProvider.virtualFile)
+
+  val psiMap = indexFile(file.node.lighterAST)
+  if (gistMap != psiMap) {
+    GistManager.getInstance().invalidateData(file.viewProvider.virtualFile)
+
+    return RuntimeExceptionWithAttachments("Gist outdated", e,
+                                           Attachment("persisted.txt", gistMap.toString()),
+                                           Attachment("psi.txt", psiMap.toString()))
+  }
+
+  StubTextInconsistencyException.checkStubTextConsistency(file)
+  val actualData = bindMethods(psiMap, file)[method]
+  if (actualData != cachedData) {
+    return RuntimeExceptionWithAttachments("Cache outdated",
+                                           Attachment("actual.txt", actualData.toString()),
+                                           Attachment("cached.txt", cachedData.toString()))
+
+  }
+
+  return e
+}
+
 fun getIndexedData(method: PsiMethodImpl): MethodData? {
   val file = method.containingFile
   val map = CachedValuesManager.getCachedValue(file) {
-    val fileData = gist.getFileData(file)
-    val result = hashMapOf<PsiMethod, MethodData>()
-    if (fileData != null) {
-      val spine = (file as PsiFileImpl).stubbedSpine
-      var methodIndex = 0
-      for (i in 0 until spine.stubCount) {
-        if (spine.getStubType(i) === METHOD) {
-          fileData[methodIndex]?.let { result[spine.getStubPsi(i) as PsiMethod] = it }
-          methodIndex++
-        }
-      }
-    }
-    CachedValueProvider.Result.create(result, file)
+    CachedValueProvider.Result.create(bindMethods(gist.getFileData(file), file), file)
   }
   return map[method]
+}
+
+private fun bindMethods(fileData: Map<Int, MethodData>?, file: PsiFile): Map<PsiMethod, MethodData> {
+  val result = hashMapOf<PsiMethod, MethodData>()
+  if (fileData != null) {
+    val spine = (file as PsiFileImpl).stubbedSpine
+    var methodIndex = 0
+    for (i in 0 until spine.stubCount) {
+      if (spine.getStubType(i) === METHOD) {
+        fileData[methodIndex]?.let { result[spine.getStubPsi(i) as PsiMethod] = it }
+        methodIndex++
+      }
+    }
+  }
+  return result
 }

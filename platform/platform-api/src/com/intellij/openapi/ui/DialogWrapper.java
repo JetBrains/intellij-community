@@ -1376,7 +1376,7 @@ public abstract class DialogWrapper {
     if (!postponeValidation()) {
       startTrackingValidation();
     }
-    if (SystemInfo.isWindows) {
+    if (SystemInfo.isWindows || (SystemInfo.isLinux && Registry.is("ide.linux.enter.on.dialog.triggers.focused.button"))) {
       installEnterHook(root, myDisposable);
     }
     myErrorTextAlarm.setActivationComponent(root);

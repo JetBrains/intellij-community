@@ -71,7 +71,8 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
         new GitRepositoryIgnoredFilesHolder(project, this, GitRepositoryManager.getInstance(project), Git.getInstance());
       Disposer.register(this, myIgnoredRepositoryFilesHolder);
       myIgnoredRepositoryFilesHolder.addUpdateStateListener(new MyRepositoryIgnoredHolderUpdateListener(project));
-      myIgnoredRepositoryFilesHolder.addUpdateStateListener(new IgnoredToExcludedSynchronizer(project, this));
+      IgnoredToExcludedSynchronizer ignoredToExcludedSynchronizer = project.getService(IgnoredToExcludedSynchronizer.class);
+      myIgnoredRepositoryFilesHolder.addUpdateStateListener(ignoredToExcludedSynchronizer);
     }
     else {
       myStagingAreaHolder = null;

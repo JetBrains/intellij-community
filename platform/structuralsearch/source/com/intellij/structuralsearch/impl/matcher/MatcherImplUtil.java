@@ -12,7 +12,7 @@ import com.intellij.structuralsearch.StructuralSearchUtil;
 /**
  * @author Maxim.Mossienko
  */
-public class MatcherImplUtil {
+public final class MatcherImplUtil {
 
   public static PsiElement[] createTreeFromText(String text, PatternTreeContext context, LanguageFileType fileType, Project project) {
     return createTreeFromText(text, new PatternContextInfo(context), fileType, null, project, false);

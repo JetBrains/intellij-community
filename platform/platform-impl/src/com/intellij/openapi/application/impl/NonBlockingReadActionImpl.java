@@ -14,7 +14,6 @@ import com.intellij.openapi.application.constraints.BaseConstrainedExecution;
 import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -25,6 +24,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -105,12 +106,12 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
 
   @Override
   public NonBlockingReadAction<T> inSmartMode(@NotNull Project project) {
-    return withConstraint(new InSmartMode(project)).expireWithRWCompliantParent(project);
+    return withConstraint(new InSmartMode(project)).expireWith(project);
   }
 
   @Override
   public NonBlockingReadAction<T> withDocumentsCommitted(@NotNull Project project) {
-    return withConstraint(new WithDocumentsCommitted(project, ModalityState.any())).expireWithRWCompliantParent(project);
+    return withConstraint(new WithDocumentsCommitted(project, ModalityState.any())).expireWith(project);
   }
 
   @Override
@@ -123,23 +124,10 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
   @NotNull
   @Override
   public NonBlockingReadAction<T> expireWith(@NotNull Disposable parentDisposable) {
-    if (parentDisposable instanceof ComponentManager) {
-      return expireWithRWCompliantParent((ComponentManager)parentDisposable);
-    }
     Set<Disposable> disposables = new HashSet<>();
     disposables.add(parentDisposable);
     return new NonBlockingReadActionImpl<>(myComputation, myEdtFinish, myConstraints, myCancellationConditions, disposables,
                                            myCoalesceEquality, myProgressIndicator);
-  }
-
-  /**
-   * App/projects/modules are always disposed in a write action,
-   * so checking them at computation/finish start is enough
-   * and allows to avoid querying Disposer, which isn't free.
-   */
-  @NotNull
-  private NonBlockingReadAction<T> expireWithRWCompliantParent(@NotNull ComponentManager parent) {
-    return expireWhen(() -> parent.isDisposed());
   }
 
   @Override
@@ -234,7 +222,7 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
         ourTasks.add(this);
       }
       for (Disposable parent : myDisposables) {
-        if (Disposer.isDisposed(parent)) {
+        if (parent instanceof Project ? ((Project)parent).isDisposed() : Disposer.isDisposed(parent)) {
           cancel();
           break;
         }
@@ -244,7 +232,8 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
             cancel();
           }
         };
-        Disposer.register(parent, child);
+        //noinspection TestOnlyProblems
+        Disposer.register(parent instanceof ProjectImpl && ((ProjectEx)parent).isLight() ? ((ProjectImpl)parent).getEarlyDisposable() : parent, child);
         myExpirationDisposables.add(child);
       }
     }

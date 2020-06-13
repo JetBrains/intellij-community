@@ -19,9 +19,6 @@ import groovy.transform.CompileStatic
 import junit.framework.TestCase
 import org.jetbrains.annotations.NonNls
 
-/**
- * @author cdr
- */
 @CompileStatic
 class NormalizeTextTest extends TestCase {
   void testCausedBy() {

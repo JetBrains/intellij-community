@@ -123,17 +123,6 @@ public final class PluginsAdvertiser {
     PluginManagerConfigurable.showPluginConfigurableAndEnable(project, disabledPlugins.toArray(new IdeaPluginDescriptor[0]));
   }
 
-  @Nullable
-  static IdeaPluginDescriptor getDisabledPlugin(Set<? extends Plugin> plugins) {
-    for (Plugin plugin : plugins) {
-      PluginId pluginId = PluginId.getId(plugin.myPluginId);
-      if (PluginManagerCore.isDisabled(pluginId)) {
-        return PluginManagerCore.getPlugin(pluginId);
-      }
-    }
-    return null;
-  }
-
   static @Nullable List<String> hasBundledPluginToInstall(Collection<? extends Plugin> plugins) {
     if (PlatformUtils.isIdeaUltimate()) {
       return null;

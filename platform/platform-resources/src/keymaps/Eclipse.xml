@@ -297,6 +297,7 @@
   <action id="RerunTests">
     <keyboard-shortcut first-keystroke="shift alt G"/>
   </action>
+  <action id="EditorAddCaretPerSelectedLine"/>
   <action id="Resume">
     <keyboard-shortcut first-keystroke="F8"/>
     <keyboard-shortcut first-keystroke="F9"/>

@@ -4,7 +4,7 @@ package com.intellij.pom;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class PomManager {
+public final class PomManager {
   private PomManager() {
   }
 

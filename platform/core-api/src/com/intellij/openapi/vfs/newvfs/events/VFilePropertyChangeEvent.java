@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.charset.Charset;
 import java.util.Objects;
 
-public class VFilePropertyChangeEvent extends VFileEvent {
+public final class VFilePropertyChangeEvent extends VFileEvent {
   private final VirtualFile myFile;
   private final String myPropertyName;
   private final Object myOldValue;

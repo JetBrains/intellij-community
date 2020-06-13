@@ -3,8 +3,8 @@ package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil.invokeAction
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.ProgressIndicator
@@ -14,6 +14,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.awt.RelativePoint.getCenterOf
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
@@ -37,10 +39,18 @@ import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.*
 import javax.swing.*
 
-internal class GHAccountsPanel(private val project: Project,
-                               private val executorFactory: GithubApiRequestExecutor.Factory,
-                               private val avatarLoader: CachingGithubUserAvatarLoader,
-                               private val imageResizer: GithubImageResizer) : BorderLayoutPanel(), Disposable {
+private val actionManager: ActionManager get() = ActionManager.getInstance()
+
+internal class GHAccountsPanel(
+  private val project: Project,
+  private val executorFactory: GithubApiRequestExecutor.Factory,
+  private val avatarLoader: CachingGithubUserAvatarLoader,
+  private val imageResizer: GithubImageResizer
+) : BorderLayoutPanel(), Disposable, DataProvider {
+
+  companion object {
+    val KEY: DataKey<GHAccountsPanel> = DataKey.create("Github.AccountsPanel")
+  }
 
   private val accountListModel = CollectionListModel<GithubAccountDecorator>()
   private val accountList = JBList<GithubAccountDecorator>(accountListModel).apply {
@@ -50,11 +60,6 @@ internal class GHAccountsPanel(private val project: Project,
     UIUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(decoratorRenderer))
 
     selectionMode = ListSelectionModel.SINGLE_SELECTION
-    emptyText.apply {
-      appendText(GithubBundle.message("accounts.none.added"))
-      appendSecondaryText(GithubBundle.message("accounts.add"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) { addAccount() }
-      appendSecondaryText(" (${KeymapUtil.getFirstKeyboardShortcutText(CommonShortcuts.getNew())})", StatusText.DEFAULT_ATTRIBUTES, null)
-    }
   }
 
   private val progressManager = createListProgressManager()
@@ -62,9 +67,17 @@ internal class GHAccountsPanel(private val project: Project,
   private val newTokensMap = mutableMapOf<GithubAccount, String>()
 
   init {
+    accountList.emptyText.apply {
+      appendText(GithubBundle.message("accounts.none.added"))
+      appendSecondaryText(GithubBundle.message("accounts.add"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+        invokeAction(actionManager.getAction("Github.Accounts.AddGHAccount"), accountList, ActionPlaces.UNKNOWN, null, null)
+      }
+      appendSecondaryText(" (${KeymapUtil.getFirstKeyboardShortcutText(CommonShortcuts.getNew())})", StatusText.DEFAULT_ATTRIBUTES, null)
+    }
+
     addToCenter(ToolbarDecorator.createDecorator(accountList)
                   .disableUpDownActions()
-                  .setAddAction { addAccount() }
+                  .setAddAction { showAddAccountActions(it.preferredPopupPoint ?: getCenterOf(accountList)) }
                   .addExtraAction(object : ToolbarDecorator.ElementActionButton(GithubBundle.message("accounts.set.default"),
                                                                                 AllIcons.Actions.Checked) {
                     override fun actionPerformed(e: AnActionEvent) {
@@ -90,16 +103,17 @@ internal class GHAccountsPanel(private val project: Project,
     Disposer.register(this, progressManager)
   }
 
-  private fun addAccount() {
-    val dialog = GithubLoginDialog(executorFactory, project, this, ::isAccountUnique)
-    if (dialog.showAndGet()) {
-      val githubAccount = GithubAccountManager.createAccount(dialog.getLogin(), dialog.getServer())
-      newTokensMap[githubAccount] = dialog.getToken()
+  override fun getData(dataId: String): Any? {
+    if (KEY.`is`(dataId)) return this
+    return null
+  }
 
-      val accountData = GithubAccountDecorator(githubAccount, false)
-      accountListModel.add(accountData)
-      loadAccountDetails(accountData)
-    }
+  private fun showAddAccountActions(point: RelativePoint) {
+    val group = actionManager.getAction("Github.Accounts.AddAccount") as ActionGroup
+    val popup = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group)
+
+    popup.setTargetComponent(this)
+    popup.component.show(point.component, point.point.x, point.point.y)
   }
 
   private fun editAccount(decorator: GithubAccountDecorator) {
@@ -108,13 +122,22 @@ internal class GHAccountsPanel(private val project: Project,
       withCredentials(decorator.account.name)
     }
     if (dialog.showAndGet()) {
-      decorator.account.name = dialog.getLogin()
-      newTokensMap[decorator.account] = dialog.getToken()
+      decorator.account.name = dialog.login
+      newTokensMap[decorator.account] = dialog.token
       loadAccountDetails(decorator)
     }
   }
 
-  private fun isAccountUnique(login: String, server: GithubServerPath) =
+  fun addAccount(server: GithubServerPath, login: String, token: String) {
+    val githubAccount = GithubAccountManager.createAccount(login, server)
+    newTokensMap[githubAccount] = token
+
+    val accountData = GithubAccountDecorator(githubAccount, false)
+    accountListModel.add(accountData)
+    loadAccountDetails(accountData)
+  }
+
+  fun isAccountUnique(login: String, server: GithubServerPath) =
     accountListModel.items.none { it.account.name == login && it.account.server == server }
 
   fun loadExistingAccountsDetails() {

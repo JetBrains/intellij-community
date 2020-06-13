@@ -78,11 +78,11 @@ public class LambdaHighlightingUtil {
   }
 
   public static boolean insertSemicolonAfter(@NotNull PsiLambdaExpression lambdaExpression) {
-    return lambdaExpression.getBody() instanceof PsiCodeBlock || !insertSemicolon(lambdaExpression.getParent());
+    return lambdaExpression.getBody() instanceof PsiCodeBlock || insertSemicolon(lambdaExpression.getParent());
   }
 
   public static boolean insertSemicolon(PsiElement parent) {
-    return parent instanceof PsiExpressionList || parent instanceof PsiExpression;
+    return !(parent instanceof PsiExpressionList) && !(parent instanceof PsiExpression);
   }
 
   public static String checkInterfaceFunctional(@NotNull PsiType functionalInterfaceType) {

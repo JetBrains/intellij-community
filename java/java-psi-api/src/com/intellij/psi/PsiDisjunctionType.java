@@ -36,7 +36,7 @@ public class PsiDisjunctionType extends PsiType.Stub {
           break;
         }
       }
-      return CachedValueProvider.Result.create(lub, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(lub, PsiModificationTracker.MODIFICATION_COUNT);
     }, false);
   }
 

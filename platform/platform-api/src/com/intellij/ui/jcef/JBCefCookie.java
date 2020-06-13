@@ -2,7 +2,6 @@
 package com.intellij.ui.jcef;
 
 import org.cef.network.CefCookie;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +13,6 @@ import java.util.Objects;
  *
  * @author Aleksey.Rostovskiy
  */
-@ApiStatus.Experimental
 public class JBCefCookie {
   private final CefCookie myCefCookie;
 

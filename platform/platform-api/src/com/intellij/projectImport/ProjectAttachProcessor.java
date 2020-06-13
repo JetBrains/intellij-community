@@ -30,6 +30,6 @@ public class ProjectAttachProcessor {
   public void beforeDetach(@NotNull Module module) {}
 
   public static boolean canAttachToProject() {
-    return EP_NAME.getPoint().size() != 0;
+    return EP_NAME.hasAnyExtensions();
   }
 }

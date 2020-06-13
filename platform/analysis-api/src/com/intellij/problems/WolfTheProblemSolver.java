@@ -13,9 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author cdr
- */
 public abstract class WolfTheProblemSolver {
   protected static final ExtensionPointName<Condition<VirtualFile>> FILTER_EP_NAME = ExtensionPointName.create("com.intellij.problemFileHighlightFilter");
 
@@ -23,7 +20,7 @@ public abstract class WolfTheProblemSolver {
     return project.getComponent(WolfTheProblemSolver.class);
   }
 
-  public abstract boolean isProblemFile(VirtualFile virtualFile);
+  public abstract boolean isProblemFile(@NotNull VirtualFile virtualFile);
 
   public abstract void weHaveGotProblems(@NotNull VirtualFile virtualFile, @NotNull List<? extends Problem> problems);
   public abstract void weHaveGotNonIgnorableProblems(@NotNull VirtualFile virtualFile, @NotNull List<? extends Problem> problems);
@@ -33,11 +30,11 @@ public abstract class WolfTheProblemSolver {
 
   public abstract boolean hasProblemFilesBeneath(@NotNull Module scope);
 
-  public abstract Problem convertToProblem(VirtualFile virtualFile, int line, int column, String[] message);
+  public abstract Problem convertToProblem(@NotNull VirtualFile virtualFile, int line, int column, String @NotNull [] message);
 
-  public abstract void reportProblems(final VirtualFile file, Collection<? extends Problem> problems);
+  public abstract void reportProblems(@NotNull VirtualFile file, @NotNull Collection<? extends Problem> problems);
 
-  public abstract boolean hasSyntaxErrors(final VirtualFile file);
+  public abstract boolean hasSyntaxErrors(@NotNull VirtualFile file);
 
   /**
    * Reports that the specified file contains problems that cannot be discovered by running the general
@@ -73,5 +70,5 @@ public abstract class WolfTheProblemSolver {
   @Deprecated
   public abstract void addProblemListener(@NotNull ProblemListener listener, @NotNull Disposable parentDisposable);
 
-  public abstract void queue(VirtualFile suspiciousFile);
+  public abstract void queue(@NotNull VirtualFile suspiciousFile);
 }

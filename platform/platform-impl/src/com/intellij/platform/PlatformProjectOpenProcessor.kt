@@ -1,31 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform
 
-import com.intellij.configurationStore.runInAutoSaveDisabledMode
-import com.intellij.conversion.ConversionResult
-import com.intellij.conversion.ConversionService
-import com.intellij.diagnostic.ActivityCategory
-import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.diagnostic.runActivity
-import com.intellij.ide.GeneralSettings
-import com.intellij.ide.IdeEventQueue
-import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.lightEdit.LightEditUtil
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Key
@@ -34,12 +21,9 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
-import com.intellij.ui.IdeUICustomization
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
@@ -47,6 +31,7 @@ import java.nio.file.Paths
 import java.util.*
 
 private val LOG = logger<PlatformProjectOpenProcessor>()
+private val EP_NAME = ExtensionPointName<DirectoryProjectConfigurator>("com.intellij.directoryProjectConfigurator")
 
 class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectOpenProcessor {
   enum class Option {
@@ -94,7 +79,11 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
                       line: Int,
                       callback: ProjectOpenedCallback?,
                       options: EnumSet<Option>): Project? {
-      val openProjectOptions = OpenProjectTask(forceOpenInNewFrame = options.contains(Option.FORCE_NEW_FRAME), projectToClose = projectToClose, callback = callback, line = line)
+      val openProjectOptions = OpenProjectTask(forceOpenInNewFrame = options.contains(Option.FORCE_NEW_FRAME),
+                                               projectToClose = projectToClose,
+                                               callback = callback,
+                                               runConfigurators = callback != null,
+                                               line = line)
       return doOpenProject(Paths.get(virtualFile.path), openProjectOptions)
     }
 
@@ -103,139 +92,92 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     fun createTempProjectAndOpenFile(file: Path, options: OpenProjectTask): Project? {
       val dummyProjectName = file.fileName.toString()
       val baseDir = FileUtilRt.createTempDirectory(dummyProjectName, null, true).toPath()
-      val copy = options.copy(isNewProject = true, projectName = dummyProjectName, isDummyProject = true)
-      val project = openExistingProject(file, baseDir, copy) ?: return null
+      val copy = options.copy(isNewProject = true, projectName = dummyProjectName, runConfigurators = true, preparedToOpen = { module ->
+        // add content root for chosen (single) file
+        ModuleRootModificationUtil.updateModel(module) { model ->
+          val entries = model.contentEntries
+          // remove custom content entry created for temp directory
+          if (entries.size == 1) {
+            model.removeContentEntry(entries[0])
+          }
+          model.addContentEntry(VfsUtilCore.pathToUrl(file.toString()))
+        }
+      })
+      val project = ProjectManagerEx.getInstanceEx().openProject(baseDir, copy) ?: return null
       openFileFromCommandLine(project, file, copy.line, copy.column)
       return project
     }
 
     @ApiStatus.Internal
     @JvmStatic
-    fun doOpenProject(file: Path, options: OpenProjectTask): Project? {
+    fun doOpenProject(file: Path, originalOptions: OpenProjectTask): Project? {
       LOG.info("Opening $file")
-      var baseDir = file
-      if (!Files.isDirectory(file)) {
-        if (LightEditUtil.openFile(file)) {
-          return LightEditUtil.getProject()
-        }
 
-        var baseDirCandidate = file.parent
-        while (baseDirCandidate != null && !Files.exists(baseDirCandidate.resolve(Project.DIRECTORY_STORE_FOLDER))) {
-          baseDirCandidate = baseDirCandidate.parent
-        }
-
-        // no reasonable directory -> create new temp one or use parent
-        if (baseDirCandidate == null) {
-          LOG.info("No project directory found")
-          if (Registry.`is`("ide.open.file.in.temp.project.dir")) {
-            return createTempProjectAndOpenFile(file, options)
-          }
-
-          baseDir = file.parent
-          options.isNewProject = !Files.isDirectory(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER))
-        }
-        else {
-          baseDir = baseDirCandidate
-          LOG.info("Project directory found: $baseDir")
-        }
+      if (Files.isDirectory(file)) {
+        return ProjectManagerEx.getInstanceEx().openProject(file, createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null))
       }
 
-      SaveAndSyncHandler.getInstance().disableAutoSave().use {
-        val project = openExistingProject(file, baseDir, options)
-        if (project != null && file !== baseDir && !Files.isDirectory(file)) {
-          openFileFromCommandLine(project, file, options.line, options.column)
-        }
-        return project
-      }
-    }
-
-    @ApiStatus.Internal
-    @JvmStatic
-    @JvmOverloads
-    fun openExistingProject(projectDir: Path, options: OpenProjectTask = OpenProjectTask()): Project? {
-      return openExistingProject(projectDir, projectDir, options)
-    }
-
-    @ApiStatus.Internal
-    @JvmStatic
-    fun openExistingProject(file: Path, ideaProjectDir: Path?, options: OpenProjectTask): Project? {
-      if (options.project != null) {
-        val projectManager = ProjectManagerEx.getInstanceExIfCreated()
-        if (projectManager != null && projectManager.isProjectOpened(options.project)) {
-          return null
-        }
+      var options = originalOptions
+      if (LightEditUtil.openFile(file)) {
+        return LightEditUtil.getProject()
       }
 
-      val activity = StartUpMeasurer.startMainActivity("project opening preparation")
-      if (!options.forceOpenInNewFrame) {
-        val openProjects: Array<Project>? = ProjectManager.getInstanceIfCreated()?.openProjects
-        if (!openProjects.isNullOrEmpty()) {
-          var projectToClose = options.projectToClose
-          if (projectToClose == null) {
-            // if several projects are opened, ask to reuse not last opened project frame, but last focused (to avoid focus switching)
-            val lastFocusedFrame = IdeFocusManager.getGlobalInstance().lastFocusedFrame
-            projectToClose = lastFocusedFrame?.project
-            if (projectToClose == null || projectToClose is LightEditCompatible) {
-              projectToClose = openProjects[openProjects.size - 1]
-            }
-          }
-          if (checkExistingProjectOnOpen(projectToClose, options.callback, ideaProjectDir)) {
-            return null
-          }
-        }
+      var baseDirCandidate = file.parent
+      while (baseDirCandidate != null && !Files.exists(baseDirCandidate.resolve(Project.DIRECTORY_STORE_FOLDER))) {
+        baseDirCandidate = baseDirCandidate.parent
       }
 
-      var result: PrepareProjectResult? = null
-      runInAutoSaveDisabledMode {
-        val frameAllocator = if (ApplicationManager.getApplication().isHeadlessEnvironment) ProjectFrameAllocator() else ProjectUiFrameAllocator(options, file)
-        val isCompleted = frameAllocator.run {
-          activity.end()
-          if (options.project == null) {
-            result = prepareProject(file, options, ideaProjectDir!!)
-            if (result?.project == null) {
-              frameAllocator.projectNotLoaded(error = null)
-              return@run
-            }
-          }
-          else {
-            result = PrepareProjectResult(options.project, null)
-          }
-
-          val project = result!!.project
-          frameAllocator.projectLoaded(project)
-          if (ProjectManagerEx.getInstanceEx().openProject(project)) {
-            frameAllocator.projectOpened(project)
-          }
-          else {
-            frameAllocator.projectNotLoaded(error = null)
-            result = null
-          }
+      val baseDir: Path
+      // no reasonable directory -> create new temp one or use parent
+      if (baseDirCandidate == null) {
+        LOG.info("No project directory found")
+        if (Registry.`is`("ide.open.file.in.temp.project.dir")) {
+          return createTempProjectAndOpenFile(file, options)
         }
 
-        if (!isCompleted) {
-          result = null
-        }
+        baseDir = file.parent
+        options = options.copy(isNewProject = !Files.isDirectory(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER)))
+      }
+      else {
+        baseDir = baseDirCandidate
+        LOG.info("Project directory found: $baseDir")
       }
 
-      val project = result?.project
-      if (project == null) {
-        if (options.showWelcomeScreen) {
-          WelcomeFrame.showIfNoProjectOpened()
-        }
-        return null
-      }
-      if (options.callback != null) {
-        options.callback!!.projectOpened(project, result?.module ?: ModuleManager.getInstance(project).modules[0])
+      val project = ProjectManagerEx.getInstanceEx().openProject(baseDir, if (baseDir == file) options else options.copy(projectName = file.fileName.toString()))
+      if (project != null && file != baseDir) {
+        openFileFromCommandLine(project, file, options.line, options.column)
       }
       return project
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    @Deprecated(message = "If project base dir differs from project store base dir, specify it as contentRoot in the options", level = DeprecationLevel.ERROR)
+    fun openExistingProject(file: Path, projectStoreBaseDir: Path, options: OpenProjectTask): Project? {
+      if (file == projectStoreBaseDir) {
+        return ProjectManagerEx.getInstanceEx().openProject(projectStoreBaseDir, options)
+      }
+      else {
+        return ProjectManagerEx.getInstanceEx().openProject(projectStoreBaseDir, options.copy(projectName = file.fileName.toString()))
+      }
     }
 
     @JvmStatic
     fun runDirectoryProjectConfigurators(baseDir: Path, project: Project, newProject: Boolean): Module {
       val moduleRef = Ref<Module>()
       val virtualFile = ProjectUtil.getFileAndRefresh(baseDir)!!
-      DirectoryProjectConfigurator.EP_NAME.forEachExtensionSafe { configurator: DirectoryProjectConfigurator ->
-        configurator.configureProject(project, virtualFile, moduleRef, newProject)
+      EP_NAME.forEachExtensionSafe { configurator ->
+        fun task() {
+          configurator.configureProject(project, virtualFile, moduleRef, newProject)
+        }
+        if (configurator.isEdtRequired) {
+          ApplicationManager.getApplication().invokeAndWait {
+            task()
+          }
+        }
+        else {
+          task()
+        }
       }
       return moduleRef.get()
     }
@@ -246,6 +188,28 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         processor.attachToProject(project, projectDir, callback)
       } != null
     }
+
+    /**
+     * If project file in IDEA format (.idea directory or .ipr file) exists, open it and run configurators if no modules.
+     *
+     * If doesn't exists, create a new project using default project template and run configurators (something that creates module).
+     * (at the moment of creation project file in IDEA format will be removed if any).
+     *
+     * This method must be not used in tests.
+     *
+     * See OpenProjectTest.
+     */
+    @ApiStatus.Internal
+    @JvmStatic
+    fun createOptionsToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?): OpenProjectTask {
+      // doesn't make sense to refresh or to use default project as template in tests
+      val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
+      return OpenProjectTask(runConfigurators = true,
+                             isNewProject = !ProjectUtil.isValidProjectPath(projectDir),
+                             projectToClose = projectToClose,
+                             isRefreshVfsNeeded = !isUnitTestMode,
+                             useDefaultProjectAsTemplate = !isUnitTestMode)
+    }
   }
 
   override fun canOpenProject(file: VirtualFile) = file.isDirectory
@@ -255,19 +219,12 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
   override fun lookForProjectsInDirectory() = false
 
   override fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
-    val options = OpenProjectTask(forceOpenInNewFrame = forceOpenInNewFrame, projectToClose = projectToClose)
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      // doesn't make sense to use default project in tests for heavy projects
-      options.useDefaultProjectAsTemplate = false
-    }
-    val baseDir = Paths.get(virtualFile.path)
-    options.isNewProject = !ProjectUtil.isValidProjectPath(baseDir)
-    return doOpenProject(baseDir, options)
+    val baseDir = virtualFile.toNioPath()
+    return doOpenProject(baseDir, createOptionsToOpenDotIdeaOrCreateNewIfNotExists(baseDir, projectToClose).copy(forceOpenInNewFrame = forceOpenInNewFrame))
   }
 
-  override fun openProjectAndFile(virtualFile: VirtualFile, line: Int, column: Int, tempProject: Boolean): Project? {
+  override fun openProjectAndFile(file: Path, line: Int, column: Int, tempProject: Boolean): Project? {
     // force open in a new frame if temp project
-    val file = Paths.get(virtualFile.path)
     if (tempProject) {
       return createTempProjectAndOpenFile(file, OpenProjectTask(forceOpenInNewFrame = true, line = line, column = column))
     }
@@ -278,91 +235,6 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
   @Suppress("HardCodedStringLiteral")
   override fun getName() = "text editor"
-}
-
-internal data class PrepareProjectResult(val project: Project, val module: Module?)
-
-private fun prepareProject(file: Path, options: OpenProjectTask, baseDir: Path): PrepareProjectResult? {
-  val project: Project?
-  if (options.isNewProject) {
-    project = ProjectManagerEx.getInstanceEx().newProject(baseDir, options.projectName ?: file.fileName.toString(), options)
-  }
-  else {
-    val indicator = ProgressManager.getInstance().progressIndicator
-    indicator?.text = IdeUICustomization.getInstance().projectMessage("progress.text.project.checking.configuration")
-    project = convertAndLoadProject(baseDir, options)
-    indicator?.text = ""
-  }
-
-  if (project == null) {
-    return null
-  }
-
-  if (options.isNewProject || (options.runConfiguratorsIfNoModules && ModuleManager.getInstance(project).modules.isEmpty())) {
-    val module = configureNewProject(project, baseDir, file, options)
-    return PrepareProjectResult(project, module)
-  }
-  else {
-    return PrepareProjectResult(project, module = null)
-  }
-}
-
-private fun configureNewProject(project: Project, baseDir: Path, contentRoot: Path, options: OpenProjectTask): Module? {
-  var module: Module? = null
-  ApplicationManager.getApplication().invokeAndWait {
-    module = PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(baseDir, project, options.isNewProject)
-  }
-
-  if (options.isDummyProject) {
-    // add content root for chosen (single) file
-    ModuleRootModificationUtil.updateModel(module!!) { model ->
-      val entries = model.contentEntries
-      // remove custom content entry created for temp directory
-      if (entries.size == 1) {
-        model.removeContentEntry(entries[0])
-      }
-      model.addContentEntry(VfsUtilCore.pathToUrl(contentRoot.toString()))
-    }
-  }
-  return module
-}
-
-private fun checkExistingProjectOnOpen(projectToClose: Project, callback: ProjectOpenedCallback?, projectDir: Path?): Boolean {
-  val settings = GeneralSettings.getInstance()
-  val isValidProject = projectDir != null && ProjectUtil.isValidProjectPath(projectDir)
-  if (projectDir != null && ProjectAttachProcessor.canAttachToProject() &&
-      (!isValidProject || settings.confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK)) {
-    val exitCode = ProjectUtil.confirmOpenOrAttachProject()
-    if (exitCode == -1) {
-      return true
-    }
-    else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
-      if (!ProjectManagerEx.getInstanceEx().closeAndDispose(projectToClose)) {
-        return true
-      }
-    }
-    else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
-      if (PlatformProjectOpenProcessor.attachToProject(projectToClose, projectDir, callback)) {
-        return true
-      }
-    }
-    // process all pending events that can interrupt focus flow
-    // todo this can be removed after taming the focus beast
-    IdeEventQueue.getInstance().flushQueue()
-  }
-  else {
-    val exitCode = ProjectUtil.confirmOpenNewProject(false)
-    if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
-      if (!ProjectManagerEx.getInstanceEx().closeAndDispose(projectToClose)) {
-        return true
-      }
-    }
-    else if (exitCode != GeneralSettings.OPEN_PROJECT_NEW_WINDOW) {
-      // not in a new window
-      return true
-    }
-  }
-  return false
 }
 
 private fun openFileFromCommandLine(project: Project, file: Path, line: Int, column: Int) {
@@ -382,26 +254,4 @@ private fun openFileFromCommandLine(project: Project, file: Path, line: Int, col
       navigatable.navigate(true)
     }, ModalityState.NON_MODAL, project.disposed)
   }
-}
-
-private fun convertAndLoadProject(path: Path, options: OpenProjectTask): Project? {
-  var conversionResult: ConversionResult? = null
-
-  if (options.runConversionsBeforeOpen) {
-    conversionResult = runActivity("project conversion", category = ActivityCategory.MAIN) {
-      ConversionService.getInstance().convert(path)
-    }
-    if (conversionResult.openingIsCanceled()) {
-      return null
-    }
-  }
-
-  val project = ProjectManagerImpl.createProject(path, options.projectName)
-  ProjectManagerImpl.initProject(path, project, options.isRefreshVfsNeeded, null, ProgressManager.getInstance().progressIndicator)
-  if (conversionResult != null && !conversionResult.conversionNotNeeded()) {
-    StartupManager.getInstance(project).registerPostStartupActivity {
-      conversionResult.postStartupActivity(project)
-    }
-  }
-  return project
 }

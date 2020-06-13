@@ -1744,6 +1744,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     return myPopup != null ? myPopup.getWindow() : null;
   }
 
+  @Override
   public void setUserData(@NotNull List<Object> userData) {
     myUserData = userData;
   }

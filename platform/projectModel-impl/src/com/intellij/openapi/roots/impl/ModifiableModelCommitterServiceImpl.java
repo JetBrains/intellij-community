@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 @ApiStatus.Internal
-public class ModifiableModelCommitterServiceImpl implements ModifiableModelCommitterService {
+class ModifiableModelCommitterServiceImpl implements ModifiableModelCommitterService {
   private static final Logger LOG = Logger.getInstance(ModifiableModelCommitter.class);
 
   @Override

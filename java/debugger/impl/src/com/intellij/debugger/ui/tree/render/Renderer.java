@@ -9,12 +9,18 @@ import java.util.concurrent.CompletableFuture;
 public interface Renderer extends Cloneable, JDOMExternalizable {
   String getUniqueId();
 
-  /***
-   * Checks whether this renderer is applicable to this value
-   * @param type
+  /**
+   * Checks whether this renderer is applicable to this type
+   * @deprecated override {@link #isApplicableAsync(Type)}
    */
-  boolean isApplicable(Type type);
+  @Deprecated
+  default boolean isApplicable(Type type) {
+    throw new AbstractMethodError("Override isApplicableAsync");
+  }
 
+  /**
+   * Checks whether this renderer is applicable to this type
+   */
   default CompletableFuture<Boolean> isApplicableAsync(Type type) {
     return CompletableFuture.completedFuture(isApplicable(type));
   }

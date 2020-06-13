@@ -32,7 +32,6 @@ public class CastConflictsWithInstanceofInspectionTest extends LightJavaInspecti
   public void testIfElseCheckBefore() { doTest(); }
   public void testAssertCheckBefore() { doTest(); }
   public void testAssertionMethodCheckBefore() { doTest(); }
-  public void testCastMethod() { doTest(); }
   public void testWhileOrChain() { doTest(); }
   public void testOrCasts() { doTest(); }
   public void testNextOperand() { doTest(); }

@@ -14,15 +14,16 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChanged
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import org.junit.Assert.*
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
@@ -125,6 +126,7 @@ class ProjectLibraryBridgeTest {
     checkLibraryReplacedEvent(events[6], interimLibraryName, mavenLibraryName)
   }
 
+  @Ignore("Unsupported yet")
   @Test
   fun `test project libraries name swapping in one transaction`() = WriteCommandAction.runWriteCommandAction(project) {
     val antLibraryName = "ant-lib"

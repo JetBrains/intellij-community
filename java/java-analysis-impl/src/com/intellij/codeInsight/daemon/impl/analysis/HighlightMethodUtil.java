@@ -450,9 +450,7 @@ public class HighlightMethodUtil {
         else {
           TextRange range = getFixRange(methodCall);
           registerUsageFixes(methodCall, highlightInfo, range);
-          QuickFixAction.registerQuickFixAction(highlightInfo, range, QUICK_FIX_FACTORY.createStaticImportMethodFix(methodCall));
-          QuickFixAction.registerQuickFixAction(highlightInfo, range, QUICK_FIX_FACTORY.createQualifyStaticMethodCallFix(methodCall));
-          QuickFixAction.registerQuickFixAction(highlightInfo, range, QUICK_FIX_FACTORY.addMethodQualifierFix(methodCall));
+          registerStaticMethodQualifierFixes(methodCall, highlightInfo);
           if (resolved instanceof PsiVariable && languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
             PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(((PsiVariable)resolved).getType());
             if (method != null) {
@@ -466,6 +464,13 @@ public class HighlightMethodUtil {
       highlightInfo = GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(resolved, referenceToMethod, substitutor, javaSdkVersion);
     }
     holder.add(highlightInfo);
+  }
+
+  private static void registerStaticMethodQualifierFixes(@NotNull PsiMethodCallExpression methodCall, HighlightInfo highlightInfo) {
+    TextRange methodExpressionRange = methodCall.getMethodExpression().getTextRange();
+    QuickFixAction.registerQuickFixAction(highlightInfo, methodExpressionRange, QUICK_FIX_FACTORY.createStaticImportMethodFix(methodCall));
+    QuickFixAction.registerQuickFixAction(highlightInfo, methodExpressionRange, QUICK_FIX_FACTORY.createQualifyStaticMethodCallFix(methodCall));
+    QuickFixAction.registerQuickFixAction(highlightInfo, methodExpressionRange, QUICK_FIX_FACTORY.addMethodQualifierFix(methodCall));
   }
 
   /**
@@ -927,9 +932,7 @@ public class HighlightMethodUtil {
     WrapExpressionFix.registerWrapAction(methodCandidates, list.getExpressions(), highlightInfo, fixRange);
     registerChangeParameterClassFix(methodCall, list, highlightInfo);
     if (methodCandidates.length == 0) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.createStaticImportMethodFix(methodCall));
-      QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.createQualifyStaticMethodCallFix(methodCall));
-      QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.addMethodQualifierFix(methodCall));
+      registerStaticMethodQualifierFixes(methodCall, highlightInfo);
     }
     for (IntentionAction action : QUICK_FIX_FACTORY.getVariableTypeFromCallFixes(methodCall, list)) {
       QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, action);
@@ -1644,8 +1647,8 @@ public class HighlightMethodUtil {
         QuickFixAction.registerQuickFixActions(
           info, constructorCall.getTextRange(), QUICK_FIX_FACTORY.createCreateConstructorFromUsageFixes(constructorCall)
         );
-        if (classReference != null) {
-          ConstructorParametersFixer.registerFixActions(classReference, constructorCall, info,getFixRange(list));
+        if (classReference != null && info != null) {
+          ConstructorParametersFixer.registerFixActions(classReference, constructorCall, info, getFixRange(list));
         }
         holder.add(info);
         return;

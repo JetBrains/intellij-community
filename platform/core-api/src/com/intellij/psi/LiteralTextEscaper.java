@@ -19,9 +19,6 @@ package com.intellij.psi;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
-*/
 public abstract class LiteralTextEscaper<T extends PsiLanguageInjectionHost> {
   protected final T myHost;
 

@@ -71,8 +71,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   }
   
   private TypeInfo getTypeInfo() {
-    return CachedValuesManager.getCachedValue(
-      this, () -> CachedValueProvider.Result.create(calculateTypeInfo(), PsiModificationTracker.MODIFICATION_COUNT));
+    return CachedValuesManager.getProjectPsiDependentCache(this, __ -> calculateTypeInfo());
   }
 
   private @NotNull TypeInfo calculateTypeInfo() {

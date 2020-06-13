@@ -533,12 +533,7 @@ public final class LoadTextUtil {
                                                          boolean saveDetectedSeparators,
                                                          boolean saveBOM) {
     DetectResult info = detectInternalCharsetAndSetBOM(virtualFile, bytes, bytes.length, saveBOM, virtualFile.getFileType());
-    byte[] bom = info.BOM;
-    ConvertResult result = convertBytes(bytes, Math.min(bom == null ? 0 : bom.length, bytes.length), bytes.length,
-                                        info.hardCodedCharset);
-    if (saveDetectedSeparators) {
-      virtualFile.setDetectedLineSeparator(result.majorLineSeparator());
-    }
+    ConvertResult result = convertBytesAndSetSeparator(bytes, bytes.length, virtualFile, saveDetectedSeparators, info, info.hardCodedCharset);
     return result.text;
   }
 
@@ -574,15 +569,31 @@ public final class LoadTextUtil {
       toProcess = null;
     }
     else {
-      byte[] bom = info.BOM;
-      int BOMEndOffset = Math.min(length, bom == null ? 0 : bom.length);
-      ConvertResult result = convertBytes(bytes, BOMEndOffset, length, internalCharset);
-      if (saveDetectedSeparators) {
-        virtualFile.setDetectedLineSeparator(result.majorLineSeparator());
-      }
+      ConvertResult result =
+        convertBytesAndSetSeparator(bytes, length, virtualFile, saveDetectedSeparators, info, internalCharset);
       toProcess = result.text;
     }
     return fileTextProcessor.fun(toProcess);
+  }
+
+  @NotNull
+  private static ConvertResult convertBytesAndSetSeparator(byte @NotNull [] bytes,
+                                                           int length,
+                                                           @NotNull VirtualFile virtualFile,
+                                                           boolean saveDetectedSeparators,
+                                                           @NotNull DetectResult info,
+                                                           @NotNull Charset internalCharset) {
+    byte[] bom = info.BOM;
+    int BOMEndOffset = Math.min(length, bom == null ? 0 : bom.length);
+    ConvertResult result = convertBytes(bytes, BOMEndOffset, length, internalCharset);
+    if (saveDetectedSeparators) {
+      String separator = result.majorLineSeparator();
+      // when in doubt, leave old separator
+      if (separator != null) {
+        virtualFile.setDetectedLineSeparator(separator);
+      }
+    }
+    return result;
   }
 
   /**

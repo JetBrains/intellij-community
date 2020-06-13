@@ -195,6 +195,10 @@
                      key="suspicious.comparator.compare.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.SuspiciousComparatorCompareInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SuspiciousInvocationHandlerImplementation" bundle="messages.JavaAnalysisBundle"
+                     key="suspicious.invocation.handler.implementation.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.bugs.SuspiciousInvocationHandlerImplementationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CompareToUsesNonFinalVariable" bundle="messages.InspectionGadgetsBundle"
                      key="non.final.field.compareto.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
@@ -632,13 +636,10 @@
     <localInspection groupPath="Java" language="JAVA" shortName="DoubleNegation" bundle="messages.InspectionGadgetsBundle" key="double.negation.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.DoubleNegationInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="DuplicateBooleanBranch" bundle="messages.InspectionGadgetsBundle"
-                     key="duplicate.boolean.branch.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.control.flow.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.controlflow.DuplicateBooleanBranchInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="DuplicateCondition" bundle="messages.InspectionGadgetsBundle" key="duplicate.condition.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.DuplicateConditionInspection"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.controlflow.DuplicateConditionInspectionMerger"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EnumSwitchStatementWhichMissesCases" bundle="messages.InspectionGadgetsBundle"
                      key="enum.switch.statement.which.misses.cases.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.control.flow.issues" enabledByDefault="true" level="INFORMATION"
@@ -1487,10 +1488,6 @@
                      key="placeholder.count.matches.argument.count.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.logging.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.logging.PlaceholderCountMatchesArgumentCountInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="RedundantObjectArrayCreationInLogging" bundle="messages.InspectionGadgetsBundle"
-                     key="redundant.object.array.creation.in.logging" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.logging.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.logging.RedundantObjectArrayCreationInLoggingInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="PublicMethodWithoutLogging" bundle="messages.InspectionGadgetsBundle"
                      key="public.method.without.logging.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.logging.issues" enabledByDefault="false" level="WARNING"

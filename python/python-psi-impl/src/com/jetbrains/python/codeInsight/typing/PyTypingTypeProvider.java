@@ -3,7 +3,6 @@ package com.jetbrains.python.codeInsight.typing;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -30,7 +29,6 @@ import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterType
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
-import com.jetbrains.python.psi.impl.PyCallExpressionNavigator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.stubs.PyClassElementType;
 import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType;
@@ -188,7 +186,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       }
     }
 
-    return getTypeVarTypeForCallee(referenceExpression, context);
+    return null;
   }
 
   @Override
@@ -311,33 +309,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     return new PyCustomType(CALLABLE, null, false, true, PyBuiltinCache.getInstance(anchor).getObjectType());
   }
 
-  @Nullable
-  private static PyType getTypeVarTypeForCallee(@NotNull PyReferenceExpression referenceExpression, @NotNull TypeEvalContext context) {
-    if (PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceExpression) == null) return null;
-
-    if (resolveToQualifiedNames(referenceExpression, context).contains(TYPE_VAR)) {
-      final List<PyCallableParameter> parameters = new ArrayList<>();
-
-      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(referenceExpression);
-      final LanguageLevel languageLevel = LanguageLevel.forElement(referenceExpression);
-      final PyElementGenerator generator = PyElementGenerator.getInstance(referenceExpression.getProject());
-
-      parameters.add(PyCallableParameterImpl.nonPsi("name", builtinCache.getStringType(languageLevel)));
-      final PyType typeOrForwardReference = PyUnionType.union(builtinCache.getTypeType(), builtinCache.getStrType());
-      parameters.add(PyCallableParameterImpl.positionalNonPsi("constraints", typeOrForwardReference));
-      parameters.add(PyCallableParameterImpl.nonPsi("bound", typeOrForwardReference, generator.createEllipsis()));
-
-      final PyClassType boolType = builtinCache.getBoolType();
-      final PyExpression falseValue = generator.createExpressionFromText(languageLevel, "False");
-      parameters.add(PyCallableParameterImpl.nonPsi("covariant", boolType, falseValue));
-      parameters.add(PyCallableParameterImpl.nonPsi("contravariant", boolType, falseValue));
-
-      return new PyCallableTypeImpl(parameters, null);
-    }
-
-    return null;
-  }
-
   private static boolean omitFirstParamInTypeComment(@NotNull PyFunction func, @NotNull PyFunctionTypeAnnotation annotation) {
     return func.getContainingClass() != null && func.getModifier() != PyFunction.Modifier.STATICMETHOD &&
            annotation.getParameterTypeList().getParameterTypes().size() < func.getParameterList().getParameters().length;
@@ -408,6 +379,13 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (level != null) {
         return getOpenFunctionCallType(function, (PyCallExpression)callSite, level, context);
       }
+    }
+
+    final PyClass initializedClass = PyUtil.turnConstructorIntoClass(function);
+    if (initializedClass != null && TYPE_VAR.equals(initializedClass.getQualifiedName())) {
+      // `typing.TypeVar` call should be assigned to a target and hence should be processed by [getReferenceType]
+      // but the corresponding type is also returned here to suppress type checker on `T = TypeVar("T")` assignment.
+      return Ref.create(getGenericTypeFromTypeVar(callSite, new Context(context)));
     }
 
     return null;
@@ -1384,7 +1362,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @NotNull
   public static Collection<String> resolveToQualifiedNames(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
-    final Set<String> names = Sets.newLinkedHashSet();
+    final Set<String> names = new LinkedHashSet<String>();
     for (PsiElement resolved : tryResolving(expression, context)) {
       final String name = getQualifiedName(resolved);
       if (name != null) {

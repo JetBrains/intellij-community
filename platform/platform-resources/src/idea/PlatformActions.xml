@@ -1228,7 +1228,7 @@
     <group id="AnalyzeStacktraceToolbar"/>
 
     <group id="ReaderModeActionGroup" class="com.intellij.codeInsight.actions.ReaderModeActionGroup">
-      <action id="ReaderModeAction" class="com.intellij.codeInsight.actions.ReaderModeAction" icon="AllIcons.Actions.Edit"/>
+      <action id="ReaderModeAction" class="com.intellij.codeInsight.actions.ReaderModeAction" icon="AllIcons.Actions.Show"/>
     </group>
   </actions>
 </idea-plugin>

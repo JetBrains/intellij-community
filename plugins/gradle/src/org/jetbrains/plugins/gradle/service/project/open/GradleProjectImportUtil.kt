@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("GradleProjectImportUtil")
 package org.jetbrains.plugins.gradle.service.project.open
 
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
@@ -10,10 +11,16 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import org.gradle.util.GradleVersion
+import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager
+import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
+import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.GradleEnvironment
+import org.jetbrains.plugins.gradle.util.GradleUtil
+import java.nio.file.Path
 
 fun canOpenGradleProject(file: VirtualFile): Boolean =
   GradleOpenProjectProvider().canOpenProject(file)
@@ -45,8 +52,30 @@ fun linkAndRefreshGradleProject(projectFilePath: String, project: Project) {
   GradleOpenProjectProvider().linkToExistingProject(projectFile, project)
 }
 
-fun setupGradleSettings(project: Project, settings: GradleProjectSettings, projectDirectory: String, gradleVersion: GradleVersion) =
-  GradleOpenProjectProvider().setupGradleSettings(project, settings, projectDirectory, gradleVersion)
+@ApiStatus.Internal
+fun GradleSettings.setupGradleSettings() {
+  gradleVmOptions = GradleEnvironment.Headless.GRADLE_VM_OPTIONS ?: gradleVmOptions
+  isOfflineWork = GradleEnvironment.Headless.GRADLE_OFFLINE?.toBoolean() ?: isOfflineWork
+  serviceDirectoryPath = GradleEnvironment.Headless.GRADLE_SERVICE_DIRECTORY ?: serviceDirectoryPath
+  storeProjectFilesExternally = true
+}
+
+@ApiStatus.Internal
+fun GradleProjectSettings.setupGradleProjectSettings(projectDirectory: Path) {
+  externalProjectPath = projectDirectory.toString()
+  isUseQualifiedModuleNames = true
+  distributionType = GradleEnvironment.Headless.GRADLE_DISTRIBUTION_TYPE?.let(DistributionType::valueOf)
+                     ?: DistributionType.DEFAULT_WRAPPED
+  gradleHome = GradleEnvironment.Headless.GRADLE_HOME ?: suggestGradleHome()
+}
+
+private fun suggestGradleHome(): String? {
+  val installationManager = ServiceManager.getService(GradleInstallationManager::class.java)
+  val lastUsedGradleHome = GradleUtil.getLastUsedGradleHome().nullize()
+  if (lastUsedGradleHome != null) return lastUsedGradleHome
+  val gradleHome = installationManager.autodetectedGradleHome ?: return null
+  return FileUtil.toCanonicalPath(gradleHome.path)
+}
 
 private fun validateGradleProject(projectFilePath: String, project: Project): ValidationInfo? {
   val systemSettings = ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID)

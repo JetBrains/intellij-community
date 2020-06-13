@@ -31,6 +31,7 @@ import com.intellij.openapi.util.text.StringUtil;
   private boolean heredocWithWhiteSpaceIgnore;
   private int regexStart = -1;
   private int regexGroups = 0;
+  private int herestringStartPosition = -1;
   private final IntStack stateStack = new IntStack(1_000);
   private final IntStack parenStack = new IntStack(1_000);
 
@@ -71,6 +72,7 @@ import com.intellij.openapi.util.text.StringUtil;
     isArithmeticExpansion = false;
     isQuoteOpen = false;
     isBackquoteOpen = false;
+    herestringStartPosition = -1;
     regexStart = -1;
     regexGroups = 0;
   }
@@ -87,17 +89,18 @@ Shebang                  = #\! {InputCharacter}*
 Comment                  = # {InputCharacter}*
 
 EscapedChar              = "\\" [^\n]
+EscapedAnyChar           = {EscapedChar} | {LineContinuation}
 Quote                    = \"
 
 UnclosedRawString        = '[^']*
 DollarSignRawString      = "$'"([^'] | {EscapedChar})*
 RawString                = {UnclosedRawString}' | {DollarSignRawString}'
 
-WordFirst                = [[:letter:]||[:digit:]||[_/@?.*:%\^+,~-]] | {EscapedChar} | [\u00C0-\u00FF] | {LineContinuation}
+WordFirst                = [[:letter:]||[:digit:]||[_/@?.*:%\^+,~-]] | {EscapedAnyChar} | [\u00C0-\u00FF]
 WordAfter                = {WordFirst} | [#!]
 Word                     = {WordFirst}{WordAfter}*
 
-ArithWordFirst           = [a-zA-Z_@.] | {EscapedChar} | {LineContinuation}
+ArithWordFirst           = [a-zA-Z_@.] | {EscapedAnyChar}
 ArithWordAfter           = {ArithWordFirst} | [0-9#!]
 ArithWord                = {ArithWordFirst}{ArithWordAfter}*
 
@@ -119,7 +122,7 @@ CasePattern              = {CaseFirst} ({LineContinuation}? {CaseAfter})*
 Filedescriptor           = "&" {IntegerLiteral} | "&-"  //todo:: check the usage ('<&' | '>&') (num | '-') in parser
 AssigOp                  = "=" | "+="
 
-ParamExpansionName       = ([a-zA-Z0-9_] | {EscapedChar})*
+ParamExpansionName       = ([a-zA-Z0-9_] | {EscapedAnyChar})*
 ParamExpansionSeparator  = "#""#"? | "!" | ":" | ":"?"=" | ":"?"+" | ":"?"-" | ":"?"?" | "@" | ","","? | "^""^"? | "*"
 
 HeredocMarker            = [^\r\n|&\\;()[] \t\"'] | {EscapedChar}
@@ -129,8 +132,8 @@ RegexWord                = [^\r\n\\\"' \t$`()] | {EscapedChar}
 Regex                    = {RegexWord}+
 
 HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
-StringContent            = [^$\"`(\\] | {EscapedChar}
-EvalContent              = [^\r\n$\"`'() ;] | {EscapedChar}
+StringContent            = [^$\"`(\\] | {EscapedAnyChar}
+EvalContent              = [^\r\n$\"`'() ;] | {EscapedAnyChar}
 
 %state ARITHMETIC_EXPRESSION
 %state OLD_ARITHMETIC_EXPRESSION
@@ -321,9 +324,9 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedChar}
 
 <HERE_STRING> {
   ">"  | ";" | "|" | "(" | ")"  |
-  "&"  | "`"                    { popState(); yypushback(1);}
-  {LineTerminator}              { popState(); return LINEFEED; }
-  {WhiteSpace}+                 { popState(); return WHITESPACE; }
+  "&"  | "`"                    { herestringStartPosition=-1; popState(); yypushback(1);}
+  {LineTerminator}              { herestringStartPosition=-1; popState(); return LINEFEED; }
+  {WhiteSpace}+                 { if (herestringStartPosition != getTokenStart()) { herestringStartPosition=-1; popState(); } return WHITESPACE; }
   {HereString}+                 { return WORD; }
 }
 
@@ -435,7 +438,7 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedChar}
     ">("                          { return OUTPUT_PROCESS_SUBSTITUTION; }
     "<("                          { return INPUT_PROCESS_SUBSTITUTION; }
 
-    "<<<" {WhiteSpace}*           { pushState(HERE_STRING); return REDIRECT_HERE_STRING; }
+    "<<<"                         { herestringStartPosition = getTokenEnd(); pushState(HERE_STRING); return REDIRECT_HERE_STRING; }
     "<<-"                         { if (yystate() != HERE_DOC_PIPELINE)
                                     { pushState(HERE_DOC_START_MARKER); heredocWithWhiteSpaceIgnore = true; return HEREDOC_MARKER_TAG; }
                                     else return SHIFT_LEFT; }

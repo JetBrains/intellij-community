@@ -587,9 +587,9 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CommentMacro$AnyCommentEnd"/>
 
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.EnumMacro"/>
-    <internalFileTemplate name="HTML File"/>
-    <internalFileTemplate name="HTML4 File"/>
-    <internalFileTemplate name="XHTML File"/>
+    <internalFileTemplate name="HTML File" id="html"/>
+    <internalFileTemplate name="HTML4 File" id="html4"/>
+    <internalFileTemplate name="XHTML File" id="xhtml"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.todo.TodoIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.id.IdIndexImpl"/>
     <fileBasedIndex implementation="com.intellij.psi.search.FileTypeIndexImpl"/>
@@ -610,7 +610,6 @@
                              implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.PsiCommentManipulator"/>
 
     <applicationService serviceImplementation="com.intellij.ide.macro.MacroManager"/>
-    <hectorComponentProvider implementation="com.intellij.codeInsight.daemon.impl.FileIncludeContextHectorProvider"/>
 
     <ideRootPaneNorth implementation="com.intellij.ide.navigationToolbar.NavBarRootPaneExtension"/>
     <navbar implementation="com.intellij.ide.navigationToolbar.DefaultNavBarExtension" id="defaultNavbar" order="last"/>
@@ -972,7 +971,7 @@
     <statistics.counterUsagesCollector groupId="move.refactoring" version="1"/>
     <statistics.counterUsagesCollector groupId="refactoring" version="1"/>
     <statistics.counterUsagesCollector groupId="package.management.ui" version="1"/>
-    <statistics.counterUsagesCollector groupId="completion" version="2"/>
+    <statistics.counterUsagesCollector groupId="completion" version="3"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector"/>
     <statistics.validation.customWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector$ToolWindowUtilValidator" />
@@ -1288,10 +1287,13 @@
 
     <applicationService serviceImplementation="com.intellij.util.indexing.IndexableSetContributorModificationTracker"/>
 
-    <toolWindow id="Problems View" anchor="bottom" icon="AllIcons.Toolwindows.ProblemsEmpty" canCloseContents="true"
+    <toolWindow id="Problems View" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowProblemsEmpty" canCloseContents="true"
                 factoryClass="com.intellij.analysis.problemsView.toolWindow.ProblemsView"/>
-    <experimentalFeature id="problems.view.enabled" percentOfUsers="0" internalFeature="true">
+    <experimentalFeature id="problems.view.enabled" percentOfUsers="100">
       <description>Allows to use the Problems View toolwindow.</description>
+    </experimentalFeature>
+    <experimentalFeature id="problems.view.project.errors.enabled" percentOfUsers="0" internalFeature="true">
+      <description>Allows to use the Project Errors tab in the Problems View toolwindow.</description>
     </experimentalFeature>
     <projectService serviceImplementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewStateManager"/>
     <notificationWhitelist groupIds="Problems View;Inspection Results;Find in Path;Dependencies;Execution;Suggest Run Dashboard;

@@ -1,9 +1,9 @@
 package com.intellij.tools.launch.impl
 
 import com.intellij.execution.CommandLineWrapperUtil
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.tools.launch.ModulesProvider
 import com.intellij.tools.launch.PathsProvider
-import com.intellij.tools.launch.TeamCityHelper
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
@@ -42,6 +42,14 @@ internal class ClassPathBuilder(private val paths: PathsProvider, private val mo
     val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
     JpsProjectLoader.loadProject(model.project, pathVariables, paths.projectRootFolder.canonicalPath)
 
+    val productionOutput = paths.outputRootFolder.resolve("production")
+    if (!productionOutput.isDirectory) {
+      error("Production classes output directory is missing: $productionOutput")
+    }
+
+    JpsJavaExtensionService.getInstance().getProjectExtension(model.project)!!.outputUrl =
+      "file://${FileUtil.toSystemIndependentName(paths.outputRootFolder.path)}"
+
     val modulesList = arrayListOf<String>()
     modulesList.add("intellij.platform.boot")
     modulesList.add(modules.mainModule)
@@ -61,6 +69,14 @@ internal class ClassPathBuilder(private val paths: PathsProvider, private val mo
       classpath.addAll(getClasspathForModule(module))
     }
 
+/*
+    println("Created classpath:")
+    for (path in classpath.distinct().sorted()) {
+      println("  $path")
+    }
+    println("-- END")
+*/
+
     val tempClasspathJarFile = CommandLineWrapperUtil.createClasspathJarFile(Manifest(), classpath.distinct())
     val launcherFolder = paths.launcherFolder
     if (!launcherFolder.exists()) {
@@ -74,20 +90,13 @@ internal class ClassPathBuilder(private val paths: PathsProvider, private val mo
     return launcherClasspathFile
   }
 
-  fun getClasspathForModule(module: JpsModule): List<String> {
+  private fun getClasspathForModule(module: JpsModule): List<String> {
     return JpsJavaExtensionService
       .dependencies(module)
       .recursively()
       .satisfying { if (it is JpsModuleDependency) !isModuleExcluded(it.module) else true }
       .includedIn(JpsJavaClasspathKind.runtime(modules.includeTestDependencies))
-      .classes().roots.map { teamCityClasspathFixer(it.canonicalPath) }.toList()
-  }
-
-  private fun teamCityClasspathFixer(element: String): String {
-    return if (TeamCityHelper.isUnderTeamCity)
-      element.replace("\\out\\", "\\out\\${paths.productId}\\").replace("/out/", "/out/${paths.productId}/")
-    else
-      element
+      .classes().roots.filter { it.exists() }.map { it.path }.toList()
   }
 
   private fun isModuleExcluded(module: JpsModule?): Boolean {

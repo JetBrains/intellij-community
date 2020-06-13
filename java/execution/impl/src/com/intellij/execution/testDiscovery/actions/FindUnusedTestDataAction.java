@@ -86,7 +86,7 @@ public class FindUnusedTestDataAction extends DumbAwareAction {
                   "Unused Test Data",
                   p -> {
                     p.setCodeUsages(false);
-                    p.setUsagesWord("file");
+                    p.setUsagesWord(count -> ExecutionBundle.message("label.usages.word.file", count));
                   }, project));
             }
           });

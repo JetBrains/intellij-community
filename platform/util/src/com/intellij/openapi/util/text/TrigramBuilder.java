@@ -1,28 +1,12 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.text;
 
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.TIntProcedure;
+import org.jetbrains.annotations.NotNull;
 
-public class TrigramBuilder {
+import java.util.function.IntPredicate;
+
+public final class TrigramBuilder {
   private TrigramBuilder() {
   }
 
@@ -69,12 +53,14 @@ public class TrigramBuilder {
     return consumer.consumeTrigramsCount(set.size()) && set.forEach(consumer);
   }
 
-  public static abstract class TrigramProcessor implements TIntProcedure {
-    public boolean consumeTrigramsCount(int count) { return true; }
+  public static abstract class TrigramProcessor implements IntPredicate {
+    public boolean consumeTrigramsCount(int count) {
+      return true;
+    }
   }
 }
 
-class AddonlyIntSet {
+final class AddonlyIntSet {
   //private static final int MAGIC = 0x9E3779B9;
   private int size;
   private int[] data;
@@ -152,11 +138,18 @@ class AddonlyIntSet {
     return false;
   }
 
-  public boolean forEach(TIntProcedure consumer) {
-    if (hasZeroKey && !consumer.execute(0)) return false;
-    for(int o:data) {
-      if (o == 0) continue;
-      if(!consumer.execute(o)) return false;
+  public boolean forEach(@NotNull IntPredicate consumer) {
+    if (hasZeroKey && !consumer.test(0)) {
+      return false;
+    }
+
+    for (int o : data) {
+      if (o == 0) {
+        continue;
+      }
+      if (!consumer.test(o)) {
+        return false;
+      }
     }
     return true;
   }

@@ -75,6 +75,8 @@
     <projectService serviceImplementation="com.intellij.dvcs.repo.VcsRepositoryManager"/>
     <vcsStartupActivity implementation="com.intellij.dvcs.repo.VcsRepositoryManager$MyStartupActivity"/>
     <iconDescriptionBundle resourceBundle="messages.DvcsBundle"/>
+
+    <editorNotificationProvider implementation="com.intellij.dvcs.ignore.IgnoredToExcludeNotificationProvider"/>
   </extensions>
 </idea-plugin>
 

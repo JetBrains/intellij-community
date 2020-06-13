@@ -14,7 +14,7 @@ import java.util.function.Predicate;
  * Unless stated otherwise, methods in the class are system-agnostic - i.e. capable to work with both OS and VFS paths.
  * Care should be taken though to make sure that within each call of a method parameters are of the same breed.
  */
-class WatchRootsUtil {
+final class WatchRootsUtil {
   static boolean isCoveredRecursively(@NotNull NavigableSet<String> recursiveRoots, @NotNull String path) {
     String recursiveRoot = recursiveRoots.floor(path);
     return recursiveRoot != null && FileUtil.startsWith(path, recursiveRoot);

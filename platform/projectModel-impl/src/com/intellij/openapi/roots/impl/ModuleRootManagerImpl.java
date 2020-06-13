@@ -25,6 +25,7 @@ import com.intellij.util.ThrowableRunnable;
 import gnu.trove.THashMap;
 import kotlin.NotImplementedError;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -32,6 +33,12 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
+/**
+ * This class isn't used in the new implementation of project model, which is based on {@link com.intellij.workspaceModel.ide Workspace Model}.
+ * It shouldn't be used directly, its base class {@link ModuleRootManagerEx} should be used instead. If absolutely needed, its instance must be
+ * taken from {@link ModuleRootManager#getInstance(Module)} under instanceof check.
+ */
+@ApiStatus.Internal
 public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Disposable {
   protected static final Logger LOG = Logger.getInstance(ModuleRootManagerImpl.class);
 

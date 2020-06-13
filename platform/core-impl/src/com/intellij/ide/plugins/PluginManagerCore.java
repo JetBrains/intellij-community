@@ -26,9 +26,7 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
-import com.intellij.util.graph.DFSTBuilder;
-import com.intellij.util.graph.GraphGenerator;
-import com.intellij.util.graph.InboundSemiGraph;
+import com.intellij.util.graph.*;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -1575,6 +1573,23 @@ public final class PluginManagerCore {
       }
     }
 
+    return true;
+  }
+
+  public static boolean processAllBackwardDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
+                                                       boolean withOptionalDeps,
+                                                       @NotNull Function<IdeaPluginDescriptor, FileVisitResult> consumer) {
+    CachingSemiGraph<IdeaPluginDescriptorImpl> semiGraph = createPluginIdGraph(Arrays.asList(ourPlugins),
+                                                                               (id) -> (IdeaPluginDescriptorImpl)getPlugin(id),
+                                                                               withOptionalDeps,
+                                                                               findPluginByModuleDependency(ALL_MODULES_MARKER) != null);
+    Graph<IdeaPluginDescriptorImpl> graph = GraphGenerator.generate(semiGraph);
+    Set<IdeaPluginDescriptorImpl> dependencies = new LinkedHashSet<>();
+    GraphAlgorithms.getInstance().collectOutsRecursively(graph, rootDescriptor, dependencies);
+    for (IdeaPluginDescriptorImpl dependency : dependencies) {
+      if (dependency == rootDescriptor) continue;
+      if (consumer.apply(dependency) == FileVisitResult.TERMINATE) return false;
+    }
     return true;
   }
 

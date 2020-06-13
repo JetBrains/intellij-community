@@ -36,7 +36,7 @@ import java.util.regex.Pattern;
 /**
  * @author Dmitry Avdeev
  */
-public class TaskUtil {
+public final class TaskUtil {
 
   // Almost ISO-8601 strict except date parts may be separated by '/'
   // and date only also allowed just in case

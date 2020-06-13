@@ -280,7 +280,7 @@ public class DataManagerImpl extends DataManager {
     return editor;
   }
 
-  private static class NullResult {
+  private static final class NullResult {
     public static final NullResult INSTANCE = new NullResult();
   }
 

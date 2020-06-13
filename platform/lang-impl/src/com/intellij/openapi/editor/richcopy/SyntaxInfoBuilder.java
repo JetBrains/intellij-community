@@ -362,9 +362,7 @@ public final class SyntaxInfoBuilder {
             HighlightInfoType type = info.type;
             key = type.getAttributesKey();
           }
-          if (key != null) {
-            attributes = myColorsScheme.getAttributes(key);
-          }
+          attributes = myColorsScheme.getAttributes(key);
         }
         if (attributes == null) {
           continue;
@@ -449,13 +447,16 @@ public final class SyntaxInfoBuilder {
 
     @Override
     public void advance() {
+      int prevEnd = myCurrentEnd;
       myCurrentStart = getCurrentStart();
       myCurrentEnd = getCurrentEnd();
-      assert myCurrentStart <= myCurrentEnd : "Unexpected range returned by highlighter: " +
-                                              myIterator.getStart() + ":" + myIterator.getEnd() +
-                                              ", scanned range: " + myStartOffset + ":" + myEndOffset +
-                                              ", resulting range: " + myCurrentStart + ":" + myCurrentEnd +
-                                              ", highlighter: " + myHighlighter;
+      assert prevEnd <= myCurrentStart && myCurrentStart <= myCurrentEnd
+        : "Unexpected range returned by highlighter: " +
+          myIterator.getStart() + ":" + myIterator.getEnd() +
+          ", prevEnd: " + prevEnd +
+          ", scanned range: " + myStartOffset + ":" + myEndOffset +
+          ", resulting range: " + myCurrentStart + ":" + myCurrentEnd +
+          ", highlighter: " + myHighlighter;
       myCurrentAttributes = myIterator.getTokenType() == TokenType.BAD_CHARACTER ? EMPTY_ATTRIBUTES : myIterator.getTextAttributes();
       myIterator.advance();
     }
@@ -477,6 +478,11 @@ public final class SyntaxInfoBuilder {
 
     @Override
     public void dispose() {
+    }
+
+    @Override
+    public String toString() {
+      return "HighlighterRangeIterator[" + myHighlighter + "]";
     }
   }
 

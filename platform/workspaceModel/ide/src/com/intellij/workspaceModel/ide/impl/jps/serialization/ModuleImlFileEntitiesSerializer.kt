@@ -450,16 +450,18 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                        writer: JpsFileContentWriter) {
     val optionsMap = TreeMap<String, String?>()
     if (externalSystemOptions != null) {
-      optionsMap["external.system.id"] = externalSystemOptions.externalSystem
+      if (externalSystemOptions.externalSystem == ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID) {
+        optionsMap[ExternalProjectSystemRegistry.IS_MAVEN_MODULE_KEY] = true.toString()
+      }
+      else {
+        optionsMap["external.system.id"] = externalSystemOptions.externalSystem
+      }
       optionsMap["external.root.project.path"] = externalSystemOptions.rootProjectPath
       optionsMap["external.linked.project.id"] = externalSystemOptions.linkedProjectId
       optionsMap["external.linked.project.path"] = externalSystemOptions.linkedProjectPath
       optionsMap["external.system.module.type"] = externalSystemOptions.externalSystemModuleType
       optionsMap["external.system.module.group"] = externalSystemOptions.externalSystemModuleGroup
       optionsMap["external.system.module.version"] = externalSystemOptions.externalSystemModuleVersion
-      if (externalSystemOptions.externalSystem == ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID) {
-        optionsMap[ExternalProjectSystemRegistry.IS_MAVEN_MODULE_KEY] = true.toString()
-      }
     }
     optionsMap["type"] = moduleType
     if (customImlData != null) {
@@ -605,8 +607,13 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
     writer.saveComponent(fileUrl, componentName, componentTag)
   }
 
-  protected open fun getSourceToSave(module: ModuleEntity): JpsFileEntitySource.FileInDirectory? =
-    module.entitySource as? JpsFileEntitySource.FileInDirectory
+  protected open fun getSourceToSave(module: ModuleEntity): JpsFileEntitySource.FileInDirectory? {
+    val entitySource = module.entitySource
+    if (entitySource is JpsImportedEntitySource) {
+      return entitySource.internalFile as? JpsFileEntitySource.FileInDirectory
+    }
+    return entitySource as? JpsFileEntitySource.FileInDirectory
+  }
 
   override fun deleteObsoleteFile(fileUrl: String, writer: JpsFileContentWriter) {
     writer.saveComponent(fileUrl, MODULE_ROOT_MANAGER_COMPONENT_NAME, null)

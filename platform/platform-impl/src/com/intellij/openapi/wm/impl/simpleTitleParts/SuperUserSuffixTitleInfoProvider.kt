@@ -4,7 +4,7 @@ package com.intellij.openapi.wm.impl.simpleTitleParts
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 
-class SuperUserSuffixTitleInfoProvider : SimpleTitleInfoProvider(TitleInfoOption.ALWAYS_ACTIVE, TitleInfoOption.ALWAYS_ACTIVE) {
+class SuperUserSuffixTitleInfoProvider : SimpleTitleInfoProvider(TitleInfoOption.ALWAYS_ACTIVE) {
   override val value: String = prepareValue()
 
   private fun prepareValue(): String {

@@ -5,13 +5,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.intellij.internal.statistic.StatisticsStringUtil.isNotEmpty;
 import static com.intellij.internal.statistic.eventLog.StatisticsEventEscaper.escape;
 
-public class ExternalSystemEventSerializer {
+public final class ExternalSystemEventSerializer {
 
   @NotNull
   public static String serialize(@NotNull ExternalSystemEvent event) {

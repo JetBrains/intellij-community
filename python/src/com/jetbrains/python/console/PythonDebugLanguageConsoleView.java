@@ -9,6 +9,8 @@ import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -39,6 +41,8 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
     List<AnAction> actions = ContainerUtil.newArrayList(PyConsoleUtil.createTabCompletionAction(getPydevConsoleView()));
     actions.add(PyConsoleUtil.createInterruptAction(getPydevConsoleView()));
     AbstractConsoleRunnerWithHistory.registerActionShortcuts(actions, getPydevConsoleView().getEditor().getComponent());
+    boolean isUseSoftWraps = EditorSettingsExternalizable.getInstance().isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE);
+    getPydevConsoleView().getEditor().getSettings().setUseSoftWraps(isUseSoftWraps);
   }
 
   public PythonDebugLanguageConsoleView(final Project project, Sdk sdk) {

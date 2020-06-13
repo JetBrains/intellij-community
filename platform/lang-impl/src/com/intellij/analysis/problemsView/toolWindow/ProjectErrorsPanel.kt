@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
+import com.intellij.codeInsight.problems.WolfTheProblemSolverImpl
 import com.intellij.icons.AllIcons.Toolwindows
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
 import com.intellij.openapi.diagnostic.Logger
@@ -8,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.problems.ProblemListener
+import com.intellij.problems.WolfTheProblemSolver
 
 internal class ProjectErrorsPanel(project: Project, state: ProblemsViewState)
   : ProblemsViewPanel(project, state), ProblemListener {
@@ -17,8 +19,14 @@ internal class ProjectErrorsPanel(project: Project, state: ProblemsViewState)
 
   init {
     treeModel.root = root
+    tree.emptyText.text = ProblemsViewBundle.message("problems.view.project.empty")
     project.messageBus.connect(this)
       .subscribe(ProblemListener.TOPIC, this)
+    val problems = WolfTheProblemSolver.getInstance(project) as? WolfTheProblemSolverImpl
+    problems?.processProblemFiles {
+      problemsAppeared(it)
+      true
+    }
   }
 
   companion object {
@@ -29,14 +37,12 @@ internal class ProjectErrorsPanel(project: Project, state: ProblemsViewState)
   override fun getSortFoldersFirst(): Option? = null
   override fun getSortBySeverity(): Option? = null
 
-  override fun getToolWindowIcon(count: Int) = if (count > 0) Toolwindows.Problems else Toolwindows.ProblemsEmpty
+  override fun getToolWindowIcon(count: Int) = if (count > 0) Toolwindows.ToolWindowProblems else Toolwindows.ToolWindowProblemsEmpty
 
   override fun problemsAppeared(file: VirtualFile) {
     LOG.debug("problemsAppeared: ", file)
-    synchronized(watchers) {
-      val watcher = watchers.computeIfAbsent(file) { HighlightingWatcher(root, it) }
-      Disposer.register(root, watcher)
-    }
+    val watcher = synchronized(watchers) { watchers.computeIfAbsent(file) { HighlightingWatcher(root, it) } }
+    Disposer.register(root, watcher)
   }
 
   override fun problemsChanged(file: VirtualFile) {
@@ -45,12 +51,8 @@ internal class ProjectErrorsPanel(project: Project, state: ProblemsViewState)
 
   override fun problemsDisappeared(file: VirtualFile) {
     LOG.debug("problemsDisappeared: ", file)
-    synchronized(watchers) {
-      val watcher = watchers.remove(file)
-      if (watcher != null) {
-        Disposer.dispose(watcher)
-        root.removeProblems(file)
-      }
-    }
+    val watcher = synchronized(watchers) { watchers.remove(file) } ?: return
+    Disposer.dispose(watcher) // removes a markup model listener
+    root.removeProblems(file, *watcher.getProblems().toTypedArray())
   }
 }

@@ -85,6 +85,8 @@ At present the core developers are (alphabetically):
 * Greg Price (@gnprice)
 * Sebastian Rittau (@srittau)
 * Guido van Rossum (@gvanrossum)
+* Shantanu (@hauntsaninja)
+* Rune Tynan (@CraftSpider)
 * Jelle Zijlstra (@JelleZijlstra)
 
 NOTE: the process for preparing and submitting changes also applies to
@@ -373,3 +375,13 @@ Core developers should follow these rules when processing pull requests:
 * Make sure commit messages to master are meaningful. For example, remove irrelevant
   intermediate commit messages.
 * If stubs for a new library are submitted, notify the library's maintainers.
+
+When reviewing PRs, follow these guidelines:
+
+* Typing is hard. Try to be helpful and explain issues with the PR,
+  especially to new contributors.
+* When reviewing auto-generated stubs, just scan for red flags and obvious
+  errors. Leave possible manual improvements for separate PRs.
+* When reviewing large, hand-crafted PRs, you only need to look for red flags
+  and general issues, and do a few spot checks.
+* Review smaller, hand-crafted PRs thoroughly.

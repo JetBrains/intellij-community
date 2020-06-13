@@ -62,7 +62,9 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xml.breadcrumbs.NavigatableCrumb;
 import gnu.trove.TIntFunction;
@@ -150,6 +152,13 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     installTypingSupport();
     myPanel.setLoadingContent(); // We need loading panel only for initial rediff()
     myPanel.setPersistentNotifications(DiffUtil.getCustomNotifications(myContext, myRequest));
+
+    new UiNotifyConnector(getComponent(), new Activatable() {
+      @Override
+      public void showNotify() {
+        myMarkupUpdater.scheduleUpdate();
+      }
+    });
   }
 
   @Override
@@ -845,7 +854,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @NotNull
   protected List<? extends DocumentContent> getContents() {
     //noinspection unchecked
-    return (List<? extends DocumentContent>)(List)myRequest.getContents();
+    return (List)myRequest.getContents();
   }
 
   @NotNull
@@ -1325,6 +1334,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     public void scheduleUpdate() {
       if (myProject == null) return;
       if (mySuspended) return;
+      if (!getComponent().isShowing()) return;
       myUpdateIndicator.cancel();
 
       myUpdateQueue.queue(new Update("update") {

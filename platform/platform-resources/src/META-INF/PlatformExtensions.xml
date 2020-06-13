@@ -35,9 +35,6 @@
                        helpTopic="configurable.group.build.help.topic"
                        displayNameKey="configurable.group.build.settings.display.name"
                        descriptionKey="configurable.group.build.settings.description"/>
-    <groupConfigurable id="build.tools" parentId="build" weight="1000"
-                       displayNameKey="configurable.group.build.tools.settings.display.name"
-                       descriptionKey="configurable.group.build.tools.settings.description"/>
     <groupConfigurable id="profiler" parentId="build"
                        displayNameKey="configurable.group.profiler.settings.display.name"
                        descriptionKey="configurable.group.profiler.settings.description"/>
@@ -65,7 +62,6 @@
 
     <applicationService serviceInterface="com.intellij.openapi.vfs.pointers.VirtualFilePointerManager"
                         serviceImplementation="com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl"/>
-    <vfs.asyncListener implementation="com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl$MyAsyncFileListener"/>
 
     <applicationService serviceImplementation="com.intellij.util.net.HttpConfigurable" preload="await"/>
     <applicationService serviceImplementation="com.intellij.ide.ClipboardSynchronizer" preload="true"/>
@@ -79,7 +75,7 @@
     <vfs.asyncListener implementation="com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl$MyAsyncFileListener"/>
 
     <applicationService serviceInterface="com.intellij.openapi.project.ProjectManager"
-                        serviceImplementation="com.intellij.openapi.project.impl.ProjectManagerImpl"/>
+                        serviceImplementation="com.intellij.openapi.project.impl.ProjectManagerExImpl"/>
 
     <!-- FileTypeManagerImpl wants PropertiesComponent -->
     <applicationService serviceInterface="com.intellij.ide.util.PropertiesComponent"
@@ -544,7 +540,7 @@
     />
 
     <applicationService serviceImplementation="com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings"/>
-    <applicationService serviceImplementation="com.intellij.openapi.keymap.KeyboardSettingsExternalizable"/>
+    <applicationService serviceImplementation="com.intellij.openapi.keymap.NationalKeyboardSupport"/>
     <applicationService serviceImplementation="com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider"/>
 
     <scopeParserExtension implementation="com.intellij.psi.search.scope.packageSet.FilePackageSetParserExtension"/>
@@ -851,7 +847,7 @@
       <description>Defines whether to show "What's new" notification after IDE update or not.</description>
     </experimentalFeature>
 
-    <experimentalFeature id="search.everywhere.mixed.results" percentOfUsers="0">
+    <experimentalFeature id="search.everywhere.mixed.results" percentOfUsers="100">
       <description>Use mixed list of results on All tab in Search Everywhere (instead of Files/Classes/Actions groups)</description>
     </experimentalFeature>
 

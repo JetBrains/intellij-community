@@ -620,7 +620,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
   }
 
-  private final Map<RootProvider, Set<OrderEntry>> myRegisteredRootProviders = ContainerUtil.newIdentityTroveMap();
+  private final Map<RootProvider, Set<OrderEntry>> myRegisteredRootProviders = new IdentityHashMap<>();
 
   void addJdkTableListener(@NotNull ProjectJdkTable.Listener jdkTableListener, @NotNull Disposable parent) {
     myJdkTableMultiListener.addListener(jdkTableListener);

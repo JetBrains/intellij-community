@@ -3,8 +3,8 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.BidirectionalMultiMap
-import com.intellij.workspaceModel.storage.impl.indices.copy
 import com.intellij.workspaceModel.storage.impl.*
+import com.intellij.workspaceModel.storage.impl.containers.copy
 import junit.framework.TestCase.*
 import org.junit.Assert
 import java.io.ByteArrayInputStream
@@ -47,8 +47,8 @@ object SerializationRoundTripChecker {
   private fun assertStorageEquals(expected: WorkspaceEntityStorageImpl, actual: WorkspaceEntityStorageImpl) {
     // Assert entity data
     assertEquals(expected.entitiesByType.size(), actual.entitiesByType.size())
-    for ((clazz, expectedEntityFamily) in expected.entitiesByType.entities.withIndex()) {
-      val actualEntityFamily = actual.entitiesByType.entities[clazz]
+    for ((clazz, expectedEntityFamily) in expected.entitiesByType.entityFamilies.withIndex()) {
+      val actualEntityFamily = actual.entitiesByType.entityFamilies[clazz]
 
       if (expectedEntityFamily == null || actualEntityFamily == null) {
         assertNull(expectedEntityFamily)
@@ -76,14 +76,14 @@ object SerializationRoundTripChecker {
     assertBiMap(expected.indexes.entitySourceIndex.index, actual.indexes.entitySourceIndex.index)
     assertBiMap(expected.indexes.persistentIdIndex.index, actual.indexes.persistentIdIndex.index)
     // External index should not be persisted
-    assertTrue(actual.indexes.externalIndices.isEmpty())
+    assertTrue(actual.indexes.externalMappings.isEmpty())
     // Just checking that all properties have been asserted
     assertEquals(5, StorageIndexes::class.memberProperties.size)
   }
 
   // Use UsefulTestCase.assertOrderedEquals in case it'd be used in this module
   private fun <T> assertOrderedEquals(actual: Iterable<T?>, expected: Iterable<T?>) {
-    if (!equals<T>(actual, expected, BiPredicate { a: T?, b: T? -> a == b })) {
+    if (!equals(actual, expected, BiPredicate { a: T?, b: T? -> a == b })) {
       val expectedString: String = expected.toString()
       val actualString: String = actual.toString()
       Assert.assertEquals("", expectedString, actualString)

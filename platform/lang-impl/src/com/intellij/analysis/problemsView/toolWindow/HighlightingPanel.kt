@@ -1,18 +1,31 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar.getSeverityRegistrar
+import com.intellij.icons.AllIcons.Toolwindows
+import com.intellij.ide.TreeExpander
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
+import com.intellij.openapi.application.Experiments
+import com.intellij.openapi.application.ModalityState.stateForComponent
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.ex.EditorMarkupModel
+import com.intellij.openapi.editor.ex.RangeHighlighterEx
+import com.intellij.openapi.editor.markup.AnalyzerStatus
+import com.intellij.openapi.editor.markup.AnalyzingType.COMPLETE
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel.renderSeverity
+import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.tree.TreeUtil.promiseSelectFirstLeaf
+import javax.swing.Icon
 
 internal class HighlightingPanel(project: Project, state: ProblemsViewState)
   : ProblemsViewPanel(project, state), FileEditorManagerListener {
+
+  private val statusUpdateAlarm = SingleAlarm(Runnable(this::updateStatus), 200, stateForComponent(this), this)
 
   init {
     tree.showsRootHandles = false
@@ -22,15 +35,23 @@ internal class HighlightingPanel(project: Project, state: ProblemsViewState)
 
   override fun getDisplayName() = ProblemsViewBundle.message("problems.view.highlighting")
   override fun getSortFoldersFirst(): Option? = null
+  override fun getTreeExpander(): TreeExpander? = null
+
+  override fun getToolWindowIcon(count: Int): Icon? {
+    if (Experiments.getInstance().isFeatureEnabled("problems.view.project.errors.enabled")) return null
+    val root = treeModel.root as? HighlightingFileRoot
+    val problem = root?.file?.let { WolfTheProblemSolver.getInstance(project).isProblemFile(it) }
+    return if (problem == true) Toolwindows.ToolWindowProblems else Toolwindows.ToolWindowProblemsEmpty
+  }
 
   override fun selectionChangedTo(selected: Boolean) {
     super.selectionChangedTo(selected)
     if (selected) updateCurrentFile()
   }
 
-  fun selectHighlightInfo(info: HighlightInfo) {
+  fun selectHighlighter(highlighter: RangeHighlighterEx) {
     val root = treeModel.root as? HighlightingFileRoot
-    root?.findProblemNode(info)?.let { select(it) }
+    root?.findProblemNode(highlighter)?.let { select(it) }
   }
 
   override fun fileOpened(manager: FileEditorManager, file: VirtualFile) = updateCurrentFile()
@@ -49,6 +70,7 @@ internal class HighlightingPanel(project: Project, state: ProblemsViewState)
       treeModel.root = HighlightingFileRoot(this, file)
       promiseSelectFirstLeaf(tree)
     }
+    statusUpdateAlarm.cancelAndRequest(forceRun = true)
     updateToolWindowContent()
   }
 
@@ -59,6 +81,38 @@ internal class HighlightingPanel(project: Project, state: ProblemsViewState)
     if (file != null) return file
     val textEditor = fileEditor as? TextEditor ?: return null
     return FileDocumentManager.getInstance().getFile(textEditor.editor.document)
+  }
+
+  private fun updateStatus() {
+    val root = treeModel.root as? HighlightingFileRoot
+    val status = root?.file?.let { findAnalyzerStatus(it) }
+    when {
+      root == null -> {
+        tree.emptyText.text = ProblemsViewBundle.message("problems.view.highlighting.no.selected.file")
+      }
+      status == null -> {
+        val name = with(root.file) { presentableName ?: name }
+        tree.emptyText.text = ProblemsViewBundle.message("problems.view.highlighting.problems.analyzing", name)
+        statusUpdateAlarm.cancelAndRequest()
+      }
+      status.title.isEmpty() -> {
+        val name = with(root.file) { presentableName ?: name }
+        tree.emptyText.text = ProblemsViewBundle.message("problems.view.highlighting.problems.not.found", name)
+      }
+      else -> {
+        tree.emptyText.text = status.title
+        if (status.details.isNotEmpty()) tree.emptyText.appendLine(status.details)
+        statusUpdateAlarm.cancelAndRequest()
+      }
+    }
+  }
+
+  private fun findAnalyzerStatus(file: VirtualFile): AnalyzerStatus? {
+    val document = ProblemsView.getDocument(project, file) ?: return null
+    val editor = EditorFactory.getInstance().editors(document, project).findFirst().orElse(null) ?: return null
+    val model = editor.markupModel as? EditorMarkupModel ?: return null
+    val status = model.errorStripeRenderer?.getStatus(editor) ?: return null
+    return if (status.analyzingType == COMPLETE) status else null
   }
 
   override fun getSeverityFilters() = getSeverityRegistrar(project).allSeverities.reversed()

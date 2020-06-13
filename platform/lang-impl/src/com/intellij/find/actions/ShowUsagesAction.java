@@ -222,8 +222,19 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
    */
   @ApiStatus.Internal
   public static void showUsages(@NotNull Project project, @NotNull DataContext dataContext, @NotNull SearchTarget target) {
-    Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
     RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
+    showUsages(project, dataContext, popupPosition, target);
+  }
+
+  /**
+   * Shows Usage popup for a single search target without disambiguation via Choose Target popup.
+   */
+  @ApiStatus.Internal
+  public static void showUsages(@NotNull Project project,
+                                @NotNull DataContext dataContext,
+                                @NotNull RelativePoint popupPosition,
+                                @NotNull SearchTarget target) {
+    Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
     SearchScope searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName());
     UsageVariantHandler variantHandler = createVariantHandler(project, editor, popupPosition, searchScope);
     handlePsiOrSymbol(variantHandler, target);
@@ -719,9 +730,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       action.registerCustomShortcutSet(action.getShortcutSet(), content);
     }
     /** save toolbar actions for using later, in automatic filter toggling in {@link #restartShowUsagesWithFiltersToggled(List} */
-    AbstractPopup createdPopup = (AbstractPopup)popup[0];
-    createdPopup.setUserData(Collections.singletonList(toolbar));
-    return createdPopup;
+    popup[0].setUserData(Collections.singletonList(toolbar));
+    return popup[0];
   }
 
   @NotNull
@@ -910,6 +920,9 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
                                            @NotNull RelativePoint popupPosition,
                                            @NotNull IntRef minWidth,
                                            @NotNull List<? extends UsageNode> data) {
+    if (!(popup instanceof AbstractPopup)) {
+      return;
+    }
     JComponent content = popup.getContent();
     Window window = SwingUtilities.windowForComponent(content);
     Dimension d = window.getSize();

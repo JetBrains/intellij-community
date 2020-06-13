@@ -70,6 +70,10 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
                .allowElements("body", "pre", "hr", "code", "tr", "span")
                .allowAttributes(HtmlGenerator.Companion.getSRC_ATTRIBUTE_NAME()).globally()
                .allowAttributes("class").onElements("code", "tr", "span")
+               .toFactory())
+        .and(new HtmlPolicyBuilder()
+               .allowElements("font")
+               .allowAttributes("color").onElements("font")
                .toFactory());
     }
   };
@@ -405,7 +409,7 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
             attachHtmlPanel();
           }
 
-          myPanel.setHtml(myLastRenderedHtml);
+          updateHtml(true);
           updatePanelCssSettings(myPanel, settings.getMarkdownCssSettings());
         }
       }, 0, ModalityState.stateForComponent(getComponent()));

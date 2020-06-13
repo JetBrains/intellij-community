@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.instrumentation;
 
-import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.diagnostic.Logger;
@@ -67,7 +66,7 @@ public class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder{
     try {
       final ProjectDescriptor pd = context.getProjectDescriptor();
       final List<String> notNulls = JpsJavaExtensionService.getInstance().getCompilerConfiguration(pd.getProject()).getNotNullAnnotations();
-      if (NotNullVerifyingInstrumenter.processClassFile((FailSafeClassReader)reader, writer, ArrayUtilRt.toStringArray(notNulls))) {
+      if (NotNullVerifyingInstrumenter.processClassFile(reader, writer, ArrayUtilRt.toStringArray(notNulls))) {
         return new BinaryContent(writer.toByteArray());
       }
     }

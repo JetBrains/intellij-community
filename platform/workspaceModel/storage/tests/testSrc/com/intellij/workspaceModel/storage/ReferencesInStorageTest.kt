@@ -93,7 +93,7 @@ class ReferencesInStorageTest {
   @Test
   fun `remove parent entity`() {
     val builder = WorkspaceEntityStorageBuilderImpl.create()
-    val child = builder.addChildEntity()
+    val child = builder.addChildEntity(builder.addParentEntity())
     builder.removeEntity(child.parent)
     builder.assertConsistency()
     assertEquals(emptyList<ChildEntity>(), builder.entities(ChildEntity::class.java).toList())
@@ -119,7 +119,7 @@ class ReferencesInStorageTest {
   @Test
   fun `remove parent entity with two children`() {
     val builder = WorkspaceEntityStorageBuilderImpl.create()
-    val child1 = builder.addChildEntity()
+    val child1 = builder.addChildEntity(builder.addParentEntity())
     builder.addChildEntity(parentEntity = child1.parent)
     builder.removeEntity(child1.parent)
     builder.assertConsistency()
@@ -170,7 +170,7 @@ class ReferencesInStorageTest {
   @Test
   fun `modify parent property`() {
     val builder = WorkspaceEntityStorageBuilderImpl.create()
-    val child = builder.addChildEntity()
+    val child = builder.addChildEntity(builder.addParentEntity())
     val oldParent = child.parent
     val newParent = builder.modifyEntity(ModifiableParentEntity::class.java, child.parent) {
       parentProperty = "changed"
@@ -186,7 +186,7 @@ class ReferencesInStorageTest {
   @Test
   fun `modify parent property via diff`() {
     val builder = WorkspaceEntityStorageBuilderImpl.create()
-    val child = builder.addChildEntity()
+    val child = builder.addChildEntity(builder.addParentEntity())
     val oldParent = child.parent
 
     val diff = WorkspaceEntityStorageBuilderImpl.from(builder)
@@ -206,7 +206,7 @@ class ReferencesInStorageTest {
   @Test
   fun `modify child property`() {
     val builder = WorkspaceEntityStorageBuilderImpl.create()
-    val child = builder.addChildEntity()
+    val child = builder.addChildEntity(builder.addParentEntity())
     val oldParent = child.parent
     val newChild = builder.modifyEntity(ModifiableChildEntity::class.java, child) {
       childProperty = "changed"
@@ -224,7 +224,7 @@ class ReferencesInStorageTest {
   @Test
   fun `modify reference to parent`() {
     val builder = WorkspaceEntityStorageBuilderImpl.create()
-    val child = builder.addChildEntity()
+    val child = builder.addChildEntity(builder.addParentEntity())
     val oldParent = child.parent
     val newParent = builder.addParentEntity("new")
     val newChild = builder.modifyEntity(ModifiableChildEntity::class.java, child) {
@@ -266,7 +266,7 @@ class ReferencesInStorageTest {
   @Test
   fun `builder from storage`() {
     val storage = WorkspaceEntityStorageBuilderImpl.create().apply {
-      addChildEntity()
+      addChildEntity(addParentEntity())
     }.toStorage()
     storage.assertConsistency()
 
@@ -302,7 +302,7 @@ class ReferencesInStorageTest {
   @Test
   fun `storage from builder`() {
     val builder = WorkspaceEntityStorageBuilderImpl.create()
-    val child = builder.addChildEntity()
+    val child = builder.addChildEntity(builder.addParentEntity())
 
     val snapshot = builder.toStorage()
     builder.assertConsistency()

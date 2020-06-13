@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.util;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -13,7 +14,7 @@ import javax.swing.event.HyperlinkEvent;
 /**
  * @author michael.golubev
  */
-public class TooltipUtil {
+public final class TooltipUtil {
 
   public static HyperlinkLabel createTooltip(final String message) {
     final HyperlinkLabel link = new HyperlinkLabel("");

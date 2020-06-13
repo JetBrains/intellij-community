@@ -258,13 +258,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
           if (editor != null) {
             Component component = ((DefaultCellEditor)editor).getComponent();
             if (component instanceof JTextField) {
-              JTextField textField = (JTextField)component;
-              try {
-                textField.getDocument().insertString(textField.getCaretPosition(), content, null);
-              }
-              catch (BadLocationException e) {
-                //just ignore, paste failed
-              }
+              ((JTextField)component).paste();
             }
           }
         }

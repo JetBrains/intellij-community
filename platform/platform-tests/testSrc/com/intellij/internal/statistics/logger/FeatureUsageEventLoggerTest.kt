@@ -1,13 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.logger
 
 import com.intellij.internal.statistic.FUCounterCollectorTestCase
 import com.intellij.internal.statistic.eventLog.*
-import com.intellij.internal.statistic.utils.PluginInfo
-import com.intellij.internal.statistic.utils.PluginType
 import com.intellij.internal.statistics.StatisticsTestEventFactory.DEFAULT_SESSION_ID
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newStateEvent
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.UsefulTestCase
 import org.junit.Test
@@ -438,6 +437,32 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     UsefulTestCase.assertEquals("barValue", obj2EventData["bar"])
   }
 
+  @Test
+  fun testEnumInObjectField() {
+    /* {
+      "obj": {
+        "enumField" : "foo"
+      }
+    } */
+
+    class TestObjDescription : ObjectDescription() {
+      var enumField by field(EnumEventField("enumField", TestEnum::class.java) { StringUtil.toLowerCase(it.name) })
+    }
+
+    val group = EventLogGroup("newGroup", 1)
+    val event = group.registerEvent("testEvent", ObjectEventField("obj", TestObjDescription()))
+
+    val events = FUCounterCollectorTestCase.collectLogEvents {
+      event.log(ObjectDescription.build(::TestObjDescription) {
+        enumField = TestEnum.FOO
+      })
+    }
+    UsefulTestCase.assertSize(1, events)
+    val objEventData = events.first().event.data["obj"] as Map<*, *>
+    UsefulTestCase.assertEquals("foo", objEventData["enumField"])
+  }
+
+  enum class TestEnum { FOO, BAR }
 
   private fun getSystemEventIdFile() =
     EventLogConfiguration.getEventLogSettingsPath().resolve("test_system_event_id").toFile()

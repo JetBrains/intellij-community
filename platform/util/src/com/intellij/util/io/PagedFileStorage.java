@@ -33,6 +33,7 @@ public class PagedFileStorage implements Forceable {
   private final PagedFileStorageCache myLastAccessedBufferCache = new PagedFileStorageCache();
 
   private final Path myFile;
+  private final boolean myReadOnly;
   protected final int myPageSize;
   protected final boolean myValuesAreBufferAligned;
 
@@ -45,6 +46,8 @@ public class PagedFileStorage implements Forceable {
                           boolean valuesAreBufferAligned,
                           boolean nativeBytesOrder) {
     myFile = file;
+    // TODO read-only flag should be extracted from PersistentHashMapValueStorage.CreationTimeOptions
+    myReadOnly = PersistentHashMapValueStorage.CreationTimeOptions.READONLY.get() == Boolean.TRUE;
 
     StorageLockContext context = THREAD_LOCAL_STORAGE_LOCK_CONTEXT.get();
     if (context != null) {
@@ -118,7 +121,7 @@ public class PagedFileStorage implements Forceable {
   public ByteBufferWrapper getByteBuffer(long address, boolean modify) {
     long page = address / myPageSize;
     assert page >= 0 && page <= StorageLock.MAX_PAGES_COUNT:address + " in " + myFile;
-    return getBufferWrapper(page, modify);
+    return getBufferWrapper(page, modify, myReadOnly);
   }
 
   public void putLong(long addr, long value) {
@@ -168,17 +171,21 @@ public class PagedFileStorage implements Forceable {
 
       int page_len = Math.min(l, myPageSize - page_offset);
       final ByteBuffer buffer = getReadOnlyBuffer(page);
-      try {
-        buffer.position(page_offset);
+      // TODO do a proper synchronization
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (buffer) {
+        try {
+          buffer.position(page_offset);
+        }
+        catch (IllegalArgumentException iae) {
+          throw new IllegalArgumentException("can't position buffer to offset " + page_offset + ", " +
+                                             "buffer.limit=" + buffer.limit() + ", " +
+                                             "page=" + page + ", " +
+                                             "file=" + myFile.getFileName() + ", "+
+                                             "file.length=" + length());
+        }
+        buffer.get(dst, o, page_len);
       }
-      catch (IllegalArgumentException iae) {
-        throw new IllegalArgumentException("can't position buffer to offset " + page_offset + ", " +
-                                           "buffer.limit=" + buffer.limit() + ", " +
-                                           "page=" + page + ", " +
-                                           "file=" + myFile.getFileName() + ", "+
-                                           "file.length=" + length());
-      }
-      buffer.get(dst, o, page_len);
 
       l -= page_len;
       o += page_len;
@@ -197,14 +204,17 @@ public class PagedFileStorage implements Forceable {
 
       int page_len = Math.min(l, myPageSize - page_offset);
       final ByteBuffer buffer = getBuffer(page);
-      try {
-        buffer.position(page_offset);
+      // TODO do a proper synchronization
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (buffer) {
+        try {
+          buffer.position(page_offset);
+        }
+        catch (IllegalArgumentException iae) {
+          throw new IllegalArgumentException("can't position buffer to offset " + page_offset);
+        }
+        buffer.put(src, o, page_len);
       }
-      catch (IllegalArgumentException iae) {
-        throw new IllegalArgumentException("can't position buffer to offset " + page_offset);
-      }
-      buffer.put(src, o, page_len);
-
       l -= page_len;
       o += page_len;
       i += page_len;
@@ -290,16 +300,16 @@ public class PagedFileStorage implements Forceable {
   }
 
   private ByteBuffer getBuffer(long page) {
-    return getBufferWrapper(page, true).getCachedBuffer();
+    return getBufferWrapper(page, true, myReadOnly).getCachedBuffer();
   }
 
   private ByteBuffer getReadOnlyBuffer(long page) {
-    return getBufferWrapper(page, false).getCachedBuffer();
+    return getBufferWrapper(page, false, myReadOnly).getCachedBuffer();
   }
 
-  private ByteBufferWrapper getBufferWrapper(long page, boolean modify) {
+  private ByteBufferWrapper getBufferWrapper(long page, boolean modify, boolean readOnly) {
     ByteBufferWrapper pageFromCache =
-      myLastAccessedBufferCache.getPageFromCache(page, myStorageLockContext.getStorageLock().getMappingChangeCount());
+      myLastAccessedBufferCache.getPageFromCache(page, myStorageLockContext.getStorageLock().getMappingChangeCount(), readOnly);
     if (pageFromCache != null) {
       if (modify) markDirty(pageFromCache);
       return pageFromCache;
@@ -311,7 +321,7 @@ public class PagedFileStorage implements Forceable {
       if (myStorageIndex == -1) {
         throw new IOException("storage is already closed; path " + myFile);
       }
-      ByteBufferWrapper byteBufferWrapper = myStorageLockContext.getStorageLock().get(myStorageIndex | (int)page, !modify); // TODO: long page
+      ByteBufferWrapper byteBufferWrapper = myStorageLockContext.getStorageLock().get(myStorageIndex | (int)page, !modify, readOnly); // TODO: long page
       if (modify) markDirty(byteBufferWrapper);
       ByteBuffer buf = byteBufferWrapper.getBuffer();
       if (myNativeBytesOrder && buf.order() != ourNativeByteOrder) {

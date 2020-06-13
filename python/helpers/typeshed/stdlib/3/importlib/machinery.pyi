@@ -1,10 +1,10 @@
 import importlib.abc
 import types
-from typing import Any, Callable, List, Optional, Sequence, Tuple
+from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
 
 # ModuleSpec is exported from this module, but for circular import
 # reasons exists in its own stub file (with Loader and ModuleType).
-from _importlib_modulespec import ModuleSpec as ModuleSpec  # Exported
+from _importlib_modulespec import ModuleSpec as ModuleSpec, Loader  # Exported
 
 class BuiltinImporter(importlib.abc.MetaPathFinder,
                       importlib.abc.InspectLoader):
@@ -81,7 +81,17 @@ class WindowsRegistryFinder(importlib.abc.MetaPathFinder):
                   target: Optional[types.ModuleType] = ...) -> Optional[ModuleSpec]:
         ...
 
-class PathFinder(importlib.abc.MetaPathFinder): ...
+class PathFinder:
+    @classmethod
+    def invalidate_caches(cls) -> None: ...
+    @classmethod
+    def find_spec(cls, fullname: str,
+                  path: Optional[Sequence[Union[bytes, str]]] = ...,
+                  target: Optional[types.ModuleType] = ...) -> Optional[ModuleSpec]: ...
+    @classmethod
+    def find_module(cls, fullname: str,
+                    path: Optional[Sequence[Union[bytes, str]]] = ...) -> Optional[Loader]: ...
+
 
 SOURCE_SUFFIXES: List[str]
 DEBUG_BYTECODE_SUFFIXES: List[str]

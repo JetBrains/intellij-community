@@ -10,10 +10,10 @@ import org.jetbrains.annotations.NotNull;
  * @deprecated Override {@link AbstractGradleModuleBuilder} instead
  */
 @Deprecated
+// TODO: See TODOs in AbstractGradleModuleBuilder
 public class GradleModuleBuilder extends AbstractGradleModuleBuilder {
   @Override
   public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
-    setWizardContext(wizardContext);
     return new ModuleWizardStep[]{new GradleModuleWizardStep(this, wizardContext)};
   }
 }

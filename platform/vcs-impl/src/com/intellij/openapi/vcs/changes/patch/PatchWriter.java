@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.application.options.CodeStyle;
@@ -25,7 +25,7 @@ import java.util.List;
 
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
-public class PatchWriter {
+public final class PatchWriter {
 
   public static void writePatches(@NotNull final Project project,
                                   @NotNull String fileName,

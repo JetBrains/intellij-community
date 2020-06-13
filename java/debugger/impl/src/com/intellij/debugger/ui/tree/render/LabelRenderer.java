@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -18,7 +18,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class LabelRenderer extends TypeRenderer implements ValueLabelRenderer, OnDemandRenderer {
+public class LabelRenderer extends ReferenceRenderer implements ValueLabelRenderer, OnDemandRenderer {
   public static final @NonNls String UNIQUE_ID = "LabelRenderer";
   public boolean ON_DEMAND;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.util.SmartList;
@@ -50,8 +50,7 @@ public final class RunAll implements Runnable {
     CompoundRuntimeException.throwIfNotEmpty(ContainerUtil.concat(suppressedExceptions, collectExceptions(myActions)));
   }
 
-  @NotNull
-  private static List<Throwable> collectExceptions(@NotNull List<? extends ThrowableRunnable<?>> actions) {
+  private static @NotNull List<Throwable> collectExceptions(@NotNull List<? extends ThrowableRunnable<?>> actions) {
     List<Throwable> result = null;
     for (ThrowableRunnable<?> action : actions) {
       try {

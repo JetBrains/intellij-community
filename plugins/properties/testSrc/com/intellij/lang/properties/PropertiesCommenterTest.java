@@ -21,9 +21,6 @@ import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
- */
 public class PropertiesCommenterTest extends LightPlatformCodeInsightTestCase {
   public void testProp1() { doTest(); }
   public void testUncomment() { doTest(); }

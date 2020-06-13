@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.control.finalVar;
 
 import com.intellij.openapi.util.Ref;
@@ -22,7 +22,7 @@ import java.util.Map;
 /**
  * @author Max Medvedev
  */
-public class VariableInitializationChecker {
+public final class VariableInitializationChecker {
 
   private static boolean isVariableDefinitelyInitialized(@NotNull GrVariable var, Instruction @NotNull [] controlFlow) {
     DFAEngine<Data> engine = new DFAEngine<>(controlFlow, new MyDfaInstance(VariableDescriptorFactory.createDescriptor(var)), new MySemilattice());

@@ -513,9 +513,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults() && type == JavaTokenType.TEXT_BLOCK_LITERAL) {
       myHolder.add(checkFeature(token, HighlightingFeature.TEXT_BLOCKS));
     }
-    else if (!myHolder.hasErrorResults() && type == JavaTokenType.RECORD_KEYWORD) {
-      myHolder.add(checkFeature(token, HighlightingFeature.RECORDS));
-    }
 
     if (!myHolder.hasErrorResults() && type == JavaTokenType.RBRACE && token.getParent() instanceof PsiCodeBlock) {
       PsiElement gParent = token.getParent().getParent();
@@ -620,7 +617,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
     // Ignore if the type of the value which is being iterated over is not resolved yet
     final PsiType iteratedValueType = iteratedValue.getType();
-    return iteratedValueType instanceof PsiPrimitiveType || PsiUtil.resolveClassInClassTypeOnly(iteratedValueType) != null;
+    return iteratedValueType == null || !PsiTypesUtil.hasUnresolvedComponents(iteratedValueType);
   }
 
   @Override

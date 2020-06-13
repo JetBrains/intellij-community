@@ -18,7 +18,7 @@ import javax.swing.JCheckBox
 /**
  * @author Konstantin Bulenkov
  */
-class NotificationSettingsUi(var notification: NotificationSettingsWrapper) {
+class NotificationSettingsUi(var notification: NotificationSettingsWrapper, val useBalloonNotifications: ComponentPredicate) {
   val ui: DialogPanel
   private lateinit var type: ComboBox<NotificationDisplayType>
   private lateinit var log: JCheckBox
@@ -31,7 +31,9 @@ class NotificationSettingsUi(var notification: NotificationSettingsWrapper) {
         type = comboBox(model,
                         getter = notification::displayType,
                         setter = {notification.displayType = it ?: NONE},
-                        renderer = SimpleListCellRenderer.create("") {it?.title}).component
+                        renderer = SimpleListCellRenderer.create("") { if(useBalloonNotifications.invoke()) it?.title else NONE.title})
+          .enableIf(useBalloonNotifications)
+          .component
         type.addActionListener {
           notification.displayType = type.selectedItem as NotificationDisplayType
         }

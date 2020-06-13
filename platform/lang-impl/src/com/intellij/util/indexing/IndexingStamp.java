@@ -41,7 +41,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  *
  * It is assumed that index stamps are monotonically increasing.
  */
-public class IndexingStamp {
+public final class IndexingStamp {
   private static final long INDEX_DATA_OUTDATED_STAMP = -2L;
 
   private static final int VERSION = 15;
@@ -415,6 +415,7 @@ public class IndexingStamp {
 
   @TestOnly
   public static void dropIndexingTimeStamps(int fileId) throws IOException {
+    myTimestampsCache.remove(fileId);
     try (DataOutputStream out =  FSRecords.writeAttribute(fileId, Timestamps.PERSISTENCE)) {
       new Timestamps(null).writeToStream(out);
     }

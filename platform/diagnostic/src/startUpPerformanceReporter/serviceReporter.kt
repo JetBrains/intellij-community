@@ -1,13 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.startUpPerformanceReporter
 
-import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.ActivityImpl
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.cl.PluginClassLoader
-import com.intellij.util.io.jackson.obj
+import com.intellij.diagnostic.ThreadNameManager
 import it.unimi.dsi.fastutil.objects.Object2LongMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
@@ -61,48 +57,4 @@ internal fun computeOwnTime(allEvents: List<ActivityImpl>, threadNameManager: Th
 
 private fun isInclusive(otherItem: ActivityImpl, item: ActivityImpl): Boolean {
   return otherItem.start >= item.start && otherItem.end <= item.end
-}
-
-internal fun writeServiceStats(writer: JsonGenerator) {
-  class StatItem(val name: String) {
-    var app = 0
-    var project = 0
-    var module = 0
-  }
-
-  // components can be inferred from data, but to verify that items reported correctly (and because for items threshold is applied (not all are reported))
-  val component = StatItem("component")
-  val service = StatItem("service")
-
-  val plugins = PluginManagerCore.getLoadedPlugins()
-  for (plugin in plugins) {
-    service.app += (plugin as IdeaPluginDescriptorImpl).app.services.size
-    service.project += plugin.project.services.size
-    service.module += plugin.module.services.size
-
-    component.app += plugin.app.components.size
-    component.project += plugin.project.components.size
-    component.module += plugin.module.components.size
-  }
-
-  writer.obj("stats") {
-    writer.writeNumberField("plugin", plugins.size)
-    for (statItem in listOf(component, service)) {
-      writer.obj(statItem.name) {
-        writer.writeNumberField("app", statItem.app)
-        writer.writeNumberField("project", statItem.project)
-        writer.writeNumberField("module", statItem.module)
-      }
-    }
-
-    writer.obj("loadedClasses") {
-      for (plugin in plugins) {
-        val classLoader = (plugin as IdeaPluginDescriptorImpl).pluginClassLoader as? PluginClassLoader ?: continue
-        val classCount = classLoader.loadedClassCount
-        if (classCount > 0) {
-          writer.writeNumberField(plugin.pluginId.idString, classCount)
-        }
-      }
-    }
-  }
 }

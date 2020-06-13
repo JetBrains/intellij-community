@@ -10,14 +10,25 @@ import collections  # Needed by aliases like DefaultDict, see mypy issue 2986
 
 overload = object()
 Any = object()
-TypeVar = object()
+
+class TypeVar:
+    __name__: str
+    __bound__: Optional[Type[Any]]
+    __constraints__: Tuple[Type[Any], ...]
+    __covariant__: bool
+    __contravariant__: bool
+    def __init__(self, name: str, *constraints: Type[Any], bound: Optional[Type[Any]] = ..., covariant: bool = ..., contravariant: bool = ...) -> None: ...
+
 _promote = object()
 
 class _SpecialForm:
-    def __getitem__(self, typeargs: Any) -> Any: ...
+    def __getitem__(self, typeargs: Any) -> object: ...
 
+Union: _SpecialForm = ...
+Optional: _SpecialForm = ...
 Tuple: _SpecialForm = ...
 Generic: _SpecialForm = ...
+# Protocol is only present in 3.8 and later, but mypy needs it unconditionally
 Protocol: _SpecialForm = ...
 Callable: _SpecialForm = ...
 Type: _SpecialForm = ...
@@ -30,7 +41,8 @@ if sys.version_info >= (3, 8):
     # TypedDict is a (non-subscriptable) special form.
     TypedDict: object
 
-class GenericMeta(type): ...
+if sys.version_info < (3, 7):
+    class GenericMeta(type): ...
 
 # Return type that indicates a function does not return.
 # This type is equivalent to the None type, but the no-op Union is necessary to
@@ -55,24 +67,21 @@ def no_type_check_decorator(decorator: _C) -> _C: ...
 
 # Type aliases and type constructors
 
-class TypeAlias:
+class _Alias:
     # Class for defining generic aliases for library types.
-    def __init__(self, target_type: type) -> None: ...
     def __getitem__(self, typeargs: Any) -> Any: ...
 
-Union = TypeAlias(object)
-Optional = TypeAlias(object)
-List = TypeAlias(object)
-Dict = TypeAlias(object)
-DefaultDict = TypeAlias(object)
-Set = TypeAlias(object)
-FrozenSet = TypeAlias(object)
-Counter = TypeAlias(object)
-Deque = TypeAlias(object)
-ChainMap = TypeAlias(object)
+List = _Alias()
+Dict = _Alias()
+DefaultDict = _Alias()
+Set = _Alias()
+FrozenSet = _Alias()
+Counter = _Alias()
+Deque = _Alias()
+ChainMap = _Alias()
 
 if sys.version_info >= (3, 7):
-    OrderedDict = TypeAlias(object)
+    OrderedDict = _Alias()
 
 if sys.version_info >= (3, 9):
     Annotated: _SpecialForm = ...
@@ -616,9 +625,9 @@ if sys.version_info >= (3, 8):
     def get_args(tp: Any) -> Tuple[Any, ...]: ...
 
 @overload
-def cast(tp: Type[_T], obj: Any) -> _T: ...
+def cast(typ: Type[_T], val: Any) -> _T: ...
 @overload
-def cast(tp: str, obj: Any) -> Any: ...
+def cast(typ: str, val: Any) -> Any: ...
 
 # Type constructors
 

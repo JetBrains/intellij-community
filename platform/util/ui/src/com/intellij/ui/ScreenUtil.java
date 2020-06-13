@@ -3,7 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.Patches;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +17,7 @@ public final class ScreenUtil {
   public static final String DISPOSE_TEMPORARY = "dispose.temporary";
 
   @Nullable private static final Map<GraphicsConfiguration, Pair<Insets, Long>> ourInsetsCache =
-    Patches.isJdkBugId8004103() ? ContainerUtil.createWeakMap() : null;
+    Patches.isJdkBugId8004103() ? CollectionFactory.createWeakMap() : null;
   private static final int ourInsetsTimeout = 5000;  // shouldn't be too long
 
   private ScreenUtil() { }

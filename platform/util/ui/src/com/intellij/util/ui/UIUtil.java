@@ -685,7 +685,7 @@ public final class UIUtil {
 
   public static void setEnabled(@NotNull Component component, boolean enabled, boolean recursively, final boolean visibleOnly) {
     JBIterable<Component> all = recursively ? uiTraverser(component).expandAndFilter(
-      visibleOnly ? (Condition<Component>)Component::isVisible : Conditions.alwaysTrue()).traverse() : JBIterable.of(component);
+      visibleOnly ? Component::isVisible : Conditions.alwaysTrue()).traverse() : JBIterable.of(component);
     Color fg = enabled ? getLabelForeground() : getLabelDisabledForeground();
     for (Component c : all) {
       c.setEnabled(enabled);
@@ -1919,7 +1919,7 @@ public final class UIUtil {
     }
     if (component != null && component.getParent() instanceof JLayeredPane) { // Handle LoadingDecorator
       Component[] components = ((JLayeredPane)component.getParent()).getComponentsInLayer(JLayeredPane.DEFAULT_LAYER);
-      if (components.length == 1 && ArrayUtil.indexOf(components, component) == -1) {
+      if (components.length == 1 && ArrayUtilRt.indexOf(components, component, 0, components.length) == -1) {
         component = getDeepestComponentAtForComponent(parent, x, y, components[0]);
       }
     }

@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,7 +21,7 @@ import com.intellij.ui.content.ContentManagerListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.ide.actions.ToggleToolbarAction.isToolbarVisible;
@@ -29,22 +29,29 @@ import static com.intellij.psi.util.PsiUtilCore.findFileSystemItem;
 
 public final class ProblemsView implements DumbAware, ToolWindowFactory {
   private static final String ID = "Problems View";
+  private static final int CURRENT_FILE_INDEX = 0;
 
   public static @Nullable ToolWindow getToolWindow(@Nullable Project project) {
     return project == null || project.isDisposed() ? null : ToolWindowManager.getInstance(project).getToolWindow(ID);
   }
 
-  public static void showCurrentFileProblems(@NotNull Project project) {
+  public static void toggleCurrentFileProblems(@NotNull Project project) {
     ToolWindow window = getToolWindow(project);
     if (window == null) return; // does not exist
-    selectContent(window.getContentManager(), 0);
-    window.setAvailable(true, null);
-    window.activate(null, true);
+    ContentManager manager = window.getContentManager();
+    if (window.isVisible() && manager.getSelectedContent() == manager.getContent(CURRENT_FILE_INDEX)) {
+      window.hide(); // hide toolwindow only if the Current File tab is selected
+    }
+    else {
+      selectContent(manager, CURRENT_FILE_INDEX);
+      window.setAvailable(true, null);
+      window.activate(null, true);
+    }
   }
 
-  public static void selectHighlightInfoIfVisible(@NotNull Project project, @NotNull HighlightInfo info) {
+  public static void selectHighlighterIfVisible(@NotNull Project project, @NotNull RangeHighlighterEx highlighter) {
     HighlightingPanel panel = get(HighlightingPanel.class, getSelectedContent(project));
-    if (panel != null && panel.isShowing()) panel.selectHighlightInfo(info);
+    if (panel != null && panel.isShowing()) panel.selectHighlighter(highlighter);
   }
 
   static @Nullable Document getDocument(@Nullable Project project, @NotNull VirtualFile file) {
@@ -95,6 +102,7 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     state.setShowToolbar(isToolbarVisible(window, PropertiesComponent.getInstance(project)));
     ContentManager manager = window.getContentManager();
     createContent(manager, new HighlightingPanel(project, state));
+    if (Experiments.getInstance().isFeatureEnabled("problems.view.project.errors.enabled"))
     createContent(manager, new ProjectErrorsPanel(project, state));
     selectContent(manager, state.getSelectedIndex());
     selectionChanged(true, manager.getSelectedContent());

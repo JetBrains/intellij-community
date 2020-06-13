@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.rules.utils;
 
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public class WhiteListSimpleRuleFactory {
+public final class WhiteListSimpleRuleFactory {
   private static final String RULE_PREFIX = "rule:";          // rule:TRUE , rule:FALSE
   private static final String ENUM_PREFIX = "enum:";          // enum:A|B|C
   private static final String REGEXP_PREFIX = "regexp:";      // regexp:\d+
@@ -151,7 +151,7 @@ public class WhiteListSimpleRuleFactory {
 
         FUSRule simpleRule = createRule(unwrapRuleNode(string));
         if (simpleRule instanceof CustomWhiteListRule) {
-          fusRule = (CustomWhiteListRule)simpleRule;
+          fusRule = simpleRule;
         }
         else {
           return UNPARSED_EXPRESSION;

@@ -33,11 +33,20 @@ public abstract class MergeRequest implements UserDataHolder {
 
   /**
    * Called on conflict resolve end. Should be called exactly once for each request that was shown.
-   *
+   * <p>
    * MergeRequest should keep the initial state of its content and restore it on {@link MergeResult#CANCEL}
    */
   @CalledInAwt
   public abstract void applyResult(@NotNull MergeResult result);
+
+  /**
+   * Called when merge request life cycle is retargeted to another one.
+   * <p>
+   * In this case, {@link #applyResult} will never be called for this request.
+   * The caller should appropriately transfer {@link MergeCallback}.
+   */
+  public void resultRetargeted() {
+  }
 
   @Nullable
   @Override

@@ -8,6 +8,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,12 +19,13 @@ import java.util.List;
 */
 public class JavaStaticMemberProcessor extends StaticMemberProcessor {
   private final PsiElement myOriginalPosition;
+  private final PsiElement myPosition;
 
   public JavaStaticMemberProcessor(CompletionParameters parameters) {
     super(parameters.getPosition());
     myOriginalPosition = parameters.getOriginalPosition();
-
-    final PsiFile file = parameters.getPosition().getContainingFile();
+    myPosition = parameters.getPosition();
+    final PsiFile file = myPosition.getContainingFile();
     if (file instanceof PsiJavaFile) {
       final PsiImportList importList = ((PsiJavaFile)file).getImportList();
       if (importList != null) {
@@ -60,7 +62,7 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
 
         super.handleInsert(context);
       }
-    });
+    }.qualifyIfNeeded(ObjectUtils.tryCast(myPosition.getParent(), PsiJavaCodeReferenceElement.class)));
   }
 
   private PsiReference createReferenceToMemberName(@NotNull PsiMember member) {

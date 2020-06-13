@@ -50,7 +50,7 @@ public class InjectionCache {
     myAnnoIndex = CachedValuesManager.getManager(project).createCachedValue(() -> {
       Set<String> result = collectMethodNamesWithLanguage(
         configuration.getAdvancedConfiguration().getLanguageAnnotationClass());
-      return new CachedValueProvider.Result<>(result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, configuration);
+      return new CachedValueProvider.Result<>(result, PsiModificationTracker.MODIFICATION_COUNT, configuration);
     }, false);
   }
 

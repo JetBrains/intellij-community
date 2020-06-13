@@ -68,7 +68,7 @@ public class ChildInfoImpl implements ChildInfo {
   }
 
   @Override
-  public String getSymLinkTarget() {
+  public String getSymlinkTarget() {
     return symLinkTarget;
   }
 

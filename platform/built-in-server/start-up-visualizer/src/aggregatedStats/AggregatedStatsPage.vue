@@ -64,20 +64,25 @@
                   <el-option v-for='name in ["as is", "2 hour", "day", "week", "month"]' :key="name" :label="name" :value="name"/>
                 </el-select>
               </el-form-item>
+              <el-form-item label="Period">
+                <el-select v-model="timeRange" data-lpignore="true" filterable>
+                  <el-option v-for='item in timeRanges' :key="item.k" :label="item.l" :value="item.k"/>
+                </el-select>
+              </el-form-item>
             </el-form>
 
             <el-divider class="dividerAfterForm">Bootstrap</el-divider>
             <el-row :gutter="5">
               <el-col :span="12">
                 <el-card shadow="never" :body-style="{ padding: '0px' }">
-                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest"
+                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest" :timeRange="timeRange"
                                       :metrics='["bootstrap_d", "appInitPreparation_d", "appInit_d", "pluginDescriptorLoading_d", "euaShowing_d", "appStarter_d"]'
                                       :chartSettings="chartSettings"/>
                 </el-card>
               </el-col>
               <el-col :span="12">
                 <el-card shadow="never" :body-style="{ padding: '0px' }">
-                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest"
+                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest" :timeRange="timeRange"
                                       :metrics='["pluginDescriptorInitV18_d", "appComponentCreation_d", "projectComponentCreation_d"]'
                                       :chartSettings="chartSettings"/>
                 </el-card>
@@ -88,14 +93,14 @@
             <el-row :gutter="5" style="margin-top: 5px;">
               <el-col :span="12">
                 <el-card shadow="never" :body-style="{ padding: '0px' }">
-                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest"
+                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest" :timeRange="timeRange"
                                       :metrics='["appComponentCreation_d", "serviceSyncPreloading_d", "serviceAsyncPreloading_d"]'
                                       :chartSettings="chartSettings"/>
                 </el-card>
               </el-col>
               <el-col :span="12">
                 <el-card shadow="never" :body-style="{ padding: '0px' }">
-                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest"
+                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest" :timeRange="timeRange"
                                       :metrics='["projectComponentCreation_d", "projectServiceSyncPreloading_d", "projectServiceAsyncPreloading_d", "moduleLoading_d"]'
                                       :chartSettings="chartSettings"/>
                 </el-card>
@@ -106,12 +111,14 @@
             <el-row :gutter="5" style="margin-top: 5px;">
               <el-col :span="12">
                 <el-card shadow="never" :body-style="{ padding: '0px' }">
-                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest" :metrics='["projectDumbAware_d", "editorRestoring_d", "editorRestoringTillPaint_d"]' :chartSettings="chartSettings"/>
+                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest" :timeRange="timeRange"
+                                      :metrics='["projectDumbAware_d", "editorRestoring_d", "editorRestoringTillPaint_d"]' :chartSettings="chartSettings"/>
                 </el-card>
               </el-col>
               <el-col :span="12">
                 <el-card shadow="never" :body-style="{ padding: '0px' }">
-                  <LineChartComponent type="instant" :order="item.order" :dataRequest="dataRequest" :metrics='["splash_i", "startUpCompleted_i"]' :chartSettings="chartSettings"/>
+                  <LineChartComponent type="instant" :order="item.order" :dataRequest="dataRequest" :timeRange="timeRange"
+                                      :metrics='["splash_i", "startUpCompleted_i"]' :chartSettings="chartSettings"/>
                 </el-card>
               </el-col>
             </el-row>
@@ -140,6 +147,7 @@
 
 <script lang="ts" src="./AggregatedStatsPage.ts"></script>
 
+<!--suppress CssUnusedSymbol -->
 <style>
 .aggregatedChart {
   width: 100%;

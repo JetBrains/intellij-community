@@ -1,12 +1,20 @@
 <html>
 <body>
-Reports calls to assertion methods with “expected” and “actual” arguments of incompatible types. Such calls often indicate that there is a bug.
+Reports calls to assertion methods with “expected” and “actual” arguments of incompatible types. Such calls often indicate that there is a bug.<br>
 The inspection applies to the following methods:<br>
 <ul>
-  <li><b>assertEquals(), assertNotEquals()</b></li>
-  <li><b>assertSame(), assertNotSame()</b></li>
+  <li><b>org.junit.Assert.assertEquals(), org.junit.Assert.assertNotEquals()</b></li>
+  <li><b>org.junit.Assert.assertSame(), org.junit.Assert.assertNotSame()</b></li>
+  <li><b>org.assertj.core.api.Assert.isEqualTo(), org.assertj.core.api.Assert.isNotEqualTo()</b></li>
+  <li><b>org.assertj.core.api.Assert.isSameAs(), org.assertj.core.api.Assert.isNotSameAs()</b></li>
 </ul>
-The <b>assertNotEquals()</b> and <b>isNotEqualTo()</b> methods are also reported, however they use a weak warning
-to take into account the case when the equals() contract is tested.
+The <b>assertNotEquals()</b> and <b>isNotEqualTo()</b> methods are also reported,<br>
+however they are highlighted with a weak warning to take into account the case when the equals() contract is tested.
+<br><br>
+Test samples where <b>the warning is fired:</b><br>
+<code>assertEquals("1", 1);</code><br>
+<code>assertNotSame(new int[0], 0);</code><br>
+<code>// weak warning, because of a possible false positive case</code><br>
+<code>assertThat(foo).as("user type").isNotEqualTo(bar);</code><br>
 </body>
 </html>

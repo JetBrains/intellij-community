@@ -13,8 +13,8 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.util.projectWizard.importSources.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.*;
@@ -132,17 +132,8 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
   }
 
   @Override
-  public List getList() {
-    return null;
-  }
-
-  @Override
   public boolean isMarked(Object element) {
     return false;
-  }
-
-  @Override
-  public void setList(List list) throws ConfigurationException {
   }
 
   @Override
@@ -155,12 +146,12 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
   }
 
   @Override
-  public List<Module> commit(@NotNull final Project project, final ModifiableModuleModel model, final ModulesProvider modulesProvider) {
-    final boolean fromProjectStructure = model != null;
+  public List<Module> commit(@NotNull Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
+    boolean fromProjectStructure = model != null;
     ModifiableModelsProvider modelsProvider = new IdeaModifiableModelsProvider();
-    final LibraryTable.ModifiableModel projectLibraryTable = modelsProvider.getLibraryTableModifiableModel(project);
-    final Map<LibraryDescriptor, Library> projectLibs = new HashMap<>();
-    final List<Module> result = new ArrayList<>();
+    LibraryTable.ModifiableModel projectLibraryTable = modelsProvider.getLibraryTableModifiableModel(project);
+    Map<LibraryDescriptor, Library> projectLibs = new HashMap<>();
+    List<Module> result = new ArrayList<>();
     try {
       WriteAction.run(() -> {
         // create project-level libraries
@@ -256,12 +247,11 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
     return result;
   }
 
-  @Nullable
   @Override
-  public List<Module> commit(Project project,
-                             ModifiableModuleModel model,
-                             ModulesProvider modulesProvider,
-                             ModifiableArtifactModel artifactModel) {
+  public @NotNull List<Module> commit(Project project,
+                                      ModifiableModuleModel model,
+                                      ModulesProvider modulesProvider,
+                                      ModifiableArtifactModel artifactModel) {
     return commit(project, model, modulesProvider);
   }
 
@@ -299,7 +289,7 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
   @NotNull
   private static Module createModule(ProjectDescriptor projectDescriptor, final ModuleDescriptor descriptor,
                                      final Map<LibraryDescriptor, Library> projectLibs, final ModifiableModuleModel moduleModel)
-    throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
+    throws InvalidDataException {
 
     final String moduleFilePath = descriptor.computeModuleFilePath();
     ModuleBuilder.deleteModuleFile(moduleFilePath);
@@ -390,8 +380,10 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
     for (ProjectDescriptor projectDescriptor : getSelectedDescriptors()) {
       for (ModuleDescriptor moduleDescriptor : projectDescriptor.getModules()) {
         try {
-          final ModuleType moduleType = getModuleType(moduleDescriptor);
-          if (moduleType != null && !moduleType.createModuleBuilder().isSuitableSdkType(sdkTypeId)) return false;
+          final ModuleType<?> moduleType = getModuleType(moduleDescriptor);
+          if (moduleType != null && !moduleType.createModuleBuilder().isSuitableSdkType(sdkTypeId)) {
+            return false;
+          }
         }
         catch (Exception ignore) {
         }
@@ -401,7 +393,7 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
   }
 
   @Nullable
-  private static ModuleType getModuleType(ModuleDescriptor moduleDescriptor) throws InvalidDataException, JDOMException, IOException {
+  private static ModuleType<?> getModuleType(ModuleDescriptor moduleDescriptor) throws InvalidDataException, JDOMException, IOException {
     if (moduleDescriptor.isReuseExistingElement()) {
       final File file = new File(moduleDescriptor.computeModuleFilePath());
       if (file.exists()) {

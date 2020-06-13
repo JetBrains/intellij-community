@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.util;
 
 import com.intellij.execution.RunManager;
@@ -18,7 +18,7 @@ import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRun
 import com.intellij.remoteServer.impl.configuration.deployment.ModuleDeploymentSourceImpl;
 import org.jetbrains.annotations.NotNull;
 
-public class CloudRunConfigurationUtil {
+public final class CloudRunConfigurationUtil {
   public static <SC extends ServerConfiguration, DC extends DeploymentConfiguration>
   DeployToServerRunConfiguration<SC, DC> createRunConfiguration(RemoteServer<SC> account, Module module, DC deploymentConfiguration) {
     final ModulePointer modulePointer = ModulePointerManager.getInstance(module.getProject()).create(module);

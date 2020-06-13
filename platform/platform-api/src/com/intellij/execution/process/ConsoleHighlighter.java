@@ -5,7 +5,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import org.jetbrains.annotations.NonNls;
 
-public class ConsoleHighlighter {
+public final class ConsoleHighlighter {
   @NonNls static final String BLACK_ID = "CONSOLE_BLACK_OUTPUT";
   @NonNls static final String RED_ID = "CONSOLE_RED_OUTPUT";
   @NonNls static final String GREEN_ID = "CONSOLE_GREEN_OUTPUT";

@@ -14,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
-import java.util.function.Predicate;
 
 public abstract class ToolWindowManagerEx extends ToolWindowManager {
   /**
@@ -55,7 +54,7 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager {
    * @return {@code ID} of tool window which was last activated among tool windows satisfying the current condition
    */
   public @Nullable String getLastActiveToolWindowId(@Nullable Condition<? super JComponent> condition) {
-    ToolWindow window = getLastActiveToolWindow((Predicate<JComponent>)component -> condition == null || condition.value(component));
+    ToolWindow window = getLastActiveToolWindow(component -> condition == null || condition.value(component));
     return window == null ? null : window.getId();
   }
 

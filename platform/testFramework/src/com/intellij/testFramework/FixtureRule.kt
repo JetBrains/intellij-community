@@ -4,7 +4,6 @@ package com.intellij.testFramework
 import com.intellij.configurationStore.LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
@@ -27,7 +26,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.stateStore
-import com.intellij.util.SmartList
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.io.systemIndependentPath
@@ -67,17 +65,16 @@ class ProjectRule(val projectDescriptor: LightProjectDescriptor = LightProjectDe
 
     @JvmStatic
     fun checkThatNoOpenProjects() {
-      val openProjects = ProjectUtil.getOpenProjects()
+      val projectManager = ProjectManagerEx.getInstanceExIfCreated() ?: return
+      val openProjects = projectManager.openProjects
       if (openProjects.isEmpty()) {
         return
       }
 
-      val projectManager = ProjectManagerEx.getInstanceEx()
-      val errors: MutableList<IllegalStateException> = SmartList()
-      val tasks: MutableList<ThrowableRunnable<Throwable>> = SmartList()
+      val tasks = mutableListOf<ThrowableRunnable<Throwable>>()
+      val errors = mutableListOf<IllegalStateException>()
       for (project in openProjects) {
-        errors.add(IllegalStateException(
-          "Test project is not disposed: $project;\n created in: ${getCreationPlace(project)}"))
+        errors.add(IllegalStateException("Test project is not disposed: $project;\n created in: ${getCreationPlace(project)}"))
         tasks.add(ThrowableRunnable { projectManager.forceCloseProject(project) })
       }
       RunAll(tasks).run(errors)
@@ -267,7 +264,18 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
 }
 
 fun createHeavyProject(path: Path, useDefaultProjectAsTemplate: Boolean = false): Project {
-  return ProjectManagerEx.getInstanceEx().newProject(path, null, OpenProjectTask(useDefaultProjectAsTemplate = useDefaultProjectAsTemplate, isNewProject = true))!!
+  return ProjectManagerEx.getInstanceEx().newProject(path, OpenProjectTask(useDefaultProjectAsTemplate = useDefaultProjectAsTemplate, isNewProject = true))!!
+}
+
+fun createTestOpenProjectOptions(): OpenProjectTask {
+  // In tests it is caller responsibility to refresh VFS (because often not only the project file must be refreshed, but the whole dir - so, no need to refresh several times).
+  // Also, cleanPersistedContents is called on start test application.
+  return OpenProjectTask(forceOpenInNewFrame = true,
+                         isRefreshVfsNeeded = false,
+                         runConversionBeforeOpen = false,
+                         runConfigurators = false,
+                         showWelcomeScreen = false,
+                         useDefaultProjectAsTemplate = false)
 }
 
 suspend fun Project.use(task: suspend (Project) -> Unit) {
@@ -395,6 +403,16 @@ class DisposableRule : ExternalResource() {
 
   val disposable: Disposable
     get() = _disposable.value
+
+
+  @Suppress("ObjectLiteralToLambda")
+  inline fun register(crossinline disposable: () -> Unit) {
+    Disposer.register(this.disposable, object : Disposable {
+      override fun dispose() {
+        disposable()
+      }
+    })
+  }
 
   override fun after() {
     if (_disposable.isInitialized()) {

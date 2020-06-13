@@ -74,7 +74,7 @@ public class EditorFactoryImpl extends EditorFactory {
 
     LaterInvocator.addModalityStateListener(new ModalityStateListener() {
       @Override
-      public void beforeModalityStateChanged(boolean entering) {
+      public void beforeModalityStateChanged(boolean entering, @NotNull Object modalEntity) {
         for (Editor editor : myEditors) {
           ((EditorImpl)editor).beforeModalityStateChanged();
         }

@@ -38,9 +38,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author cdr
- */
 public class GenericsHighlightUtil {
   private static final Logger LOG = Logger.getInstance(GenericsHighlightUtil.class);
 

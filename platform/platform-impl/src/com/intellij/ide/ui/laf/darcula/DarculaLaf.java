@@ -14,10 +14,9 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TableActions;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +37,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -463,12 +463,15 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   public Icon getDisabledIcon(JComponent component, Icon icon) {
     if (icon == null) return null;
 
+    ScaleContext ctx = ScaleContext.create(component);
+    icon = MultiResolutionImageProvider.convertFromJBIcon(icon, ctx);
     Icon disabledIcon = super.getDisabledIcon(component, icon);
+    disabledIcon = MultiResolutionImageProvider.convertFromMRIcon(disabledIcon, ctx);
+
     if (disabledIcon != null) {
       return disabledIcon;
     }
-
-    return IconLoader.getDisabledIcon(icon);
+    return IconLoader.getDisabledIcon(icon, component);
   }
 
   @Override

@@ -13,7 +13,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
-public class PathUtilRt {
+public final class PathUtilRt {
   @NotNull
   public static String getFileName(@Nullable String path) {
     if (StringUtilRt.isEmpty(path)) {
@@ -66,13 +66,14 @@ public class PathUtilRt {
     return path.substring(0, end);
   }
 
-  private static int getLastIndexOfPathSeparator(@NotNull String path, int end) {
-    return Math.max(path.lastIndexOf('/', end - 1), path.lastIndexOf('\\', end - 1));
+  private static int getLastIndexOfPathSeparator(@NotNull CharSequence path, int end) {
+    return Math.max(StringUtilRt.lastIndexOf(path,'/', 0,end - 1), StringUtilRt.lastIndexOf(path, '\\', 0,end - 1));
   }
 
-  private static boolean isWindowsUNCRoot(@NotNull String path, int lastPathSeparatorPosition) {
+  public static boolean isWindowsUNCRoot(@NotNull CharSequence path, int lastPathSeparatorPosition) {
     return Platform.CURRENT == Platform.WINDOWS &&
-           (path.startsWith("//") || path.startsWith("\\\\")) && getLastIndexOfPathSeparator(path, lastPathSeparatorPosition) == 1;
+           (StringUtilRt.startsWith(path, "//") || StringUtilRt.startsWith(path, "\\\\"))
+           && getLastIndexOfPathSeparator(path, lastPathSeparatorPosition) == 1;
   }
 
   @NotNull

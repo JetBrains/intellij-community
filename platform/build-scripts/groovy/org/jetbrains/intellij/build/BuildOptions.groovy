@@ -159,9 +159,17 @@ class BuildOptions {
   int bundledJreVersion = System.getProperty("intellij.build.bundled.jre.version", "11").toInteger()
 
   /**
-   * Specifies JRE build to be bundled with distributions. If {@code null} then jdkBuild from gradle.properties will be used.
+   * Specifies JRE build to be bundled with distributions. If {@code null} then {@code jdkBuild} from gradle.properties will be used.
    */
   String bundledJreBuild = System.getProperty("intellij.build.bundled.jre.build")
+
+  /**
+   * Specifies a prefix to use when looking for an artifact of a JRE to be bundled with distributions.
+   * If {@code null}, {@code "jbr-"} will be used.
+   *
+   * @see org.jetbrains.intellij.build.JetBrainsRuntimeDistribution
+   */
+  String bundledJrePrefix = System.getProperty("intellij.build.bundled.jre.prefix")
 
   /**
    * Directory path to unpack JetBrains Runtime builds into

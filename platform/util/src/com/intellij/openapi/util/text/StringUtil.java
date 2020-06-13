@@ -613,7 +613,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * @return string with paired quotaion marks (quote (") or apostrophe (')) removed
+   * @return string with paired quotation marks (quote (") or apostrophe (')) removed
    */
   @Contract(pure = true)
   public static @NotNull String unquoteString(@NotNull String s) {

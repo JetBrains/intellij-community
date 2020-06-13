@@ -540,12 +540,6 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
   @Override
   public void dispose() {
-    for (TemplatesGroup group : myTemplatesMap.keySet()) {
-      ModuleBuilder builder = group.getModuleBuilder();
-      if (builder != null) {
-        builder.cleanup();
-      }
-    }
     myLastSelectedGroup = null;
     mySettingsStep = null;
     myTemplatesMap.clear();

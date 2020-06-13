@@ -17,6 +17,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -33,6 +34,7 @@ import java.util.function.Supplier;
 
 public class SettingsImpl implements EditorSettings {
   private static final Logger LOG = Logger.getInstance(SettingsImpl.class);
+  private static final RegistryValue SPECIAL_CHARS_ENABLED = Registry.get("editor.show.special.chars");
 
   @Nullable private final EditorEx myEditor;
   @Nullable private Supplier<? extends Language> myLanguageSupplier;
@@ -84,6 +86,7 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myRenamePreselect                       = null;
   private Boolean myWrapWhenTypingReachesRightMargin      = null;
   private Boolean myShowIntentionBulb                     = null;
+  private Boolean myShowingSpecialCharacters              = null;
 
   private List<Integer> mySoftMargins = null;
 
@@ -744,5 +747,20 @@ public class SettingsImpl implements EditorSettings {
   @Override
   public void setLanguageSupplier(@Nullable Supplier<? extends Language> languageSupplier) {
     myLanguageSupplier = languageSupplier;
+  }
+
+  @Override
+  public boolean isShowingSpecialChars() {
+    return myShowingSpecialCharacters == null ? SPECIAL_CHARS_ENABLED.asBoolean() : myShowingSpecialCharacters;
+  }
+
+  @Override
+  public void setShowingSpecialChars(boolean value) {
+    boolean oldState = isShowingSpecialChars();
+    myShowingSpecialCharacters = value;
+    boolean newState = isShowingSpecialChars();
+    if (newState != oldState) {
+      fireEditorRefresh();
+    }
   }
 }

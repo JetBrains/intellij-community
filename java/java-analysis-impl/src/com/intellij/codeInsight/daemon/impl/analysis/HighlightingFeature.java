@@ -32,32 +32,18 @@ public enum HighlightingFeature {
   MODULES(LanguageLevel.JDK_1_9, "feature.modules"),
   LVTI(LanguageLevel.JDK_10, "feature.lvti"),
   VAR_LAMBDA_PARAMETER(LanguageLevel.JDK_11, "feature.var.lambda.parameter"),
-  ENHANCED_SWITCH(LanguageLevel.JDK_13_PREVIEW, "feature.enhanced.switch"){
-    @Override
-    boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      return useSiteLevel.isAtLeast(LanguageLevel.JDK_13_PREVIEW);//enabled in jdk 14 as standard
-    }
-
-    @Override
-    LanguageLevel getStandardLevel() {
-      return LanguageLevel.JDK_14;
-    }
-  },
-  SWITCH_EXPRESSION(LanguageLevel.JDK_13_PREVIEW, "feature.switch.expressions") {
-    @Override
-    boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      return useSiteLevel.isAtLeast(LanguageLevel.JDK_13_PREVIEW);//enabled in jdk 14 as standard
-    }
-
-    @Override
-    LanguageLevel getStandardLevel() {
-      return LanguageLevel.JDK_14;
-    }
-  },
-  TEXT_BLOCKS(LanguageLevel.JDK_13_PREVIEW, "feature.text.blocks"),
+  ENHANCED_SWITCH(LanguageLevel.JDK_14, "feature.enhanced.switch"),
+  SWITCH_EXPRESSION(LanguageLevel.JDK_14, "feature.switch.expressions"),
   RECORDS(LanguageLevel.JDK_14_PREVIEW, "feature.records"),
   PATTERNS(LanguageLevel.JDK_14_PREVIEW, "feature.patterns.instanceof"),
-  TEXT_BLOCK_ESCAPES(LanguageLevel.JDK_14_PREVIEW, "feature.text.block.escape.sequences");
+  TEXT_BLOCK_ESCAPES(LanguageLevel.JDK_14_PREVIEW, "feature.text.block.escape.sequences"),
+  TEXT_BLOCKS(LanguageLevel.JDK_14_PREVIEW, "feature.text.blocks") {
+    @Override
+    boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
+      return useSiteLevel.isAtLeast(LanguageLevel.JDK_14_PREVIEW);
+    }
+  },
+  SEALED_CLASSES(LanguageLevel.JDK_15_PREVIEW, "feature.sealed.classes");
 
   final LanguageLevel level;
   @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE)

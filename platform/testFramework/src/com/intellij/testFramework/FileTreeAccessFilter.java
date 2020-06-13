@@ -26,9 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Set;
 
-/**
- * @author cdr
- */
 public class FileTreeAccessFilter implements VirtualFileFilter {
   private final Set<VirtualFile> myAddedClasses = new THashSet<>();
   private boolean myTreeAccessAllowed;

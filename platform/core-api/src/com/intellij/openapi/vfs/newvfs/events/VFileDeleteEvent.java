@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class VFileDeleteEvent extends VFileEvent {
+public final class VFileDeleteEvent extends VFileEvent {
   @NotNull private final VirtualFile myFile;
 
   public VFileDeleteEvent(@Nullable Object requestor, @NotNull VirtualFile file, boolean isFromRefresh) {

@@ -1,30 +1,37 @@
 package circlet.vcs
 
-import circlet.actions.*
-import circlet.client.api.*
+import circlet.actions.CircletActionUtils
 import circlet.client.api.Navigator
-import circlet.components.*
-import com.intellij.dvcs.repo.*
-import com.intellij.ide.*
+import circlet.client.api.ProjectLocation
+import circlet.components.circletWorkspace
+import com.intellij.dvcs.repo.VcsRepositoryManager
+import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.progress.*
-import com.intellij.openapi.project.*
-import com.intellij.openapi.vcs.*
-import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.history.*
-import com.intellij.openapi.vfs.*
-import com.intellij.vcs.log.*
-import com.intellij.vcsUtil.*
-import git4idea.*
-import git4idea.history.*
-import git4idea.repo.*
-import icons.*
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.VcsDataKeys
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.history.VcsFileRevisionEx
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.VcsLogDataKeys
+import com.intellij.vcsUtil.VcsUtil
+import git4idea.GitRevisionNumber
+import git4idea.GitUtil
+import git4idea.history.GitHistoryUtils
+import git4idea.repo.GitRepository
+import icons.SpaceIcons
 import runtime.routing.Location
 import com.intellij.openapi.util.Ref as Ref1
 
 abstract class CircletOpenInBrowserActionGroup<T>(groupName: String) :
-    ActionGroup(groupName, "Open link in browser", CircletIcons.mainIcon),
-    DumbAware {
+  ActionGroup(groupName, "Open link in browser", SpaceIcons.Main),
+  DumbAware {
 
     abstract fun getData(dataContext: DataContext): List<T>?
 
@@ -227,7 +234,7 @@ class CircletVcsOpenInBrowserActionGroup :
                         val hash = getCurrentFileRevisionHash(project, virtualFile) ?: return null
 
                         return Navigator.p.project(description.projectKey)
-                            .file(repo, hash, relativePath)
+                            .fileAnnotate(repo, hash, relativePath)
                             .absoluteHref(server)
                     }
 

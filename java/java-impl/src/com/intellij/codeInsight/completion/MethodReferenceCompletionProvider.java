@@ -2,30 +2,27 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
-import com.intellij.codeInsight.ExpectedTypeInfoImpl;
-import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.completion.scope.CompletionElement;
+import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.daemon.impl.analysis.PsiMethodReferenceHighlightingUtil;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.*;
+import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Consumer;
-import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
-public class MethodReferenceCompletionProvider extends CompletionProvider<CompletionParameters> {
+class MethodReferenceCompletionProvider {
   private static final Logger LOG = Logger.getInstance(MethodReferenceCompletionProvider.class);
 
-  @Override
-  protected void addCompletions(@NotNull CompletionParameters parameters,
-                                @NotNull ProcessingContext context,
-                                @NotNull final CompletionResultSet result) {
+  static void addCompletions(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     if (!PsiUtil.isLanguageLevel8OrHigher(parameters.getOriginalFile())) return;
 
-    final PsiElement rulezzRef = parameters.getPosition().getParent();
-    if (rulezzRef == null || !LambdaUtil.isValidLambdaContext(rulezzRef.getParent())) return;
+    PsiElement position = parameters.getPosition();
+    PsiMethodReferenceExpression refPlace = (PsiMethodReferenceExpression)position.getParent();
+    if (refPlace == null || !LambdaUtil.isValidLambdaContext(refPlace.getParent())) return;
 
     final ExpectedTypeInfo[] expectedTypes = JavaSmartCompletionContributor.getExpectedTypes(parameters);
     for (ExpectedTypeInfo expectedType : expectedTypes) {
@@ -34,60 +31,35 @@ public class MethodReferenceCompletionProvider extends CompletionProvider<Comple
         final PsiType functionalType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(defaultType);
         final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalType);
         if (returnType != null && functionalType != null) {
-          final PsiElement position = parameters.getPosition();
-          final PsiElement refPlace = position.getParent();
-          final ExpectedTypeInfoImpl typeInfo =
-            new ExpectedTypeInfoImpl(returnType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, returnType, TailType.UNKNOWN, null, ExpectedTypeInfoImpl.NULL);
-          Consumer<LookupElement> noTypeCheck = new Consumer<LookupElement>() {
-            @Override
-            public void consume(final LookupElement lookupElement) {
-              final PsiElement element = lookupElement.getPsiElement();
-              if (element instanceof PsiMethod) {
-                final PsiMethodReferenceExpression referenceExpression = createMethodReferenceExpression((PsiMethod)element);
-                if (referenceExpression == null) {
-                  return;
-                }
+          JavaCompletionProcessor processor = new JavaCompletionProcessor(
+            position, new AssignableFromFilter(returnType), JavaCompletionProcessor.Options.DEFAULT_OPTIONS, Conditions.alwaysTrue());
+          refPlace.processVariants(processor);
+          Iterable<PsiMethod> matchingMethods = JBIterable.from(processor.getResults())
+            .map(CompletionElement::getElement)
+            .filter(PsiMethod.class);
 
-                LambdaUtil.performWithTargetType(referenceExpression, functionalType, () -> {
-                  final PsiElement resolve = referenceExpression.resolve();
-                  if (resolve != null && PsiEquivalenceUtil.areElementsEquivalent(element, resolve) &&
-                      PsiMethodReferenceHighlightingUtil.checkMethodReferenceContext(referenceExpression, resolve, functionalType) == null) {
-                    result.addElement(new JavaMethodReferenceElement((PsiMethod)element, refPlace));
-                  }
-                  return null;
-                });
+          for (PsiMethod method : matchingMethods) {
+            PsiMethodReferenceExpression referenceExpression = createMethodReferenceExpression(method, refPlace);
+            LambdaUtil.performWithTargetType(referenceExpression, functionalType, () -> {
+              if (referenceExpression.isReferenceTo(method) &&
+                  PsiMethodReferenceHighlightingUtil.checkMethodReferenceContext(referenceExpression, method, functionalType) == null) {
+                result.addElement(new JavaMethodReferenceElement(method, refPlace));
               }
-            }
-
-            private PsiMethodReferenceExpression createMethodReferenceExpression(PsiMethod method) {
-              PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(method.getProject());
-              if (refPlace instanceof PsiMethodReferenceExpression) {
-                final PsiMethodReferenceExpression referenceExpression = (PsiMethodReferenceExpression)refPlace.copy();
-                final PsiElement referenceNameElement = referenceExpression.getReferenceNameElement();
-                LOG.assertTrue(referenceNameElement != null, referenceExpression);
-                referenceNameElement.replace(method.isConstructor() ? elementFactory.createKeyword("new") : elementFactory.createIdentifier(method.getName()));
-                return referenceExpression;
-              }
-              else if (method.hasModifierProperty(PsiModifier.STATIC)) {
-                final PsiClass aClass = method.getContainingClass();
-                LOG.assertTrue(aClass != null);
-                final String qualifiedName = aClass.getQualifiedName();
-                return (PsiMethodReferenceExpression)elementFactory.createExpressionFromText(
-                  qualifiedName + "::" + (method.isConstructor() ? "new" : method.getName()), refPlace);
-              }
-              else {
-                return null;
-              }
-            }
-          };
-
-          final Runnable runnable = ReferenceExpressionCompletionContributor
-            .fillCompletionVariants(new JavaSmartCompletionParameters(parameters, typeInfo), noTypeCheck);
-          if (runnable != null) {
-            runnable.run();
+              return null;
+            });
           }
         }
       }
     }
   }
+
+  private static PsiMethodReferenceExpression createMethodReferenceExpression(PsiMethod method, PsiMethodReferenceExpression place) {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
+    PsiMethodReferenceExpression copy = (PsiMethodReferenceExpression)place.copy();
+    PsiElement referenceNameElement = copy.getReferenceNameElement();
+    LOG.assertTrue(referenceNameElement != null, copy);
+    referenceNameElement.replace(method.isConstructor() ? factory.createKeyword("new") : factory.createIdentifier(method.getName()));
+    return copy;
+  }
+
 }

@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.Query;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -32,6 +33,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * This is an internal class, {@link DirectoryIndex} must be used instead.
+ */
+@ApiStatus.Internal
 public final class DirectoryIndexImpl extends DirectoryIndex implements Disposable {
   private static final Logger LOG = Logger.getInstance(DirectoryIndexImpl.class);
 

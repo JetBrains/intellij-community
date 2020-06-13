@@ -219,11 +219,11 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   }
 
   public static boolean isSearchField(Component c) {
-    return c instanceof JTextField && "search".equals(((JTextField)c).getClientProperty("JTextField.variant"));
+    return c instanceof JTextField && "search".equals(((JTextField)c).getClientProperty(VARIANT));
   }
 
   public static boolean isSearchFieldWithHistoryPopup(Component c) {
-    return isSearchField(c) && ((JTextField)c).getClientProperty("JTextField.Search.FindPopup") instanceof JPopupMenu;
+    return isSearchField(c) && ((JTextField)c).getClientProperty(POPUP) instanceof JPopupMenu;
   }
 
   @Nullable
@@ -355,7 +355,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
               showSearchPopup();
               break;
             case CLEAR:
-              Object listener = getComponent().getClientProperty("JTextField.Search.CancelAction");
+              Object listener = getComponent().getClientProperty(ON_CLEAR);
               if (listener instanceof ActionListener) {
                 ((ActionListener)listener).actionPerformed(new ActionEvent(getComponent(), ActionEvent.ACTION_PERFORMED, "action"));
               }
@@ -577,7 +577,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
           font = UIManager.getFont(getPropertyPrefix() + ".font");
           component.setFont(!monospaced
                             ? !SystemInfo.isMacOSCatalina ? font : disableKerning(font)
-                            : new FontUIResource("monospaced", font.getStyle(), font.getSize()));
+                            : new FontUIResource(MONOSPACED, font.getStyle(), font.getSize()));
         }
       }
     }

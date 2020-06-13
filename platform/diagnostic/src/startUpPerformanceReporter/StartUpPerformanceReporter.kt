@@ -67,7 +67,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
       val serviceActivities = Object2ObjectOpenHashMap<String, MutableList<ActivityImpl>>()
       val services = mutableListOf<ActivityImpl>()
 
-      val threadNameManager = ThreadNameManager()
+      val threadNameManager = IdeThreadNameManager()
 
       var end = -1L
 
@@ -110,7 +110,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
 
       val pluginCostMap = computePluginCostMap()
 
-      val w = IdeaFormatWriter(activities, pluginCostMap, threadNameManager)
+      val w = IdeIdeaFormatWriter(activities, pluginCostMap, threadNameManager)
       val startTime = items.first().start
       for (item in items) {
         val pluginId = item.pluginId ?: continue

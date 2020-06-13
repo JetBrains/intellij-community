@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class PlaceholderTextRanges {
+public final class PlaceholderTextRanges {
 
   private PlaceholderTextRanges() {
   }

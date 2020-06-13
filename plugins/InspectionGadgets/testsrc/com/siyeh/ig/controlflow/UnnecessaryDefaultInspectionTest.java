@@ -2,9 +2,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -99,9 +97,4 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
     return inspection;
   }
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_13;
-  }
 }

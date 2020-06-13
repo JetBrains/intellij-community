@@ -16,9 +16,6 @@
 
 package com.intellij.usages.impl;
 
-/**
- * @author cdr
- */
 public class NullUsage extends UsageAdapter {
   public static final NullUsage INSTANCE = new NullUsage();
 

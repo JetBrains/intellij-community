@@ -1,7 +1,7 @@
 # NB: SocketServer.pyi and socketserver.pyi must remain consistent!
 # Stubs for socketserver
 
-from typing import Any, BinaryIO, Callable, List, Optional, Tuple, Type, Text, Union
+from typing import Any, BinaryIO, Callable, ClassVar, List, Optional, Tuple, Type, Text, Union
 from socket import SocketType
 import sys
 import types
@@ -63,23 +63,24 @@ if sys.platform != 'win32':
                      RequestHandlerClass: Callable[..., BaseRequestHandler],
                      bind_and_activate: bool = ...) -> None: ...
 
-class ForkingMixIn:
-    timeout: Optional[float]  # undocumented
-    active_children: Optional[List[int]]  # undocumented
-    max_children: int  # undocumented
-    if sys.version_info >= (3, 7):
-        block_on_close: bool
-    if sys.version_info >= (3, 6):
-        def collect_children(self, *, blocking: bool = ...) -> None: ...  # undocumented
-    else:
-        def collect_children(self) -> None: ...  # undocumented
-    def handle_timeout(self) -> None: ...  # undocumented
-    if sys.version_info >= (3, 3):
-        def service_actions(self) -> None: ...  # undocumented
-    def process_request(self, request: bytes,
-                        client_address: Tuple[str, int]) -> None: ...
-    if sys.version_info >= (3, 6):
-        def server_close(self) -> None: ...
+if sys.platform != "win32":
+    class ForkingMixIn:
+        timeout: Optional[float]  # undocumented
+        active_children: Optional[List[int]]  # undocumented
+        max_children: int  # undocumented
+        if sys.version_info >= (3, 7):
+            block_on_close: bool
+        if sys.version_info >= (3, 6):
+            def collect_children(self, *, blocking: bool = ...) -> None: ...  # undocumented
+        else:
+            def collect_children(self) -> None: ...  # undocumented
+        def handle_timeout(self) -> None: ...  # undocumented
+        if sys.version_info >= (3, 3):
+            def service_actions(self) -> None: ...  # undocumented
+        def process_request(self, request: bytes,
+                            client_address: Tuple[str, int]) -> None: ...
+        if sys.version_info >= (3, 6):
+            def server_close(self) -> None: ...
 
 class ThreadingMixIn:
     daemon_threads: bool
@@ -92,8 +93,9 @@ class ThreadingMixIn:
     if sys.version_info >= (3, 6):
         def server_close(self) -> None: ...
 
-class ForkingTCPServer(ForkingMixIn, TCPServer): ...
-class ForkingUDPServer(ForkingMixIn, UDPServer): ...
+if sys.platform != "win32":
+    class ForkingTCPServer(ForkingMixIn, TCPServer): ...
+    class ForkingUDPServer(ForkingMixIn, UDPServer): ...
 class ThreadingTCPServer(ThreadingMixIn, TCPServer): ...
 class ThreadingUDPServer(ThreadingMixIn, UDPServer): ...
 if sys.platform != 'win32':
@@ -118,9 +120,16 @@ class BaseRequestHandler:
     def finish(self) -> None: ...
 
 class StreamRequestHandler(BaseRequestHandler):
+    rbufsize: ClassVar[int]  # Undocumented
+    wbufsize: ClassVar[int]  # Undocumented
+    timeout: ClassVar[Optional[float]]  # Undocumented
+    disable_nagle_algorithm: ClassVar[bool]  # Undocumented
+    connection: SocketType  # Undocumented
     rfile: BinaryIO
     wfile: BinaryIO
 
 class DatagramRequestHandler(BaseRequestHandler):
+    packet: SocketType  # Undocumented
+    socket: SocketType  # Undocumented
     rfile: BinaryIO
     wfile: BinaryIO

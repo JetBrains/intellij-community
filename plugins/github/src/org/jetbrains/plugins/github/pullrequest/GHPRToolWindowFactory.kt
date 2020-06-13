@@ -9,7 +9,6 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 
 class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
-
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     toolWindow.setToHideOnEmptyContent(true)
     project.service<GHPRToolWindowTabsManager>().contentManager = GHPRToolWindowTabsContentManager(project, toolWindow.contentManager)

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lexer;
 
 import com.intellij.codeInsight.completion.CompletionUtilCore;
@@ -34,8 +34,6 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
   private static final int SEEN_STYLE_SCRIPT_SHIFT = 10;
   private static final int SEEN_STYLE_SCRIPT_MASK = 0x7 << SEEN_STYLE_SCRIPT_SHIFT;
   protected static final int BASE_STATE_SHIFT = 13;
-  @Nullable
-  protected static final Language ourDefaultStyleLanguage = Language.findLanguageByID("CSS");
 
   protected boolean seenTag;
   protected boolean seenAttribute;
@@ -187,8 +185,9 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
 
   @Nullable
   protected Language getStyleLanguage() {
-    if (ourDefaultStyleLanguage != null && styleType != null && !"text/css".equals(styleType)) {
-      for (Language language : ourDefaultStyleLanguage.getDialects()) {
+    Language cssLanguage = Language.findLanguageByID("CSS");
+    if (cssLanguage != null && styleType != null && !"text/css".equals(styleType)) {
+      for (Language language : cssLanguage.getDialects()) {
         for (String mimeType : language.getMimeTypes()) {
           if (styleType.equals(mimeType)) {
             return language;
@@ -196,7 +195,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
         }
       }
     }
-    return ourDefaultStyleLanguage;
+    return cssLanguage;
   }
 
   @Nullable

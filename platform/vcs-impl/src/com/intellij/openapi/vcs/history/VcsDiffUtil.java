@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.diff.DiffManager;
@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -34,14 +35,13 @@ import static com.intellij.diff.util.DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TI
 import static com.intellij.diff.util.DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE;
 import static com.intellij.vcsUtil.VcsUtil.getShortRevisionString;
 
-public class VcsDiffUtil {
-
+public final class VcsDiffUtil {
   @CalledInAwt
   public static void showDiffFor(@NotNull Project project,
-                                 @NotNull final Collection<? extends Change> changes,
-                                 @NotNull final String revNumTitle1,
-                                 @NotNull final String revNumTitle2,
-                                 @NotNull final FilePath filePath) {
+                                 @NotNull Collection<? extends Change> changes,
+                                 @NotNull String revNumTitle1,
+                                 @NotNull String revNumTitle2,
+                                 @NotNull FilePath filePath) {
     if (filePath.isDirectory()) {
       showChangesDialog(project, getDialogTitle(filePath, revNumTitle1, revNumTitle2), new ArrayList<>(changes));
     }
@@ -50,13 +50,13 @@ public class VcsDiffUtil {
         DiffManager.getInstance().showDiff(project, new MessageDiffRequest("No Changes Found"));
       }
       else {
-        final HashMap<Key, Object> revTitlesMap = new HashMap<>(2);
+        Map<Key<?>, Object> revTitlesMap = new HashMap<>(2);
         revTitlesMap.put(VCS_DIFF_LEFT_CONTENT_TITLE, revNumTitle1);
         revTitlesMap.put(VCS_DIFF_RIGHT_CONTENT_TITLE, revNumTitle2);
         ShowDiffContext showDiffContext = new ShowDiffContext() {
           @NotNull
           @Override
-          public Map<Key, Object> getChangeContext(@NotNull Change change) {
+          public Map<Key<?>, Object> getChangeContext(@NotNull Change change) {
             return revTitlesMap;
           }
         };
@@ -75,6 +75,41 @@ public class VcsDiffUtil {
   public static String getRevisionTitle(@NotNull String revision, boolean localMark) {
     return revision +
            (localMark ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
+  }
+
+  public static void putFilePathsIntoChangeContext(@NotNull Change change, @NotNull Map<Key<?>, Object> context) {
+    ContentRevision afterRevision = change.getAfterRevision();
+    ContentRevision beforeRevision = change.getBeforeRevision();
+    FilePath aFile = afterRevision == null ? null : afterRevision.getFile();
+    FilePath bFile = beforeRevision == null ? null : beforeRevision.getFile();
+    context.put(VCS_DIFF_RIGHT_CONTENT_TITLE, getRevisionTitle(afterRevision, aFile, null));
+    context.put(VCS_DIFF_LEFT_CONTENT_TITLE, getRevisionTitle(beforeRevision, bFile, aFile));
+  }
+
+  @NotNull
+  public static String getRevisionTitle(@Nullable ContentRevision revision,
+                                        @Nullable FilePath file,
+                                        @Nullable FilePath baseFile) {
+    return getShortHash(revision) +
+           (file == null || VcsFileUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(baseFile, file)
+            ? ""
+            : " (" + getRelativeFileName(baseFile, file) + ")");
+  }
+
+  @NotNull
+  private static String getShortHash(@Nullable ContentRevision revision) {
+    if (revision == null) return "";
+    VcsRevisionNumber revisionNumber = revision.getRevisionNumber();
+    if (revisionNumber instanceof ShortVcsRevisionNumber) return ((ShortVcsRevisionNumber)revisionNumber).toShortString();
+    return revisionNumber.asString();
+  }
+
+  @NotNull
+  private static String getRelativeFileName(@Nullable FilePath baseFile, @NotNull FilePath file) {
+    if (baseFile == null || !baseFile.getName().equals(file.getName())) return file.getName();
+    FilePath aParentPath = baseFile.getParentPath();
+    if (aParentPath == null) return file.getName();
+    return VcsFileUtil.relativePath(aParentPath.getIOFile(), file.getIOFile());
   }
 
   @CalledInAwt

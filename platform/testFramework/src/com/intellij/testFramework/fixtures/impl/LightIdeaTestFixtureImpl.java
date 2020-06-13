@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.application.options.CodeStyle;
@@ -35,7 +35,7 @@ public final class LightIdeaTestFixtureImpl extends BaseFixture implements Light
   public void setUp() throws Exception {
     super.setUp();
 
-    TestApplicationManager application = LightPlatformTestCase.initApplication();
+    TestApplicationManager application = TestApplicationManager.getInstance();
     Pair<Project, Module> setup = LightPlatformTestCase.doSetup(myProjectDescriptor, LocalInspectionTool.EMPTY_ARRAY, getTestRootDisposable());
     myProject = setup.getFirst();
     myModule = setup.getSecond();
@@ -76,7 +76,7 @@ public final class LightIdeaTestFixtureImpl extends BaseFixture implements Light
         myProject = null;
         myModule = null;
         if (project != null) {
-          LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication());
+          TestApplicationManagerKt.tearDownProjectAndApp(project);
         }
       })
       .append(() -> LightPlatformTestCase.checkEditorsReleased())

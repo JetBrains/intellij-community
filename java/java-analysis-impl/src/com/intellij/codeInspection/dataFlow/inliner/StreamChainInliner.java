@@ -123,13 +123,13 @@ public class StreamChainInliner implements CallInliner {
     .register(STATE_FILTER, (PsiMethodCallExpression call) -> (Step next) -> new StateFilterStep(call, next));
 
   private static final CallMapper<Step> TERMINAL_STEP_MAPPER = new CallMapper<Step>()
-    .register(FOR_TERMINAL, LambdaTerminalStep::new)
-    .register(MATCH_TERMINAL, MatchTerminalStep::new)
-    .register(SUM_TERMINAL, SumTerminalStep::new)
-    .register(MIN_MAX_TERMINAL, MinMaxTerminalStep::new)
-    .register(OPTIONAL_TERMINAL, OptionalTerminalStep::new)
-    .register(TO_ARRAY_TERMINAL, ToArrayStep::new)
-    .register(COLLECT_TERMINAL, StreamChainInliner::createTerminalFromCollector);
+    .register(FOR_TERMINAL, call -> new LambdaTerminalStep(call))
+    .register(MATCH_TERMINAL, call -> new MatchTerminalStep(call))
+    .register(SUM_TERMINAL, call -> new SumTerminalStep(call))
+    .register(MIN_MAX_TERMINAL, call -> new MinMaxTerminalStep(call))
+    .register(OPTIONAL_TERMINAL, call -> new OptionalTerminalStep(call))
+    .register(TO_ARRAY_TERMINAL, call -> new ToArrayStep(call))
+    .register(COLLECT_TERMINAL, call -> createTerminalFromCollector(call));
 
   private static final Step NULL_TERMINAL_STEP = new Step(null, null, null) {
     @Override

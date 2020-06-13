@@ -103,9 +103,12 @@ class LibraryPropertiesTest {
       assertEquals(elementAsString, it.propertiesXmlTag)
     }
 
-    moduleRootManager.modifiableModel.moduleLibraryTable.libraryIterator.forEach {
-      assertEquals(antLibraryName, it.name)
-      assertEquals(propertyData, ((it as LibraryEx).properties as TestLibraryProperties).data)
+    moduleRootManager.modifiableModel.let { rootModel ->
+      rootModel.moduleLibraryTable.libraryIterator.forEach {
+        assertEquals(antLibraryName, it.name)
+        assertEquals(propertyData, ((it as LibraryEx).properties as TestLibraryProperties).data)
+      }
+      rootModel.dispose()
     }
   }
 }

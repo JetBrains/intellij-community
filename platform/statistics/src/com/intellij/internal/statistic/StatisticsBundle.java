@@ -21,9 +21,6 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-/**
- * @author Denis Zhdanov
- */
 public class StatisticsBundle extends DynamicBundle {
 
   public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object @NotNull ... params) {

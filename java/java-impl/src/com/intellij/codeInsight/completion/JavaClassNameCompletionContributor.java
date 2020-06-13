@@ -19,6 +19,7 @@ import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
@@ -83,6 +84,12 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
                                    @NotNull final PrefixMatcher matcher,
                                    @NotNull final Consumer<? super LookupElement> consumer) {
     final PsiElement insertedElement = parameters.getPosition();
+
+    JavaClassReference ref =
+      JavaClassReferenceCompletionContributor.findJavaClassReference(insertedElement.getContainingFile(), parameters.getOffset());
+    if (ref != null && ref.getContext() instanceof PsiClass) {
+      return;
+    }
 
     if (JavaCompletionContributor.getAnnotationNameIfInside(insertedElement) != null) {
       MultiMap<String, PsiClass> annoMap = getAllAnnotationClasses(insertedElement, matcher);

@@ -120,7 +120,7 @@ public class StatementParser {
     }
     else if (tokenType == JavaTokenType.IDENTIFIER &&
              PsiKeyword.YIELD.equals(builder.getTokenText()) &&
-             getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_13_PREVIEW)) {
+             getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_14)) {
       return parseYieldStatement(builder);
     }
     else if (tokenType == JavaTokenType.CONTINUE_KEYWORD) {

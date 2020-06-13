@@ -81,7 +81,7 @@ class ScopedClassHierarchy {
   static ScopedClassHierarchy getHierarchy(@NotNull final PsiClass psiClass, @NotNull final GlobalSearchScope resolveScope) {
     return CachedValuesManager.getCachedValue(psiClass, () -> {
       Map<GlobalSearchScope, ScopedClassHierarchy> result = ConcurrentFactoryMap.createMap(resolveScope1 -> new ScopedClassHierarchy(psiClass, resolveScope1));
-      return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
     }).get(resolveScope);
   }
 

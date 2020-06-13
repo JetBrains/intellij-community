@@ -7,8 +7,8 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.i18n.NlsInfo;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
 import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.util.DescriptorI18nUtil;
 
 import java.util.List;
 import java.util.Set;
@@ -113,8 +114,10 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
   private static void checkPropertyCapitalization(DomElementAnnotationHolder holder,
                                                   DomElement domElement,
                                                   Nls.Capitalization capitalization,
-                                                  String resourceKey, boolean required) {
-    final PropertiesFileImpl bundleFile = findBundlePropertiesFile(domElement);
+                                                  @Nullable String resourceKey, boolean required) {
+    if (resourceKey == null) return;
+    
+    final PropertiesFile bundleFile = DescriptorI18nUtil.findBundlePropertiesFile(domElement);
     if (bundleFile == null) return;
 
     final Property property = ObjectUtils.tryCast(bundleFile.findPropertyByKey(resourceKey), Property.class);

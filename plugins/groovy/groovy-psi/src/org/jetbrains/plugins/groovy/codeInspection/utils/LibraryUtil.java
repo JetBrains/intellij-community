@@ -19,7 +19,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
-public class LibraryUtil {
+public final class LibraryUtil {
 
   private LibraryUtil() {
     super();

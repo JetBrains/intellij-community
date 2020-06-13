@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.diagnostic.LoadingState;
@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class LaterInvocator {
+public final class LaterInvocator {
   private static final Logger LOG = Logger.getInstance(LaterInvocator.class);
 
   private LaterInvocator() { }
@@ -171,7 +171,7 @@ public class LaterInvocator {
       LOG.debug("enterModal:" + modalEntity);
     }
 
-    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(true);
+    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(true, modalEntity);
 
     ourModalEntities.add(modalEntity);
     synchronized (ourModalityStack) {
@@ -186,7 +186,7 @@ public class LaterInvocator {
     reincludeSkippedItemsAndRequestFlush();
   }
 
-  public static void enterModal(Project project, Dialog dialog) {
+  public static void enterModal(Project project, @NotNull Dialog dialog) {
     LOG.assertTrue(isDispatchThread(), "enterModal() should be invoked in event-dispatch thread");
 
     if (LOG.isDebugEnabled()) {
@@ -198,7 +198,7 @@ public class LaterInvocator {
       return;
     }
 
-    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(true);
+    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(true, dialog);
 
     List<Dialog> modalEntitiesList = projectToModalEntities.getOrDefault(project, ContainerUtil.createLockFreeCopyOnWriteList());
     projectToModalEntities.put(project, modalEntitiesList);
@@ -220,14 +220,14 @@ public class LaterInvocator {
     reincludeSkippedItemsAndRequestFlush();
   }
 
-  public static void leaveModal(Project project, Dialog dialog) {
+  public static void leaveModal(Project project, @NotNull Dialog dialog) {
     LOG.assertTrue(isWriteThread(), "leaveModal() should be invoked in write thread");
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("leaveModal:" + dialog.getName() + " ; for project: " + project.getName());
     }
 
-    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(false);
+    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(false, dialog);
 
     int index = ourModalEntities.indexOf(dialog);
 
@@ -267,7 +267,7 @@ public class LaterInvocator {
       LOG.debug("leaveModal:" + modalEntity);
     }
 
-    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(false);
+    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(false, modalEntity);
 
     int index = ourModalEntities.indexOf(modalEntity);
     LOG.assertTrue(index >= 0);

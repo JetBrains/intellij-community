@@ -24,7 +24,7 @@ import java.util.List;
  * </ul>
  */
 @ApiStatus.Internal
-public class SimpleStringPersistentEnumerator {
+public final class SimpleStringPersistentEnumerator {
   public static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
 
   @NotNull
@@ -81,19 +81,15 @@ public class SimpleStringPersistentEnumerator {
         nameToIdRegistry.put(name, i + 1);
       }
 
-      synchronized (myState) {
-        myState.ensureCapacity(nameToIdRegistry.size());
-        nameToIdRegistry.forEachEntry((name, index) -> {
-          myState.put(name, index);
-          return true;
-        });
-      }
+      myState.ensureCapacity(nameToIdRegistry.size());
+      nameToIdRegistry.forEachEntry((name, index) -> {
+        myState.put(name, index);
+        return true;
+      });
     }
     catch (IOException e) {
-      synchronized (myState) {
-        myState.clear();
-        writeStorageToDisk();
-      }
+      myState.clear();
+      writeStorageToDisk();
     }
   }
   

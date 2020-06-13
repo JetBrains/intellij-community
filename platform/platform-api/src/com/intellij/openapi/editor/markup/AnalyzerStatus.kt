@@ -103,7 +103,7 @@ interface UIController {
    */
   fun onClosePopup()
 
-  fun openProblemsView()
+  fun toggleProblemsView()
 }
 
 /**
@@ -187,7 +187,7 @@ class AnalyzerStatus(val icon: Icon, val title: String, val details: String, con
           override fun fillHectorPanels(container: Container, gc: GridBag) {}
           override fun canClosePopup(): Boolean = true
           override fun onClosePopup() {}
-          override fun openProblemsView() {}
+          override fun toggleProblemsView() {}
         }
       }
     }

@@ -177,7 +177,7 @@ internal object UpdateInstaller {
     }
 
     args += File(java, if (SystemInfo.isWindows) "bin\\java.exe" else "bin/java").path
-    args += if (getJdkSuffix().startsWith("-jbr1")) "-Xmx2000m" else "-Xmx900m"
+    args += if (SystemInfo.is32Bit) "-Xmx1700m" else "-Xmx2000m"
     args += "-cp"
     args += arrayOf(patchFiles.last().path, log4jCopy.path, jnaCopy.path, jnaUtilsCopy.path).joinToString(File.pathSeparator)
 

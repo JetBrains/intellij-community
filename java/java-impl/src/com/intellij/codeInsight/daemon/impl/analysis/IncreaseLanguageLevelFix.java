@@ -25,9 +25,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author cdr
- */
 public class IncreaseLanguageLevelFix implements IntentionAction, LocalQuickFix, HighPriorityAction {
   private final LanguageLevel myLevel;
 

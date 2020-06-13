@@ -154,7 +154,7 @@ public class ShowFontsUsedByEditorAction extends EditorAction {
   }
 }
 
-class AccessingInternalJdkFontApi {
+final class AccessingInternalJdkFontApi {
   private static final Method GET_FONT_2D_METHOD = ReflectionUtil.getDeclaredMethod(Font.class, "getFont2D");
   private static final FontRenderContext DUMMY_CONTEXT = new FontRenderContext(null, false, false);
 

@@ -153,7 +153,7 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
     return CachedValuesManager.getCachedValue(this, () -> {
       JavaPsiImplementationHelper helper = JavaPsiImplementationHelper.getInstance(getProject());
       PsiJavaModule result = helper != null ? helper.getOriginalModule(this) : this;
-      return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 

@@ -20,9 +20,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
- */
 public interface MethodSignature {
   MethodSignature[] EMPTY_ARRAY = new MethodSignature[0];
 

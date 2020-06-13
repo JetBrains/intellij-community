@@ -20,7 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-public class DisabledPluginsState {
+public final class DisabledPluginsState {
   public static final String DISABLED_PLUGINS_FILENAME = "disabled_plugins.txt";
 
   private static volatile Set<PluginId> ourDisabledPlugins;

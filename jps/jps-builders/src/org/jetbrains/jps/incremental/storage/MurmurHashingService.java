@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.storage;
 
 import com.google.common.hash.Hasher;
@@ -12,7 +12,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 
-class MurmurHashingService {
+final class MurmurHashingService {
   static final int HASH_SIZE = 16;
 
   static byte[] getStringHash(@NotNull String hashableString) {

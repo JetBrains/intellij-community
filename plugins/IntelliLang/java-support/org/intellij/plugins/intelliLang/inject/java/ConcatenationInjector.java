@@ -41,9 +41,6 @@ import java.util.*;
 import static com.intellij.util.containers.ContainerUtil.mapIterator;
 import static java.util.Collections.emptyList;
 
-/**
- * @author cdr
- */
 public final class ConcatenationInjector implements ConcatenationAwareInjector {
   private final Project myProject;
 

@@ -34,13 +34,8 @@ public interface VirtualFilePointer {
   @NotNull
   String getPresentableUrl();
 
-  boolean isValid();
-
   /**
-   * @return true if {@link VirtualFilePointerListener#validityChanged(VirtualFilePointer[])}
-   * should fired for every change beneath this directory (Used for jar directories in libraries)
+   * @return true if the file exists
    */
-  default boolean isRecursive() {
-    return false;
-  }
+  boolean isValid();
 }

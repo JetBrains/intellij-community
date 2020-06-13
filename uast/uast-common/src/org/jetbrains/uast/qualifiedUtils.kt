@@ -196,7 +196,8 @@ fun UElement.asRecursiveLogString(render: (UElement) -> String = { it.asLogStrin
 
     override fun visitElement(node: UElement): Boolean {
       stringBuilder.append(indent.repeat(level))
-      stringBuilder.appendln(render(node))
+      stringBuilder.append(render(node))
+      stringBuilder.append('\n')
       level++
       return false
     }

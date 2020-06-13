@@ -25,6 +25,10 @@ data class GitFileStatus(val index: StatusCode,
   else getFileStatus(workTree)
 }
 
+fun untrackedStatus(filePath: FilePath) = GitFileStatus('?', '?', filePath, null)
+fun ignoredStatus(filePath: FilePath) = GitFileStatus('!', '!', filePath, null)
+fun notChangedStatus(filePath: FilePath) = GitFileStatus(' ', ' ', filePath, null)
+
 fun GitFileStatus.has(contentVersion: ContentVersion): Boolean {
   return when (contentVersion) {
     ContentVersion.HEAD -> isTracked() && !isAdded(index)

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ui.paint.PaintUtil;
@@ -21,7 +21,7 @@ import java.util.function.Consumer;
  * This class allows to cache repeatedly painted elements, by drawing them to an in-memory image, and transferring that image to the target
  * graphics instead of performing the original painting.
  */
-public class CachingPainter {
+public final class CachingPainter {
   private static final Map<Object, CachedPainting> ourCache = new WeakHashMap<>();
 
   /**

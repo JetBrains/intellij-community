@@ -15,9 +15,6 @@ import com.intellij.psi.impl.source.tree.injected.MyTestInjector
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-/**
- * @author cdr
- */
 class HighlightUsagesHandlerTest extends LightJavaCodeInsightFixtureTestCase {
   final String basePath = JavaTestUtil.relativeJavaTestDataPath
 
@@ -104,7 +101,7 @@ class HighlightUsagesHandlerTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   void testBreakInSwitchExpr() {
-    IdeaTestUtil.withLevel module, LanguageLevel.JDK_13_PREVIEW, {
+    IdeaTestUtil.withLevel module, LanguageLevel.JDK_14, {
       configureFile()
       ctrlShiftF7()
       assertRangeText 'switch', 'yield', 'yield'

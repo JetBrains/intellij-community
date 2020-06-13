@@ -18,7 +18,7 @@ import java.util.List;
  * <p>
  * Options can be customized via {@link FileChooserDescriptor}.
  */
-public class FileChooser {
+public final class FileChooser {
   private static final Logger LOG = Logger.getInstance(FileChooser.class);
 
   /**

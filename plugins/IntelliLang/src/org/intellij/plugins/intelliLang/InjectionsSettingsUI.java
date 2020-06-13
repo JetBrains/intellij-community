@@ -302,9 +302,8 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
           if (place.isEnabled()) enablePlacesCount++;
         }
       }
-      myCountLabel.setText(IntelliLangBundle
-                             .message("label.text.0.injection.1.2.of.3.place.4.enabled", items.size(), items.size() > 1 ? "s" : "",
-                                      enablePlacesCount, placesCount, placesCount > 1 ? "s" : ""));
+      myCountLabel.setText(
+        IntelliLangBundle.message("label.text.0.injection.1.2.of.3.place.4.enabled", items.size(), enablePlacesCount, placesCount));
     }
     else {
       myCountLabel.setText(IntelliLangBundle.message("label.text.no.injections.configured"));

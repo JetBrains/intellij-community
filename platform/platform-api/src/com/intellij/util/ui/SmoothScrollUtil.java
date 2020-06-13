@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.MouseWheelEvent;
 
-public class SmoothScrollUtil {
+public final class SmoothScrollUtil {
   public static @Nullable
   JScrollBar getEventScrollBar(@NotNull MouseWheelEvent e) {
     return isHorizontalScroll(e) ? getEventHorizontalScrollBar(e) : getEventVerticalScrollBar(e);

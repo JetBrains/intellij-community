@@ -87,11 +87,6 @@ class BaseRequest:
     is_multiprocess: bool
     is_run_once: bool
 
-    # These are not preset at runtime but we add them since monkeypatching this
-    # class is quite common.
-    def __setattr__(self, name: str, value: Any): ...
-    def __getattr__(self, name: str): ...
-
 _OnCloseT = TypeVar('_OnCloseT', bound=Callable[[], Any])
 _SelfT = TypeVar('_SelfT', bound=BaseResponse)
 

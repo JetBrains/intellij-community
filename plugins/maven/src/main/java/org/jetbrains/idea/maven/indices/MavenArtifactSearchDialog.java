@@ -98,7 +98,7 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
   }
 
   private void initComponents(Project project, String initialText, boolean classMode) {
-    myTabbedPane = new TabbedPaneWrapper(project);
+    myTabbedPane = new TabbedPaneWrapper(getDisposable());
 
     MavenArtifactSearchPanel.Listener listener = new MavenArtifactSearchPanel.Listener() {
       @Override

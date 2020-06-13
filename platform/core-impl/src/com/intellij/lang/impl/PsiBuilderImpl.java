@@ -163,7 +163,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   private TokenSequence performLexing(@Nullable Object parentCachingNode) {
     TokenSequence fromParent = null;
 
-    if (parentCachingNode instanceof LazyParseableToken) {
+    if (parentCachingNode instanceof LazyParseableToken && shouldReuseCollapsedTokens(((LazyParseableToken)parentCachingNode).getTokenType())) {
       fromParent = ((LazyParseableToken)parentCachingNode).getParsedTokenSequence();
       assert fromParent == null || fromParent.lexStarts[fromParent.lexemeCount] == myText.length();
       ProgressIndicatorProvider.checkCanceled();
@@ -1253,7 +1253,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     final int end = myLexStarts[startMarker.getEndIndex()];
     final IElementType markerType = startMarker.myType;
     final TreeElement leaf = createLeaf(markerType, start, end);
-    if (markerType instanceof ILazyParseableElementTypeBase && ((ILazyParseableElementTypeBase)markerType).reuseCollapsedTokens() &&
+    if (shouldReuseCollapsedTokens(markerType) &&
         startMarker.myLexemeIndex < startMarker.getEndIndex()) {
       int length = startMarker.getEndIndex() - startMarker.myLexemeIndex;
       int[] relativeStarts = new int[length + 1];
@@ -1267,6 +1267,10 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     }
     ast.rawAddChildrenWithoutNotifications(leaf);
     return startMarker.getEndIndex();
+  }
+
+  private static boolean shouldReuseCollapsedTokens(IElementType collapsed) {
+    return collapsed instanceof ILazyParseableElementTypeBase && ((ILazyParseableElementTypeBase)collapsed).reuseCollapsedTokens();
   }
 
   @NotNull

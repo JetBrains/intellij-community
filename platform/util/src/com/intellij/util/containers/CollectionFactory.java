@@ -88,12 +88,47 @@ public final class CollectionFactory {
     }
   }
 
+  public static @NotNull Set<String> createFilePathSet(int expectedSize) {
+    return createFilePathSet(expectedSize, SystemInfoRt.isFileSystemCaseSensitive);
+  }
+
+  public static @NotNull Set<String> createFilePathSet(int expectedSize, boolean isFileSystemCaseSensitive) {
+    if (isFileSystemCaseSensitive) {
+      return new HashSet<>(expectedSize);
+    }
+    else {
+      return new ObjectOpenCustomHashSet<>(expectedSize, CaseInsensitiveStringHashingStrategy.INSTANCE);
+    }
+  }
+
+  public static @NotNull Set<String> createFilePathSet(@NotNull Collection<String> paths, boolean isFileSystemCaseSensitive) {
+    if (isFileSystemCaseSensitive) {
+      return new HashSet<>(paths);
+    }
+    else {
+      return new ObjectOpenCustomHashSet<>(paths, CaseInsensitiveStringHashingStrategy.INSTANCE);
+    }
+  }
+
   public static @NotNull <V> Map<String, V> createFilePathMap() {
     if (SystemInfoRt.isFileSystemCaseSensitive) {
       return new HashMap<>();
     }
     else {
       return createCaseInsensitiveStringMap();
+    }
+  }
+
+  public static @NotNull <V> Map<String, V> createFilePathMap(int expectedSize) {
+    return createFilePathMap(expectedSize, SystemInfoRt.isFileSystemCaseSensitive);
+  }
+
+  public static @NotNull <V> Map<String, V> createFilePathMap(int expectedSize, boolean isFileSystemCaseSensitive) {
+    if (isFileSystemCaseSensitive) {
+      return new HashMap<>(expectedSize);
+    }
+    else {
+      return new Object2ObjectOpenCustomHashMap<>(expectedSize, CaseInsensitiveStringHashingStrategy.INSTANCE);
     }
   }
 
@@ -166,7 +201,7 @@ public final class CollectionFactory {
 
   public static @NotNull Set<String> createFilePathSet(@NotNull Collection<String> paths) {
     if (SystemInfoRt.isFileSystemCaseSensitive) {
-      return new ObjectOpenHashSet<>(paths);
+      return new HashSet<>(paths);
     }
     else {
       return new ObjectOpenCustomHashSet<>(paths, CaseInsensitiveStringHashingStrategy.INSTANCE);

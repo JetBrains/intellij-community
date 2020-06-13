@@ -35,9 +35,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author cdr
- */
 public class LineTooltipRenderer extends ComparableObject.Impl implements TooltipRenderer {
 
   /**

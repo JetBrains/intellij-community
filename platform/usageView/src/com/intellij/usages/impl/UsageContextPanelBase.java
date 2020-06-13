@@ -30,9 +30,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-/**
- * @author cdr
- */
 public abstract class UsageContextPanelBase extends JBPanelWithEmptyText implements UsageContextPanel {
   protected final Project myProject;
   @NotNull protected final UsageViewPresentation myPresentation;

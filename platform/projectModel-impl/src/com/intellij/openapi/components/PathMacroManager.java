@@ -9,7 +9,7 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.PathUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
@@ -49,7 +49,7 @@ public class PathMacroManager implements PathMacroSubstitutor {
 
   protected static void addFileHierarchyReplacements(@NotNull ExpandMacroToPathMap result, @NotNull String macroName, @SystemIndependent @Nullable String path) {
     if (path != null) {
-      doAddFileHierarchyReplacements(result, StringUtil.trimEnd(path, "/"), '$' + macroName + '$');
+      doAddFileHierarchyReplacements(result, Strings.trimEnd(path, "/"), '$' + macroName + '$');
     }
   }
 
@@ -65,9 +65,9 @@ public class PathMacroManager implements PathMacroSubstitutor {
     if (path == null) return;
 
     String macro = '$' + macroName + '$';
-    path = StringUtil.trimEnd(FileUtil.toSystemIndependentName(path), "/");
+    path = Strings.trimEnd(FileUtil.toSystemIndependentName(path), "/");
     boolean overwrite = true;
-    while (StringUtil.isNotEmpty(path) && path.contains("/") && !"/".equals(path)) {
+    while (Strings.isNotEmpty(path) && path.contains("/") && !"/".equals(path)) {
       result.addReplacement(path, macro, overwrite);
       if (path.equals(stopAt)) break;
       macro += "/..";
@@ -111,7 +111,7 @@ public class PathMacroManager implements PathMacroSubstitutor {
   @Override
   @Contract("null -> null; !null -> !null")
   public String expandPath(@Nullable String text) {
-    if (StringUtil.isEmpty(text)) {
+    if (Strings.isEmpty(text)) {
       return text;
     }
     return getExpandMacroMap().substitute(text, SystemInfo.isFileSystemCaseSensitive);
@@ -120,10 +120,10 @@ public class PathMacroManager implements PathMacroSubstitutor {
   @Contract("null, _ -> null; !null, _ -> !null")
   @Override
   public String collapsePath(@Nullable String text, boolean recursively) {
-    if (StringUtil.isEmpty(text)) {
+    if (Strings.isEmpty(text)) {
       return text;
     }
-    return getReplacePathMap().substitute(text, SystemInfo.isFileSystemCaseSensitive, recursively);
+    return getReplacePathMap().substitute(text, SystemInfo.isFileSystemCaseSensitive, recursively).toString();
   }
 
   @Override

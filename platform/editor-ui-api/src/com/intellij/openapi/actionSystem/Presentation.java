@@ -108,6 +108,7 @@ public final class Presentation implements Cloneable {
   @NotNull private Supplier<TextWithMnemonic> myTextWithMnemonicSupplier = () -> null;
   private boolean myVisible = true;
   private boolean myEnabled = true;
+  private boolean myMultipleChoice = false;
   private double myWeight = DEFAULT_WEIGHT;
 
   public Presentation() {
@@ -447,5 +448,16 @@ public final class Presentation implements Cloneable {
 
   public boolean isEnabledAndVisible() {
     return isEnabled() && isVisible();
+  }
+
+  /**
+   * This parameter specifies if multiple actions can be taken in the same context
+   */
+  public void setMultipleChoice(boolean b) {
+    this.myMultipleChoice = b;
+  }
+
+  public boolean isMultipleChoice(){
+    return myMultipleChoice;
   }
 }

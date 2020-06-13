@@ -18,7 +18,7 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
@@ -31,10 +31,10 @@ import com.intellij.packaging.impl.artifacts.ArtifactManagerImpl;
 import com.intellij.packaging.impl.artifacts.ArtifactModelImpl;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.Stack;
+import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
@@ -718,7 +718,7 @@ public class MavenProjectImporter {
   }
 
   private static boolean isDisposed(Library library) {
-    return library instanceof LibraryImpl && ((LibraryImpl)library).isDisposed();
+    return library instanceof LibraryEx && ((LibraryEx)library).isDisposed();
   }
 
   private Collection<ModuleRootModel> collectModuleModels() {

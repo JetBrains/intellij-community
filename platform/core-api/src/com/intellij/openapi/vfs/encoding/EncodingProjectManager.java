@@ -6,9 +6,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
 
-/**
- * @author cdr
- */
 public abstract class EncodingProjectManager extends EncodingManager {
   public static EncodingProjectManager getInstance(@NotNull Project project) {
     return project.getService(EncodingProjectManager.class);

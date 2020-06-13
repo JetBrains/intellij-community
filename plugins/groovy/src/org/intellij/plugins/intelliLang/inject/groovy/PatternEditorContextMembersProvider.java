@@ -129,7 +129,7 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
     CachedValue<Set<String>> cachedValue = project.getUserData(PATTERN_CLASSES);
     if (cachedValue == null) {
       cachedValue = CachedValuesManager.getManager(project).createCachedValue(
-        () -> CachedValueProvider.Result.create(calcDevPatternClassNames(project), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT), false);
+        () -> CachedValueProvider.Result.create(calcDevPatternClassNames(project), PsiModificationTracker.MODIFICATION_COUNT), false);
       project.putUserData(PATTERN_CLASSES, cachedValue);
     }
     return cachedValue.getValue();

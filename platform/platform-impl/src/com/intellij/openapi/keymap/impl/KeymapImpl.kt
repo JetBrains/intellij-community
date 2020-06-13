@@ -744,6 +744,7 @@ private val visualStudioKeymap = "com.intellij.plugins.visualstudiokeymap"
 private val xcodeKeymap = "com.intellij.plugins.xcodekeymap"
 private val visualAssistKeymap = "com.intellij.plugins.visualassistkeymap"
 private val riderKeymap = "com.intellij.plugins.riderkeymap"
+private val vsCodeKeymap = "com.intellij.plugins.vscodekeymap"
 
 internal fun notifyAboutMissingKeymap(keymapName: String, message: String, isParent: Boolean) {
   val connection = ApplicationManager.getApplication().messageBus.connect()
@@ -775,6 +776,8 @@ internal fun notifyAboutMissingKeymap(keymapName: String, message: String, isPar
             "Xcode" -> xcodeKeymap
             "Rider",
             "Rider OSX"-> riderKeymap
+            "VSCode",
+            "VSCode OSX"-> vsCodeKeymap
             else -> null
           }
           val action: AnAction? = when (pluginId) {

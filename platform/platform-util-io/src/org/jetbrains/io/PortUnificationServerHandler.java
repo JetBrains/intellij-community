@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -99,7 +99,7 @@ final class PortUnificationServerHandler extends Decoder {
       else if (isHttp(magic1, magic2)) {
         NettyUtil.addHttpServerCodec(pipeline);
         pipeline.addLast("delegatingHttpHandler", delegatingHttpRequestHandler);
-        final Logger logger = Logger.getInstance(BuiltInServer.class);
+        Logger logger = Logger.getInstance(BuiltInServer.class);
         if (logger.isDebugEnabled()) {
           pipeline.addLast(new ChannelOutboundHandlerAdapter() {
             @Override

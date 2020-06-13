@@ -1,14 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
-import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import org.jetbrains.annotations.NotNull;
-import sun.misc.Cleaner;
 import sun.misc.Unsafe;
-import sun.nio.ch.DirectBuffer;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -19,7 +16,6 @@ public final class ByteBufferUtil {
   /**
    * Please use with care. In most cases leaving the job to the GC is enough.
    */
-  @ReviseWhenPortedToJDK("9")
   public static boolean cleanBuffer(@NotNull ByteBuffer buffer) {
     if (!buffer.isDirect()) return true;
 
@@ -37,16 +33,6 @@ public final class ByteBufferUtil {
         return false;
       }
     }
-    else {
-      try {
-        Cleaner cleaner = ((DirectBuffer)buffer).cleaner();
-        if (cleaner != null) cleaner.clean();  // already cleaned otherwise
-        return true;
-      }
-      catch (Exception e) {
-        Logger.getInstance(ByteBufferUtil.class).warn(e);
-        return false;
-      }
-    }
+    return false;
   }
 }

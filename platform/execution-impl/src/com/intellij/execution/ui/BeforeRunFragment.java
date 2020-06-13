@@ -5,15 +5,19 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends RunConfigurationEditorFragment<S, BeforeRunComponent> {
+public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends RunConfigurationEditorFragment<S, JComponent> {
+  private final BeforeRunComponent myComponent;
+
   public static <S extends RunConfigurationBase<?>> List<SettingsEditorFragment<S, ?>> createGroup() {
     ArrayList<SettingsEditorFragment<S, ?>> list = new ArrayList<>();
-    list.add(new BeforeRunFragment<>());
     list.add(RunConfigurationEditorFragment.createSettingsTag("before.launch.openToolWindow",
                                                               ExecutionBundle.message("run.configuration.before.run.open.tool.window"),
                                                               ExecutionBundle.message("run.configuration.before.run.group"),
@@ -27,11 +31,27 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
     return list;
   }
 
-  private BeforeRunFragment() {
+  public static <S extends RunConfigurationBase<?>> BeforeRunFragment<S> createComponent(BeforeRunComponent component) {
+    return new BeforeRunFragment<>(component);
+  }
+
+  private BeforeRunFragment(BeforeRunComponent component) {
     super("beforeRunTasks", ExecutionBundle.message("run.configuration.before.run.task"),
-          ExecutionBundle.message("run.configuration.before.run.group"), new BeforeRunComponent(), -2);
-    component().myChangeListener = () -> fireEditorStateChanged();
-    Disposer.register(this, component());
+          ExecutionBundle.message("run.configuration.before.run.group"), wrap(component), -2);
+    myComponent = component;
+    component.myChangeListener = () -> fireEditorStateChanged();
+    Disposer.register(this, component);
+  }
+
+  private static JComponent wrap(BeforeRunComponent component) {
+    JPanel panel = new JPanel(new BorderLayout());
+    JPanel labelPanel = new JPanel(new BorderLayout());
+    JLabel label = new JLabel(ExecutionBundle.message("run.configuration.before.run.label"));
+    label.setBorder(JBUI.Borders.empty(12, 0, 0, 5));
+    labelPanel.add(label, BorderLayout.NORTH);
+    panel.add(labelPanel, BorderLayout.WEST);
+    panel.add(component, BorderLayout.CENTER);
+    return panel;
   }
 
   @Override
@@ -43,17 +63,17 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
   public void toggle(boolean selected) {
     super.setSelected(selected);
     if (selected) {
-      component().showPopup();
+      myComponent.showPopup();
     }
   }
 
   @Override
   public void resetEditorFrom(@NotNull RunnerAndConfigurationSettingsImpl s) {
-    component().reset(s);
+    myComponent.reset(s);
   }
 
   @Override
   public void applyEditorTo(@NotNull RunnerAndConfigurationSettingsImpl s) {
-    component().apply(s);
+    myComponent.apply(s);
   }
 }
