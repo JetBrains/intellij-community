@@ -27,7 +27,7 @@ public abstract class CreateFieldFromParameterActionBase extends BaseIntentionAc
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final PsiParameter parameter = FieldFromParameterUtils.findParameterAtCursor(file, editor);
+    PsiParameter parameter = FieldFromParameterUtils.findParameterAtCursor(file, editor);
     if (parameter == null || !isAvailable(parameter)) {
       return false;
     }
@@ -46,7 +46,7 @@ public abstract class CreateFieldFromParameterActionBase extends BaseIntentionAc
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    final PsiParameter myParameter = FieldFromParameterUtils.findParameterAtCursor(file, editor);
+    PsiParameter myParameter = FieldFromParameterUtils.findParameterAtCursor(file, editor);
     if (myParameter == null || !FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
@@ -58,20 +58,21 @@ public abstract class CreateFieldFromParameterActionBase extends BaseIntentionAc
     }
   }
 
-  private void processParameter(final @NotNull Project project,
-                                final @NotNull PsiParameter myParameter,
-                                final boolean isInteractive) {
-    final PsiType type = getSubstitutedType(myParameter);
-    final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
-    final String parameterName = myParameter.getName();
+  private void processParameter(@NotNull Project project,
+                                @NotNull PsiParameter myParameter,
+                                boolean isInteractive) {
+    PsiType type = getSubstitutedType(myParameter);
+    JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
+    String parameterName = myParameter.getName();
     String propertyName = styleManager.variableNameToPropertyName(parameterName, VariableKind.PARAMETER);
 
     String fieldNameToCalc;
     boolean isFinalToCalc;
-    final PsiClass targetClass = PsiTreeUtil.getParentOfType(myParameter, PsiClass.class);
-    final PsiMethod method = (PsiMethod)myParameter.getDeclarationScope();
+    PsiClass targetClass = PsiTreeUtil.getParentOfType(myParameter, PsiClass.class);
+    if (targetClass == null) return;
+    PsiMethod method = (PsiMethod)myParameter.getDeclarationScope();
 
-    final boolean isMethodStatic = method.hasModifierProperty(PsiModifier.STATIC);
+    boolean isMethodStatic = method.hasModifierProperty(PsiModifier.STATIC);
 
     VariableKind kind = isMethodStatic ? VariableKind.STATIC_FIELD : VariableKind.FIELD;
     SuggestedNameInfo suggestedNameInfo = styleManager.suggestVariableName(kind, propertyName, null, type);
@@ -89,7 +90,7 @@ public abstract class CreateFieldFromParameterActionBase extends BaseIntentionAc
       }
       names = ArrayUtilRt.toStringArray(namesList);
 
-      final CreateFieldFromParameterDialog dialog = new CreateFieldFromParameterDialog(
+      CreateFieldFromParameterDialog dialog = new CreateFieldFromParameterDialog(
         project,
         names,
         targetClass,
@@ -109,8 +110,8 @@ public abstract class CreateFieldFromParameterActionBase extends BaseIntentionAc
       fieldNameToCalc = names[0];
     }
 
-    final boolean isFinal = isFinalToCalc;
-    final String fieldName = fieldNameToCalc;
+    boolean isFinal = isFinalToCalc;
+    String fieldName = fieldNameToCalc;
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
         performRefactoring(project, targetClass, method, myParameter, type, fieldName, isMethodStatic, isFinal);
@@ -123,14 +124,14 @@ public abstract class CreateFieldFromParameterActionBase extends BaseIntentionAc
 
   protected abstract PsiType getSubstitutedType(@NotNull PsiParameter parameter);
 
-  protected abstract void performRefactoring(Project project,
-                                    PsiClass targetClass,
-                                    PsiMethod method,
-                                    PsiParameter myParameter,
-                                    PsiType type,
-                                    String fieldName,
-                                    boolean methodStatic,
-                                    boolean isFinal);
+  protected abstract void performRefactoring(@NotNull Project project,
+                                             @NotNull PsiClass targetClass,
+                                             @NotNull PsiMethod method,
+                                             @NotNull PsiParameter myParameter,
+                                             PsiType type,
+                                             @NotNull String fieldName,
+                                             boolean methodStatic,
+                                             boolean isFinal);
 
   @Override
   public boolean startInWriteAction() {

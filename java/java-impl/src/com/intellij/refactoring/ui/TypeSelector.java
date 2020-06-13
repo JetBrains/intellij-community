@@ -36,14 +36,14 @@ public class TypeSelector {
   private final MyComboBoxModel myComboBoxModel;
   private final Project myProject;
 
-  public TypeSelector(PsiType type, Project project) {
+  public TypeSelector(PsiType type, @NotNull Project project) {
     myType = type;
     myProject = project;
     myComponent = new JLabel(myType.getPresentableText());
     myComboBoxModel = null;
   }
 
-  public TypeSelector(Project project) {
+  public TypeSelector(@NotNull Project project) {
     myProject = project;
     myComboBoxModel = new MyComboBoxModel();
     myComponent = new ComboBox();
@@ -75,14 +75,14 @@ public class TypeSelector {
   }
 
   public PsiType[] getTypes() {
-    final PsiType[] types = PsiType.createArray(myComboBoxModel.mySuggestions.length);
+    PsiType[] types = PsiType.createArray(myComboBoxModel.mySuggestions.length);
     for (int i = 0; i < types.length; i++) {
       types[i] = myComboBoxModel.mySuggestions[i].getType();
     }
     return types;
   }
 
-  private static PsiTypeItem[] wrapToItems(final PsiType[] types, Project project) {
+  private static PsiTypeItem[] wrapToItems(PsiType @NotNull [] types, @NotNull Project project) {
     PsiTypeItem[] result = new PsiTypeItem[types.length];
     for (int i = 0; i < result.length; i++) {
       result [i] = new PsiTypeItem(types [i], project);
@@ -127,10 +127,9 @@ public class TypeSelector {
   public PsiType getSelectedType() {
     if (myComponent instanceof JLabel) {
       return myType;
-    } else {
-      final PsiTypeItem selItem = (PsiTypeItem)((JComboBox)myComponent).getSelectedItem();
-      return selItem == null ? null : selItem.getType();
     }
+    PsiTypeItem selItem = (PsiTypeItem)((JComboBox)myComponent).getSelectedItem();
+    return selItem == null ? null : selItem.getType();
   }
 
   public void selectType(@NotNull PsiType type) {
@@ -169,7 +168,7 @@ public class TypeSelector {
     private final PsiType myType;
     private final SmartTypePointer myTypePointer;
 
-    private PsiTypeItem(final PsiType type, Project project) {
+    private PsiTypeItem(@NotNull PsiType type, @NotNull Project project) {
       myType = type;
       myTypePointer = SmartTypePointerManager.getInstance(project).createSmartTypePointer(type);
     }
