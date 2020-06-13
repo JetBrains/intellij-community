@@ -137,6 +137,16 @@ public class GitFileUtils {
     repository.getUntrackedFilesHolder().add(ContainerUtil.map(removedFiles, VcsUtil::getFilePath));
   }
 
+  private static void updateUntrackedFilesHolderOnFileReset(@NotNull Project project, @NotNull VirtualFile root,
+                                                            @NotNull Collection<? extends FilePath> resetFiles) {
+    GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
+    if (repository == null) {
+      LOG.error("Repository not found for root " + root.getPresentableUrl());
+      return;
+    }
+    repository.getUntrackedFilesHolder().markPossiblyUntracked(resetFiles);
+  }
+
   public static void addFiles(@NotNull Project project, @NotNull VirtualFile root, VirtualFile @NotNull ... files) throws VcsException {
     addFiles(project, root, Arrays.asList(files));
   }
@@ -226,6 +236,7 @@ public class GitFileUtils {
       handler.addParameters(filesChunk);
       Git.getInstance().runCommand(handler).throwOnError();
     }
+    updateUntrackedFilesHolderOnFileReset(project, root, files);
   }
 
   public static void revertUnstagedPaths(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<? extends FilePath> files) throws VcsException {
