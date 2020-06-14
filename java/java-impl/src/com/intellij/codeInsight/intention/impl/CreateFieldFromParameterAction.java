@@ -17,10 +17,9 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,13 +27,32 @@ import org.jetbrains.annotations.NotNull;
  * @author Max Medvedev
  */
 public class CreateFieldFromParameterAction extends CreateFieldFromParameterActionBase {
+  private final boolean myIsFix;
+
+  public CreateFieldFromParameterAction() {
+    // an intention should be available for regular methods only, because for constructors there will be quickfix
+    this(false);
+  }
+
+  public CreateFieldFromParameterAction(boolean isFix) {
+    myIsFix = isFix;
+  }
 
   @Override
-  protected boolean isAvailable(@NotNull PsiParameter psiParameter) {
-    final PsiType type = getSubstitutedType(psiParameter);
-    final PsiClass targetClass = PsiTreeUtil.getParentOfType(psiParameter, PsiClass.class);
-    return FieldFromParameterUtils.isAvailable(psiParameter, type, targetClass, false) &&
-           psiParameter.getLanguage().isKindOf(JavaLanguage.INSTANCE);
+  protected boolean isAvailable(@NotNull PsiParameter parameter) {
+    PsiElement scope = parameter.getDeclarationScope();
+    if (!(scope instanceof PsiMethod)) {
+      return false;
+    }
+    boolean isConstructor = ((PsiMethod)scope).isConstructor();
+    if (myIsFix && !isConstructor) return false;
+    PsiCodeBlock body = ((PsiMethod)scope).getBody();
+    if (body == null) return false;
+    if (!myIsFix && isConstructor && ReferencesSearch.search(parameter, new LocalSearchScope(body)).findFirst() == null) return false;
+    final PsiType type = getSubstitutedType(parameter);
+    final PsiClass targetClass = PsiTreeUtil.getParentOfType(parameter, PsiClass.class);
+    return FieldFromParameterUtils.isAvailable(parameter, type, targetClass, false) &&
+           parameter.getLanguage().isKindOf(JavaLanguage.INSTANCE);
   }
 
   @Override

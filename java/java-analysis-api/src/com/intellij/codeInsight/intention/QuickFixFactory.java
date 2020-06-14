@@ -459,11 +459,16 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createChangeModifierFix();
 
   @NotNull
-  public abstract IntentionAction createWrapSwitchRuleStatementsIntoBlockFix(PsiSwitchLabeledRuleStatement rule);
+  public abstract IntentionAction createWrapSwitchRuleStatementsIntoBlockFix(@NotNull PsiSwitchLabeledRuleStatement rule);
   
   @NotNull
-  public abstract IntentionAction createAddParameterListFix(PsiMethod method);
+  public abstract IntentionAction createAddParameterListFix(@NotNull PsiMethod method);
 
   @NotNull
-  public abstract IntentionAction createAddEmptyRecordHeaderFix(PsiClass record);
+  public abstract IntentionAction createAddEmptyRecordHeaderFix(@NotNull PsiClass record);
+
+  @NotNull
+  public abstract IntentionAction createCreateFieldFromParameterFix();
+  @NotNull
+  public abstract IntentionAction createAssignFieldFromParameterFix();
 }

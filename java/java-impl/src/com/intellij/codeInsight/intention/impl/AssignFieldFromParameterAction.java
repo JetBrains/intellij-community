@@ -38,6 +38,15 @@ import org.jetbrains.annotations.Nullable;
 
 public class AssignFieldFromParameterAction extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance(AssignFieldFromParameterAction.class);
+  private final boolean myIsFix;
+
+  public AssignFieldFromParameterAction() {
+    // an intention should be available for regular methods only, because for constructors there will be quickfix
+    this(false);
+  }
+  public AssignFieldFromParameterAction(boolean isFix) {
+    myIsFix = isFix;
+  }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
@@ -52,18 +61,22 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     if (field == null || !field.getType().isAssignableFrom(type)) return false;
     if (!field.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return false;
     PsiElement scope = myParameter.getDeclarationScope();
-    if (scope instanceof PsiMethod && field.hasModifierProperty(PsiModifier.FINAL)) {
-      PsiMethod method = (PsiMethod)scope;
-      if (!method.isConstructor()) return false;
-      if (!JavaHighlightUtil.getChainedConstructors(method).isEmpty()) return false;
-      PsiCodeBlock body = method.getBody();
-      LOG.assertTrue(body != null);
-      try {
-        ControlFlow flow =
-          ControlFlowFactory.getInstance(project).getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
-        if (!ControlFlowUtil.isVariableDefinitelyNotAssigned(field, flow)) return false;
+    if (scope instanceof PsiMethod) {
+      if (((PsiMethod)scope).isConstructor() != myIsFix) return false;
+      if (field.hasModifierProperty(PsiModifier.FINAL)) {
+        PsiMethod method = (PsiMethod)scope;
+        if (!method.isConstructor()) return false;
+        if (!JavaHighlightUtil.getChainedConstructors(method).isEmpty()) return false;
+        PsiCodeBlock body = method.getBody();
+        LOG.assertTrue(body != null);
+        try {
+          ControlFlow flow =
+            ControlFlowFactory.getInstance(project).getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+          if (!ControlFlowUtil.isVariableDefinitelyNotAssigned(field, flow)) return false;
+        }
+        catch (AnalysisCanceledException ignored) {
+        }
       }
-      catch (AnalysisCanceledException ignored) { }
     }
     setText(JavaBundle.message("intention.assign.field.from.parameter.text", field.getName()));
 

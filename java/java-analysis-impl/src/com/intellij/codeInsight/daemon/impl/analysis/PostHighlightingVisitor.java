@@ -389,7 +389,7 @@ class PostHighlightingVisitor {
           !JavaHighlightUtil.isSerializationRelatedMethod(method, method.getContainingClass()) &&
           !PsiClassImplUtil.isMainOrPremainMethod(method)) {
         if (UnusedSymbolUtil.isInjected(project, method)) return null;
-        HighlightInfo highlightInfo = checkUnusedParameter(parameter, identifier);
+        HighlightInfo highlightInfo = checkUnusedParameter(parameter, identifier, method);
         if (highlightInfo != null) {
           QuickFixFactory.getInstance().registerFixesForUnusedParameter(parameter, highlightInfo);
           return highlightInfo;
@@ -397,14 +397,14 @@ class PostHighlightingVisitor {
       }
     }
     else if (declarationScope instanceof PsiForeachStatement && !PsiUtil.isIgnoredName(parameter.getName())) {
-      HighlightInfo highlightInfo = checkUnusedParameter(parameter, identifier);
+      HighlightInfo highlightInfo = checkUnusedParameter(parameter, identifier, null);
       if (highlightInfo != null) {
         QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createRenameToIgnoredFix(parameter), myDeadCodeKey);
         return highlightInfo;
       }
     }
     else if (parameter instanceof PsiPatternVariable) {
-      HighlightInfo highlightInfo = checkUnusedParameter(parameter, identifier);
+      HighlightInfo highlightInfo = checkUnusedParameter(parameter, identifier, null);
       if (highlightInfo != null) {
         QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createDeleteFix(parameter));
         return highlightInfo;
@@ -415,11 +415,17 @@ class PostHighlightingVisitor {
   }
 
   private HighlightInfo checkUnusedParameter(@NotNull PsiParameter parameter,
-                                             @NotNull PsiIdentifier identifier) {
+                                             @NotNull PsiIdentifier identifier,
+                                             @Nullable PsiMethod declarationMethod) {
     if (!myRefCountHolder.isReferenced(parameter) && !UnusedSymbolUtil.isImplicitUsage(myProject, parameter)) {
       String message = JavaErrorBundle.message(parameter instanceof PsiPatternVariable ? 
                                                "pattern.variable.is.not.used" : "parameter.is.not.used", identifier.getText());
-      return UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
+      HighlightInfo info = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
+      if (declarationMethod != null && declarationMethod.isConstructor()) {
+        QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createAssignFieldFromParameterFix());
+        QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createCreateFieldFromParameterFix());
+      }
+      return info;
     }
     return null;
   }
