@@ -9,4 +9,5 @@ interface LauncherOptions {
   val ideaArguments: List<String> get() = listOf()
   val environment: Map<String, String> get() = mapOf()
   val beforeProcessStart: (ProcessBuilder) -> Unit get() = { }
+  val redirectOutputIntoParentProcess: Boolean get() = true
 }
