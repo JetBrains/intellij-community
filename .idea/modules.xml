@@ -600,6 +600,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/laf/macos/intellij.laf.macos.iml" filepath="$PROJECT_DIR$/plugins/laf/macos/intellij.laf.macos.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/laf/win10/intellij.laf.win10.iml" filepath="$PROJECT_DIR$/plugins/laf/win10/intellij.laf.win10.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/lint/intellij.lint.iml" filepath="$PROJECT_DIR$/android/lint/intellij.lint.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/lint/tests/intellij.lint.tests.iml" filepath="$PROJECT_DIR$/android/lint/tests/intellij.lint.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/markdown/intellij.markdown.iml" filepath="$PROJECT_DIR$/plugins/markdown/intellij.markdown.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/intellij.maven.iml" filepath="$PROJECT_DIR$/plugins/maven/intellij.maven.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/artifact-resolver/common/intellij.maven.artifactResolver.common.iml" filepath="$PROJECT_DIR$/plugins/maven/artifact-resolver/common/intellij.maven.artifactResolver.common.iml" />

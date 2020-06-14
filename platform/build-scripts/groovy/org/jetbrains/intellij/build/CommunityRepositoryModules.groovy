@@ -288,8 +288,8 @@ class CommunityRepositoryModules {
       withModule("intellij.android.sdkUpdates", "android.jar")
       withModule("intellij.android.wizard", "android.jar")
       withModule("intellij.android.wizard.model", "android.jar")
-      withModuleLibrary("precompiled-plugin", "android.sdktools.wizardTemplate.plugin", "")
-      withModuleLibrary("precompiled-impl", "android.sdktools.wizardTemplate.impl", "")
+      withModuleLibrary("precompiled-wizardTemplate.plugin", "android.sdktools.wizardTemplate.plugin", "")
+      withModuleLibrary("precompiled-wizardTemplate.impl", "android.sdktools.wizardTemplate.impl", "")
       withModule("intellij.android.profilersAndroid", "android.jar")
       withModule("intellij.android.deploy", "android.jar")
       withModule("intellij.android.kotlin.idea", "android-kotlin.jar")
@@ -356,6 +356,8 @@ class CommunityRepositoryModules {
       withModuleLibrary("precompiled-usb-devices", "android.sdktools.usb-devices", "")
 
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
+
+      withProjectLibrary("kxml2") //todo[nik] move to module libraries
 
       withProjectLibrary("asm-tools")
       withResourceFromModule("intellij.android.core", "lib/commons-compress-1.8.1.jar", "lib")
