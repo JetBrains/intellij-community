@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AddParameterListFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  public AddParameterListFix(PsiMethod method) {
+  public AddParameterListFix(@NotNull PsiMethod method) {
     super(method);
   }
 

@@ -48,7 +48,7 @@ import java.util.*;
  * @author Danila Ponomarenko
  */
 public class BindFieldsFromParametersAction extends BaseIntentionAction implements HighPriorityAction {
-  private static final Logger LOG = Logger.getInstance(CreateFieldFromParameterAction.class);
+  private static final Logger LOG = Logger.getInstance(BindFieldsFromParametersAction.class);
   private static final Key<Map<SmartPsiElementPointer<PsiParameter>, Boolean>> PARAMS = Key.create("FIELDS_FROM_PARAMS");
 
   private static final Object LOCK = new Object();
