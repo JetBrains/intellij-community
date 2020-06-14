@@ -1093,6 +1093,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
 
     protected boolean canMoveOrResizeColumn(int modelIndex) {
+      if (table.getRowCount() == 0) return false;
       return true;
     }
   }
@@ -1206,7 +1207,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     @Override
     public void mouseMoved(@NotNull MouseEvent e) {
-      if (isOnBorder(e)) return;
+      if (isOnBorder(e) || header.getTable().getRowCount() == 0) return;
       mouseInputListener.mouseMoved(convertMouseEvent(e));
     }
 
