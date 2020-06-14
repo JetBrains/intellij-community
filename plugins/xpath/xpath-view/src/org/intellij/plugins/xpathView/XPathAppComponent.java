@@ -49,7 +49,7 @@ import java.util.List;
  * <p/>
  * Also used to manage highlighters.
  */
-@State(name = "XPathView.XPathViewPlugin", storages = @Storage("xpath.xml"), reportStatistic = true)
+@State(name = "XPathView.XPathViewPlugin", storages = @Storage("xpath.xml"))
 public final class XPathAppComponent implements PersistentStateComponent<Config> {
   private Config configuration = new Config();
 

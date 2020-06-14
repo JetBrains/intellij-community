@@ -8,7 +8,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.annotations.Property
 
-@State(name = "TerminalOptionsProvider", storages = [(Storage("terminal.xml"))], reportStatistic = true)
+@State(name = "TerminalOptionsProvider", storages = [(Storage("terminal.xml"))])
 class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider.State> {
   private var myState = State()
 

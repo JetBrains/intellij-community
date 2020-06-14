@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.text;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 /**
  * @author Konstantin Bulenkov
  */
-@State(name = "DateTimeFormatter", storages = @Storage("ui-datetime.xml"), reportStatistic = true)
+@State(name = "DateTimeFormatter", storages = @Storage("ui-datetime.xml"))
 public class DateTimeFormatManager implements PersistentStateComponent<Element> {
   public static final String DEFAULT_DATE_FORMAT = "dd MMM yyyy";
   private boolean myPrettyFormattingAllowed = true;

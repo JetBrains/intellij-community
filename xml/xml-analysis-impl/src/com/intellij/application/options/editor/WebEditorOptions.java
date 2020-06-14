@@ -11,8 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 @State(
   name = "XmlEditorOptions",
-  storages = @Storage("editor.xml"),
-  reportStatistic = true
+  storages = @Storage("editor.xml")
 )
 public final class WebEditorOptions implements PersistentStateComponent<WebEditorOptions> {
   private static final boolean myShowCssColorPreviewInGutter = true;

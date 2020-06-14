@@ -59,7 +59,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * @author Dmitry Avdeev
  */
-@State(name = "TaskManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE), reportStatistic = true)
+@State(name = "TaskManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class TaskManagerImpl extends TaskManager implements PersistentStateComponent<TaskManagerImpl.Config>, Disposable {
   private static final Logger LOG = Logger.getInstance(TaskManagerImpl.class);
 

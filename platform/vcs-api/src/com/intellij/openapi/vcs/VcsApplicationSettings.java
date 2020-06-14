@@ -13,8 +13,7 @@ import org.jetbrains.annotations.NotNull;
  */
 @State(
   name = "VcsApplicationSettings",
-  storages = @Storage("vcs.xml"),
-  reportStatistic = true
+  storages = @Storage("vcs.xml")
 )
 public class VcsApplicationSettings implements PersistentStateComponent<VcsApplicationSettings> {
   public String PATCH_STORAGE_LOCATION = null;
