@@ -23,7 +23,7 @@ public class IncreaseLanguageLevelFixTest extends LightDaemonAnalyzerTestCase {
 
   @Override
   protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk(JavaVersion.compose(14));
+    return IdeaTestUtil.getMockJdk(JavaVersion.compose(15));
   }
 
   @Override
@@ -40,15 +40,19 @@ public class IncreaseLanguageLevelFixTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testRecordTopLevel() {
-    doTest(LanguageLevel.JDK_14_PREVIEW);
+    doTest(LanguageLevel.JDK_15_PREVIEW);
   }
 
   public void testRecordInClass() {
-    doTest(LanguageLevel.JDK_14_PREVIEW);
+    doTest(LanguageLevel.JDK_15_PREVIEW);
   }
 
   public void testRecordInMethod() {
-    doTest(LanguageLevel.JDK_14_PREVIEW);
+    doTest(LanguageLevel.JDK_15_PREVIEW);
+  }
+
+  public void testSealedClasses() {
+    doTest(LanguageLevel.JDK_15_PREVIEW);
   }
 
   private void doTest(LanguageLevel level) {

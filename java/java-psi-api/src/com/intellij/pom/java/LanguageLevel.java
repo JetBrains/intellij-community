@@ -57,6 +57,19 @@ public enum LanguageLevel {
     return myPreview;
   }
 
+  /**
+   * @return corresponding preview level, or {@code null} if level has no paired preview level
+   */
+  public LanguageLevel getPreviewLevel() {
+    if (myPreview) return this;
+    try {
+      return valueOf(name() + "_PREVIEW");
+    }
+    catch (IllegalArgumentException e) {
+      return null;
+    }
+  }
+
   @NotNull
   @Nls
   public String getPresentableText() {
