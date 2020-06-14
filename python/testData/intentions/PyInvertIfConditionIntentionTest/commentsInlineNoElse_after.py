@@ -2,9 +2,8 @@ def func():
     value = "not-none"
 
     if value is not None:
-        <selection>pass</selection><caret>
-    else:
+        pass
+    else:  # Is none
         print("None")
 
-    # noinspection SomeInspection
     print(value)

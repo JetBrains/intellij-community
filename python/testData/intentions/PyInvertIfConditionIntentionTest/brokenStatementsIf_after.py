@@ -1,8 +1,8 @@
 def func():
     value = "not-none"
 
-    <caret>if value is not None:
-    else:
+    if value is None:
         print("None")
+    else:
 
     print(value)

@@ -11,6 +11,11 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import kotlin.reflect.KClass
 
+// ----------- Generic util ----------------------------------------------------------------------------------------------------------------
+
+@Suppress("UNCHECKED_CAST")
+fun <T : PsiElement> T.copyElement() : T = copy() as T
+
 // ----------- Walking children/siblings/parents -------------------------------------------------------------------------------------------
 
 inline fun <reified T : PsiElement> PsiElement.parentOfType(withSelf: Boolean = false): T? {

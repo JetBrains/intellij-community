@@ -3,7 +3,7 @@ def func():
 
     # noinspection SomeInspection
     if value is not None:
-        <selection>pass</selection>
+        <selection>pass</selection><caret>
     else:
         print("None")
 

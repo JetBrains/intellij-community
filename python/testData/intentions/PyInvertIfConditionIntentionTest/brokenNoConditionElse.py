@@ -1,5 +1,5 @@
 def func():
     <caret>if:
         print("None")
-
-    print("Done")
+    else:
+        print("Not none")

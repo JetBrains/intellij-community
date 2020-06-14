@@ -2,6 +2,7 @@
 package com.jetbrains.python.intentions
 
 import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.psi.LanguageLevel
 
 class PyInvertIfConditionIntentionTest : PyIntentionTestCase() {
 
@@ -14,7 +15,15 @@ class PyInvertIfConditionIntentionTest : PyIntentionTestCase() {
   }
 
   fun testBrokenNoCondition() {
+    doTest()
+  }
+
+  fun testBrokenNoConditionConditional() {
     doNegativeTest()
+  }
+
+  fun testBrokenNoConditionElse() {
+    doTest()
   }
 
   fun testBrokenReturns() {
@@ -26,11 +35,11 @@ class PyInvertIfConditionIntentionTest : PyIntentionTestCase() {
   }
 
   fun testBrokenStatementsElse() {
-    doNegativeTest()
+    doTest()
   }
 
   fun testBrokenStatementsIf() {
-    doNegativeTest()
+    doTest()
   }
 
   fun testCaretElse() {
@@ -78,6 +87,10 @@ class PyInvertIfConditionIntentionTest : PyIntentionTestCase() {
   }
 
   fun testCommentsInlineIf() {
+    doTest()
+  }
+
+  fun testCommentsInlineNoElse() {
     doTest()
   }
 
@@ -310,6 +323,10 @@ class PyInvertIfConditionIntentionTest : PyIntentionTestCase() {
     doTest()
   }
 
+  fun testConditionMapping() {
+    doTest()
+  }
+
   fun testConditionMultilineContinuation() {
     doTest()
   }
@@ -366,6 +383,14 @@ class PyInvertIfConditionIntentionTest : PyIntentionTestCase() {
     doTest()
   }
 
+  fun testConditionAsync() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, ::doTest)
+  }
+
+  fun testConditionChainedComparisons() {
+    doTest()
+  }
+
   fun testGeneralChained() {
     doNegativeTest()
   }
@@ -391,6 +416,14 @@ class PyInvertIfConditionIntentionTest : PyIntentionTestCase() {
   }
 
   fun testGeneralNoElseFollowupReturnOnly() {
+    doTest()
+  }
+
+  fun testGeneralNoElseNestedReturn() {
+    doTest()
+  }
+
+  fun testGeneralNoElseNestedReturns() {
     doTest()
   }
 

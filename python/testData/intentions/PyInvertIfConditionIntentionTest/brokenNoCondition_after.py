@@ -1,5 +1,7 @@
 def func():
-    <caret>if:
+    if:
+        pass
+    else:
         print("None")
 
     print("Done")

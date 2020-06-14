@@ -3,7 +3,7 @@ def func():
 
     # pylint: disable=unused-argument
     if value is not None:
-        <selection>pass</selection>
+        <selection>pass</selection><caret>
     else:
         print("None")
 
