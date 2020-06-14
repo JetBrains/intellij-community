@@ -29,6 +29,7 @@
     <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
     <terminal.shellCommandHandler implementation="com.intellij.ide.actions.runAnything.RunAnythingTerminalBridge"/>
     <notificationWhitelist groupIds="Terminal"/>
+    <terminal.shellCommandHandler implementation="com.intellij.terminal.impl.OpenFileShellCommandHandler"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
