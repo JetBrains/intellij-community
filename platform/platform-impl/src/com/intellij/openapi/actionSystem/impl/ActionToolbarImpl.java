@@ -111,8 +111,17 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   private Rectangle myAutoPopupRec;
 
-  private final DefaultActionGroup mySecondaryActions = new DefaultActionGroup();
-  private PopupStateModifier mySecondaryButtonPopupStateModifier;
+  private final DefaultActionGroup mySecondaryActions = new DefaultActionGroup() {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      if (mySecondaryGroupUpdater != null) {
+        e.getPresentation().setIcon(getTemplatePresentation().getIcon());
+        mySecondaryGroupUpdater.update(e);
+      }
+    }
+  };
+  private SecondaryGroupUpdater mySecondaryGroupUpdater;
   private boolean myForceMinimumSize;
   private boolean myForceShowFirstComponent;
   private boolean mySkipWindowAdjustments;
@@ -271,8 +280,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
   }
 
-  public void setSecondaryButtonPopupStateModifier(@NotNull PopupStateModifier popupStateModifier) {
-    mySecondaryButtonPopupStateModifier = popupStateModifier;
+  public void setSecondaryButtonPopupStateModifier(@NotNull ActionToolbarImpl.SecondaryGroupUpdater secondaryGroupUpdater) {
+    mySecondaryGroupUpdater = secondaryGroupUpdater;
   }
 
   private void fillToolBar(@NotNull List<? extends AnAction> actions, boolean layoutSecondaries) {
@@ -312,14 +321,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (mySecondaryActions.getChildrenCount() > 0) {
       mySecondaryActionsButton =
         new ActionButton(mySecondaryActions, myPresentationFactory.getPresentation(mySecondaryActions), myPlace, getMinimumButtonSize()) {
-          @Override
-          @ButtonState
-          public int getPopState() {
-            return mySecondaryButtonPopupStateModifier != null && mySecondaryButtonPopupStateModifier.willModify()
-                   ? mySecondaryButtonPopupStateModifier.getModifiedPopupState()
-                   : super.getPopState();
-          }
-
           @Override
           protected String getShortcutText() {
             Object shortcut = myPresentation.getClientProperty(SECONDARY_SHORTCUT);
@@ -1092,6 +1093,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       actionsUpdated(forced, updater.expandActionGroupWithTimeout(myActionGroup, false));
       myAlreadyUpdated = true;
     }
+    if (mySecondaryActionsButton != null) {
+      mySecondaryActionsButton.update();
+      mySecondaryActionsButton.repaint();
+    }
   }
 
   private CancellablePromise<List<AnAction>> myLastUpdate;
@@ -1434,9 +1439,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myPresentationFactory.reset();
   }
 
-  public interface PopupStateModifier {
-    @ActionButtonComponent.ButtonState
-    int getModifiedPopupState();
-    boolean willModify();
+  public interface SecondaryGroupUpdater {
+    void update(@NotNull AnActionEvent e);
   }
 }
