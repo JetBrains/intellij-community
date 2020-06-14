@@ -1209,4 +1209,26 @@
   <action id="ToggleFindInSelection">
     <keyboard-shortcut first-keystroke="control alt E"/>
   </action>
+
+  <action id="UsageGrouping.Module">
+    <keyboard-shortcut first-keystroke="control alt M"/>
+  </action>
+  <action  id="UsageGrouping.Directory">
+    <keyboard-shortcut first-keystroke="control alt P"/>
+  </action>
+  <action id="UsageGrouping.UsageType">
+    <keyboard-shortcut first-keystroke="control alt T"/>
+  </action>
+  <action id="UsageGrouping.FlattenModules">
+    <keyboard-shortcut first-keystroke="control alt O"/>
+  </action>
+  <action id="UsageGrouping.FileStructure">
+    <keyboard-shortcut first-keystroke="control alt F"/>
+  </action>
+  <action id="UsageGrouping.DirectoryStructure">
+    <keyboard-shortcut first-keystroke="control alt D"/>
+  </action>
+  <action id="UsageGrouping.Package">
+    <keyboard-shortcut first-keystroke="control alt P"/>
+  </action>
 </keymap>

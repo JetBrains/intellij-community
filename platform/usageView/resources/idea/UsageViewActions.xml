@@ -1,29 +1,11 @@
 <idea-plugin>
   <actions>
-    <action class="com.intellij.usages.impl.actions.GroupByModuleTypeAction" id="UsageGrouping.Module">
-      <keyboard-shortcut first-keystroke="control M" keymap="Mac OS X"/>
-      <keyboard-shortcut first-keystroke="control alt M" keymap="$default"/>
-    </action>
+    <action class="com.intellij.usages.impl.actions.GroupByModuleTypeAction" id="UsageGrouping.Module"/>
     <action class="com.intellij.usages.impl.actions.GroupByScopeAction" id="UsageGrouping.Scope"/>
-    <action class="com.intellij.usages.impl.actions.GroupByDirectoryAction" id="UsageGrouping.Directory">
-      <keyboard-shortcut first-keystroke="control P" keymap="Mac OS X"/>
-      <keyboard-shortcut first-keystroke="control alt P" keymap="$default"/>
-    </action>
-    <action class="com.intellij.usages.impl.actions.GroupByUsageTypeAction" id="UsageGrouping.UsageType">
-      <keyboard-shortcut first-keystroke="control T" keymap="Mac OS X"/>
-      <keyboard-shortcut first-keystroke="control alt T" keymap="$default"/>
-    </action>
-    <action class="com.intellij.usages.impl.actions.FlattenModulesAction" id="UsageGrouping.FlattenModules">
-      <keyboard-shortcut first-keystroke="control O" keymap="Mac OS X"/>
-      <keyboard-shortcut first-keystroke="control alt O" keymap="$default"/>
-    </action>
-    <action class="com.intellij.usages.impl.UsageGroupingRuleProviderImpl$GroupByFileStructureAction" id="UsageGrouping.FileStructure">
-      <keyboard-shortcut first-keystroke="control S" keymap="Mac OS X"/>
-      <keyboard-shortcut first-keystroke="control alt F" keymap="$default"/>
-    </action>
-    <action class="com.intellij.usages.impl.actions.GroupByDirectoryStructureAction" id="UsageGrouping.DirectoryStructure">
-      <keyboard-shortcut first-keystroke="control D" keymap="Mac OS X"/>
-      <keyboard-shortcut first-keystroke="control alt D" keymap="$default"/>
-    </action>
+    <action class="com.intellij.usages.impl.actions.GroupByDirectoryAction" id="UsageGrouping.Directory"/>
+    <action class="com.intellij.usages.impl.actions.GroupByUsageTypeAction" id="UsageGrouping.UsageType"/>
+    <action class="com.intellij.usages.impl.actions.FlattenModulesAction" id="UsageGrouping.FlattenModules"/>
+    <action class="com.intellij.usages.impl.UsageGroupingRuleProviderImpl$GroupByFileStructureAction" id="UsageGrouping.FileStructure"/>
+    <action class="com.intellij.usages.impl.actions.GroupByDirectoryStructureAction" id="UsageGrouping.DirectoryStructure"/>
   </actions>
 </idea-plugin>
