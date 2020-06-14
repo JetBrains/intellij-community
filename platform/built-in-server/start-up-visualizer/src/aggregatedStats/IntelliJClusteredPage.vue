@@ -64,7 +64,7 @@ import {timeRanges} from "@/aggregatedStats/parseDuration"
 @Component({
   components: {LineChartComponent, ClusteredChartComponent}
 })
-export default class ClusteredPage extends Vue {
+export default class IntelliJClusteredPage extends Vue {
   private readonly dataModule = getModule(AppStateModule, this.$store)
 
   readonly timeRanges = timeRanges

@@ -94,11 +94,10 @@
 import {Component} from "vue-property-decorator"
 import LineChartComponent from "./LineChartComponent.vue"
 import ClusteredChartComponent from "./ClusteredChartComponent.vue"
-import ClusteredPage from "./ClusteredPage.vue"
 import {AggregatedStatsPage} from "./AggregatedStatsPage"
 
 @Component({
-  components: {LineChartComponent, ClusteredChartComponent, ClusteredPage}
+  components: {LineChartComponent, ClusteredChartComponent}
 })
 export default class FleetAggregatedStatsPage extends AggregatedStatsPage {
   protected getDbName(): string {

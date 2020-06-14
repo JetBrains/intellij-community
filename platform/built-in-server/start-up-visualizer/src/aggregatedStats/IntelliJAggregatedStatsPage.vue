@@ -49,7 +49,7 @@
 
     <h3>Aggregated</h3>
 
-    <ClusteredPage :dataRequest="dataRequest"/>
+    <IntelliJClusteredPage :dataRequest="dataRequest"/>
 
     <el-tabs value="date" size="small">
       <el-tab-pane v-for='item in [
@@ -149,7 +149,7 @@
 import {Component} from "vue-property-decorator"
 import LineChartComponent from "./LineChartComponent.vue"
 import ClusteredChartComponent from "./ClusteredChartComponent.vue"
-import ClusteredPage from "./ClusteredPage.vue"
+import IntelliJClusteredPage from "./IntelliJClusteredPage.vue"
 import {AggregatedStatsPage} from "./AggregatedStatsPage"
 
 const projectNameToTitle = new Map<string, string>()
@@ -164,7 +164,7 @@ projectNameToTitle.set("nC4MRRFMVYUSQLNIvPgDt+B3JqA", "Idea")
 Object.seal(projectNameToTitle)
 
 @Component({
-  components: {LineChartComponent, ClusteredChartComponent, ClusteredPage}
+  components: {LineChartComponent, ClusteredChartComponent, IntelliJClusteredPage}
 })
 export default class IntelliJAggregatedStatsPage extends AggregatedStatsPage {
   projectNameToTitle = projectNameToTitle
