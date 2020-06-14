@@ -3235,7 +3235,7 @@ public class HighlightUtil {
           return standardLevel;
         }
         LanguageLevel previewLevel = sdkVersion.getMaxLanguageLevel().getPreviewLevel();
-        if (previewLevel != null) {
+        if (previewLevel != null && previewLevel.isAtLeast(feature.level)) {
           return previewLevel;
         }
       }
