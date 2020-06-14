@@ -5,7 +5,7 @@
 
 <script lang="ts">
 import {Component, Prop, Watch} from "vue-property-decorator"
-import {DataQuery, DataQueryFilter, DataRequest, encodeQuery, GroupedMetricResponse} from "@/aggregatedStats/model"
+import {DataQuery, DataRequest, encodeQuery, getFilters, GroupedMetricResponse} from "@/aggregatedStats/model"
 import {ClusteredChartManager} from "@/aggregatedStats/ClusteredChartManager"
 import {DurationParseResult, parseTimeRange, toClickhouseSql} from "@/aggregatedStats/parseDuration"
 import {BaseStatChartComponent} from "@/aggregatedStats/BaseStatChartComponent"
@@ -39,22 +39,17 @@ export default class ClusteredChartComponent extends BaseStatChartComponent<Clus
     let aggregator: string = chartSettings.aggregationOperator || DEFAULT_AGGREGATION_OPERATOR
     if (aggregator === "median") {
       aggregator = "quantileTDigest(0.5)"
-    } else if (aggregator === "quantile") {
+    }
+    else if (aggregator === "quantile") {
       aggregator = `quantileTDigest(${chartSettings.quantile / 100})`
     }
 
     // server will cache request, so, `now` here can lead to cached response, but it is ok because data collected each several hours, so, cache cleared in any case
     const timeRange = parseTimeRange(this.timeRange)
 
-    const filters: Array<DataQueryFilter> = [
-      {field: "product", value: request.product},
-      {field: "project", value: request.project},
-      {
-        field: "machine",
-        value: request.machine
-      },
+    const filters = getFilters(request).concat([
       {field: "generated_time", sql: `> ${toClickhouseSql(timeRange)}`}
-    ]
+    ])
 
     const interval = getClickHouseIntervalByDuration(timeRange)
     const dataQuery: DataQuery = {

@@ -5,28 +5,13 @@ import {getModule} from "vuex-module-decorators"
 import {loadJson} from "@/httpUtil"
 import {DataRequest, expandMachineAsFilterValue, InfoResponse, MachineGroup} from "@/aggregatedStats/model"
 import {debounce} from "debounce"
-import LineChartComponent from "@/aggregatedStats/LineChartComponent.vue"
-import ClusteredChartComponent from "@/aggregatedStats/ClusteredChartComponent.vue"
 import {timeRanges} from "./parseDuration"
 import {Location} from "vue-router"
 import {Notification} from "element-ui"
-import ClusteredPage from "@/aggregatedStats/ClusteredPage.vue"
 
-export const projectNameToTitle = new Map<string, string>()
-
-projectNameToTitle.set("/q9N7EHxr8F1NHjbNQnpqb0Q0fs", "joda-time")
-projectNameToTitle.set("73YWaW9bytiPDGuKvwNIYMK5CKI", "simple for IJ")
-projectNameToTitle.set("1PbxeQ044EEghMOG9hNEFee05kM", "light edit (IJ)")
-
-projectNameToTitle.set("j1a8nhKJexyL/zyuOXJ5CFOHYzU", "simple for PS")
-projectNameToTitle.set("JeNLJFVa04IA+Wasc+Hjj3z64R0", "simple for WS")
-projectNameToTitle.set("nC4MRRFMVYUSQLNIvPgDt+B3JqA", "Idea")
-Object.seal(projectNameToTitle)
-
-@Component({
-  components: {LineChartComponent, ClusteredChartComponent, ClusteredPage}
-})
-export default class AggregatedStatsPage extends Vue {
+// @ts-ignore
+@Component
+export abstract class AggregatedStatsPage extends Vue {
   private readonly dataModule = getModule(AppStateModule, this.$store)
   readonly timeRanges = timeRanges
 
@@ -40,19 +25,19 @@ export default class AggregatedStatsPage extends Vue {
 
   isFetching: boolean = false
 
-  projectNameToTitle = projectNameToTitle
-
   timeRange: String = "3M"
 
   private loadDataAfterDelay = debounce(() => {
     this.loadData()
   }, 1000)
 
+  protected abstract getDbName(): string
+
   dataRequest: DataRequest | null = null
 
   loadData() {
     this.isFetching = true
-    loadJson(`${this.chartSettings.serverUrl}/api/v1/info?db=ij`, null)
+    loadJson(`${this.chartSettings.serverUrl}/api/v1/info?db=${this.getDbName()}`, null)
       .then((data: InfoResponse | null) => {
         if (data == null) {
           this.isFetching = false
@@ -115,6 +100,10 @@ export default class AggregatedStatsPage extends Vue {
     }
   }
 
+  protected convertProjectNameToTitle(projectName: string): string {
+    return projectName
+  }
+
   private applyChangedProduct(product: string | null, info: InfoResponse) {
     if (product != null && product.length > 0) {
       // later maybe will be more info for machine, so, do not use string instead of Machine
@@ -125,8 +114,8 @@ export default class AggregatedStatsPage extends Vue {
 
       const projects = info.productToProjects[product] || []
       projects.sort((a, b) => {
-        const t1 = projectNameToTitle.get(a) || a
-        const t2 = projectNameToTitle.get(b) || b
+        const t1 = this.convertProjectNameToTitle(a)
+        const t2 = this.convertProjectNameToTitle(b)
         if (t1.startsWith("simple ") && !t2.startsWith("simple ")) {
           return -1
         }
@@ -186,7 +175,7 @@ export default class AggregatedStatsPage extends Vue {
 
   private requestDataReloading(product: string, machine: Array<string>, project: string) {
     this.dataRequest = Object.seal({
-      db: "ij",
+      db: this.getDbName(),
       product,
       machine: expandMachineAsFilterValue(product, machine, this.lastInfoResponse!!),
       project

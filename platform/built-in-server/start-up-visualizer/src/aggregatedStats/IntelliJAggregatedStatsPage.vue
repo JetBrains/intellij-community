@@ -145,7 +145,39 @@
   </div>
 </template>
 
-<script lang="ts" src="./AggregatedStatsPage.ts"></script>
+<script lang="ts">
+import {Component} from "vue-property-decorator"
+import LineChartComponent from "./LineChartComponent.vue"
+import ClusteredChartComponent from "./ClusteredChartComponent.vue"
+import ClusteredPage from "./ClusteredPage.vue"
+import {AggregatedStatsPage} from "./AggregatedStatsPage"
+
+const projectNameToTitle = new Map<string, string>()
+
+projectNameToTitle.set("/q9N7EHxr8F1NHjbNQnpqb0Q0fs", "joda-time")
+projectNameToTitle.set("73YWaW9bytiPDGuKvwNIYMK5CKI", "simple for IJ")
+projectNameToTitle.set("1PbxeQ044EEghMOG9hNEFee05kM", "light edit (IJ)")
+
+projectNameToTitle.set("j1a8nhKJexyL/zyuOXJ5CFOHYzU", "simple for PS")
+projectNameToTitle.set("JeNLJFVa04IA+Wasc+Hjj3z64R0", "simple for WS")
+projectNameToTitle.set("nC4MRRFMVYUSQLNIvPgDt+B3JqA", "Idea")
+Object.seal(projectNameToTitle)
+
+@Component({
+  components: {LineChartComponent, ClusteredChartComponent, ClusteredPage}
+})
+export default class IntelliJAggregatedStatsPage extends AggregatedStatsPage {
+  projectNameToTitle = projectNameToTitle
+
+  protected getDbName(): string {
+    return "ij"
+  }
+
+  protected convertProjectNameToTitle(projectName: string): string {
+    return projectNameToTitle.get(projectName) || projectName
+  }
+}
+</script>
 
 <!--suppress CssUnusedSymbol -->
 <style>

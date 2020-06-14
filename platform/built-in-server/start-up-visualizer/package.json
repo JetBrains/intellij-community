@@ -16,15 +16,15 @@
     "rison-node": "^2.1.1",
     "vue": "^2.6.11",
     "vue-class-component": "^7.2.3",
-    "vue-property-decorator": "^8.4.2",
-    "vue-router": "^3.3.3",
+    "vue-property-decorator": "^8.5.0",
+    "vue-router": "^3.3.4",
     "vuex": "^3.4.0",
     "vuex-persist": "^2.2.0"
   },
   "devDependencies": {
     "@types/debounce": "^1.2.0",
-    "@vue/cli-plugin-typescript": "^4.4.3",
-    "@vue/cli-service": "^4.4.3",
+    "@vue/cli-plugin-typescript": "^4.4.4",
+    "@vue/cli-service": "^4.4.4",
     "typescript": "^3.9.5",
     "vue-template-compiler": "^2.6.11",
     "vuex-module-decorators": "^0.17.0"

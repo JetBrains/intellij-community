@@ -63,6 +63,16 @@ export interface DataRequest {
   machine: Array<string>
 }
 
+export function getFilters(request: DataRequest): Array<DataQueryFilter> {
+  const result: Array<DataQueryFilter> = []
+  if (request.db == "ij") {
+    result.push({field: "product", value: request.product})
+  }
+  result.push({field: "project", value: request.project})
+  result.push({field: "machine", value: request.machine})
+  return result
+}
+
 const rison: { encode: (o: any) => string } = require("rison-node")
 
 export function encodeQuery(query: DataQuery): string {
