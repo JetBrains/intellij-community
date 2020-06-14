@@ -26,7 +26,10 @@ import java.util.Set;
 
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfo;
 
-@State(name = "FeatureUsageStatistics", storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED))
+@State(
+  name = "FeatureUsageStatistics",
+  storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
+  reportStatistic = false)
 public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implements PersistentStateComponent<Element> {
   private static final int HOUR = 1000 * 60 * 60;
   private static final long DAY = HOUR * 24;

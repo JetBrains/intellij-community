@@ -25,7 +25,7 @@ internal val GithubAccount.isGHAccount: Boolean get() = server.isGithubDotCom
 @State(name = "GithubAccounts", storages = [
   Storage(value = "github.xml"),
   Storage(value = "github_settings.xml", deprecated = true)
-])
+], reportStatistic = false)
 internal class GithubAccountManager : PersistentStateComponent<Array<GithubAccount>> {
   var accounts: Set<GithubAccount> by observable(setOf()) { _, oldValue, newValue ->
     oldValue.filter { it !in newValue }.forEach(this::accountRemoved)

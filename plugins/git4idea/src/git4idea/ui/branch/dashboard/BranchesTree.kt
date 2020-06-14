@@ -301,7 +301,7 @@ private val BRANCH_TREE_TRANSFER_HANDLER = object : TransferHandler() {
   override fun getSourceActions(c: JComponent) = COPY_OR_MOVE
 }
 
-@State(name = "BranchesTreeState", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
+@State(name = "BranchesTreeState", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)], reportStatistic = false)
 internal class BranchesTreeStateHolder : PersistentStateComponent<TreeState> {
   private lateinit var branchesTree: FilteringBranchesTree
   private lateinit var treeState: TreeState

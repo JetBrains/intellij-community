@@ -11,7 +11,8 @@ import org.jetbrains.annotations.Nullable;
 
 @State(
   name = "UsagesStatistic",
-  storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED)
+  storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
+  reportStatistic = false
 )
 @Service
 public final class UsageStatisticsPersistenceComponent implements PersistentStateComponent<Element> {

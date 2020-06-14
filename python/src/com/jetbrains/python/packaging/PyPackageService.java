@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@State(name = "PyPackageService", storages = @Storage(value = "packages.xml", roamingType = RoamingType.DISABLED))
+@State(name = "PyPackageService", storages = @Storage(value = "packages.xml", roamingType = RoamingType.DISABLED), reportStatistic = false)
 public class PyPackageService implements
                               PersistentStateComponent<PyPackageService> {
   public volatile Map<String, Boolean> sdkToUsersite = new ConcurrentHashMap<>();

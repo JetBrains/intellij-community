@@ -12,7 +12,7 @@ import org.jetbrains.plugins.github.util.GithubNotifications
  *
  * TODO: auto-detection
  */
-@State(name = "GithubDefaultAccount", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
+@State(name = "GithubDefaultAccount", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)], reportStatistic = false)
 internal class GithubProjectDefaultAccountHolder(private val project: Project) : PersistentStateComponent<AccountState> {
   var account: GithubAccount? = null
 
