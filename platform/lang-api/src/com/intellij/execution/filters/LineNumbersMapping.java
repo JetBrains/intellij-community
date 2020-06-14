@@ -2,6 +2,8 @@
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.util.Key;
+import com.sun.jdi.connect.IllegalConnectorArgumentsException;
+import org.jetbrains.annotations.NotNull;
 
 public interface LineNumbersMapping {
   /**
@@ -12,4 +14,28 @@ public interface LineNumbersMapping {
 
   int bytecodeToSource(int line);
   int sourceToBytecode(int line);
+
+  class ArrayBasedMapping implements LineNumbersMapping {
+    private final int[] myMapping;
+
+    public ArrayBasedMapping(int @NotNull [] mapping) {
+      myMapping = mapping.clone();
+    }
+
+    @Override
+    public int bytecodeToSource(int line) {
+      for (int i = 0; i < myMapping.length; i += 2) {
+        if (myMapping[i] == line) return myMapping[i + 1];
+      }
+      return -1;
+    }
+
+    @Override
+    public int sourceToBytecode(int line) {
+      for (int i = 0; i < myMapping.length; i += 2) {
+        if (myMapping[i + 1] == line) return myMapping[i];
+      }
+      return -1;
+    }
+  }
 }

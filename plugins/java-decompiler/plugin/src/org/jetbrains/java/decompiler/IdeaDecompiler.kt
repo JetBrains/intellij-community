@@ -5,10 +5,12 @@ import com.intellij.application.options.CodeStyle
 import com.intellij.execution.filters.LineNumbersMapping
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.ide.plugins.DynamicPlugins
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginDescriptorLoader
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -16,6 +18,8 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
@@ -35,7 +39,6 @@ import java.io.File
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.Callable
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
 import java.util.jar.Manifest
 
@@ -47,6 +50,8 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
 
     private const val POSTPONE_EXIT_CODE = DialogWrapper.CANCEL_EXIT_CODE
     private const val DECLINE_EXIT_CODE = DialogWrapper.NEXT_USER_EXIT_CODE
+
+    private val TASK_KEY: Key<Future<CharSequence>> = Key.create("java.decompiler.optimistic.task")
 
     private fun getOptions(): Map<String, Any> {
       val options = CodeStyle.getDefaultSettings().getIndentOptions(JavaFileType.INSTANCE)
@@ -65,27 +70,19 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
         IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES to "1",
         IFernflowerPreferences.UNIT_TEST_MODE to if (ApplicationManager.getApplication().isUnitTestMode) "1" else "0")
     }
+
+    private fun canWork(): Boolean =
+      ApplicationManager.getApplication().isUnitTestMode || PropertiesComponent.getInstance().isValueSet(LEGAL_NOTICE_KEY)
   }
 
-  private val myLogger = lazy { IdeaLogger() }
-  private val myOptions = lazy { getOptions() }
-  private val myFutures = ConcurrentHashMap<VirtualFile, Future<CharSequence>>()
-  @Volatile private var myLegalNoticeAccepted = false
+  class LegalBurden : FileEditorManagerListener.Before {
+    private var myShowNotice = !canWork()
 
-  init {
-    myLegalNoticeAccepted = ApplicationManager.getApplication().isUnitTestMode || PropertiesComponent.getInstance().isValueSet(LEGAL_NOTICE_KEY)
-    if (!myLegalNoticeAccepted) {
-      intercept()
-    }
-  }
-
-  private fun intercept() {
-    val app = ApplicationManager.getApplication()
-    val connection = app.messageBus.connect()
-    connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, object : FileEditorManagerListener.Before {
-      override fun beforeFileOpened(source: FileEditorManager, file: VirtualFile) {
-        if (!myLegalNoticeAccepted && file.fileType === JavaClassFileType.INSTANCE && ClassFileDecompilers.find(file) === this@IdeaDecompiler) {
-          myFutures[file] = app.executeOnPooledThread(Callable { decompile(file) })
+    override fun beforeFileOpened(source: FileEditorManager, file: VirtualFile) {
+      if (myShowNotice && file.fileType === JavaClassFileType.INSTANCE) {
+        val decompiler = ClassFileDecompilers.find(file)
+        if (decompiler is IdeaDecompiler) {
+          TASK_KEY.set(file, ApplicationManager.getApplication().executeOnPooledThread(Callable { decompiler.decompile(file) }))
 
           val title = IdeaDecompilerBundle.message("legal.notice.title", StringUtil.last(file.path, 40, true))
           val message = IdeaDecompilerBundle.message("legal.notice.text")
@@ -95,36 +92,48 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
             .show()
           when (result) {
             DialogWrapper.OK_EXIT_CODE -> {
+              myShowNotice = false
               PropertiesComponent.getInstance().setValue(LEGAL_NOTICE_KEY, true)
-              myLegalNoticeAccepted = true
 
-              app.invokeLater {
+              ApplicationManager.getApplication().invokeLater {
                 RefreshQueue.getInstance().processSingleEvent(
-                  VFileContentChangeEvent(this@IdeaDecompiler, file, file.modificationStamp, -1, false))
+                  VFileContentChangeEvent(this@LegalBurden, file, file.modificationStamp, -1, false))
               }
-
-              connection.disconnect()
             }
 
             DECLINE_EXIT_CODE -> {
-              myFutures.remove(file)?.cancel(true)
-              PluginManagerCore.disablePlugin(PluginId.getId("org.jetbrains.java.decompiler"))
-              ApplicationManagerEx.getApplicationEx().restart(true)
+              myShowNotice = false
+              TASK_KEY.set(file, null)
+
+              val id = PluginId.getId("org.jetbrains.java.decompiler")
+              PluginManagerCore.disablePlugin(id)
+
+              val plugin = PluginManagerCore.getPlugin(id)
+              if (plugin is IdeaPluginDescriptorImpl) {
+                val descriptor = PluginDescriptorLoader.loadFullDescriptor(plugin)
+                if (DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)) {
+                  val task = DynamicPlugins.getPluginUnloadingTask(descriptor, DynamicPlugins.UnloadPluginOptions(disable = true, save = false))
+                  ApplicationManager.getApplication().invokeLater(task)
+                }
+              }
             }
 
             POSTPONE_EXIT_CODE -> {
-              myFutures.remove(file)?.cancel(true)
+              TASK_KEY.set(file, null)
             }
           }
         }
       }
-    })
+    }
   }
+
+  private val myLogger = lazy { IdeaLogger() }
+  private val myOptions = lazy { getOptions() }
 
   override fun accepts(file: VirtualFile): Boolean = true
 
   override fun getText(file: VirtualFile): CharSequence =
-      if (myLegalNoticeAccepted) myFutures.remove(file)?.get() ?: decompile(file)
+      if (canWork()) TASK_KEY.pop(file)?.get() ?: decompile(file)
       else ClsFileImpl.decompile(file)
 
   private fun decompile(file: VirtualFile): CharSequence {
@@ -157,7 +166,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
 
       val mapping = saver.myMapping
       if (mapping != null) {
-        file.putUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY, ExactMatchLineNumbersMapping(mapping))
+        file.putUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY, LineNumbersMapping.ArrayBasedMapping(mapping))
       }
 
       return saver.myResult
@@ -212,25 +221,9 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
     override fun closeArchive(path: String, archiveName: String) { }
   }
 
-  private class ExactMatchLineNumbersMapping(private val mapping: IntArray) : LineNumbersMapping {
-    @Suppress("LoopToCallChain")
-    override fun bytecodeToSource(line: Int): Int {
-      for (i in mapping.indices step 2) {
-        if (mapping[i] == line) {
-          return mapping[i + 1]
-        }
-      }
-      return -1
-    }
-
-    @Suppress("LoopToCallChain")
-    override fun sourceToBytecode(line: Int): Int {
-      for (i in mapping.indices step 2) {
-        if (mapping[i + 1] == line) {
-          return mapping[i]
-        }
-      }
-      return -1
-    }
+  private fun <T> Key<T>.pop(holder: UserDataHolder): T? {
+    val value = get(holder)
+    if (value != null) set(holder, null)
+    return value
   }
 }

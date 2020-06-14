@@ -16,6 +16,11 @@
     <psi.classFileDecompiler implementation="org.jetbrains.java.decompiler.IdeaDecompiler" order="last"/>
   </extensions>
 
+  <applicationListeners>
+    <listener class="org.jetbrains.java.decompiler.IdeaDecompiler$LegalBurden"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
+  </applicationListeners>
+
   <actions>
    <group>
       <action id="ByteCodeDecompiler" class="org.jetbrains.java.decompiler.ShowDecompiledClassAction"/>
