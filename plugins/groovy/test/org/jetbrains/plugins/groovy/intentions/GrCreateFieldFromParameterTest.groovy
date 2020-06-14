@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Max Medvedev
  */
-class CreateFieldFromParameterTest extends LightJavaCodeInsightFixtureTestCase {
+class GrCreateFieldFromParameterTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     "${TestUtils.testDataPath}intentions/createFieldFromParameter/"
