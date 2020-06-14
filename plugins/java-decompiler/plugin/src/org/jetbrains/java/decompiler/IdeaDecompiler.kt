@@ -44,7 +44,7 @@ import java.util.jar.Manifest
 
 class IdeaDecompiler : ClassFileDecompilers.Light() {
   companion object {
-    const val BANNER: String = "//\n// Source code recreated from a .class file by IntelliJ IDEA\n// (powered by Fernflower decompiler)\n//\n\n"
+    const val BANNER: String = "//\n// Source code recreated from a .class file by IntelliJ IDEA\n// (powered by FernFlower decompiler)\n//\n\n"
 
     private const val LEGAL_NOTICE_KEY = "decompiler.legal.notice.accepted"
 
@@ -148,7 +148,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
 
     try {
       val mask = "${file.nameWithoutExtension}$"
-      val files = listOf(file) + file.parent.children.filter { it.nameWithoutExtension.startsWith(mask) && it.fileType === JavaClassFileType.INSTANCE }
+      val files = listOf(file) + file.parent.children.filter { it.name.startsWith(mask) && it.fileType === JavaClassFileType.INSTANCE }
 
       val options = HashMap(myOptions.value)
       if (Registry.`is`("decompiler.use.line.mapping")) {

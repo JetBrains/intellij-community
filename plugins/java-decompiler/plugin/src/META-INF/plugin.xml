@@ -1,10 +1,9 @@
 <idea-plugin>
-
   <id>org.jetbrains.java.decompiler</id>
   <name>Java Bytecode Decompiler</name>
   <category>Other Tools</category>
   <description>
-    Extends standard .class file viewer with the Fernflower Java decompiler
+    Extends standard .class file viewer with the FernFlower Java decompiler
   </description>
   <vendor>JetBrains</vendor>
 
@@ -22,10 +21,9 @@
   </applicationListeners>
 
   <actions>
-   <group>
+    <group id="idea.java.decompiler.action.group">
       <action id="ByteCodeDecompiler" class="org.jetbrains.java.decompiler.ShowDecompiledClassAction"/>
       <add-to-group group-id="QuickActions" anchor="after" relative-to-action="QuickJavaDoc"/>
     </group>
   </actions>
-
 </idea-plugin>
