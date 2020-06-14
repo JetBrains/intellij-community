@@ -41,7 +41,8 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
                             * Whether to run DirectoryProjectConfigurator if a new project or no modules.
                             */
                            val runConfigurators: Boolean = false,
-                           val runConversionBeforeOpen: Boolean = true) {
+                           val runConversionBeforeOpen: Boolean = true,
+                           internal val isProjectCreatedWithWizard: Boolean = false) {
   @ApiStatus.Internal
   fun withBeforeOpenCallback(callback: Predicate<Project>) = copy(beforeOpen = { callback.test(it) })
 
@@ -62,8 +63,12 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
     }
 
     @JvmStatic
-    fun newProjectAndRunConfigurators(projectToClose: Project?, isRefreshVfsNeeded: Boolean): OpenProjectTask {
-      return OpenProjectTask(isNewProject = true, projectToClose = projectToClose, runConfigurators = true, isRefreshVfsNeeded = isRefreshVfsNeeded)
+    fun newProjectFromWizardAndRunConfigurators(projectToClose: Project?, isRefreshVfsNeeded: Boolean): OpenProjectTask {
+      return OpenProjectTask(isNewProject = true,
+                             projectToClose = projectToClose,
+                             runConfigurators = true,
+                             isProjectCreatedWithWizard = true,
+                             isRefreshVfsNeeded = isRefreshVfsNeeded)
     }
 
     @JvmStatic
