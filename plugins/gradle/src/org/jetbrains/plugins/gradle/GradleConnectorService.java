@@ -71,8 +71,11 @@ public class GradleConnectorService implements Disposable {
   @Override
   public void dispose() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    connectorsMap.values().forEach(GradleProjectConnection::disconnect);
+    disconnectGradleConnections();
+    stopIdleDaemonsOfOldVersions();
+  }
 
+  private void stopIdleDaemonsOfOldVersions() {
     if (DISABLE_STOP_OLD_IDLE_DAEMONS) return;
     try {
       if (ProjectUtil.getOpenProjects().length == 0) {
@@ -90,6 +93,11 @@ public class GradleConnectorService implements Disposable {
     catch (Exception e) {
       LOG.warn("Failed to stop Gradle daemons during project close", e);
     }
+  }
+
+  private void disconnectGradleConnections() {
+    connectorsMap.values().forEach(GradleProjectConnection::disconnect);
+    connectorsMap.clear();
   }
 
   private ProjectConnection getConnection(
