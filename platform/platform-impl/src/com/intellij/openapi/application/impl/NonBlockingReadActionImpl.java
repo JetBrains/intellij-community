@@ -124,7 +124,7 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
   @NotNull
   @Override
   public NonBlockingReadAction<T> expireWith(@NotNull Disposable parentDisposable) {
-    Set<Disposable> disposables = new HashSet<>();
+    Set<Disposable> disposables = new HashSet<>(myDisposables);
     disposables.add(parentDisposable);
     return new NonBlockingReadActionImpl<>(myComputation, myEdtFinish, myConstraints, myCancellationConditions, disposables,
                                            myCoalesceEquality, myProgressIndicator);
