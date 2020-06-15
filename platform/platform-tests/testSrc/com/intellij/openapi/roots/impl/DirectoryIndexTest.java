@@ -988,24 +988,20 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     }
   }
 
-  public void testUnrelatedDirectoriesCreationMustNotLeadToDirectoryIndexRebuildToImproveCheckoutPerformance() {
+  public void testUnrelatedDirectoriesCreationMustNotLeadToDirectoryIndexRebuildToImproveCheckoutSpeed() {
     VirtualFile root = ModuleRootManager.getInstance(myModule).getContentRoots()[0];
     WriteAction.run(()->ModuleRootModificationUtil.updateModel(myModule, model -> {
       ContentEntry rootEntry = model.getContentEntries()[0];
-      for (int i=0;i<10_000;i++) {
-        VirtualFile src = createChildDirectory(root, "extsrc" + i);
-        rootEntry.addSourceFolder(src, false);
-      }
+      rootEntry.addSourceFolder(createChildDirectory(root, "extsrc"), false);
     }));
 
-    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(getProject());
-    PlatformTestUtil.startPerformanceTest("dir creation must not lead to dirindex rebuild", 30_000, ()->{
-      for (int i=0; i<2_000; i++) {
-        VirtualFile xxx = createChildDirectory(root, "xxx");
-        assertFalse(fileIndex.isInSource(xxx));
-        delete(xxx);
-      }
-    }).assertTiming();
+    DirectoryIndexImpl dirIndex = (DirectoryIndexImpl)DirectoryIndex.getInstance(myProject);
+    RootIndex rootIndex = dirIndex.getRootIndex();
+
+    VirtualFile xxx = createChildDirectory(root, "xxx");
+    assertFalse(ProjectFileIndex.getInstance(getProject()).isInSource(xxx));
+    delete(xxx);
+    assertSame(rootIndex, dirIndex.getRootIndex());
   }
 
   public void testSourceRootResidingUnderExcludedDirectoryMustBeIndexed() throws IOException {
