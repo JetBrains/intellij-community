@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.mlcompletion.prev2calls
 
+import com.intellij.codeInsight.completion.CompletionUtilCore
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.codeInsight.mlcompletion.PyMlCompletionHelpers
 import com.jetbrains.python.psi.*
@@ -17,7 +18,9 @@ class AssignmentVisitor(private val borderOffset: Int,
     if (node.textOffset > borderOffset) return
 
     val (resolvedExpression, resolvedPrefix) = getResolvedExpression(node)
-    if (node.parent !is PyCallExpression && ("." !in resolvedExpression || resolvedPrefix == resolvedExpression)) return
+    if (node.parent !is PyCallExpression &&
+        CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED !in resolvedExpression &&
+        ("." !in resolvedExpression || resolvedPrefix == resolvedExpression)) return
 
     val qualifier = resolvedExpression.substringBeforeLast(".", "")
     val reference = resolvedExpression.substringAfterLast(".")
