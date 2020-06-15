@@ -77,7 +77,6 @@ class VcsLogEditor(file: VcsLogFile) : FileEditorBase() {
   override fun getComponent(): JComponent = container
   override fun getPreferredFocusedComponent(): JComponent? = vcsLogFile?.logUis?.firstOrNull()?.mainComponent
   override fun getName(): String = "Vcs Log Editor"
-  override fun getFile(): VirtualFile? = vcsLogFile
 }
 
 class VcsLogEditorProvider : FileEditorProvider, DumbAware {
