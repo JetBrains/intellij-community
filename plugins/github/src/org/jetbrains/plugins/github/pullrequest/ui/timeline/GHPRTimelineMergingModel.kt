@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
@@ -24,7 +25,9 @@ class GHPRTimelineMergingModel : AbstractListModel<GHPRTimelineItem>() {
     }
 
     var added = false
+    val hideUnknown = ApplicationManager.getApplication().let { !it.isInternal && !it.isEAP }
     for (item in items) {
+      if (hideUnknown && item is GHPRTimelineItem.Unknown) continue
       val merged = mergeIfPossible(lastItem, item)
       if (merged != null) {
         lastItem = merged
