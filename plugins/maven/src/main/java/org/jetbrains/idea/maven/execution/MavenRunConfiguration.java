@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.CommonBundle;
@@ -6,7 +6,7 @@ import com.intellij.build.*;
 import com.intellij.build.events.StartBuildEvent;
 import com.intellij.build.events.impl.StartBuildEventImpl;
 import com.intellij.build.process.BuildProcessHandler;
-import com.intellij.debugger.impl.DebuggerManagerImpl;
+import com.intellij.debugger.impl.RemoteConnectionBuilder;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
@@ -219,8 +219,11 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       try {
         // there's no easy and reliable way to know the version of target JRE, but without it there won't be any debugger agent settings
         parameters.setJdk(JavaParametersUtil.createProjectJdk(project, null));
-        connection = DebuggerManagerImpl.createDebugParameters(
-          parameters, false, DebuggerSettings.getInstance().getTransport(), "", false);
+        connection = new RemoteConnectionBuilder(false, DebuggerSettings.getInstance().getTransport(), "")
+          .asyncAgent(true)
+          .project(environment.getProject())
+          .memoryAgent(DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT)
+          .create(parameters);
       }
       catch (ExecutionException e) {
         throw new RuntimeException("Cannot create debug connection", e);
