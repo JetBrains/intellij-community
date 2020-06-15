@@ -139,8 +139,8 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     }
   }
 
-  override fun removeIgnoredFiles(filePaths: Collection<FilePath>): List<FilePath> {
-    val removedIgnoredFilePaths = arrayListOf<FilePath>()
+  override fun removeIgnoredFiles(filePaths: Collection<FilePath>): Collection<FilePath> {
+    val removedIgnoredFilePaths = hashSetOf<FilePath>()
     val filePathsSet = filePaths.toHashSet()
     val ignored = SET_LOCK.read { ignoredSet.toHashSet() }
 
