@@ -15,16 +15,23 @@ PullRequestReview
 
 RenamedTitleEvent
 ClosedEvent | ReopenedEvent | MergedEvent
+ReferencedEvent
 AssignedEvent | UnassignedEvent
 LabeledEvent | UnlabeledEvent
 ReviewRequestedEvent | ReviewRequestRemovedEvent
 ReviewDismissedEvent
+ReadyForReviewEvent
 
 BaseRefChangedEvent | BaseRefForcePushedEvent
 HeadRefDeletedEvent | HeadRefForcePushedEvent | HeadRefRestoredEvent
+
+CrossReferencedEvent
 */
+
 /*MAYBE
 LockedEvent | UnlockedEvent
+MarkedAsDuplicateEvent | UnmarkedAsDuplicateEvent
+ConvertToDraftEvent
 
 CommentDeletedEvent
 ???PullRequestCommitCommentThread
@@ -43,9 +50,11 @@ DeployedEvent
 DeploymentEnvironmentChangedEvent
 PullRequestReviewThread
 PinnedEvent | UnpinnedEvent
+MentionedEvent
 SubscribedEvent | UnsubscribedEvent
 MilestonedEvent | DemilestonedEvent
-MentionedEvent | ReferencedEvent | CrossReferencedEvent
+ConnectedEvent | DisconnectedEvent
+AutomaticBaseChangeSucceededEvent | AutomaticBaseChangeFailedEvent
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "__typename", visible = true,
               defaultImpl = Unknown::class)
@@ -55,6 +64,7 @@ MentionedEvent | ReferencedEvent | CrossReferencedEvent
   JsonSubTypes.Type(name = "PullRequestReview", value = GHPullRequestReview::class),
 
   JsonSubTypes.Type(name = "ReviewDismissedEvent", value = GHPRReviewDismissedEvent::class),
+  JsonSubTypes.Type(name = "ReadyForReviewEvent", value = GHPRReadyForReviewEvent::class),
 
   JsonSubTypes.Type(name = "RenamedTitleEvent", value = GHPRRenamedTitleEvent::class),
 

@@ -24,6 +24,13 @@ fragment reviewDismissedEvent on ReviewDismissedEvent {
     }
 }
 
+fragment readyForReviewEvent on ReadyForReviewEvent {
+    actor {
+        ...actorInfo
+    }
+    createdAt
+}
+
 fragment renamedEvent on RenamedTitleEvent {
     actor {
         ...actorInfo
@@ -201,6 +208,8 @@ query($repoOwner: String!, $repoName: String!, $number: Int!, $pageSize: Int = 1
                     ...reviewRequestRemovedEvent
 
                     ...reviewDismissedEvent
+
+                    ...readyForReviewEvent
 
                     ...baseRefChangedEvent
                     ...baseRefForcePushedEvent

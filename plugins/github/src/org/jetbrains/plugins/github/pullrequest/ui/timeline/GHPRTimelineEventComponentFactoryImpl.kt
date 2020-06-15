@@ -222,6 +222,11 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
                    border = JBUI.Borders.emptyLeft(28)
                  }
                })
+        is GHPRReadyForReviewEvent ->
+          Item(GithubIcons.Review,
+               GHPRTimelineItemComponentFactory.actionTitle(avatarIconsProvider, event.actor,
+                                                            GithubBundle.message("pull.request.timeline.ready.for.review"),
+                                                            event.createdAt))
 
         else -> throwUnknownType(event)
       }
