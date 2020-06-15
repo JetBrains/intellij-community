@@ -62,12 +62,13 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
   constructor(host: PsiLanguageInjectionHost) : this(
     StringEntry.Known(ElementManipulators.getValueText(host), host, ElementManipulators.getValueTextRange(host)))
 
-  fun findIndexOfInKnown(pattern: String): Int {
+  @JvmOverloads
+  fun findIndexOfInKnown(pattern: String, startFrom: Int = 0): Int {
     var accumulated = 0
     for (segment in segments) {
       when (segment) {
         is StringEntry.Known -> {
-          val i = segment.value.indexOf(pattern)
+          val i = segment.value.indexOf(pattern, startFrom - accumulated)
           if (i >= 0) return accumulated + i
           accumulated += segment.value.length
         }
