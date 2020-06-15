@@ -69,6 +69,7 @@ public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, Markdow
   private JBLabel myVerticalSplitLabel;
   private JBCheckBox myDisableInjections;
   private JBCheckBox myHideErrorsCheckbox;
+  private JBLabel myPlantUMLLocationHelp;
 
   private static final Color SUCCESS_COLOR = new JBColor(0x008000, 0x6A8759);
 
@@ -198,6 +199,13 @@ public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, Markdow
     myEditorPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
 
     myCssTitledSeparator = new TitledSeparator(MarkdownBundle.message("markdown.settings.css.title.name"));
+
+    myPlantUMLLocationHelp = ContextHelpLabel.create(
+      MarkdownBundle.message(
+        "markdown.settings.preview.plantUML.jar.location.description",
+        MarkdownSettingsConfigurable.getExpectedJarPath().getAbsolutePath()
+      )
+    );
 
     createPreviewUIComponents();
   }
