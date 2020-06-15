@@ -424,17 +424,14 @@ public class GitImpl extends GitImplBase {
   @Override
   public @NotNull GitCommandResult setUpstream(@NotNull GitRepository repository,
                                                @NotNull String upstreamBranchName,
-                                               @Nullable String branchName) {
+                                               @NotNull String branchName) {
     GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
     h.setStdoutSuppressed(false);
     if (GitVersionSpecialty.KNOWS_SET_UPSTREAM_TO.existsIn(repository)) {
-      h.addParameters("--set-upstream-to", upstreamBranchName);
+      h.addParameters("--set-upstream-to", upstreamBranchName, branchName);
     }
     else {
-      h.addParameters("--set-upstream", branchName);
-    }
-    if (branchName != null) {
-      h.addParameters(branchName);
+      h.addParameters("--set-upstream", branchName, upstreamBranchName);
     }
     return runCommand(h);
   }
