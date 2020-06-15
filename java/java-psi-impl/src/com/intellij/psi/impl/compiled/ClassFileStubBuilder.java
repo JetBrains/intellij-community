@@ -30,7 +30,7 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder.CompositeBina
   @NotNull
   @Override
   public Stream<ClassFileDecompilers.Decompiler> getAllSubBuilders() {
-    return ClassFileDecompilers.EP_NAME.extensions();
+    return ClassFileDecompilers.EP_NAME.extensions().filter(decompiler -> decompiler instanceof Full);
   }
 
   @Nullable
