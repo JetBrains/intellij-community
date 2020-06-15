@@ -303,6 +303,6 @@ public class VcsRootProblemNotifier {
     if (presentablePath == null) {
       presentablePath = FileUtil.getLocationRelativeToUserHome(toSystemDependentName(mapping));
     }
-    return StringUtil.shortenPathWithEllipsis(escapeXmlEntities(presentablePath), 30, true);
+    return escapeXmlEntities(presentablePath);
   }
 }
