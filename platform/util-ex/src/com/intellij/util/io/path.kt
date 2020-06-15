@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
 import com.intellij.openapi.util.io.FileUtilRt
@@ -92,9 +92,8 @@ fun Path.delete(recursively: Boolean = true) {
 }
 
 private fun doDelete(file: Path) {
-  val attributes: BasicFileAttributes
-  try {
-    attributes = Files.readAttributes(file, BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS)
+  val attributes = try {
+    Files.readAttributes(file, BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS)
   }
   catch (e: NoSuchFileException) {
     return
@@ -106,13 +105,11 @@ private fun doDelete(file: Path) {
   }
 
   Files.walkFileTree(file, object : SimpleFileVisitor<Path>() {
-    @Throws(IOException::class)
     override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
       deleteFile(file)
       return FileVisitResult.CONTINUE
     }
 
-    @Throws(IOException::class)
     override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
       Files.deleteIfExists(dir)
       return FileVisitResult.CONTINUE
