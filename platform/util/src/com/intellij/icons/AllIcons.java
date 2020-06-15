@@ -931,6 +931,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Apache = load("/providers/apache.svg");
     /** 16x16 */ public static final @NotNull Icon ApacheDerby = load("/providers/apacheDerby.svg");
     /** 16x16 */ public static final @NotNull Icon Azure = load("/providers/azure.svg");
+    /** 16x16 */ public static final @NotNull Icon BigQuery = load("/providers/bigQuery.svg");
     /** 16x16 */ public static final @NotNull Icon Cassandra = load("/providers/cassandra.svg");
     /** 16x16 */ public static final @NotNull Icon ClickHouse = load("/providers/clickHouse.svg");
     /** 16x16 */ public static final @NotNull Icon CockroachDB = load("/providers/cockroachDB.svg");
