@@ -5,16 +5,22 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
+import com.intellij.psi.impl.light.LightFieldBuilder;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.ref.GCUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 public class PsiAugmentProviderTest extends LightJavaCodeInsightFixtureTestCase {
+  private static final String AUGMENTED_FIELD = "augmented";
+
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/augment";
@@ -47,6 +53,16 @@ public class PsiAugmentProviderTest extends LightJavaCodeInsightFixtureTestCase 
     PsiType type2 = var.getType();
     assertNotNull(type2);
     assertEquals(PsiType.INT.getCanonicalText(false), type2.getCanonicalText(false));
+  }
+
+  public void testDuplicatesFromSeveralAugmenterCallsAreIgnored() {
+    PsiClass psiClass = myFixture.addClass("class C {}");
+    PsiField field = psiClass.findFieldByName(AUGMENTED_FIELD, false);
+    assertNotNull(field);
+
+    GCUtil.tryGcSoftlyReachableObjects();
+
+    assertSame(field, psiClass.findFieldByName(AUGMENTED_FIELD, false));
   }
 
   private static class TestAugmentProvider extends PsiAugmentProvider {
@@ -91,6 +107,27 @@ public class PsiAugmentProviderTest extends LightJavaCodeInsightFixtureTestCase 
       }
 
       return null;
+    }
+
+    @Override
+    protected @NotNull <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element,
+                                                                      @NotNull Class<Psi> type,
+                                                                      @Nullable String nameHint) {
+      if (type.equals(PsiField.class)) {
+        //noinspection unchecked
+        return (List<Psi>)Collections.singletonList(new LightFieldBuilder(element.getManager(), AUGMENTED_FIELD, PsiType.BOOLEAN) {
+          @Override
+          public int hashCode() {
+            return 0;
+          }
+
+          @Override
+          public boolean equals(Object obj) {
+            return obj.getClass() == getClass();
+          }
+        });
+      }
+      return super.getAugments(element, type, nameHint);
     }
 
     @NotNull

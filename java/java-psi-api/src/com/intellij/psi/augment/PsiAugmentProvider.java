@@ -41,7 +41,7 @@ public abstract class PsiAugmentProvider {
    * An extension that enables one to add children to some PSI elements, e.g. methods to Java classes.
    * The class code remains the same, but its method accessors also include the results returned from {@link PsiAugmentProvider}s.
    * An augmenter can be called several times with the same parameters in the same state of the code model,
-   * and the PSI returned from these invocations should be equivalent (as in {@link PsiElement#isEquivalentTo} or {@link #equals}).
+   * and the PSI returned from these invocations must be equal and implement {@link #equals}/{@link #hashCode()} accordingly.
    * @param nameHint the expected name of the requested augmented members, or null if all members of the specified class are to be returned.
    *                 Implementations can ignore this parameter or use it for optimizations.
    */
@@ -63,7 +63,7 @@ public abstract class PsiAugmentProvider {
   /**
    * @deprecated invoke and override {@link #getAugments(PsiElement, Class, String)}.
    */
-  @SuppressWarnings("DeprecatedIsStillUsed")
+  @SuppressWarnings("unused")
   @Deprecated
   @NotNull
   protected <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element, @NotNull Class<Psi> type) {
