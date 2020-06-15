@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.text.StringUtil.shortenTextWithEllipsis;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY;
@@ -62,7 +63,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
 
   private final boolean myEnableUnversioned;
   private final boolean myEnablePartialCommit;
-  @Nullable private JComponent myBottomDiffComponent;
+  @Nullable private Supplier<? extends JComponent> myBottomDiffComponent;
 
   @NotNull private final ChangeListChooser myChangeListChooser;
   @NotNull private final DeleteProvider myDeleteProvider = new VirtualFileDeleteProvider();
@@ -184,13 +185,15 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @Override
   protected void updateDiffContext(@NotNull DiffRequestChain chain) {
     super.updateDiffContext(chain);
-    chain.putUserData(DiffUserDataKeysEx.BOTTOM_PANEL, myBottomDiffComponent);
+    if (myBottomDiffComponent != null) {
+      chain.putUserData(DiffUserDataKeysEx.BOTTOM_PANEL, myBottomDiffComponent.get());
+    }
     chain.putUserData(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, myEnablePartialCommit);
     chain.putUserData(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, true);
   }
 
 
-  public void setBottomDiffComponent(@NotNull JComponent value) {
+  public void setBottomDiffComponent(@Nullable Supplier<? extends JComponent> value) {
     myBottomDiffComponent = value;
   }
 
