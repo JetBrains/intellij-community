@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
  * It allows clients to inspect all tokens at once and easily move back and forward to implement some simple lexer-based checks.
  */
 @ApiStatus.Experimental
-public interface TokenizedText {
+public interface TokenList {
 
   /**
    * @return the number of tokens inside
@@ -25,7 +25,7 @@ public interface TokenizedText {
    * @return the full text that was split into the tokens represented here
    */
   @NotNull
-  CharSequence getText();
+  CharSequence getTokenizedText();
 
   /**
    * @return the start offset of the token with the given index
@@ -47,7 +47,7 @@ public interface TokenizedText {
    */
   default CharSequence getTokenText(int index) {
     if (index < 0 || index >= getTokenCount()) return null;
-    return getText().subSequence(getTokenStart(index), getTokenEnd(index));
+    return getTokenizedText().subSequence(getTokenStart(index), getTokenEnd(index));
   }
 
   /**
@@ -130,23 +130,23 @@ public interface TokenizedText {
   }
 
   /**
-   * A simple lexer over {@link TokenizedText}.
+   * A simple lexer over {@link TokenList}.
    */
   class WrappingLexer extends LexerBase {
-    private final TokenizedText myTokens;
+    private final TokenList myTokens;
     private int myIndex;
 
-    WrappingLexer(TokenizedText tokens) {
+    WrappingLexer(TokenList tokens) {
       this.myTokens = tokens;
     }
 
-    public TokenizedText getTokens() {
+    public TokenList getTokens() {
       return myTokens;
     }
 
     @Override
     public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
-      assert Comparing.equal(buffer, myTokens.getText());
+      assert Comparing.equal(buffer, myTokens.getTokenizedText());
       assert startOffset == 0;
       assert endOffset == buffer.length();
       assert initialState == 0;
@@ -180,12 +180,12 @@ public interface TokenizedText {
 
     @Override
     public @NotNull CharSequence getBufferSequence() {
-      return myTokens.getText();
+      return myTokens.getTokenizedText();
     }
 
     @Override
     public int getBufferEnd() {
-      return myTokens.getText().length();
+      return myTokens.getTokenizedText().length();
     }
   }
 
