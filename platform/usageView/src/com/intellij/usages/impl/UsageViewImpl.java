@@ -189,6 +189,8 @@ public class UsageViewImpl implements UsageViewEx {
 
     myGroupingRules = getActiveGroupingRules(project, getUsageViewSettings());
     myFilteringRules = getActiveFilteringRules(project);
+    //by default disable read/write filter - enabling it if resulting usages have read/write access
+    setReadWriteFilterEnabled(false);
 
     myBuilder = new UsageNodeTreeBuilder(myTargets, myGroupingRules, myFilteringRules, myRoot, myProject);
 
@@ -667,23 +669,22 @@ public class UsageViewImpl implements UsageViewEx {
     return list.toArray(UsageFilteringRule.EMPTY_ARRAY);
   }
 
-  protected void adjustReadWriteUsageFilter(Collection<? extends Usage> usages) {
-    boolean b = usages.stream().anyMatch(usage -> {
-      if(usage instanceof PsiElementUsage){
-        PsiElement element = ((PsiElementUsage) usage).getElement();
-        ReadWriteAccessDetector detector = ReadWriteAccessDetector.findDetector(element);
-        if(detector.isDeclarationWriteAccess(element) || detector.isDeclarationWriteAccess(element)){
-          return true;
-        }
+  protected boolean isUsageReadWriteAccessible(Usage usage) {
+    if(usage instanceof PsiElementUsage){
+      PsiElement element = ((PsiElementUsage) usage).getElement();
+      ReadWriteAccessDetector detector = ReadWriteAccessDetector.findDetector(element);
+      if(detector != null){
+        return true;
       }
-      return false;
-    });
+    }
+    return false;
+  }
 
+  protected void setReadWriteFilterEnabled(boolean b) {
     for (UsageFilteringRuleProvider provider : UsageFilteringRuleProvider.EP_NAME.getExtensionList()) {
-      if (provider instanceof UsageFilteringRuleProvider){
-        ((UsageFilteringRuleProviderImpl)provider) .setReadWriteEnabled(b);
+      if (provider instanceof UsageFilteringRuleProviderImpl){
+        ((UsageFilteringRuleProviderImpl)provider).setReadWriteEnabled(b);
       }
-
     }
   }
 
@@ -1229,7 +1230,6 @@ public class UsageViewImpl implements UsageViewEx {
   @NotNull
   @Override
   public CompletableFuture<?> appendUsagesInBulk(@NotNull Collection<? extends Usage> usages) {
-    adjustReadWriteUsageFilter(usages);
     CompletableFuture<Object> result = new CompletableFuture<>();
     addUpdateRequest(() -> ReadAction.run(() -> {
       try {
@@ -1247,6 +1247,9 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   public UsageNode doAppendUsage(@NotNull Usage usage) {
+    if(isUsageReadWriteAccessible(usage)) {
+      setReadWriteFilterEnabled(true);
+    }
     assert !ApplicationManager.getApplication().isDispatchThread();
     // invoke in ReadAction to be be sure that usages are not invalidated while the tree is being built
     ApplicationManager.getApplication().assertReadAccessAllowed();
