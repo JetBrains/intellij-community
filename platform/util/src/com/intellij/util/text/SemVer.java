@@ -189,45 +189,23 @@ public final class SemVer implements Comparable<SemVer> {
 
   @Nullable
   public static SemVer parseFromText(@Nullable String text) {
-    return parseFromText(text, false);
-  }
+    if (text != null) {
+      int majorEndIdx = text.indexOf('.');
+      if (majorEndIdx >= 0) {
+        int minorEndIdx = text.indexOf('.', majorEndIdx + 1);
+        if (minorEndIdx >= 0) {
+          int preReleaseIdx = text.indexOf('-', minorEndIdx + 1);
+          int patchEndIdx = preReleaseIdx >= 0 ? preReleaseIdx : text.length();
 
-  /**
-   * @param text string presentation of the version
-   * @param incomplete if the flag is true the method will accept shorten paths e.g. 3.5 instead of 3.5.0  
-   * @return parsed version or null
-   */
-  @Nullable
-  public static SemVer parseFromText(@Nullable String text, boolean incomplete) {
-    if (text == null) return null;
-    int majorEndIdx = text.indexOf('.');
-    if (majorEndIdx >= 0) {
-      int minorEndIdx = text.indexOf('.', majorEndIdx + 1);
-      if (minorEndIdx >= 0) {
-        int preReleaseIdx = text.indexOf('-', minorEndIdx + 1);
-        int patchEndIdx = preReleaseIdx >= 0 ? preReleaseIdx : text.length();
+          int major = StringUtil.parseInt(text.substring(0, majorEndIdx), -1);
+          int minor = StringUtil.parseInt(text.substring(majorEndIdx + 1, minorEndIdx), -1);
+          int patch = StringUtil.parseInt(text.substring(minorEndIdx + 1, patchEndIdx), -1);
+          String preRelease = preReleaseIdx >= 0 ? text.substring(preReleaseIdx + 1) : null;
 
-        int major = StringUtil.parseInt(text.substring(0, majorEndIdx), -1);
-        int minor = StringUtil.parseInt(text.substring(majorEndIdx + 1, minorEndIdx), -1);
-        int patch = StringUtil.parseInt(text.substring(minorEndIdx + 1, patchEndIdx), -1);
-        String preRelease = preReleaseIdx >= 0 ? text.substring(preReleaseIdx + 1) : null;
-
-        if (major >= 0 && minor >= 0 && patch >= 0) {
-          return new SemVer(text, major, minor, patch, preRelease);
+          if (major >= 0 && minor >= 0 && patch >= 0) {
+            return new SemVer(text, major, minor, patch, preRelease);
+          }
         }
-      }
-      else if (incomplete) {
-        int major = StringUtil.parseInt(text.substring(0, majorEndIdx), -1);
-        int minor = StringUtil.parseInt(text.substring(majorEndIdx + 1), -1);
-        if (major >= 0 && minor >= 0) {
-          return new SemVer(text, major, minor, 0, null);
-        }
-      }
-    }
-    else if (incomplete) {
-      int major = StringUtil.parseInt(text, -1);
-      if (major >= 0) {
-        return new SemVer(text, major, 0, 0, null);
       }
     }
 
