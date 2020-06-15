@@ -54,7 +54,7 @@ class VcsLogIconProvider : FileIconProvider {
   override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? = (file as? VcsLogFile)?.fileType?.icon
 }
 
-class VcsLogEditor(file: VcsLogFile) : FileEditorBase() {
+class VcsLogEditor(val file: VcsLogFile) : FileEditorBase() {
   private val container: JComponent = JPanel(BorderLayout())
 
   private var vcsLogFile: VcsLogFile? = file
