@@ -167,7 +167,16 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
 
       val text = when (event.newState) {
         GHPullRequestState.CLOSED -> GithubBundle.message("pull.request.timeline.closed")
-        GHPullRequestState.MERGED -> GithubBundle.message("pull.request.timeline.merged")
+        GHPullRequestState.MERGED -> {
+          val mergeEvent = (if (event is GHPRTimelineMergedStateEvents) event.lastStateEvent else event) as GHPRMergedEvent
+          if (mergeEvent.commit != null) {
+            //language=HTML
+            val commitText = """<a href='${mergeEvent.commit.url}'>${mergeEvent.commit.abbreviatedOid}</a>"""
+            val ref = branchHTML(mergeEvent.mergeRefName)
+            GithubBundle.message("pull.request.timeline.merged.commit", commitText, ref)
+          }
+          else GithubBundle.message("pull.request.timeline.merged")
+        }
         GHPullRequestState.OPEN -> GithubBundle.message("pull.request.timeline.reopened")
       }
 
@@ -195,15 +204,6 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
     }
 
     private fun branchHTML(ref: GHGitRefName?) = ref?.name?.let { branchHTML(it) }
-
-    //language=HTML
-    private fun branchHTML(name: String): String {
-      val foreground = CurrentBranchComponent.TEXT_COLOR
-      val background = CurrentBranchComponent.getBranchPresentationBackground(UIUtil.getListBackground())
-
-      return """<span style='color: #${ColorUtil.toHex(foreground)}; background: #${ColorUtil.toHex(background)}'>
-                  &nbsp;<icon-inline src='GithubIcons.Branch'/>$name&nbsp;</span>"""
-    }
   }
 
   private inner class ComplexEventComponentFactory : EventComponentFactory<GHPRTimelineEvent.Complex>() {
@@ -234,6 +234,15 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
   }
 
   companion object {
+    private fun branchHTML(name: String): String {
+      val foreground = CurrentBranchComponent.TEXT_COLOR
+      val background = CurrentBranchComponent.getBranchPresentationBackground(UIUtil.getListBackground())
+
+      //language=HTML
+      return """<span style='color: #${ColorUtil.toHex(foreground)}; background: #${ColorUtil.toHex(background)}'>
+                  &nbsp;<icon-inline src='GithubIcons.Branch'/>$name&nbsp;</span>"""
+    }
+
     private fun StringBuilder.appendParagraph(text: String): StringBuilder {
       if (text.isNotEmpty()) this.append("<p>").append(text).append("</p>")
       return this
