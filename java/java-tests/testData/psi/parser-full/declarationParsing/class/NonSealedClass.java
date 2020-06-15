@@ -1,1 +1,1 @@
-non-sealed class C implements I {}
+private non-sealed class C implements I {}

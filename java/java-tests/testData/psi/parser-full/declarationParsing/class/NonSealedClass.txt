@@ -2,7 +2,9 @@ PsiJavaFile:NonSealedClass.java
   PsiImportList
     <empty list>
   PsiClass:C
-    PsiModifierList:non-sealed
+    PsiModifierList:private non-sealed
+      PsiKeyword:private('private')
+      PsiWhiteSpace(' ')
       PsiKeyword:non-sealed('non-sealed')
     PsiWhiteSpace(' ')
     PsiKeyword:class('class')

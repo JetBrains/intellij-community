@@ -31,11 +31,6 @@ public class JavaLexer extends LexerBase {
     new THashSet<>(Arrays.asList(OPEN, MODULE, REQUIRES, EXPORTS, OPENS, USES, PROVIDES, TRANSITIVE, TO, WITH),
                    CharSequenceHashingStrategy.CASE_SENSITIVE);
 
-  // Minus is a single token that may separate identifiers that can form "non-sealed" keyword
-  // For incremental lexing it is important that at "-" lexer is not in the initial state so we will lex one more token
-  private static final int INITIAL_STATE = 0;
-  private static final int MAYBE_NON_SEALED_STATE = -1;
-
   public static boolean isKeyword(String id, @NotNull LanguageLevel level) {
     return KEYWORDS.contains(id) ||
            level.isAtLeast(LanguageLevel.JDK_1_4) && ASSERT.equals(id) ||
@@ -53,17 +48,14 @@ public class JavaLexer extends LexerBase {
   }
 
   private final _JavaLexer myFlexLexer;
-  private final LanguageLevel myLevel;
   private CharSequence myBuffer;
   private char @Nullable [] myBufferArray;
   private int myBufferIndex;
   private int myBufferEndOffset;
   private int myTokenEndOffset;  // positioned after the last symbol of the current token
   private IElementType myTokenType;
-  private int myState = INITIAL_STATE;
 
   public JavaLexer(@NotNull LanguageLevel level) {
-    myLevel = level;
     myFlexLexer = new _JavaLexer(level);
   }
 
@@ -80,7 +72,7 @@ public class JavaLexer extends LexerBase {
 
   @Override
   public int getState() {
-    return myState;
+    return 0;
   }
 
   @Override
@@ -116,7 +108,6 @@ public class JavaLexer extends LexerBase {
 
     myBufferIndex = myTokenEndOffset;
 
-    boolean wasMinus = false;
     char c = charAt(myBufferIndex);
     switch (c) {
       case ' ':
@@ -173,35 +164,9 @@ public class JavaLexer extends LexerBase {
           myTokenEndOffset = getClosingQuote(myBufferIndex + 1, c);
         }
         break;
-      case 'n':
-        if (myLevel.isAtLeast(LanguageLevel.JDK_15_PREVIEW) &&
-            myBufferIndex + 9 < myBufferEndOffset &&
-            charAt(myBufferIndex + 1) == 'o' &&
-            charAt(myBufferIndex + 2) == 'n' &&
-            charAt(myBufferIndex + 3) == '-' &&
-            charAt(myBufferIndex + 4) == 's' &&
-            charAt(myBufferIndex + 5) == 'e' &&
-            charAt(myBufferIndex + 6) == 'a' &&
-            charAt(myBufferIndex + 7) == 'l' &&
-            charAt(myBufferIndex + 8) == 'e' &&
-            charAt(myBufferIndex + 9) == 'd') {
-          myTokenType = JavaTokenType.NON_SEALED_KEYWORD;
-          myTokenEndOffset = myBufferIndex + 10;
-        }
-        else {
-          flexLocateToken();
-        }
-        break;
-      case '-':
-        wasMinus = true;
-        // fallthrough
+
       default:
         flexLocateToken();
-    }
-    if (wasMinus) {
-      myState = MAYBE_NON_SEALED_STATE;
-    } else {
-      myState = INITIAL_STATE;
     }
 
     if (myTokenEndOffset > myBufferEndOffset) {

@@ -164,23 +164,6 @@ public class JavaHighlighterTest extends LightJavaCodeInsightTestCase {
     CheckHighlighterConsistency.performCheck(editor);
   }
 
-  public void testNonSealedEditing() {
-    Editor editor = initDocument("non-sealed class A {\n" +
-                                 "    \n" +
-                                 "} ");
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      int idx = myDocument.getText().lastIndexOf(" class");
-      myDocument.deleteString(idx - 1, idx);
-    });
-    CheckHighlighterConsistency.performCheck(editor);
-
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      int idx = myDocument.getText().lastIndexOf(" class");
-      myDocument.insertString(idx, "d");
-    });
-    CheckHighlighterConsistency.performCheck(editor);
-  }
-
   private Editor initDocument(String text) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     myDocument = editorFactory.createDocument(text);
