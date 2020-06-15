@@ -24,6 +24,7 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -37,7 +38,7 @@ public class LambdaHighlightingUtil {
     return checkInterfaceFunctional(psiClass, JavaErrorBundle.message("target.type.of.a.lambda.conversion.must.be.an.interface"));
   }
 
-  static String checkInterfaceFunctional(@NotNull PsiClass psiClass, @NotNull String interfaceNonFunctionalMessage) {
+  static String checkInterfaceFunctional(@NotNull PsiClass psiClass, @NotNull @Nls String interfaceNonFunctionalMessage) {
     if (psiClass instanceof PsiTypeParameter) return null; //should be logged as cyclic inference
     final List<HierarchicalMethodSignature> signatures = LambdaUtil.findFunctionCandidates(psiClass);
     if (signatures == null) return interfaceNonFunctionalMessage;

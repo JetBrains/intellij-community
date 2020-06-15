@@ -565,9 +565,17 @@ public class AnnotationsHighlightUtil {
       if (owner instanceof PsiModifierList) {
         final PsiElement parent = ((PsiModifierList)owner).getParent();
         if (parent instanceof PsiClass) {
-          final String errorMessage = LambdaHighlightingUtil.checkInterfaceFunctional((PsiClass)parent, ((PsiClass)parent).getName() + " is not a functional interface");
+          final String errorMessage = LambdaHighlightingUtil.checkInterfaceFunctional((PsiClass)parent, JavaErrorBundle.message("not.a.functional.interface", ((PsiClass)parent).getName()));
           if (errorMessage != null) {
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotation).descriptionAndTooltip(errorMessage).create();
+          }
+          
+          if (HighlightingFeature.SEALED_CLASSES.isSufficient(languageLevel) && 
+              ((PsiClass)parent).hasModifierProperty(PsiModifier.SEALED)) {
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+              .range(annotation)
+              .descriptionAndTooltip(JavaErrorBundle.message("functional.interface.must.not.be.sealed.error.description", PsiModifier.SEALED))
+              .create();
           }
         }
       }

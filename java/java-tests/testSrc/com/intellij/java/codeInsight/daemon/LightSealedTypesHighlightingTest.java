@@ -18,9 +18,8 @@ public class LightSealedTypesHighlightingTest extends LightJavaCodeInsightFixtur
     return JAVA_15;
   }
 
-  public void testSealedTypesBasics() {
-    doTest();
-  }
+  public void testSealedTypesBasics() { doTest(); }
+  public void testSealedFunctionalInterface() { doTest(); }
   
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");
