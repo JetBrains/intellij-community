@@ -23,12 +23,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.*;
@@ -38,6 +36,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -60,6 +59,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 
@@ -160,7 +160,8 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
   void storeSelection(@Nullable VirtualFile file) {
     if (file != null) {
-      FileChooserUtil.setLastOpenedFile(myProject, file.toNioPath());
+      Pair<String, String> pair = file.getFileSystem().getProtocol() == StandardFileSystems.JAR_PROTOCOL ? URLUtil.splitJarUrl(file.getPath()) : null;
+      FileChooserUtil.setLastOpenedFile(myProject, pair == null ? file.toNioPath() : Paths.get(pair.getFirst()));
     }
     if (file != null && file.getFileSystem() instanceof LocalFileSystem) {
       saveRecent(file.getPath());
@@ -168,7 +169,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
   private void saveRecent(String path) {
-    final List<String> files = new ArrayList<>(Arrays.asList(getRecentFiles()));
+    List<String> files = new ArrayList<>(getRecentFiles());
     files.remove(path);
     files.add(0, path);
     while (files.size() > 30) {
@@ -177,19 +178,19 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     PropertiesComponent.getInstance().setValues(RECENT_FILES_KEY, ArrayUtilRt.toStringArray(files));
   }
 
-  private String @NotNull [] getRecentFiles() {
-    final String[] recent = PropertiesComponent.getInstance().getValues(RECENT_FILES_KEY);
-    if (recent != null) {
-      if (recent.length > 0 && myPathTextField.getField().getText().replace('\\', '/').equals(recent[0])) {
-        final String[] pathes = new String[recent.length - 1];
-        System.arraycopy(recent, 1, pathes, 0, recent.length - 1);
-        return pathes;
-      }
-      return recent;
+  private @NotNull List<String> getRecentFiles() {
+    String[] array = PropertiesComponent.getInstance().getValues(RECENT_FILES_KEY);
+    if (array == null) {
+      return Collections.emptyList();
     }
-    return ArrayUtilRt.EMPTY_STRING_ARRAY;
-  }
 
+    if (array.length > 0 && myPathTextField.getField().getText().replace('\\', '/').equals(array[0])) {
+      String[] paths = new String[array.length - 1];
+      System.arraycopy(array, 1, paths, 0, array.length - 1);
+      return Arrays.asList(paths);
+    }
+    return Arrays.asList(array);
+  }
 
   private JComponent createHistoryButton() {
     JLabel label = new JLabel(AllIcons.Actions.Download);
@@ -308,7 +309,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     };
     Disposer.register(myDisposable, myPathTextField);
     myPathTextFieldWrapper.add(myPathTextField.getField(), BorderLayout.CENTER);
-    if (getRecentFiles().length > 0) {
+    if (getRecentFiles().size() > 0) {
       myPathTextFieldWrapper.add(createHistoryButton(), BorderLayout.EAST);
     }
 
@@ -603,7 +604,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     myTextFieldAction.update();
     myNorthPanel.remove(myPathTextFieldWrapper);
     if (isToShowTextField()) {
-      final ArrayList<VirtualFile> selection = new ArrayList<>();
+      List<VirtualFile> selection = new ArrayList<>();
       if (myFileSystemTree.getSelectedFile() != null) {
         selection.add(myFileSystemTree.getSelectedFile());
       }
