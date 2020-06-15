@@ -50,21 +50,10 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     myJvmFacade = AtomicNotNullLazyValue.createValue(() -> (JvmFacadeImpl)JvmFacade.getInstance(project));
     myConversionHelper = JvmPsiConversionHelper.getInstance(myProject);
 
-    final PsiModificationTracker modificationTracker = PsiManager.getInstance(project).getModificationTracker();
-
-    project.getMessageBus().connect().subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
-      private long lastTimeSeen = -1L;
-
-      @Override
-      public void modificationCountChanged() {
-        myClassCache.clear();
-        final long now = modificationTracker.getModificationCount();
-        if (lastTimeSeen != now) {
-          lastTimeSeen = now;
-          myPackageCache.clear();
-          myModuleCache.clear();
-        }
-      }
+    project.getMessageBus().connect().subscribe(PsiModificationTracker.TOPIC, () -> {
+      myClassCache.clear();
+      myPackageCache.clear();
+      myModuleCache.clear();
     });
 
     DummyHolderFactory.setFactory(new JavaDummyHolderFactory());

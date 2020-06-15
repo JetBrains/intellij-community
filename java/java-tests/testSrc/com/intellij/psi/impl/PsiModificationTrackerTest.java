@@ -450,32 +450,6 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
     assertEquals(mc, tracker.getModificationCount());
   }
 
-  public void testJavaStructureModCountMustNotBeAdvancedOnJavadocChange() {
-    configureByText(JavaFileType.INSTANCE, "/* <selection>abc</selection> */ class A{}");
-
-    PsiModificationTracker tracker = (PsiModificationTracker)getTracker();
-    long javaCount = getJavaTracker().getModificationCount();
-    long codeBlockCount = tracker.getModificationCount();
-
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> replaceSelection("cde"));
-
-    assertEquals(javaCount, getJavaTracker().getModificationCount());
-    assertFalse(codeBlockCount == tracker.getModificationCount());
-  }
-
-  public void testJavaStructureModCountMustNotBeAdvancedOnAddingSpace() {
-    configureByText(JavaFileType.INSTANCE, "class A{ <selection></selection> }");
-
-    PsiModificationTracker tracker = (PsiModificationTracker)getTracker();
-    long javaCount = getJavaTracker().getModificationCount();
-    long codeBlockCount = tracker.getModificationCount();
-
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> replaceSelection(" "));
-
-    assertEquals(javaCount, getJavaTracker().getModificationCount());
-    assertFalse(codeBlockCount == tracker.getModificationCount());
-  }
-
   public void testChangeBothInsideAnonymousAndOutsideShouldAdvanceJavaModStructureAndClearCaches() {
     PsiFile file = configureByText(JavaFileType.INSTANCE, "class A{ void bar() {\n" +
                                                           "int a = foo().goo();\n" +
@@ -552,8 +526,5 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
       return ((PsiModificationTrackerImpl)PsiModificationTracker.SERVICE.getInstance(getProject()))
         .forLanguage(JavaLanguage.INSTANCE);
     }
-
-    public void testJavaStructureModCountMustNotBeAdvancedOnJavadocChange() {}
-    public void testJavaStructureModCountMustNotBeAdvancedOnAddingSpace() {}
   }
 }
