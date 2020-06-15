@@ -19,6 +19,7 @@ import org.jetbrains.plugins.github.util.completionOnEdt
 import org.jetbrains.plugins.github.util.errorOnEdt
 import org.jetbrains.plugins.github.util.submitIOTask
 import java.util.concurrent.CompletableFuture
+import javax.swing.JComponent
 import javax.swing.JTextField
 
 internal typealias UniqueLoginPredicate = (login: String, server: GithubServerPath) -> Boolean
@@ -56,7 +57,7 @@ internal class GithubLoginPanel(
   private fun applyUi(ui: GHCredentialsUi) {
     currentUi = ui
     setContent(currentUi.getPanel())
-    currentUi.getPreferredFocus().requestFocus()
+    currentUi.getPreferredFocusableComponent()?.requestFocus()
     tokenAcquisitionError = null
   }
 
@@ -70,9 +71,9 @@ internal class GithubLoginPanel(
     }
   }
 
-  fun getPreferredFocus() =
+  fun getPreferredFocusableComponent(): JComponent? =
     serverTextField.takeIf { it.isEditable && it.text.isBlank() }
-    ?: currentUi.getPreferredFocus()
+    ?: currentUi.getPreferredFocusableComponent()
 
   fun doValidateAll(): List<ValidationInfo> {
     val uiError =

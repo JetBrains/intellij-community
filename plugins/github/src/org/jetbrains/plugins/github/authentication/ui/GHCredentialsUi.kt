@@ -13,7 +13,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal abstract class GHCredentialsUi {
-  abstract fun getPreferredFocus(): JComponent
+  abstract fun getPreferredFocusableComponent(): JComponent?
   abstract fun getValidator(): Validator
   abstract fun createExecutor(): GithubApiRequestExecutor
   abstract fun acquireLoginAndToken(

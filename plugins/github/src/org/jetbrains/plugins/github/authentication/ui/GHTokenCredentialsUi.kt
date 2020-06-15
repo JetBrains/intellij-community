@@ -18,6 +18,7 @@ import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.notBlank
 import org.jetbrains.plugins.github.ui.util.Validator
 import java.net.UnknownHostException
+import javax.swing.JComponent
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
 
@@ -50,7 +51,7 @@ internal class GHTokenCredentialsUi(
 
   private fun browseNewTokenUrl() = browse(buildNewTokenUrl(serverTextField.tryParseServer()!!))
 
-  override fun getPreferredFocus() = tokenTextField
+  override fun getPreferredFocusableComponent(): JComponent = tokenTextField
 
   override fun getValidator(): Validator = { notBlank(tokenTextField, message("login.token.cannot.be.empty")) }
 

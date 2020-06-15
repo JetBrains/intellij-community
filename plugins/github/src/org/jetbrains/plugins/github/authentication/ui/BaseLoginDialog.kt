@@ -39,7 +39,7 @@ internal abstract class BaseLoginDialog(
   val server: GithubServerPath get() = loginPanel.getServer()
   fun setServer(path: String, editable: Boolean) = loginPanel.setServer(path, editable)
 
-  override fun getPreferredFocusedComponent(): JComponent? = loginPanel.getPreferredFocus()
+  override fun getPreferredFocusedComponent(): JComponent? = loginPanel.getPreferredFocusableComponent()
 
   override fun doValidateAll(): List<ValidationInfo> = loginPanel.doValidateAll()
 

@@ -20,6 +20,7 @@ import org.jetbrains.plugins.github.ui.util.DialogValidationUtils
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.notBlank
 import java.net.UnknownHostException
 import java.util.function.Supplier
+import javax.swing.JComponent
 import javax.swing.JPasswordField
 
 internal class GHPasswordCredentialsUi(
@@ -51,7 +52,8 @@ internal class GHPasswordCredentialsUi(
     }
   }
 
-  override fun getPreferredFocus() = if (loginTextField.isEditable && loginTextField.text.isEmpty()) loginTextField else passwordField
+  override fun getPreferredFocusableComponent(): JComponent =
+    if (loginTextField.isEditable && loginTextField.text.isEmpty()) loginTextField else passwordField
 
   override fun getValidator() =
     DialogValidationUtils.chain(
