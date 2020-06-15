@@ -32,8 +32,8 @@ import java.util.List;
 import static com.intellij.sh.ShStringUtil.quote;
 
 public class ShRunConfigurationProfileState implements RunProfileState {
-  private final Project myProject;
-  private final ShRunConfiguration myRunConfiguration;
+  protected final Project myProject;
+  protected final ShRunConfiguration myRunConfiguration;
 
   public ShRunConfigurationProfileState(@NotNull Project project, @NotNull ShRunConfiguration runConfiguration) {
     myProject = project;
@@ -51,7 +51,7 @@ public class ShRunConfigurationProfileState implements RunProfileState {
     return null;
   }
 
-  private ExecutionResult buildExecutionResult() throws ExecutionException {
+  protected ExecutionResult buildExecutionResult() throws ExecutionException {
     GeneralCommandLine commandLine = createCommandLine();
     ProcessHandler processHandler = createProcessHandler(commandLine);
     ProcessTerminatedListener.attach(processHandler);
@@ -61,7 +61,7 @@ public class ShRunConfigurationProfileState implements RunProfileState {
   }
 
   @NotNull
-  private static ProcessHandler createProcessHandler(GeneralCommandLine commandLine) throws ExecutionException {
+  protected static ProcessHandler createProcessHandler(GeneralCommandLine commandLine) throws ExecutionException {
     return new KillableProcessHandler(commandLine) {
       @NotNull
       @Override
@@ -87,7 +87,7 @@ public class ShRunConfigurationProfileState implements RunProfileState {
   }
 
   @NotNull
-  private GeneralCommandLine createCommandLine() throws ExecutionException {
+  protected GeneralCommandLine createCommandLine() throws ExecutionException {
     VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(myRunConfiguration.getScriptPath());
     if (virtualFile == null || virtualFile.getParent() == null) {
       throw new ExecutionException("Cannot determine shell script parent directory");
@@ -121,7 +121,7 @@ public class ShRunConfigurationProfileState implements RunProfileState {
     return commandLine;
   }
 
-  private boolean isRunBeforeConfig() {
+  protected boolean isRunBeforeConfig() {
     Key<Boolean> userDataKey = ShBeforeRunProviderDelegate.getRunBeforeUserDataKey(myRunConfiguration);
     Boolean userDataValue = myProject.getUserData(userDataKey);
     boolean isRunBeforeConfig = userDataValue != null && userDataValue.booleanValue();
@@ -130,7 +130,7 @@ public class ShRunConfigurationProfileState implements RunProfileState {
   }
 
   @NotNull
-  private String buildCommand() {
+  protected String buildCommand() {
     final WSLDistribution wslDistribution = ShRunConfiguration.getWSLDistributionIfNeeded(myRunConfiguration.getInterpreterPath(),
                                                                                           myRunConfiguration.getScriptPath());
     final List<String> commandLine = new ArrayList<>();
@@ -155,7 +155,7 @@ public class ShRunConfigurationProfileState implements RunProfileState {
     ContainerUtil.addIfNotNull(commandLine, StringUtil.nullize(options));
   }
 
-  private static String adaptPathForExecution(@NotNull String systemDependentPath,
+  protected static String adaptPathForExecution(@NotNull String systemDependentPath,
                                               @Nullable WSLDistribution wslDistribution) {
     if (wslDistribution != null) return quote(wslDistribution.getWslPath(systemDependentPath));
     if (Platform.current() != Platform.WINDOWS) return quote(systemDependentPath);
@@ -163,7 +163,7 @@ public class ShRunConfigurationProfileState implements RunProfileState {
     return StringUtil.containsWhitespaces(systemDependentPath) ? StringUtil.QUOTER.fun(escapedPath) : escapedPath;
   }
 
-  private static String convertToWslIfNeeded(@NotNull String path, @Nullable WSLDistribution wslDistribution) {
+  protected static String convertToWslIfNeeded(@NotNull String path, @Nullable WSLDistribution wslDistribution) {
     return wslDistribution != null ? wslDistribution.getWslPath(path) : path;
   }
 }

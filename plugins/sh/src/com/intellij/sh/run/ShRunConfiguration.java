@@ -46,7 +46,7 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
   private String myInterpreterOptions = "";
   private String myScriptWorkingDirectory = "";
 
-  ShRunConfiguration(@NotNull Project project, @NotNull ConfigurationFactory factory, @NotNull String name) {
+  public ShRunConfiguration(@NotNull Project project, @NotNull ConfigurationFactory factory, @NotNull String name) {
     super(project, factory, name);
   }
 

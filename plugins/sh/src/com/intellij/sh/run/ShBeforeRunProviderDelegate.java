@@ -26,7 +26,7 @@ public class ShBeforeRunProviderDelegate implements RunConfigurationBeforeRunPro
     }
   }
 
-  static Key<Boolean> getRunBeforeUserDataKey(@NotNull RunConfiguration runConfiguration) {
+  public static Key<Boolean> getRunBeforeUserDataKey(@NotNull RunConfiguration runConfiguration) {
     return KEY_MAP.computeIfAbsent(runConfiguration.getName(), key -> Key.create(SH_BEFORE_KEY_PREFIX + "_" + key));
   }
 }
