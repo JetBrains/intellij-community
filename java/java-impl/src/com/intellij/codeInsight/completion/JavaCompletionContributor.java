@@ -274,7 +274,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       List<LookupElement> refSuggestions = Collections.emptyList();
       if (parent instanceof PsiJavaCodeReferenceElement && mayCompleteReference) {
         refSuggestions = completeReference(parameters, (PsiJavaCodeReferenceElement)parent, session, expectedInfos);
-        List<LookupElement> filtered = filterReferenceSuggestions(smart, result, (PsiJavaCodeReferenceElement)parent, expectedInfos, refSuggestions);
+        List<LookupElement> filtered = filterReferenceSuggestions(parameters, result, (PsiJavaCodeReferenceElement)parent, expectedInfos, refSuggestions);
         hasTypeMatchingSuggestions |= ContainerUtil.exists(filtered, item ->
           ReferenceExpressionCompletionContributor.matchesExpectedType(item, expectedInfos));
         session.registerBatchItems(filtered);
@@ -337,15 +337,16 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static List<LookupElement> filterReferenceSuggestions(boolean smart,
+  private static List<LookupElement> filterReferenceSuggestions(CompletionParameters parameters,
                                                                 CompletionResultSet result,
                                                                 PsiJavaCodeReferenceElement parent,
                                                                 Set<ExpectedTypeInfo> expectedInfos,
                                                                 List<LookupElement> refSuggestions) {
-    if (smart) {
+    if (parameters.getCompletionType() == CompletionType.SMART) {
       refSuggestions = ReferenceExpressionCompletionContributor.smartCompleteReference(refSuggestions, expectedInfos);
     }
     List<LookupElement> matching = ContainerUtil.findAll(refSuggestions, result.getPrefixMatcher()::prefixMatches);
+    if (parameters.getInvocationCount() >= 2) return matching;
     return JavaCompletionProcessor.dispreferStaticAfterInstance(parent, matching);
   }
 

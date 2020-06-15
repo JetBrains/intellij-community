@@ -4,10 +4,9 @@ class Bar {
 class Goo {}
 
 class Foo {
-  Bar getBar() {}
-
+  Bar bar() {}
 
   void x(Goo unmatched) {
-    Goo g = getG<caret>
+    Goo g = ba<caret>
   }
 }

@@ -531,7 +531,10 @@ public class Outer {
 
   void testAccessStaticViaInstanceSecond() throws Throwable {
     configure()
+    assert !('foo' in myFixture.lookupElementStrings)
     myFixture.complete(CompletionType.BASIC, 2)
+    myFixture.assertPreferredCompletionItems 0, 'foo'
+    myFixture.type('\n')
     checkResult()
   }
 
@@ -2020,5 +2023,10 @@ class Abc {
     checkResult()
   }
 
-  void testSuggestChainsOfExpectedType() { doTest() }
+  void testSuggestChainsOfExpectedType() {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'bar', 'bar().getGoo'
+    selectItem(myItems[1])
+    checkResult()
+  }
 }

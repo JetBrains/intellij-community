@@ -169,6 +169,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     getterQualifiedByMethod,
     accessibleFieldGetter,
     normal,
+    basicChain,
     collectionFactory,
     expectedTypeMethod,
     verySuitableClass,
@@ -236,6 +237,9 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     }
     final JavaChainLookupElement chain = item.as(JavaChainLookupElement.CLASS_CONDITION_KEY);
     if (chain != null) {
+      if (myCompletionType == CompletionType.BASIC) {
+        return MyResult.basicChain;
+      }
       Object qualifier = chain.getQualifier().getObject();
       if (qualifier instanceof PsiVariable && PsiUtil.isJvmLocalVariable((PsiVariable)qualifier)) {
         return MyResult.variable;
