@@ -32,7 +32,8 @@ public class RegExpColorsPage implements ColorSettingsPage {
     new AttributesDescriptor(RegExpBundle.message("color.settings.quantifier"), RegExpHighlighter.QUANTIFIER),
     new AttributesDescriptor(RegExpBundle.message("color.settings.dot"), RegExpHighlighter.DOT),
     new AttributesDescriptor(RegExpBundle.message("color.settings.inline.option"), RegExpHighlighter.OPTIONS),
-    new AttributesDescriptor(RegExpBundle.message("color.settings.name"), RegExpHighlighter.NAME)
+    new AttributesDescriptor(RegExpBundle.message("color.settings.name"), RegExpHighlighter.NAME),
+    new AttributesDescriptor(RegExpBundle.message("color.settings.matched.groups"), RegExpHighlighter.MATCHED_GROUPS)
   };
 
   @NonNls private static final HashMap<String,TextAttributesKey> ourTagToDescriptorMap = new HashMap<>();

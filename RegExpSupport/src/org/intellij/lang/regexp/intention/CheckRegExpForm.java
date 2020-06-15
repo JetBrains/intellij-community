@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.intention;
 
+import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
@@ -11,11 +12,14 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.IncrementalFindAction;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -34,6 +38,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.regexp.*;
@@ -42,6 +47,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -49,7 +55,11 @@ import java.util.regex.Pattern;
  * @author Konstantin Bulenkov
  */
 public class CheckRegExpForm {
+  private static final Logger LOG = Logger.getInstance(CheckRegExpForm.class);
+
   public static final Key<Boolean> CHECK_REG_EXP_EDITOR = Key.create("CHECK_REG_EXP_EDITOR");
+
+  private static final Key<List<RegExpMatch>> LAST_MATCHES = Key.create("REG_EXP_LAST_MATCHES");
 
   private static final String LAST_EDITED_REGEXP = "last.edited.regexp";
 
@@ -58,6 +68,8 @@ public class CheckRegExpForm {
   private final JPanel myRootPanel;
   private final JBLabel myRegExpIcon = new JBLabel();
   private final JBLabel mySampleIcon = new JBLabel();
+
+  private final SmartList<RangeHighlighter> highlighters = new SmartList<>();
 
   public CheckRegExpForm(@NotNull PsiFile regexpFile) {
     final Project project = regexpFile.getProject();
@@ -156,7 +168,7 @@ public class CheckRegExpForm {
         if (!updater.isDisposed()) {
           updater.addRequest(() -> {
             final RegExpMatchResult result = isMatchingText(regexpFile, myRegExp.getText(), mySampleText.getText());
-            ApplicationManager.getApplication().invokeLater(() -> reportResult(result), ModalityState.any(), __ -> updater.isDisposed());
+            ApplicationManager.getApplication().invokeLater(() -> reportResult(result, regexpFile), ModalityState.any(), __ -> updater.isDisposed());
           }, 0);
         }
       }
@@ -208,7 +220,7 @@ public class CheckRegExpForm {
     });
   }
 
-  void reportResult(RegExpMatchResult result) {
+  void reportResult(RegExpMatchResult result, @NotNull PsiFile regexpFile) {
     switch (result) {
       case NO_MATCH:
         setIconAndTooltip(mySampleIcon, AllIcons.General.BalloonError, RegExpBundle.message("tooltip.no.match"));
@@ -216,6 +228,30 @@ public class CheckRegExpForm {
         break;
       case MATCHES:
         setIconAndTooltip(mySampleIcon, AllIcons.General.InspectionsOK, RegExpBundle.message("tooltip.matches"));
+        setIconAndTooltip(myRegExpIcon, null, null);
+        break;
+      case FOUND:
+        final List<RegExpMatch> matches = getMatches(regexpFile);
+        final Editor editor = mySampleText.getEditor();
+        if (editor != null) {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            final HighlightManager highlightManager = HighlightManager.getInstance(regexpFile.getProject());
+            for (RangeHighlighter highlighter : highlighters) {
+              highlightManager.removeSegmentHighlighter(editor, highlighter);
+            }
+            for (RegExpMatch match : matches) {
+              final int start = match.start(0);
+              final int end = match.end(0);
+              highlightManager.addRangeHighlight(editor, start, end, RegExpHighlighter.MATCHED_GROUPS, true, highlighters);
+            }
+          });
+        }
+        if (matches.size() > 1) {
+          setIconAndTooltip(mySampleIcon, AllIcons.General.InspectionsOK, RegExpBundle.message("tooltip.found.multiple", matches.size()));
+        }
+        else {
+          setIconAndTooltip(mySampleIcon, AllIcons.General.InspectionsOK, RegExpBundle.message("tooltip.found"));
+        }
         setIconAndTooltip(myRegExpIcon, null, null);
         break;
       case INCOMPLETE:
@@ -246,6 +282,10 @@ public class CheckRegExpForm {
   @NotNull
   public JPanel getRootPanel() {
     return myRootPanel;
+  }
+
+  private List<RegExpMatch> getMatches(PsiFile regexpFile) {
+    return regexpFile.getUserData(LAST_MATCHES);
   }
 
   @TestOnly
@@ -290,6 +330,19 @@ public class CheckRegExpForm {
       else if (matcher.hitEnd()) {
         return RegExpMatchResult.INCOMPLETE;
       }
+      else if (matcher.find()) {
+        final SmartList<RegExpMatch> matches = new SmartList<>();
+        do {
+          final RegExpMatch match = new RegExpMatch();
+          final int count = matcher.groupCount();
+          for (int i = 0; i <= count; i++) {
+            match.add(matcher.start(i), matcher.end(i));
+          }
+          matches.add(match);
+        } while (matcher.find());
+        regexpFile.putUserData(LAST_MATCHES, matches);
+        return RegExpMatchResult.FOUND;
+      }
       else {
         return RegExpMatchResult.NO_MATCH;
       }
@@ -297,7 +350,9 @@ public class CheckRegExpForm {
     catch (ProcessCanceledException ignore) {
       return RegExpMatchResult.TIMEOUT;
     }
-    catch (Exception ignore) {}
+    catch (Exception e) {
+      LOG.warn(e);
+    }
 
     return RegExpMatchResult.BAD_REGEXP;
   }
