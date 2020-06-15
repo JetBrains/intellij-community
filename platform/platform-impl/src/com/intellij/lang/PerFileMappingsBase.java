@@ -40,7 +40,7 @@ import java.util.*;
 /**
  * @author gregsh
  */
-public abstract class PerFileMappingsBase<T> implements PersistentStateComponent<Element>, PerFileMappings<T>, Disposable {
+public abstract class PerFileMappingsBase<T> implements PersistentStateComponent<Element>, PerFileMappingsEx<T>, Disposable {
   private final Project myProject;
   private List<PerFileMappingState> myDeferredMappings;
   private final Map<VirtualFile, T> myMappings = new HashMap<>();
