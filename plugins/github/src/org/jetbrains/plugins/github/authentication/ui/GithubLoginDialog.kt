@@ -4,7 +4,6 @@ package org.jetbrains.plugins.github.authentication.ui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper.IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBEmptyBorder
@@ -20,9 +19,6 @@ import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JTextArea
-
-private fun JComponent.setPaddingCompensated(): JComponent =
-  apply { putClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY, false) }
 
 internal class GithubLoginDialog @JvmOverloads constructor(
   executorFactory: GithubApiRequestExecutor.Factory,

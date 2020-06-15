@@ -38,7 +38,7 @@ private class PasswordLoginDialog(project: Project?, parent: Component?, isAccou
     init()
   }
 
-  override fun createCenterPanel(): JComponent = loginPanel
+  override fun createCenterPanel(): JComponent = loginPanel.setPaddingCompensated()
 
   override fun createSouthAdditionalPanel(): JPanel = createSignUpLink()
 }

@@ -48,5 +48,5 @@ private class AddAccountWithTokenDialog(project: Project?, parent: Component?, s
     init()
   }
 
-  override fun createCenterPanel(): JComponent = loginPanel
+  override fun createCenterPanel(): JComponent = loginPanel.setPaddingCompensated()
 }
