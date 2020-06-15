@@ -594,11 +594,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     }
   }
 
-  @NotNull
-  private static ProgressIndicator createProgressIndicator() {
-    return new EmptyProgressIndicator();
-  }
-
   private final class DataHolder {
     private final boolean myWasEverythingDirty;
     private final FileHolderComposite myComposite;
