@@ -10,11 +10,14 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
 import com.intellij.vcs.commit.message.SubjectLimitInspection;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.xml.CommonXmlStrings;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -95,7 +98,7 @@ public final class CommitPresentationUtil {
       String hash = matcher.group();
 
       if (resolvedHashes.contains(hash)) {
-        hash = "<a href=\"" + GO_TO_HASH + hash + "\">" + hash + "</a>";
+        hash = XmlStringUtil.formatLink(GO_TO_HASH + hash, hash);
       }
       matcher.appendReplacement(result, hash);
     }
@@ -243,7 +246,7 @@ public final class CommitPresentationUtil {
   @NotNull
   @NonNls
   private static String getEmailText(@NotNull VcsUser user) {
-    return " <a href='mailto:" + user.getEmail() + "'>&lt;" + user.getEmail() + "&gt;</a>";
+    return " " + XmlStringUtil.formatLink("mailto:" + user.getEmail(), CommonXmlStrings.LT + user.getEmail() + CommonXmlStrings.GT);
   }
 
   @NotNull
@@ -276,13 +279,11 @@ public final class CommitPresentationUtil {
     String head = VcsLogBundle.message("vcs.log.details.in.branches", branches.size()) + " ";
 
     if (expanded) {
-      String hide = VcsLogBundle.message("vcs.log.details.in.branches.hide");
-      //noinspection HardCodedStringLiteral
-      return head + "<a href=\"" + SHOW_HIDE_BRANCHES + "\">" + hide + "</a><br/>" + StringUtil.join(branches, "<br/>");
+      return head + XmlStringUtil.formatLink(SHOW_HIDE_BRANCHES, VcsLogBundle.message("vcs.log.details.in.branches.hide")) +
+             UIUtil.BR + StringUtil.join(branches, UIUtil.BR);
     }
 
-    String showAll = VcsLogBundle.message("vcs.log.details.in.branches.show.all");
-    String tail = "… <a href=\"" + SHOW_HIDE_BRANCHES + "\">" + showAll + "</a>";
+    String tail = "… " + XmlStringUtil.formatLink(SHOW_HIDE_BRANCHES, VcsLogBundle.message("vcs.log.details.in.branches.show.all"));
     int headWidth = metrics.stringWidth(head);
     int tailWidth = metrics.stringWidth(StringUtil.removeHtmlTags(tail));
     if (availableWidth <= headWidth + tailWidth) {

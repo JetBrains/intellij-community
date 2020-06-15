@@ -34,7 +34,7 @@ public class GitCommitTooltipLinkHandler extends TooltipLinkHandler {
   public static String createLink(@NotNull String text, @NotNull VcsRevisionNumber revisionNumber) {
     Hash hash = tryCreateHash(revisionNumber.asString());
     if (hash == null) return null;
-    return "<a href=\"#git_commit/" + hash.asString() + "\">" + XmlStringUtil.escapeString(text) + "</a>";
+    return XmlStringUtil.formatLink("#git_commit/" + hash.asString(), XmlStringUtil.escapeString(text));
   }
 
   @Nullable

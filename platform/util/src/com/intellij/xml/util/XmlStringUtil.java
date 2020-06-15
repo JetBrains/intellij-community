@@ -132,6 +132,10 @@ public final class XmlStringUtil {
     return String.format("<%s %s>%s</%s>", tagWord, attributes, text, tagWord);
   }
 
+  public static @NotNull String formatLink(@NonNls @NotNull String targetUrl, @Nls @NotNull String text) {
+    return wrapInHtmlTagWithAttributes(text, "a", "href=\"" + targetUrl + "\"");
+  }
+
   public static boolean isWrappedInHtml(@NotNull String tooltip) {
     return StringUtil.startsWithIgnoreCase(tooltip, HTML_START) &&
            StringUtil.endsWithIgnoreCase(tooltip, HTML_END);
