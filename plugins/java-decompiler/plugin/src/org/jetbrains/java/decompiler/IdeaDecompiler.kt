@@ -80,7 +80,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
 
     override fun beforeFileOpened(source: FileEditorManager, file: VirtualFile) {
       if (myShowNotice && file.fileType === JavaClassFileType.INSTANCE) {
-        val decompiler = ClassFileDecompilers.find(file)
+        val decompiler = ClassFileDecompilers.getInstance().find(file)
         if (decompiler is IdeaDecompiler) {
           TASK_KEY.set(file, ApplicationManager.getApplication().executeOnPooledThread(Callable { decompiler.decompile(file) }))
 

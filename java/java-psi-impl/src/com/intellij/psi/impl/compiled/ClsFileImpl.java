@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.diagnostic.PluginException;
@@ -380,7 +380,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   }
 
   private static Exception wrapException(InvalidMirrorException e, VirtualFile file) {
-    ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.find(file);
+    ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.getInstance().find(file);
     if (decompiler instanceof ClassFileDecompilers.Light) {
       PluginId pluginId = PluginManagerCore.getPluginByClassName(decompiler.getClass().getName());
       if (pluginId != null) {

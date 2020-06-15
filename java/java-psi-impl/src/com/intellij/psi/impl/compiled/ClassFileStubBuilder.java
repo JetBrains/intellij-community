@@ -28,14 +28,14 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder.CompositeBina
 
   @Override
   public @NotNull Stream<ClassFileDecompilers.Decompiler> getAllSubBuilders() {
-    return ClassFileDecompilers.EP_NAME.extensions().filter(decompiler -> decompiler instanceof Full);
+    return ClassFileDecompilers.getInstance().EP_NAME.extensions().filter(decompiler -> decompiler instanceof Full);
   }
 
   @Override
   public @Nullable ClassFileDecompilers.Decompiler getSubBuilder(@NotNull FileContent fileContent) {
     fileContent.getFile().setPreloadedContentHint(fileContent.getContent());
     try {
-      return ClassFileDecompilers.find(fileContent.getFile());
+      return ClassFileDecompilers.getInstance().find(fileContent.getFile());
     }
     finally {
       fileContent.getFile().setPreloadedContentHint(null);

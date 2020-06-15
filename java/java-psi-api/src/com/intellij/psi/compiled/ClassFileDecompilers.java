@@ -1,6 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.compiled;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
@@ -11,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * An API to extend default IDEA .class file decompiler and handle files compiled from sources other than Java.
  */
+@Service
 public final class ClassFileDecompilers {
   /**
    * Actual implementations should extend either {@link Light} or {@link Full} classes -
@@ -72,12 +75,15 @@ public final class ClassFileDecompilers {
     public abstract FileViewProvider createFileViewProvider(@NotNull VirtualFile file, @NotNull PsiManager manager, boolean physical);
   }
 
-  public static final ExtensionPointName<Decompiler> EP_NAME = ExtensionPointName.create("com.intellij.psi.classFileDecompiler");
+  public static ClassFileDecompilers getInstance() {
+    return ApplicationManager.getApplication().getService(ClassFileDecompilers.class);
+  }
+
+  public final ExtensionPointName<Decompiler> EP_NAME = ExtensionPointName.create("com.intellij.psi.classFileDecompiler");
 
   private ClassFileDecompilers() { }
 
-  @Nullable
-  public static Decompiler find(@NotNull VirtualFile file) {
+  public @Nullable Decompiler find(@NotNull VirtualFile file) {
     return EP_NAME.findFirstSafe(decompiler -> (decompiler instanceof Light || decompiler instanceof Full) && decompiler.accepts(file));
   }
 }
