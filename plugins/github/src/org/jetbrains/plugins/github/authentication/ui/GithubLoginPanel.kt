@@ -35,8 +35,8 @@ internal class GithubLoginPanel(
   private var tokenAcquisitionError: ValidationInfo? = null
 
   private lateinit var currentUi: GithubCredentialsUI
-  private var passwordUi = GithubCredentialsUI.PasswordUI(serverTextField, executorFactory, isAccountUnique)
-  private var tokenUi = GithubCredentialsUI.TokenUI(serverTextField, executorFactory, isAccountUnique)
+  private var passwordUi = GHPasswordCredentialsUi(serverTextField, executorFactory, isAccountUnique)
+  private var tokenUi = GHTokenCredentialsUi(serverTextField, executorFactory, isAccountUnique)
 
   private val progressIcon = AnimatedIcon.Default()
   private val progressExtension = ExtendableTextComponent.Extension { progressIcon }
