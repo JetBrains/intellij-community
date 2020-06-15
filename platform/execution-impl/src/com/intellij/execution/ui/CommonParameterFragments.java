@@ -73,7 +73,7 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
                                           FileUtil.toSystemDependentName(notNullize(settings.getInputRedirectOptions().getRedirectInputPath()))),
                                         (settings, component) -> {
                                           String filePath = component.getComponent().getText();
-                                          settings.getInputRedirectOptions().setRedirectInput(isNotEmpty(filePath));
+                                          settings.getInputRedirectOptions().setRedirectInput(component.isVisible() && isNotEmpty(filePath));
                                           settings.getInputRedirectOptions().setRedirectInputPath(
                                             isEmpty(filePath) ? null : FileUtil.toSystemIndependentName(filePath));
                                         },
