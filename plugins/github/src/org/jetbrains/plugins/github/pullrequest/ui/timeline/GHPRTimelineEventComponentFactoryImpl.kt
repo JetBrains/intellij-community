@@ -227,6 +227,17 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
                GHPRTimelineItemComponentFactory.actionTitle(avatarIconsProvider, event.actor,
                                                             GithubBundle.message("pull.request.timeline.ready.for.review"),
                                                             event.createdAt))
+        is GHPRCrossReferencedEvent -> {
+          val source = event.source
+          Item(GithubIcons.Timeline,
+               GHPRTimelineItemComponentFactory.actionTitle(avatarIconsProvider, event.actor,
+                                                            GithubBundle.message("pull.request.timeline.mentioned"),
+                                                            event.createdAt),
+            //language=HTML
+               HtmlEditorPane("""${source.title}&nbsp<a href='${source.url}'>#${source.number}</a>""").apply {
+                 border = JBUI.Borders.emptyLeft(28)
+               })
+        }
 
         else -> throwUnknownType(event)
       }
