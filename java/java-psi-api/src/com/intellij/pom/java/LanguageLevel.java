@@ -60,7 +60,7 @@ public enum LanguageLevel {
   /**
    * @return corresponding preview level, or {@code null} if level has no paired preview level
    */
-  public LanguageLevel getPreviewLevel() {
+  public @Nullable LanguageLevel getPreviewLevel() {
     if (myPreview) return this;
     try {
       return valueOf(name() + "_PREVIEW");
