@@ -183,6 +183,25 @@ fragment baseRefChangedEvent on BaseRefChangedEvent {
     createdAt
 }
 
+fragment crossReferencedEvent on CrossReferencedEvent {
+    actor {
+        ...actorInfo
+    }
+    createdAt
+    source {
+        ... on PullRequest {
+            title
+            number
+            url
+        }
+        ... on Issue {
+            title
+            number
+            url
+        }
+    }
+}
+
 query($repoOwner: String!, $repoName: String!, $number: Int!, $pageSize: Int = 100, $cursor: String, $since: DateTime) {
     repository(owner: $repoOwner, name: $repoName) {
         pullRequest(number: $number) {
@@ -221,6 +240,8 @@ query($repoOwner: String!, $repoName: String!, $number: Int!, $pageSize: Int = 1
                     ...headRefForcePushedEvent
                     ...headRefDeletedEvent
                     ...headRefRestoredEvent
+
+                    ...crossReferencedEvent
                 }
             }
         }
