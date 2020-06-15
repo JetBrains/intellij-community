@@ -2,7 +2,6 @@
 package com.intellij.execution.ui;
 
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SettingsEditorListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.util.containers.ContainerUtil;
@@ -17,10 +16,15 @@ public abstract class NestedGroupFragment<S extends FragmentedSettings> extends 
 
   private final NotNullLazyValue<List<SettingsEditorFragment<S, ?>>> myChildren = NotNullLazyValue.createValue(() -> {
     List<SettingsEditorFragment<S, ?>> children = createChildren();
-    SettingsEditorListener<S> listener = editor -> { updateVisibility(); fireEditorStateChanged(); };
     for (SettingsEditorFragment<S, ?> child : children) {
       Disposer.register(this, child);
-      child.addSettingsEditorListener(listener);
+      child.addSettingsEditorListener(editor -> {
+        if (child.isSelected()) {
+          setSelected(true);
+        }
+        updateVisibility();
+        fireEditorStateChanged();
+      });
     }
     return children;
   });
