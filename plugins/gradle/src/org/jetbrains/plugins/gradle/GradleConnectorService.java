@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import java.lang.reflect.Field;
@@ -341,7 +340,7 @@ public class GradleConnectorService implements Disposable {
    */
   private static class DistributionWrapper implements Distribution {
     private final Distribution myDistribution;
-    private final File myRtJarFile = new File(PathUtil.getCanonicalPath(PathManager.getJarPathForClass(MarkerRt.class)));
+    private final File myRtJarFile = new File(FileUtil.toCanonicalPath(PathManager.getJarPathForClass(MarkerRt.class)));
 
     DistributionWrapper(Distribution distribution) {
       myDistribution = distribution;
