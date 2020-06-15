@@ -82,7 +82,7 @@ public final class PyTestTracebackParserTest {
                                           @NotNull String linkSubText,
                                           @NotNull String fileName,
                                           int lineNumber) {
-    final var linkInTrace = new PyTestTracebackParser().findLinkInTrace(text);
+    LinkInTrace linkInTrace = new PyTestTracebackParser().findLinkInTrace(text);
     assertNotNull("Failed to parse line", linkInTrace);
     assertEquals("Bad file name", fileName, linkInTrace.getFileName());
     assertEquals("Bad line number", lineNumber, linkInTrace.getLineNumber());
