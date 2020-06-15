@@ -18,9 +18,13 @@ class GHPRTimelineMergedStateEvents(initialState: GHPRTimelineEvent.State) : GHP
   override var newState: GHPullRequestState = initialState.newState
     private set
 
+  var lastStateEvent = initialState
+    private set
+
   override fun addNonMergedEvent(event: GHPRTimelineEvent.State) {
     if (newState != GHPullRequestState.MERGED) {
       newState = event.newState
+      lastStateEvent = event
     }
   }
 

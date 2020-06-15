@@ -59,6 +59,10 @@ fragment mergedEvent on MergedEvent {
         ...actorInfo
     }
     createdAt
+    commit {
+        ...commitShort
+    }
+    mergeRefName
 }
 
 fragment assignedEvent on AssignedEvent {

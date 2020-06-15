@@ -4,6 +4,8 @@ package org.jetbrains.plugins.github.api.data
 open class GHCommitShort(id: String,
                          oid: String,
                          abbreviatedOid: String,
+                         val url: String,
                          val messageHeadlineHTML: String,
                          val author: GHGitActor?)
-  : GHCommitHash(id, oid, abbreviatedOid)
+  : GHCommitHash(id, oid, abbreviatedOid) {
+}

@@ -6,13 +6,14 @@ import com.fasterxml.jackson.annotation.JsonProperty
 class GHCommit(id: String,
                oid: String,
                abbreviatedOid: String,
+               url: String,
                val messageHeadline: String,
                messageHeadlineHTML: String,
                val messageBodyHTML: String,
                author: GHGitActor?,
                val committer: GHGitActor?,
                @JsonProperty("parents") parents: GHNodes<GHCommitHash>)
-  : GHCommitShort(id, oid, abbreviatedOid, messageHeadlineHTML, author) {
+  : GHCommitShort(id, oid, abbreviatedOid, url, messageHeadlineHTML, author) {
 
   val parents = parents.nodes
 }
