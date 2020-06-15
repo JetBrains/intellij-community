@@ -483,9 +483,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
 
         SensitiveProgressWrapper vcsIndicator = new SensitiveProgressWrapper(ProgressManager.getInstance().getProgressIndicator());
         invalidated.doWhenCanceled(() -> vcsIndicator.cancel());
-        ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-          iterateScopes(dataHolder, scopes, vcsIndicator);
-        }, vcsIndicator);
+        try {
+          ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+            iterateScopes(dataHolder, scopes, vcsIndicator);
+          }, vcsIndicator);
+        }
+        catch (ProcessCanceledException ignore) {
+        }
 
         boolean takeChanges;
         synchronized (myDataLock) {
@@ -658,7 +662,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     catch (VcsException e) {
       handleUpdateException(e);
     }
-    catch (ProcessCanceledException ignore) {
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Throwable t) {
       LOG.debug(t);
