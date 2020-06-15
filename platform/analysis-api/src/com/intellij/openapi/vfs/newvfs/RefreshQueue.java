@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +52,7 @@ public abstract class RefreshQueue {
     session.launch();
   }
 
+  @ApiStatus.Internal
   public abstract void processSingleEvent(@NotNull VFileEvent event);
 
   public abstract void cancelSession(long id);

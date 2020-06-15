@@ -80,7 +80,7 @@ public final class ClassFileDecompilers {
     return ApplicationManager.getApplication().getService(ClassFileDecompilers.class);
   }
 
-  public final ExtensionPointName<Decompiler> EP_NAME = ExtensionPointName.create("com.intellij.psi.classFileDecompiler");
+  public final ExtensionPointName<Decompiler> EP_NAME = new ExtensionPointName<>("com.intellij.psi.classFileDecompiler");
 
   private ClassFileDecompilers() {
     EP_NAME.addChangeListener(() -> BinaryFileTypeDecompilers.getInstance().notifyDecompilersChange(), null);

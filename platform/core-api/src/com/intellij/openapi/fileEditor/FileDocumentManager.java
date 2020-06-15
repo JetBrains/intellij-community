@@ -27,8 +27,9 @@ public abstract class FileDocumentManager implements SavingRequestor {
   /**
    * Returns the document for the specified virtual file.<p/>
    *
-   * Documents are cached on weak or strong references, depending on the nature of the virtual file. If the document for the given virtual file is not yet cached,
-   * the file's contents are read from VFS and loaded into heap memory. An appropriate encoding is used. All line separators are converted to {@code \n}.<p/>
+   * Documents are cached on weak or strong references, depending on the nature of the virtual file. If the document
+   * for the given virtual file is not yet cached, the file's contents are read from VFS and loaded into heap memory.
+   * An appropriate encoding is used. All line separators are converted to {@code \n}.<p/>
    *
    * Should be invoked in a read action.
    *
@@ -169,7 +170,7 @@ public abstract class FileDocumentManager implements SavingRequestor {
     public static final WriteAccessStatus WRITABLE = new WriteAccessStatus(true);
 
     private final boolean myWithWriteAccess;
-    @NotNull private final String myReadOnlyMessage;
+    private final @NotNull String myReadOnlyMessage;
 
     private WriteAccessStatus(boolean withWriteAccess) {
       myWithWriteAccess = withWriteAccess;
