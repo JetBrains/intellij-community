@@ -48,7 +48,7 @@ public class JBCefJSQuery implements JBCefDisposable {
     if (!browser.isCefBrowserCreated()) {
       return create.apply(null);
     }
-    JBCefBrowser.JSQueryPool pool = browser.getJSQuerySlotPool();
+    JBCefBrowser.JSQueryPool pool = browser.getJSQueryPool();
     JSQueryFunc slot;
     if (pool != null && (slot = pool.getFreeSlot()) != null) {
       return new JBCefJSQuery(browser, slot);

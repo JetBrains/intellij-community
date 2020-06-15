@@ -472,7 +472,7 @@ public class JBCefBrowser implements JBCefDisposable {
   }
 
   @Nullable
-  JBCefBrowser.JSQueryPool getJSQuerySlotPool() {
+  JBCefBrowser.JSQueryPool getJSQueryPool() {
     return myJSQueryPool;
   }
 
