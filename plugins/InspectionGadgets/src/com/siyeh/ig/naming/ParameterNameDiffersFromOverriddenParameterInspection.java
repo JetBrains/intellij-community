@@ -16,10 +16,8 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.*;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -85,12 +83,31 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
       if (parameterList.isEmpty()) {
         return;
       }
-      final PsiMethod superMethod = MethodUtils.getSuper(method);
+      final PsiMethod superMethod = getSuperMethod(method);
       if (superMethod == null) {
         return;
       }
       final PsiParameter[] parameters = parameterList.getParameters();
       checkParameters(superMethod, parameters);
+    }
+
+    @Nullable
+    private PsiMethod getSuperMethod(@NotNull PsiMethod method) {
+      if (method.isConstructor()) {
+        final PsiMethod superCtor = JavaPsiConstructorUtil.findConstructorInSuper(method);
+        if (superCtor == null) {
+          return null;
+        }
+        final PsiClass superClass = superCtor.getContainingClass();
+        if (superClass == null) {
+          return null;
+        }
+        if (CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
+          return null;
+        }
+        return superCtor;
+      }
+      return MethodUtils.getSuper(method);
     }
 
     private void checkParameters(@NotNull PsiMethod superMethod, PsiParameter[] parameters) {
