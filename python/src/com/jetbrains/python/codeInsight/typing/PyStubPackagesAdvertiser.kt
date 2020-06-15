@@ -33,15 +33,17 @@ import javax.swing.JComponent
 private class PyStubPackagesAdvertiser : PyInspection() {
   companion object {
     // file-level suggestion will be shown for packages below
-    private val FORCED = mapOf("django" to "Django", "numpy" to "numpy") // top-level package to package on PyPI
+    private val FORCED = emptyMap<String, String>() // top-level package to package on PyPI
 
     // notification will be shown for packages below
-    private val CHECKED = mapOf("coincurve" to "coincurve",
+    private val CHECKED = mapOf("boto3" to "boto3",
+                                "coincurve" to "coincurve",
                                 "docutils" to "docutils",
-                                "ordered_set" to "ordered-set",
+                                "pika" to "pika",
                                 "gi" to "PyGObject",
                                 "PyQt5" to "PyQt5",
-                                "pyspark" to "pyspark") // top-level package to package on PyPI, sorted by the latter
+                                "pyspark" to "pyspark",
+                                "traits" to "traits") // top-level package to package on PyPI, sorted by the latter
 
     private val BALLOON_SHOWING = Key.create<Boolean>("showingStubPackagesAdvertiserBalloon")
     private val BALLOON_NOTIFICATIONS = NotificationGroup(
