@@ -374,6 +374,13 @@ class NormalCompletionTest extends NormalCompletionTestCase {
 
   void testFieldType() { doTest() }
 
+  void testFieldOfLocalClass() {
+    configure()
+    assert LookupElementPresentation.renderElement(myItems[0]).itemText == 'field'
+    type('\t')
+    checkResult()
+  }
+
   void testPackageInAnnoParam() throws Throwable {
     doTest()
   }

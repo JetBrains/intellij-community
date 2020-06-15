@@ -284,7 +284,8 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     if (context instanceof PsiReferenceExpression && !((PsiReferenceExpression)context).isQualified()) {
       PsiVariable target = JavaPsiFacade.getInstance(context.getElement().getProject()).getResolveHelper()
         .resolveReferencedVariable(field.getName(), (PsiElement)context);
-      return !field.getManager().areElementsEquivalent(target, CompletionUtil.getOriginalOrSelf(field));
+      return !field.getManager().areElementsEquivalent(target, field) &&
+             !field.getManager().areElementsEquivalent(target, CompletionUtil.getOriginalOrSelf(field));
     }
     return false;
   }

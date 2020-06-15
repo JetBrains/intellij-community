@@ -19,13 +19,11 @@ import java.util.List;
 */
 public class JavaStaticMemberProcessor extends StaticMemberProcessor {
   private final PsiElement myOriginalPosition;
-  private final PsiElement myPosition;
 
   public JavaStaticMemberProcessor(CompletionParameters parameters) {
     super(parameters.getPosition());
     myOriginalPosition = parameters.getOriginalPosition();
-    myPosition = parameters.getPosition();
-    final PsiFile file = myPosition.getContainingFile();
+    final PsiFile file = parameters.getPosition().getContainingFile();
     if (file instanceof PsiJavaFile) {
       final PsiImportList importList = ((PsiJavaFile)file).getImportList();
       if (importList != null) {
@@ -62,7 +60,7 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
 
         super.handleInsert(context);
       }
-    }.qualifyIfNeeded(ObjectUtils.tryCast(myPosition.getParent(), PsiJavaCodeReferenceElement.class)));
+    }.qualifyIfNeeded(ObjectUtils.tryCast(getPosition().getParent(), PsiJavaCodeReferenceElement.class)));
   }
 
   private PsiReference createReferenceToMemberName(@NotNull PsiMember member) {
