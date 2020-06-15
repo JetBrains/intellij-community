@@ -2,9 +2,12 @@
 package com.intellij.execution.junit2.inspection;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.PsiEnumConstantImpl;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -21,14 +24,16 @@ public class JunitEnumSourceImplicitUsageProvider implements ImplicitUsageProvid
       PsiClass psiClass = ((PsiEnumConstantImpl)element).getContainingClass();
       String className = psiClass != null ? psiClass.getName() : null;
       if (className == null) return false;
-      GlobalSearchScope useScope = psiClass.getResolveScope();
-      PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(psiClass.getProject());
-      PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(className, useScope, null,
-                                                                                        null);
+      SearchScope useScope = psiClass.getUseScope();
 
-      if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES ||
-          cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {
-        return false;
+      if (!(useScope instanceof LocalSearchScope)) {
+        PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(psiClass.getProject());
+        PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(className, (GlobalSearchScope)useScope, null,
+                                                                                          null);
+        if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES ||
+            cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {
+          return false;
+        }
       }
       return ReferencesSearch.search(psiClass, useScope, false)
         .anyMatch(reference -> {
@@ -40,14 +45,12 @@ public class JunitEnumSourceImplicitUsageProvider implements ImplicitUsageProvid
   }
 
   private static boolean isReferencedInsideEnumSourceAnnotation(PsiElement referenceElement) {
-    PsiElement parent = referenceElement;
-
-    while ((parent = PsiTreeUtil.getParentOfType(parent, PsiAnnotationParameterList.class, true)) != null) {
-         PsiAnnotation annotation = (PsiAnnotation)parent.getParent();
-              String annotationName = annotation.getQualifiedName();
-              if (ENUM_SOURCE.equals(annotationName) && annotation.getAttributes().size() == 1) {
-                return true;
-              }
+    PsiAnnotation annotation = PsiTreeUtil.getParentOfType(referenceElement, PsiAnnotation.class);
+    if (annotation != null) {
+      String annotationName = annotation.getQualifiedName();
+      if (ENUM_SOURCE.equals(annotationName) && annotation.getAttributes().size() == 1) {
+        return true;
+      }
     }
     return false;
   }
