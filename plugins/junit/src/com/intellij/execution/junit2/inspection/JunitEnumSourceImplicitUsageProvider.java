@@ -21,9 +21,9 @@ public class JunitEnumSourceImplicitUsageProvider implements ImplicitUsageProvid
       PsiClass psiClass = ((PsiEnumConstantImpl)element).getContainingClass();
       String className = psiClass != null ? psiClass.getName() : null;
       if (className == null) return false;
-      SearchScope useScope = psiClass.getUseScope();
+      GlobalSearchScope useScope = psiClass.getResolveScope();
       PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(psiClass.getProject());
-      PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(className, (GlobalSearchScope)useScope, null,
+      PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(className, useScope, null,
                                                                                         null);
 
       if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES ||
