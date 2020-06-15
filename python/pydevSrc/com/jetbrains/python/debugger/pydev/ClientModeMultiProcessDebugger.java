@@ -450,16 +450,17 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
 
   @Override
   public void removeBreakpoint(@NotNull String typeId, @NotNull String file, int line) {
-    for (ProcessDebugger d : allDebuggers()) {
-      d.removeBreakpoint(typeId, file, line);
-    }
+    allDebuggers().forEach(d -> d.removeBreakpoint(typeId, file, line));
   }
 
   @Override
   public void setShowReturnValues(boolean isShowReturnValues) {
-    for (ProcessDebugger d : allDebuggers()) {
-      d.setShowReturnValues(isShowReturnValues);
-    }
+    allDebuggers().forEach(d -> d.setShowReturnValues(isShowReturnValues));
+  }
+
+  @Override
+  public void setUnitTestDebuggingMode() {
+    allDebuggers().forEach(d -> d.setUnitTestDebuggingMode());
   }
 
   /**

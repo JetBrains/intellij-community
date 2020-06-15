@@ -82,7 +82,7 @@ public class PyExceptionBreakpointType
       final String qualifiedName = pyClass.getQualifiedName();
       assert qualifiedName != null : "Qualified name of the class shouldn't be null";
       return WriteAction.compute(() -> XDebuggerManager.getInstance(project).getBreakpointManager()
-        .addBreakpoint(PyExceptionBreakpointType.this, new PyExceptionBreakpointProperties(qualifiedName)));
+        .addBreakpoint(this, new PyExceptionBreakpointProperties(qualifiedName)));
     }
     return null;
   }

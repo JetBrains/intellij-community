@@ -102,6 +102,8 @@ public interface ProcessDebugger {
 
   void setShowReturnValues(boolean isShowReturnValues);
 
+  void setUnitTestDebuggingMode();
+
   void addCloseListener(RemoteDebuggerCloseListener remoteDebuggerCloseListener);
 
   List<PydevCompletionVariant> getCompletions(String threadId, String frameId, String prefix);

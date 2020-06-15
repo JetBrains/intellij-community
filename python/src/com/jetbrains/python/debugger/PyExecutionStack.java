@@ -74,6 +74,10 @@ public class PyExecutionStack extends XExecutionStack {
     }
   }
 
+  @NotNull PyThreadInfo getThreadInfo() {
+    return myThreadInfo;
+  }
+
   private static PyStackFrame convert(final PyDebugProcess debugProcess, final PyStackFrameInfo frameInfo) {
     return debugProcess.createStackFrame(frameInfo);
   }

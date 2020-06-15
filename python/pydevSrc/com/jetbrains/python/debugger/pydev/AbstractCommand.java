@@ -64,6 +64,8 @@ public abstract class AbstractCommand<T> {
 
   public static final int CMD_GET_SMART_STEP_INTO_VARIANTS = 160;
 
+  public static final int CMD_SET_UNIT_TESTS_DEBUGGING_MODE = 170;
+
   /**
    * The code of the message that means that IDE received
    * {@link #PROCESS_CREATED} message from the Python debugger script.
