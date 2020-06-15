@@ -15,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 /**
@@ -24,23 +23,15 @@ import java.util.function.Function;
  * @author tav
  */
 public class JBCefJSQuery implements JBCefDisposable {
-  @NotNull private final String myJSCallID;
-  @NotNull private final CefMessageRouter myMsgRouter;
+  @NotNull private final JSQueryFunc myFunc;
   @NotNull private final CefClient myCefClient;
   @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
 
   @NotNull private final Map<Function<String, Response>, CefMessageRouterHandler> myHandlerMap = Collections.synchronizedMap(new HashMap<>());
 
-  @NotNull private static final AtomicInteger UNIQUE_ID_COUNTER = new AtomicInteger(0);
-
-  private JBCefJSQuery(@NotNull JBCefBrowser browser, @NotNull String jsCallID) {
-    myJSCallID = jsCallID;
-    CefMessageRouter.CefMessageRouterConfig config = new CefMessageRouter.CefMessageRouterConfig();
-    config.jsQueryFunction = myJSCallID;
-    config.jsCancelFunction = myJSCallID;
-    myMsgRouter = CefMessageRouter.create(config);
+  private JBCefJSQuery(@NotNull JBCefBrowser browser, @NotNull JBCefJSQuery.JSQueryFunc func) {
+    myFunc = func;
     myCefClient = browser.getJBCefClient().getCefClient();
-    myCefClient.addMessageRouter(myMsgRouter);
     Disposer.register(browser, this);
   }
 
@@ -50,7 +41,19 @@ public class JBCefJSQuery implements JBCefDisposable {
    * @param browser the associated cef browser
    */
   public static JBCefJSQuery create(@NotNull JBCefBrowser browser) {
-    return new JBCefJSQuery(browser, "cefQuery_" + browser.hashCode() + "_" + UNIQUE_ID_COUNTER.incrementAndGet());
+    Function<Void, JBCefJSQuery> create = (v) -> {
+      return new JBCefJSQuery(browser, new JSQueryFunc(browser,browser.getJSQueryCounter(), false));
+    };
+    if (!browser.isCefBrowserCreated()) {
+      return create.apply(null);
+    }
+    JBCefBrowser.JSQueryPool pool = browser.getJSQuerySlotPool();
+    JSQueryFunc slot;
+    if (pool != null && (slot = pool.getFreeSlot()) != null) {
+      return new JBCefJSQuery(browser, slot);
+    }
+    // this query will produce en error in JS debug console
+    return create.apply(null);
   }
 
   /**
@@ -70,7 +73,7 @@ public class JBCefJSQuery implements JBCefDisposable {
    * @param onFailureCallback JS callback in format: function(error_code, error_message) {}
    */
   public String inject(@Nullable String queryResult, @NotNull String onSuccessCallback, @NotNull String onFailureCallback) {
-    return "window." + myJSCallID +
+    return "window." + myFunc.myFuncName +
            "({request: '' + " + queryResult + "," +
              "onSuccess: " + onSuccessCallback + "," +
              "onFailure: " + onFailureCallback +
@@ -79,7 +82,7 @@ public class JBCefJSQuery implements JBCefDisposable {
 
   public void addHandler(@NotNull Function<String, Response> handler) {
     CefMessageRouterHandler cefHandler;
-    myMsgRouter.addHandler(cefHandler = new CefMessageRouterHandlerAdapter() {
+    myFunc.myRouter.addHandler(cefHandler = new CefMessageRouterHandlerAdapter() {
       @Override
       public boolean onQuery(CefBrowser browser,
                              CefFrame frame,
@@ -105,14 +108,14 @@ public class JBCefJSQuery implements JBCefDisposable {
   public void removeHandler(@NotNull Function<String, Response> handler) {
     CefMessageRouterHandler cefHandler = myHandlerMap.remove(handler);
     if (cefHandler != null) {
-      myMsgRouter.removeHandler(cefHandler);
+      myFunc.myRouter.removeHandler(cefHandler);
     }
   }
 
   @Override
   public void dispose() {
     myDisposeHelper.dispose(() -> {
-      myCefClient.removeMessageRouter(myMsgRouter);
+      myCefClient.removeMessageRouter(myFunc.myRouter);
       myHandlerMap.clear();
     });
   }
@@ -163,6 +166,20 @@ public class JBCefJSQuery implements JBCefDisposable {
 
     public boolean hasResponse() {
       return myResponse != null;
+    }
+  }
+
+  static class JSQueryFunc {
+    final CefMessageRouter myRouter;
+    final String myFuncName;
+
+    JSQueryFunc(@NotNull JBCefBrowser browser, int index, boolean isSlot) {
+      myFuncName = "cefQuery_" + browser.hashCode() + "_" + (isSlot ? "slot_" : "") + index;
+      CefMessageRouter.CefMessageRouterConfig config = new CefMessageRouter.CefMessageRouterConfig();
+      config.jsQueryFunction = myFuncName;
+      config.jsCancelFunction = myFuncName;
+      myRouter = CefMessageRouter.create(config);
+      browser.getJBCefClient().getCefClient().addMessageRouter(myRouter);
     }
   }
 }
