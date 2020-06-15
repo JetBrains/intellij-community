@@ -911,7 +911,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
   // PY-33189
   public void testInitializingAttrsKwOnlyOnFields() {
-    final var marks = loadTest(5);
+    final Map<String, PsiElement> marks = loadTest(5);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("b: int, *, a", new String[]{"b: int, "});
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("b: int, *, a", new String[]{"b: int, "});
