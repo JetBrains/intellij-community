@@ -48,6 +48,7 @@ internal class GithubLoginPanel(
     set(value) {
       passwordUi.footer = value
       tokenUi.footer = value
+      oauthUi.footer = value
       applyUi(currentUi)
     }
 

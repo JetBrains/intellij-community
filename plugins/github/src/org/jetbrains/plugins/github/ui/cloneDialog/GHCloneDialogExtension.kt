@@ -28,6 +28,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInforma
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager.Companion.ACCOUNT_REMOVED_TOPIC
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager.Companion.ACCOUNT_TOKEN_CHANGED_TOPIC
 import org.jetbrains.plugins.github.authentication.accounts.isGHAccount
+import org.jetbrains.plugins.github.authentication.isOAuthEnabled
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
@@ -91,7 +92,7 @@ private class GHCloneDialogExtensionComponent(project: Project) : BaseCloneDialo
           if (isExistingAccount) message("login.action") else message("login.via.github.action"),
           {
             switchToLogin(account)
-            getLoginPanel()?.setPasswordUi()
+            getLoginPanel()?.setPrimaryLoginUi()
           },
           showSeparatorAbove = !isExistingAccount
         )
@@ -126,7 +127,7 @@ private class GHCloneDialogLoginPanel(account: GithubAccount?) :
     JPanel(HorizontalLayout(0)).apply {
       border = JBEmptyBorder(getRegularPanelInsets())
 
-      val loginViaGHButton = JButton(message("login.via.github.action")).apply { addActionListener { setPasswordUi() } }
+      val loginViaGHButton = JButton(message("login.via.github.action")).apply { addActionListener { setPrimaryLoginUi() } }
       val useTokenLink = LinkLabel.create(message("link.label.use.token")) { setTokenUi() }
 
       add(loginViaGHButton)
@@ -144,6 +145,8 @@ private class GHCloneDialogLoginPanel(account: GithubAccount?) :
 
   fun setChooseLoginUi() = setContent(chooseLoginUiPanel)
 
+  fun setPrimaryLoginUi() = if (isOAuthEnabled()) setOAuthUi() else setPasswordUi()
+
   fun setTokenUi() {
     setContent(loginPanel)
     loginPanel.setTokenUi() // after `loginPanel` is set as content to ensure correct focus behavior
@@ -152,6 +155,11 @@ private class GHCloneDialogLoginPanel(account: GithubAccount?) :
   fun setPasswordUi() {
     setContent(loginPanel)
     loginPanel.setPasswordUi() // after `loginPanel` is set as content to ensure correct focus behavior
+  }
+
+  fun setOAuthUi() {
+    setContent(loginPanel)
+    loginPanel.setOAuthUi()
   }
 
   private fun setContent(content: JComponent) {
