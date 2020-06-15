@@ -87,7 +87,7 @@ object GHHtmlErrorPanel {
         pane.setBody("")
       }
       // JDK bug - need to force height recalculation (see JBR-2256)
-      pane.setSize(pane.width, Int.MAX_VALUE / 2)
+      pane.setSize(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
     }
 
     //language=HTML
