@@ -299,7 +299,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @NotNull
   List<HighlightInfo> doHighlighting(@NotNull HighlightSeverity minimalSeverity);
 
-  @NotNull PsiSymbolReference findSingleReference();
+  @NotNull PsiSymbolReference findSingleReferenceAtCaret();
 
   /**
    * Finds the reference in position marked by {@link #CARET_MARKER}.

@@ -599,7 +599,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public @NotNull PsiSymbolReference findSingleReference() {
+  public @NotNull PsiSymbolReference findSingleReferenceAtCaret() {
     PsiFile file = getFile();
     assertNotNull(file);
     List<PsiSymbolReference> refs = new SmartList<>();
