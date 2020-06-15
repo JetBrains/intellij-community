@@ -103,7 +103,7 @@ object GHGQLRequests {
       : GHConnection<GHPullRequestReviewThread>(pageInfo, nodes)
 
     fun commits(repository: GHRepositoryCoordinates, number: Long,
-                pagination: GHGQLRequestPagination? = null): GQLQuery<GHGQLPagedRequestResponse<GHPullRequestCommitShort>> {
+                pagination: GHGQLRequestPagination? = null): GQLQuery<GHGQLPagedRequestResponse<GHPullRequestCommit>> {
       return GQLQuery.TraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.pullRequestCommits,
                                       mapOf("repoOwner" to repository.repositoryPath.owner,
                                             "repoName" to repository.repositoryPath.repository,
@@ -114,8 +114,8 @@ object GHGQLRequests {
                                       "repository", "pullRequest", "commits")
     }
 
-    private class CommitsConnection(pageInfo: GHGQLPageInfo, nodes: List<GHPullRequestCommitShort>)
-      : GHConnection<GHPullRequestCommitShort>(pageInfo, nodes)
+    private class CommitsConnection(pageInfo: GHGQLPageInfo, nodes: List<GHPullRequestCommit>)
+      : GHConnection<GHPullRequestCommit>(pageInfo, nodes)
 
     object Timeline {
       fun items(server: GithubServerPath, repoOwner: String, repoName: String, number: Long,

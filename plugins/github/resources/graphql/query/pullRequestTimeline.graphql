@@ -6,7 +6,7 @@ fragment issueCommentInfo on IssueComment {
 fragment prCommitInfo on PullRequestCommit {
     ...nodeInfo
     commit {
-        ...commit
+        ...commitShort
     }
     url
 }

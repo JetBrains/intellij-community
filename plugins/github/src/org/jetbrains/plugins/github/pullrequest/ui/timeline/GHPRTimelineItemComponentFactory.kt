@@ -17,7 +17,7 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.intellij.lang.annotations.Language
 import org.jetbrains.plugins.github.api.data.*
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestCommit
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestCommitShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState.*
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEvent
@@ -43,7 +43,7 @@ class GHPRTimelineItemComponentFactory(private val reviewDataProvider: GHPRRevie
   fun createComponent(item: GHPRTimelineItem): Item {
     try {
       return when (item) {
-        is GHPullRequestCommit -> Item(AllIcons.Vcs.CommitNode, commitTitle(item.commit))
+        is GHPullRequestCommitShort -> Item(AllIcons.Vcs.CommitNode, commitTitle(item.commit, item.url))
 
         is GHIssueComment -> createComponent(item)
         is GHPullRequestReview -> createComponent(item)
@@ -105,9 +105,9 @@ class GHPRTimelineItemComponentFactory(private val reviewDataProvider: GHPRRevie
     })
   }
 
-  private fun commitTitle(commit: GHCommit): JComponent {
+  private fun commitTitle(commit: GHCommitShort, commitUrl: String): JComponent {
     //language=HTML
-    val text = """${commit.messageHeadlineHTML} <a href='${commit.url}'>${commit.abbreviatedOid}</a>"""
+    val text = """${commit.messageHeadlineHTML} <a href='${commitUrl}'>${commit.abbreviatedOid}</a>"""
 
     return HorizontalBox().apply {
       add(userAvatar(commit.author))
