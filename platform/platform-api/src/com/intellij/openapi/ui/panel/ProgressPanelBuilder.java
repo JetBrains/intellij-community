@@ -427,7 +427,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
           if (state == State.PLAYING) {
             mySuspendButton.setIcons(resumeIcon);
             state = State.PAUSED;
-            setCommentText(IdeBundle.message("comment.text.paused"), true);
+            setCommentText(IdeBundle.message("comment.text.resume"), true);
             pauseAction.run();
           }
           else {
@@ -502,7 +502,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
 
       @Override
       public void mouseExited(MouseEvent e) {
-        setCommentText(state != State.PAUSED ? null : IdeBundle.message("comment.text.paused"), true);
+        setCommentText(state == State.PAUSED ? IdeBundle.message("comment.text.paused") : null, true);
       }
     }
   }

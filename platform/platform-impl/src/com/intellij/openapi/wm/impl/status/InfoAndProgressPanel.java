@@ -567,7 +567,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
 
     @Override
     public void updateProgressNow() {
-      super_updateProgressNow();
+      super.updateProgressNow();
       mySuspendUpdateRunnable.run();
       updateCancelButton(mySuspendButton, myCancelButton);
     }
@@ -744,10 +744,6 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
           ApplicationManager.getApplication().invokeLater(update);
         }
       });
-    }
-
-    protected final void super_updateProgressNow() {
-      super.updateProgressNow();
     }
 
     @Override

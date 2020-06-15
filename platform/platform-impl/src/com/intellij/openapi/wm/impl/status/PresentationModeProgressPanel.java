@@ -9,7 +9,6 @@ import com.intellij.openapi.wm.impl.status.InfoAndProgressPanel.MyInlineProgress
 import com.intellij.ui.TransparentPanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -34,8 +33,8 @@ public class PresentationModeProgressPanel {
     Font font = JBUI.Fonts.label(11);
     myText.setFont(font);
     myText2.setFont(font);
-    myText.setIcon(JBUI.scale(EmptyIcon.create(1, 16)));
-    myText2.setIcon(JBUI.scale(EmptyIcon.create(1, 16)));
+    myText.setText(" ");
+    myText2.setText(" ");
     myEastButtons = myProgress.createPresentationButtons();
     myButtonPanel.add(InlineProgressIndicator.createButtonPanel(myEastButtons.map(b -> b.button)));
     myRootPanel.setPreferredSize(new JBDimension(250, 60));
@@ -54,10 +53,10 @@ public class PresentationModeProgressPanel {
     myProgressBar.setForeground(color);
 
     if (!StringUtil.equals(myText.getText(), myProgress.getText())) {
-      myText.setText(myProgress.getText());
+      myText.setText(StringUtil.defaultIfEmpty(myProgress.getText(), " "));
     }
     if (!StringUtil.equals(myText2.getText(), myProgress.getText2())) {
-      myText2.setText(myProgress.getText2());
+      myText2.setText(StringUtil.defaultIfEmpty(myProgress.getText2(), " "));
     }
     if ((myProgress.isIndeterminate() || myProgress.getFraction() == 0.0) != myProgressBar.isIndeterminate()) {
       myProgressBar.setIndeterminate(myProgress.isIndeterminate() || myProgress.getFraction() == 0.0);
