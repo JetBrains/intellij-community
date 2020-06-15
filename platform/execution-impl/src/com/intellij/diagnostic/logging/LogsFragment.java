@@ -41,7 +41,7 @@ public class LogsFragment<T extends RunConfigurationBase<?>> extends NestedGroup
   private final ListTableModel<LogFileOptions> myModel;
 
   public LogsFragment() {
-    super("log.monitor", DiagnosticBundle.message("log.monitor.fragment.name"), DiagnosticBundle.message("log.monitor.fragment.group"), t -> false);
+    super("log.monitor", DiagnosticBundle.message("log.monitor.fragment.name"), DiagnosticBundle.message("log.monitor.fragment.group"), t -> !t.getLogFiles().isEmpty());
 
     ColumnInfo<LogFileOptions, String> TAB_NAME = new TabNameColumnInfo();
     ColumnInfo<LogFileOptions, String> FILE = new FileColumnInfo();
