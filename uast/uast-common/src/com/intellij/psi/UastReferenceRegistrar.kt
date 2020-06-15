@@ -138,3 +138,11 @@ fun PsiReferenceRegistrar.registerReferenceProviderByUsage(expressionPattern: UE
     this.registerUastReferenceProvider(expressionPattern, UastReferenceByUsageAdapter(usagePattern, provider), priority)
   }
 }
+
+@ApiStatus.Experimental
+fun PsiReferenceRegistrar.registerReferenceProviderByUsage(usagePattern: UElementPattern<*, *>,
+                                                           provider: UastReferenceProvider,
+                                                           priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
+  registerReferenceProviderByUsage(uExpressionInVariable(), usagePattern, provider, priority)
+}
+
