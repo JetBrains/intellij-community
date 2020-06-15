@@ -988,6 +988,11 @@ public class HighlightUtil {
           isAllowed &= !privateOrProtected;
         }
       }
+      if (PsiModifier.NON_SEALED.equals(modifier) && !aClass.hasModifierProperty(PsiModifier.SEALED)) {
+        isAllowed = Arrays.stream(aClass.getSuperTypes())
+          .map(PsiClassType::resolve)
+          .anyMatch(superClass -> superClass != null && superClass.hasModifierProperty(PsiModifier.SEALED));
+      }
     }
     else if (modifierOwner instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)modifierOwner;
