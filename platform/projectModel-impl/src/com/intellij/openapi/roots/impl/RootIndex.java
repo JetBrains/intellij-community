@@ -236,36 +236,36 @@ class RootIndex {
 
     for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
       Collection<SyntheticLibrary> libraries = provider.getAdditionalProjectLibraries(project);
-      for (SyntheticLibrary descriptor : libraries) {
-        for (VirtualFile sourceRoot : descriptor.getSourceRoots()) {
-          if (!ensureValid(sourceRoot, descriptor)) continue;
+      for (SyntheticLibrary library : libraries) {
+        for (VirtualFile sourceRoot : library.getSourceRoots()) {
+          if (!ensureValid(sourceRoot, library, provider)) continue;
 
           info.libraryOrSdkSources.add(sourceRoot);
           info.classAndSourceRoots.add(sourceRoot);
-          if (descriptor instanceof JavaSyntheticLibrary) {
+          if (library instanceof JavaSyntheticLibrary) {
             info.packagePrefix.put(sourceRoot, "");
           }
-          info.sourceOfLibraries.putValue(sourceRoot, descriptor);
+          info.sourceOfLibraries.putValue(sourceRoot, library);
         }
-        for (VirtualFile classRoot : descriptor.getBinaryRoots()) {
-          if (!ensureValid(classRoot, project)) continue;
+        for (VirtualFile classRoot : library.getBinaryRoots()) {
+          if (!ensureValid(classRoot, project, provider)) continue;
 
           info.libraryOrSdkClasses.add(classRoot);
           info.classAndSourceRoots.add(classRoot);
-          if (descriptor instanceof JavaSyntheticLibrary) {
+          if (library instanceof JavaSyntheticLibrary) {
             info.packagePrefix.put(classRoot, "");
           }
-          info.classOfLibraries.putValue(classRoot, descriptor);
+          info.classOfLibraries.putValue(classRoot, library);
         }
-        for (VirtualFile file : descriptor.getExcludedRoots()) {
-          if (!ensureValid(file, project)) continue;
-          info.excludedFromLibraries.putValue(file, descriptor);
+        for (VirtualFile file : library.getExcludedRoots()) {
+          if (!ensureValid(file, project, provider)) continue;
+          info.excludedFromLibraries.putValue(file, library);
         }
       }
     }
     for (DirectoryIndexExcludePolicy policy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(project)) {
       List<VirtualFile> files = ContainerUtil.mapNotNull(policy.getExcludeUrlsForProject(), url -> VirtualFileManager.getInstance().findFileByUrl(url));
-      info.excludedFromProject.addAll(ContainerUtil.filter(files, file -> ensureValid(file, policy)));
+      info.excludedFromProject.addAll(ContainerUtil.filter(files, file -> ensureValid(file, project, policy)));
 
       Function<Sdk, List<VirtualFile>> fun = policy.getExcludeSdkRootsStrategy();
 
@@ -287,7 +287,7 @@ class RootIndex {
 
         for (Sdk sdk: sdks) {
           info.excludedFromSdkRoots
-            .addAll(ContainerUtil.filter(fun.fun(sdk), file -> ensureValid(file, policy) && !roots.contains(file)));
+            .addAll(ContainerUtil.filter(fun.fun(sdk), file -> ensureValid(file, sdk, policy) && !roots.contains(file)));
         }
       }
     }
@@ -303,12 +303,21 @@ class RootIndex {
   }
 
   private static boolean ensureValid(@NotNull VirtualFile file, @NotNull Object container) {
+    return ensureValid(file, container, null);
+  }
+
+  private static boolean ensureValid(@NotNull VirtualFile file, @NotNull Object container, @Nullable Object containerProvider) {
     if (!(file instanceof VirtualFileWithId)) {
       //skip roots from unsupported file systems (e.g. http)
       return false;
     }
     if (!file.isValid()) {
-      LOG.error("Invalid root " + file + " in " + container);
+      if (containerProvider != null) {
+        LOG.error("Invalid root " + file + " in " + container + " provided by " + containerProvider.getClass());
+      }
+      else {
+        LOG.warn("Invalid root " + file + " in " + container);
+      }
       return false;
     }
     return true;
