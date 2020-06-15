@@ -25,7 +25,7 @@ internal class GHTokenCredentialsUi(
   private val serverTextField: ExtendableTextField,
   val factory: GithubApiRequestExecutor.Factory,
   val isAccountUnique: UniqueLoginPredicate
-) : GithubCredentialsUI() {
+) : GHCredentialsUi() {
 
   private val tokenTextField = JBTextField()
   private var fixedLogin: String? = null

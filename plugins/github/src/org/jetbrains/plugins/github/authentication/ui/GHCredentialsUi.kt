@@ -12,7 +12,7 @@ import org.jetbrains.plugins.github.ui.util.Validator
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal abstract class GithubCredentialsUI {
+internal abstract class GHCredentialsUi {
   abstract fun getPreferredFocus(): JComponent
   abstract fun getValidator(): Validator
   abstract fun createExecutor(): GithubApiRequestExecutor

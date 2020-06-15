@@ -26,7 +26,7 @@ internal class GHPasswordCredentialsUi(
   private val serverTextField: ExtendableTextField,
   private val executorFactory: GithubApiRequestExecutor.Factory,
   private val isAccountUnique: UniqueLoginPredicate
-) : GithubCredentialsUI() {
+) : GHCredentialsUi() {
 
   private val loginTextField = JBTextField()
   private val passwordField = JPasswordField()

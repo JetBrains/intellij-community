@@ -34,7 +34,7 @@ internal class GithubLoginPanel(
   private val serverTextField = ExtendableTextField(GithubServerPath.DEFAULT_HOST, 0)
   private var tokenAcquisitionError: ValidationInfo? = null
 
-  private lateinit var currentUi: GithubCredentialsUI
+  private lateinit var currentUi: GHCredentialsUi
   private var passwordUi = GHPasswordCredentialsUi(serverTextField, executorFactory, isAccountUnique)
   private var tokenUi = GHTokenCredentialsUi(serverTextField, executorFactory, isAccountUnique)
 
@@ -53,7 +53,7 @@ internal class GithubLoginPanel(
     applyUi(passwordUi)
   }
 
-  private fun applyUi(ui: GithubCredentialsUI) {
+  private fun applyUi(ui: GHCredentialsUi) {
     currentUi = ui
     setContent(currentUi.getPanel())
     currentUi.getPreferredFocus().requestFocus()
@@ -62,7 +62,7 @@ internal class GithubLoginPanel(
 
   fun createSwitchUiLink(): LinkLabel<*> {
     fun switchUiText(): String = if (currentUi == passwordUi) message("login.use.token") else message("login.use.credentials")
-    fun nextUi(): GithubCredentialsUI = if (currentUi == passwordUi) tokenUi else passwordUi
+    fun nextUi(): GHCredentialsUi = if (currentUi == passwordUi) tokenUi else passwordUi
 
     return LinkLabel<Any?>(switchUiText(), null) { link, _ ->
       applyUi(nextUi())
