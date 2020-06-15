@@ -4,7 +4,7 @@ package com.intellij.sh;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
@@ -19,7 +19,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface ShSupport {
-  static ShSupport getInstance() { return ServiceManager.getService(ShSupport.class); }
+  ExtensionPointName<ShSupport> EP_NAME = ExtensionPointName.create("com.intellij.sh.shSupport");
+
+  @NotNull
+  static ShSupport getInstance() {
+    return EP_NAME.findExtensionOrFail(ShSupport.class);
+  }
 
   boolean isExternalFormatterEnabled();
 
