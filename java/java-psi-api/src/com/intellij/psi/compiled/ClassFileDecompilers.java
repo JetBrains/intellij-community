@@ -4,6 +4,7 @@ package com.intellij.psi.compiled;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiManager;
@@ -81,7 +82,9 @@ public final class ClassFileDecompilers {
 
   public final ExtensionPointName<Decompiler> EP_NAME = ExtensionPointName.create("com.intellij.psi.classFileDecompiler");
 
-  private ClassFileDecompilers() { }
+  private ClassFileDecompilers() {
+    EP_NAME.addChangeListener(() -> BinaryFileTypeDecompilers.getInstance().notifyDecompilersChange(), null);
+  }
 
   public @Nullable Decompiler find(@NotNull VirtualFile file) {
     return EP_NAME.findFirstSafe(decompiler -> (decompiler instanceof Light || decompiler instanceof Full) && decompiler.accepts(file));
