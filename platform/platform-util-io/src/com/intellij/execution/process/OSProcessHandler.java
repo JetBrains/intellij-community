@@ -19,7 +19,6 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.HashSet;
 import java.util.Set;
 
 public class OSProcessHandler extends BaseOSProcessHandler {
@@ -297,7 +297,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   public static void deleteFileOnTermination(@NotNull GeneralCommandLine commandLine, @NotNull File fileToDelete) {
     Set<File> set = commandLine.getUserData(DELETE_FILES_ON_TERMINATION);
     if (set == null) {
-      set = new THashSet<>();
+      set = new HashSet<>();
       commandLine.putUserData(DELETE_FILES_ON_TERMINATION, set);
     }
     set.add(fileToDelete);

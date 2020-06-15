@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.lang.Language;
@@ -28,7 +27,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -70,12 +69,12 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
     final CharSequence chars = file.getViewProvider().getContents();
     boolean multiLine = queryParameters.isMultiLine();
     List<CommentRange> commentRanges = findCommentTokenRanges(file, chars, queryParameters.getRange(), multiLine);
-    TIntArrayList occurrences = new TIntArrayList(1);
+    IntArrayList occurrences = new IntArrayList(1);
     IndexPattern[] patterns = patternProvider != null ? patternProvider.getIndexPatterns()
                                                       : new IndexPattern[] {queryParameters.getPattern()};
 
     for (int i = 0; i < commentRanges.size(); i++) {
-      occurrences.resetQuick();
+      occurrences.clear();
 
       for (int j = patterns.length - 1; j >=0; --j) {
         if (!collectPatternMatches(patterns, patterns[j], chars, commentRanges, i, file, queryParameters.getRange(), consumer,
@@ -198,12 +197,12 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
   private static boolean collectPatternMatches(IndexPattern[] allIndexPatterns,
                                                IndexPattern indexPattern,
                                                CharSequence chars,
-                                               List<? extends CommentRange> commentRanges,
+                                               List<CommentRange> commentRanges,
                                                int commentNum,
                                                PsiFile file,
                                                TextRange range,
                                                Processor<? super IndexPatternOccurrence> consumer,
-                                               TIntArrayList matches,
+                                               IntArrayList matches,
                                                boolean multiLine
                                                ) {
     CommentRange commentRange = commentRanges.get(commentNum);
@@ -229,7 +228,7 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
         int start = fitToRange(matcher.start(), commentPrefixLength, suffixStartOffset) + commentStart - commentPrefixLength;
         int end = fitToRange(matcher.end(), commentPrefixLength, suffixStartOffset) + commentStart - commentPrefixLength;
         if (start != end) {
-          if ((range == null || range.getStartOffset() <= start && end <= range.getEndOffset()) && matches.indexOf(start) == -1) {
+          if ((range == null || range.getStartOffset() <= start && end <= range.getEndOffset()) && !matches.contains(start)) {
             List<TextRange> additionalRanges = multiLine ? findContinuation(start, chars, allIndexPatterns, commentRanges, commentNum)
                                                          : Collections.emptyList();
             if (range != null && !additionalRanges.isEmpty() &&
@@ -255,7 +254,7 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
   }
 
   private static List<TextRange> findContinuation(int mainRangeStartOffset, CharSequence text, IndexPattern[] allIndexPatterns,
-                                                  List<? extends CommentRange> commentRanges, int commentNum) {
+                                                  List<CommentRange> commentRanges, int commentNum) {
     CommentRange commentRange = commentRanges.get(commentNum);
     int lineStartOffset = CharArrayUtil.shiftBackwardUntil(text, mainRangeStartOffset - 1, "\n") + 1;
     int lineEndOffset = CharArrayUtil.shiftForwardUntil(text, mainRangeStartOffset, "\n");
@@ -292,7 +291,7 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
     return result.isEmpty() ? Collections.emptyList() : result;
   }
 
-  private static class CommentRange {
+  private static final class CommentRange {
     private static final Comparator<CommentRange> BY_START_OFFSET_THEN_BY_END_OFFSET =
       Comparator.comparingInt((CommentRange o) -> o.startOffset).thenComparingInt((CommentRange o) -> o.endOffset);
 

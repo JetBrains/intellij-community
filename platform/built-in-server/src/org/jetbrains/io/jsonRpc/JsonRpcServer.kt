@@ -17,8 +17,8 @@ import com.intellij.util.Consumer
 import com.intellij.util.SmartList
 import com.intellij.util.io.releaseIfError
 import com.intellij.util.io.writeUtf8
-import gnu.trove.TIntArrayList
 import io.netty.buffer.*
+import it.unimi.dsi.fastutil.ints.IntArrayList
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.io.JsonReaderEx
@@ -30,10 +30,10 @@ import java.util.concurrent.atomic.AtomicInteger
 private val LOG = Logger.getInstance(JsonRpcServer::class.java)
 
 private val INT_LIST_TYPE_ADAPTER_FACTORY = object : TypeAdapterFactory {
-  private var typeAdapter: IntArrayListTypeAdapter<TIntArrayList>? = null
+  private var typeAdapter: IntArrayListTypeAdapter<IntArrayList>? = null
 
   override fun <T> create(gson: Gson, type: TypeToken<T>): TypeAdapter<T>? {
-    if (type.type !== TIntArrayList::class.java) {
+    if (type.type !== IntArrayList::class.java) {
       return null
     }
 
@@ -264,51 +264,55 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
       }
 
       // gson - SOE if param has type class com.intellij.openapi.editor.impl.DocumentImpl$MyCharArray, so, use hack
-      if (param is CharSequence) {
-        JsonUtil.escape(param, buffer)
-      }
-      else if (param == null) {
-        buffer.writeAscii("null")
-      }
-      else if (param is Boolean) {
-        buffer.writeAscii(param.toString())
-      }
-      else if (param is Number) {
-        if (sb == null) {
-          sb = StringBuilder()
+      when (param) {
+        is CharSequence -> {
+          JsonUtil.escape(param, buffer)
         }
-        if (param is Int) {
-          sb.append(param.toInt())
+        null -> {
+          buffer.writeAscii("null")
         }
-        else if (param is Long) {
-          sb.append(param.toLong())
+        is Boolean -> {
+          buffer.writeAscii(param.toString())
         }
-        else if (param is Float) {
-          sb.append(param.toFloat())
+        is Number -> {
+          if (sb == null) {
+            sb = StringBuilder()
+          }
+          when (param) {
+            is Int -> {
+              sb.append(param.toInt())
+            }
+            is Long -> {
+              sb.append(param.toLong())
+            }
+            is Float -> {
+              sb.append(param.toFloat())
+            }
+            is Double -> {
+              sb.append(param.toDouble())
+            }
+            else -> {
+              sb.append(param.toString())
+            }
+          }
+          buffer.writeAscii(sb)
+          sb.setLength(0)
         }
-        else if (param is Double) {
-          sb.append(param.toDouble())
+        is Consumer<*> -> {
+          if (sb == null) {
+            sb = StringBuilder()
+          }
+          @Suppress("UNCHECKED_CAST")
+          (param as Consumer<StringBuilder>).consume(sb)
+          buffer.writeUtf8(sb)
+          sb.setLength(0)
         }
-        else {
-          sb.append(param.toString())
+        else -> {
+          if (writer == null) {
+            writer = JsonWriter(ByteBufUtf8Writer(buffer))
+          }
+          (gson.getAdapter(param.javaClass) as TypeAdapter<Any>).write(writer, param)
         }
-        buffer.writeAscii(sb)
-        sb.setLength(0)
-      }
-      else if (param is Consumer<*>) {
-        if (sb == null) {
-          sb = StringBuilder()
-        }
-        @Suppress("UNCHECKED_CAST")
-        (param as Consumer<StringBuilder>).consume(sb)
-        buffer.writeUtf8(sb)
-        sb.setLength(0)
-      }
-      else {
-        if (writer == null) {
-          writer = JsonWriter(ByteBufUtf8Writer(buffer))
-        }
-        (gson.getAdapter(param.javaClass) as TypeAdapter<Any>).write(writer, param)
       }
     }
   }
@@ -325,15 +329,14 @@ private class IntArrayListTypeAdapter<T> : TypeAdapter<T>() {
   override fun write(out: JsonWriter, value: T) {
     var error: IOException? = null
     out.beginArray()
-    (value as TIntArrayList).forEach { intValue ->
+    val iterator = (value as IntArrayList).iterator()
+    while (iterator.hasNext()) {
       try {
-        out.value(intValue.toLong())
+        out.value(iterator.nextInt().toLong())
       }
       catch (e: IOException) {
         error = e
       }
-
-      error == null
     }
 
     error?.let { throw it }
