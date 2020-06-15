@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -61,18 +62,17 @@ public class MoveIntoIfBranchesAction implements IntentionAction {
         afterLast.add(e);
       }
     }
-    if (afterLast.isEmpty()) return false;
-    Set<PsiNamedElement> declared = StreamEx.of(statements).select(PsiDeclarationStatement.class)
-      .flatArray(PsiDeclarationStatement::getDeclaredElements).select(PsiNamedElement.class).toSet();
+    List<String> declaredInIf = StreamEx.of(ifStatement.getThenBranch(), ifStatement.getElseBranch()).flatArray(ControlFlowUtils::unwrapBlock)
+      .select(PsiDeclarationStatement.class).flatArray(PsiDeclarationStatement::getDeclaredElements)
+      .select(PsiNamedElement.class).map(PsiNamedElement::getName).nonNull().toList();
+    if (afterLast.isEmpty() && declaredInIf.isEmpty()) return false;
+    Set<PsiVariable> declared = StreamEx.of(statements).flatCollection(VariableAccessUtils::findDeclaredVariables).toSet();
     if (declared.isEmpty()) return false;
     if (SyntaxTraverser.psiTraverser().withRoots(afterLast).filter(PsiJavaCodeReferenceElement.class)
           .filter(ref -> declared.contains(ref.resolve())).first() != null) {
       return true;
     }
-    return StreamEx.of(ifStatement.getThenBranch(), ifStatement.getElseBranch()).flatArray(ControlFlowUtils::unwrapBlock)
-      .select(PsiDeclarationStatement.class).flatArray(PsiDeclarationStatement::getDeclaredElements)
-      .select(PsiNamedElement.class).map(PsiNamedElement::getName).nonNull()
-      .anyMatch(name -> ContainerUtil.exists(declared, d -> name.equals(d.getName())));
+    return ContainerUtil.exists(declaredInIf, name -> ContainerUtil.exists(declared, d -> name.equals(d.getName())));
   }
 
   @Override
