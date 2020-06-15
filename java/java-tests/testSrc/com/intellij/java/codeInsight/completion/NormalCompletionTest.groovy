@@ -2019,4 +2019,6 @@ class Abc {
     selectItem(myItems[1])
     checkResult()
   }
+
+  void testSuggestChainsOfExpectedType() { doTest() }
 }

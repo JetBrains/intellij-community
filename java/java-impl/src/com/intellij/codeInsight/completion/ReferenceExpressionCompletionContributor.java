@@ -12,7 +12,6 @@ import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -67,32 +66,21 @@ public class ReferenceExpressionCompletionContributor {
     return TrueFilter.INSTANCE;
   }
 
-  static void addSmartReferenceSuggestions(CompletionParameters parameters,
-                                           List<LookupElement> allRefSuggestions,
-                                           Set<ExpectedTypeInfo> infos,
-                                           List<SlowerTypeConversions> chainedEtc,
-                                           Consumer<? super LookupElement> result) {
-    final PsiElement element = parameters.getPosition();
-    if (JavaSmartCompletionContributor.INSIDE_TYPECAST_EXPRESSION.accepts(element)) return;
-
-    ElementFilter filter = getReferenceFilter(element, false);
-    allRefSuggestions = ContainerUtil.filter(allRefSuggestions, item -> filter.isAcceptable(item.getObject(), element));
-
-    for (ExpectedTypeInfo info : infos) {
-      for (LookupElement item : allRefSuggestions) {
-        if (matchesExpectedType(item, info.getType())) {
-          if (item instanceof JavaMethodCallElement) {
-            checkTooGeneric((JavaMethodCallElement)item);
-          }
-          result.consume(item);
+  static List<LookupElement> smartCompleteReference(List<LookupElement> allRefSuggestions, Set<ExpectedTypeInfo> infos) {
+    List<LookupElement> result = new ArrayList<>();
+    for (LookupElement item : allRefSuggestions) {
+      if (matchesExpectedType(item, infos)) {
+        if (item instanceof JavaMethodCallElement) {
+          checkTooGeneric((JavaMethodCallElement)item);
         }
-      }
-
-      if (parameters.getInvocationCount() >= 2) {
-        chainedEtc.add(new SlowerTypeConversions(new HashSet<>(allRefSuggestions), element, (PsiJavaCodeReferenceElement) element.getParent(),
-                                                 new JavaSmartCompletionParameters(parameters, info), result));
+        result.add(JavaSmartCompletionContributor.decorate(item, infos));
       }
     }
+    return result;
+  }
+
+  static boolean matchesExpectedType(LookupElement item, Set<ExpectedTypeInfo> infos) {
+    return ContainerUtil.exists(infos, info -> matchesExpectedType(item, info.getType()));
   }
 
   private static boolean matchesExpectedType(LookupElement item, PsiType type) {

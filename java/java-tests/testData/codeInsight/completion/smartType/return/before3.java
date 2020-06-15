@@ -1,11 +1,6 @@
 class A{
-  class B{
-    int fooo(){
-    }
-  }
-
   int fooo(){
-    A b = null;
+    A a = null;
 
     return fo<caret>
   }

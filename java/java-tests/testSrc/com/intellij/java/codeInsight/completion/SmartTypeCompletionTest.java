@@ -1344,4 +1344,10 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     assertTrue(PsiUtil.getLanguageLevel(getProject()).isLessThan(LanguageLevel.JDK_1_8));
     doTest();
   }
+
+  public void testSuggestChainsWhenNoDirectMatches() {
+    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject("second/MethodAsQualifier.java", "a.java"));
+    myFixture.complete(CompletionType.SMART);
+    checkResultByFile("second/MethodAsQualifier-out.java");
+  }
 }

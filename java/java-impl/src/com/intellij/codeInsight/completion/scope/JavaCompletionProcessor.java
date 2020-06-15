@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion.scope;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.SuppressManager;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstanceBase;
 import com.intellij.openapi.util.Condition;
@@ -24,10 +25,7 @@ import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassHint {
 
@@ -92,10 +90,32 @@ public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassH
       myQualifierType = JavaPsiFacade.getElementFactory(element.getProject()).createType(qualifierClass);
     }
 
-    myAllowStaticWithInstanceQualifier = !options.filterStaticAfterInstance ||
-                                         SuppressManager.getInstance().isSuppressedFor(element, AccessStaticViaInstanceBase.ACCESS_STATIC_VIA_INSTANCE) ||
-                                         Registry.is("ide.java.completion.suggest.static.after.instance");
+    myAllowStaticWithInstanceQualifier = !options.filterStaticAfterInstance || allowStaticAfterInstanceQualifier(element);
 
+  }
+
+  private static boolean allowStaticAfterInstanceQualifier(@NotNull PsiElement position) {
+    return SuppressManager.getInstance().isSuppressedFor(position, AccessStaticViaInstanceBase.ACCESS_STATIC_VIA_INSTANCE) ||
+           Registry.is("ide.java.completion.suggest.static.after.instance");
+  }
+
+  public static List<LookupElement> dispreferStaticAfterInstance(PsiJavaCodeReferenceElement position, List<LookupElement> items) {
+    if (allowStaticAfterInstanceQualifier(position)) return items;
+
+    PsiElement qualifier = position.getQualifier();
+    if (qualifier == null ||
+        qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).resolve() instanceof PsiClass) {
+      return items;
+    }
+
+    List<LookupElement> preferred = new ArrayList<>();
+    for (LookupElement item : items) {
+      Object object = item.getObject();
+      if (!(object instanceof PsiModifierListOwner) || !((PsiModifierListOwner)object).hasModifierProperty(PsiModifier.STATIC)) {
+        preferred.add(item);
+      }
+    }
+    return preferred.isEmpty() ? items : preferred;
   }
 
   @Override
