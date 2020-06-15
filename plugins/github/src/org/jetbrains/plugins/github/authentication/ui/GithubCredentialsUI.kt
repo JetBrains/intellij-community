@@ -121,8 +121,7 @@ internal sealed class GithubCredentialsUI {
           .withOKEnabled()
         is GithubParseException -> ValidationInfo(error.message ?: GithubBundle.message("credentials.invalid.server.path"),
                                                   serverTextField)
-        else -> ValidationInfo(GithubBundle.message(GithubBundle.message("credentials.invalid.auth.data", error.message.orEmpty())))
-          .withOKEnabled()
+        else -> ValidationInfo(GithubBundle.message("credentials.invalid.auth.data", error.message.orEmpty())).withOKEnabled()
       }
     }
 
