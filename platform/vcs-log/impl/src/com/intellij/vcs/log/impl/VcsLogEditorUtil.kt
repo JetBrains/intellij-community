@@ -74,10 +74,9 @@ internal fun closeLogTabs(project: Project, editorTabIds: List<String>): Boolean
   }.filterValues { logIds -> logIds.isNotEmpty() }
 
   for ((logEditor, ids) in editorsToIdsMap) {
-    val logFile = logEditor.file ?: continue
-
-    (logEditor as? VcsLogEditor)?.beforeEditorClose(true)
-    ApplicationManager.getApplication().invokeLater({ editorManager.closeFile(logFile) }, ModalityState.NON_MODAL, { project.isDisposed })
+    (logEditor as? VcsLogEditor)?.disposeLogUis()
+    ApplicationManager.getApplication().invokeLater({ editorManager.closeFile(logEditor.file!!) }, ModalityState.NON_MODAL,
+                                                    { project.isDisposed })
     tabsToClose.removeAll(ids)
   }
   return tabsToClose.isEmpty()

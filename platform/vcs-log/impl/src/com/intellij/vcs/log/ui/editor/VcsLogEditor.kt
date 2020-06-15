@@ -40,13 +40,24 @@ class VcsLogFileType : FileType {
 
 val VCS_LOG_FILE_DISPLAY_NAME_GENERATOR = Key.create<(List<VcsLogUiEx>) -> String>("VCS_LOG_FILE_GENERATE_DISPLAY_NAME")
 
-class VcsLogFile(
-  internal val rootComponent: JComponent,
-  internal val logUis: List<VcsLogUiEx>,
-  name: String
-) : LightVirtualFile(name, VcsLogFileType.INSTANCE, "") {
+class VcsLogFile(component: JComponent, uis: List<VcsLogUiEx>, name: String) :
+  LightVirtualFile(name, VcsLogFileType.INSTANCE, "") {
+
+  private val _logUis = uis.toMutableList()
+  internal val logUis: List<VcsLogUiEx> get() = _logUis
+
+  internal val rootComponent: JComponent = JPanel(BorderLayout()).also {
+    it.add(component, BorderLayout.CENTER)
+  }
+
   init {
     putUserData(SplitAction.FORBID_TAB_SPLIT, true)
+  }
+
+  internal fun disposeLogUis() {
+    rootComponent.removeAll()
+    _logUis.forEach(Disposer::dispose)
+    _logUis.clear()
   }
 }
 
@@ -54,32 +65,14 @@ class VcsLogIconProvider : FileIconProvider {
   override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? = (file as? VcsLogFile)?.fileType?.icon
 }
 
-class VcsLogEditor(val file: VcsLogFile) : FileEditorBase() {
-  private val container: JComponent = JPanel(BorderLayout())
+class VcsLogEditor(private val vcsLogFile: VcsLogFile) : FileEditorBase() {
 
-  private var vcsLogFile: VcsLogFile? = file
+  fun disposeLogUis() = vcsLogFile.disposeLogUis()
 
-  init {
-    container.add(file.rootComponent, BorderLayout.CENTER)
-  }
-
-  fun beforeEditorClose(disposeLogUis: Boolean) {
-    val logUis = vcsLogFile?.logUis
-
-    container.removeAll()
-    vcsLogFile = null
-
-    if (disposeLogUis) {
-      logUis?.forEach(Disposer::dispose)
-    }
-  }
-
-  override fun getComponent(): JComponent = container
-  override fun getPreferredFocusedComponent(): JComponent? = vcsLogFile?.logUis?.firstOrNull()?.mainComponent
+  override fun getComponent(): JComponent = vcsLogFile.rootComponent
+  override fun getPreferredFocusedComponent(): JComponent? = vcsLogFile.logUis.firstOrNull()?.mainComponent
   override fun getName(): String = "Vcs Log Editor"
-  override fun getFile(): VirtualFile {
-    return file
-  }
+  override fun getFile() = vcsLogFile
 }
 
 class VcsLogEditorProvider : FileEditorProvider, DumbAware {
@@ -93,9 +86,9 @@ class VcsLogEditorProvider : FileEditorProvider, DumbAware {
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
 
   override fun disposeEditor(editor: FileEditor) {
-    val file = editor.file
-    val closingToReopen = file != null && file.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN) == true
-    (editor as VcsLogEditor).beforeEditorClose(!closingToReopen)
+    if (editor.file?.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN) == false) {
+      (editor as VcsLogEditor).disposeLogUis()
+    }
 
     super.disposeEditor(editor)
   }
