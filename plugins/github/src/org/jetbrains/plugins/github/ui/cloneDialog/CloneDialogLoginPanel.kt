@@ -14,10 +14,13 @@ import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes.ERROR_ATTRIBUTES
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.layout.*
+import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI.Borders.empty
+import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.JBUI.emptyInsets
 import com.intellij.util.ui.UIUtil.getRegularPanelInsets
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
@@ -33,6 +36,7 @@ import org.jetbrains.plugins.github.util.successOnEdt
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.SwingConstants.TOP
 
 internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
   JBPanel<CloneDialogLoginPanel>(VerticalLayout(0)) {
@@ -43,8 +47,9 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
   private val loginPanel = GithubLoginPanel(GithubApiRequestExecutor.Factory.getInstance()) { name, server ->
     if (account == null) authenticationManager.isAccountUnique(name, server) else true
   }
+  private val inlineCancelPanel = simplePanel()
   private val loginButton = JButton(message("button.login.mnemonic"))
-  private val backLink = LinkLabel<Any?>(IdeBundle.message("button.back"), null)
+  private val backLink = LinkLabel<Any?>(IdeBundle.message("button.back"), null).apply { verticalAlignment = TOP }
 
   private var loginIndicator: ProgressIndicator? = null
 
@@ -75,15 +80,42 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
       null
     )
 
-  fun setTokenUi() = loginPanel.setTokenUi()
-  fun setPasswordUi() = loginPanel.setPasswordUi()
+  fun setTokenUi() {
+    setupNewUi(false)
+    loginPanel.setTokenUi()
+  }
+
+  fun setPasswordUi() {
+    setupNewUi(false)
+    loginPanel.setPasswordUi()
+  }
+
+  fun setOAuthUi() {
+    setupNewUi(true)
+    loginPanel.setOAuthUi()
+
+    login()
+  }
+
   fun setServer(path: String, editable: Boolean) = loginPanel.setServer(path, editable)
 
   private fun buildLayout() {
-    loginPanel.footer = { buttonPanel() } // footer is used to put buttons in 2-nd column - align under text boxes
-
-    add(loginPanel)
+    add(JPanel(HorizontalLayout(0)).apply {
+      add(loginPanel)
+      add(inlineCancelPanel.apply { border = JBEmptyBorder(getRegularPanelInsets().apply { left = scale(6) }) })
+    })
     add(errorPanel.apply { border = JBEmptyBorder(getRegularPanelInsets().apply { top = 0 }) })
+  }
+
+  private fun setupNewUi(isOAuth: Boolean) {
+    loginButton.isVisible = !isOAuth
+    backLink.text = if (isOAuth) IdeBundle.message("link.cancel") else IdeBundle.message("button.back")
+
+    loginPanel.footer = { if (!isOAuth) buttonPanel() } // footer is used to put buttons in 2-nd column - align under text boxes
+    if (isOAuth) inlineCancelPanel.addToCenter(backLink)
+    inlineCancelPanel.isVisible = isOAuth
+
+    errorPanel.removeAll()
   }
 
   private fun LayoutBuilder.buttonPanel() =
