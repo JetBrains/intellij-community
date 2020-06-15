@@ -947,6 +947,21 @@ public class HighlightClassUtil {
     }
     return null;
   }
+  
+  public static HighlightInfo checkWellFormedSealedInheritor(PsiClass psiClass) {
+    if (!psiClass.hasModifierProperty(PsiModifier.SEALED) &&
+        !psiClass.hasModifierProperty(PsiModifier.NON_SEALED) &&
+        !psiClass.hasModifierProperty(PsiModifier.FINAL)) {
+      PsiIdentifier nameIdentifier = psiClass.getNameIdentifier();
+      if (nameIdentifier == null) return null;
+      if (Arrays.stream(psiClass.getSuperTypes()).map(superType -> superType.resolve())
+        .anyMatch(superClass -> superClass != null && superClass.hasModifierProperty(PsiModifier.SEALED))) {
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(nameIdentifier)
+          .descriptionAndTooltip(JavaErrorBundle.message("sealed.type.inheritor.expected.modifiers", PsiModifier.SEALED, PsiModifier.NON_SEALED, PsiModifier.FINAL)).create();
+      }
+    }
+    return null;
+  }
 
   public static HighlightInfo checkIllegalInstanceMemberInRecord(PsiMember member) {
     if (!member.hasModifierProperty(PsiModifier.STATIC)) {
