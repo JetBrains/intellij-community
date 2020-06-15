@@ -12,7 +12,6 @@ import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static com.intellij.psi.compiled.ClassFileDecompilers.Full;
@@ -27,30 +26,33 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder.CompositeBina
     return true;
   }
 
-  @NotNull
   @Override
-  public Stream<ClassFileDecompilers.Decompiler> getAllSubBuilders() {
+  public @NotNull Stream<ClassFileDecompilers.Decompiler> getAllSubBuilders() {
     return ClassFileDecompilers.EP_NAME.extensions().filter(decompiler -> decompiler instanceof Full);
   }
 
-  @Nullable
   @Override
-  public ClassFileDecompilers.Decompiler getSubBuilder(@NotNull FileContent fileContent) {
-    return setContentAndCompute(fileContent, () -> ClassFileDecompilers.find(fileContent.getFile()));
+  public @Nullable ClassFileDecompilers.Decompiler getSubBuilder(@NotNull FileContent fileContent) {
+    fileContent.getFile().setPreloadedContentHint(fileContent.getContent());
+    try {
+      return ClassFileDecompilers.find(fileContent.getFile());
+    }
+    finally {
+      fileContent.getFile().setPreloadedContentHint(null);
+    }
   }
 
-  @NotNull
   @Override
-  public String getSubBuilderVersion(@Nullable ClassFileDecompilers.Decompiler decompiler) {
+  public @NotNull String getSubBuilderVersion(@Nullable ClassFileDecompilers.Decompiler decompiler) {
     if (decompiler == null) return "default";
     int version = decompiler instanceof Full ? ((Full)decompiler).getStubBuilder().getStubVersion() : 0;
     return decompiler.getClass().getName() + ":" + version;
   }
 
-  @Nullable
   @Override
-  public Stub buildStubTree(@NotNull FileContent fileContent, @Nullable ClassFileDecompilers.Decompiler decompiler) {
-    return setContentAndCompute(fileContent, () -> {
+  public @Nullable Stub buildStubTree(@NotNull FileContent fileContent, @Nullable ClassFileDecompilers.Decompiler decompiler) {
+    fileContent.getFile().setPreloadedContentHint(fileContent.getContent());
+    try {
       VirtualFile file = fileContent.getFile();
       try {
         if (decompiler instanceof Full) {
@@ -75,21 +77,14 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder.CompositeBina
       }
 
       return null;
-    });
+    }
+    finally {
+      fileContent.getFile().setPreloadedContentHint(null);
+    }
   }
 
   @Override
   public int getStubVersion() {
     return STUB_VERSION;
-  }
-
-  private static <T> T setContentAndCompute(@NotNull FileContent content, @NotNull Supplier<T> computation) {
-    try {
-      content.getFile().setPreloadedContentHint(content.getContent());
-      return computation.get();
-    }
-    finally {
-      content.getFile().setPreloadedContentHint(null);
-    }
   }
 }
