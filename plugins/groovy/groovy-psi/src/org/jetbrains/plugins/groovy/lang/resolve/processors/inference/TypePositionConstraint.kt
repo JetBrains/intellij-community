@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
 import com.intellij.psi.PsiElement
@@ -18,7 +18,7 @@ class TypePositionConstraint(
         if (!extension.isApplicableTo(expectedType.position)) {
           continue
         }
-        val reduced = extension.reduceTypeConstraint(expectedType.type, rightType, expectedType.position)
+        val reduced = extension.reduceTypeConstraint(expectedType.type, rightType, expectedType.position, context)
         if (reduced != null) {
           constraints += reduced
           return true
