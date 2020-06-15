@@ -1,29 +1,29 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io.jsonRpc
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.SimpleTimer
-import gnu.trove.THashSet
-import gnu.trove.TObjectProcedure
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
 import io.netty.util.AttributeKey
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.io.webSocket.WebSocketServerOptions
+import java.util.function.Consumer
+import java.util.function.Predicate
 
 internal val CLIENT = AttributeKey.valueOf<Client>("SocketHandler.client")
 
 class ClientManager(private val listener: ClientListener?, val exceptionHandler: ExceptionHandler, options: WebSocketServerOptions? = null) : Disposable {
   private val heartbeatTimer = SimpleTimer.getInstance().setUp({
-    forEachClient(TObjectProcedure {
-      if (it.channel.isActive) {
-        it.sendHeartbeat()
-      }
-      true
-    })
+                                                                 forEachClient(Consumer {
+                                                                   if (it.channel.isActive) {
+                                                                     it.sendHeartbeat()
+                                                                   }
+                                                                 })
   }, (options ?: WebSocketServerOptions()).heartbeatDelay.toLong())
 
-  private val clients = THashSet<Client>()
+  private val clients = ObjectOpenHashSet<Client>()
 
   fun addClient(client: Client) {
     synchronized (clients) {
@@ -48,10 +48,10 @@ class ClientManager(private val listener: ClientListener?, val exceptionHandler:
   }
 
   fun <T> send(messageId: Int, message: ByteBuf, results: MutableList<Promise<Pair<Client, T>>>? = null) {
-    forEachClient(object : TObjectProcedure<Client> {
+    forEachClient(object : Consumer<Client> {
       private var first: Boolean = false
 
-      override fun execute(client: Client): Boolean {
+      override fun accept(client: Client) {
         try {
           val result = client.send<Pair<Client, T>>(messageId, if (first) message else message.duplicate())
           first = false
@@ -60,7 +60,6 @@ class ClientManager(private val listener: ClientListener?, val exceptionHandler:
         catch (e: Throwable) {
           exceptionHandler.exceptionCaught(e)
         }
-        return true
       }
     })
   }
@@ -87,9 +86,17 @@ class ClientManager(private val listener: ClientListener?, val exceptionHandler:
     return true
   }
 
-  fun forEachClient(procedure: TObjectProcedure<Client>) {
+  private fun forEachClient(procedure: Consumer<Client>) {
     synchronized (clients) {
-      clients.forEach(procedure)
+      for (client in clients) {
+        procedure.accept(client)
+      }
+    }
+  }
+
+  fun findClient(predicate: Predicate<Client>): Client? {
+    synchronized (clients) {
+      return clients.firstOrNull { predicate.test(it) }
     }
   }
 }

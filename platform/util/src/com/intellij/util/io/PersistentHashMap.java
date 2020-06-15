@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -576,7 +576,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
     return values;
   }
 
-  public final boolean processKeysWithExistingMapping(Processor<? super Key> processor) throws IOException {
+  public final boolean processKeysWithExistingMapping(@NotNull Processor<? super Key> processor) throws IOException {
     synchronized (getDataAccessLock()) {
       try {
         if (myAppendCache != null) {
