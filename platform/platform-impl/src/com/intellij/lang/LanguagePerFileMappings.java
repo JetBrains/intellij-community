@@ -18,21 +18,21 @@ package com.intellij.lang;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 /**
  * @author peter
  */
 public abstract class LanguagePerFileMappings<T> extends PerFileMappingsBase<T> implements PerFileMappings<T> {
 
-  private final Project myProject;
-
   public LanguagePerFileMappings(@NotNull Project project) {
-    myProject = project;
+    super(project);
   }
 
   @Override
   @NotNull
   protected Project getProject() {
-    return myProject;
+    return Objects.requireNonNull(super.getProject());
   }
 
   @Override

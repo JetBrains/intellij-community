@@ -41,10 +41,16 @@ import java.util.*;
  * @author gregsh
  */
 public abstract class PerFileMappingsBase<T> implements PersistentStateComponent<Element>, PerFileMappings<T>, Disposable {
+  private final Project myProject;
   private List<PerFileMappingState> myDeferredMappings;
   private final Map<VirtualFile, T> myMappings = new HashMap<>();
 
   public PerFileMappingsBase() {
+    this(null);
+  }
+
+  public PerFileMappingsBase(@Nullable Project project) {
+    myProject = project;
     installDeleteUndo();
   }
 
@@ -58,7 +64,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   }
 
   @Nullable
-  protected Project getProject() { return null; }
+  protected Project getProject() { return myProject; }
 
   @NotNull
   @Override
