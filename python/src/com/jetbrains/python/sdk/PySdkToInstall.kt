@@ -77,22 +77,22 @@ private fun getPy38ToInstallOnWindows(): PySdkToInstallOnWindows {
     PySdkToInstallOnWindows(
       name,
       version,
-      "https://www.python.org/ftp/python/3.8.2/python-3.8.2.exe",
-      26481424,
-      "6f0ba59c7dbeba7bb0ee21682fe39748",
+      "https://www.python.org/ftp/python/3.8.3/python-3.8.3.exe",
+      26744744,
+      "452373e2c467c14220efeb10f40c231f",
       hashFunction,
-      "python-3.8.2.exe"
+      "python-3.8.3.exe"
     )
   }
   else {
     PySdkToInstallOnWindows(
       name,
       version,
-      "https://www.python.org/ftp/python/3.8.2/python-3.8.2-amd64.exe",
-      27586384,
-      "b5df1cbb2bc152cd70c3da9151cb510b",
+      "https://www.python.org/ftp/python/3.8.3/python-3.8.3-amd64.exe",
+      27805800,
+      "fd2458fa0e9ead1dd9fbc2370a42853b",
       hashFunction,
-      "python-3.8.2-amd64.exe"
+      "python-3.8.3-amd64.exe"
     )
   }
 }
