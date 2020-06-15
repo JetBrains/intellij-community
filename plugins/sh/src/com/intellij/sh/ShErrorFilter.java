@@ -17,6 +17,7 @@ public class ShErrorFilter extends HighlightErrorFilter implements HighlightInfo
   @Override
   public boolean shouldHighlightErrorElement(@NotNull PsiErrorElement element) {
     if (ApplicationManager.getApplication().isInternal()) return true;
+    if (!ShSupport.getInstance().isErrorFilterEnabled()) return true;
     return !(element.getContainingFile() instanceof ShFile);
   }
 
@@ -25,6 +26,7 @@ public class ShErrorFilter extends HighlightErrorFilter implements HighlightInfo
     if (ApplicationManager.getApplication().isInternal()) return true;
     if (UpdateHighlightersUtil.isFileLevelOrGutterAnnotation(highlightInfo)) return true;
     if (!(file instanceof ShFile)) return true;
+    if (!ShSupport.getInstance().isErrorFilterEnabled()) return true;
     return highlightInfo.getSeverity().compareTo(HighlightSeverity.WARNING) < 0;
   }
 }
