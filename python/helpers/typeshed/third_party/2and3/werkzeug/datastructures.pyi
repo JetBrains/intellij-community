@@ -13,7 +13,6 @@ from typing import (
     MutableSet,
     NoReturn,
     Optional,
-    Protocol,
     Text,
     Tuple,
     Type,
@@ -21,6 +20,7 @@ from typing import (
     Union,
     overload,
 )
+from _typeshed import SupportsWrite
 
 _K = TypeVar("_K")
 _V = TypeVar("_V")
@@ -428,9 +428,6 @@ class WWWAuthenticate(UpdateDictMixin, Dict[str, Any]):
     qop: Any
     stale: Any
 
-class _Writer(Protocol):
-    def write(self, data: bytes) -> Any: ...
-
 class FileStorage(object):
     name: Optional[Text]
     stream: IO[bytes]
@@ -453,7 +450,7 @@ class FileStorage(object):
     def mimetype(self) -> str: ...
     @property
     def mimetype_params(self) -> Dict[str, str]: ...
-    def save(self, dst: Union[Text, _Writer], buffer_size: int = ...): ...
+    def save(self, dst: Union[Text, SupportsWrite[bytes]], buffer_size: int = ...): ...
     def close(self) -> None: ...
     def __nonzero__(self) -> bool: ...
     def __bool__(self) -> bool: ...

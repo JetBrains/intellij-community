@@ -1,13 +1,8 @@
-
-import sys
 import contextvars
 from typing import List, Tuple, Callable, Sequence
-from . import futures
+from typing_extensions import Literal
 
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
+from . import futures
 
 _PENDING: Literal["PENDING"]  # undocumented
 _CANCELLED: Literal["CANCELLED"]  # undocumented

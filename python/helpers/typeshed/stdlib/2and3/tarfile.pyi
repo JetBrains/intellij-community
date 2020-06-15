@@ -1,19 +1,10 @@
-# Stubs for tarfile
-
 from typing import (
     Callable, IO, Iterable, Iterator, List, Mapping, Optional, Type,
     Union, Tuple, Dict, Set
 )
-import os
 import sys
+from _typeshed import AnyPath
 from types import TracebackType
-
-if sys.version_info >= (3, 6):
-    _Path = Union[bytes, str, os.PathLike]
-elif sys.version_info >= (3,):
-    _Path = Union[bytes, str]
-else:
-    _Path = Union[str, unicode]
 
 # tar constants
 NUL: bytes
@@ -67,7 +58,7 @@ if sys.version_info < (3,):
     TAR_PLAIN: int
     TAR_GZIPPED: int
 
-def open(name: Optional[_Path] = ..., mode: str = ...,
+def open(name: Optional[AnyPath] = ..., mode: str = ...,
          fileobj: Optional[IO[bytes]] = ..., bufsize: int = ...,
          *, format: Optional[int] = ..., tarinfo: Optional[TarInfo] = ...,
          dereference: Optional[bool] = ...,
@@ -79,7 +70,7 @@ def open(name: Optional[_Path] = ..., mode: str = ...,
          compresslevel: Optional[int] = ...) -> TarFile: ...
 
 class TarFile(Iterable[TarInfo]):
-    name: Optional[_Path]
+    name: Optional[AnyPath]
     mode: str
     fileobj: Optional[IO[bytes]]
     format: Optional[int]
@@ -93,7 +84,7 @@ class TarFile(Iterable[TarInfo]):
     errorlevel: Optional[int]
     if sys.version_info < (3,):
         posix: bool
-    def __init__(self, name: Optional[_Path] = ..., mode: str = ...,
+    def __init__(self, name: Optional[AnyPath] = ..., mode: str = ...,
                  fileobj: Optional[IO[bytes]] = ...,
                  format: Optional[int] = ..., tarinfo: Optional[TarInfo] = ...,
                  dereference: Optional[bool] = ...,
@@ -110,7 +101,7 @@ class TarFile(Iterable[TarInfo]):
                  exc_tb: Optional[TracebackType]) -> None: ...
     def __iter__(self) -> Iterator[TarInfo]: ...
     @classmethod
-    def open(cls, name: Optional[_Path] = ..., mode: str = ...,
+    def open(cls, name: Optional[AnyPath] = ..., mode: str = ...,
              fileobj: Optional[IO[bytes]] = ..., bufsize: int = ...,
              *, format: Optional[int] = ..., tarinfo: Optional[TarInfo] = ...,
              dereference: Optional[bool] = ...,
@@ -129,33 +120,33 @@ class TarFile(Iterable[TarInfo]):
         def list(self, verbose: bool = ...) -> None: ...
     def next(self) -> Optional[TarInfo]: ...
     if sys.version_info >= (3, 5):
-        def extractall(self, path: _Path = ...,
+        def extractall(self, path: AnyPath = ...,
                        members: Optional[List[TarInfo]] = ...,
                        *, numeric_owner: bool = ...) -> None: ...
     else:
-        def extractall(self, path: _Path = ...,
+        def extractall(self, path: AnyPath = ...,
                        members: Optional[List[TarInfo]] = ...) -> None: ...
     if sys.version_info >= (3, 5):
-        def extract(self, member: Union[str, TarInfo], path: _Path = ...,
+        def extract(self, member: Union[str, TarInfo], path: AnyPath = ...,
                     set_attrs: bool = ...,
                     *, numeric_owner: bool = ...) -> None: ...
     else:
         def extract(self, member: Union[str, TarInfo],
-                    path: _Path = ...) -> None: ...
+                    path: AnyPath = ...) -> None: ...
     def extractfile(self,
                     member: Union[str, TarInfo]) -> Optional[IO[bytes]]: ...
-    def makedir(self, tarinfo: TarInfo, targetpath: _Path) -> None: ...  # undocumented
-    def makefile(self, tarinfo: TarInfo, targetpath: _Path) -> None: ...  # undocumented
-    def makeunknown(self, tarinfo: TarInfo, targetpath: _Path) -> None: ...  # undocumented
-    def makefifo(self, tarinfo: TarInfo, targetpath: _Path) -> None: ...  # undocumented
-    def makedev(self, tarinfo: TarInfo, targetpath: _Path) -> None: ...  # undocumented
-    def makelink(self, tarinfo: TarInfo, targetpath: _Path) -> None: ...  # undocumented
+    def makedir(self, tarinfo: TarInfo, targetpath: AnyPath) -> None: ...  # undocumented
+    def makefile(self, tarinfo: TarInfo, targetpath: AnyPath) -> None: ...  # undocumented
+    def makeunknown(self, tarinfo: TarInfo, targetpath: AnyPath) -> None: ...  # undocumented
+    def makefifo(self, tarinfo: TarInfo, targetpath: AnyPath) -> None: ...  # undocumented
+    def makedev(self, tarinfo: TarInfo, targetpath: AnyPath) -> None: ...  # undocumented
+    def makelink(self, tarinfo: TarInfo, targetpath: AnyPath) -> None: ...  # undocumented
     if sys.version_info >= (3, 5):
-        def chown(self, tarinfo: TarInfo, targetpath: _Path, numeric_owner: bool) -> None: ...  # undocumented
+        def chown(self, tarinfo: TarInfo, targetpath: AnyPath, numeric_owner: bool) -> None: ...  # undocumented
     else:
-        def chown(self, tarinfo: TarInfo, targetpath: _Path) -> None: ...  # undocumented
-    def chmod(self, tarinfo: TarInfo, targetpath: _Path) -> None: ...  # undocumented
-    def utime(self, tarinfo: TarInfo, targetpath: _Path) -> None: ...  # undocumented
+        def chown(self, tarinfo: TarInfo, targetpath: AnyPath) -> None: ...  # undocumented
+    def chmod(self, tarinfo: TarInfo, targetpath: AnyPath) -> None: ...  # undocumented
+    def utime(self, tarinfo: TarInfo, targetpath: AnyPath) -> None: ...  # undocumented
     if sys.version_info >= (3, 7):
         def add(self, name: str, arcname: Optional[str] = ...,
                 recursive: bool = ..., *,
@@ -178,9 +169,9 @@ class TarFile(Iterable[TarInfo]):
     def close(self) -> None: ...
 
 if sys.version_info >= (3, 9):
-    def is_tarfile(name: Union[_Path, IO[bytes]]) -> bool: ...
+    def is_tarfile(name: Union[AnyPath, IO[bytes]]) -> bool: ...
 else:
-    def is_tarfile(name: _Path) -> bool: ...
+    def is_tarfile(name: AnyPath) -> bool: ...
 
 if sys.version_info < (3, 8):
     def filemode(mode: int) -> str: ...  # undocumented

@@ -1,5 +1,5 @@
 from typing import Iterable, Optional
-from wsgiref.types import StartResponse, WSGIApplication, WSGIEnvironment
+from _typeshed.wsgi import StartResponse, WSGIApplication, WSGIEnvironment
 
 class ProxyFix(object):
     app: WSGIApplication

@@ -4,7 +4,7 @@ _dummy_threading
 _importlib_modulespec
 _operator.methodcaller
 _threading_local.local.__new__
-_types
+_typeshed.*  # Utility types for typeshed, doesn't exist at runtime
 _weakref.CallableProxyType.__getattr__
 _weakref.ProxyType.__getattr__
 _weakref.ReferenceType.__call__
@@ -12,8 +12,7 @@ abc.ABCMeta.__new__
 abc.abstractclassmethod
 abc.abstractmethod
 abc.abstractstaticmethod
-argparse.ArgumentError.__init__
-argparse.Namespace.__getattr__
+argparse.Namespace.__getattr__  # The whole point of this class is its attributes are dynamic
 asyncio.BaseEventLoop.subprocess_exec
 asyncio.Condition.acquire
 asyncio.Condition.locked
@@ -130,17 +129,7 @@ concurrent.futures.Executor.map
 concurrent.futures._base.Executor.map
 concurrent.futures.ProcessPoolExecutor.map
 concurrent.futures.process.ProcessPoolExecutor.map
-configparser.DuplicateOptionError.__init__
-configparser.DuplicateSectionError.__init__
-configparser.Error.__init__
-configparser.InterpolationDepthError.__init__
-configparser.InterpolationError.__init__
-configparser.InterpolationMissingOptionError.__init__
 configparser.LegacyInterpolation.before_get
-configparser.MissingSectionHeaderError.__init__
-configparser.NoOptionError.__init__
-configparser.NoSectionError.__init__
-configparser.ParsingError.__init__
 configparser.SectionProxy.__getattr__
 configparser.SectionProxy.getboolean
 configparser.SectionProxy.getfloat
@@ -162,7 +151,6 @@ ctypes.pointer
 ctypes.string_at
 ctypes.wstring_at
 dbm.error
-dbm.ndbm
 difflib.SequenceMatcher.__init__
 distutils.archive_util.make_archive
 distutils.archive_util.make_tarball
@@ -292,24 +280,6 @@ lib2to3.pytree.BasePattern.__new__
 lib2to3.pytree.BasePattern.type
 lib2to3.pytree.NegatedPattern.match
 lib2to3.pytree.NegatedPattern.match_seq
-logging.Formatter.formatException
-logging.Handler.addFilter
-logging.Handler.removeFilter
-logging.Logger.addFilter
-logging.Logger.removeFilter
-logging.LoggerAdapter.isEnabledFor
-logging.LoggerAdapter.setLevel
-logging.RootLogger.__init__
-logging.addLevelName
-logging.disable
-logging.getLevelName
-logging.handlers.DatagramHandler.send
-logging.handlers.NTEventLogHandler.__init__
-logging.handlers.SocketHandler.makeSocket
-logging.handlers.SocketHandler.send
-logging.handlers.SysLogHandler.__init__
-logging.makeLogRecord
-logging.shutdown
 mailbox.Babyl.__init__
 mailbox.MH.__init__
 mailbox.MMDF.__init__
@@ -541,6 +511,8 @@ typing.[A-Z]\w+
 # We can't distinguish not having a default value from having a default value of inspect.Parameter.empty
 inspect.Parameter.__init__
 inspect.Signature.__init__
+# Any field can be set on Namespace
+multiprocessing.(dummy|managers).Namespace.__[gs]etattr__
 os.[a-z]+_(param|result)._(asdict|make|replace)  # NamedTuple like, but not actually NamedTuples
 # sys attributes that are not always defined
 sys.last_traceback

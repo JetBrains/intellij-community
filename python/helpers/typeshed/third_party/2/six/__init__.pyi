@@ -1,5 +1,3 @@
-# Stubs for six (Python 2.7)
-
 from __future__ import print_function
 
 import types
@@ -10,7 +8,6 @@ from typing import (
 import typing
 import unittest
 
-# Exports
 from __builtin__ import unichr as unichr
 from StringIO import StringIO as StringIO, StringIO as BytesIO
 from functools import wraps as wraps

@@ -1,4 +1,4 @@
-from .utilities import BadRequest, logger, undquote
+from .utilities import BadRequest
 from collections import namedtuple
 from logging import Logger
 from typing import Any, Callable, Mapping, Sequence, Optional, Set

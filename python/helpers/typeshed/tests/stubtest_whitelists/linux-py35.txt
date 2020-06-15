@@ -1,8 +1,5 @@
 asyncio.unix_events._UnixSelectorEventLoop.create_unix_server
 pwd.getpwnam
 socket.NETLINK_CRYPTO
-site.getsitepackages
-site.getuserbase
-site.getusersitepackages
 ssl.PROTOCOL_SSLv3
 ssl.RAND_egd

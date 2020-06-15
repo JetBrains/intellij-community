@@ -1,6 +1,6 @@
 # Stubs for hmac
 
-from typing import Any, Callable, Optional, Union, overload, AnyStr, overload
+from typing import Any, AnyStr, Callable, Optional, Union, overload
 from types import ModuleType
 import sys
 

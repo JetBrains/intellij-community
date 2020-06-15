@@ -1,7 +1,5 @@
-import io
 import sys
-from typing import Union, Protocol
-from _types import FileDescriptorLike
+from _typeshed import FileDescriptorLike
 
 def cancel_dump_traceback_later() -> None: ...
 def disable() -> None: ...

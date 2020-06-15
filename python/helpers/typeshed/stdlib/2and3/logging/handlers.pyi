@@ -1,5 +1,4 @@
-# Stubs for logging.handlers (Python 2.4)
-
+from _typeshed import StrPath
 import datetime
 from logging import Handler, FileHandler, LogRecord
 from socket import SocketType
@@ -15,11 +14,6 @@ else:
 
 # TODO update socket stubs to add SocketKind
 _SocketKind = int
-if sys.version_info >= (3, 6):
-    from os import PathLike
-    _Path = Union[str, PathLike[str]]
-else:
-    _Path = str
 
 DEFAULT_TCP_LOGGING_PORT: int
 DEFAULT_UDP_LOGGING_PORT: int
@@ -31,7 +25,7 @@ SYSLOG_TCP_PORT: int
 class WatchedFileHandler(FileHandler):
     dev: int
     ino: int
-    def __init__(self, filename: _Path, mode: str = ..., encoding: Optional[str] = ...,
+    def __init__(self, filename: StrPath, mode: str = ..., encoding: Optional[str] = ...,
                  delay: bool = ...) -> None: ...
     def _statstream(self) -> None: ...
 
@@ -41,7 +35,7 @@ if sys.version_info >= (3,):
         terminator: str
         namer: Optional[Callable[[str], str]]
         rotator: Optional[Callable[[str, str], None]]
-        def __init__(self, filename: _Path, mode: str,
+        def __init__(self, filename: StrPath, mode: str,
                      encoding: Optional[str] = ...,
                      delay: bool = ...) -> None: ...
         def rotation_filename(self, default_name: str) -> None: ...
@@ -50,7 +44,7 @@ if sys.version_info >= (3,):
 
 if sys.version_info >= (3,):
     class RotatingFileHandler(BaseRotatingHandler):
-        def __init__(self, filename: _Path, mode: str = ..., maxBytes: int = ...,
+        def __init__(self, filename: StrPath, mode: str = ..., maxBytes: int = ...,
                      backupCount: int = ..., encoding: Optional[str] = ...,
                      delay: bool = ...) -> None: ...
         def doRollover(self) -> None: ...
@@ -65,7 +59,7 @@ else:
 if sys.version_info >= (3,):
     class TimedRotatingFileHandler(BaseRotatingHandler):
         if sys.version_info >= (3, 4):
-            def __init__(self, filename: _Path, when: str = ...,
+            def __init__(self, filename: StrPath, when: str = ...,
                          interval: int = ...,
                          backupCount: int = ..., encoding: Optional[str] = ...,
                          delay: bool = ..., utc: bool = ...,
@@ -93,13 +87,14 @@ class SocketHandler(Handler):
         def __init__(self, host: str, port: Optional[int]) -> None: ...
     else:
         def __init__(self, host: str, port: int) -> None: ...
-    def makeSocket(self) -> SocketType: ...
+    def makeSocket(self, timeout: float = ...) -> SocketType: ...  # timeout is undocumented
     def makePickle(self, record: LogRecord) -> bytes: ...
-    def send(self, packet: bytes) -> None: ...
+    def send(self, s: bytes) -> None: ...
     def createSocket(self) -> None: ...
 
 
-class DatagramHandler(SocketHandler): ...
+class DatagramHandler(SocketHandler):
+    def makeSocket(self) -> SocketType: ...  # type: ignore
 
 
 class SysLogHandler(Handler):
@@ -132,14 +127,14 @@ class SysLogHandler(Handler):
     LOG_LOCAL6: int
     LOG_LOCAL7: int
     def __init__(self, address: Union[Tuple[str, int], str] = ...,
-                 facility: int = ..., socktype: _SocketKind = ...) -> None: ...
+                 facility: int = ..., socktype: Optional[_SocketKind] = ...) -> None: ...
     def encodePriority(self, facility: Union[int, str],
                        priority: Union[int, str]) -> int: ...
     def mapPriority(self, levelName: str) -> str: ...
 
 
 class NTEventLogHandler(Handler):
-    def __init__(self, appname: str, dllname: str = ...,
+    def __init__(self, appname: str, dllname: Optional[str] = ...,
                  logtype: str = ...) -> None: ...
     def getEventCategory(self, record: LogRecord) -> int: ...
     # TODO correct return value?
@@ -170,8 +165,12 @@ class BufferingHandler(Handler):
     def shouldFlush(self, record: LogRecord) -> bool: ...
 
 class MemoryHandler(BufferingHandler):
-    def __init__(self, capacity: int, flushLevel: int = ...,
-                 target: Optional[Handler] = ...) -> None: ...
+    if sys.version_info >= (3, 6):
+        def __init__(self, capacity: int, flushLevel: int = ...,
+                     target: Optional[Handler] = ..., flushOnClose: bool = ...) -> None: ...
+    else:
+        def __init__(self, capacity: int, flushLevel: int = ...,
+                     target: Optional[Handler] = ...) -> None: ...
     def setTarget(self, target: Handler) -> None: ...
 
 

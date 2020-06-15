@@ -1,15 +1,10 @@
 from profile import Profile
 from cProfile import Profile as _cProfile
-import os
-import sys
+from _typeshed import AnyPath
 from typing import Any, Dict, IO, Iterable, List, Optional, Text, Tuple, TypeVar, Union, overload
 
 _Selector = Union[str, float, int]
 _T = TypeVar('_T', bound=Stats)
-if sys.version_info >= (3, 6):
-    _Path = Union[bytes, Text, os.PathLike[Any]]
-else:
-    _Path = Union[bytes, Text]
 
 class Stats:
     sort_arg_dict_default: Dict[str, Tuple[Any, str]]
@@ -20,7 +15,7 @@ class Stats:
     def load_stats(self, arg: Union[None, str, Text, Profile, _cProfile]) -> None: ...
     def get_top_level_stats(self) -> None: ...
     def add(self: _T, *arg_list: Union[None, str, Text, Profile, _cProfile, _T]) -> _T: ...
-    def dump_stats(self, filename: _Path) -> None: ...
+    def dump_stats(self, filename: AnyPath) -> None: ...
     def get_sort_arg_defs(self) -> Dict[str, Tuple[Tuple[Tuple[int, int], ...], str]]: ...
     @overload
     def sort_stats(self: _T, field: int) -> _T: ...

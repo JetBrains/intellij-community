@@ -3,7 +3,8 @@ from datetime import datetime
 from typing import (
     Any, Callable, Iterable, Iterator, Mapping, MutableMapping, Optional, Sequence, Text, Tuple, Type, TypeVar, Union, overload
 )
-from wsgiref.types import WSGIEnvironment, InputStream
+from typing_extensions import Literal
+from _typeshed.wsgi import WSGIEnvironment, InputStream
 
 from .datastructures import (
     Authorization, CombinedMultiDict, EnvironHeaders, Headers, ImmutableMultiDict,
@@ -11,11 +12,6 @@ from .datastructures import (
     Accept, MIMEAccept, CharsetAccept, LanguageAccept,
 )
 from .useragents import UserAgent
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
 
 class BaseRequest:
     charset: str

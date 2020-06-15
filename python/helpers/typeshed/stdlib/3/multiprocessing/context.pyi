@@ -1,17 +1,11 @@
-# Stubs for multiprocessing.context
-
 from logging import Logger
 import multiprocessing
 from multiprocessing import synchronize
 from multiprocessing import queues
 from multiprocessing.process import BaseProcess
 import sys
-from typing import Any, Callable, Iterable, Optional, List, Mapping, Sequence, Type, Union, overload
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
+from typing import Any, Callable, Iterable, Optional, List, Sequence, Type, Union, overload
+from typing_extensions import Literal
 
 _LockLike = Union[synchronize.Lock, synchronize.RLock]
 

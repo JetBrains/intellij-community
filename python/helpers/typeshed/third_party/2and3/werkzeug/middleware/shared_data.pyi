@@ -1,6 +1,6 @@
 import datetime
 from typing import Callable, IO, Iterable, List, Mapping, Optional, Text, Tuple, Union
-from wsgiref.types import StartResponse, WSGIApplication, WSGIEnvironment
+from _typeshed.wsgi import StartResponse, WSGIApplication, WSGIEnvironment
 
 _V = Union[Tuple[Text, Text], Text]
 

@@ -1,8 +1,6 @@
-# Stubs for plistlib
-
 from typing import (
     Any, IO, Mapping, MutableMapping, Optional, overload, Union,
-    Type, TypeVar,
+    Type, TypeVar, Text
 )
 from typing import Dict as DictT
 import sys
@@ -17,10 +15,7 @@ if sys.version_info >= (3,):
 
 mm = MutableMapping[str, Any]
 _D = TypeVar('_D', bound=mm)
-if sys.version_info >= (3,):
-    _Path = str
-else:
-    _Path = Union[str, unicode]
+_Path = Union[str, Text]
 
 if sys.version_info >= (3, 9):
     @overload

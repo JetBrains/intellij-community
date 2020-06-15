@@ -1,19 +1,8 @@
-import sys
 from socket import socket
-from typing import Any, Mapping, Optional, Union
+from typing import Any, Mapping, Optional
+from typing_extensions import Literal
 
 from . import base_events, constants, events, futures, streams, transports
-
-if sys.version_info >= (3, 7):
-    from os import PathLike
-    _Path = Union[str, PathLike[str]]
-else:
-    _Path = str
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
 
 class _ProactorBasePipeTransport(transports._FlowControlMixin, transports.BaseTransport):
 

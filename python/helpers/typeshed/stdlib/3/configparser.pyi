@@ -1,15 +1,8 @@
-# Based on http://docs.python.org/3.5/library/configparser.html and on
-# reading configparser.py.
-
+from _typeshed import AnyPath, StrPath
 import sys
 from typing import (AbstractSet, MutableMapping, Mapping, Dict, Sequence, List,
                     Union, Iterable, Iterator, Callable, Any, IO, overload,
-                    Optional, Pattern, Type, TypeVar, ClassVar)
-# Types only used in type comments only
-from typing import Optional, Tuple  # noqa
-
-if sys.version_info >= (3, 6):
-    from os import PathLike
+                    Optional, Pattern, Type, TypeVar, ClassVar, Tuple)
 
 # Internal type aliases
 _section = Mapping[str, str]
@@ -19,11 +12,9 @@ _converters = Dict[str, _converter]
 _T = TypeVar('_T')
 
 if sys.version_info >= (3, 7):
-    _Path = Union[str, bytes, PathLike[str]]
-elif sys.version_info >= (3, 6):
-    _Path = Union[str, PathLike[str]]
+    _Path = AnyPath
 else:
-    _Path = str
+    _Path = StrPath
 
 DEFAULTSECT: str
 MAX_INTERPOLATION_DEPTH: int
@@ -190,16 +181,21 @@ class ConverterMapping(MutableMapping[str, Optional[_converter]]):
     def __len__(self) -> int: ...
 
 
-class Error(Exception): ...
+class Error(Exception):
+    message: str
+    def __init__(self, msg: str = ...) -> None: ...
 
 
-class NoSectionError(Error): ...
+class NoSectionError(Error):
+    section: str
+    def __init__(self, section: str) -> None: ...
 
 
 class DuplicateSectionError(Error):
     section: str
     source: Optional[str]
     lineno: Optional[int]
+    def __init__(self, section: str, source: Optional[str] = ..., lineno: Optional[int] = ...) -> None: ...
 
 
 class DuplicateOptionError(Error):
@@ -207,23 +203,28 @@ class DuplicateOptionError(Error):
     option: str
     source: Optional[str]
     lineno: Optional[int]
+    def __init__(self, section: str, option: str, source: Optional[str] = ..., lineno: Optional[str] = ...) -> None: ...
 
 
 class NoOptionError(Error):
     section: str
     option: str
+    def __init__(self, option: str, section: str) -> None: ...
 
 
 class InterpolationError(Error):
     section: str
     option: str
+    def __init__(self, option: str, section: str, msg: str) -> None: ...
 
 
-class InterpolationDepthError(InterpolationError): ...
+class InterpolationDepthError(InterpolationError):
+    def __init__(self, option: str, section: str, rawval: object) -> None: ...
 
 
 class InterpolationMissingOptionError(InterpolationError):
     reference: str
+    def __init__(self, option: str, section: str, rawval: object, reference: str) -> None: ...
 
 
 class InterpolationSyntaxError(InterpolationError): ...
@@ -231,9 +232,12 @@ class InterpolationSyntaxError(InterpolationError): ...
 
 class ParsingError(Error):
     source: str
-    errors: Sequence[Tuple[int, str]]
+    errors: List[Tuple[int, str]]
+    def __init__(self, source: Optional[str] = ..., filename: Optional[str] = ...) -> None: ...
+    def append(self, lineno: int, line: str) -> None: ...
 
 
 class MissingSectionHeaderError(ParsingError):
     lineno: int
     line: str
+    def __init__(self, filename: str, lineno: int, line: str) -> None: ...

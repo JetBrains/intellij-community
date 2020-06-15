@@ -1,4 +1,4 @@
-from io import _OpenBinaryMode, _OpenTextMode
+from _typeshed import OpenBinaryMode, OpenTextMode
 from typing import (Any, BinaryIO, Generator, IO, List, Optional, Sequence,
                     TextIO, Tuple, Type, TypeVar, Union, overload)
 from types import TracebackType
@@ -100,10 +100,10 @@ class Path(PurePath):
         def mkdir(self, mode: int = ..., parents: bool = ...,
                   exist_ok: bool = ...) -> None: ...
     @overload
-    def open(self, mode: _OpenTextMode = ..., buffering: int = ..., encoding: Optional[str] = ..., errors: Optional[str] = ...,
+    def open(self, mode: OpenTextMode = ..., buffering: int = ..., encoding: Optional[str] = ..., errors: Optional[str] = ...,
              newline: Optional[str] = ...) -> TextIO: ...
     @overload
-    def open(self, mode: _OpenBinaryMode, buffering: int = ..., encoding: None = ..., errors: None = ...,
+    def open(self, mode: OpenBinaryMode, buffering: int = ..., encoding: None = ..., errors: None = ...,
              newline: None = ...) -> BinaryIO: ...
     @overload
     def open(self, mode: str, buffering: int = ..., encoding: Optional[str] = ..., errors: Optional[str] = ...,

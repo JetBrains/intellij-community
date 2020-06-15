@@ -1,5 +1,3 @@
-# Stubs for xml.etree.ElementTree
-
 from typing import (
     Any,
     Callable,
@@ -13,7 +11,6 @@ from typing import (
     List,
     MutableSequence,
     Optional,
-    Protocol,
     Sequence,
     Text,
     Tuple,
@@ -21,13 +18,9 @@ from typing import (
     Union,
     overload,
 )
-import io
+from _typeshed import AnyPath, FileDescriptor, SupportsWrite
 import sys
-
-if sys.version_info < (3,) or sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
+from typing_extensions import Literal
 
 VERSION: str
 
@@ -63,16 +56,9 @@ else:
     # _fixtext function in the source). Client code knows best:
     _str_result_type = Any
 
-if sys.version_info >= (3, 6):
-    from os import PathLike
-    _file_or_filename = Union[str, bytes, PathLike[str], int, IO[Any]]
-else:
-    _file_or_filename = Union[str, bytes, int, IO[Any]]
+_file_or_filename = Union[AnyPath, FileDescriptor, IO[Any]]
 
 if sys.version_info >= (3, 8):
-    class _Writeable(Protocol):
-        def write(self, __s: str) -> Any: ...
-
     @overload
     def canonicalize(
         xml_data: Optional[_parser_input_type] = ...,
@@ -91,7 +77,7 @@ if sys.version_info >= (3, 8):
     def canonicalize(
         xml_data: Optional[_parser_input_type] = ...,
         *,
-        out: _Writeable,
+        out: SupportsWrite[str],
         from_file: Optional[_file_or_filename] = ...,
         with_comments: bool = ...,
         strip_text: bool = ...,

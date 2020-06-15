@@ -1,7 +1,7 @@
 import datetime
 from typing import Any, Dict, Tuple, List, Text, NoReturn, Optional, Protocol, Type, Union, Iterable
 
-from wsgiref.types import WSGIEnvironment, StartResponse
+from _typeshed.wsgi import WSGIEnvironment, StartResponse
 from werkzeug.wrappers import Response
 
 class _EnvironContainer(Protocol):
@@ -147,6 +147,12 @@ class UnavailableForLegalReasons(HTTPException):
     description: Text
 
 class InternalServerError(HTTPException):
+    def __init__(
+        self,
+        description: Optional[Text] = ...,
+        response: Optional[Response] = ...,
+        original_exception: Optional[Exception] = ...,
+    ) -> None: ...
     code: int
     description: Text
 

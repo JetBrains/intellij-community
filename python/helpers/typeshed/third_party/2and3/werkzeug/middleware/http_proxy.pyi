@@ -1,5 +1,5 @@
 from typing import Any, Dict, Iterable, Mapping, MutableMapping, Text
-from wsgiref.types import StartResponse, WSGIApplication, WSGIEnvironment
+from _typeshed.wsgi import StartResponse, WSGIApplication, WSGIEnvironment
 
 _Opts = Mapping[Text, Any]
 _MutableOpts = MutableMapping[Text, Any]

@@ -1,5 +1,5 @@
 import sys
-from wsgiref.types import WSGIEnvironment
+from _typeshed.wsgi import WSGIEnvironment
 from typing import Any, Generic, Optional, Text, Tuple, Type, TypeVar, overload
 from typing_extensions import Literal
 

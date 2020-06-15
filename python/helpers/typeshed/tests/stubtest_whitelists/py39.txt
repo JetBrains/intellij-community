@@ -3,8 +3,6 @@ _dummy_thread
 _thread.ExceptHookArgs
 _thread._ExceptHookArgs
 _weakref.getweakrefcount
-array.array.fromstring
-array.array.tostring
 ast.Bytes.__new__
 ast.Ellipsis.__new__
 ast.ExtSlice.__new__
@@ -17,11 +15,7 @@ asyncio.AbstractEventLoop.sock_sendfile
 asyncio.compat  # removed in 3.7
 asyncio.Future.__init__
 asyncio.Future._callbacks
-asyncio.Handle.__init__
-asyncio.TimerHandle.__init__
 asyncio.events.AbstractEventLoop.sock_sendfile
-asyncio.events.Handle.__init__
-asyncio.events.TimerHandle.__init__
 asyncio.futures.Future.__init__
 asyncio.futures.Future._callbacks
 asyncio.proactor_events._ProactorBasePipeTransport.__del__
@@ -35,7 +29,6 @@ bz2.BZ2File.read
 bz2.BZ2File.read1
 bz2.BZ2File.readline
 bz2.BZ2File.seek
-cProfile.Profile.runcall
 codecs.lookup
 codecs.lookup_error
 codecs.register
@@ -115,7 +108,6 @@ ipaddress._BaseNetwork.hostmask
 itertools.tee
 logging.FileHandler.__init__
 logging.handlers.BaseRotatingHandler.__init__
-logging.handlers.MemoryHandler.__init__
 logging.handlers.RotatingFileHandler.__init__
 logging.handlers.TimedRotatingFileHandler.__init__
 logging.handlers.WatchedFileHandler.__init__
@@ -160,7 +152,6 @@ platform.DEV_NULL
 platform.uname_result.__new__
 platform.uname_result._fields
 platform.uname_result.processor
-profile.Profile.runcall
 pwd.getpwnam
 pwd.getpwuid
 queue.SimpleQueue.__init__
@@ -181,8 +172,6 @@ sys.UnraisableHookArgs
 threading.ExceptHookArgs
 time.CLOCK_PROF
 time.CLOCK_UPTIME
-tkinter.Menu.tk_bindForTraversal
-tkinter.Misc.tk_menuBar
 trace.Trace.runfunc
 types.ClassMethodDescriptorType.__get__
 types.CodeType.replace

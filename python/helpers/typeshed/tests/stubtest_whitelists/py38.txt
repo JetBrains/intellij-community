@@ -9,11 +9,7 @@ asyncio.AbstractEventLoop.sock_sendfile
 asyncio.compat  # removed in 3.7
 asyncio.Future.__init__
 asyncio.Future._callbacks
-asyncio.Handle.__init__
-asyncio.TimerHandle.__init__
 asyncio.events.AbstractEventLoop.sock_sendfile
-asyncio.events.Handle.__init__
-asyncio.events.TimerHandle.__init__
 asyncio.futures.Future.__init__
 asyncio.futures.Future._callbacks
 asyncio.proactor_events._ProactorBasePipeTransport.__del__
@@ -52,6 +48,7 @@ hmac.new  # Stub is a white lie; see comments in the stub
 http.client.HTTPSConnection.__init__
 http.cookiejar.DefaultCookiePolicy.__init__
 http.server.SimpleHTTPRequestHandler.__init__
+importlib.metadata.DistributionFinder.Context.pattern
 importlib.metadata.EntryPointBase
 inspect.isasyncgenfunction
 inspect.iscoroutinefunction
@@ -60,7 +57,6 @@ ipaddress.IPv4Interface.hostmask
 ipaddress.IPv6Interface.hostmask
 ipaddress._BaseNetwork.broadcast_address
 ipaddress._BaseNetwork.hostmask
-logging.handlers.MemoryHandler.__init__
 macpath
 macurl2path  # removed in 3.7
 mmap.MADV_[A-Z_]+
@@ -80,8 +76,6 @@ ssl.PROTOCOL_SSLv3
 ssl.RAND_egd
 sys.UnraisableHookArgs
 threading.ExceptHookArgs
-tkinter.Menu.tk_bindForTraversal
-tkinter.Misc.tk_menuBar
 types.ClassMethodDescriptorType.__get__
 types.CodeType.replace
 types.MethodDescriptorType.__get__

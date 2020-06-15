@@ -1,10 +1,7 @@
-# Stubs for selector
-# See https://docs.python.org/3/library/selectors.html
-
 import sys
 from abc import ABCMeta, abstractmethod
 from typing import Any, List, Mapping, NamedTuple, Optional, Tuple
-from _types import FileDescriptor, FileDescriptorLike
+from _typeshed import FileDescriptor, FileDescriptorLike
 
 _EventMask = int
 

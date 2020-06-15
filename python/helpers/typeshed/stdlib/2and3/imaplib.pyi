@@ -1,15 +1,10 @@
-import imaplib
 import subprocess
 import sys
 import time
 from socket import socket as _socket
 from ssl import SSLSocket, SSLContext
 from typing import Any, Callable, Dict, IO, List, Optional, Pattern, Text, Tuple, Type, Union
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
+from typing_extensions import Literal
 
 # TODO: Commands should use their actual return types, not this type alias.
 #       E.g. Tuple[Literal["OK"], List[bytes]]
