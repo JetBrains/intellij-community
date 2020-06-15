@@ -48,7 +48,6 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
     CommonParameterFragments<ApplicationConfiguration> commonParameterFragments = new CommonParameterFragments<>(myProject, hasModule);
     fragments.addAll(commonParameterFragments.getFragments());
     fragments.add(CommonJavaFragments.createBuildBeforeRun(beforeRunComponent));
-    fragments.add(CommonJavaFragments.createEnvParameters());
 
     JrePathEditor jrePathEditor = new JrePathEditor();
     setMinimumWidth(jrePathEditor, 100);

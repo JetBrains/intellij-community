@@ -4,6 +4,7 @@ package com.intellij.execution.ui;
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.InputRedirectAware;
+import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
@@ -51,6 +52,7 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
                                                  (settings, component) -> component.getComponent().setText(settings.getWorkingDirectory()),
                                                  (settings, component) -> settings.setWorkingDirectory(component.getComponent().getText()),
                                                  settings -> isNotEmpty(settings.getWorkingDirectory())));
+    myFragments.add(createEnvParameters());
   }
 
   public List<SettingsEditorFragment<Settings, ?>> getFragments() {
@@ -58,7 +60,6 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
   }
 
   public static <S extends InputRedirectAware> SettingsEditorFragment<S, ?> createRedirectFragment(Computable<Boolean> hasModule) {
-
     TextFieldWithBrowseButton inputFile = new TextFieldWithBrowseButton();
     inputFile.addBrowseFolderListener(null, null, null,
                                       FileChooserDescriptorFactory.createSingleFileDescriptor(),
@@ -78,5 +79,13 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
                                             isEmpty(filePath) ? null : FileUtil.toSystemIndependentName(filePath));
                                         },
                                         settings -> isNotEmpty(settings.getInputRedirectOptions().getRedirectInputPath()));
+  }
+
+  public static <S extends CommonProgramRunConfigurationParameters> SettingsEditorFragment<S, ?> createEnvParameters() {
+    EnvironmentVariablesComponent env = new EnvironmentVariablesComponent();
+    env.setLabelLocation(BorderLayout.WEST);
+    return SettingsEditorFragment.create("environmentVariables",
+                                         ExecutionBundle.message("environment.variables.fragment.name"),
+                                         ExecutionBundle.message("group.operating.system"), env);
   }
 }
