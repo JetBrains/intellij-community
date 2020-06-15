@@ -40,6 +40,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -132,7 +133,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
     ClassLoader loader = FileDocumentManagerListener.class.getClassLoader();
     myMultiCaster = (FileDocumentManagerListener)Proxy.newProxyInstance(loader, new Class[]{FileDocumentManagerListener.class}, handler);
 
-    BinaryFileTypeDecompilers.getInstance().addExtensionPointChangeListener(this::clearCachedDocumentsForBinaryFiles, null);
     // remove VirtualFiles sitting in the DocumentImpl.rmTreeQueue reference queue which could retain plugin-registered FS in their VirtualDirectoryImpl.myFs
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
@@ -560,6 +560,16 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
   }
 
   @Override
+  public void reloadBinaryFiles() {
+    for (VirtualFile file : myDocumentCache.keySet()) {
+      if (file.getFileType().isBinary()) {
+        RefreshQueue.getInstance().processSingleEvent(
+          new VFileContentChangeEvent("binary-reload", file, file.getModificationStamp(), -1, false));
+      }
+    }
+  }
+
+  @Override
   public Document @NotNull [] getUnsavedDocuments() {
     if (myUnsavedDocuments.isEmpty()) {
       return Document.EMPTY_ARRAY;
@@ -867,15 +877,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
         reloadFromDisk(document);
       }
     }
-  }
-
-  private void clearCachedDocumentsForBinaryFiles() {
-    myDocumentCache.keySet().forEach(key -> {
-      if (key.getFileType().isBinary()) {
-        key.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
-        removeDocumentFromCache(key);
-      }
-    });
   }
 
   private final Map<VirtualFile, Document> myDocumentCache = ContainerUtil.createConcurrentWeakValueMap();

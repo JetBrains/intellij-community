@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.core.CoreBundle;
@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.SavingRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -155,6 +156,9 @@ public abstract class FileDocumentManager implements SavingRequestor {
    * @param files the files to discard the changes for.
    */
   public abstract void reloadFiles(VirtualFile @NotNull ... files);
+
+  @ApiStatus.Internal
+  public void reloadBinaryFiles() { }
 
   /**
    * Stores the write access status (true if the document has the write access; false otherwise)
