@@ -49,7 +49,8 @@ class GHPRTimelineItemComponentFactory(private val reviewDataProvider: GHPRRevie
         is GHPullRequestReview -> createComponent(item)
 
         is GHPRTimelineEvent -> eventComponentFactory.createComponent(item)
-        else -> throw IllegalStateException("Unknown item type")
+        is GHPRTimelineItem.Unknown -> throw IllegalStateException("Unknown item type: " + item.__typename)
+        else -> error("Undefined item type")
       }
     }
     catch (e: Exception) {
