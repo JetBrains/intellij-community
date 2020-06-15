@@ -27,7 +27,7 @@ class GHPRTimelineMergingModel : AbstractListModel<GHPRTimelineItem>() {
     var added = false
     val hideUnknown = ApplicationManager.getApplication().let { !it.isInternal && !it.isEAP }
     for (item in items) {
-      if (hideUnknown && item is GHPRTimelineItem.Unknown) continue
+      if (item is GHPRTimelineItem.Unknown && (hideUnknown || item.__typename in GHPRTimelineItem.IGNORED_TYPES)) continue
       val merged = mergeIfPossible(lastItem, item)
       if (merged != null) {
         lastItem = merged

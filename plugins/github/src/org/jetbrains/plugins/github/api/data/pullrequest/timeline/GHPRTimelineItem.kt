@@ -15,7 +15,6 @@ PullRequestReview
 
 RenamedTitleEvent
 ClosedEvent | ReopenedEvent | MergedEvent
-ReferencedEvent
 AssignedEvent | UnassignedEvent
 LabeledEvent | UnlabeledEvent
 ReviewRequestedEvent | ReviewRequestRemovedEvent
@@ -50,11 +49,14 @@ DeployedEvent
 DeploymentEnvironmentChangedEvent
 PullRequestReviewThread
 PinnedEvent | UnpinnedEvent
-MentionedEvent
 SubscribedEvent | UnsubscribedEvent
 MilestonedEvent | DemilestonedEvent
 ConnectedEvent | DisconnectedEvent
 AutomaticBaseChangeSucceededEvent | AutomaticBaseChangeFailedEvent
+ */
+/*IGNORE
+ReferencedEvent
+MentionedEvent
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "__typename", visible = true,
               defaultImpl = Unknown::class)
@@ -90,4 +92,8 @@ AutomaticBaseChangeSucceededEvent | AutomaticBaseChangeFailedEvent
 )
 interface GHPRTimelineItem {
   class Unknown(val __typename: String) : GHPRTimelineItem
+
+  companion object {
+    val IGNORED_TYPES = setOf("ReferencedEvent", "MentionedEvent")
+  }
 }
