@@ -240,7 +240,13 @@ class XDebugSessionTab2(
 
       val singleContent = toolWindow.contentManager.contents.singleOrNull()
       val headerVisible = toolWindow.isHeaderVisible
-      val toolbar = DefaultActionGroup().apply {
+      val topRightToolbar = DefaultActionGroup().apply {
+        if (headerVisible) return@apply
+        addAll(toolWindow.decorator.headerToolbar.actions)
+      }
+      myUi.options.setTopRightToolbar(topRightToolbar, ActionPlaces.DEBUGGER_TOOLBAR)
+
+      val topMiddleToolbar = DefaultActionGroup().apply {
         if (singleContent == null || headerVisible) return@apply
 
         add(object : AnAction() {
@@ -249,13 +255,13 @@ class XDebugSessionTab2(
           }
 
           override fun update(e: AnActionEvent) {
-            e.presentation.text = "Close"
+            e.presentation.text = "Close debug session"
             e.presentation.icon = AllIcons.Actions.Close
           }
         })
-        addAll(toolWindow.decorator.headerToolbar.actions)
+        addSeparator()
       }
-      myUi.options.setTopRightToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
+      myUi.options.setTopMiddleToolbar(topMiddleToolbar, ActionPlaces.DEBUGGER_TOOLBAR)
 
       toolWindow.decorator.isHeaderVisible = headerVisible
 

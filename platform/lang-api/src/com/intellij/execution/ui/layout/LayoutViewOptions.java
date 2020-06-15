@@ -22,6 +22,9 @@ public interface LayoutViewOptions {
   LayoutViewOptions setTopLeftToolbar(@NotNull ActionGroup actions, @NotNull String place);
 
   @NotNull
+  LayoutViewOptions setTopMiddleToolbar(@NotNull ActionGroup actions, @NotNull String place);
+
+  @NotNull
   LayoutViewOptions setTopRightToolbar(@NotNull ActionGroup actions, @NotNull String place);
 
   @NotNull
