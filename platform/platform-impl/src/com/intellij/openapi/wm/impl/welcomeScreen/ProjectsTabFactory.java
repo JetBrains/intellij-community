@@ -38,7 +38,7 @@ public class ProjectsTabFactory implements WelcomeTabFactory {
 
   @Override
   public @NotNull WelcomeScreenTab createWelcomeTab(@NotNull Disposable parentDisposable) {
-    return new TabbedWelcomeScreen.DefaultWelcomeScreenTab("Projects") {
+    return new TabbedWelcomeScreen.DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.projects.title")) {
 
       @Override
       protected JComponent buildComponent() {

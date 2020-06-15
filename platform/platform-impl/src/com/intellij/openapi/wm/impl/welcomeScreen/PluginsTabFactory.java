@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,7 +23,7 @@ public class PluginsTabFactory implements WelcomeTabFactory {
 
   @Override
   public @NotNull WelcomeScreenTab createWelcomeTab(@NotNull Disposable parentDisposable) {
-    return new TabbedWelcomeScreen.DefaultWelcomeScreenTab("Plugins") {
+    return new TabbedWelcomeScreen.DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.plugins.title")) {
       @Override
       protected JComponent buildComponent() {
         PluginManagerConfigurable configurable = new PluginManagerConfigurable();

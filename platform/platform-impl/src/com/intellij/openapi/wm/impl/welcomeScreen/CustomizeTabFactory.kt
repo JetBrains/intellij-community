@@ -56,7 +56,7 @@ class CustomizeTabFactory : WelcomeTabFactory {
 private fun getIdeFont() = if (settings.overrideLafFonts) settings.fontSize else JBFont.label().size
 private fun getEditorFont() = fontOptions.getSize(fontOptions.fontFamily)
 
-class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab("Customize") {
+class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.customize.title")) {
   private val supportedColorBlindness = getColorBlindness()
   private val propertyGraph = PropertyGraph()
   private val lafProperty = propertyGraph.graphProperty { laf.currentLookAndFeelReference }

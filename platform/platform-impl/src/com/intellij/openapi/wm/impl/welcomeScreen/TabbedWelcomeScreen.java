@@ -11,6 +11,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -113,7 +114,7 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     private final JComponent myKeyComponent;
     private JComponent myAssociatedComponent;
 
-    public DefaultWelcomeScreenTab(@NotNull String tabName) {
+    public DefaultWelcomeScreenTab(@NotNull @Nls String tabName) {
       myKeyComponent = JBUI.Panels.simplePanel().addToLeft(new JLabel(tabName)).withBackground(getMainTabListBackground());
     }
 
