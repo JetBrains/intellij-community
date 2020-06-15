@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.api.data.pullrequest.timeline
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import org.jetbrains.plugins.github.api.data.GHIssueComment
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestCommit
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestCommitShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem.Unknown
 
@@ -60,7 +60,7 @@ AutomaticBaseChangeSucceededEvent | AutomaticBaseChangeFailedEvent
               defaultImpl = Unknown::class)
 @JsonSubTypes(
   JsonSubTypes.Type(name = "IssueComment", value = GHIssueComment::class),
-  JsonSubTypes.Type(name = "PullRequestCommit", value = GHPullRequestCommit::class),
+  JsonSubTypes.Type(name = "PullRequestCommit", value = GHPullRequestCommitShort::class),
   JsonSubTypes.Type(name = "PullRequestReview", value = GHPullRequestReview::class),
 
   JsonSubTypes.Type(name = "ReviewDismissedEvent", value = GHPRReviewDismissedEvent::class),
