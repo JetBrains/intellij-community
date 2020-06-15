@@ -4,6 +4,7 @@ package com.intellij.util.io
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.IOException
 import java.io.InputStream
+import java.math.BigInteger
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.security.Provider
@@ -14,6 +15,10 @@ object DigestUtil {
 
   @JvmStatic
   val random by lazy { SecureRandom() }
+
+  // http://stackoverflow.com/a/41156 - shorter than UUID, but secure
+  @JvmStatic
+  fun randomToken(): String = BigInteger(130, random).toString(32)
 
   @JvmStatic
   fun md5() = getMessageDigest("MD5")

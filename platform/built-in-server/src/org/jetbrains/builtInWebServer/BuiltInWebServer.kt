@@ -23,6 +23,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.*
+import com.intellij.util.io.DigestUtil.randomToken
 import com.intellij.util.net.NetUtils
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
@@ -37,7 +38,6 @@ import org.jetbrains.io.orInSafeMode
 import org.jetbrains.io.send
 import java.awt.datatransfer.StringSelection
 import java.io.IOException
-import java.math.BigInteger
 import java.net.InetAddress
 import java.nio.file.Files
 import java.nio.file.Path
@@ -136,11 +136,6 @@ fun acquireToken(): String {
     tokens.put(token, java.lang.Boolean.TRUE)
   }
   return token
-}
-
-// http://stackoverflow.com/a/41156 - shorter than UUID, but secure
-private fun randomToken(): String {
-  return BigInteger(130, DigestUtil.random).toString(32)
 }
 
 private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext, projectNameAsHost: String?): Boolean {

@@ -38,6 +38,7 @@ internal class GithubLoginPanel(
   private lateinit var currentUi: GHCredentialsUi
   private var passwordUi = GHPasswordCredentialsUi(serverTextField, executorFactory, isAccountUnique)
   private var tokenUi = GHTokenCredentialsUi(serverTextField, executorFactory, isAccountUnique)
+  private var oauthUi = GHOAuthCredentialsUi(executorFactory, isAccountUnique)
 
   private val progressIcon = AnimatedIcon.Default()
   private val progressExtension = ExtendableTextComponent.Extension { progressIcon }
@@ -137,4 +138,6 @@ internal class GithubLoginPanel(
   fun setError(exception: Throwable) {
     tokenAcquisitionError = currentUi.handleAcquireError(exception)
   }
+
+  fun setOAuthUi() = applyUi(oauthUi)
 }

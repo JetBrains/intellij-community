@@ -62,26 +62,14 @@ internal class GHTokenCredentialsUi(
     executor: GithubApiRequestExecutor,
     indicator: ProgressIndicator
   ): Pair<String, String> {
-    val (details, scopes) = GHSecurityUtil.loadCurrentUserWithScopes(executor, indicator, server)
-    if (scopes == null || !GHSecurityUtil.isEnoughScopes(scopes))
-      throw GithubAuthenticationException("Insufficient scopes granted to token.")
-
-    val login = details.login
-    fixedLogin?.let {
-      if (it != login) throw GithubAuthenticationException("Token should match username \"$it\"")
-    }
-
-    if (!isAccountUnique(login, server)) throw LoginNotUniqueException(login)
+    val login = acquireLogin(server, executor, indicator, isAccountUnique, fixedLogin)
     return login to tokenTextField.text
   }
 
   override fun handleAcquireError(error: Throwable): ValidationInfo =
     when (error) {
-      is LoginNotUniqueException -> ValidationInfo(message("login.account.already.added", error.login)).withOKEnabled()
-      is UnknownHostException -> ValidationInfo(message("server.unreachable")).withOKEnabled()
-      is GithubAuthenticationException -> ValidationInfo(message("credentials.incorrect", error.message.orEmpty())).withOKEnabled()
       is GithubParseException -> ValidationInfo(error.message ?: message("credentials.invalid.server.path"), serverTextField)
-      else -> ValidationInfo(message("credentials.invalid.auth.data", error.message.orEmpty())).withOKEnabled()
+      else -> handleError(error)
     }
 
   override fun setBusy(busy: Boolean) {
@@ -90,6 +78,34 @@ internal class GHTokenCredentialsUi(
 
   fun setFixedLogin(fixedLogin: String?) {
     this.fixedLogin = fixedLogin
+  }
+
+  companion object {
+    fun acquireLogin(
+      server: GithubServerPath,
+      executor: GithubApiRequestExecutor,
+      indicator: ProgressIndicator,
+      isAccountUnique: UniqueLoginPredicate,
+      fixedLogin: String?
+    ): String {
+      val (details, scopes) = GHSecurityUtil.loadCurrentUserWithScopes(executor, indicator, server)
+      if (scopes == null || !GHSecurityUtil.isEnoughScopes(scopes))
+        throw GithubAuthenticationException("Insufficient scopes granted to token.")
+
+      val login = details.login
+      if (fixedLogin != null && fixedLogin != login) throw GithubAuthenticationException("Token should match username \"$fixedLogin\"")
+      if (!isAccountUnique(login, server)) throw LoginNotUniqueException(login)
+
+      return login
+    }
+
+    fun handleError(error: Throwable): ValidationInfo =
+      when (error) {
+        is LoginNotUniqueException -> ValidationInfo(message("login.account.already.added", error.login)).withOKEnabled()
+        is UnknownHostException -> ValidationInfo(message("server.unreachable")).withOKEnabled()
+        is GithubAuthenticationException -> ValidationInfo(message("credentials.incorrect", error.message.orEmpty())).withOKEnabled()
+        else -> ValidationInfo(message("credentials.invalid.auth.data", error.message.orEmpty())).withOKEnabled()
+      }
   }
 }
 
