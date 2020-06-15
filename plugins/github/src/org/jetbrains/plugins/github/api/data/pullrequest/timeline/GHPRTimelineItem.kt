@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api.data.pullrequest.timeline
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
@@ -47,7 +47,7 @@ SubscribedEvent | UnsubscribedEvent
 MilestonedEvent | DemilestonedEvent
 MentionedEvent | ReferencedEvent | CrossReferencedEvent
  */
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "__typename", visible = false,
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "__typename", visible = true,
               defaultImpl = Unknown::class)
 @JsonSubTypes(
   JsonSubTypes.Type(name = "IssueComment", value = GHIssueComment::class),
@@ -79,5 +79,5 @@ MentionedEvent | ReferencedEvent | CrossReferencedEvent
   JsonSubTypes.Type(name = "HeadRefRestoredEvent", value = GHPRHeadRefRestoredEvent::class)
 )
 interface GHPRTimelineItem {
-  class Unknown : GHPRTimelineItem
+  class Unknown(val __typename: String) : GHPRTimelineItem
 }
