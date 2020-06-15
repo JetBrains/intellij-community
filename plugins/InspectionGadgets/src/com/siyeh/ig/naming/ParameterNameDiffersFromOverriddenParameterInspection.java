@@ -94,18 +94,7 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
     @Nullable
     private PsiMethod getSuperMethod(@NotNull PsiMethod method) {
       if (method.isConstructor()) {
-        final PsiMethod superCtor = JavaPsiConstructorUtil.findConstructorInSuper(method);
-        if (superCtor == null) {
-          return null;
-        }
-        final PsiClass superClass = superCtor.getContainingClass();
-        if (superClass == null) {
-          return null;
-        }
-        if (CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
-          return null;
-        }
-        return superCtor;
+        return JavaPsiConstructorUtil.findConstructorInSuperWithParameterTypes(method, method.getSignature(PsiSubstitutor.EMPTY).getParameterTypes());
       }
       return MethodUtils.getSuper(method);
     }
