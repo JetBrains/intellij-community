@@ -434,4 +434,24 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
       "p3: os.PathLike[str] = p1"
     );
   }
+
+  // PY-41847
+  public void testTypingAnnotatedType() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        doTestByText("from typing import Annotated\n" +
+                     "A = Annotated[bool, 'Some constraint']\n" +
+                     "a: A = <warning descr=\"Expected type 'bool', got 'str' instead\">'str'</warning>\n" +
+                     "b: A = True\n" +
+                     "c: Annotated[bool, 'Some constraint'] = <warning descr=\"Expected type 'bool', got 'str' instead\">'str'</warning>\n" +
+                     "d: Annotated[str, 'Some constraint'] = 'str'\n");
+      }
+    );
+  }
+
+  // PY-41847
+  public void testTypingAnnotatedTypeMultiFile() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doMultiFileTest);
+  }
 }

@@ -4,6 +4,7 @@ package com.jetbrains.python.inspections
 import com.intellij.codeInsight.controlflow.ControlFlowUtil
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
@@ -104,14 +105,18 @@ class PyTypeHintsInspection : PyInspection() {
         }
       }
 
-      if ((node.parent is PyAnnotation || node.parent is PyExpressionStatement && node.parent.parent is PyDocstringFile) &&
-          node.multiFollowAssignmentsChain(resolveContext, this::followNotTypingOpaque)
-            .asSequence()
-            .mapNotNull { it.element }
-            .filterIsInstance<PyQualifiedNameOwner>()
-            .mapNotNull { it.qualifiedName }
-            .any { it == PyTypingTypeProvider.LITERAL || it == PyTypingTypeProvider.LITERAL_EXT }) {
-        registerProblem(node, "'Literal' must have at least one parameter")
+      if ((node.parent is PyAnnotation || node.parent is PyExpressionStatement && node.parent.parent is PyDocstringFile)) {
+        val qNames = node.multiFollowAssignmentsChain(resolveContext, this::followNotTypingOpaque)
+          .asSequence()
+          .mapNotNull { it.element }
+          .filterIsInstance<PyQualifiedNameOwner>()
+          .mapNotNull { it.qualifiedName }
+        if (qNames.any { it == PyTypingTypeProvider.LITERAL || it == PyTypingTypeProvider.LITERAL_EXT }) {
+          registerProblem(node, "'Literal' must have at least one parameter")
+        }
+        if (qNames.any { it == PyTypingTypeProvider.ANNOTATED || it == PyTypingTypeProvider.ANNOTATED_EXT }) {
+          registerProblem(node, "'Annotated' must be called with at least two arguments")
+        }
       }
     }
 
@@ -290,7 +295,9 @@ class PyTypeHintsInspection : PyInspection() {
               PyTypingTypeProvider.FINAL,
               PyTypingTypeProvider.FINAL_EXT,
               PyTypingTypeProvider.LITERAL,
-              PyTypingTypeProvider.LITERAL_EXT ->
+              PyTypingTypeProvider.LITERAL_EXT,
+              PyTypingTypeProvider.ANNOTATED,
+              PyTypingTypeProvider.ANNOTATED_EXT ->
                 registerProblem(base,
                                 "'${it.substringAfterLast('.')}' cannot be used with instance and class checks",
                                 ProblemHighlightType.GENERIC_ERROR)
@@ -326,7 +333,9 @@ class PyTypeHintsInspection : PyInspection() {
                 PyTypingTypeProvider.FINAL,
                 PyTypingTypeProvider.FINAL_EXT,
                 PyTypingTypeProvider.LITERAL,
-                PyTypingTypeProvider.LITERAL_EXT -> {
+                PyTypingTypeProvider.LITERAL_EXT,
+                PyTypingTypeProvider.ANNOTATED,
+                PyTypingTypeProvider.ANNOTATED_EXT -> {
                   registerProblem(base,
                                   "'${qName.substringAfterLast('.')}' cannot be used with instance and class checks",
                                   ProblemHighlightType.GENERIC_ERROR)
@@ -488,6 +497,8 @@ class PyTypeHintsInspection : PyInspection() {
       val callableQName = QualifiedName.fromDottedString(PyTypingTypeProvider.CALLABLE)
       val literalQName = QualifiedName.fromDottedString(PyTypingTypeProvider.LITERAL)
       val literalExtQName = QualifiedName.fromDottedString(PyTypingTypeProvider.LITERAL_EXT)
+      val annotatedQName = QualifiedName.fromDottedString(PyTypingTypeProvider.ANNOTATED)
+      val annotatedExtQName = QualifiedName.fromDottedString(PyTypingTypeProvider.ANNOTATED_EXT)
       val qNames = PyResolveUtil.resolveImportedElementQNameLocally(operand)
 
       var typingOnly = true
@@ -497,6 +508,7 @@ class PyTypeHintsInspection : PyInspection() {
         when (it) {
           genericQName -> checkGenericParameters(index)
           literalQName, literalExtQName -> checkLiteralParameter(index)
+          annotatedQName, annotatedExtQName -> checkAnnotatedParameter(index)
           callableQName -> {
             callableExists = true
             checkCallableParameters(index)
@@ -526,6 +538,12 @@ class PyTypeHintsInspection : PyInspection() {
         registerProblem(index,
                         "'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, " +
                         "other literal types, or type aliases to other literal types")
+      }
+    }
+
+    private fun checkAnnotatedParameter(index: PyExpression) {
+      if (index !is PyTupleExpression) {
+        registerProblem(index, "'Annotated' must be called with at least two arguments")
       }
     }
 

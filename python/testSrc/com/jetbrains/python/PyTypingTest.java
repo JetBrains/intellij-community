@@ -1493,6 +1493,39 @@ public class PyTypingTest extends PyTestCase {
                          "a: MyType\n");
   }
 
+  // PY-41847
+  public void testNoStringLiteralInjectionForTypingAnnotated() {
+    doTestNoInjectedText("from typing import Annotated\n" +
+                         "MyType = Annotated[str, \"f<caret>oo\", True]\n" +
+                         "a: MyType\n");
+
+    doTestNoInjectedText("from typing import Annotated\n" +
+                         "a: Annotated[int, \"f<caret>oo\", True]\n");
+
+    doTestInjectedText("from typing import Annotated\n" +
+                       "a: Annotated['Forward<caret>Reference', 'foo']",
+                       "ForwardReference");
+  }
+
+  // PY-41847
+  public void testTypingAnnotated() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        doTest("int",
+               "from typing import Annotated\n" +
+               "A = Annotated[int, 'Some constraint']\n" +
+               "expr: A");
+        doTest("int",
+               "from typing_extensions import Annotated\n" +
+               "expr: Annotated[int, 'Some constraint'] = '5'");
+        doMultiFileStubAwareTest("int",
+                                 "from annotated import A\n" +
+                                 "expr: A = 'str'");
+      }
+    );
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
