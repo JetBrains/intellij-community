@@ -326,6 +326,7 @@ class TestingTasksImpl extends TestingTasks {
     List<String> defaultJvmArgs = VmOptionsGenerator.COMMON_VM_OPTIONS + [
       '-XX:+HeapDumpOnOutOfMemoryError',
       '-XX:HeapDumpPath=' + hprofSnapshotFilePath,
+      '-Dkotlinx.coroutines.debug=on', // re-enable coroutine debugging in tests (its is explicitly disabled in VmOptionsGenerator)
     ]
     jvmArgs.addAll(0, defaultJvmArgs)
     if (options.jvmMemoryOptions != null) {
