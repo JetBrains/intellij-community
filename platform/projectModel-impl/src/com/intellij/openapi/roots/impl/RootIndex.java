@@ -316,7 +316,7 @@ class RootIndex {
         LOG.error("Invalid root " + file + " in " + container + " provided by " + containerProvider.getClass());
       }
       else {
-        LOG.warn("Invalid root " + file + " in " + container);
+        LOG.error("Invalid root " + file + " in " + container);
       }
       return false;
     }
