@@ -103,12 +103,13 @@ public class DeclarationParser {
 
     refParser.parseReferenceList(builder, JavaTokenType.EXTENDS_KEYWORD, JavaElementType.EXTENDS_LIST, JavaTokenType.COMMA);
     refParser.parseReferenceList(builder, JavaTokenType.IMPLEMENTS_KEYWORD, JavaElementType.IMPLEMENTS_LIST, JavaTokenType.COMMA);
-    if (getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_15_PREVIEW) &&
-        builder.getTokenType() == JavaTokenType.IDENTIFIER &&
-        PsiKeyword.PERMITS.equals(builder.getTokenText())) {
-      builder.remapCurrentToken(JavaTokenType.PERMITS_KEYWORD);
+    if (getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_15_PREVIEW)) {
+      if (builder.getTokenType() == JavaTokenType.IDENTIFIER &&
+          PsiKeyword.PERMITS.equals(builder.getTokenText())) {
+        builder.remapCurrentToken(JavaTokenType.PERMITS_KEYWORD);
+      }
+      refParser.parseReferenceList(builder, JavaTokenType.PERMITS_KEYWORD, JavaElementType.PERMITS_LIST, JavaTokenType.COMMA);
     }
-    refParser.parseReferenceList(builder, JavaTokenType.PERMITS_KEYWORD, JavaElementType.PERMITS_LIST, JavaTokenType.COMMA);
 
     if (builder.getTokenType() != JavaTokenType.LBRACE) {
       final PsiBuilder.Marker error = builder.mark();
