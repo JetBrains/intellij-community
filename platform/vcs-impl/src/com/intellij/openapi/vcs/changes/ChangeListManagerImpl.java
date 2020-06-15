@@ -15,7 +15,6 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -479,6 +478,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
           }
         }
         dataHolder.notifyStart();
+        myChangesViewManager.setBusy(true);
         myChangesViewManager.scheduleRefresh();
 
         SensitiveProgressWrapper vcsIndicator = new SensitiveProgressWrapper(ProgressManager.getInstance().getProgressIndicator());
@@ -570,7 +570,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     for (final VcsDirtyScope scope : scopes) {
       indicator.checkCanceled();
 
-      myChangesViewManager.setBusy(true);
       actualUpdate(builder, scope, scope.getVcs(), dataHolder, updater, indicator);
 
       synchronized (myDataLock) {
