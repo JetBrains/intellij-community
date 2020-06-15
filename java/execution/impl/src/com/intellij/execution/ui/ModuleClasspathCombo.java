@@ -92,6 +92,7 @@ public class ModuleClasspathCombo extends JComboBox<ModuleClasspathCombo.Item> {
       else {
         item.myOptionValue = !item.myOptionValue;
         myPreventPopupClosing = true;
+        update();
       }
     }
   }
