@@ -105,6 +105,9 @@ public class UnusedSymbolUtil {
     if (field instanceof PsiEnumConstant && isEnumValuesMethodUsed(project, containingFile, field, progress, helper)) {
       return false;
     }
+    if (isImplicitUsage(project, field)) {
+      return false;
+    }
     return weAreSureThereAreNoUsages(project, containingFile, field, progress, helper);
   }
 
