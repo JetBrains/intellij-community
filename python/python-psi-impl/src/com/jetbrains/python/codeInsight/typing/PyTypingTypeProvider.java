@@ -92,6 +92,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final String FINAL_EXT = "typing_extensions.Final";
   public static final String LITERAL = "typing.Literal";
   public static final String LITERAL_EXT = "typing_extensions.Literal";
+  public static final String ANNOTATED = "typing.Annotated";
+  public static final String ANNOTATED_EXT = "typing_extensions.Annotated";
 
   private static final String PY2_FILE_TYPE = "typing.BinaryIO";
   private static final String PY3_BINARY_FILE_TYPE = "typing.BinaryIO";
@@ -131,10 +133,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   public static final ImmutableSet<String> GENERIC_CLASSES = ImmutableSet.<String>builder()
     // special forms
-    .add(TUPLE, GENERIC, PROTOCOL, CALLABLE, TYPE, CLASS_VAR, FINAL, LITERAL)
+    .add(TUPLE, GENERIC, PROTOCOL, CALLABLE, TYPE, CLASS_VAR, FINAL, LITERAL, ANNOTATED)
     // type aliases
     .add(UNION, OPTIONAL, LIST, DICT, DEFAULT_DICT, ORDERED_DICT, SET, FROZEN_SET, COUNTER, DEQUE, CHAIN_MAP)
-    .add(PROTOCOL_EXT, FINAL_EXT, LITERAL_EXT)
+    .add(PROTOCOL_EXT, FINAL_EXT, LITERAL_EXT, ANNOTATED_EXT)
     .build();
 
   /**
@@ -168,6 +170,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .add(FINAL, FINAL_EXT)
     .add(LITERAL, LITERAL_EXT)
     .add(TYPED_DICT, TYPED_DICT_EXT)
+    .add(ANNOTATED, ANNOTATED_EXT)
     .build();
 
   @Nullable
@@ -745,6 +748,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (finalType != null) {
         return finalType;
       }
+      final Ref<PyType> annotatedType = getAnnotatedType(resolved, context);
+      if (annotatedType != null) {
+        return annotatedType;
+      }
       final Ref<PyType> literalType = getLiteralType(resolved, context);
       if (literalType != null) {
         return literalType;
@@ -906,6 +913,25 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
           .map(index -> PyLiteralType.Companion.fromLiteralParameter(index, context.getTypeContext()))
           .map(Ref::create)
           .orElse(null);
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static Ref<PyType> getAnnotatedType(@NotNull PsiElement resolved, @NotNull Context context) {
+    if (resolved instanceof PySubscriptionExpression) {
+      final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)resolved;
+      final PyExpression operand = subscriptionExpr.getOperand();
+
+      Collection<String> resolvedNames = resolveToQualifiedNames(operand, context.getTypeContext());
+      if (resolvedNames.stream().anyMatch(name -> ANNOTATED.equals(name) || ANNOTATED_EXT.equals(name))) {
+        final PyExpression indexExpr = subscriptionExpr.getIndexExpression();
+        final PyExpression type = indexExpr instanceof PyTupleExpression ? ((PyTupleExpression)indexExpr).getElements()[0] : indexExpr;
+        if (type != null) {
+          return getType(type, context);
+        }
       }
     }
 
