@@ -397,7 +397,7 @@
       <module fileurl="file://$PROJECT_DIR$/android/android-layout-inspector/intellij.android.android-layout-inspector.iml" filepath="$PROJECT_DIR$/android/android-layout-inspector/intellij.android.android-layout-inspector.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-layout-inspector/intellij.android.android-layout-inspector-test.iml" filepath="$PROJECT_DIR$/android/android-layout-inspector/intellij.android.android-layout-inspector-test.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/apkanalyzer/intellij.android.apkanalyzer.iml" filepath="$PROJECT_DIR$/android/apkanalyzer/intellij.android.apkanalyzer.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/app-inspection/api/intellij.android.app-inspection.api.iml" filepath="$PROJECT_DIR$/android/app-inspection/api/intellij.android.app-inspection.api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/app-inspection/api/intellij.android.app-inspection.iml" filepath="$PROJECT_DIR$/android/app-inspection/api/intellij.android.app-inspection.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/app-inspection/ide/intellij.android.app-inspection.ide.iml" filepath="$PROJECT_DIR$/android/app-inspection/ide/intellij.android.app-inspection.ide.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/artwork/intellij.android.artwork.iml" filepath="$PROJECT_DIR$/android/artwork/intellij.android.artwork.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/assistant/intellij.android.assistant.iml" filepath="$PROJECT_DIR$/android/assistant/intellij.android.assistant.iml" />

@@ -264,7 +264,7 @@ class CommunityRepositoryModules {
 
       withModule("intellij.android.core", "android.jar", null)
       withModule("intellij.android.adb", "android.jar")
-      withModule("intellij.android.app-inspection.api", "android.jar")
+      withModule("intellij.android.app-inspection", "android.jar")
       withModule("intellij.android.app-inspection.ide", "android.jar")
       withModule("intellij.android.databinding", "android.jar")
       withModule("intellij.android.debuggers", "android.jar")
