@@ -849,14 +849,20 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
                   myMultiProcessLink.setBounds(0, 0, 0, 0);
                 }
 
-                setBounds(myProcessIconComponent, x, centerY, iconSize, false);
+                setBounds(myProcessIconComponent, 0, centerY, iconSize, false);
               }
               else {
+                boolean minisWidth = true;
+
                 if (myMultiProcessLink.isVisible()) {
                   rightX = setBounds(myMultiProcessLink, rightX, centerY, null, true) - gap;
                 }
+                else if (width < 60) {
+                  rightX = 0;
+                  minisWidth = false;
+                }
 
-                setBounds(myProcessIconComponent, rightX, centerY, iconSize, true);
+                setBounds(myProcessIconComponent, rightX, centerY, iconSize, minisWidth);
               }
 
               myProcessIconComponent.setVisible(true);
