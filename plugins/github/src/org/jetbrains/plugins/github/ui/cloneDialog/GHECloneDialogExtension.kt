@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.github.ui.cloneDialog
 
 import com.intellij.application.subscribe
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBEmptyBorder
@@ -37,53 +39,57 @@ class GHECloneDialogExtension : BaseCloneDialogExtension() {
   override fun getAccounts(): Collection<GithubAccount> = getGHEAccounts()
 
   override fun createMainComponent(project: Project, modalityState: ModalityState): VcsCloneDialogExtensionComponent =
-    object : BaseCloneDialogExtensionComponent(
-      project,
-      GithubAuthenticationManager.getInstance(),
-      GithubApiRequestExecutorManager.getInstance(),
-      GithubAccountInformationProvider.getInstance(),
-      CachingGithubUserAvatarLoader.getInstance(),
-      GithubImageResizer.getInstance()
-    ) {
-
-      init {
-        ACCOUNT_REMOVED_TOPIC.subscribe(this, this)
-        ACCOUNT_TOKEN_CHANGED_TOPIC.subscribe(this, this)
-
-        setup()
-      }
-
-      override fun getAccounts(): Collection<GithubAccount> = getGHEAccounts()
-
-      override fun accountRemoved(removedAccount: GithubAccount) {
-        if (removedAccount.isGHEAccount) super.accountRemoved(removedAccount)
-      }
-
-      override fun tokenChanged(account: GithubAccount) {
-        if (account.isGHEAccount) super.tokenChanged(account)
-      }
-
-      override fun createLoginPanel(account: GithubAccount?, cancelHandler: () -> Unit): JComponent =
-        GHECloneDialogLoginPanel(account).apply {
-          loginPanel.isCancelVisible = getAccounts().isNotEmpty()
-          loginPanel.setCancelHandler(cancelHandler)
-        }
-
-      override fun createAccountMenuLoginActions(account: GithubAccount?): Collection<AccountMenuItem.Action> =
-        listOf(createLoginAction(account))
-
-      private fun createLoginAction(account: GithubAccount?): AccountMenuItem.Action {
-        val isExistingAccount = account != null
-        return AccountMenuItem.Action(
-          if (isExistingAccount) message("login.action") else message("accounts.add"),
-          { switchToLogin(account) },
-          showSeparatorAbove = !isExistingAccount
-        )
-      }
-    }
+    GHECloneDialogExtensionComponent(project)
 }
 
-private class GHECloneDialogLoginPanel(account: GithubAccount?) : BorderLayoutPanel() {
+private class GHECloneDialogExtensionComponent(project: Project) : BaseCloneDialogExtensionComponent(
+  project,
+  GithubAuthenticationManager.getInstance(),
+  GithubApiRequestExecutorManager.getInstance(),
+  GithubAccountInformationProvider.getInstance(),
+  CachingGithubUserAvatarLoader.getInstance(),
+  GithubImageResizer.getInstance()
+) {
+
+  init {
+    ACCOUNT_REMOVED_TOPIC.subscribe(this, this)
+    ACCOUNT_TOKEN_CHANGED_TOPIC.subscribe(this, this)
+
+    setup()
+  }
+
+  override fun getAccounts(): Collection<GithubAccount> = getGHEAccounts()
+
+  override fun accountRemoved(removedAccount: GithubAccount) {
+    if (removedAccount.isGHEAccount) super.accountRemoved(removedAccount)
+  }
+
+  override fun tokenChanged(account: GithubAccount) {
+    if (account.isGHEAccount) super.tokenChanged(account)
+  }
+
+  override fun createLoginPanel(account: GithubAccount?, cancelHandler: () -> Unit): JComponent =
+    GHECloneDialogLoginPanel(account).apply {
+      Disposer.register(this@GHECloneDialogExtensionComponent, this)
+
+      loginPanel.isCancelVisible = getAccounts().isNotEmpty()
+      loginPanel.setCancelHandler(cancelHandler)
+    }
+
+  override fun createAccountMenuLoginActions(account: GithubAccount?): Collection<AccountMenuItem.Action> =
+    listOf(createLoginAction(account))
+
+  private fun createLoginAction(account: GithubAccount?): AccountMenuItem.Action {
+    val isExistingAccount = account != null
+    return AccountMenuItem.Action(
+      if (isExistingAccount) message("login.action") else message("accounts.add"),
+      { switchToLogin(account) },
+      showSeparatorAbove = !isExistingAccount
+    )
+  }
+}
+
+private class GHECloneDialogLoginPanel(account: GithubAccount?) : BorderLayoutPanel(), Disposable {
   private val titlePanel =
     simplePanel().apply {
       val title = JBLabel(message("login.to.github.enterprise"), ComponentStyle.LARGE).apply { font = JBFont.label().biggerOn(5.0f) }
@@ -98,4 +104,6 @@ private class GHECloneDialogLoginPanel(account: GithubAccount?) : BorderLayoutPa
     addToTop(titlePanel.apply { border = JBEmptyBorder(getRegularPanelInsets().apply { bottom = 0 }) })
     addToCenter(loginPanel)
   }
+
+  override fun dispose() = loginPanel.cancelLogin()
 }
