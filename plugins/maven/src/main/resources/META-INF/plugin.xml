@@ -272,6 +272,11 @@
     <notificationWhitelist groupIds="Maven: non-managed pom.xml"/>
   </extensions>
 
+  <extensions defaultExtensionNs="com.intellij.properties">
+    <implicitPropertyUsageProvider implementation="org.jetbrains.idea.maven.utils.MavenWrapperImplicitPropertyUsageProvider"/>
+  </extensions>
+
+
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
     <pluginDescriptor mavenId="org.apache.maven.plugins:maven-surefire-plugin">
       <param name="additionalClasspathElements/additionalClasspathElement"
