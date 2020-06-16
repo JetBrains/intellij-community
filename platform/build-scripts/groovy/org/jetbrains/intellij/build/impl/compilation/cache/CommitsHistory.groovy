@@ -16,7 +16,11 @@ class CommitsHistory {
   CommitsHistory(String branch, String defaultBranch = MASTER_BRANCH) {
     isDefaultBranch = branch == defaultBranch
 
-    defaultBranchPath = defaultBranch == MASTER_BRANCH ? COMMIT_HISTORY_FILE : "$defaultBranch/$COMMIT_HISTORY_FILE"
+    defaultBranchPath = pathForBranch(defaultBranch)
     path = (branch == null || isDefaultBranch) ? defaultBranchPath : "$branch/$COMMIT_HISTORY_FILE"
+  }
+
+  static String pathForBranch(String branch) {
+    return branch == MASTER_BRANCH ? COMMIT_HISTORY_FILE : "$branch/$COMMIT_HISTORY_FILE"
   }
 }

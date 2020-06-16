@@ -44,7 +44,7 @@ class CompilationOutputsUploader {
   @Lazy
   private String commitsHistoryPath = {
     Git git = new Git(context.paths.projectHome.trim())
-    return new CommitsHistory(git.currentBranch(false)).path
+    return CommitsHistory.pathForBranch(git.currentBranch(false))
   }()
 
   @Lazy
