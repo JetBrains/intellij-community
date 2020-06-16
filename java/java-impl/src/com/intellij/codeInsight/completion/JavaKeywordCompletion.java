@@ -602,6 +602,9 @@ public class JavaKeywordCompletion {
       if (!psiClass.isInterface()) {
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.IMPLEMENTS), TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
+      if (psiClass.hasModifierProperty(PsiModifier.SEALED)) {
+        addKeyword(new OverridableSpace(createKeyword(PsiKeyword.PERMITS), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      }
     }
   }
 

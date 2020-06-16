@@ -186,6 +186,8 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testQualifiedNew() { doTest(1, "new"); }
   public void testRecord() {setLanguageLevel(LanguageLevel.JDK_14_PREVIEW);  doTest(); }
   public void testRecordInFileScope() {setLanguageLevel(LanguageLevel.JDK_14_PREVIEW);  doTest(1, "record"); }
+  public void testSealedModifier() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(1, "sealed"); }
+  public void testPermitsList() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(1, "permits"); }
 
   public void testOverwriteCatch() {
     configureByTestName();
