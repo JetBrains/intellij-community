@@ -19,16 +19,15 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
 import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -233,6 +232,7 @@ public class CollapseIntoLoopAction implements IntentionAction {
         PsiType curType = curIterationExpression.getType();
         PsiType firstType = firstIterationExpression.getType();
         if (curType == null || !curType.equals(firstType)) return false;
+        Set<PsiVariable> usedVariables;
         if (secondIteration) {
           if (!expressionsToReplace.isEmpty()) {
             PsiExpression firstExpressionToReplace = expressionsToReplace.get(0);
@@ -240,9 +240,16 @@ public class CollapseIntoLoopAction implements IntentionAction {
             if (!firstType.equals(firstExpressionToReplace.getType())) return false;
           }
           expressionsToReplace.add(firstIterationExpression);
+          usedVariables = StreamEx.of(firstIterationExpression, curIterationExpression)
+            .map(VariableAccessUtils::collectUsedVariables).toFlatCollection(Function.identity(), HashSet::new);
         }
         else {
           if (!expressionsToReplace.contains(firstIterationExpression)) return false;
+          usedVariables = VariableAccessUtils.collectUsedVariables(curIterationExpression);
+        }
+        if (!usedVariables.isEmpty() &&
+            statements.subList(0, count).stream().anyMatch(st -> VariableAccessUtils.isAnyVariableAssigned(usedVariables, st))) {
+          return false;
         }
       }
       if (secondIteration) {
