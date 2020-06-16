@@ -84,8 +84,8 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
   public static <S extends CommonProgramRunConfigurationParameters> SettingsEditorFragment<S, ?> createEnvParameters() {
     EnvironmentVariablesComponent env = new EnvironmentVariablesComponent();
     env.setLabelLocation(BorderLayout.WEST);
-    return SettingsEditorFragment.create("environmentVariables",
-                                         ExecutionBundle.message("environment.variables.fragment.name"),
-                                         ExecutionBundle.message("group.operating.system"), env);
+    return SettingsEditorFragment.createFromComponent("environmentVariables",
+                                                      ExecutionBundle.message("environment.variables.fragment.name"),
+                                                      ExecutionBundle.message("group.operating.system"), env, s -> true);
   }
 }
