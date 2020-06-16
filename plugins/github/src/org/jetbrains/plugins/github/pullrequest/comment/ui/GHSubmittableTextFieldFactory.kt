@@ -30,7 +30,7 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.ui.InlineIconButton
+import com.intellij.util.ui.codereview.InlineIconButton
 import java.awt.Dimension
 import java.awt.event.*
 import java.util.function.Supplier
@@ -163,13 +163,15 @@ class GHSubmittableTextFieldFactory(private val model: GHSubmittableTextFieldMod
   }
 
   private fun createSubmitButton(actionName: String) =
-    InlineIconButton(GithubIcons.Send, GithubIcons.SendHovered, tooltip = actionName, shortcut = SUBMIT_SHORTCUT_SET).apply {
+    InlineIconButton(GithubIcons.Send, GithubIcons.SendHovered, tooltip = actionName,
+                                                                        shortcut = SUBMIT_SHORTCUT_SET).apply {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
 
   private fun createCancelButton() =
-    InlineIconButton(AllIcons.Actions.Close, AllIcons.Actions.CloseHovered, tooltip = Messages.getCancelButton(),
-                     shortcut = CANCEL_SHORTCUT_SET).apply {
+    InlineIconButton(AllIcons.Actions.Close, AllIcons.Actions.CloseHovered,
+                                                                        tooltip = Messages.getCancelButton(),
+                                                                        shortcut = CANCEL_SHORTCUT_SET).apply {
       border = JBUI.Borders.empty(getEditorTextFieldVerticalOffset(), 0)
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }

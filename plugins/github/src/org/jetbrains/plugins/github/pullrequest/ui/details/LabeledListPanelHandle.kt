@@ -13,7 +13,7 @@ import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.WrapLayout
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.ui.InlineIconButton
+import com.intellij.util.ui.codereview.InlineIconButton
 import org.jetbrains.plugins.github.util.CollectionDelta
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
 import org.jetbrains.plugins.github.util.getEDTExecutor
@@ -44,7 +44,7 @@ internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRDetai
   val panel = NonOpaquePanel(WrapLayout(FlowLayout.LEADING, 0, 0))
 
   private val editButton = InlineIconButton(AllIcons.General.Inline_edit,
-                                            AllIcons.General.Inline_edit_hovered).apply {
+                                                                                               AllIcons.General.Inline_edit_hovered).apply {
     border = JBUI.Borders.empty(6, 0)
     actionListener = ActionListener { editList() }
   }

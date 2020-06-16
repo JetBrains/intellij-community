@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -27,6 +26,7 @@ import com.intellij.util.Processor
 import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.codereview.ReturnToListComponent
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcsUtil.VcsUtil
@@ -224,14 +224,9 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
   }
 
   private fun createReturnToListSideComponent(): JComponent {
-    return BorderLayoutPanel()
-      .addToRight(LinkLabel<Any>(GithubBundle.message("pull.request.back.to.list"), AllIcons.Actions.Back) { _, _ ->
-        viewController.viewList()
-      }.apply {
-        border = JBUI.Borders.emptyRight(8)
-      })
-      .andTransparent()
-      .withBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM))
+    return ReturnToListComponent.createReturnToListSideComponent(GithubBundle.message("pull.request.back.to.list")) {
+      viewController.viewList()
+    }
   }
 
   private fun createInfoComponent(): JComponent {
