@@ -23,13 +23,12 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction
-import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.EnumComboBoxModel
-import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.layout.*
 import com.intellij.util.execution.ParametersListUtil
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.VcsExecutablePathSelector
 import com.intellij.vcs.log.VcsLogFilterCollection.STRUCTURE_FILTER
@@ -37,6 +36,7 @@ import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl
 import com.intellij.vcs.log.ui.filter.StructureFilterPopupComponent
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi
+import com.intellij.vcs.log.ui.filter.VcsLogPopupComponent
 import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.i18n.GitBundle
@@ -48,6 +48,7 @@ import org.jetbrains.annotations.CalledInAny
 import java.awt.Color
 import java.util.function.Consumer
 import javax.swing.JLabel
+import javax.swing.border.Border
 
 private fun projectSettings(project: Project) = GitVcsSettings.getInstance(project)
 private val applicationSettings get() = GitVcsApplicationSettings.getInstance()
@@ -347,6 +348,9 @@ internal class GitVcsPanel(private val project: Project) :
           override fun shouldDrawLabel(): Boolean = false
           override fun shouldIndicateHovering(): Boolean = false
           override fun getDefaultSelectorForeground(): Color = UIUtil.getLabelForeground()
+          override fun createUnfocusedBorder(): Border {
+            return FilledRoundedBorder(JBColor.namedColor("Component.borderColor", Gray.xBF), ARC_SIZE, 1)
+          }
         }.initUi()
 
         label(message("settings.filter.update.info"))

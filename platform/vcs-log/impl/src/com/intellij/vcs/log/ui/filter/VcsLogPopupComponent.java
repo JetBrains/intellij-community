@@ -26,7 +26,8 @@ import java.util.function.Supplier;
 
 public abstract class VcsLogPopupComponent extends JPanel {
   private static final int GAP_BEFORE_ARROW = 3;
-  private static final int BORDER_SIZE = 2;
+  protected static final int BORDER_SIZE = 2;
+  protected static final int ARC_SIZE = 10;
 
   private final PopupState myPopupState = new PopupState();
   @NotNull private final Supplier<String> myDisplayName;
@@ -42,7 +43,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
     myValueLabel = new DynamicLabel(this::getCurrentText);
     setDefaultForeground();
     setFocusable(true);
-    setBorder(createUnfocusedBorder());
+    setBorder(wrapBorder(createUnfocusedBorder()));
 
     setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
     if (myNameLabel != null) add(myNameLabel);
@@ -90,12 +91,12 @@ public abstract class VcsLogPopupComponent extends JPanel {
     addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(@NotNull FocusEvent e) {
-        setBorder(createFocusedBorder());
+        setBorder(wrapBorder(createFocusedBorder()));
       }
 
       @Override
       public void focusLost(@NotNull FocusEvent e) {
-        setBorder(createUnfocusedBorder());
+        setBorder(wrapBorder(createUnfocusedBorder()));
       }
     });
   }
@@ -164,20 +165,23 @@ public abstract class VcsLogPopupComponent extends JPanel {
   }
 
   private static Border createFocusedBorder() {
-    return BorderFactory.createCompoundBorder(new FilledRoundedBorder(UIUtil.getFocusedBorderColor(), 10, BORDER_SIZE),
-                                              JBUI.Borders.empty(2));
+    return new FilledRoundedBorder(UIUtil.getFocusedBorderColor(), ARC_SIZE, BORDER_SIZE);
   }
 
-  private static Border createUnfocusedBorder() {
-    return BorderFactory.createCompoundBorder(JBUI.Borders.empty(BORDER_SIZE), JBUI.Borders.empty(2));
+  protected Border createUnfocusedBorder() {
+    return JBUI.Borders.empty(BORDER_SIZE);
   }
 
-  private static class FilledRoundedBorder implements Border {
+  private static Border wrapBorder(Border outerBorder) {
+    return BorderFactory.createCompoundBorder(outerBorder, JBUI.Borders.empty(2));
+  }
+
+  public static class FilledRoundedBorder implements Border {
     private final Color myColor;
     private final int myThickness;
     private final int myArcSize;
 
-    FilledRoundedBorder(@NotNull Color color, int arcSize, int thickness) {
+    public FilledRoundedBorder(@NotNull Color color, int arcSize, int thickness) {
       myColor = color;
       myThickness = thickness;
       myArcSize = arcSize;
