@@ -1817,15 +1817,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  private static final boolean INDICES_ARE_PSI_DEPENDENT_BY_DEFAULT = SystemProperties.getBooleanProperty("idea.indices.psi.dependent.default", true);
   public static boolean isPsiDependentIndex(@NotNull IndexExtension<?, ?, ?> extension) {
-    if (INDICES_ARE_PSI_DEPENDENT_BY_DEFAULT) {
-      return extension instanceof FileBasedIndexExtension &&
-             ((FileBasedIndexExtension<?, ?>)extension).dependsOnFileContent();
-    }
-    else {
-      return extension instanceof PsiDependentIndex;
-    }
+    return extension instanceof FileBasedIndexExtension &&
+           ((FileBasedIndexExtension<?, ?>)extension).dependsOnFileContent();
   }
   public static final boolean DO_TRACE_STUB_INDEX_UPDATE = SystemProperties.getBooleanProperty("idea.trace.stub.index.update", false);
 
