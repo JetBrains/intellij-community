@@ -290,7 +290,8 @@ public class HighlightClassUtil {
   public static boolean isRestrictedIdentifier(String typeName, @NotNull LanguageLevel level) {
     return PsiKeyword.VAR.equals(typeName) && HighlightingFeature.LVTI.isSufficient(level) ||
            PsiKeyword.YIELD.equals(typeName) && HighlightingFeature.SWITCH_EXPRESSION.isSufficient(level) ||
-           PsiKeyword.RECORD.equals(typeName) && HighlightingFeature.RECORDS.isSufficient(level);
+           PsiKeyword.RECORD.equals(typeName) && HighlightingFeature.RECORDS.isSufficient(level) ||
+           (PsiKeyword.SEALED.equals(typeName) || PsiKeyword.PERMITS.equals(typeName)) && HighlightingFeature.SEALED_CLASSES.isSufficient(level);
   }
 
   static HighlightInfo checkClassAndPackageConflict(@NotNull PsiClass aClass) {
