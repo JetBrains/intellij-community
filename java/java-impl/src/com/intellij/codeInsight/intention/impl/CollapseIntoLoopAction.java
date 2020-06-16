@@ -229,6 +229,7 @@ public class CollapseIntoLoopAction implements IntentionAction {
         if (!(leftDiff instanceof PsiExpression) || !(rightDiff instanceof PsiExpression)) return false;
         curIterationExpression = (PsiExpression)rightDiff;
         firstIterationExpression = (PsiExpression)leftDiff;
+        if (PsiUtil.isAccessedForWriting(curIterationExpression)) return false;
         PsiType curType = curIterationExpression.getType();
         PsiType firstType = firstIterationExpression.getType();
         if (curType == null || !curType.equals(firstType)) return false;
