@@ -19,8 +19,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
 
-public final class TrigramIndex extends ScalarIndexExtension<Integer> implements CustomInputsIndexFileBasedIndexExtension<Integer>,
-                                                                           DocumentChangeDependentIndex {
+public final class TrigramIndex extends ScalarIndexExtension<Integer> implements CustomInputsIndexFileBasedIndexExtension<Integer> {
   /**
    * @deprecated not used anymore, always enabled
    */

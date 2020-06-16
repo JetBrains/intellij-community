@@ -18,7 +18,7 @@ package com.intellij.util.indexing;
 /**
  * Marker interface of index that is built from PSI, meaning its invalidation will happen upon producing new PSI.
  *
- * @deprecated by default all content-aware indices are PSI dependent. Use {@link DocumentChangeDependentIndex} to make index PSI-independent (since 2019.2)
+ * @deprecated by default all content-aware indices are PSI dependent.
  */
 @Deprecated
 public interface PsiDependentIndex {

@@ -1821,8 +1821,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   public static boolean isPsiDependentIndex(@NotNull IndexExtension<?, ?, ?> extension) {
     if (INDICES_ARE_PSI_DEPENDENT_BY_DEFAULT) {
       return extension instanceof FileBasedIndexExtension &&
-             ((FileBasedIndexExtension<?, ?>)extension).dependsOnFileContent() &&
-             !(extension instanceof DocumentChangeDependentIndex);
+             ((FileBasedIndexExtension<?, ?>)extension).dependsOnFileContent();
     }
     else {
       return extension instanceof PsiDependentIndex;
