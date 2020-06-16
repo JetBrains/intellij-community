@@ -297,20 +297,6 @@ public class GitHistoryUtils {
   }
 
   /**
-   * Get name of the file in the last commit. If file was renamed, returns the previous name.
-   *
-   * @param project the context project
-   * @param path    the path to check
-   * @return the name of file in the last commit or argument
-   * @deprecated use {@link VcsUtil#getLastCommitPath(Project, FilePath)}
-   */
-  @NotNull
-  @Deprecated
-  public static FilePath getLastCommitName(@NotNull Project project, @NotNull FilePath path) {
-    return VcsUtil.getLastCommitPath(project, path);
-  }
-
-  /**
    * @deprecated use {@link GitHistoryUtils#collectTimedCommits(Project, VirtualFile, String...)}
    */
   @Deprecated
@@ -349,15 +335,5 @@ public class GitHistoryUtils {
       rc.add(Pair.create(new SHAHash(record.getHash()), record.getDate()));
     }
     return rc;
-  }
-
-  /**
-   * @deprecated use {@link GitHistoryUtils#collectCommitsMetadata(Project, VirtualFile, String...)} instead.
-   */
-  @Deprecated
-  public static List<? extends VcsCommitMetadata> readLastCommits(@NotNull Project project,
-                                                                  @NotNull VirtualFile root,
-                                                                  String @NotNull ... hashes) throws VcsException {
-    return collectCommitsMetadata(project, root, hashes);
   }
 }

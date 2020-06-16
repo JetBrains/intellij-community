@@ -180,28 +180,6 @@ public class GitLogUtil {
     return new LogDataImpl(refs, commits);
   }
 
-  /**
-   * @deprecated use {@link GitHistoryUtils#history(Project, VirtualFile, String...)} instead.
-   */
-  @Deprecated
-  @NotNull
-  public static List<GitCommit> collectFullDetails(@NotNull Project project,
-                                                   @NotNull VirtualFile root,
-                                                   String... parameters) throws VcsException {
-
-    List<GitCommit> commits = new ArrayList<>();
-    try {
-      readFullDetails(project, root, commits::add, parameters);
-    }
-    catch (VcsException e) {
-      if (commits.isEmpty()) {
-        throw e;
-      }
-      LOG.warn("Error during loading details, returning partially loaded commits\n", e);
-    }
-    return commits;
-  }
-
   public static void readFullDetails(@NotNull Project project,
                                      @NotNull VirtualFile root,
                                      @NotNull Consumer<? super GitCommit> commitConsumer,

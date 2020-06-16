@@ -560,6 +560,13 @@ public class VcsUtil {
     return mappings;
   }
 
+  /**
+   * Get path to the file in the last commit. If file was renamed locally, returns the previous file path.
+   *
+   * @param project the context project
+   * @param path    the path to check
+   * @return the name of file in the last commit or argument
+   */
   @NotNull
   public static FilePath getLastCommitPath(@NotNull Project project, @NotNull FilePath path) {
     if (project.isDefault()) return path;
