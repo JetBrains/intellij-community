@@ -21,7 +21,6 @@ import java.util.List;
 
 public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvider {
   private final ReadWriteState myReadWriteState = new ReadWriteState();
-  private boolean readWriteActionsEnabled = true;
 
   @Override
   public UsageFilteringRule @NotNull [] getActiveRules(@NotNull Project project) {
@@ -79,10 +78,6 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
     }
   }
 
-  public void setReadWriteEnabled(boolean readWriteEnabled) {
-    this.readWriteActionsEnabled = readWriteEnabled;
-  }
-
   private class ShowReadAccessUsagesAction extends ToggleAction implements DumbAware {
     private ShowReadAccessUsagesAction() {
       super(UsageViewBundle.messagePointer("action.show.read.access"),
@@ -100,13 +95,6 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
       Project project = e.getProject();
       if (project == null) return;
       project.getMessageBus().syncPublisher(RULES_CHANGED).run();
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      Presentation presentation = e.getPresentation();
-      presentation.setEnabled(readWriteActionsEnabled);
     }
   }
 
@@ -127,13 +115,6 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
       Project project = e.getProject();
       if (project == null) return;
       project.getMessageBus().syncPublisher(RULES_CHANGED).run();
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      Presentation presentation = e.getPresentation();
-      presentation.setEnabled(readWriteActionsEnabled);
     }
   }
 }
