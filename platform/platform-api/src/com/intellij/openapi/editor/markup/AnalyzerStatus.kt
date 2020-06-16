@@ -41,7 +41,8 @@ data class PassWrapper(val presentableName: String, val progress: Double, val fi
  * Type of the analyzing status that's taking place.
  */
 enum class AnalyzingType {
-  COMPLETE, // Analyzing complete
+  COMPLETE, // Analyzing complete, final results are available or none if OFF or in PowerSave mode
+  SUSPENDED, // Analyzing suspended for long process like indexing
   PARTIAL,  // Analyzing has partial results available for displaying
   EMPTY     // Analyzing in progress but no information is available
 }
