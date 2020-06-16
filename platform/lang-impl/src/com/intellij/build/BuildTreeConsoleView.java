@@ -827,16 +827,13 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         }
       };
       Disposer.register(this, myView);
-      if (executionConsole != null && buildViewSettingsProvider.isSideBySideView()) {
+      if (executionConsole != null) {
         String nodeConsoleViewName = getNodeConsoleViewName(buildProgressRootNode);
         myView.addViewAndShowIfNeeded(executionConsole, nodeConsoleViewName, true);
         myNodeConsoleViewName.set(nodeConsoleViewName);
       }
       ConsoleView emptyConsole = new ConsoleViewImpl(project, GlobalSearchScope.EMPTY_SCOPE, true, false);
       myView.addView(emptyConsole, EMPTY_CONSOLE_NAME);
-      if (!buildViewSettingsProvider.isSideBySideView()) {
-        myPanel.setVisible(false);
-      }
       JComponent consoleComponent = emptyConsole.getComponent();
       consoleComponent.setFocusable(true);
       myPanel.add(myView.getComponent(), BorderLayout.CENTER);
@@ -901,21 +898,9 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         myView.addView(textConsoleView, nodeConsoleViewName);
         myView.showView(nodeConsoleViewName, false);
       }
-      else if (myViewSettingsProvider.isSideBySideView()) {
+      else {
         myView.showView(EMPTY_CONSOLE_NAME, false);
         return true;
-      }
-
-      if (!myViewSettingsProvider.isSideBySideView()) {
-        EventResult eventResult = node.getResult();
-        BuildTextConsoleView taskOutputView = new BuildTextConsoleView(myProject, true, myExecutionConsoleFilters);
-        boolean hasChanged = taskOutputView.appendEventResult(eventResult);
-        if (!hasChanged) return false;
-
-        taskOutputView.scrollTo(0);
-        myView.addView(taskOutputView, nodeConsoleViewName);
-        myView.showView(nodeConsoleViewName, false);
-        myPanel.setVisible(true);
       }
       return true;
     }
@@ -933,7 +918,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     }
 
     private void addOutput(@NotNull ExecutionNode node, Consumer<BuildTextConsoleView> consumer) {
-      if (!myViewSettingsProvider.isSideBySideView()) return;
       String nodeConsoleViewName = getNodeConsoleViewName(node);
       ExecutionConsole viewView = myView.getView(nodeConsoleViewName);
       if (viewView instanceof BuildTextConsoleView) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("BuildTreeFilters")
 package com.intellij.build
 
@@ -9,9 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.util.NlsContext
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Predicate
 
@@ -43,10 +41,6 @@ open class FilterToggleAction constructor(text: @NlsContexts.Command String,
                                           private val defaultState: Boolean) : ToggleAction(text), DumbAware {
   override fun isSelected(e: AnActionEvent): Boolean {
     val presentation = e.presentation
-    if (!Registry.`is`("build.view.side-by-side", true)) {
-      presentation.isVisible = false
-      return false
-    }
     val filteringEnabled = filterable.isFilteringEnabled
     presentation.isEnabledAndVisible = filteringEnabled
     if (filteringEnabled && stateKey != null &&

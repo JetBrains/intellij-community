@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.build
 
 import com.intellij.build.events.MessageEvent
@@ -33,10 +33,7 @@ class BuildTreeConsoleViewTest: LightPlatformTestCase() {
                                                  "test descriptor",
                                                  "fake path",
                                                  1L)
-    treeConsoleView = BuildTreeConsoleView(getProject(), buildDescriptor, null, object : BuildViewSettingsProvider {
-      override fun isExecutionViewHidden(): Boolean = false
-      override fun isSideBySideView(): Boolean = true
-    })
+    treeConsoleView = BuildTreeConsoleView(project, buildDescriptor, null) { false }
   }
 
   @Test
@@ -116,7 +113,7 @@ class BuildTreeConsoleViewTest: LightPlatformTestCase() {
     TreeUtil.visitVisibleRows(tree, visitor)
 
 
-    assertThat(visitor.userObjects.map { it -> (it as ExecutionNode).name + "--" + it.result!!.javaClass.simpleName })
+    assertThat(visitor.userObjects.map { (it as ExecutionNode).name + "--" + it.result!!.javaClass.simpleName })
       .containsExactly("build finished--FailureResultImpl", "build event--FailureResultImpl", "build nested event--FailureResultImpl", "error message--")
   }
 
