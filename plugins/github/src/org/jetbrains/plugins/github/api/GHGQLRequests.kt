@@ -2,10 +2,7 @@
 package org.jetbrains.plugins.github.api
 
 import org.jetbrains.plugins.github.api.GithubApiRequest.Post.GQLQuery
-import org.jetbrains.plugins.github.api.data.GHConnection
-import org.jetbrains.plugins.github.api.data.GHNodes
-import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
-import org.jetbrains.plugins.github.api.data.GHRepositoryPermission
+import org.jetbrains.plugins.github.api.data.*
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLPageInfo
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLPagedRequestResponse
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLRequestPagination
@@ -60,6 +57,18 @@ object GHGQLRequests {
                                mapOf("id" to commentId),
                                String::class.java,
                                "node", "body")
+
+    fun updateComment(server: GithubServerPath, commentId: String, newText: String): GQLQuery<GHComment> =
+      GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.updateIssueComment,
+                               mapOf("id" to commentId,
+                                     "body" to newText),
+                               GHComment::class.java,
+                               "updateIssueComment", "issueComment")
+
+    fun deleteComment(server: GithubServerPath, commentId: String): GQLQuery<Any?> =
+      GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.deleteIssueComment,
+                               mapOf("id" to commentId),
+                               Any::class.java)
   }
 
   object PullRequest {

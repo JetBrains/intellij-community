@@ -8,6 +8,7 @@ import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBusFactory
 import com.intellij.util.messages.MessageBusOwner
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.plugins.github.api.data.GHIssueComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.GHPRDiffControllerImpl
@@ -79,14 +80,30 @@ internal class GHPRDataProviderRepositoryImpl(private val detailsService: GHPRDe
     val commentsData = GHPRCommentsDataProviderImpl(commentService, id, messageBus)
 
     val timelineLoaderHolder = DisposalCountingHolder { timelineDisposable ->
-      timelineLoaderFactory(id).also {
+      timelineLoaderFactory(id).also { loader ->
         messageBus.connect(timelineDisposable).subscribe(GHPRDataOperationsListener.TOPIC, object : GHPRDataOperationsListener {
-          override fun onStateChanged() = it.loadMore(true)
-          override fun onMetadataChanged() = it.loadMore(true)
-          override fun onCommentAdded() = it.loadMore(true)
-          override fun onReviewsChanged() = it.loadMore(true)
+          override fun onStateChanged() = loader.loadMore(true)
+          override fun onMetadataChanged() = loader.loadMore(true)
+
+          override fun onCommentAdded() = loader.loadMore(true)
+          override fun onCommentUpdated(commentId: String, newBody: String) {
+            val comment = loader.loadedData.find { it is GHIssueComment && it.id == commentId } as? GHIssueComment
+            if (comment != null) {
+              val newComment = GHIssueComment(commentId, comment.author, newBody, comment.createdAt,
+                                              comment.viewerCanDelete, comment.viewerCanUpdate)
+              loader.updateData(newComment)
+            }
+            loader.loadMore(true)
+          }
+
+          override fun onCommentDeleted(commentId: String) {
+            loader.removeData { it is GHIssueComment && it.id == commentId }
+            loader.loadMore(true)
+          }
+
+          override fun onReviewsChanged() = loader.loadMore(true)
         })
-        Disposer.register(timelineDisposable, it)
+        Disposer.register(timelineDisposable, loader)
       }
     }.also {
       Disposer.register(parentDisposable, it)

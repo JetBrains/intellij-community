@@ -22,6 +22,7 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRTimelineFileEditor
 import org.jetbrains.plugins.github.pullrequest.action.GHPRReloadStateAction
@@ -82,9 +83,18 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
         timelineModel.add(loadedData.subList(startIdx, loadedData.size))
       }
 
-      override fun onAllDataRemoved() = timelineModel.removeAll()
+      override fun onDataUpdated(idx: Int) {
+        val loadedData = editor.timelineLoader.loadedData
+        val item = loadedData[idx]
+        timelineModel.update(item)
+      }
 
-      override fun onDataUpdated(idx: Int) = throw UnsupportedOperationException("Inplace timeline event update is not supported")
+      override fun onDataRemoved(data: Any) {
+        if (data !is GHPRTimelineItem) return
+        timelineModel.remove(data)
+      }
+
+      override fun onAllDataRemoved() = timelineModel.removeAll()
     })
     timelineModel.add(editor.timelineLoader.loadedData)
   }
@@ -97,7 +107,8 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
     val header = GHPRHeaderPanel(detailsModel, avatarIconsProvider)
 
     val timeline = GHPRTimelineComponent(timelineModel,
-                                         createItemComponentFactory(project, editor.reviewData, reviewThreadsModelsProvider,
+                                         createItemComponentFactory(project, editor.commentsData, editor.reviewData,
+                                                                    reviewThreadsModelsProvider,
                                                                     avatarIconsProvider, editor.securityService.currentUser)).apply {
       border = JBUI.Borders.empty(16, 0)
     }
@@ -194,6 +205,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
   }
 
   private fun createItemComponentFactory(project: Project,
+                                         commentsDataProvider: GHPRCommentsDataProvider,
                                          reviewDataProvider: GHPRReviewDataProvider,
                                          reviewThreadsModelsProvider: GHPRReviewsThreadsModelsProvider,
                                          avatarIconsProvider: GHAvatarIconsProvider,
@@ -202,7 +214,8 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
 
     val diffFactory = GHPRReviewThreadDiffComponentFactory(FileTypeRegistry.getInstance(), project, EditorFactory.getInstance())
     val eventsFactory = GHPRTimelineEventComponentFactoryImpl(avatarIconsProvider)
-    return GHPRTimelineItemComponentFactory(reviewDataProvider, avatarIconsProvider, reviewThreadsModelsProvider, diffFactory,
+    return GHPRTimelineItemComponentFactory(commentsDataProvider, reviewDataProvider,
+                                            avatarIconsProvider, reviewThreadsModelsProvider, diffFactory,
                                             eventsFactory,
                                             currentUser)
   }

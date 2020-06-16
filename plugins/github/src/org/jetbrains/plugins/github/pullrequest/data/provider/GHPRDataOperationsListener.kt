@@ -8,6 +8,8 @@ interface GHPRDataOperationsListener {
   fun onStateChanged() {}
   fun onMetadataChanged() {}
   fun onCommentAdded() {}
+  fun onCommentUpdated(commentId: String, newBody: String) {}
+  fun onCommentDeleted(commentId: String) {}
   fun onReviewsChanged() {}
 
   companion object {

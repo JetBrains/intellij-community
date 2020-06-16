@@ -145,7 +145,7 @@ class GHPRReviewDataProviderImpl(private val commentService: GHPRCommentService,
       list.map {
         GHPullRequestReviewThread(it.id, it.isResolved, GHNodes(it.comments.map { comment ->
           if (comment.id == commentId)
-            GHPullRequestReviewComment(comment.id, comment.databaseId, comment.url, comment.author, newComment.bodyHtml, comment.createdAt,
+            GHPullRequestReviewComment(comment.id, comment.databaseId, comment.url, comment.author, newComment.bodyHTML, comment.createdAt,
                                        comment.state, comment.path, comment.commit, comment.position,
                                        comment.originalCommit, comment.originalPosition, comment.replyTo, comment.diffHunk,
                                        comment.reviewId?.let { GHNode(it) }, comment.viewerCanDelete, comment.viewerCanUpdate)

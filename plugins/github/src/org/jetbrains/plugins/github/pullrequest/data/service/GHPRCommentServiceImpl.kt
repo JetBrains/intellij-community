@@ -33,6 +33,16 @@ class GHPRCommentServiceImpl(private val progressManager: ProgressManager,
       requestExecutor.execute(GHGQLRequests.Comment.getCommentBody(repository.serverPath, commentId))
     }.logError(LOG, "Error occurred while loading comment source")
 
+  override fun updateComment(progressIndicator: ProgressIndicator, commentId: String, text: String) =
+    progressManager.submitIOTask(progressIndicator) {
+      requestExecutor.execute(GHGQLRequests.Comment.updateComment(repository.serverPath, commentId, text))
+    }.logError(LOG, "Error occurred while updating comment")
+
+  override fun deleteComment(progressIndicator: ProgressIndicator, commentId: String) =
+    progressManager.submitIOTask(progressIndicator) {
+      requestExecutor.execute(GHGQLRequests.Comment.deleteComment(repository.serverPath, commentId))
+    }.logError(LOG, "Error occurred while deleting comment")
+
   companion object {
     private val LOG = logger<GHPRCommentService>()
   }
