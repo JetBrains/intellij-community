@@ -25,5 +25,3 @@ fun <A : Any, B : Any> JBPair<A?, B?>.toNotNull(): Pair<A, B> {
 fun <E> Collection<E>.toArray(empty: Array<E>): Array<E> = toArrayFromContainers(empty)
 
 inline fun <reified T> Any?.castSafelyTo(): T? = this as? T
-
-inline infix fun <T : Any> T?.withNotNullBackup(backup: () -> T): T = this ?: backup()
