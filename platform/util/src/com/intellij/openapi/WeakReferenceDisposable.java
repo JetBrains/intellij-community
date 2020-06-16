@@ -2,6 +2,7 @@
 package com.intellij.openapi;
 
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.Reference;
@@ -15,6 +16,15 @@ import java.lang.ref.WeakReference;
  */
 public abstract class WeakReferenceDisposable<T> extends WeakReference<T> implements Disposable {
   private static final ReferenceQueue<Object> ourRefQueue = new ReferenceQueue<>();
+
+  public static <E> WeakReferenceDisposable<E> create(E referent, Consumer<? super E> disposer) {
+    return new WeakReferenceDisposable<E>(referent) {
+      @Override
+      protected void disposeReferent(@NotNull E referent) {
+        disposer.consume(referent);
+      }
+    };
+  }
 
   public WeakReferenceDisposable(@NotNull T referent) {
     super(referent, ourRefQueue);
