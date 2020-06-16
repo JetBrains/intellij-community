@@ -473,7 +473,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkClassAndPackageConflict(aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkPublicClassInRightFile(aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkWellFormedRecord(aClass));
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkWellFormedSealedInheritor(aClass));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkSealedNonEnumeratedInheritors(aClass));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkSealedSuper(aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkTypeParameterOverrideEquivalentMethods(aClass, myLanguageLevel));
   }
 
@@ -1066,6 +1067,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     myHolder.add(HighlightUtil.checkUnhandledExceptions(expression, classReference != null ? classReference.getTextRange() : null));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkAnonymousInheritFinal(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkAnonymousInheritProhibited(expression));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkAnonymousSealedProhibited(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkQualifiedNew(expression, type, aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkCreateInnerClassFromStaticContext(expression, type, aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkTypeParameterInstantiation(expression));
@@ -1649,6 +1651,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkExtendsAllowed(list));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkImplementsAllowed(list));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkClassExtendsOnlyOneClass(list));
+      if (!myHolder.hasErrorResults()) HighlightClassUtil.checkPermitsList(list, myHolder);
       if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkGenericCannotExtendException(list));
     }
   }

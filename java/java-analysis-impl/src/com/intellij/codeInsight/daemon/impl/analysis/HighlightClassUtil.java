@@ -31,9 +31,12 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PackageScope;
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
+import com.intellij.util.ObjectUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -964,21 +967,6 @@ public class HighlightClassUtil {
     return null;
   }
   
-  public static HighlightInfo checkWellFormedSealedInheritor(PsiClass psiClass) {
-    if (!psiClass.hasModifierProperty(PsiModifier.SEALED) &&
-        !psiClass.hasModifierProperty(PsiModifier.NON_SEALED) &&
-        !psiClass.hasModifierProperty(PsiModifier.FINAL)) {
-      PsiIdentifier nameIdentifier = psiClass.getNameIdentifier();
-      if (nameIdentifier == null) return null;
-      if (Arrays.stream(psiClass.getSuperTypes()).map(superType -> superType.resolve())
-        .anyMatch(superClass -> superClass != null && superClass.hasModifierProperty(PsiModifier.SEALED))) {
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(nameIdentifier)
-          .descriptionAndTooltip(JavaErrorBundle.message("sealed.type.inheritor.expected.modifiers", PsiModifier.SEALED, PsiModifier.NON_SEALED, PsiModifier.FINAL)).create();
-      }
-    }
-    return null;
-  }
-
   public static HighlightInfo checkIllegalInstanceMemberInRecord(PsiMember member) {
     if (!member.hasModifierProperty(PsiModifier.STATIC)) {
       PsiClass aClass = member.getContainingClass();
@@ -1016,6 +1004,12 @@ public class HighlightClassUtil {
 
   static HighlightInfo checkExtendsSealedClass(PsiClass aClass, PsiClass superClass, PsiJavaCodeReferenceElement elementToHighlight) {
     if (superClass.hasModifierProperty(PsiModifier.SEALED)) {
+      if (PsiUtil.isLocalClass(aClass)) {
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+          .range(elementToHighlight)
+          .descriptionAndTooltip(JavaErrorBundle.message("local.classes.must.extend.sealed.classes")).create();
+      }
+
       PsiClassType[] permittedTypes = superClass.getPermitsListTypes();
       if (permittedTypes.length > 0) {
         if (Arrays.stream(permittedTypes).map(permittedType -> permittedType.resolve()).anyMatch(permittedClass -> aClass.equals(permittedClass))) {
@@ -1034,6 +1028,107 @@ public class HighlightClassUtil {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
         .descriptionAndTooltip(JavaErrorBundle.message("not.allowed.in.sealed.hierarchy", aClass.getName()))
         .range(elementToHighlight).create();
+    }
+    return null;
+  }
+
+  public static HighlightInfo checkAnonymousSealedProhibited(PsiNewExpression newExpression) {
+    PsiAnonymousClass aClass = newExpression.getAnonymousClass();
+    if (aClass != null) {
+      PsiClass superClass = aClass.getBaseClassType().resolve();
+      if (superClass != null && superClass.hasModifierProperty(PsiModifier.SEALED)) {
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+          .range(aClass.getBaseClassReference())
+          .descriptionAndTooltip(JavaErrorBundle.message("anonymous.classes.must.extend.sealed.classes")).create();
+      }
+    }
+    return null;
+  }
+
+  static void checkPermitsList(PsiReferenceList list, 
+                               HighlightInfoHolder holder) {
+    PsiElement parent = list.getParent();
+    if (parent instanceof PsiClass && list.equals(((PsiClass)parent).getPermitsList())) {
+      PsiClass aClass = (PsiClass)parent;
+      PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
+      if (nameIdentifier == null) return;
+      if (!aClass.hasModifierProperty(PsiModifier.SEALED)) {
+        holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+          .range(list.getFirstChild())
+          .descriptionAndTooltip(JavaErrorBundle.message("invalid.permits.clause", aClass.getName()))
+          .create());
+      }
+
+      PsiJavaModule currentModule = JavaModuleGraphUtil.findDescriptorByElement(aClass);
+      JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(aClass.getProject());
+      for (PsiJavaCodeReferenceElement permitted : list.getReferenceElements()) {
+        @Nullable PsiElement resolve = permitted.resolve();
+        if (resolve instanceof PsiClass) {
+          PsiClass inheritorClass = (PsiClass)resolve;
+          if (Arrays.stream(inheritorClass.getSuperTypes()).noneMatch(type -> aClass.equals(type.resolve()))) {
+            holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(permitted)
+                         .descriptionAndTooltip(JavaErrorBundle.message("invalid.permits.clause.direct.implementation", 
+                                                                        inheritorClass.getName(), 
+                                                                        inheritorClass.isInterface() == aClass.isInterface() ? 1 : 2,
+                                                                        aClass.getName()))
+                         .create());
+          }
+          else {
+            if (currentModule == null && !psiFacade.arePackagesTheSame(aClass, inheritorClass)) {
+              holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                           .range(permitted)
+                           .descriptionAndTooltip(JavaErrorBundle.message("class.not.allowed.to.extend.sealed.class.from.another.package"))
+                           .create());
+            }
+            else if (currentModule != null && currentModule != JavaModuleGraphUtil.findDescriptorByElement(inheritorClass)) {
+              holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                           .range(permitted)
+                           .descriptionAndTooltip(JavaErrorBundle.message("class.not.allowed.to.extend.sealed.class.from.another.module"))
+                           .create());
+            }
+          }
+        }
+      }
+    }
+  }
+
+  public static HighlightInfo checkSealedNonEnumeratedInheritors(PsiClass psiClass) {
+    if (psiClass.hasModifierProperty(PsiModifier.SEALED) && psiClass.getPermitsListTypes().length == 0) {
+      PsiIdentifier nameIdentifier = psiClass.getNameIdentifier();
+      if (nameIdentifier == null) return null;
+      PsiJavaModule currentModule = JavaModuleGraphUtil.findDescriptorByElement(psiClass);
+      GlobalSearchScope searchScope = null;
+      if (currentModule == null) {
+        PsiClassOwner classOwner = ObjectUtils.tryCast(psiClass.getContainingFile(), PsiClassOwner.class);
+        if (classOwner != null) {
+          String packageName = classOwner.getPackageName();
+          PsiPackage aPackage = JavaPsiFacade.getInstance(psiClass.getProject()).findPackage(packageName);
+          searchScope = PackageScope.packageScope(Objects.requireNonNull(aPackage), false);
+        }
+      }
+      else {
+        searchScope = currentModule.getResolveScope();
+      }
+
+      if (searchScope != null && !DirectClassInheritorsSearch.search(psiClass, searchScope).anyMatch(c -> !PsiUtil.isLocalOrAnonymousClass(c))) {
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+          .range(nameIdentifier)
+          .descriptionAndTooltip(JavaErrorBundle.message("sealed.must.have.inheritors"))
+          .create();
+      }
+    }
+    return null;
+  }
+
+  public static HighlightInfo checkSealedSuper(PsiClass aClass) {
+    PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
+    if (nameIdentifier != null &&
+        !aClass.hasModifierProperty(PsiModifier.SEALED) &&
+        !aClass.hasModifierProperty(PsiModifier.NON_SEALED) &&
+        !aClass.hasModifierProperty(PsiModifier.FINAL) &&
+        Arrays.stream(aClass.getSuperTypes()).map(type -> type.resolve()).anyMatch(superClass -> superClass != null && superClass.hasModifierProperty(PsiModifier.SEALED))) {
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(nameIdentifier)
+        .descriptionAndTooltip(JavaErrorBundle.message("sealed.type.inheritor.expected.modifiers", PsiModifier.SEALED, PsiModifier.NON_SEALED, PsiModifier.FINAL)).create();
     }
     return null;
   }
