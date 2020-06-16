@@ -297,7 +297,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
       throw e;
     }
     catch (Exception e) {
-      throw new MapInputException("Failed to map data for input " + inputId, e);
+      throw new MapInputException("Failed to map data for input " + inputId + " for index " + myIndexId.getName(), e);
     }
   }
 
