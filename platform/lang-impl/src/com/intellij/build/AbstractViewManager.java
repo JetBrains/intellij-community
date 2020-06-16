@@ -22,7 +22,6 @@ import com.intellij.ui.SystemNotifications;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.ui.EmptyIcon;
@@ -32,10 +31,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 import static com.intellij.build.ExecutionNode.getEventResultIcon;
 
@@ -53,8 +52,6 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
   private final AtomicClearableLazyValue<MultipleBuildsView> myBuildsViewValue;
   private final Set<MultipleBuildsView> myPinnedViews;
   private final AtomicBoolean isDisposed = new AtomicBoolean(false);
-  // todo [Vlad] remove the map when BuildProgressListener.onEvent(BuildEvent) method will be removed
-  private final Map<Object, Object> idsMap = new ConcurrentHashMap<>();
   private final DisposableWrapperList<BuildProgressListener> myListeners = new DisposableWrapperList<>();
 
   public AbstractViewManager(Project project) {
@@ -95,19 +92,6 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
   @Override
   public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
     if (isDisposed.get()) return;
-
-    //noinspection deprecation
-    if (buildId == UNKNOWN_BUILD_ID) {
-      Object buildIdCandidate = event instanceof StartBuildEvent ? event.getId() :
-                                idsMap.get(ObjectUtils.notNull(event.getParentId(), event.getId()));
-      if (buildIdCandidate == null) {
-        return;
-      }
-      buildId = buildIdCandidate;
-      if (event instanceof StartEvent) {
-        idsMap.put(event.getId(), buildId);
-      }
-    }
 
     MultipleBuildsView buildsView;
     if (event instanceof StartBuildEvent) {
@@ -165,7 +149,6 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
   }
 
   protected void onBuildFinish(BuildDescriptor buildDescriptor) {
-    clearIdsOf(Collections.singleton(buildDescriptor));
     BuildInfo buildInfo = (BuildInfo)buildDescriptor;
     if (buildInfo.result instanceof FailureResult) {
       boolean activate = buildInfo.isActivateToolWindowWhenFailed();
@@ -188,7 +171,6 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     isDisposed.set(true);
     myPinnedViews.clear();
     myBuildsViewValue.drop();
-    idsMap.clear();
   }
 
   void onBuildsViewRemove(@NotNull MultipleBuildsView buildsView) {
@@ -200,14 +182,6 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     else {
       myPinnedViews.remove(buildsView);
     }
-
-    clearIdsOf(buildsView.getBuildsMap().keySet());
-  }
-
-  private void clearIdsOf(@NotNull Collection<? extends BuildDescriptor> builds) {
-    if (idsMap.isEmpty()) return;
-    Set<?> ids = builds.stream().map(BuildDescriptor::getId).collect(Collectors.toSet());
-    idsMap.values().removeIf(val -> ids.contains(val));
   }
 
   @ApiStatus.Internal
