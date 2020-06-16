@@ -90,16 +90,42 @@ class GHPRTimelineItemComponentFactory(private val commentsDataProvider: GHPRCom
 
   private fun createComponent(review: GHPullRequestReview): Item {
     val reviewThreadsModel = reviewsThreadsModelsProvider.getReviewThreadsModel(review.id)
+    val panelHandle: GHEditableHtmlPaneHandle?
+    if (review.bodyHTML.isNotEmpty()) {
+      val editorPane = HtmlEditorPane(review.bodyHTML)
+      panelHandle =
+        GHEditableHtmlPaneHandle(editorPane,
+                                 { reviewDataProvider.getReviewMarkdownBody(EmptyProgressIndicator(), review.id) },
+                                 { newText ->
+                                   reviewDataProvider.updateReviewBody(EmptyProgressIndicator(), review.id, newText).successOnEdt {
+                                     editorPane.setBody(it)
+                                   }
+                                 })
+    }
+    else {
+      panelHandle = null
+    }
 
-    val reviewPanel = JPanel(VerticalLayout(UI.scale(12))).apply {
-      isOpaque = false
+    val actionsPanel = NonOpaquePanel(HorizontalLayout(UI.scale(8))).apply {
+      if (panelHandle != null && review.viewerCanUpdate) add(GHTextActions.createEditButton(panelHandle))
+    }
+
+    val contentPanel = NonOpaquePanel(VerticalLayout(UI.scale(12))).apply {
       border = JBUI.Borders.emptyTop(4)
-      if (review.bodyHTML.isNotEmpty()) {
-        add(HtmlEditorPane(review.bodyHTML))
-      }
+      if (panelHandle != null) add(panelHandle.panel, VerticalLayout.FILL_HORIZONTAL)
       add(GHPRReviewThreadsPanel.create(reviewThreadsModel) {
         GHPRReviewThreadComponent.createWithDiff(it, reviewDataProvider, reviewDiffComponentFactory, avatarIconsProvider, currentUser)
       }, VerticalLayout.FILL_HORIZONTAL)
+    }
+    val actionText = when (review.state) {
+      APPROVED -> GithubBundle.message("pull.request.timeline.approved.changes")
+      CHANGES_REQUESTED -> GithubBundle.message("pull.request.timeline.rejected.changes")
+      PENDING -> GithubBundle.message("pull.request.timeline.started.review")
+      COMMENTED, DISMISSED -> GithubBundle.message("pull.request.timeline.reviewed")
+    }
+    val titlePanel = NonOpaquePanel(HorizontalLayout(UI.scale(12))).apply {
+      add(actionTitle(avatarIconsProvider, review.author, actionText, review.createdAt))
+      if (actionsPanel.componentCount > 0) add(actionsPanel)
     }
 
     val icon = when (review.state) {
@@ -110,14 +136,7 @@ class GHPRTimelineItemComponentFactory(private val commentsDataProvider: GHPRCom
       PENDING -> GithubIcons.Review
     }
 
-    val actionText = when (review.state) {
-      APPROVED -> GithubBundle.message("pull.request.timeline.approved.changes")
-      CHANGES_REQUESTED -> GithubBundle.message("pull.request.timeline.rejected.changes")
-      PENDING -> GithubBundle.message("pull.request.timeline.started.review")
-      COMMENTED, DISMISSED -> GithubBundle.message("pull.request.timeline.reviewed")
-    }
-
-    return Item(icon, actionTitle(avatarIconsProvider, review.author, actionText, review.createdAt), reviewPanel)
+    return Item(icon, titlePanel, contentPanel)
   }
 
   private fun userAvatar(user: GHActor?): JLabel {

@@ -68,6 +68,15 @@ class GHPRReviewDataProviderImpl(private val commentService: GHPRCommentService,
     return future.dropReviews().notifyReviews()
   }
 
+  override fun getReviewMarkdownBody(progressIndicator: ProgressIndicator, reviewId: String) =
+    commentService.getCommentMarkdownBody(progressIndicator, reviewId)
+
+  override fun updateReviewBody(progressIndicator: ProgressIndicator, reviewId: String, newText: String): CompletableFuture<String> =
+    reviewService.updateReviewBody(progressIndicator, reviewId, newText).successOnEdt {
+      messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onReviewUpdated(reviewId, newText)
+      it.bodyHTML
+    }
+
   override fun deleteReview(progressIndicator: ProgressIndicator, reviewId: String): CompletableFuture<out Any?> {
     val future = reviewService.deleteReview(progressIndicator, pullRequestId, reviewId)
     pendingReviewRequestValue.combineResult(future) { pendingReview, _ ->

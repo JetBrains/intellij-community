@@ -67,6 +67,7 @@ object GHPRReviewThreadsPanel {
       else for (i in 0 until model.size) {
         panel.add(threadComponentFactory(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i)
       }
+      panel.isVisible = panel.componentCount > 0
     }
   }
 }

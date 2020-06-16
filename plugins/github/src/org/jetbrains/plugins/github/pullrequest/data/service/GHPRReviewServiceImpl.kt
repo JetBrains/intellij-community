@@ -10,6 +10,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentWithPendingReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
@@ -60,6 +61,14 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
       requestExecutor.execute(progressIndicator,
                               GHGQLRequests.PullRequest.Review.submit(repository.serverPath, reviewId, event, body))
     }.logError(LOG, "Error occurred while submitting review")
+
+  override fun updateReviewBody(progressIndicator: ProgressIndicator,
+                                reviewId: String,
+                                newText: String): CompletableFuture<GHPullRequestReview> =
+    progressManager.submitIOTask(progressIndicator) {
+      requestExecutor.execute(progressIndicator,
+                              GHGQLRequests.PullRequest.Review.updateBody(repository.serverPath, reviewId, newText))
+    }.logError(LOG, "Error occurred while updating review")
 
   override fun deleteReview(progressIndicator: ProgressIndicator,
                             pullRequestId: GHPRIdentifier,
