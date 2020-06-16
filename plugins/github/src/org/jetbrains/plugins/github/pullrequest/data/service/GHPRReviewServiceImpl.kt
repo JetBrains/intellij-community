@@ -69,11 +69,6 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
                               GHGQLRequests.PullRequest.Review.delete(repository.serverPath, reviewId))
     }.logError(LOG, "Error occurred while deleting review")
 
-  override fun getCommentMarkdownBody(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<String> =
-    progressManager.submitIOTask(progressIndicator) {
-      requestExecutor.execute(GHGQLRequests.PullRequest.Review.getCommentBody(repository.serverPath, commentId))
-    }.logError(LOG, "Error occurred while loading comment source")
-
   override fun addComment(progressIndicator: ProgressIndicator,
                           pullRequestId: GHPRIdentifier,
                           reviewId: String,

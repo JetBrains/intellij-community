@@ -54,6 +54,14 @@ object GHGQLRequests {
     }
   }
 
+  object Comment {
+    fun getCommentBody(server: GithubServerPath, commentId: String): GQLQuery<String> =
+      GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.commentBody,
+                               mapOf("id" to commentId),
+                               String::class.java,
+                               "node", "body")
+  }
+
   object PullRequest {
     fun findOne(repository: GHRepositoryCoordinates, number: Long): GQLQuery<GHPullRequest?> {
       return GQLQuery.OptionalTraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.findPullRequest,
@@ -197,12 +205,6 @@ object GHGQLRequests {
                                        "body" to body),
                                  GHPullRequestReviewCommentWithPendingReview::class.java,
                                  "addPullRequestReviewComment", "comment")
-
-      fun getCommentBody(server: GithubServerPath, commentId: String): GQLQuery<String> =
-        GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.getReviewCommentBody,
-                                 mapOf("id" to commentId),
-                                 String::class.java,
-                                 "node", "body")
 
       fun deleteComment(server: GithubServerPath, commentId: String): GQLQuery<GHPullRequestPendingReview> =
         GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.deleteReviewComment,

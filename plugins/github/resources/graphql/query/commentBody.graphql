@@ -1,6 +1,6 @@
 query($id: ID!) {
     node(id: $id) {
-        ... on PullRequestReviewComment {
+        ... on Comment {
             body
         }
     }

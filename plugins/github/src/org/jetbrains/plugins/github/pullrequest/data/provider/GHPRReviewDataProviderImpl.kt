@@ -15,6 +15,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewStat
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCommentService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewService
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import org.jetbrains.plugins.github.util.completionOnEdt
@@ -22,7 +23,8 @@ import org.jetbrains.plugins.github.util.handleOnEdt
 import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.concurrent.CompletableFuture
 
-class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
+class GHPRReviewDataProviderImpl(private val commentService: GHPRCommentService,
+                                 private val reviewService: GHPRReviewService,
                                  private val pullRequestId: GHPRIdentifier,
                                  private val messageBus: MessageBus)
   : GHPRReviewDataProvider, Disposable {
@@ -78,7 +80,7 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
   override fun canComment() = reviewService.canComment()
 
   override fun getCommentMarkdownBody(progressIndicator: ProgressIndicator, commentId: String) =
-    reviewService.getCommentMarkdownBody(progressIndicator, commentId)
+    commentService.getCommentMarkdownBody(progressIndicator, commentId)
 
   override fun addComment(progressIndicator: ProgressIndicator,
                           reviewId: String,
