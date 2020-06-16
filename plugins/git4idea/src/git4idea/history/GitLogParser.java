@@ -61,7 +61,7 @@ public class GitLogParser<R extends GitLogRecord> {
   @NotNull private final String myPretty;
 
   @NotNull private final OptionsParser myOptionsParser;
-  @NotNull private final PathsParser myPathsParser;
+  @NotNull private final PathsParser<R> myPathsParser;
 
   @NotNull private final GitLogRecordBuilder<R> myRecordBuilder;
 

@@ -152,7 +152,7 @@ public class GitFileHistory {
   }
 
   @NotNull
-  private GitLineHandler createLogHandler(@NotNull GitLogParser parser,
+  private GitLineHandler createLogHandler(@NotNull GitLogParser<GitLogFullRecord> parser,
                                           @NotNull FilePath path,
                                           @NotNull String lastCommit,
                                           String... parameters) {
