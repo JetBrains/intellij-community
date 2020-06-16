@@ -15,10 +15,10 @@ public final class BinaryFileTypeDecompilers extends FileTypeExtension<BinaryFil
 
   private BinaryFileTypeDecompilers() {
     super(EP_NAME);
-    EP_NAME.addChangeListener(() -> notifyDecompilersChange(), null);
+    EP_NAME.addChangeListener(() -> notifyDecompilerSetChange(), null);
   }
 
-  public void notifyDecompilersChange() {
+  public void notifyDecompilerSetChange() {
     ApplicationManager.getApplication().invokeLater(() -> FileDocumentManager.getInstance().reloadBinaryFiles(), ModalityState.NON_MODAL);
   }
 
