@@ -20,6 +20,7 @@ public class LightSealedTypesHighlightingTest extends LightJavaCodeInsightFixtur
 
   public void testSealedTypesBasics() { doTest(); }
   public void testSealedFunctionalInterface() { doTest(); }
+  public void testSealedRestrictedTypes() { doTest(); }
   
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");
