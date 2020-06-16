@@ -65,7 +65,7 @@ object GHPRReviewThreadCommentsPanel {
 
         override fun intervalAdded(e: ListDataEvent) {
           for (i in e.index0..e.index1) {
-            panel.add(componentFactory(model.getElementAt(i)), i + 1)
+            panel.add(componentFactory(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i + 1)
           }
           panel.validate()
           panel.repaint()
@@ -78,11 +78,11 @@ object GHPRReviewThreadCommentsPanel {
       })
       foldModel.addValueChangedListener { updateFolding() }
 
-      panel.add(componentFactory(model.getElementAt(0)))
+      panel.add(componentFactory(model.getElementAt(0)), VerticalLayout.FILL_HORIZONTAL)
       panel.add(unfoldButtonPanel)
 
       for (i in 1 until model.size) {
-        panel.add(componentFactory(model.getElementAt(i)))
+        panel.add(componentFactory(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL)
       }
       updateFolding()
     }
