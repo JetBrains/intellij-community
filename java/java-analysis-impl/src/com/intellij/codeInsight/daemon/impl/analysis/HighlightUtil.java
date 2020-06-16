@@ -3153,6 +3153,9 @@ public class HighlightUtil {
           if (highlightInfo == null) {
             highlightInfo = GenericsHighlightUtil.checkCannotInheritFromTypeParameter(aClass, ref);
           }
+          if (highlightInfo == null) {
+            highlightInfo = HighlightClassUtil.checkExtendsSealedClass((PsiClass)refGrandParent, aClass, ref);
+          }
         }
       }
       else if (refGrandParent instanceof PsiMethod && ((PsiMethod)refGrandParent).getThrowsList() == referenceList) {
