@@ -28,7 +28,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
@@ -159,7 +158,7 @@ public class ProjectProblemPassUtils {
 
   static int getMemberOffset(@NotNull PsiMember psiMember) {
     return Arrays.stream(psiMember.getChildren())
-      .filter(c -> !(c instanceof PsiDocComment) && !(c instanceof PsiWhiteSpace))
+      .filter(c -> !(c instanceof PsiComment) && !(c instanceof PsiWhiteSpace))
       .findFirst().orElse(psiMember)
       .getTextRange().getStartOffset();
   }
