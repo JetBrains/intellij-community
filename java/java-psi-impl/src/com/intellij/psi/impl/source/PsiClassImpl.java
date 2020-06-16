@@ -191,6 +191,11 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   @Override
+  public @Nullable PsiReferenceList getPermitsList() {
+    return getStubOrPsiChild(JavaStubElementTypes.PERMITS_LIST);
+  }
+
+  @Override
   public PsiClass getSuperClass() {
     return PsiClassImplUtil.getSuperClass(this);
   }

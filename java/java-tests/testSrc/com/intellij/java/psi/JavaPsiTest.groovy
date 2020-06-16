@@ -20,7 +20,7 @@ import groovy.transform.CompileStatic
 class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14
+    return JAVA_15
   }
 
   void testEmptyImportList() {
@@ -228,6 +228,13 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
     }
 
     assert "record A(String s, int i)" == clazz.text
+  }
+
+  void "test permits list"() {
+    def clazz = configureFile("class A permits B {}").classes[0]
+    def elements = clazz.permitsList.referenceElements
+    assert 1 == elements.size()
+    assert "B" == elements.first().referenceName
   }
 
   private PsiJavaFile configureFile(String text) {
