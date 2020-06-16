@@ -412,7 +412,7 @@ public class StructureFilterPopupComponent
       Collection<FilePath> filesPaths = ContainerUtil.sorted(getStructureFilterPaths(), HierarchicalFilePathComparator.NATURAL);
 
       String oldValue = StringUtil.join(ContainerUtil.map(filesPaths, StructureFilterPopupComponent::path2Text), "\n");
-      MultilinePopupBuilder popupBuilder = new MultilinePopupBuilder(project, Collections.emptyList(), oldValue, null);
+      MultilinePopupBuilder popupBuilder = new MultilinePopupBuilder(project, oldValue, new char[]{'\n'});
 
       JBPopup popup = popupBuilder.createPopup();
       popup.addListener(new JBPopupListener() {

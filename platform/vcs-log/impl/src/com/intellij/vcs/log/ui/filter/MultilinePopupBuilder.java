@@ -19,7 +19,7 @@ import com.google.common.primitives.Chars;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.LanguageTextField;
 import com.intellij.ui.SoftWrapsEditorCustomization;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
@@ -42,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -49,30 +51,23 @@ class MultilinePopupBuilder {
   static final char[] SEPARATORS = {'|', '\n'};
 
   @NotNull private final EditorTextField myTextField;
+  private final char[] mySeparators;
 
   MultilinePopupBuilder(@NotNull Project project,
-                        @NotNull final Collection<String> values,
+                        @NotNull Collection<String> values,
                         @NotNull String initialValue,
                         @Nullable CompletionPrefixProvider completionPrefixProvider) {
-    myTextField = createTextField(project, values, completionPrefixProvider, initialValue);
+    myTextField = new TextFieldWithCompletion(project, new MyCompletionProvider(values, completionPrefixProvider),
+                                              initialValue, false, true, false);
+    setupTextField(myTextField);
+    mySeparators = SEPARATORS;
   }
 
-  @NotNull
-  private static EditorTextField createTextField(@NotNull Project project,
-                                                 Collection<String> values,
-                                                 @Nullable CompletionPrefixProvider completionPrefixProvider,
-                                                 @NotNull String initialValue) {
-    TextFieldWithCompletion textField =
-      new TextFieldWithCompletion(project, new MyCompletionProvider(values, completionPrefixProvider), initialValue, false, true, false) {
-        @Override
-        protected EditorEx createEditor() {
-          EditorEx editor = super.createEditor();
-          SoftWrapsEditorCustomization.ENABLED.customize(editor);
-          return editor;
-        }
-      };
-    textField.setBorder(new CompoundBorder(JBUI.Borders.empty(2), textField.getBorder()));
-    return textField;
+  MultilinePopupBuilder(@NotNull Project project, @NotNull String initialValue, char[] separators) {
+    myTextField = new LanguageTextField(PlainTextLanguage.INSTANCE, project, initialValue,
+                                        new LanguageTextField.SimpleDocumentCreator(), false);
+    setupTextField(myTextField);
+    mySeparators = separators;
   }
 
   @NotNull
@@ -81,14 +76,12 @@ class MultilinePopupBuilder {
     panel.add(myTextField, BorderLayout.CENTER);
     ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, myTextField)
       .setCancelOnClickOutside(true)
-      .setAdText(
-        VcsLogBundle.message("vcs.log.filter.popup.advertisement.with.key.text",
-                             KeymapUtil.getShortcutsText(CommonShortcuts.CTRL_ENTER.getShortcuts())))
+      .setAdText(getAdText())
       .setRequestFocus(true)
       .setResizable(true)
       .setMayBeParent(true);
 
-    final JBPopup popup = builder.createPopup();
+    JBPopup popup = builder.createPopup();
     popup.setMinimumSize(new JBDimension(200, 90));
     AnAction okAction = new DumbAwareAction() {
       @Override
@@ -102,11 +95,37 @@ class MultilinePopupBuilder {
   }
 
   @NotNull
+  private String getAdText() {
+    return VcsLogBundle.message("vcs.log.filter.popup.advertisement.with.key.text", getSeparatorsText(mySeparators),
+                                KeymapUtil.getShortcutsText(CommonShortcuts.CTRL_ENTER.getShortcuts()));
+  }
+
+  @NotNull
   List<String> getSelectedValues() {
-    return ContainerUtil.mapNotNull(StringUtil.tokenize(myTextField.getText(), new String(SEPARATORS)), value -> {
+    return ContainerUtil.mapNotNull(StringUtil.tokenize(myTextField.getText(), new String(mySeparators)), value -> {
       String trimmed = value.trim();
       return trimmed.isEmpty() ? null : trimmed;
     });
+  }
+
+  @NotNull
+  private static String getSeparatorsText(char[] separators) {
+    StringBuilder s = new StringBuilder();
+    for (char c : separators) {
+      String separator = c == '\n' ? VcsLogBundle.message("vcs.log.filter.popup.advertisement.text.new.lines") : Character.toString(c);
+      if (s.length() == 0) {
+        s.append(separator);
+      }
+      else {
+        s.append(VcsLogBundle.message("vcs.log.filter.popup.advertisement.text.or.suffix", separator));
+      }
+    }
+    return s.toString();
+  }
+
+  private static void setupTextField(@NotNull EditorTextField textField) {
+    textField.addSettingsProvider(editor -> SoftWrapsEditorCustomization.ENABLED.customize(editor));
+    textField.setBorder(new CompoundBorder(JBUI.Borders.empty(2), textField.getBorder()));
   }
 
   interface CompletionPrefixProvider {
@@ -133,7 +152,7 @@ class MultilinePopupBuilder {
     @Nullable
     @Override
     public String getAdvertisement() {
-      return VcsLogBundle.message("vcs.log.filter.popup.advertisement.text");
+      return VcsLogBundle.message("vcs.log.filter.popup.advertisement.text", getSeparatorsText(SEPARATORS));
     }
   }
 }
