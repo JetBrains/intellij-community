@@ -178,10 +178,10 @@ class BuildOptions {
   String jdksTargetDir = System.getProperty(JDKS_TARGET_DIR_OPTION)
 
   /**
-   * Specifies JetBrains Runtime version to be used as project SDK, 8 by default.
+   * Specifies JetBrains Runtime version to be used as project SDK, 11 by default.
    */
   static final String JDK_VERSION_OPTION = "intellij.build.jdk.version"
-  int jbrVersion = System.getProperty(JDK_VERSION_OPTION, "8").toInteger()
+  int jbrVersion = System.getProperty(JDK_VERSION_OPTION, "11").toInteger()
 
   /**
    * Specifies an algorithm to build distribution checksums.
