@@ -549,6 +549,7 @@ public class Outer {
     myFixture.assertPreferredCompletionItems 0, 'getAnnotationsAreaOffset'
   }
 
+  @NeedsIndex.ForStandardLibrary(reason = "On emptly indices 'foo' is the only item, so is not filtered out in  JavaCompletionProcessor.dispreferStaticAfterInstance")
   void testAccessStaticViaInstanceSecond() throws Throwable {
     configure()
     assert !('foo' in myFixture.lookupElementStrings)
