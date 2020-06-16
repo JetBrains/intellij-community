@@ -1012,4 +1012,28 @@ public class HighlightClassUtil {
     }
     return null;
   }
+
+  static HighlightInfo checkExtendsSealedClass(PsiClass aClass, PsiClass superClass, PsiJavaCodeReferenceElement elementToHighlight) {
+    if (superClass.hasModifierProperty(PsiModifier.SEALED)) {
+      PsiClassType[] permittedTypes = superClass.getPermitsListTypes();
+      if (permittedTypes.length > 0) {
+        if (Arrays.stream(permittedTypes).map(permittedType -> permittedType.resolve()).anyMatch(permittedClass -> aClass.equals(permittedClass))) {
+          return null;
+        }
+      }
+      else if (JavaPsiFacade.getInstance(aClass.getProject()).arePackagesTheSame(aClass, superClass)) {
+        return null;
+      }
+      else {
+        PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(aClass);
+        if (javaModule != null && javaModule == JavaModuleGraphUtil.findDescriptorByElement(superClass)) {
+          return null;
+        }
+      }
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        .descriptionAndTooltip(JavaErrorBundle.message("not.allowed.in.sealed.hierarchy", aClass.getName()))
+        .range(elementToHighlight).create();
+    }
+    return null;
+  }
 }
