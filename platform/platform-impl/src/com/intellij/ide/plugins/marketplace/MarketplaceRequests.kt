@@ -101,16 +101,19 @@ open class MarketplaceRequests {
   ).addParameters(param)
 
   fun getFeatures(param: Map<String, String>): List<FeatureImpl> = try {
-    HttpRequests
-      .request(createFeatureUrl(param))
-      .throwStatusCodeException(false)
-      .productNameAsUserAgent()
-      .connect {
-        objectMapper.readValue(
-          it.inputStream,
-          object : TypeReference<List<FeatureImpl>>() {}
-        )
-      }
+    if (param.isNotEmpty()) {
+      HttpRequests
+        .request(createFeatureUrl(param))
+        .throwStatusCodeException(false)
+        .productNameAsUserAgent()
+        .connect {
+          objectMapper.readValue(
+            it.inputStream,
+            object : TypeReference<List<FeatureImpl>>() {}
+          )
+        }
+    }
+    else emptyList()
   }
   catch (e: Exception) {
     logWarnOrPrintIfDebug("Can not get features from Marketplace", e)
@@ -250,20 +253,23 @@ open class MarketplaceRequests {
   }
 
   fun getLastCompatiblePluginUpdate(ids: List<String>, buildNumber: BuildNumber? = null): List<IdeCompatibleUpdate> = try {
-    val data = objectMapper.writeValueAsString(CompatibleUpdateRequest(PluginDownloader.getBuildNumberForDownload(buildNumber), ids))
-    val url = Urls.newFromEncoded(COMPATIBLE_UPDATE_URL).toExternalForm()
-    HttpRequests
-      .post(url, HttpRequests.JSON_CONTENT_TYPE)
-      .productNameAsUserAgent()
-      .throwStatusCodeException(false)
-      .connect {
-        it.write(data)
-        objectMapper
-          .readValue(
-            it.inputStream,
-            object : TypeReference<List<IdeCompatibleUpdate>>() {}
-          )
-      }
+    if (ids.isNotEmpty()) {
+      val data = objectMapper.writeValueAsString(CompatibleUpdateRequest(PluginDownloader.getBuildNumberForDownload(buildNumber), ids))
+      val url = Urls.newFromEncoded(COMPATIBLE_UPDATE_URL).toExternalForm()
+      HttpRequests
+        .post(url, HttpRequests.JSON_CONTENT_TYPE)
+        .productNameAsUserAgent()
+        .throwStatusCodeException(false)
+        .connect {
+          it.write(data)
+          objectMapper
+            .readValue(
+              it.inputStream,
+              object : TypeReference<List<IdeCompatibleUpdate>>() {}
+            )
+        }
+    }
+    else emptyList()
   }
   catch (e: Exception) {
     logWarnOrPrintIfDebug("Can not get compatible updates from Marketplace", e)
