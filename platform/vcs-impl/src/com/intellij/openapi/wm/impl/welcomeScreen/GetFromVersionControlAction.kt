@@ -21,10 +21,16 @@ open class GetFromVersionControlAction : DumbAwareAction() {
     if (!isEnabled)
       return
     if (e.place == ActionPlaces.WELCOME_SCREEN) {
-      presentation.icon = AllIcons.Welcome.FromVCS
-      presentation.selectedIcon = AllIcons.Welcome.FromVCSSelected
-      presentation.text = if (Registry.`is`("use.tabbed.welcome.screen")) ActionsBundle.message("Vcs.VcsClone.Tabbed.Welcome.text")
-      else ActionsBundle.message("Vcs.VcsClone.Welcome.text")
+      if (Registry.`is`("use.tabbed.welcome.screen")) {
+        presentation.icon = AllIcons.Welcome.FromVCSTab
+        presentation.selectedIcon = AllIcons.Welcome.FromVCSTabSelected
+        presentation.text = ActionsBundle.message("Vcs.VcsClone.Tabbed.Welcome.text")
+      }
+      else {
+        presentation.icon = AllIcons.Welcome.FromVCS
+        presentation.text = ActionsBundle.message("Vcs.VcsClone.Tabbed.Welcome.text")
+        ActionsBundle.message("Vcs.VcsClone.Welcome.text")
+      }
     }
     else {
       presentation.icon = null
