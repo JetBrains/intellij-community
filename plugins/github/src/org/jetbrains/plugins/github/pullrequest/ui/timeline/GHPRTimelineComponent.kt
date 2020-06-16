@@ -65,7 +65,7 @@ class GHPRTimelineComponent(private val model: ListModel<GHPRTimelineItem>,
     // paint time LINE
     // painted from bottom to top
     synchronized(treeLock) {
-      val lastIdx = componentCount - 1
+      val lastIdx = components.indexOfLast { it.isVisible }
       if (lastIdx < 0) return
       val lastComp = getComponent(lastIdx) as? Item ?: return
       var yEnd = computeYEnd(lastComp)
@@ -74,8 +74,8 @@ class GHPRTimelineComponent(private val model: ListModel<GHPRTimelineItem>,
       g.color = timeLineColor
       val x = timeLineX.float.toDouble()
 
-      for (i in componentCount - 2 downTo 0) {
-        val comp = getComponent(i) as? Item ?: continue
+      for (i in lastIdx - 1 downTo 0) {
+        val comp = getComponent(i).takeIf { it.isVisible } as? Item ?: continue
         val yStart = computeYStart(comp)
         if (yStart >= yEnd) continue
         LinePainter2D.paint(g, x, yStart.toDouble(), x, yEnd.toDouble(), LinePainter2D.StrokeType.INSIDE, timeLineWidth.float.toDouble())
