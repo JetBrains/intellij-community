@@ -18,7 +18,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Area;
@@ -170,15 +169,17 @@ public abstract class VcsLogPopupComponent extends JPanel {
   }
 
   private static Border createUnfocusedBorder() {
-    return BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(BORDER_SIZE, BORDER_SIZE, BORDER_SIZE, BORDER_SIZE),
-                                              JBUI.Borders.empty(2));
+    return BorderFactory.createCompoundBorder(JBUI.Borders.empty(BORDER_SIZE), JBUI.Borders.empty(2));
   }
 
-  private static class FilledRoundedBorder extends LineBorder {
+  private static class FilledRoundedBorder implements Border {
+    private final Color myColor;
+    private final int myThickness;
     private final int myArcSize;
 
     FilledRoundedBorder(@NotNull Color color, int arcSize, int thickness) {
-      super(color, thickness);
+      myColor = color;
+      myThickness = thickness;
       myArcSize = arcSize;
     }
 
@@ -186,15 +187,28 @@ public abstract class VcsLogPopupComponent extends JPanel {
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
       GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
 
-      g.setColor(lineColor);
-      Area area = new Area(new RoundRectangle2D.Double(x, y, width, height, myArcSize, myArcSize));
-      int innerArc = Math.max(myArcSize - thickness, 0);
+      g.setColor(myColor);
+
+      int thickness = JBUI.scale(myThickness);
+      int arcSize = JBUI.scale(myArcSize);
+      Area area = new Area(new RoundRectangle2D.Double(x, y, width, height, arcSize, arcSize));
+      int innerArc = Math.max(arcSize - thickness, 0);
       area.subtract(new Area(new RoundRectangle2D.Double(x + thickness, y + thickness,
                                                          width - 2 * thickness, height - 2 * thickness,
                                                          innerArc, innerArc)));
       ((Graphics2D)g).fill(area);
 
       config.restore();
+    }
+
+    @Override
+    public Insets getBorderInsets(Component c) {
+      return JBUI.insets(myThickness);
+    }
+
+    @Override
+    public boolean isBorderOpaque() {
+      return false;
     }
   }
 
