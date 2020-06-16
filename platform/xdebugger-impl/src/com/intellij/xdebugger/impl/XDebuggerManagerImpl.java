@@ -461,8 +461,11 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
         int lineNumber = getLineNumber(e);
         XDebugSessionImpl session = getCurrentSession();
         if (session != null && lineNumber >= 0) {
-          session.runToPosition(XSourcePositionImpl.create(((EditorEx)e.getEditor()).getVirtualFile(), lineNumber), false);
-          e.consume();
+          XSourcePositionImpl position = XSourcePositionImpl.create(((EditorEx)e.getEditor()).getVirtualFile(), lineNumber);
+          if (position != null) {
+            session.runToPosition(position, false);
+            e.consume();
+          }
         }
       }
     }
