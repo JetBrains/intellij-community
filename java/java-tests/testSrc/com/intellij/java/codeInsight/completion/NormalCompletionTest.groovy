@@ -2025,6 +2025,7 @@ class Bar {{
 
   void testSuggestGetInstanceMethodName() { doTest() }
 
+  @NeedsIndex.Full(reason = "AllClassesSearchExecutor.processClassNames from JavaNoVariantsDelegator.suggestNonImportedClasses uses stub indices to provide completion, so matching Scratch class is ignored, ant so is its inner class")
   void testTabOnNewInnerClass() {
     configureByTestName()
     lookup.currentItem = myFixture.lookupElements.find { it.lookupString.contains('Inner') }
