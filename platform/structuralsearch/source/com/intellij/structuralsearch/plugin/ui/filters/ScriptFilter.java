@@ -32,7 +32,8 @@ public class ScriptFilter extends FilterAction {
 
   @Override
   public boolean hasFilter() {
-    return !StringUtil.isEmpty(myTable.getVariable().getScriptCodeConstraint());
+    final NamedScriptableDefinition variable = myTable.getVariable();
+    return variable != null && !StringUtil.isEmpty(variable.getScriptCodeConstraint());
   }
 
   @Override
@@ -115,7 +116,7 @@ public class ScriptFilter extends FilterAction {
 
       @Override
       public JComponent[] getFocusableComponents() {
-        return new JComponent[]{myTextField};
+        return new JComponent[] {myTextField};
       }
     };
   }
