@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.api
 object GHGQLQueries {
   const val findOrganizationTeams = "findOrganizationTeams"
   const val findRepositoryPermission = "findRepositoryPermission"
+  const val commentBody = "commentBody"
   const val issueSearch = "issueSearch"
   const val findPullRequest = "findPullRequest"
   const val pullRequestTimeline = "pullRequestTimeline"
@@ -14,7 +15,6 @@ object GHGQLQueries {
   const val submitReview = "submitReview"
   const val deleteReview = "deleteReview"
   const val pendingReview = "findPendingReview"
-  const val getReviewCommentBody = "getReviewCommentBody"
   const val addReviewComment = "addReviewComment"
   const val deleteReviewComment = "deleteReviewComment"
   const val updateReviewComment = "updateReviewComment"

@@ -43,9 +43,6 @@ interface GHPRReviewService {
   fun deleteReview(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, reviewId: String): CompletableFuture<out Any?>
 
   @CalledInAny
-  fun getCommentMarkdownBody(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<String>
-
-  @CalledInAny
   fun addComment(progressIndicator: ProgressIndicator,
                  pullRequestId: GHPRIdentifier,
                  reviewId: String,
