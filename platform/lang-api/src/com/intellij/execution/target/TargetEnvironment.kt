@@ -18,8 +18,14 @@ abstract class TargetEnvironment(
 ) {
 
   sealed class TargetPath {
+    /**
+     * Request for a certain path on the target machine. If the [absolutePath] does not exist, it should be created.
+     */
     data class Persistent(val absolutePath: String) : TargetPath()
 
+    /**
+     * Request for any not used random path.
+     */
     data class Temporary @JvmOverloads constructor(
       /** Any string. An environment implementation may reuse previously created directories for the same hint. */
       val hint: String? = null,
