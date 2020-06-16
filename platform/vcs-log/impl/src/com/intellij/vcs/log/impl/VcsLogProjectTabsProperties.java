@@ -40,12 +40,6 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
   public void loadState(@NotNull State state) {
     myState = state;
 
-    // migration from the old toolwindow-only tabs
-    for (String tab : myState.OPEN_TABS) {
-      myState.OPEN_GENERIC_TABS.put(tab, VcsLogManager.LogWindowKind.TOOL_WINDOW);
-    }
-    myState.OPEN_TABS.clear();
-
     if (!myState.oldMeFiltersMigrated) {
       // migrate "me" to "*" for recent user filters
       FilterConfigMigrationUtil.migrateRecentUserFilters(myState.RECENT_FILTERS);
@@ -109,8 +103,6 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
 
   public static class State {
     public Map<String, MyState> TAB_STATES = new TreeMap<>();
-    @Deprecated
-    public LinkedHashSet<String> OPEN_TABS = new LinkedHashSet<>();
     public LinkedHashMap<String, VcsLogManager.LogWindowKind> OPEN_GENERIC_TABS = new LinkedHashMap<>();
     public Map<String, List<RecentGroup>> RECENT_FILTERS = new HashMap<>();
 
