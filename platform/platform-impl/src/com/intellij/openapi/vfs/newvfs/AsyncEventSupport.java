@@ -69,7 +69,6 @@ public final class AsyncEventSupport {
 
     List<AsyncFileListener.ChangeApplier> appliers = new ArrayList<>();
     List<AsyncFileListener> allListeners = new ArrayList<>();
-    // must be the first
     ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).addAsyncFileListenerTo(allListeners);
     allListeners.addAll(EP_NAME.getExtensionList());
     ((VirtualFileManagerImpl)VirtualFileManager.getInstance()).addAsyncFileListenersTo(allListeners);
