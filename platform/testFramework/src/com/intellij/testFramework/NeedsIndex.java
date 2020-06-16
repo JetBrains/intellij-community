@@ -6,7 +6,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-public interface NeedsIndicesState {
+public interface NeedsIndex {
 
     /**
      * Used to mark those completion tests that are not expected to work in dumb mode even with full indices.
@@ -30,7 +30,7 @@ public interface NeedsIndicesState {
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
-    @interface FullIndices {
+    @interface Full {
         String reason() default "";
     }
 
@@ -43,7 +43,7 @@ public interface NeedsIndicesState {
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
-    @interface StandardLibraryIndices {
+    @interface ForStandardLibrary {
         String reason() default "";
     }
 }

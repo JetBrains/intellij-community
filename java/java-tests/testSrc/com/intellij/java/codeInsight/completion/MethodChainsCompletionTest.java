@@ -13,14 +13,14 @@ import com.intellij.compiler.chainsSearch.completion.lookup.JavaRelevantChainLoo
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.NeedsIndicesState;
+import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.SmartList;
 
 import java.util.List;
 
 @SkipSlowTestLocally
-@NeedsIndicesState.StandardLibraryIndices
+@NeedsIndex.ForStandardLibrary
 public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   private final static String TEST_INDEX_FILE_NAME = "TestIndex.java";
   private final static String TEST_COMPLETION_FILE_NAME = "TestCompletion.java";

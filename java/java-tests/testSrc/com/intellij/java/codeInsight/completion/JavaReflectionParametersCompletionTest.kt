@@ -24,7 +24,7 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.NeedsIndicesState
+import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.indexing.DumbModeAccessType
 import com.intellij.util.indexing.FileBasedIndex
@@ -32,7 +32,7 @@ import com.intellij.util.indexing.FileBasedIndex
 /**
  * @author Pavel.Dolgov
  */
-@NeedsIndicesState.FullIndices
+@NeedsIndex.Full
 class JavaReflectionParametersCompletionTest : LightFixtureCompletionTestCase() {
   override fun getBasePath(): String = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/reflectionParameters/"
 

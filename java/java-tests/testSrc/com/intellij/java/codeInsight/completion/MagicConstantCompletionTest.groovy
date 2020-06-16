@@ -18,7 +18,7 @@ package com.intellij.java.codeInsight.completion
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.psi.PsiClass
-import com.intellij.testFramework.NeedsIndicesState
+import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 import org.intellij.lang.annotations.Language
@@ -29,7 +29,7 @@ import org.intellij.lang.annotations.Language
 @CompileStatic
 class MagicConstantCompletionTest extends LightJavaCodeInsightFixtureTestCase {
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void "test in method argument"() {
     addModifierList()
     myFixture.configureByText "a.java", """
