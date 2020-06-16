@@ -114,8 +114,8 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
     return new FileBasedIndexExtension<K, Void>() {
       @Override
       public @NotNull ID<K, Void> getName() {
-        //noinspection unchecked
-        return (ID<K, Void>)extension.getKey();
+        @SuppressWarnings("unchecked") ID<K, Void> key = (ID<K, Void>)extension.getKey();
+        return key;
       }
 
       @Override

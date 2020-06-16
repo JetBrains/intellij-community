@@ -592,14 +592,15 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
   }
 
   private void propertyChanged(@NotNull VFilePropertyChangeEvent event) {
-    final VirtualFile file = event.getFile();
     if (VirtualFile.PROP_WRITABLE.equals(event.getPropertyName())) {
-      final Document document = getCachedDocument(file);
+      VirtualFile file = event.getFile();
+      Document document = getCachedDocument(file);
       if (document != null) {
         ApplicationManager.getApplication().runWriteAction((ExternalChangeAction)() -> document.setReadOnly(!file.isWritable()));
       }
     }
     else if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
+      VirtualFile file = event.getFile();
       Document document = getCachedDocument(file);
       if (document != null) {
         if (isBinaryWithoutDecompiler(file)) {
@@ -620,13 +621,13 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
   }
 
   private static boolean isBinaryWithDecompiler(@NotNull VirtualFile file) {
-    final FileType ft = file.getFileType();
-    return ft.isBinary() && BinaryFileTypeDecompilers.getInstance().forFileType(ft) != null;
+    FileType type = file.getFileType();
+    return type.isBinary() && BinaryFileTypeDecompilers.getInstance().forFileType(type) != null;
   }
 
   private static boolean isBinaryWithoutDecompiler(@NotNull VirtualFile file) {
-    final FileType fileType = file.getFileType();
-    return fileType.isBinary() && BinaryFileTypeDecompilers.getInstance().forFileType(fileType) == null;
+    FileType type = file.getFileType();
+    return type.isBinary() && BinaryFileTypeDecompilers.getInstance().forFileType(type) == null;
   }
 
   static final class MyAsyncFileListener implements AsyncFileListener {
@@ -882,7 +883,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
 
   /** @deprecated another dirty Rider hack; don't use */
   @Deprecated
-  @SuppressWarnings("StaticNonFinalField")
+  @SuppressWarnings({"StaticNonFinalField", "DeprecatedIsStillUsed"})
   public static boolean ourConflictsSolverEnabled = true;
 
   protected void cacheDocument(@NotNull VirtualFile file, @NotNull Document document) {
