@@ -463,6 +463,11 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     return false;
   }
 
+  @Override
+  public @NotNull JsonSchemaCatalogManager getCatalogManager() {
+    return myCatalogManager;
+  }
+
   private static class MyState {
     @NotNull private final Factory<List<JsonSchemaFileProvider>> myFactory;
     @NotNull private final Project myProject;

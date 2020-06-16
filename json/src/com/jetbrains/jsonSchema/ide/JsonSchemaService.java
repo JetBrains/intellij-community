@@ -10,6 +10,7 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
+import com.jetbrains.jsonSchema.remote.JsonSchemaCatalogManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,4 +78,6 @@ public interface JsonSchemaService {
   List<JsonSchemaInfo> getAllUserVisibleSchemas();
 
   boolean isApplicableToFile(@Nullable VirtualFile file);
+
+  @NotNull JsonSchemaCatalogManager getCatalogManager();
 }
