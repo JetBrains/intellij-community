@@ -62,6 +62,7 @@ public final class Main {
   public static void main(String[] args) {
     LinkedHashMap<String, Long> startupTimings = new LinkedHashMap<>();
     startupTimings.put("startup begin", System.nanoTime());
+
     if (args.length == 1 && "%f".equals(args[0])) {
       args = NO_ARGS;
     }
