@@ -169,7 +169,7 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
   public LogicalPosition offsetToLogicalPosition(int offset) {
     Document document = getDocument();
     int line = document.getLineNumber(offset);
-    int col = document.getLineStartOffset(line);
+    int col = offset - document.getLineStartOffset(line);
     return new LogicalPosition(line, col);
   }
 
