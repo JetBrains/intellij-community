@@ -355,7 +355,7 @@ class JBZipOutputStream {
   }
 
   public void putNextEntryBytes(JBZipEntry entry, byte[] bytes) throws IOException {
-    prepareNextEntry(entry, bytes.length);
+    prepareNextEntry(entry);
 
     crc.reset();
     crc.update(bytes);
@@ -378,12 +378,13 @@ class JBZipOutputStream {
     }
 
     entry.setCompressedSize(outputBytesLength);
+    entry.setSize(bytes.length);
     writeLocalFileHeader(entry);
     writeOut(outputBytes, 0, outputBytesLength);
   }
 
-  void putNextEntryContent(JBZipEntry entry, long size, InputStream content) throws IOException {
-    prepareNextEntry(entry, size);
+  void putNextEntryContent(JBZipEntry entry, InputStream content) throws IOException {
+    prepareNextEntry(entry);
     writeLocalFileHeader(entry);
     flushBuffer();
 
@@ -399,11 +400,13 @@ class JBZipOutputStream {
       output = bufferedFileOutput;
     }
 
+    long writtenSize = 0;
     try {
       final byte[] buffer = new byte[10 * 1024];
       int count;
       crc.reset();
       while ((count = content.read(buffer)) > 0) {
+        writtenSize += count;
         output.write(buffer, 0, count);
         crc.update(buffer, 0, count);
       }
@@ -413,12 +416,11 @@ class JBZipOutputStream {
     }
     writtenOnDisk += fileOutput.myWrittenBytes;
 
+    entry.setSize(writtenSize);
     updateLocalFileHeader(entry, crc.getValue(), fileOutput.myWrittenBytes);
   }
 
-  private void prepareNextEntry(JBZipEntry entry, long size) {
-    entry.setSize(size);
-
+  private void prepareNextEntry(JBZipEntry entry) {
     if (entry.getMethod() == -1) {
       entry.setMethod(method);
     }
