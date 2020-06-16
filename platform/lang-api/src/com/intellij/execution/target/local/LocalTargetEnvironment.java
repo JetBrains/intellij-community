@@ -106,7 +106,7 @@ public class LocalTargetEnvironment extends TargetEnvironment {
 
   @NotNull
   @Override
-  public TargetPlatform getRemotePlatform() {
+  public TargetPlatform getTargetPlatform() {
     return TargetPlatform.CURRENT;
   }
 

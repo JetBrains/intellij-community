@@ -122,7 +122,7 @@ abstract class TargetEnvironment(
   abstract fun createProcess(commandLine: TargetedCommandLine,
                              indicator: ProgressIndicator): Process
 
-  abstract val remotePlatform: TargetPlatform
+  abstract val targetPlatform: TargetPlatform
 
   //FIXME: document
   abstract fun shutdown()

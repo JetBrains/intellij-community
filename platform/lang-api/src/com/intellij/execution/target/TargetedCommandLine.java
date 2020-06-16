@@ -59,7 +59,7 @@ public final class TargetedCommandLine {
       parameters.add(resolvePromise(parameter.getTargetValue(), "parameter"));
     }
     return StringUtil.join(CommandLineUtil.toCommandLine(ParametersListUtil.escape(exePath), parameters,
-                                                         target.getRemotePlatform().getPlatform()), " ");
+                                                         target.getTargetPlatform().getPlatform()), " ");
   }
 
   public List<String> collectCommandsSynchronously() throws ExecutionException {
