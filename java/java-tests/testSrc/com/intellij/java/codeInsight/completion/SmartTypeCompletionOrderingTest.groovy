@@ -25,7 +25,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.psi.PsiClass
 import com.intellij.psi.statistics.StatisticsManager
-import com.intellij.testFramework.NeedsIndicesState
+import com.intellij.testFramework.NeedsIndex
 
 class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/smartTypeSorting"
@@ -34,18 +34,18 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     super(CompletionType.SMART)
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testJComponentAdd() throws Throwable {
     checkPreferredItems(0, "name", "b", "fooBean239", "foo")
   }
 
-  @NeedsIndicesState.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
+  @NeedsIndex.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   void testJComponentAddNew() throws Throwable {
     //there's no PopupMenu in mock jdk
     checkPreferredItems(2, "Component", "String", "FooBean3", "JComponent", "Container")
   }
 
-  @NeedsIndicesState.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
+  @NeedsIndex.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   void testJComponentAddNewWithStats() throws Throwable {
     //there's no PopupMenu in mock jdk
     final LookupImpl lookup = invokeCompletion("/JComponentAddNew.java")
@@ -60,7 +60,7 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems(2, "Component", "String", "Container", "FooBean3", "JComponent")
   }
 
-  @NeedsIndicesState.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
+  @NeedsIndex.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   void testNewListAlwaysFirst() {
     def lookup = invokeCompletion(getTestName(false) + ".java")
     assertPreferredItems 1, 'List', 'ArrayList', 'AbstractList', 'AbstractSequentialList'
@@ -71,7 +71,7 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems 1, 'List', 'AbstractSequentialList', 'ArrayList', 'AbstractList'
   }
 
-  @NeedsIndicesState.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
+  @NeedsIndex.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   void testNoStatsOnUnsuccessfulAttempt() {
     final LookupImpl lookup = invokeCompletion("/JComponentAddNew.java")
     assertPreferredItems(2, "Component", "String", "FooBean3", "JComponent", "Container")
@@ -90,32 +90,32 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems(0, "goo", "bar", "foo")
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testNewRunnable() throws Throwable {
     checkPreferredItems(0, "Runnable", "MyAnotherRunnable", "MyRunnable", "Thread")
   }
 
-  @NeedsIndicesState.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
+  @NeedsIndex.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   void testNewComponent() throws Throwable {
     checkPreferredItems(1, "Component", "Foo", "JComponent", "Container")
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testClassLiteral() throws Throwable {
     checkPreferredItems(0, "String.class")
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testMethodsWithSubstitutableReturnType() throws Throwable {
     checkPreferredItems(0, "foo", "toString", "bar")
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testDontPreferKeywords() throws Throwable {
     checkPreferredItems(0, "o1", "foo", "name", "this")
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testEnumValueOf() throws Throwable {
     checkPreferredItems(0, "e", "MyEnum.BAR", "MyEnum.FOO", "valueOf", "valueOf")
   }
@@ -128,59 +128,59 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "getVersionString", "getTitle")
   }
 
-  @NeedsIndicesState.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
+  @NeedsIndex.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   void testPreferImportedClasses() throws Throwable {
     //there's no PopupMenu in mock jdk
     checkPreferredItems(2, "Component", "String", "FooBean3", "JPanel", "JComponent")
   }
 
-  @NeedsIndicesState.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
+  @NeedsIndex.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   void testPreferNestedClasses() throws Throwable {
     //there's no PopupMenu in mock jdk
     checkPreferredItems(2, "Component", "String", "FooBean3", "NestedClass", "JComponent")
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testSmartCollections() throws Throwable {
     checkPreferredItems(0, "s")
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testSmartEquals() throws Throwable {
     checkPreferredItems(0, "s")
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testSmartEquals2() throws Throwable {
     checkPreferredItems(0, "foo", "this", "o", "s")
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testSmartEquals3() throws Throwable {
     checkPreferredItems(0, "b", "this", "a", "z")
   }
 
-  @NeedsIndicesState.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
+  @NeedsIndex.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   void testSmartCollectionsNew() throws Throwable {
     checkPreferredItems(1, "Foo", "Bar")
   }
 
-  @NeedsIndicesState.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
+  @NeedsIndex.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   void testSmartEqualsNew() throws Throwable {
     checkPreferredItems(1, "Foo", "Bar")
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testSmartEqualsNew2() throws Throwable {
     checkPreferredItems(0, "Foo")
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testBooleanValueOf() throws Throwable {
     checkPreferredItems(0, "b", "Boolean.FALSE", "Boolean.TRUE", "equals", "false", "true", "valueOf", "valueOf")
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testXmlTagGetAttribute() throws Throwable {
     checkPreferredItems(0, "getAttributeValue", "getNamespace", "toString")
   }
@@ -201,7 +201,7 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "MyProcessor", "Proc1")
   }
 
-  @NeedsIndicesState.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
+  @NeedsIndex.SmartMode(reason = "AbstractExpectedTypeSkipper works in smart mode only")
   void testStatisticsAffectsNonPreferableExpectedItems() throws Throwable {
     final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java")
     assertPreferredItems(1, "List", "ArrayList", "AbstractList", "AbstractSequentialList")
@@ -211,7 +211,7 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems(0, "List", "ArrayList", "AbstractList", "AbstractSequentialList")
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testPreferNonRecursiveMethodParams() throws Throwable {
     checkPreferredItems(0, "b", "s", "a", "hashCode")
   }
@@ -248,22 +248,22 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "Foo", "Bar", "Goo")
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testLiteralInReturn() throws Throwable {
     checkPreferredItems(0, "false", "true", "equals")
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testLiteralInIf() throws Throwable {
     checkPreferredItems(0, "equals", "false", "true")
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testFactoryMethodForDefaultType() throws Throwable {
     checkPreferredItems(0, "create", "this")
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testLocalVarsBeforeClassLiterals() throws Throwable {
     checkPreferredItems(0, "local", "Foo.class", "Bar.class")
   }
@@ -272,7 +272,7 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "_o", "b")
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testInnerClassesProximity() throws Throwable {
     checkPreferredItems(0, "Goo", "InnerGoo", "Bar", "AGoo")
   }
@@ -289,7 +289,7 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems(0, "foo", "param", "this", "goo", "bar")
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testPreferredByNameDontChangeStatistics() throws Throwable {
     invokeCompletion(getTestName(false) + ".java")
     assertPreferredItems(0, "foo", "false")
@@ -305,12 +305,12 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems(0, "myBar", "myFoo")
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testPreferSameNamedMethods() {
     checkPreferredItems(0, "foo", "boo", "doo", "hashCode")
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testErasureNotAffectingProximity() {
     myFixture.addClass("package foo; public interface Foo<T> {}")
     myFixture.addClass("package bar; public class Bar implements foo.Foo {}")
@@ -331,13 +331,13 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     assertEquals("Bar", presentation.getItemText())
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testAssertEquals() throws Throwable {
     myFixture.addClass("package junit.framework; public class Assert { public static void assertEquals(Object a, Object b) {} }")
     checkPreferredItems(0, "boo", "bar")
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testPreferCollectionsEmptyList() throws Throwable {
     myFixture.addClass("package foo; public class FList<T> implements java.util.List<T> { public static <T> FList<T> emptyList() {} }")
     configureNoCompletion(getTestName(false) + ".java")
@@ -346,12 +346,12 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems(0, "local", "local.subList", "locMethod")
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testDispreferGetterInSetterCall() {
     checkPreferredItems 0, 'color', 'getZooColor', 'getColor', 'hashCode'
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testPreferOtherGetterInSetterCall() {
     checkPreferredItems 0, 'color', 'getColor', 'getZooColor', 'hashCode'
   }
@@ -360,37 +360,37 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems 0, 'e', 'createEvent'
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testPreferLocalOverThis() {
     checkPreferredItems 0, 'value', 'this', 'hashCode'
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testGetLogger() {
     checkPreferredItems 0, 'Foo.class', 'forName'
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testGetWildcardLogger() {
     checkPreferredItems 0, 'Foo.class', 'forName'
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testGetWildcardFactoryLogger() {
     checkPreferredItems 0, 'Foo.class', 'forName'
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testPreferLocalWildcardClassOverObject() {
     checkPreferredItems 0, 'type', 'Object.class', 'forName', 'forName'
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   void testPreferStringsInStringConcatenation() {
     checkPreferredItems 0, 'toString'
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testGlobalStaticMemberStats() {
     configureNoCompletion(getTestName(false) + ".java")
     myFixture.complete(CompletionType.SMART, 2)
@@ -399,7 +399,7 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems 0, 'newLinkedSet1', 'newLinkedSet0', 'newLinkedSet2'
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testPreferExpectedTypeMembers() {
     configureNoCompletion(getTestName(false) + ".java")
     myFixture.complete(CompletionType.SMART, 2)
@@ -407,7 +407,7 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     assert lookup.items.size() == 2
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testPreferGlobalMembersReturningExpectedType() {
     configureNoCompletion(getTestName(false) + ".java")
     def items = myFixture.complete(CompletionType.SMART, 2)

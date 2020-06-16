@@ -9,7 +9,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.testFramework.NeedsIndicesState;
+import com.intellij.testFramework.NeedsIndex;
 import org.jetbrains.annotations.NotNull;
 
 public class KeywordCompletionTest extends LightCompletionTestCase {
@@ -97,7 +97,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testNullInMethodCall() { doTest(); }
   public void testNullInMethodCall2() { doTest(); }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testNewInMethodRefs() {
     doTest(1, "new", "null", "true", "false");
     assertEquals("new", LookupElementPresentation.renderElement(myItems[0]).getItemText());
@@ -105,7 +105,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     checkResultByTestName();
   }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testNewInMethodRefsArray() {
     doTest(1, "new", "null", "true", "false");
     assertEquals("Object", assertInstanceOf(myItems[0].getPsiElement(), PsiMethod.class).getName());
@@ -139,9 +139,9 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testNoPrimitivesInBooleanAnnotationAttribute() { doTest(1, "true", "int", "boolean"); }
   public void testNoPrimitivesInIntAnnotationValueAttribute() { doTest(0, "true", "int", "boolean"); }
   public void testNoPrimitivesInEnumAnnotationAttribute() { doTest(0, "true", "int", "boolean"); }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testPrimitivesInClassAnnotationValueAttribute() { doTest(2, "true", "int", "boolean"); }
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testPrimitivesInClassAnnotationAttribute() { doTest(3, "true", "int", "boolean"); }
   public void testPrimitivesInMethodReturningArray() { doTest(2, "true", "byte", "boolean"); }
   public void testPrimitivesInMethodReturningClass() { doTest(3, "byte", "boolean", "void"); }
@@ -197,7 +197,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
 
   public void testFinalAfterAnnotationAttributes() { doTest(); }
 
-  @NeedsIndicesState.StandardLibraryIndices
+  @NeedsIndex.ForStandardLibrary
   public void testTryInExpression() {
     configureByTestName();
     assertEquals("toString", myItems[0].getLookupString());

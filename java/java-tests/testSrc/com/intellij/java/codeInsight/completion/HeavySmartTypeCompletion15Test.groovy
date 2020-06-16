@@ -6,7 +6,7 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.testFramework.NeedsIndicesState
+import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
@@ -20,7 +20,7 @@ class HeavySmartTypeCompletion15Test extends JavaCodeInsightFixtureTestCase {
     return JavaTestUtil.getJavaTestDataPath()
   }
 
-  @NeedsIndicesState.FullIndices(reason = "ClassLiteralGetter provides option, but it's filtered out in TypeConversionUtil.isAssignable(com.intellij.psi.PsiType, com.intellij.psi.PsiType)")
+  @NeedsIndex.Full(reason = "ClassLiteralGetter provides option, but it's filtered out in TypeConversionUtil.isAssignable(com.intellij.psi.PsiType, com.intellij.psi.PsiType)")
   void testGetInstance() throws Throwable {
     myFixture.configureFromExistingVirtualFile(
       myFixture.copyFileToProject(BASE_PATH + "/foo/" + getTestName(false) + ".java", "foo/" + getTestName(false) + ".java"))
@@ -29,7 +29,7 @@ class HeavySmartTypeCompletion15Test extends JavaCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(BASE_PATH + "/foo/" + getTestName(false) + "-out.java")
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testProtectedAnonymousConstructor() throws Throwable {
     myFixture.addClass("package pkg;" +
                        "public class Foo {" +
@@ -42,7 +42,7 @@ class HeavySmartTypeCompletion15Test extends JavaCodeInsightFixtureTestCase {
     doTest()
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testProtectedAnonymousConstructor2() throws Throwable {
     myFixture.addClass("package pkg;" +
                        "public class Foo {" +
@@ -55,7 +55,7 @@ class HeavySmartTypeCompletion15Test extends JavaCodeInsightFixtureTestCase {
     doTest()
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testUnlockDocument() throws Throwable {
     myFixture.addClass("package pkg; public class Bar {}")
     myFixture.addClass("package pkg; public class Foo {" +
@@ -79,7 +79,7 @@ class HeavySmartTypeCompletion15Test extends JavaCodeInsightFixtureTestCase {
     myFixture.complete(CompletionType.SMART)
   }
 
-  @NeedsIndicesState.FullIndices
+  @NeedsIndex.Full
   void testClassLiteralShouldInsertImport() throws Throwable {
     myFixture.addClass("package bar; public class Intf {}")
     myFixture.addClass("package foo; public class Bar extends bar.Intf {}")
