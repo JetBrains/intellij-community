@@ -18,9 +18,8 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -48,7 +47,7 @@ public class CreateFieldFromParameterAction extends CreateFieldFromParameterActi
     if (myIsFix && !isConstructor) return false;
     PsiCodeBlock body = ((PsiMethod)scope).getBody();
     if (body == null) return false;
-    if (!myIsFix && isConstructor && ReferencesSearch.search(parameter, new LocalSearchScope(body)).findFirst() == null) return false;
+    if (!myIsFix && isConstructor && !VariableAccessUtils.variableIsUsed(parameter, body)) return false;
     final PsiType type = getSubstitutedType(parameter);
     final PsiClass targetClass = PsiTreeUtil.getParentOfType(parameter, PsiClass.class);
     return FieldFromParameterUtils.isAvailable(parameter, type, targetClass, false) &&
