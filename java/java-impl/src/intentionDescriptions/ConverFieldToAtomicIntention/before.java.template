@@ -1,0 +1,8 @@
+class A {
+  boolean b = false;
+  void foo() {
+    if (b) {
+       //do smth
+    }
+  }
+}

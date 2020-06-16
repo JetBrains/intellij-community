@@ -1,0 +1,10 @@
+public class X {
+  int f(boolean a) {
+    if (a) {
+      return 0;
+    }
+    else {
+      return 1;
+    }
+  }
+}

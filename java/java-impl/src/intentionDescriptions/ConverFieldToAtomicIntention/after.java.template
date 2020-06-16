@@ -1,0 +1,11 @@
+import java.util.concurrent.atomic.AtomicBoolean;
+
+class A {
+
+  <spot>AtomicBoolean b = new AtomicBoolean(false);</spot>
+  void foo() {
+    if (<spot>b.get()</spot>) {
+       //do smth
+    }
+  }
+}
