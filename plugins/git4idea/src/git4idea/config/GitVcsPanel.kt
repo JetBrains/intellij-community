@@ -4,7 +4,7 @@ package git4idea.config
 import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
 import com.intellij.dvcs.branch.DvcsSyncSettings
-import com.intellij.dvcs.ui.DvcsBundle.message
+import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -40,6 +40,7 @@ import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi
 import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.i18n.GitBundle
+import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepositoryManager
 import git4idea.update.GitUpdateProjectInfoLogProperties
 import git4idea.update.getUpdateMethods
@@ -53,7 +54,7 @@ private val applicationSettings get() = GitVcsApplicationSettings.getInstance()
 private val gitOptionGroupName get() = message("settings.git.option.group")
 
 // @formatter:off
-private fun cdSyncBranches(project: Project)                                  = CheckboxDescriptor(message("sync.setting"), PropertyBinding({ projectSettings(project).syncSetting == DvcsSyncSettings.Value.SYNC }, { projectSettings(project).syncSetting = if (it) DvcsSyncSettings.Value.SYNC else DvcsSyncSettings.Value.DONT_SYNC }), groupName = gitOptionGroupName)
+private fun cdSyncBranches(project: Project)                                  = CheckboxDescriptor(DvcsBundle.message("sync.setting"), PropertyBinding({ projectSettings(project).syncSetting == DvcsSyncSettings.Value.SYNC }, { projectSettings(project).syncSetting = if (it) DvcsSyncSettings.Value.SYNC else DvcsSyncSettings.Value.DONT_SYNC }), groupName = gitOptionGroupName)
 private val cdCommitOnCherryPick                                        get() = CheckboxDescriptor(message("settings.commit.automatically.on.cherry.pick"), PropertyBinding(applicationSettings::isAutoCommitOnCherryPick, applicationSettings::setAutoCommitOnCherryPick), groupName = gitOptionGroupName)
 private fun cdAddCherryPickSuffix(project: Project)                           = CheckboxDescriptor(message("settings.add.suffix"), PropertyBinding({ projectSettings(project).shouldAddSuffixToCherryPicksOfPublishedCommits() }, { projectSettings(project).setAddSuffixToCherryPicks(it) }), groupName = gitOptionGroupName)
 private fun cdWarnAboutCrlf(project: Project)                                 = CheckboxDescriptor(message("settings.crlf"), PropertyBinding({ projectSettings(project).warnAboutCrlf() }, { projectSettings(project).setWarnAboutCrlf(it) }), groupName = gitOptionGroupName)
@@ -121,7 +122,7 @@ internal class GitVcsPanel(private val project: Project) :
 
       override fun onSuccess() {
         if (gitVersion.isSupported) {
-          errorNotifier.showMessage(GitBundle.message("git.executable.version.is", gitVersion.presentation))
+          errorNotifier.showMessage(message("git.executable.version.is", gitVersion.presentation))
         }
         else {
           showUnsupportedVersionError(project, gitVersion, errorNotifier)
@@ -264,7 +265,7 @@ internal class GitVcsPanel(private val project: Project) :
     if (project.isDefault || GitRepositoryManager.getInstance(project).moreThanOneRoot()) {
       row {
         checkBox(cdSyncBranches(project)).applyToComponent {
-          toolTipText = message("sync.setting.description", "Git")
+          toolTipText = DvcsBundle.message("sync.setting.description", "Git")
         }
       }
     }
