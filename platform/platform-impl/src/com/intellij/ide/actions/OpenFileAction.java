@@ -12,8 +12,10 @@ import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
 import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -27,6 +29,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -79,9 +82,18 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
   public static class OnWelcomeScreen extends OpenFileAction {
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setSelectedIcon(AllIcons.Welcome.OpenSelected);
+      Presentation presentation = e.getPresentation();
       if (!NewWelcomeScreen.isNewWelcomeScreen(e)) {
-        e.getPresentation().setEnabledAndVisible(false);
+        presentation.setEnabledAndVisible(false);
+        return;
+      }
+      if (Registry.is("use.tabbed.welcome.screen")) {
+        presentation.setIcon(AllIcons.Welcome.Open);
+        presentation.setSelectedIcon(AllIcons.Welcome.OpenSelected);
+        presentation.setText(ActionsBundle.message("action.Tabbed.WelcomeScreen.OpenProject.text"));
+      }
+      else {
+        presentation.setIcon(AllIcons.Actions.Menu_open);
       }
     }
   }
