@@ -1053,10 +1053,12 @@ public class HighlightClassUtil {
       PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
       if (nameIdentifier == null) return;
       if (!aClass.hasModifierProperty(PsiModifier.SEALED)) {
-        holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
           .range(list.getFirstChild())
           .descriptionAndTooltip(JavaErrorBundle.message("invalid.permits.clause", aClass.getName()))
-          .create());
+          .create();
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.SEALED, true, false));
+        holder.add(info);
       }
 
       PsiJavaModule currentModule = JavaModuleGraphUtil.findDescriptorByElement(aClass);
@@ -1127,8 +1129,14 @@ public class HighlightClassUtil {
         !aClass.hasModifierProperty(PsiModifier.NON_SEALED) &&
         !aClass.hasModifierProperty(PsiModifier.FINAL) &&
         Arrays.stream(aClass.getSuperTypes()).map(type -> type.resolve()).anyMatch(superClass -> superClass != null && superClass.hasModifierProperty(PsiModifier.SEALED))) {
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(nameIdentifier)
+      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(nameIdentifier)
         .descriptionAndTooltip(JavaErrorBundle.message("sealed.type.inheritor.expected.modifiers", PsiModifier.SEALED, PsiModifier.NON_SEALED, PsiModifier.FINAL)).create();
+      if (!aClass.isInterface()) {
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.FINAL, true, false));
+      }
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.SEALED, true, false));
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.NON_SEALED, true, false));
+      return info;
     }
     return null;
   }
