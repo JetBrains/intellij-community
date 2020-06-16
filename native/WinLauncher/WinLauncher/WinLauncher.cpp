@@ -715,24 +715,6 @@ jobjectArray ArgsToJavaArray(std::vector<LPWSTR> args)
   return result;
 }
 
-void PrintUsage()
-{
-  char fullPath[_MAX_PATH];
-  GetModuleFileNameA(NULL, fullPath, _MAX_PATH);
-  std::string::size_type pos = std::string(fullPath).find_last_of("\\/");
-  std::string fileName = std::string(fullPath).substr(pos+1);
-
-  std::stringstream buf;
-  buf << "Usage:\n   ";
-  buf << fileName + " -h | -? | --help\n   ";
-  buf << fileName + " [project_dir]\n   ";
-  buf << fileName + " [-l|--line line] [project_dir|--temp-project] file[:line]\n   ";
-  buf << fileName + " diff <left> <right>\n   ";
-  buf << fileName + " merge <local> <remote> [base] <merged>";
-  std::string title = "Command line options.";
-  MessageBoxA(NULL, buf.str().c_str(), title.c_str(), MB_OK);
-}
-
 bool isNumber(std::string line)
 {
   char* p;
@@ -749,14 +731,6 @@ std::vector<LPWSTR> ParseCommandLine(LPCWSTR commandLine)
   std::vector<LPWSTR> result;
   for (int i = 1; i < numArgs; i++)
   {
-    if ((wcscmp(L"-h", argv[i]) == 0) ||
-        (wcscmp(L"-?", argv[i]) == 0) ||
-        (wcscmp(L"--help", argv[i]) == 0))
-    {
-      PrintUsage();
-      std::exit(0);
-    }
-
     std::wstring arg(argv[i]);
     std::string command(arg.begin(), arg.end());
     // IDEA-230983
@@ -1162,6 +1136,24 @@ static void SetPathVariable(const wchar_t *varName, REFKNOWNFOLDERID rfId)
   }
 }
 
+void PrintUsage()
+{
+  char fullPath[_MAX_PATH];
+  GetModuleFileNameA(NULL, fullPath, _MAX_PATH);
+  std::string::size_type pos = std::string(fullPath).find_last_of("\\/");
+  std::string fileName = std::string(fullPath).substr(pos+1);
+
+  std::stringstream buf;
+  buf << "Usage:\n   ";
+  buf << fileName + " -h | -? | --help\n   ";
+  buf << fileName + " [project_dir]\n   ";
+  buf << fileName + " [-l|--line line] [project_dir|--temp-project] file[:line]\n   ";
+  buf << fileName + " diff <left> <right>\n   ";
+  buf << fileName + " merge <local> <remote> [base] <merged>";
+
+  MessageBoxA(NULL, buf.str().c_str(), "Command-line Options", MB_OK);
+}
+
 int APIENTRY _tWinMain(HINSTANCE hInstance,
                        HINSTANCE hPrevInstance,
                        LPTSTR    lpCmdLine,
@@ -1182,6 +1174,15 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
     }
     CloseHandle(parentProcHandle);
     return 0;
+  }
+
+  for (int i = 1; i < __argc; i++)
+  {
+    if (wcscmp(L"-h", __wargv[i]) == 0 || wcscmp(L"-?", __wargv[i]) == 0 || wcscmp(L"--help", __wargv[i]) == 0)
+    {
+      PrintUsage();
+      return 0;
+    }
   }
 
   // ensures path variables are defined
