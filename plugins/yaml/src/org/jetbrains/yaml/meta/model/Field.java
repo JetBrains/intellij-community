@@ -28,7 +28,10 @@ public class Field {
   }
 
   private final String myName;
-  private final YamlMetaType myMainType;
+  private final MetaTypeProvider myMetaTypeProvider;
+  // must be accessed with getMainType()
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  private YamlMetaType myMainType;
   private boolean myIsRequired;
   private boolean myEditable = true;
   private boolean myDeprecated = false;
@@ -39,9 +42,25 @@ public class Field {
 
   private final Map<Relation, YamlMetaType> myPerRelationTypes = new HashMap<>();
 
+  /**
+   * Used in {@link Field#Field(String, MetaTypeProvider)}.
+   * Invoked only once
+   */
+  public interface MetaTypeProvider {
+    @NotNull YamlMetaType getMainType();
+  }
+
   public Field(@NonNls @NotNull String name, @NotNull YamlMetaType mainType) {
+    this(name, () -> mainType);
+  }
+
+  /**
+   * Used for late initialization of the field metatype.
+   * Useful when the type isn't fully constructed at the moment of the field initialization (e.g. for cyclic dependencies)
+   */
+  public Field(@NonNls @NotNull String name, @NotNull MetaTypeProvider provider) {
     myName = name;
-    myMainType = mainType;
+    myMetaTypeProvider = provider;
   }
 
   @NotNull
@@ -128,7 +147,7 @@ public class Field {
   @Contract(pure = true)
   @NotNull
   public YamlMetaType getType(@NotNull Relation relation) {
-    return myPerRelationTypes.getOrDefault(relation, myMainType);
+    return myPerRelationTypes.getOrDefault(relation, getMainType());
   }
 
   @Contract(pure = true)
@@ -149,7 +168,7 @@ public class Field {
     if (myIsMany) {
       return Relation.SEQUENCE_ITEM;
     }
-    return myMainType instanceof YamlScalarType ? Relation.SCALAR_VALUE : Relation.OBJECT_CONTENTS;
+    return getMainType() instanceof YamlScalarType ? Relation.SCALAR_VALUE : Relation.OBJECT_CONTENTS;
   }
 
   @NotNull
@@ -183,10 +202,10 @@ public class Field {
     result.append("[").append(getName()).append("]@");
     result.append(Integer.toHexString(hashCode()));
     result.append(" : ");
-    result.append(myMainType.getTypeName());
+    result.append(getMainType().getTypeName());
 
     List<String> nonDefaultTypes = myPerRelationTypes.entrySet().stream()
-      .filter(e -> e.getValue() == myMainType)
+      .filter(e -> e.getValue() == getMainType())
       .map(e -> e.getKey() + ":" + e.getValue())
       .collect(Collectors.toList());
 
@@ -205,7 +224,7 @@ public class Field {
 
     LookupElementBuilder lookup = LookupElementBuilder
       .create(new TypeFieldPair(ownerClass, this), getName())
-      .withTypeText(myMainType.getDisplayName(), true)
+      .withTypeText(getMainType().getDisplayName(), true)
       .withIcon(getLookupIcon())
       .withStrikeoutness(isDeprecated());
 
@@ -226,6 +245,19 @@ public class Field {
 
   @Nullable
   public Icon getLookupIcon() {
-    return myIsMany ? AllIcons.Json.Array : myMainType.getIcon();
+    return myIsMany ? AllIcons.Json.Array : getMainType().getIcon();
+  }
+  
+  @NotNull
+  private YamlMetaType getMainType() {
+    if(myMainType != null)
+      return myMainType;
+    
+    synchronized (myMetaTypeProvider) {
+      if(myMainType == null) {
+        myMainType = myMetaTypeProvider.getMainType();
+      }
+      return myMainType;
+    }
   }
 }
