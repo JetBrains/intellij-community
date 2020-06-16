@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 public final class EditorModificationUtil {
-  private static final Key<ReadOnlyHint> READ_ONLY_VIEW_HINT_KEY = Key.create("READ_ONLY_VIEW_MESSAGE_KEY");
+  private static final Key<ReadOnlyHint> READ_ONLY_VIEW_HINT_KEY = Key.create("READ_ONLY_VIEW_HINT_KEY");
 
   private EditorModificationUtil() { }
 
