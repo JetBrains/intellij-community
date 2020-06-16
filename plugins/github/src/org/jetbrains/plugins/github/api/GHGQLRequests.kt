@@ -175,6 +175,13 @@ object GHGQLRequests {
                                        "body" to body),
                                  Any::class.java)
 
+      fun updateBody(server: GithubServerPath, reviewId: String, newText: String): GQLQuery<GHPullRequestReview> =
+        GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.updateReview,
+                                 mapOf("reviewId" to reviewId,
+                                       "body" to newText),
+                                 GHPullRequestReview::class.java,
+                                 "updatePullRequestReview", "pullRequestReview")
+
       fun delete(server: GithubServerPath, reviewId: String): GQLQuery<Any> =
         GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.deleteReview,
                                  mapOf("reviewId" to reviewId),

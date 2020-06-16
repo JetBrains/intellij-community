@@ -1,4 +1,5 @@
 fragment pullRequestReview on PullRequestReview {
+    __typename
     ...nodeInfo
     url
     author {
@@ -7,4 +8,5 @@ fragment pullRequestReview on PullRequestReview {
     bodyHTML
     state
     createdAt
+    viewerCanUpdate
 }

@@ -11,6 +11,7 @@ interface GHPRDataOperationsListener {
   fun onCommentUpdated(commentId: String, newBody: String) {}
   fun onCommentDeleted(commentId: String) {}
   fun onReviewsChanged() {}
+  fun onReviewUpdated(reviewId: String, newBody: String) {}
 
   companion object {
     val TOPIC = Topic.create("Pull Request data operations", GHPRDataOperationsListener::class.java)

@@ -10,6 +10,7 @@ import com.intellij.util.messages.MessageBusOwner
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.data.GHIssueComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.GHPRDiffControllerImpl
 import org.jetbrains.plugins.github.pullrequest.data.provider.*
@@ -102,6 +103,16 @@ internal class GHPRDataProviderRepositoryImpl(private val detailsService: GHPRDe
           }
 
           override fun onReviewsChanged() = loader.loadMore(true)
+
+          override fun onReviewUpdated(reviewId: String, newBody: String) {
+            val review = loader.loadedData.find { it is GHPullRequestReview && it.id == reviewId } as? GHPullRequestReview
+            if (review != null) {
+              val newReview = GHPullRequestReview(reviewId, review.url, review.author, newBody, review.state, review.createdAt,
+                                                  review.viewerCanUpdate)
+              loader.updateData(newReview)
+            }
+            loader.loadMore(true)
+          }
         })
         Disposer.register(timelineDisposable, loader)
       }

@@ -15,6 +15,7 @@ object GHGQLQueries {
   const val pullRequestMergeabilityData = "findPullRequestMergeability"
   const val createReview = "createReview"
   const val submitReview = "submitReview"
+  const val updateReview = "updateReview"
   const val deleteReview = "deleteReview"
   const val pendingReview = "findPendingReview"
   const val addReviewComment = "addReviewComment"
