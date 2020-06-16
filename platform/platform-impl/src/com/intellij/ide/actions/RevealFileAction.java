@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -134,11 +134,6 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
    * (note that not all platforms support highlighting).
    */
   public static void openFile(@NotNull File file) {
-    if (!file.exists()) {
-      LOG.info("does not exist: " + file);
-      return;
-    }
-
     File parent = file.getAbsoluteFile().getParentFile();
     if (parent != null) {
       doOpen(parent, file);
@@ -152,11 +147,6 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
    * Opens a system file manager with given directory open in it.
    */
   public static void openDirectory(@NotNull File directory) {
-    if (!directory.isDirectory()) {
-      LOG.info("not a directory: " + directory);
-      return;
-    }
-
     doOpen(directory.getAbsoluteFile(), null);
   }
 
