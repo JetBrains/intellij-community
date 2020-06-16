@@ -47,7 +47,7 @@ class FacetModelBridgeTest {
   fun prepareProject() {
     project = createEmptyTestProject(temporaryDirectoryRule, disposableRule)
     module = createModule()
-    FacetType.EP_NAME.point.registerExtension(MockFacetType(), module)
+    runWriteActionAndWait { FacetType.EP_NAME.point.registerExtension(MockFacetType(), module) }
   }
 
   @Test
