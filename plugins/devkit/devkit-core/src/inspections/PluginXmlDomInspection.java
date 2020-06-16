@@ -278,11 +278,15 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       return;
     }
 
-    if (resolveStatus != PluginPlatformInfo.PlatformResolveStatus.DEVKIT) {
+    final BuildNumber buildNumber = platformInfo.getSinceBuildNumber();
+    if (buildNumber == null) {
+      holder.createProblem(listeners, ProblemHighlightType.ERROR,
+                           "Could not determine target platform version, please check project setup", null)
+        .highlightWholeElement();
       return;
     }
 
-    final int baselineVersion = platformInfo.getSinceBuildNumber().getBaselineVersion();
+    final int baselineVersion = buildNumber.getBaselineVersion();
 
     boolean canHaveOsAttribute = baselineVersion >= LISTENERS_OS_ATTRIBUTE_PLATFORM_VERSION;
     if (!canHaveOsAttribute) {
