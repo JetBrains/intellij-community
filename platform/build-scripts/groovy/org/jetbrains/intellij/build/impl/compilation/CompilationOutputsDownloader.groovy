@@ -4,7 +4,6 @@ package org.jetbrains.intellij.build.impl.compilation
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.Decompressor
 import groovy.transform.CompileStatic
@@ -210,29 +209,31 @@ class GetClient {
   }
 
   def doGet(String url, Type responseType) {
-    CloseableHttpResponse response = null
     return getWithRetry(url, { HttpGet request ->
-      response = httpClient.execute(request)
-      def responseString = EntityUtils.toString(response.entity, ContentType.APPLICATION_JSON.charset)
-      if (response.statusLine.statusCode != HttpStatus.SC_OK) {
-        DownloadException downloadException = new DownloadException(url, response.statusLine.statusCode, responseString)
-        throwDownloadException(response, downloadException)
+      httpClient.execute(request).withCloseable { response ->
+        def responseString = EntityUtils.toString(response.entity, ContentType.APPLICATION_JSON.charset)
+        if (response.statusLine.statusCode != HttpStatus.SC_OK) {
+          DownloadException downloadException = new DownloadException(url, response.statusLine.statusCode, responseString)
+          throwDownloadException(response, downloadException)
+        }
+
+        gson.fromJson(responseString, responseType)
       }
-      return gson.fromJson(responseString, responseType)
-    }, { StreamUtil.closeStream(response) })
+    })
   }
 
   void doGet(String url, File file) {
-    CloseableHttpResponse response = null
     getWithRetry(url, { HttpGet request ->
-      response = httpClient.execute(request)
-      if (response.statusLine.statusCode != HttpStatus.SC_OK) {
-        DownloadException downloadException = new DownloadException(url, response.statusLine.statusCode, response.entity.content.text)
-        throwDownloadException(response, downloadException)
+      httpClient.execute(request).withCloseable { response ->
+        if (response.statusLine.statusCode != HttpStatus.SC_OK) {
+          DownloadException downloadException = new DownloadException(url, response.statusLine.statusCode, response.entity.content.text)
+          throwDownloadException(response, downloadException)
+        }
+        file << response.entity.content
       }
-      file << response.entity.content
-      return
-    }, { StreamUtil.closeStream(response) })
+    })
+
+    return
   }
 
   private static void throwDownloadException(CloseableHttpResponse response, DownloadException downloadException) {
@@ -244,7 +245,7 @@ class GetClient {
     }
   }
 
-  private <T> T getWithRetry(String url, Closure<T> operation, Closure<T> finalizer = {}) {
+  private <T> T getWithRetry(String url, Closure<T> operation) {
     return new Retry(buildMessages).call {
       try {
         operation(new HttpGet(url))
@@ -254,9 +255,6 @@ class GetClient {
       }
       catch (Exception ex) {
         throw new DownloadException(url, ex)
-      }
-      finally {
-        finalizer()
       }
     }
   }
