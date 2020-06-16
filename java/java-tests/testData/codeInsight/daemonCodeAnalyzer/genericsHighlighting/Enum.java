@@ -145,7 +145,7 @@ interface Barz {
 ///////////////////////
 class sss {
  void f() {
-   <error descr="Enum must not be local">enum EEEE</error> { EE, YY };
+   <error descr="Local enums are not supported at language level '5'">enum</error> EEEE { EE, YY };
  }
 }
 

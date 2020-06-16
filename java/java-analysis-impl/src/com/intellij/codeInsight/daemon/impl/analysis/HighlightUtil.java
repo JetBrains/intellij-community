@@ -954,6 +954,9 @@ public class HighlightUtil {
         if (PsiModifier.STATIC.equals(modifier) || privateOrProtected || PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
           isAllowed = modifierOwnerParent instanceof PsiClass;
         }
+        if (PsiModifier.PUBLIC.equals(modifier)) {
+          isAllowed = !(modifierOwnerParent instanceof PsiDeclarationStatement);
+        }
       }
       else {
         if (PsiModifier.PUBLIC.equals(modifier)) {
@@ -966,7 +969,6 @@ public class HighlightUtil {
           //noinspection DuplicateExpressions
           if (PsiModifier.STATIC.equals(modifier) || privateOrProtected || PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
             isAllowed = modifierOwnerParent instanceof PsiClass && ((PsiClass)modifierOwnerParent).getQualifiedName() != null ||
-                        (modifierOwnerParent instanceof PsiDeclarationStatement && aClass.isRecord() && PsiModifier.STATIC.equals(modifier)) ||
                         FileTypeUtils.isInServerPageFile(modifierOwnerParent) ||
                         // non-physical dummy holder might not have FQN
                         !modifierOwnerParent.isPhysical();
