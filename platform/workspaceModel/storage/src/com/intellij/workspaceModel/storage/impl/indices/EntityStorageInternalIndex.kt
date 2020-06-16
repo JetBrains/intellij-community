@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.storage.impl.indices
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.workspaceModel.storage.impl.EntityId
 import com.intellij.workspaceModel.storage.impl.containers.copy
+import org.jetbrains.annotations.TestOnly
 
 open class EntityStorageInternalIndex<T> private constructor(
   internal open val index: BidirectionalMap<EntityId, T>
@@ -33,11 +34,13 @@ open class EntityStorageInternalIndex<T> private constructor(
       index[id] = entitySource
     }
 
+    @TestOnly
     internal fun clear() {
       startWrite()
       index.clear()
     }
 
+    @TestOnly
     internal fun copyFrom(another: EntityStorageInternalIndex<T>) {
       startWrite()
       this.index.putAll(another.index)

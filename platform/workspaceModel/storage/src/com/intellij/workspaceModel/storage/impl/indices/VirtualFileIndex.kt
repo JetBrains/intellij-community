@@ -8,6 +8,7 @@ import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.containers.copy
 import com.intellij.workspaceModel.storage.impl.containers.putAll
+import org.jetbrains.annotations.TestOnly
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
@@ -35,11 +36,13 @@ open class VirtualFileIndex private constructor(
       virtualFileUrls.forEach { index.put(it, id) }
     }
 
+    @TestOnly
     internal fun clear() {
       startWrite()
       index.clear()
     }
 
+    @TestOnly
     internal fun copyFrom(another: VirtualFileIndex) {
       startWrite()
       index.putAll(another.index)
