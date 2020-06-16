@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.CommonShortcuts.ENTER
 import com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.SimpleColoredComponent
@@ -45,6 +46,8 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
   private val loginButton = JButton(message("button.login.mnemonic"))
   private val backLink = LinkLabel<Any?>(IdeBundle.message("button.back"), null)
 
+  private var loginIndicator: ProgressIndicator? = null
+
   var isCancelVisible: Boolean
     get() = backLink.isVisible
     set(value) {
@@ -63,7 +66,14 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
     LoginAction().registerCustomShortcutSet(ENTER, loginPanel)
   }
 
-  fun setCancelHandler(listener: () -> Unit) = backLink.setListener({ _, _ -> listener() }, null)
+  fun setCancelHandler(listener: () -> Unit) =
+    backLink.setListener(
+      { _, _ ->
+        cancelLogin()
+        listener()
+      },
+      null
+    )
 
   fun setTokenUi() = loginPanel.setTokenUi()
   fun setPasswordUi() = loginPanel.setPasswordUi()
@@ -84,11 +94,23 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
       }
     }
 
-  private fun login() {
-    val modalityState = ModalityState.stateForComponent(this)
+  fun cancelLogin() {
+    loginIndicator?.cancel()
+    loginIndicator = null
+  }
 
-    loginPanel.acquireLoginAndToken(EmptyProgressIndicator(modalityState))
-      .completionOnEdt(modalityState) { errorPanel.removeAll() }
+  private fun login() {
+    cancelLogin()
+
+    val modalityState = ModalityState.stateForComponent(this)
+    val indicator = EmptyProgressIndicator(modalityState)
+
+    loginIndicator = indicator
+    loginPanel.acquireLoginAndToken(indicator)
+      .completionOnEdt(modalityState) {
+        loginIndicator = null
+        errorPanel.removeAll()
+      }
       .errorOnEdt(modalityState) {
         loginPanel.doValidateAll().forEach { errorPanel.add(toErrorComponent(it)) }
 
