@@ -84,8 +84,7 @@ public final class GitHistoryProvider implements VcsHistoryProviderEx,
   }
 
   @Override
-  @Nullable
-  public VcsAbstractHistorySession createSessionFor(final FilePath filePath) throws VcsException {
+  public @NotNull VcsAbstractHistorySession createSessionFor(final FilePath filePath) throws VcsException {
     List<VcsFileRevision> revisions = GitFileHistory.collectHistory(myProject, filePath);
     return createSession(filePath, revisions, revisions.isEmpty() ? null : getFirstItem(revisions).getRevisionNumber());
   }

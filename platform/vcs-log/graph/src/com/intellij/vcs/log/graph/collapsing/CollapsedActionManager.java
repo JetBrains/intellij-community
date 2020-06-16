@@ -197,9 +197,8 @@ final class CollapsedActionManager {
   };
 
   private final static ActionCase EXPAND_ALL = new ActionCase() {
-    @Nullable
     @Override
-    public LinearGraphAnswer performAction(@NotNull ActionContext context) {
+    public @NotNull LinearGraphAnswer performAction(@NotNull ActionContext context) {
       CollapsedGraph.Modification modification = context.myCollapsedGraph.startModification();
       modification.removeAdditionalEdges();
       modification.resetNodesVisibility();
@@ -214,9 +213,8 @@ final class CollapsedActionManager {
   };
 
   private final static ActionCase COLLAPSE_ALL = new ActionCase() {
-    @Nullable
     @Override
-    public LinearGraphAnswer performAction(@NotNull ActionContext context) {
+    public @NotNull LinearGraphAnswer performAction(@NotNull ActionContext context) {
       CollapsedGraph.Modification modification = context.myCollapsedGraph.startModification();
       modification.removeAdditionalEdges();
       modification.resetNodesVisibility();
