@@ -16,9 +16,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 import java.util.function.IntFunction;
 
-@SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 @ApiStatus.NonExtendable
 // cannot be final because of https://plugins.jetbrains.com/plugin/7831-illuminated-cloud
 public class ContainerUtil {
@@ -84,7 +84,6 @@ public class ContainerUtil {
   /**
    * @deprecated Use {@link TreeMap#TreeMap(Map)}
    */
-  @SuppressWarnings("unused")
   @Contract(pure = true)
   @Deprecated
   public static @NotNull <K extends Comparable<? super K>, V> TreeMap<K, V> newTreeMap(@NotNull Map<? extends K, ? extends V> map) {
@@ -647,7 +646,7 @@ public class ContainerUtil {
     }
 
     @Override
-    public void forEach(java.util.function.Consumer<? super E> action) {
+    public void forEach(Consumer<? super E> action) {
       myStore.forEach(action);
     }
   }
@@ -682,7 +681,7 @@ public class ContainerUtil {
     }
 
     @Override
-    public void forEach(java.util.function.Consumer<? super E> action) {
+    public void forEach(Consumer<? super E> action) {
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0, length = myStore.length; i < length; i++) {
         action.accept(myStore[i]);

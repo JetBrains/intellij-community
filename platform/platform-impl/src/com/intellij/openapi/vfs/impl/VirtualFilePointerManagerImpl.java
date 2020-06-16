@@ -559,8 +559,8 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     return new ChangeApplier() {
       @Override
       public void beforeVfsChange() {
-        //noinspection SynchronizeOnThis
         CollectedEvents collected;
+        //noinspection SynchronizeOnThis
         synchronized (VirtualFilePointerManagerImpl.this) {
           collected = myCollectedEvents;
           if (collected.startModCount == myPointerSetModCount) {

@@ -154,7 +154,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
    * @return a pair where first element is read usages and second is write usages
    */
   @NotNull
-  public static Couple<Collection<TextRange>> getHighlightUsages(@NotNull PsiElement target, PsiElement psiElement, boolean withDeclarations) {
+  public static Couple<Collection<TextRange>> getHighlightUsages(@NotNull PsiElement target, @NotNull PsiElement psiElement, boolean withDeclarations) {
     return getUsages(target, psiElement, withDeclarations, true);
   }
 
@@ -170,7 +170,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   }
 
   @NotNull
-  private static Couple<Collection<TextRange>> getUsages(@NotNull PsiElement target, PsiElement psiElement, boolean withDeclarations, boolean detectAccess) {
+  private static Couple<Collection<TextRange>> getUsages(@NotNull PsiElement target, @NotNull PsiElement psiElement, boolean withDeclarations, boolean detectAccess) {
     List<TextRange> readRanges = new ArrayList<>();
     List<TextRange> writeRanges = new ArrayList<>();
     final ReadWriteAccessDetector detector = detectAccess ? ReadWriteAccessDetector.findDetector(target) : null;
@@ -345,6 +345,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
       myEditor, BraceHighlighter.getAlarm(), leftBraceRange.getStartOffset(), leftBraceRange.getEndOffset(), null);
   }
 
+  @NotNull
   private List<HighlightInfo> getHighlights() {
     if (myReadAccessRanges.isEmpty() && myWriteAccessRanges.isEmpty() && myCodeBlockMarkerRanges.isEmpty()) {
       return Collections.emptyList();
@@ -369,7 +370,8 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
     return result;
   }
 
-  private HighlightInfo createHighlightInfo(TextRange range, HighlightInfoType type, Set<Pair<Object, TextRange>> existingMarkupTooltips) {
+  @NotNull
+  private HighlightInfo createHighlightInfo(@NotNull TextRange range, @NotNull HighlightInfoType type, @NotNull Set<Pair<Object, TextRange>> existingMarkupTooltips) {
     int start = range.getStartOffset();
     String tooltip = start <= myDocument.getTextLength() ? HighlightHandlerBase.getLineTextErrorStripeTooltip(myDocument, start, false) : null;
     String unescapedTooltip = existingMarkupTooltips.contains(new Pair<Object, TextRange>(tooltip, range)) ? null : tooltip;
@@ -380,7 +382,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
     return builder.createUnconditionally();
   }
 
-  public static void clearMyHighlights(Document document, Project project) {
+  public static void clearMyHighlights(@NotNull Document document, @NotNull Project project) {
     MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, true);
     for (RangeHighlighter highlighter : markupModel.getAllHighlighters()) {
       HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
