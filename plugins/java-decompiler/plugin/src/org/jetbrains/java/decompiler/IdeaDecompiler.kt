@@ -24,13 +24,12 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.newvfs.RefreshQueue
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.PsiPackage
 import com.intellij.psi.compiled.ClassFileDecompilers
 import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.ui.components.LegalNoticeDialog
+import com.intellij.util.FileContentUtilCore
 import org.jetbrains.java.decompiler.main.decompiler.BaseDecompiler
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences
@@ -94,11 +93,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
             DialogWrapper.OK_EXIT_CODE -> {
               myShowNotice = false
               PropertiesComponent.getInstance().setValue(LEGAL_NOTICE_KEY, true)
-
-              ApplicationManager.getApplication().invokeLater {
-                RefreshQueue.getInstance().processSingleEvent(
-                  VFileContentChangeEvent(this@LegalBurden, file, file.modificationStamp, -1, false))
-              }
+              ApplicationManager.getApplication().invokeLater { FileContentUtilCore.reparseFiles(file) }
             }
 
             DECLINE_EXIT_CODE -> {
