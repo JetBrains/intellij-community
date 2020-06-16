@@ -5,6 +5,8 @@ object GHGQLQueries {
   const val findOrganizationTeams = "findOrganizationTeams"
   const val findRepositoryPermission = "findRepositoryPermission"
   const val commentBody = "commentBody"
+  const val updateIssueComment = "updateIssueComment"
+  const val deleteIssueComment = "deleteIssueComment"
   const val issueSearch = "issueSearch"
   const val findPullRequest = "findPullRequest"
   const val pullRequestTimeline = "pullRequestTimeline"

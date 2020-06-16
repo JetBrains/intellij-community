@@ -47,6 +47,18 @@ class GHPRTimelineMergingModel : AbstractListModel<GHPRTimelineItem>() {
     if (added) fireIntervalAdded(this, lastListIdx + 1, list.lastIndex)
   }
 
+  fun update(item: GHPRTimelineItem) {
+    val idx = list.indexOf(item)
+    if (idx >= 0) list[idx] = item
+    fireContentsChanged(this, idx, idx)
+  }
+
+  fun remove(item: GHPRTimelineItem) {
+    val idx = list.indexOf(item)
+    if (idx >= 0) list.removeAt(idx)
+    fireIntervalRemoved(this, idx, idx)
+  }
+
   fun removeAll() {
     val lastIdx = max(0, size - 1)
     list.clear()

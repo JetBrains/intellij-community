@@ -1,6 +1,7 @@
 fragment issueCommentInfo on IssueComment {
     ...comment
-    url
+    viewerCanUpdate
+    viewerCanDelete
 }
 
 fragment prCommitInfo on PullRequestCommit {

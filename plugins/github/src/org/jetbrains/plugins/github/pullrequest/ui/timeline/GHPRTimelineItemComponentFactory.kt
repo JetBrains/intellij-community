@@ -3,10 +3,13 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
+import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.ide.plugins.newui.VerticalLayout
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.HorizontalBox
+import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
@@ -25,15 +28,20 @@ import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineIt
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadComponent
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
+import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
+import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.util.GithubUIUtil
+import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.*
 import javax.swing.*
 import kotlin.math.ceil
 import kotlin.math.floor
 
-class GHPRTimelineItemComponentFactory(private val reviewDataProvider: GHPRReviewDataProvider,
+class GHPRTimelineItemComponentFactory(private val commentsDataProvider: GHPRCommentsDataProvider,
+                                       private val reviewDataProvider: GHPRReviewDataProvider,
                                        private val avatarIconsProvider: GHAvatarIconsProvider,
                                        private val reviewsThreadsModelsProvider: GHPRReviewsThreadsModelsProvider,
                                        private val reviewDiffComponentFactory: GHPRReviewThreadDiffComponentFactory,
@@ -58,10 +66,27 @@ class GHPRTimelineItemComponentFactory(private val reviewDataProvider: GHPRRevie
     }
   }
 
-  private fun createComponent(model: GHIssueComment) =
-    Item(userAvatar(model.author),
-         actionTitle(model.author, GithubBundle.message("pull.request.timeline.commented"), model.createdAt),
-         HtmlEditorPane(model.bodyHtml))
+  private fun createComponent(comment: GHIssueComment): Item {
+    val textPane = HtmlEditorPane(comment.bodyHTML)
+    val panelHandle = GHEditableHtmlPaneHandle(textPane,
+                                               { commentsDataProvider.getCommentMarkdownBody(EmptyProgressIndicator(), comment.id) },
+                                               { newText ->
+                                                 commentsDataProvider.updateComment(EmptyProgressIndicator(), comment.id,
+                                                                                    newText).successOnEdt { textPane.setBody(it) }
+                                               })
+    val actionsPanel = NonOpaquePanel(HorizontalLayout(UI.scale(8))).apply {
+      if (comment.viewerCanUpdate) add(GHTextActions.createEditButton(panelHandle))
+      if (comment.viewerCanDelete) add(GHTextActions.createDeleteButton {
+        commentsDataProvider.deleteComment(EmptyProgressIndicator(), comment.id)
+      })
+    }
+    val titlePanel = NonOpaquePanel(HorizontalLayout(UI.scale(12))).apply {
+      add(actionTitle(comment.author, GithubBundle.message("pull.request.timeline.commented"), comment.createdAt))
+      if (actionsPanel.componentCount > 0) add(actionsPanel)
+    }
+
+    return Item(userAvatar(comment.author), titlePanel, panelHandle.panel)
+  }
 
   private fun createComponent(review: GHPullRequestReview): Item {
     val reviewThreadsModel = reviewsThreadsModelsProvider.getReviewThreadsModel(review.id)

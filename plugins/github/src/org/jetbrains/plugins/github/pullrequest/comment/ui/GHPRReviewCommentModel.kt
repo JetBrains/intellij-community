@@ -42,9 +42,9 @@ class GHPRReviewCommentModel(val id: String, state: GHPullRequestReviewCommentSt
 
     dateCreated = comment.createdAt
 
-    if (body != comment.bodyHtml)
+    if (body != comment.bodyHTML)
       updated = true
-    body = comment.bodyHtml
+    body = comment.bodyHTML
 
     if (authorUsername != comment.author?.login)
       updated = true
@@ -74,7 +74,7 @@ class GHPRReviewCommentModel(val id: String, state: GHPullRequestReviewCommentSt
 
   companion object {
     fun convert(comment: GHPullRequestReviewComment): GHPRReviewCommentModel =
-      GHPRReviewCommentModel(comment.id, comment.state, comment.createdAt, comment.bodyHtml,
+      GHPRReviewCommentModel(comment.id, comment.state, comment.createdAt, comment.bodyHTML,
                              comment.author?.login, comment.author?.url,
                              comment.author?.avatarUrl,
                              comment.viewerCanDelete, comment.viewerCanUpdate)

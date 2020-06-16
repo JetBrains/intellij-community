@@ -50,6 +50,12 @@ class GHPRTimelineComponent(private val model: ListModel<GHPRTimelineItem>,
       }
 
       override fun contentsChanged(e: ListDataEvent) {
+        for (i in e.index1 downTo e.index0) {
+          remove(i)
+        }
+        for (i in e.index0..e.index1) {
+          add(itemComponentFactory.createComponent(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i)
+        }
         validate()
         repaint()
       }
