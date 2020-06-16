@@ -63,9 +63,16 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
   private val environmentPromise = AsyncPromise<Pair<TargetEnvironment, ProgressIndicator>>()
   private val dependingOnEnvironmentPromise = mutableListOf<Promise<Unit>>()
 
-  private fun uploadIntoTempDir(uploadPathString: String, getParent: Boolean? = null): TargetValue<String> {
+  /**
+   * @param uploadPathIsFile
+   *   * true: [uploadPathString] points to a file, the volume should be created for the file's directory.
+   *   * false: [uploadPathString] points to a directory, the volume should be created for the path.
+   *   * null: Determine whether [uploadPathString] a file or a directory,
+   *     throws an error if [uploadPathString] does not exist or is not readable.
+   */
+  private fun uploadIntoTempDir(uploadPathString: String, uploadPathIsFile: Boolean? = null): TargetValue<String> {
     val uploadPath = Paths.get(FileUtil.toSystemDependentName(uploadPathString))
-    val isDir = getParent ?: uploadPath.isDirectory()
+    val isDir = uploadPathIsFile ?: uploadPath.isDirectory()
     val localRootPath = if (isDir) uploadPath else uploadPath.parent
     val uploadRoot = TargetEnvironment.UploadRoot(
       localRootPath = localRootPath,
@@ -413,7 +420,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
       listOf(TargetValue.fixed(mainClass))
     }
     else if (jarPath != null) {
-      listOf(TargetValue.fixed("-jar"), uploadIntoTempDir(jarPath, getParent = true))
+      listOf(TargetValue.fixed("-jar"), uploadIntoTempDir(jarPath, uploadPathIsFile = true))
     }
     else {
       throw CantRunException(ExecutionBundle.message("main.class.is.not.specified.error.message"))
@@ -465,7 +472,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
       return
     }
     val suffix = if (equalsSign > -1) value.substring(equalsSign) else ""
-    commandLine.addParameter(TargetValue.map(uploadIntoTempDir(path, getParent = true)) { v: String ->
+    commandLine.addParameter(TargetValue.map(uploadIntoTempDir(path, uploadPathIsFile = true)) { v: String ->
       prefix + v + suffix
     })
   }
