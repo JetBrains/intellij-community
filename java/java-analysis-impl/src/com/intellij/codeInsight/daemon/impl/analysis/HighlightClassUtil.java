@@ -31,8 +31,10 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -593,13 +595,26 @@ public class HighlightClassUtil {
     return info;
   }
 
-  static HighlightInfo checkInterfaceCannotBeLocal(@NotNull PsiClass aClass) {
-    if (PsiUtil.isLocalClass(aClass)) {
-      TextRange range = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
-      String description = JavaErrorBundle.message("interface.cannot.be.local");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(description).create();
+  static HighlightInfo checkMustNotBeLocal(@NotNull PsiClass aClass) {
+    IElementType token;
+    HighlightingFeature feature;
+    if (aClass.isEnum()) {
+      token = JavaTokenType.ENUM_KEYWORD;
+      feature = HighlightingFeature.LOCAL_ENUMS;
     }
-    return null;
+    else if (aClass.isInterface()) {
+      token = JavaTokenType.INTERFACE_KEYWORD;
+      feature = HighlightingFeature.LOCAL_INTERFACES;
+    }
+    else {
+      return null;
+    }
+    if (!PsiUtil.isLocalClass(aClass)) return null;
+    PsiElement anchor = StreamEx.iterate(aClass.getFirstChild(), Objects::nonNull, PsiElement::getNextSibling)
+      .findFirst(e -> e instanceof PsiKeyword && ((PsiKeyword)e).getTokenType().equals(token))
+      .orElseThrow(NoSuchElementException::new);
+    PsiFile file = aClass.getContainingFile();
+    return HighlightUtil.checkFeature(anchor, feature, PsiUtil.getLanguageLevel(file), file);
   }
 
   static HighlightInfo checkCyclicInheritance(@NotNull PsiClass aClass) {
@@ -700,7 +715,7 @@ public class HighlightClassUtil {
           final PsiClass baseClass = PsiUtil.resolveClassInType(((PsiAnonymousClass)aClass).getBaseClassType());
           if (baseClass != null && baseClass.isInterface()) {
             info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
-              .descriptionAndTooltip("Anonymous class implements interface; cannot have qualifier for new").create();
+              .descriptionAndTooltip(JavaErrorBundle.message("anonymous.class.implements.interface.cannot.have.qualifier")).create();
           }
           QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createRemoveNewQualifierFix(expression, aClass));
         }
@@ -710,7 +725,7 @@ public class HighlightClassUtil {
             PsiElement refQualifier = reference.getQualifier();
             if (refQualifier != null) {
               info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refQualifier)
-                .descriptionAndTooltip("Qualified class reference is not allowed in qualified new")
+                .descriptionAndTooltip(JavaErrorBundle.message("qualified.class.reference.not.allowed.in.qualified.new"))
                 .create();
               QuickFixAction
                 .registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(refQualifier, QuickFixBundle.message("remove.qualifier.fix")));
@@ -885,7 +900,7 @@ public class HighlightClassUtil {
           return HighlightUtil.checkAssignability(outerType, null, qualifier, qualifier);
         }
       } else {
-        String description = "'" + HighlightUtil.formatClass(targetClass) + "' is not an inner class";
+        String description = JavaErrorBundle.message("not.inner.class", HighlightUtil.formatClass(targetClass));
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(qualifier).descriptionAndTooltip(description).create();
       }
     }

@@ -58,7 +58,9 @@ public enum HighlightingFeature {
       return LanguageLevel.JDK_15;
     }
   },
-  SEALED_CLASSES(LanguageLevel.JDK_15_PREVIEW, "feature.sealed.classes");
+  SEALED_CLASSES(LanguageLevel.JDK_15_PREVIEW, "feature.sealed.classes"),
+  LOCAL_INTERFACES(LanguageLevel.JDK_15_PREVIEW, "feature.local.interfaces"),
+  LOCAL_ENUMS(LanguageLevel.JDK_15_PREVIEW, "feature.local.enums");
 
   final LanguageLevel level;
   @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE)
