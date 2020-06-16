@@ -15,12 +15,19 @@
  */
 package com.siyeh.ig.testFrameworks;
 
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class AssertWithoutMessageInspection extends BaseInspection {
 
@@ -32,7 +39,7 @@ public class AssertWithoutMessageInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("asserts.without.messages.problem.descriptor");
+    return InspectionGadgetsBundle.message("assert.without.message.problem.descriptor");
   }
 
   private static class AssertionsWithoutMessagesVisitor extends BaseInspectionVisitor {
@@ -49,5 +56,31 @@ public class AssertWithoutMessageInspection extends BaseInspection {
         registerMethodCallError(expression);
       }
     }
+  }
+
+  @Override
+  protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
+    return new InspectionGadgetsFix() {
+      @Override
+      protected void doFix(Project project, ProblemDescriptor descriptor) {
+        PsiMethodCallExpression methodCallExpr = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
+        if (methodCallExpr == null) return;
+
+        PsiExpressionList methodArgs = methodCallExpr.getArgumentList();
+        PsiExpression[] methodArgExprs = methodArgs.getExpressions();
+        PsiExpression firstMethodArgExpr = methodArgExprs.length > 0 ? methodArgExprs[0] : null;
+        PsiExpression newMessageExpr = JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText("\"\"", methodCallExpr);
+        PsiElement createdMessageExpr = methodArgs.addBefore(newMessageExpr, firstMethodArgExpr);
+
+        final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+        if (editor == null) return;
+        editor.getCaretModel().moveToOffset(createdMessageExpr.getTextOffset() + 1);
+      }
+
+      @Override
+      public @IntentionFamilyName @NotNull String getFamilyName() {
+        return InspectionGadgetsBundle.message("assert.without.message.quick.fix.family.name");
+      }
+    };
   }
 }
