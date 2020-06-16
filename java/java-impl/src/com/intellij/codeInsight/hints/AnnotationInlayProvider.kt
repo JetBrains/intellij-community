@@ -34,7 +34,8 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
     val document = PsiDocumentManager.getInstance(project).getDocument(file)
     return object : FactoryInlayHintsCollector(editor) {
       override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
-        if (file.project.service<DumbService>().isDumb) return true
+        if (file.project.service<DumbService>().isDumb) return false
+        if (file.project.isDefault) return false
         val presentations = SmartList<InlayPresentation>()
         if (element is PsiModifierListOwner) {
           var annotations = emptySequence<PsiAnnotation>()
