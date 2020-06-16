@@ -13,8 +13,12 @@
 // limitations under the License.
 package org.intellij.plugins.markdown.ui.preview;
 
+import com.intellij.CommonBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.intellij.plugins.markdown.MarkdownBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -40,12 +44,18 @@ public abstract class MarkdownHtmlPanelProvider {
 
   @NotNull
   public static MarkdownHtmlPanelProvider createFromInfo(@NotNull ProviderInfo providerInfo) {
-    for (MarkdownHtmlPanelProvider provider : getProviders()) {
-      if (provider.getProviderInfo().getClassName().equals(providerInfo.getClassName())) {
-        return provider;
-      }
+    try {
+      return ((MarkdownHtmlPanelProvider)Class.forName(providerInfo.getClassName()).newInstance());
     }
-    return getProviders()[0];
+    catch (Exception e) {
+      Messages.showMessageDialog(
+        MarkdownBundle.message("dialog.message.cannot.set.preview.panel.provider", providerInfo.getName(), e.getMessage()),
+        CommonBundle.getErrorTitle(),
+        Messages.getErrorIcon()
+      );
+      Logger.getInstance(MarkdownHtmlPanelProvider.class).error(e);
+      return getProviders()[0];
+    }
   }
 
   public static boolean hasAvailableProviders() {
