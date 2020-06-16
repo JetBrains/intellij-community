@@ -98,6 +98,7 @@ internal class ModifiableFacetModelBridge(private val initialStorage: WorkspaceE
 
   override fun commit() {
     val moduleDiff = moduleBridge.diff
+    updateFacetConfiguration()
     if (moduleDiff != null) {
       val res = moduleDiff.addDiff(diff)
       populateModel(res)
@@ -107,6 +108,19 @@ internal class ModifiableFacetModelBridge(private val initialStorage: WorkspaceE
         val res = it.addDiff(diff)
         populateModel(res)
       }
+    }
+  }
+
+  // In some cases configuration for newly added facets changes before the actual commit e.g. MavenProjectImportHandler#configureFacet.
+  private fun updateFacetConfiguration() {
+    entityToFacet.forEach { (facetEntity, facet) ->
+      if (initialStorage.resolve(facetEntity.persistentId()) != null) return@forEach
+      val newFacetConfiguration = FacetUtil.saveFacetConfiguration(facet)?.let { JDOMUtil.write(it) }
+      if (facetEntity.configurationXmlTag == newFacetConfiguration) return@forEach
+      val newEntity = diff.modifyEntity(ModifiableFacetEntity::class.java, facetEntity) {
+        this.configurationXmlTag = newFacetConfiguration
+      }
+      entityToFacet.inverse()[facet] = newEntity
     }
   }
 

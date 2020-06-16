@@ -104,6 +104,19 @@ public class FacetManagerTest extends FacetTestCase {
     commit(model);
     assertNull(getFacetManager().getFacetByType(MockFacetType.ID));
   }
+
+  public void testChangeFacetConfiguration() {
+    String configData = "data";
+    ModifiableFacetModel model = getFacetManager().createModifiableModel();
+    MockFacet mockFacet = new MockFacet(myModule, "mock");
+    model.addFacet(mockFacet);
+    mockFacet.getConfiguration().setData(configData);
+    commit(model);
+
+    MockFacet facetByType = getFacetManager().getFacetByType(MockFacetType.ID);
+    assertEquals(configData, facetByType.getConfiguration().getData());
+    assertSame(mockFacet, facetByType);
+  }
   
   public void testAddRemoveFacetWithSubFacet() {
     assertNull(getFacetManager().getFacetByType(MockSubFacetType.ID));
