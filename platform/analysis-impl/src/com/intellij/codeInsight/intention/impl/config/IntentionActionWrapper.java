@@ -30,7 +30,7 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
   }
 
   @NotNull
-  String getDescriptionDirectoryName() {
+  public String getDescriptionDirectoryName() {
     return getDescriptionDirectoryName(getImplementationClassName());
   }
 
