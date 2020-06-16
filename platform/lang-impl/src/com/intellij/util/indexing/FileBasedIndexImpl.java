@@ -1381,7 +1381,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       if (myStorageBufferingHandler.runUpdate(false, storageUpdate)) {
         ConcurrencyUtil.withLock(myReadLock, () -> {
           if (currentFC != null) {
-            index.setIndexedStateForFile(inputId, currentFC);
+            if (!isMock(currentFC.getFile())) {
+              index.setIndexedStateForFile(inputId, currentFC);
+            }
           }
           else {
             index.resetIndexedStateForFile(inputId);
@@ -1681,7 +1683,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
           if (file != null) {
             VirtualFile virtualFile = file.getVirtualFile();
-            if (virtualFile instanceof VirtualFileWithId) {
+            if (virtualFile instanceof VirtualFileWithId && !isMock(virtualFile)) {
               getChangedFilesCollector().getEventMerger().recordTransientStateChangeEvent(virtualFile);
             }
           }
