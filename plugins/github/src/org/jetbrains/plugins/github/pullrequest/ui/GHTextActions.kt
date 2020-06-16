@@ -68,6 +68,7 @@ object GHTextActions {
 
 
   private fun calcLines(textPane: JEditorPane): Int {
+    if (textPane.document.length == 0) return 0
     var lineCount = 0
     var offset = 0
     while (true) {
