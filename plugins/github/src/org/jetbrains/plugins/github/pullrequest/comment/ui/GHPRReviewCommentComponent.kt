@@ -5,7 +5,6 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
@@ -17,6 +16,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComm
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
+import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
 import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.util.GithubUIUtil
@@ -57,10 +57,11 @@ object GHPRReviewCommentComponent {
 
     Controller(comment, titlePane, pendingLabel, resolvedLabel, textPane)
 
-    val editorWrapper = Wrapper()
-    val editButton = GHTextActions.createEditButton(textPane, editorWrapper,
-                                                    { reviewDataProvider.getCommentMarkdownBody(EmptyProgressIndicator(), comment.id) },
-                                                    { reviewDataProvider.updateComment(EmptyProgressIndicator(), comment.id, it) }).apply {
+    val editablePaneHandle = GHEditableHtmlPaneHandle(textPane,
+                                                      { reviewDataProvider.getCommentMarkdownBody(EmptyProgressIndicator(), comment.id) },
+                                                      { reviewDataProvider.updateComment(EmptyProgressIndicator(), comment.id, it) })
+
+    val editButton = GHTextActions.createEditButton(editablePaneHandle).apply {
       isVisible = comment.canBeUpdated
     }
     val deleteButton = GHTextActions.createDeleteButton {
@@ -82,8 +83,7 @@ object GHPRReviewCommentComponent {
       add(resolvedLabel, CC().hideMode(3).alignX("left"))
       add(editButton, CC().hideMode(3).gapBefore("${UI.scale(12)}"))
       add(deleteButton, CC().hideMode(3).gapBefore("${UI.scale(8)}"))
-      add(textPane, CC().newline().skip().push().minWidth("0").minHeight("0"))
-      add(editorWrapper, CC().newline().skip().push().minWidth("0").minHeight("0").growX())
+      add(editablePaneHandle.panel, CC().newline().skip().push().minWidth("0").minHeight("0").growX())
     }
   }
 
