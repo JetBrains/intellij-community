@@ -98,7 +98,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
     VirtualFile v = refreshAndFindFile(f);
     VirtualFilePointer thePointer = myVirtualFilePointerManager.create(v, disposable, listener);
     assertNotNull(TempFileSystem.getInstance());
-    PlatformTestUtil.startPerformanceTest("same url vfp create", 9000, () -> {
+    PlatformTestUtil.startPerformanceTest("same file vfp create", 10000, () -> {
       for (int i = 0; i < 10_000_000; i++) {
         VirtualFilePointer pointer = myVirtualFilePointerManager.create(v, disposable, listener);
         assertSame(pointer, thePointer);
