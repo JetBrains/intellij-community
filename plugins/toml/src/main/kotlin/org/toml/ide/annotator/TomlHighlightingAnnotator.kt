@@ -26,8 +26,7 @@ class TomlHighlightingAnnotator : AnnotatorBase() {
             else -> return
         }
         val severity = if (isUnitTestMode) color.testSeverity else HighlightSeverity.INFORMATION
-        // BACKCOMPAT: 2019.3
-        @Suppress("DEPRECATION")
-        holder.createAnnotation(severity, element.textRange, null).textAttributes = color.textAttributesKey
+
+        holder.newSilentAnnotation(severity).textAttributes(color.textAttributesKey).create()
     }
 }
