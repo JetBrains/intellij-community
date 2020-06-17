@@ -18,7 +18,6 @@
 
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.externalSystem</depends>
-  <depends>com.intellij.properties</depends>
 
   <resource-bundle>messages.GradleBundle</resource-bundle>
 
@@ -132,11 +131,6 @@
 
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.plugins.gradle.GradleCommandLineProjectConfigurator"/>
     <notificationWhitelist groupIds="Gradle Notification Group"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="com.intellij.properties">
-    <implicitPropertyUsageProvider
-      implementation="org.jetbrains.plugins.gradle.service.project.GradleWrapperImplicitPropertyUsageProvider"/>
   </extensions>
 
   <actions>
