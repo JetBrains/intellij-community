@@ -47,8 +47,8 @@ class GHPRDetailsDataProviderImpl(private val detailsService: GHPRDetailsService
   override fun getDescriptionMarkdownBody(indicator: ProgressIndicator) =
     commentService.getCommentMarkdownBody(indicator, pullRequestId.id)
 
-  override fun updateDetails(indicator: ProgressIndicator, description: String?): CompletableFuture<GHPullRequest> {
-    val future = detailsService.updateDetails(indicator, pullRequestId, description).completionOnEdt {
+  override fun updateDetails(indicator: ProgressIndicator, title: String?, description: String?): CompletableFuture<GHPullRequest> {
+    val future = detailsService.updateDetails(indicator, pullRequestId, title, description).completionOnEdt {
       messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onMetadataChanged()
     }
     detailsRequestValue.overrideProcess(future)

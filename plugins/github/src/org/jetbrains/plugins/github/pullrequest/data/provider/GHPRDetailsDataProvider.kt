@@ -40,7 +40,7 @@ interface GHPRDetailsDataProvider {
   fun getDescriptionMarkdownBody(indicator: ProgressIndicator): CompletableFuture<String>
 
   @CalledInAwt
-  fun updateDetails(indicator: ProgressIndicator, description: String? = null): CompletableFuture<GHPullRequest>
+  fun updateDetails(indicator: ProgressIndicator, title: String? = null, description: String? = null): CompletableFuture<GHPullRequest>
 
   @CalledInAwt
   fun adjustReviewers(indicator: ProgressIndicator, delta: CollectionDelta<GHPullRequestRequestedReviewer>)

@@ -82,10 +82,11 @@ object GHGQLRequests {
     }
 
 
-    fun update(repository: GHRepositoryCoordinates, pullRequestId: String, description: String?): GQLQuery<GHPullRequest> {
-      return GQLQuery.TraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.updatePullRequest,
-                                      mapOf("pullRequestId" to pullRequestId,
-                                            "body" to description),
+    fun update(repository: GHRepositoryCoordinates, pullRequestId: String, title: String?, description: String?): GQLQuery<GHPullRequest> {
+      val parameters = mutableMapOf<String, Any>("pullRequestId" to pullRequestId)
+      if (title != null) parameters["title"] = title
+      if (description != null) parameters["body"] = description
+      return GQLQuery.TraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.updatePullRequest, parameters,
                                       GHPullRequest::class.java,
                                       "updatePullRequest", "pullRequest")
     }
