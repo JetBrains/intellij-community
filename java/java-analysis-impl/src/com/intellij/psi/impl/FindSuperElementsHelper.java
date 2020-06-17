@@ -18,6 +18,7 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
@@ -47,7 +48,8 @@ public class FindSuperElementsHelper {
         }
       }
       else {
-        PsiMethod[] superMethods = method.findSuperMethods(false);
+        PsiMethod[] superMethods = MethodSignatureUtil.convertMethodSignaturesToMethods(new ArrayList<>(
+          SuperMethodsSearch.search(method, null, true, false).findAll()));
         if (superMethods.length == 0) {
           PsiMethod superMethod = getSiblingInheritedViaSubClass(method);
           if (superMethod != null) {
