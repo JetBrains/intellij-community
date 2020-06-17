@@ -109,7 +109,7 @@ public final class TerminalShellCommandHandlerHelper {
   private PropertiesComponent getPropertiesComponent() {
     PropertiesComponent propertiesComponent = myPropertiesComponent;
     if (propertiesComponent == null) {
-      propertiesComponent = ReadAction.compute(() -> PropertiesComponent.getInstance(myWidget.getProject()));
+      propertiesComponent = ReadAction.compute(() -> PropertiesComponent.getInstance());
       myPropertiesComponent = propertiesComponent;
     }
     return propertiesComponent;
