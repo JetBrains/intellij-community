@@ -32,9 +32,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
@@ -196,18 +194,25 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
     return allClasses;
   }
 
-  private static void suggestNonImportedClasses(CompletionParameters parameters, CompletionResultSet result, @Nullable JavaCompletionSession session) {
-    JavaClassNameCompletionContributor.addAllClasses(parameters, true, result.getPrefixMatcher(), element -> {
+  static void suggestNonImportedClasses(CompletionParameters parameters, CompletionResultSet result, @Nullable JavaCompletionSession session) {
+    List<LookupElement> sameNamedBatch = new ArrayList<>();
+    JavaClassNameCompletionContributor.addAllClasses(parameters, parameters.getInvocationCount() <= 2, result.getPrefixMatcher(), element -> {
       if (session != null && session.alreadyProcessed(element)) {
         return;
       }
       JavaPsiClassReferenceElement classElement = element.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);
-      if (classElement != null) {
+      if (classElement != null && parameters.getInvocationCount() < 2) {
         classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
       }
 
-      result.addElement(element);
+      element = JavaCompletionUtil.highlightIfNeeded(null, element, element.getObject(), parameters.getPosition());
+      if (!sameNamedBatch.isEmpty() && !element.getLookupString().equals(sameNamedBatch.get(0).getLookupString())) {
+        result.addAllElements(sameNamedBatch);
+        sameNamedBatch.clear();
+      }
+      sameNamedBatch.add(element);
     });
+    result.addAllElements(sameNamedBatch);
   }
 
   public static class ResultTracker implements Consumer<CompletionResult> {

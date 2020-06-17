@@ -527,11 +527,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     if (parameters.getInvocationCount() >= 2) {
-      JavaClassNameCompletionContributor.addAllClasses(parameters, parameters.getInvocationCount() <= 2, result.getPrefixMatcher(), element -> {
-        if (!session.alreadyProcessed(element)) {
-          result.addElement(JavaCompletionUtil.highlightIfNeeded(null, element, element.getObject(), parameters.getPosition()));
-        }
-      });
+      JavaNoVariantsDelegator.suggestNonImportedClasses(parameters, result, session);
     }
     else {
       advertiseSecondCompletion(parameters.getPosition().getProject(), result);
