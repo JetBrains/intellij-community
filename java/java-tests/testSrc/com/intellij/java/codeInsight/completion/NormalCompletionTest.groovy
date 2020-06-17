@@ -1989,6 +1989,7 @@ class Bar {{
 
   void testOnlyResourcesInResourceList5() { doTest('\n') }
 
+  @NeedsIndex.ForStandardLibrary
   void testMethodReferenceNoStatic() { doTest('\n') }
 
   void testMethodReferenceCallContext() { doTest('\n') }

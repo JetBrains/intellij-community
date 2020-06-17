@@ -16,10 +16,12 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.impl.BetterPrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -154,7 +156,12 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
         if (ref != null) {
           for (LookupElement item : JavaSmartCompletionContributor.completeReference(position, ref, filter, true, true, parameters,
                                                                                      result.getPrefixMatcher())) {
-            qualifiedCollector.addElement(JavaCompletionUtil.highlightIfNeeded(null, new JavaChainLookupElement(base, item, separator), item.getObject(), position));
+            LookupElement chain =
+              JavaCompletionUtil.highlightIfNeeded(null, new JavaChainLookupElement(base, item, separator), item.getObject(), position);
+            if (JavaCompletionContributor.shouldInsertSemicolon(position)) {
+              chain = TailTypeDecorator.withTail(chain, TailType.SEMICOLON);
+            }
+            qualifiedCollector.addElement(chain);
           }
         }
       }

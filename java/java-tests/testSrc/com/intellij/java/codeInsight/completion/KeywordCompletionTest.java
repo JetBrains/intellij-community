@@ -100,7 +100,9 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   @NeedsIndex.ForStandardLibrary
   public void testNewInMethodRefs() {
     doTest(1, "new", "null", "true", "false");
-    assertEquals("new", LookupElementPresentation.renderElement(myItems[0]).getItemText());
+    LookupElementPresentation presentation = LookupElementPresentation.renderElement(myItems[0]);
+    assertEquals("new", presentation.getItemText());
+    assertEmpty(presentation.getTailText());
     selectItem(myItems[0]);
     checkResultByTestName();
   }

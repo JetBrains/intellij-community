@@ -7,6 +7,7 @@ import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
+import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -365,9 +366,6 @@ public class JavaCompletionContributor extends CompletionContributor {
     if (CatchTypeProvider.CATCH_CLAUSE_TYPE.accepts(position)) {
       CatchTypeProvider.addCompletions(parameters, result);
     }
-    if (psiElement().afterLeaf("::").withParent(PsiMethodReferenceExpression.class).accepts(position)) {
-      MethodReferenceCompletionProvider.addCompletions(parameters, result);
-    }
   }
 
   private static boolean smartCompleteExpression(CompletionParameters parameters,
@@ -561,9 +559,16 @@ public class JavaCompletionContributor extends CompletionContributor {
       }
     }
 
-    TailType switchLabelTail = !smart && IN_SWITCH_LABEL.accepts(position)
-                               ? TailTypes.forSwitchLabel(Objects.requireNonNull(PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class)))
-                               : null;
+    boolean inSwitchLabel = IN_SWITCH_LABEL.accepts(position);
+    TailType forcedTail = null;
+    if (!smart) {
+      if (inSwitchLabel) {
+        forcedTail = TailTypes.forSwitchLabel(Objects.requireNonNull(PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class)));
+      }
+      else if (shouldInsertSemicolon(position)) {
+        forcedTail = TailType.SEMICOLON;
+      }
+    }
 
     List<LookupElement> items = new ArrayList<>();
     if (INSIDE_CONSTRUCTOR.accepts(position) &&
@@ -589,8 +594,11 @@ public class JavaCompletionContributor extends CompletionContributor {
       }
 
       LookupItem<?> item = element.as(LookupItem.CLASS_CONDITION_KEY);
-      if (switchLabelTail != null) {
-        element = new IndentingDecorator(TailTypeDecorator.withTail(element, switchLabelTail));
+      if (forcedTail != null) {
+        element = TailTypeDecorator.withTail(element, forcedTail);
+      }
+      if (inSwitchLabel && !smart) {
+        element = new IndentingDecorator(element);
       }
       if (originalFile instanceof PsiJavaCodeReferenceCodeFragment &&
           !((PsiJavaCodeReferenceCodeFragment)originalFile).isClassesAccepted() && item != null) {
@@ -615,6 +623,11 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     }
     return items;
+  }
+
+  static boolean shouldInsertSemicolon(PsiElement position) {
+    return position.getParent() instanceof PsiMethodReferenceExpression &&
+           LambdaHighlightingUtil.insertSemicolon(position.getParent().getParent());
   }
 
   private static List<LookupElement> processLabelReference(PsiLabelReference reference) {

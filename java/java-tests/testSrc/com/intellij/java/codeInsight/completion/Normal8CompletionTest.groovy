@@ -469,4 +469,11 @@ class Test88 {
     myFixture.type('\n')
     checkResultByFileName()
   }
+
+  @NeedsIndex.ForStandardLibrary
+  void testPreferConstructorReferenceOfExpectedType() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'new'
+  }
+
 }
