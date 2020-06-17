@@ -478,4 +478,10 @@ class Test88 {
     myFixture.assertPreferredCompletionItems 0, 'new'
   }
 
+  @NeedsIndex.ForStandardLibrary
+  void testPreferQualifiedMethodReferenceOfExpectedType() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'aDouble -> ', 'doubleValue'
+  }
+
 }

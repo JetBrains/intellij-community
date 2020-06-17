@@ -42,7 +42,7 @@ import java.util.*;
 
 public class FunctionalExpressionCompletionProvider {
   static final Key<Boolean> LAMBDA_ITEM = Key.create("LAMBDA_ITEM");
-  static final Key<Boolean> METHOD_REF_ITEM = Key.create("METHOD_REF_ITEM");
+  static final Key<Boolean> METHOD_REF_PREFERRED = Key.create("METHOD_REF_ITEM");
 
   private static boolean isLambdaContext(@NotNull PsiElement element) {
     final PsiElement rulezzRef = element.getParent();
@@ -52,7 +52,7 @@ public class FunctionalExpressionCompletionProvider {
   }
 
   static boolean isFunExprItem(LookupElement item) {
-    return item.getUserData(LAMBDA_ITEM) != null || item.getUserData(METHOD_REF_ITEM) != null;
+    return item.getUserData(LAMBDA_ITEM) != null || item.getUserData(METHOD_REF_PREFERRED) != null;
   }
 
   static void addFunctionalVariants(@NotNull CompletionParameters parameters, boolean addInheritors, PrefixMatcher matcher, Consumer<? super LookupElement> result) {
@@ -101,7 +101,8 @@ public class FunctionalExpressionCompletionProvider {
               new MethodReferenceCompletion(addInheritors, parameters, matcher, functionalInterfaceType, params, originalPosition,
                                             substitutor, expectedReturnType);
             completion.suggestMethodReferences(element -> {
-                element.putUserData(METHOD_REF_ITEM, true);
+              Object object = element.getObject();
+              element.putUserData(METHOD_REF_PREFERRED, object instanceof PsiMethod && completion.hasExactReturnType((PsiMethod)object));
                 result.consume(parameters.getCompletionType() == CompletionType.SMART
                                ? JavaSmartCompletionContributor.decorate(element, Arrays.asList(expectedTypes))
                                : element);
@@ -317,6 +318,11 @@ class MethodReferenceCompletion {
   private boolean hasAppropriateReturnType(PsiMethod psiMethod) {
     PsiType returnType = psiMethod.getReturnType();
     return returnType != null && TypeConversionUtil.isAssignable(myExpectedReturnType, mySubstitutor.substitute(returnType));
+  }
+
+  boolean hasExactReturnType(PsiMethod psiMethod) {
+    PsiType returnType = psiMethod.getReturnType();
+    return returnType != null && myExpectedReturnType.equals(mySubstitutor.substitute(returnType));
   }
 
   private boolean isSignatureAppropriate(PsiMethod psiMethod, int offset, PsiClass accessObjectClass) {
