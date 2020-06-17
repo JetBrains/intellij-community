@@ -13,8 +13,10 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
+import com.intellij.openapi.fileEditor.impl.HTMLFileEditor;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -32,6 +34,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,7 +104,11 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
           String title = IdeBundle.message("update.whats.new.file.name", ApplicationInfo.getInstance().getFullVersion());
           LightVirtualFile file = new LightVirtualFile(title, myNewBuild.getMessage());
           file.putUserData(HTMLEditorProvider.Companion.getHTML_CONTENT_TYPE(), true);
-          FileEditorManager.getInstance(project).openFile(file, true);
+          FileEditor[] fileEditors = FileEditorManager.getInstance(project).openFile(file, true);
+          if (fileEditors.length > 0 && fileEditors[0] instanceof HTMLFileEditor) {
+            ((HTMLFileEditor)fileEditors[0])
+              .setUrl(myNewBuild.getBlogPost() + "/?var=embed" + (UIUtil.isUnderDarcula() ? "&theme=dark" : ""));
+          }
           close(OK_EXIT_CODE);
         }
       };
