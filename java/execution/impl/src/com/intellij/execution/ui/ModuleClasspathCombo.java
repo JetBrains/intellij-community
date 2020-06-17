@@ -8,6 +8,8 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -97,8 +99,7 @@ public class ModuleClasspathCombo extends JComboBox<ModuleClasspathCombo.Item> {
     }
   }
 
-  private static class ListRenderer implements ListCellRenderer<Item> {
-    private final DefaultListCellRenderer myDefaultRenderer = new DefaultListCellRenderer();
+  private static class ListRenderer extends ColoredListCellRenderer<Item> {
     private final JCheckBox myCheckBox = new JBCheckBox();
     @Override
     public Component getListCellRendererComponent(JList<? extends Item> list,
@@ -106,14 +107,10 @@ public class ModuleClasspathCombo extends JComboBox<ModuleClasspathCombo.Item> {
                                                   int index,
                                                   boolean isSelected,
                                                   boolean cellHasFocus) {
-      myCheckBox.setOpaque(false);
-      if (value == null) {
-        return myDefaultRenderer.getListCellRendererComponent(list, null, index, isSelected, cellHasFocus);
+      if (value == null || value.myModule != null) {
+        return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       }
-      else if (value.myModule != null) {
-        return myDefaultRenderer.getListCellRendererComponent(list, value.myModule.getName(), index, isSelected, cellHasFocus);
-      }
-      else if (value.myOptionName == null) {
+      if (value.myOptionName == null) {
         JPanel pane = new JPanel(new GridBagLayout());
         pane.setOpaque(false);
         GridBagConstraints gbc = new GridBagConstraints();
@@ -124,9 +121,22 @@ public class ModuleClasspathCombo extends JComboBox<ModuleClasspathCombo.Item> {
         return pane;
       }
       else {
+        myCheckBox.setOpaque(false);
         myCheckBox.setText(value.myOptionName);
         myCheckBox.setSelected(value.myOptionValue);
         return myCheckBox;
+      }
+    }
+
+    @Override
+    protected void customizeCellRenderer(@NotNull JList<? extends Item> list, Item value, int index, boolean selected, boolean hasFocus) {
+      if (value == null) return;
+      if (index == -1) {
+        append("-cp ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        append(value.myModule.getName());
+      }
+      else {
+        append(value.myModule.getName());
       }
     }
   }
