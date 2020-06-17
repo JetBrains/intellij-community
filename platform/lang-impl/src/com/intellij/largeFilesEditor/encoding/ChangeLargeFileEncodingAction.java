@@ -20,15 +20,15 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.nio.charset.Charset;
 
-public class ChangeFileEncodingAction extends com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction {
+class ChangeLargeFileEncodingAction extends com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction {
 
-  private static final Logger logger = Logger.getInstance(ChangeFileEncodingAction.class);
+  private static final Logger logger = Logger.getInstance(ChangeLargeFileEncodingAction.class);
 
   private final LargeFileEditorAccessor myLargeFileEditorAccessor;
   private final Project project;
   private final StatusBar statusBar;
 
-  ChangeFileEncodingAction(LargeFileEditorAccessor largeFileEditorAccessor, Project project, StatusBar statusBar) {
+  ChangeLargeFileEncodingAction(LargeFileEditorAccessor largeFileEditorAccessor, Project project, StatusBar statusBar) {
     this.myLargeFileEditorAccessor = largeFileEditorAccessor;
     this.project = project;
     this.statusBar = statusBar;

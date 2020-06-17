@@ -98,7 +98,7 @@ public class EncodingWidget extends EditorBasedWidget implements StatusBarWidget
   }
 
   private void showPopup(@NotNull LargeFileEditorAccess largeFileEditorAccess) {
-    ChangeFileEncodingAction action = new ChangeFileEncodingAction(myLargeFileEditorAccessor, getProject(), myStatusBar);
+    ChangeLargeFileEncodingAction action = new ChangeLargeFileEncodingAction(myLargeFileEditorAccessor, getProject(), myStatusBar);
     JComponent where = getComponent();
     ListPopup popup = action.createPopup(largeFileEditorAccess.getVirtualFile(), largeFileEditorAccess.getEditor(),
                                          where);
