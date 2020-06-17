@@ -1,84 +1,37 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
-import com.intellij.ide.BrowserUtil
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.components.labels.LinkListener
-import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
-import net.miginfocom.layout.CC
-import net.miginfocom.layout.LC
-import net.miginfocom.swing.MigLayout
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
+import com.intellij.util.ui.components.BorderLayoutPanel
+import icons.GithubIcons
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
-import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.GithubUIUtil
-import javax.swing.Box
-import javax.swing.JPanel
+import javax.swing.JComponent
 
-internal class GHPRHeaderPanel(private val model: SingleValueModel<GHPullRequestShort>,
-                               avatarIconsProvider: CachingGithubAvatarIconsProvider)
-  : JPanel() {
+internal object GHPRHeaderPanel {
 
-  private val authorAvatar = LinkLabel<Any>("", avatarIconsProvider.getIcon(model.value.author?.avatarUrl), LinkListener { _, _ ->
-    model.value.author?.url?.let { BrowserUtil.browse(it) }
-  })
-
-  //language=html
-  private val createText = HtmlEditorPane("<a href='${model.value.author?.url}'>${model.value.author?.login ?: "unknown"}</a> " +
-                                          "created ${GithubUIUtil.formatActionDate(model.value.createdAt)}").apply {
-    foreground = UIUtil.getContextHelpForeground()
-  }
-
-  private val title = JBLabel(UIUtil.ComponentStyle.LARGE).apply {
-    font = font.deriveFont((font.size * 1.5).toFloat())
-  }
-
-  private val number = JBLabel(UIUtil.ComponentStyle.LARGE).apply {
-    font = font.deriveFont((font.size * 1.4).toFloat())
-    foreground = UIUtil.getContextHelpForeground()
-  }
-
-  private val descriptionPane = HtmlEditorPane()
-
-  init {
-    isOpaque = false
-    layout = MigLayout(LC().gridGap("0", "0")
-                         .insets("0", "0", "0", "0")
-                         .fill()
-                         .noGrid()).apply {
-      rowConstraints = "[]${UI.scale(4)}[]${UI.scale(8)}[]"
+  fun create(model: SingleValueModel<GHPullRequestShort>): JComponent {
+    val title = JBLabel(UIUtil.ComponentStyle.LARGE).apply {
+      font = font.deriveFont((font.size * 1.5).toFloat())
     }
 
-    add(authorAvatar, noGap())
-    add(Box.createRigidArea(JBDimension(5, 0)), noGap())
-    add(createText, noGap().wrap())
+    val number = JBLabel(UIUtil.ComponentStyle.LARGE).apply {
+      font = font.deriveFont((font.size * 1.4).toFloat())
+      foreground = UIUtil.getContextHelpForeground()
+    }
 
-    add(title, noGap())
-    add(Box.createRigidArea(JBDimension(10, 0)), noGap())
-    add(number, noGap().wrap())
-
-    add(descriptionPane, CC().grow().push().minWidth("0"))
-
-    fun update() {
+    model.addAndInvokeValueChangedListener {
+      title.icon = when (model.value.state) {
+        GHPullRequestState.CLOSED -> GithubIcons.PullRequestClosed
+        GHPullRequestState.MERGED -> GithubIcons.PullRequestMerged
+        GHPullRequestState.OPEN -> GithubIcons.PullRequestOpen
+      }
       title.text = model.value.title
-      number.text = "#" + model.value.number
-      descriptionPane.setBody((model.value as? GHPullRequest)?.bodyHTML.orEmpty())
-      //forces height recalculation (see JBR-2256)
-      descriptionPane.setSize(descriptionPane.width, Int.MAX_VALUE / 2)
+      number.text = " #${model.value.number}"
     }
 
-    model.addValueChangedListener {
-      update()
-    }
-    update()
-  }
-
-  companion object {
-    private fun noGap() = CC().gap("0", "0", "0", "0")
+    return BorderLayoutPanel().addToCenter(title).addToRight(number).andTransparent()
   }
 }

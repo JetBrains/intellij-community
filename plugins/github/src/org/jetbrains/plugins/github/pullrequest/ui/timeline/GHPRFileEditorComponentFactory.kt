@@ -31,6 +31,7 @@ import org.jetbrains.plugins.github.pullrequest.comment.ui.GHSubmittableTextFiel
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHSubmittableTextFieldModel
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStateModelImpl
@@ -104,10 +105,11 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
 
     val avatarIconsProvider = editor.avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, mainPanel)
 
-    val header = GHPRHeaderPanel(detailsModel, avatarIconsProvider)
+    val header = GHPRHeaderPanel.create(detailsModel)
 
-    val timeline = GHPRTimelineComponent(timelineModel,
-                                         createItemComponentFactory(project, editor.commentsData, editor.reviewData,
+    val timeline = GHPRTimelineComponent(detailsModel,
+                                         timelineModel,
+                                         createItemComponentFactory(project, editor.detailsData, editor.commentsData, editor.reviewData,
                                                                     reviewThreadsModelsProvider,
                                                                     avatarIconsProvider, editor.securityService.currentUser)).apply {
       border = JBUI.Borders.empty(16, 0)
@@ -205,6 +207,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
   }
 
   private fun createItemComponentFactory(project: Project,
+                                         detailsDataProvider: GHPRDetailsDataProvider,
                                          commentsDataProvider: GHPRCommentsDataProvider,
                                          reviewDataProvider: GHPRReviewDataProvider,
                                          reviewThreadsModelsProvider: GHPRReviewsThreadsModelsProvider,
@@ -214,7 +217,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
 
     val diffFactory = GHPRReviewThreadDiffComponentFactory(FileTypeRegistry.getInstance(), project, EditorFactory.getInstance())
     val eventsFactory = GHPRTimelineEventComponentFactoryImpl(avatarIconsProvider)
-    return GHPRTimelineItemComponentFactory(commentsDataProvider, reviewDataProvider,
+    return GHPRTimelineItemComponentFactory(detailsDataProvider, commentsDataProvider, reviewDataProvider,
                                             avatarIconsProvider, reviewThreadsModelsProvider, diffFactory,
                                             eventsFactory,
                                             currentUser)

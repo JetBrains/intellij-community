@@ -61,7 +61,7 @@ internal class GHPRDataProviderRepositoryImpl(private val detailsService: GHPRDe
     })
     Disposer.register(parentDisposable, messageBus)
 
-    val detailsData = GHPRDetailsDataProviderImpl(detailsService, id, messageBus).apply {
+    val detailsData = GHPRDetailsDataProviderImpl(detailsService, commentService, id, messageBus).apply {
       addDetailsLoadedListener(parentDisposable) {
         loadedDetails?.let { providerDetailsLoadedEventDispatcher.multicaster.onDetailsLoaded(it) }
       }

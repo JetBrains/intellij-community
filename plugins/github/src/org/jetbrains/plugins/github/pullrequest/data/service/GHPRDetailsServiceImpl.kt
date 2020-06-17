@@ -24,7 +24,7 @@ import java.util.concurrent.CompletableFuture
 class GHPRDetailsServiceImpl(private val progressManager: ProgressManager,
                              private val requestExecutor: GithubApiRequestExecutor,
                              private val repository: GHRepositoryCoordinates) : GHPRDetailsService {
-  
+
   private val serverPath = repository.serverPath
   private val repoPath = repository.repositoryPath
 
@@ -33,6 +33,11 @@ class GHPRDetailsServiceImpl(private val progressManager: ProgressManager,
       requestExecutor.execute(it, GHGQLRequests.PullRequest.findOne(repository, pullRequestId.number))
       ?: throw GHNotFoundException("Pull request ${pullRequestId.number} does not exist")
     }.logError(LOG, "Error occurred while loading PR details")
+
+  override fun updateDetails(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, description: String?)
+    : CompletableFuture<GHPullRequest> = progressManager.submitIOTask(indicator) {
+    requestExecutor.execute(it, GHGQLRequests.PullRequest.update(repository, pullRequestId.id, description))
+  }.logError(LOG, "Error occurred while loading PR details")
 
   override fun adjustReviewers(indicator: ProgressIndicator,
                                pullRequestId: GHPRIdentifier,
