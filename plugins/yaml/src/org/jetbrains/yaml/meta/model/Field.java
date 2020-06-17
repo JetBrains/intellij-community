@@ -58,9 +58,9 @@ public class Field {
    * Used for late initialization of the field metatype.
    * Useful when the type isn't fully constructed at the moment of the field initialization (e.g. for cyclic dependencies)
    */
-  public Field(@NonNls @NotNull String name, @NotNull MetaTypeSupplier provider) {
+  public Field(@NonNls @NotNull String name, @NotNull MetaTypeSupplier supplier) {
     myName = name;
-    myMetaTypeSupplier = provider;
+    myMetaTypeSupplier = supplier;
   }
 
   @NotNull
