@@ -55,6 +55,8 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import static com.intellij.util.ObjectUtils.tryCast;
+
 public class HighlightMethodUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
   private static final Logger LOG = Logger.getInstance(HighlightMethodUtil.class);
@@ -1285,7 +1287,7 @@ public class HighlightMethodUtil {
     if (!JavaPsiConstructorUtil.isConstructorCall(methodCall)) return null;
     PsiElement codeBlock = methodCall.getParent().getParent();
     if (codeBlock instanceof PsiCodeBlock) {
-      PsiMethod ctor = ObjectUtils.tryCast(codeBlock.getParent(), PsiMethod.class);
+      PsiMethod ctor = tryCast(codeBlock.getParent(), PsiMethod.class);
       if (ctor != null && ctor.isConstructor()) {
         if (JavaPsiRecordUtil.isCompactConstructor(ctor) ||
             JavaPsiRecordUtil.isExplicitCanonicalConstructor(ctor)) {
@@ -1317,6 +1319,27 @@ public class HighlightMethodUtil {
     return null;
   }
 
+  /**
+   * This method validates that the language level of the project where a call expression accesses
+   * the method that is annotated with {@link CommonClassNames#JDK_INTERNAL_PREVIEW_FEATURE} is sufficient
+   *
+   * @param methodCallExpression the expression to examine
+   * @param level the current language level
+   * @return an instance of HighlightInfo with a quickfix to set the appropriate language level
+   * if the current language level is not sufficient or null
+   */
+  static HighlightInfo checkMethodCallPreviewFeatureAnnotation(@NotNull final PsiMethodCallExpression methodCallExpression,
+                                                               @NotNull final LanguageLevel level) {
+    final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+    final PsiElement targetMethod = methodExpression.resolve();
+    if (!(targetMethod instanceof PsiJvmModifiersOwner)) return null;
+
+    final PsiAnnotation annotation = ((PsiJvmModifiersOwner)targetMethod).getAnnotation(CommonClassNames.JDK_INTERNAL_PREVIEW_FEATURE);
+    final HighlightingFeature feature = GenericsHighlightUtil.extractHighlightingFeature(annotation);
+    if (feature == null) return null;
+
+    return HighlightUtil.checkFeature(methodCallExpression, feature, level, methodCallExpression.getContainingFile());
+  }
 
   static HighlightInfo checkConstructorCallsBaseClassConstructor(@NotNull PsiMethod constructor,
                                                                  @Nullable RefCountHolder refCountHolder,

@@ -7,6 +7,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 public enum HighlightingFeature {
@@ -88,5 +89,19 @@ public enum HighlightingFeature {
    */
   LanguageLevel getStandardLevel() {
     return level.isPreview() ? null : level;
+  }
+
+  @Nullable
+  public static HighlightingFeature convertFromPreviewFeature(@NotNull final String feature) {
+    switch (feature) {
+      case "PATTERN_MATCHING_IN_INSTANCEOF":
+        return PATTERNS;
+      case "TEXT_BLOCKS":
+        return TEXT_BLOCKS;
+      case "RECORDS":
+        return RECORDS;
+      default:
+        return null;
+    }
   }
 }

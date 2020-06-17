@@ -1592,6 +1592,38 @@ public class HighlightUtil {
     return null;
   }
 
+  public static HighlightInfo checkFieldPreviewFeatureAnnotation(@NotNull final PsiReferenceExpression expression,
+                                                                 @NotNull final PsiField field,
+                                                                 @NotNull final LanguageLevel level) {
+    final HighlightingFeature feature = GenericsHighlightUtil.extractHighlightingFeature(field.getAnnotation(CommonClassNames.JDK_INTERNAL_PREVIEW_FEATURE));
+    if (feature == null) return null;
+
+    return checkFeature(expression, feature, level, expression.getContainingFile());
+  }
+
+  public static HighlightInfo checkPackagePreviewFeatureAnnotation(@NotNull final PsiImportStatement statement,
+                                                                   @NotNull final LanguageLevel level) {
+    final PsiElement resolve = statement.resolve();
+    final PsiPackage psiPackage;
+    if (resolve instanceof PsiPackage) {
+      psiPackage = (PsiPackage)resolve;
+    }
+    else if (resolve instanceof PsiClass) {
+      psiPackage = JavaResolveUtil.getContainingPackage((PsiClass)resolve);
+    }
+    else {
+      return null;
+    }
+
+    if (psiPackage == null) return null;
+
+    final PsiAnnotation annotation = psiPackage.getAnnotation(CommonClassNames.JDK_INTERNAL_PREVIEW_FEATURE);
+    final HighlightingFeature feature = GenericsHighlightUtil.extractHighlightingFeature(annotation);
+    if (feature == null) return null;
+
+    return checkFeature(statement, feature, level, statement.getContainingFile());
+  }
+
   private enum SelectorKind { INT, ENUM, STRING }
 
   private static SelectorKind getSwitchSelectorKind(@NotNull PsiType type) {

@@ -300,4 +300,9 @@ public class JavaResolveUtil {
     return PsiResolveHelper.SERVICE.getInstance(project)
       .resolveConstructor(PsiTypesUtil.getClassType(superClassWhichTheSuperCallMustResolveTo), expressionList, place).getElement();
   }
+
+  public static PsiPackage getContainingPackage(@NotNull PsiClass psiClass) {
+    PsiDirectory directory = psiClass.getContainingFile().getContainingDirectory();
+    return directory == null ? null : JavaDirectoryService.getInstance().getPackage(directory);
+  }
 }
