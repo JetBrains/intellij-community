@@ -17,10 +17,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
-import com.siyeh.ig.psiutils.VariableNameGenerator;
+import com.siyeh.ig.psiutils.*;
 import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -220,7 +217,7 @@ public class CollapseIntoLoopAction implements IntentionAction {
       for (int index = 0; index < count; index++) {
         PsiStatement first = statements.get(index);
         PsiStatement cur = statements.get(index + offset);
-        EquivalenceChecker.Match match = equivalence.statementsMatch(first, cur);
+        EquivalenceChecker.Match match = new TrackingEquivalenceChecker().statementsMatch(first, cur);
         if (match.isExactMismatch()) return false;
         if (match.isExactMatch()) continue;
         PsiElement leftDiff = match.getLeftDiff();
