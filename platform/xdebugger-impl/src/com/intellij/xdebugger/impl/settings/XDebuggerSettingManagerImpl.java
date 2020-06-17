@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -20,7 +21,8 @@ import java.util.Collection;
 import java.util.List;
 
 @State(name = "XDebuggerSettings", storages = @Storage("debugger.xml"))
-public class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager implements PersistentStateComponent<XDebuggerSettingManagerImpl.SettingsState> {
+public class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager
+  implements PersistentStateComponent<XDebuggerSettingManagerImpl.SettingsState>, Disposable {
   private XDebuggerDataViewSettings myDataViewSettings = new XDebuggerDataViewSettings();
   private XDebuggerGeneralSettings myGeneralSettings = new XDebuggerGeneralSettings();
 
@@ -73,6 +75,10 @@ public class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager implem
         ComponentSerializationUtil.loadComponentState(settings, settingsState.configuration);
       }
     }
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private static XDebuggerSettings findSettings(String id) {
