@@ -11,7 +11,7 @@ import com.intellij.openapi.util.KeyWithDefaultValue
 import com.intellij.openapi.vfs.VirtualFile
 
 class HTMLEditorProvider : FileEditorProvider, DumbAware {
-  override fun createEditor(project: Project, file: VirtualFile): FileEditor = HTMLFileEditor(file)
+  override fun createEditor(project: Project, file: VirtualFile): FileEditor = HTMLFileEditor()
 
   override fun accept(project: Project, file: VirtualFile) = file.getUserData(HTML_CONTENT_TYPE)!!
 
