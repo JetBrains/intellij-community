@@ -254,9 +254,10 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     Set<Charset> result = new HashSet<>();
     result.add(StandardCharsets.UTF_8);
     result.add(CharsetToolkit.getDefaultSystemCharset());
-    result.add(CharsetToolkit.UTF_16_CHARSET);
-    result.add(CharsetToolkit.forName("ISO-8859-1"));
-    result.add(CharsetToolkit.forName("US-ASCII"));
+    result.add(CharsetToolkit.getPlatformCharset());
+    result.add(StandardCharsets.UTF_16);
+    result.add(StandardCharsets.ISO_8859_1);
+    result.add(StandardCharsets.US_ASCII);
     result.add(EncodingManager.getInstance().getDefaultCharset());
     result.add(EncodingManager.getInstance().getDefaultCharsetForPropertiesFiles(null));
     result.remove(null);
