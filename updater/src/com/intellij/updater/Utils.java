@@ -82,14 +82,20 @@ public class Utils {
   }
 
   private static void tryDelete(Path path) throws IOException {
+    IOException lastError = null;
+
     for (int i = 0; i < 10; i++) {
       try {
-        if (Files.deleteIfExists(path) || !Files.exists(path)) {
-          Runner.logger().info("deleted: " + path);
-          return;
-        }
+        Files.delete(path);
+        Runner.logger().info("deleted: " + path);
+        return;
+      }
+      catch (NoSuchFileException e) {
+        Runner.logger().info("already deleted: " + path);
+        return;
       }
       catch (AccessDeniedException e) {
+        lastError = e;
         try {
           DosFileAttributeView view = Files.getFileAttributeView(path, DosFileAttributeView.class);
           if (view != null && view.readAttributes().isReadOnly()) {
@@ -99,12 +105,14 @@ public class Utils {
         }
         catch (IOException ignore) { }
       }
-      catch (IOException ignore) { }
+      catch (IOException e) {
+        lastError = e;
+      }
 
       pause(10);
     }
 
-    throw new IOException("Cannot delete: " + path);
+    throw new IOException("Cannot delete: " + path, lastError);
   }
 
   public static boolean isExecutable(File file) {
