@@ -13,10 +13,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
-import com.intellij.openapi.fileEditor.impl.HTMLFileEditor;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -27,7 +24,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.util.SystemProperties;
@@ -102,13 +98,8 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
         @Override
         public void actionPerformed(ActionEvent e) {
           String title = IdeBundle.message("update.whats.new.file.name", ApplicationInfo.getInstance().getFullVersion());
-          LightVirtualFile file = new LightVirtualFile(title, myNewBuild.getMessage());
-          file.putUserData(HTMLEditorProvider.Companion.getHTML_CONTENT_TYPE(), true);
-          FileEditor[] fileEditors = FileEditorManager.getInstance(project).openFile(file, true);
-          if (fileEditors.length > 0 && fileEditors[0] instanceof HTMLFileEditor) {
-            ((HTMLFileEditor)fileEditors[0])
-              .setUrl(myNewBuild.getBlogPost() + "/?var=embed" + (UIUtil.isUnderDarcula() ? "&theme=dark" : ""));
-          }
+          HTMLEditorProvider.Companion
+            .openEditor(project, myNewBuild.getBlogPost() + "/?var=embed" + (UIUtil.isUnderDarcula() ? "&theme=dark" : ""), title);
           close(OK_EXIT_CODE);
         }
       };

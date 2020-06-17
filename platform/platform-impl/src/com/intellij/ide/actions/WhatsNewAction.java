@@ -7,13 +7,19 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
 public class WhatsNewAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    BrowserUtil.browse(ApplicationInfoEx.getInstanceEx().getWhatsNewUrl());
+    String text = e.getPresentation().getText();
+    if (e.getProject() == null || text == null) {
+      BrowserUtil.browse(ApplicationInfoEx.getInstanceEx().getWhatsNewUrl());
+    } else {
+      HTMLEditorProvider.Companion.openEditor(e.getProject(), ApplicationInfoEx.getInstanceEx().getWhatsNewUrl(), text);
+    }
   }
 
   @Override
