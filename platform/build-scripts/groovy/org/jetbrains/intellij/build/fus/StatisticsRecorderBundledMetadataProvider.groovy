@@ -11,23 +11,23 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.impl.retry.Retry
 
 /**
- * Download a default version of feature usage statistics white list to be bundled with IDE.
+ * Download a default version of feature usage statistics metadata to be bundled with IDE.
  */
 @CompileStatic
-class StatisticsRecorderBundledWhiteListProvider {
-  private static final String WHITE_LIST_JSON = 'white-list.json'
+class StatisticsRecorderBundledMetadataProvider {
+  private static final String EVENTS_SCHEME_JSON = 'events-scheme.json'
 
-  static File downloadWhiteList(BuildContext context) {
-    def whiteListJson = WHITE_LIST_JSON
+  static File downloadMetadata(BuildContext context) {
+    def eventsSchemeJson = EVENTS_SCHEME_JSON
     context.messages.block("Downloading a default version of feature usage statistics") {
-      def dir = new File(context.paths.temp, 'whitelists')
+      def dir = new File(context.paths.temp, 'events-scheme')
       def recorderId = context.proprietaryBuildTools.featureUsageStatisticsProperties.recorderId
-      def list = new File(dir, "resources/event-log-whitelist/$recorderId/$whiteListJson")
+      def list = new File(dir, "resources/event-log-metadata/$recorderId/$eventsSchemeJson")
       if (!list.parentFile.mkdirs() || !list.createNewFile()) {
         context.messages.error("Unable to create $list")
       }
       list.write new Retry(context.messages).call {
-        download(context, whiteListServiceUri(context).with {
+        download(context, metadataServiceUri(context).with {
           def name = context.applicationInfo.productCode + '.json'
           it.endsWith('/') ? "$it$name" : "$it/$name"
         })
@@ -45,7 +45,7 @@ class StatisticsRecorderBundledWhiteListProvider {
   }
 
   @CompileDynamic
-  private static String whiteListServiceUri(BuildContext context) {
+  private static String metadataServiceUri(BuildContext context) {
     def providerUri = context.proprietaryBuildTools.featureUsageStatisticsProperties.whiteListProviderUri
     context.messages.info("Parsing $providerUri")
     new XmlSlurper().parse(providerUri).'@white-list-service'.toString()
