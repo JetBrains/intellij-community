@@ -9,7 +9,7 @@ class JavaLensProviderTest : InlayHintsProviderTestCase() {
   fun testMethodUsages() {
     doTest("""
 class A {
-<# block [  1 usage  ] #>
+<# block [   1 usage  ] #>
   void foo() {
   }
   
@@ -23,7 +23,7 @@ class A {
   fun testClassInheritors() {
     doTest("""
 class A {
-<# block [  2 usages   2 implementations  ] #>
+<# block [   2 usages   2 implementations  ] #>
   class B {}
   
   class B1 extends B {}
@@ -35,16 +35,16 @@ class A {
   fun testEnumMembers() {
     doTest("""
 class A {
-<# block [  6 usages  ] #>
+<# block [   6 usages  ] #>
   enum E { 
-<# block [  1 usage  ] #>
+<# block [     1 usage  ] #>
     E1, E2, E3, E4
   }
 
   E foo() {
     bar(E.E1, E.E2, E.E3, E.E4);
   }
-<# block [  1 usage  ] #>
+<# block [   1 usage  ] #>
   void bar(E... e) {}
 }
     """.trimIndent())
