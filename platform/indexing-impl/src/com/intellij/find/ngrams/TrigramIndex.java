@@ -86,7 +86,7 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
     return false;
   }
 
-  private static final ThreadLocalCachedIntArray spareBufferLocal = new ThreadLocalCachedIntArray();
+  private static final ThreadLocalCachedIntArray SPARE_BUFFER_LOCAL = new ThreadLocalCachedIntArray();
 
   @NotNull
   @Override
@@ -96,7 +96,7 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
       public void save(@NotNull DataOutput out, @NotNull Collection<Integer> value) throws IOException {
         final int numberOfValues = value.size();
 
-        int[] buffer = spareBufferLocal.getBuffer(numberOfValues);
+        int[] buffer = SPARE_BUFFER_LOCAL.getBuffer(numberOfValues);
         int ptr = 0;
         for(Integer i:value) {
           buffer[ptr++] = i;
