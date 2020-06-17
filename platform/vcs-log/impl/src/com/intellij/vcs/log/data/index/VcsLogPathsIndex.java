@@ -71,9 +71,9 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
   }
 
   @Nullable
-  public FilePath getPath(int pathId) {
+  private FilePath getPath(int pathId, boolean isDirectory) {
     try {
-      return toFilePath(myPathsIndexer.getPathsEnumerator().valueOf(pathId));
+      return toFilePath(myPathsIndexer.getPathsEnumerator().valueOf(pathId), isDirectory);
     }
     catch (IOException e) {
       myPathsIndexer.myFatalErrorConsumer.consume(e);
@@ -97,8 +97,8 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     for (Couple<Integer> rename : renames) {
       if ((isChildPath && rename.second == pathId) ||
           (!isChildPath && rename.first == pathId)) {
-        FilePath path1 = getPath(rename.first);
-        FilePath path2 = getPath(rename.second);
+        FilePath path1 = getPath(rename.first, path.isDirectory());
+        FilePath path2 = getPath(rename.second, path.isDirectory());
         return new EdgeData<>(path1, path2);
       }
     }
@@ -118,7 +118,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
       @Override
       public int encode(@NotNull VirtualFile root, @NotNull String relativePath, boolean isDirectory) {
         try {
-          return myPathsIndexer.myPathsEnumerator.enumerate(new LightFilePath(root, relativePath, isDirectory));
+          return myPathsIndexer.myPathsEnumerator.enumerate(new LightFilePath(root, relativePath));
         }
         catch (IOException e) {
           myPathsIndexer.myFatalErrorConsumer.consume(e);
@@ -142,10 +142,9 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
 
   @Contract("null -> null; !null -> !null")
   @Nullable
-  private static FilePath toFilePath(@Nullable LightFilePath lightFilePath) {
+  private static FilePath toFilePath(@Nullable LightFilePath lightFilePath, boolean isDirectory) {
     if (lightFilePath == null) return null;
-    return VcsUtil.getFilePath(lightFilePath.getRoot().getPath() + "/" + lightFilePath.getRelativePath(),
-                               lightFilePath.isDirectory());
+    return VcsUtil.getFilePath(lightFilePath.getRoot().getPath() + "/" + lightFilePath.getRelativePath(), isDirectory);
   }
 
   private static class PathsIndexer implements DataIndexer<Integer, List<ChangeKind>, VcsLogIndexer.CompressedDetails> {
@@ -287,16 +286,14 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
   private static class LightFilePath {
     @NotNull private final VirtualFile myRoot;
     @NotNull private final String myRelativePath;
-    private final boolean myIsDirectory;
 
-    private LightFilePath(@NotNull VirtualFile root, @NotNull String relativePath, boolean directory) {
+    private LightFilePath(@NotNull VirtualFile root, @NotNull String relativePath) {
       myRoot = root;
       myRelativePath = relativePath;
-      myIsDirectory = directory;
     }
 
     private LightFilePath(@NotNull VirtualFile root, @NotNull FilePath filePath) {
-      this(root, VcsFileUtil.relativePath(root, filePath), filePath.isDirectory());
+      this(root, VcsFileUtil.relativePath(root, filePath));
     }
 
     @NotNull
@@ -309,23 +306,18 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
       return myRelativePath;
     }
 
-    public boolean isDirectory() {
-      return myIsDirectory;
-    }
-
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       LightFilePath path = (LightFilePath)o;
-      return myIsDirectory == path.myIsDirectory &&
-             myRoot.equals(path.myRoot) &&
+      return myRoot.equals(path.myRoot) &&
              myRelativePath.equals(path.myRelativePath);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(myRoot, myRelativePath, myIsDirectory);
+      return Objects.hash(myRoot, myRelativePath);
     }
   }
 
@@ -356,7 +348,6 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     public void save(@NotNull DataOutput out, LightFilePath value) throws IOException {
       out.writeInt(myRootsReversed.get(value.getRoot()));
       IOUtil.writeUTF(out, value.getRelativePath());
-      out.writeBoolean(value.isDirectory());
     }
 
     @Override
@@ -365,8 +356,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
       VirtualFile root = myRoots.get(rootIndex);
       if (root == null) throw new IOException("Can not read root for index " + rootIndex + ". All roots " + myRoots);
       String path = IOUtil.readUTF(in);
-      boolean isDirectory = in.readBoolean();
-      return new LightFilePath(root, path, isDirectory);
+      return new LightFilePath(root, path);
     }
   }
 

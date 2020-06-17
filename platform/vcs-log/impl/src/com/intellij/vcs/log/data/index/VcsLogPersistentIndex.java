@@ -55,7 +55,7 @@ import static com.intellij.vcs.log.util.PersistentUtil.calcIndexId;
 @NonNls
 public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
-  private static final int VERSION = 15;
+  private static final int VERSION = 16;
   public static final VcsLogProgress.ProgressKey INDEXING = new VcsLogProgress.ProgressKey("index");
 
   @NotNull private final Project myProject;
