@@ -341,7 +341,11 @@ public abstract class JavaTestFrameworkRunnableState<T extends
         boolean useDynamicClasspathForForkMode = shortenCommandLine == null
                                                  ? JdkUtil.useDynamicClasspath(getConfiguration().getProject())
                                                  : shortenCommandLine != ShortenCommandLine.NONE;
-        if (useDynamicClasspathForForkMode && forkPerModule()) {
+        if (shortenCommandLine == ShortenCommandLine.ARGS_FILE) {
+          //see com.intellij.rt.execution.testFrameworks.ForkedByModuleSplitter.startChildFork
+          writer.println(shortenCommandLine);
+        }
+        else if (useDynamicClasspathForForkMode && forkPerModule()) {
           writer.println("use classpath jar");
         }
         else {
