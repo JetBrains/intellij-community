@@ -28,7 +28,7 @@ public class Field {
   }
 
   private final String myName;
-  private final MetaTypeProvider myMetaTypeProvider;
+  private final MetaTypeSupplier myMetaTypeSupplier;
   // must be accessed with getMainType()
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private YamlMetaType myMainType;
@@ -43,10 +43,10 @@ public class Field {
   private final Map<Relation, YamlMetaType> myPerRelationTypes = new HashMap<>();
 
   /**
-   * Used in {@link Field#Field(String, MetaTypeProvider)}.
+   * Used in {@link Field#Field(String, MetaTypeSupplier)}.
    * Invoked only once
    */
-  public interface MetaTypeProvider {
+  public interface MetaTypeSupplier {
     @NotNull YamlMetaType getMainType();
   }
 
@@ -58,9 +58,9 @@ public class Field {
    * Used for late initialization of the field metatype.
    * Useful when the type isn't fully constructed at the moment of the field initialization (e.g. for cyclic dependencies)
    */
-  public Field(@NonNls @NotNull String name, @NotNull MetaTypeProvider provider) {
+  public Field(@NonNls @NotNull String name, @NotNull MetaTypeSupplier provider) {
     myName = name;
-    myMetaTypeProvider = provider;
+    myMetaTypeSupplier = provider;
   }
 
   @NotNull
@@ -253,9 +253,14 @@ public class Field {
     if(myMainType != null)
       return myMainType;
     
-    synchronized (myMetaTypeProvider) {
+    synchronized (myMetaTypeSupplier) {
       if(myMainType == null) {
-        myMainType = myMetaTypeProvider.getMainType();
+        try {
+          myMainType = myMetaTypeSupplier.getMainType();
+        }
+        catch (Exception e) {
+          throw new RuntimeException("Supplier failed to return a metatype for field: " + this, e);
+        }
       }
       return myMainType;
     }
