@@ -4536,8 +4536,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void setLineSpacing(float lineSpacing) {
-      myLineSpacing = EditorFontsConstants.checkAndFixEditorLineSpacing(lineSpacing);
-      reinitSettings();
+      float oldLineSpacing = getLineSpacing();
+      float newLineSpacing = EditorFontsConstants.checkAndFixEditorLineSpacing(lineSpacing);
+      myLineSpacing = newLineSpacing;
+      if (oldLineSpacing != newLineSpacing) {
+        reinitSettings();
+      }
     }
   }
 
