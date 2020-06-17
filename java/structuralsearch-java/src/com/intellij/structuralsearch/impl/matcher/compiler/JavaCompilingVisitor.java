@@ -204,7 +204,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     }
     else if (!commentText.isEmpty()) {
       if (myCompilingVisitor.hasFragments(commentText)) {
-        final MatchingHandler handler = myCompilingVisitor.processPatternStringWithFragments(comment.getText(), COMMENT);
+        final MatchingHandler handler = myCompilingVisitor.processPatternStringWithFragments(JavaMatchUtil.getCommentText(comment).trim(), COMMENT);
         if (handler != null) comment.putUserData(CompiledPattern.HANDLER_KEY, handler);
       }
       else {
