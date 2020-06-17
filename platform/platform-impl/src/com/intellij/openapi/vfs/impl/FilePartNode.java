@@ -383,7 +383,7 @@ class FilePartNode {
     }
   }
 
-  VirtualFilePointerImpl getPointer(VirtualFilePointerListener listener) {
+  VirtualFilePointerImpl getPointer(@Nullable VirtualFilePointerListener listener) {
     Object leaves = this.leaves;
     if (leaves == null) {
       return null;

@@ -54,9 +54,9 @@ public final class EncodingUtil {
 
   // the result of wild guess
   public enum Magic8 {
-    ABSOLUTELY,
-    WELL_IF_YOU_INSIST,
-    NO_WAY
+    ABSOLUTELY,  // bytes on disk/editor text stay the same after the change
+    WELL_IF_YOU_INSIST,  // bytes on disk after convert/editor text after reload are changed, but the change is reversible
+    NO_WAY // the change will cause information loss
   }
 
   // check if file can be loaded in the encoding correctly:

@@ -51,7 +51,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   private final OrderRootsCache myRootsCache;
 
   protected boolean myStartupActivityPerformed;
-  private boolean myStateLoaded = false;
+  private boolean myStateLoaded;
 
   private final RootProvider.RootSetChangedListener myRootProviderChangeListener = new RootProviderChangeListener();
 
@@ -102,7 +102,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   protected final BatchSession myRootsChanged = new BatchSession(false);
   protected final BatchSession myFileTypesChanged = new BatchSession(true);
-  private final VirtualFilePointerListener myRootsValidityChangedListener = new VirtualFilePointerListener(){};
+  private final VirtualFilePointerListener myEmptyRootsValidityChangedListener = new VirtualFilePointerListener(){};
 
   public static ProjectRootManagerImpl getInstanceImpl(Project project) {
     return (ProjectRootManagerImpl)getInstance(project);
@@ -680,6 +680,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   @NotNull
   public VirtualFilePointerListener getRootsValidityChangedListener() {
-    return myRootsValidityChangedListener;
+    return myEmptyRootsValidityChangedListener;
   }
 }

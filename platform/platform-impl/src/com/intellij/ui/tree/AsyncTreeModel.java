@@ -591,7 +591,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     }
 
     @Nullable
-    private List<Node> load(int count, @NotNull IntFunction<?> function) {
+    private List<Node> load(int count, @NotNull IntFunction<?> childGetter) {
       if (count < 0) LOG.warn("illegal child count: " + count);
       if (count <= 0) return emptyList();
 
@@ -600,7 +600,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       for (int i = 0; i < count; i++) {
         ProgressManager.checkCanceled();
         if (isObsolete()) return null;
-        Object child = function.apply(i);
+        Object child = childGetter.apply(i);
         if (child == null) {
           LOG.warn("ignore null child at " + i);
         }

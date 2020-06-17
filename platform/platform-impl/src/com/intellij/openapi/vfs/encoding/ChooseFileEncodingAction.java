@@ -46,7 +46,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   private void fillCharsetActions(@NotNull DefaultActionGroup group,
                                   @Nullable final VirtualFile virtualFile,
                                   @NotNull List<? extends Charset> charsets,
-                                  @NotNull final Function<? super Charset, String> charsetFilter) {
+                                  @NotNull final Function<? super Charset, String> descriptionSupplier) {
     for (final Charset charset : charsets) {
       AnAction action = new CharsetAction(charset.displayName(), null, EmptyIcon.ICON_16) {
         @Override
@@ -57,7 +57,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
         @Override
         public void update(@NotNull AnActionEvent e) {
           super.update(e);
-          String description = charsetFilter.fun(charset);
+          String description = descriptionSupplier.fun(charset);
           Icon defer;
           if (virtualFile == null || virtualFile.isDirectory()) {
             defer = null;
@@ -78,8 +78,11 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
               CharSequence text = myText.getValue();
               byte[] bytes = myBytes.getValue();
               EncodingUtil.Magic8 safeToReload = EncodingUtil.isSafeToReloadIn(myFile, text, bytes, charset);
-              EncodingUtil.Magic8 safeToConvert = EncodingUtil.Magic8.ABSOLUTELY;
-              if (safeToReload != EncodingUtil.Magic8.ABSOLUTELY) {
+              EncodingUtil.Magic8 safeToConvert;
+              if (safeToReload == EncodingUtil.Magic8.ABSOLUTELY) {
+                safeToConvert = EncodingUtil.Magic8.ABSOLUTELY;
+              }
+              else {
                 safeToConvert = EncodingUtil.isSafeToConvertTo(myFile, text, bytes, charset);
               }
               return safeToReload == EncodingUtil.Magic8.ABSOLUTELY || safeToConvert == EncodingUtil.Magic8.ABSOLUTELY ? null :
@@ -116,7 +119,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   @NotNull
   protected DefaultActionGroup createCharsetsActionGroup(@Nullable String clearItemText,
                                                          @Nullable Charset alreadySelected,
-                                                         @NotNull Function<? super Charset, String> charsetFilter) {
+                                                         @NotNull Function<? super Charset, String> descriptionSupplier) {
     DefaultActionGroup group = new DefaultActionGroup();
     List<Charset> favorites = new ArrayList<>(EncodingManager.getInstance().getFavorites());
     Collections.sort(favorites);
@@ -136,14 +139,14 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
       });
     }
     if (favorites.isEmpty() && clearItemText == null) {
-      fillCharsetActions(group, myVirtualFile, Arrays.asList(CharsetToolkit.getAvailableCharsets()), charsetFilter);
+      fillCharsetActions(group, myVirtualFile, Arrays.asList(CharsetToolkit.getAvailableCharsets()), descriptionSupplier);
     }
     else {
-      fillCharsetActions(group, myVirtualFile, favorites, charsetFilter);
+      fillCharsetActions(group, myVirtualFile, favorites, descriptionSupplier);
 
       DefaultActionGroup more = DefaultActionGroup.createPopupGroup(() -> IdeBundle.message("action.text.more"));
       group.add(more);
-      fillCharsetActions(more, myVirtualFile, Arrays.asList(CharsetToolkit.getAvailableCharsets()), charsetFilter);
+      fillCharsetActions(more, myVirtualFile, Arrays.asList(CharsetToolkit.getAvailableCharsets()), descriptionSupplier);
     }
     return group;
   }
