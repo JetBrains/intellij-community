@@ -9,9 +9,11 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.HierarchicalFilePathComparator;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.popup.KeepingPopupOpenAction;
@@ -30,6 +32,7 @@ import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
+import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.Nls;
@@ -108,8 +111,8 @@ public class StructureFilterPopupComponent
 
   @NotNull
   @Nls
-  private static String getTextFromFilePaths(@NotNull Collection<? extends FilePath> files,
-                                             @Nls @NotNull String categoryText, boolean full) {
+  private String getTextFromFilePaths(@NotNull Collection<? extends FilePath> files,
+                                      @Nls @NotNull String categoryText, boolean full) {
     return getText(files, categoryText, FILE_PATH_BY_PATH_COMPARATOR,
                    file -> StringUtil.shortenPathWithEllipsis(path2Text(file), FILTER_LABEL_LENGTH), full);
   }
@@ -168,8 +171,8 @@ public class StructureFilterPopupComponent
   }
 
   @NotNull
-  private static String getTooltipTextForFilePaths(@NotNull Collection<? extends FilePath> files) {
-    return getTooltipTextForFiles(files, FILE_PATH_BY_PATH_COMPARATOR, StructureFilterPopupComponent::path2Text);
+  private String getTooltipTextForFilePaths(@NotNull Collection<? extends FilePath> files) {
+    return getTooltipTextForFiles(files, FILE_PATH_BY_PATH_COMPARATOR, this::path2Text);
   }
 
   @NotNull
@@ -254,18 +257,32 @@ public class StructureFilterPopupComponent
   }
 
   @NotNull
-  private static String getStructureActionText(@NotNull VcsLogStructureFilter filter) {
+  private String getStructureActionText(@NotNull VcsLogStructureFilter filter) {
     return getTextFromFilePaths(filter.getFiles(), VcsLogBundle.message("vcs.log.filter.popup.no.items"), filter.getFiles().isEmpty());
   }
 
   @NotNull
-  private static String path2Text(@NotNull FilePath filePath) {
-    return filePath.getPresentableUrl() + (filePath.isDirectory() ? File.separator : "");
+  private String path2Text(@NotNull FilePath filePath) {
+    VirtualFile commonAncestor = VfsUtil.getCommonAncestor(getAllRoots());
+    String path;
+    if (commonAncestor == null) {
+      path = filePath.getPresentableUrl();
+    }
+    else {
+      path = FileUtil.toSystemDependentName(VcsFileUtil.relativePath(commonAncestor, filePath));
+    }
+    return path + (filePath.isDirectory() ? File.separator : "");
   }
 
   @NotNull
-  private static FilePath text2Path(@NotNull String path) {
-    if (path.endsWith(File.separator)) {
+  private FilePath text2Path(@NotNull String path) {
+    boolean isDirectory = path.endsWith(File.separator);
+    VirtualFile commonAncestor = VfsUtil.getCommonAncestor(getAllRoots());
+    if (commonAncestor != null && !FileUtil.isAbsolute(FileUtil.toSystemDependentName(path))) {
+      path = commonAncestor.getPath() + '/' + path;
+    }
+
+    if (isDirectory) {
       return VcsUtil.getFilePath(path, true);
     }
     return VcsUtil.getFilePath(path);
@@ -411,7 +428,7 @@ public class StructureFilterPopupComponent
 
       Collection<FilePath> filesPaths = ContainerUtil.sorted(getStructureFilterPaths(), HierarchicalFilePathComparator.NATURAL);
 
-      String oldValue = StringUtil.join(ContainerUtil.map(filesPaths, StructureFilterPopupComponent::path2Text), "\n");
+      String oldValue = StringUtil.join(ContainerUtil.map(filesPaths, StructureFilterPopupComponent.this::path2Text), "\n");
       MultilinePopupBuilder popupBuilder = new MultilinePopupBuilder(project, oldValue, new char[]{'\n'});
 
       JBPopup popup = popupBuilder.createPopup();
@@ -419,7 +436,7 @@ public class StructureFilterPopupComponent
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {
           if (event.isOk()) {
-            List<FilePath> selectedPaths = ContainerUtil.map(popupBuilder.getSelectedValues(), StructureFilterPopupComponent::text2Path);
+            List<FilePath> selectedPaths = ContainerUtil.map(popupBuilder.getSelectedValues(), StructureFilterPopupComponent.this::text2Path);
             setStructureFilter(VcsLogFilterObject.fromPaths(selectedPaths));
           }
         }
