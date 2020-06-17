@@ -26,10 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static com.intellij.openapi.util.NlsContexts.DialogTitle;
 
@@ -46,6 +43,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
 
   private ElementCreator myCreator;
   private InputValidator myInputValidator;
+  private final Map<String, InputValidator> myExtraValidators = new HashMap<>();
 
   protected CreateFileFromTemplateDialog(@NotNull Project project) {
     super(project, true);
@@ -60,18 +58,21 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
   @Nullable
   @Override
   protected ValidationInfo doValidate() {
-    if (myInputValidator != null) {
-      final String text = myNameField.getText().trim();
-      final boolean canClose = myInputValidator.canClose(text);
-      if (!canClose) {
-        String errorText = LangBundle.message("incorrect.name");
-        if (myInputValidator instanceof InputValidatorEx) {
-          String message = ((InputValidatorEx)myInputValidator).getErrorText(text);
-          if (message != null) {
-            errorText = message;
+    final String text = myNameField.getText().trim();
+    InputValidator[] validators = {myInputValidator, myExtraValidators.get(getKindCombo().getSelectedName())};
+    for (InputValidator validator : validators) {
+      if (validator != null) {
+        final boolean canClose = validator.canClose(text);
+        if (!canClose) {
+          String errorText = LangBundle.message("incorrect.name");
+          if (validator instanceof InputValidatorEx) {
+            String message = ((InputValidatorEx)validator).getErrorText(text);
+            if (message != null) {
+              errorText = message;
+            }
           }
+          return new ValidationInfo(errorText, myNameField);
         }
-        return new ValidationInfo(errorText, myNameField);
       }
     }
     return super.doValidate();
@@ -150,8 +151,12 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     }
 
     @Override
-    public Builder addKind(@Nls @NotNull String name, @Nullable Icon icon, @NotNull String templateName) {
+    public Builder addKind(@Nls @NotNull String name, @Nullable Icon icon, @NotNull String templateName,
+                           @Nullable InputValidator extraValidator) {
       myDialog.getKindCombo().addItem(name, icon, templateName);
+      if (extraValidator != null) {
+        myDialog.myExtraValidators.put(templateName, extraValidator);
+      }
       if (myDialog.getKindCombo().getComboBox().getItemCount() > 1) {
         myDialog.setTemplateKindComponentsVisible(true);
       }
@@ -222,6 +227,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     private String myTitle = "Title";
     private final List<Trinity<String, Icon, String>> myTemplatesList = new ArrayList<>();
     private InputValidator myInputValidator;
+    private final Map<String, InputValidator> myExtraValidators = new HashMap<>();
 
     private NonBlockingPopupBuilderImpl(@NotNull Project project) {myProject = project;}
 
@@ -232,8 +238,12 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     }
 
     @Override
-    public Builder addKind(@Nls @NotNull String kind, @Nullable Icon icon, @NotNull String templateName) {
+    public Builder addKind(@Nls @NotNull String kind, @Nullable Icon icon, @NotNull String templateName,
+                           @Nullable InputValidator extraValidator) {
       myTemplatesList.add(Trinity.create(kind, icon, templateName));
+      if (extraValidator != null) {
+        myExtraValidators.put(templateName, extraValidator);
+      }
       return this;
     }
 
@@ -280,7 +290,10 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
         if (StringUtil.isEmptyOrSpaces(newElementName)) return;
 
         boolean isValid = myInputValidator == null || myInputValidator.canClose(newElementName);
-        if (isValid) {
+        InputValidator extraValidator = myExtraValidators.get(contentPanel.getSelectedTemplate());
+        boolean isExtraValid = extraValidator == null || extraValidator.canClose(newElementName);
+
+        if (isValid && isExtraValid) {
           popup.closeOk(e);
           T createdElement = (T) createElement(newElementName, elementCreator);
           if (createdElement != null) {
@@ -288,7 +301,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
           }
         }
         else {
-          String errorMessage = Optional.ofNullable(myInputValidator)
+          String errorMessage = Optional.ofNullable(!isValid ? myInputValidator : extraValidator)
             .filter(validator -> validator instanceof InputValidatorEx)
             .map(validator -> ((InputValidatorEx)validator).getErrorText(newElementName))
             .orElse(LangBundle.message("incorrect.name"));
@@ -316,7 +329,16 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
   public interface Builder {
     Builder setTitle(@DialogTitle String title);
     Builder setValidator(InputValidator validator);
-    Builder addKind(@NlsContexts.ListItem @NotNull String kind, @Nullable Icon icon, @NonNls @NotNull String templateName);
+
+    default Builder addKind(@NlsContexts.ListItem @NotNull String kind, @Nullable Icon icon, @NonNls @NotNull String templateName) {
+      return addKind(kind, icon, templateName, null);
+    }
+
+    Builder addKind(@NlsContexts.ListItem @NotNull String kind,
+                    @Nullable Icon icon,
+                    @NonNls @NotNull String templateName,
+                    @Nullable InputValidator extraValidator);
+
     @Nullable
     <T extends PsiElement> T show(@DialogTitle @NotNull String errorTitle,
                                   @NonNls @Nullable String selectedItem,
