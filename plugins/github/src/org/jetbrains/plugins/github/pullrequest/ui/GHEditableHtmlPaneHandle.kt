@@ -16,13 +16,15 @@ import javax.swing.JComponent
 import javax.swing.text.BadLocationException
 import javax.swing.text.Utilities
 
-internal class GHEditableHtmlPaneHandle(private val editorPane: HtmlEditorPane,
-                                        private val loadSource: () -> CompletableFuture<String>,
-                                        private val updateText: (String) -> CompletableFuture<out Any?>) {
+internal open class GHEditableHtmlPaneHandle(private val editorPane: HtmlEditorPane,
+                                             private val loadSource: () -> CompletableFuture<String>,
+                                             private val updateText: (String) -> CompletableFuture<out Any?>) {
 
   val panel = NonOpaquePanel(VerticalLayout(UI.scale(8))).apply {
-    add(editorPane)
+    add(wrapEditorPane(editorPane))
   }
+
+  protected open fun wrapEditorPane(editorPane: HtmlEditorPane): JComponent = editorPane
 
   private var editor: JComponent? = null
 

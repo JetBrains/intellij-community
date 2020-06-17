@@ -37,6 +37,4 @@ fragment pullRequestInfo on PullRequest {
     url
     sshUrl
   }
-
-  viewerCanUpdate
 }

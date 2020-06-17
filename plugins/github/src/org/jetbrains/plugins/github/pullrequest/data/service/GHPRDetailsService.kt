@@ -17,7 +17,8 @@ interface GHPRDetailsService {
   fun loadDetails(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier): CompletableFuture<GHPullRequest>
 
   @CalledInAny
-  fun updateDetails(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, description: String?): CompletableFuture<GHPullRequest>
+  fun updateDetails(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, title: String?, description: String?)
+    : CompletableFuture<GHPullRequest>
 
   @CalledInAny
   fun adjustReviewers(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, delta: CollectionDelta<GHPullRequestRequestedReviewer>)

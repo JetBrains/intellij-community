@@ -34,9 +34,9 @@ class GHPRDetailsServiceImpl(private val progressManager: ProgressManager,
       ?: throw GHNotFoundException("Pull request ${pullRequestId.number} does not exist")
     }.logError(LOG, "Error occurred while loading PR details")
 
-  override fun updateDetails(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, description: String?)
+  override fun updateDetails(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, title: String?, description: String?)
     : CompletableFuture<GHPullRequest> = progressManager.submitIOTask(indicator) {
-    requestExecutor.execute(it, GHGQLRequests.PullRequest.update(repository, pullRequestId.id, description))
+    requestExecutor.execute(it, GHGQLRequests.PullRequest.update(repository, pullRequestId.id, title, description))
   }.logError(LOG, "Error occurred while loading PR details")
 
   override fun adjustReviewers(indicator: ProgressIndicator,

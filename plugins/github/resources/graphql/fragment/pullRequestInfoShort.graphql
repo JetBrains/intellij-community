@@ -17,10 +17,11 @@ fragment pullRequestInfoShort on PullRequest {
     }
   }
   labels(first: 100) {
-    nodes {
-      ...labelInfo
-    }
+      nodes {
+          ...labelInfo
+      }
   }
 
-  viewerDidAuthor
+    viewerCanUpdate
+    viewerDidAuthor
 }

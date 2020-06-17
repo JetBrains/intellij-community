@@ -16,6 +16,7 @@ open class GHPullRequestShort(id: String,
                               val createdAt: Date,
                               @JsonProperty("assignees") assignees: GHNodes<GHUser>,
                               @JsonProperty("labels") labels: GHNodes<GHLabel>,
+                              val viewerCanUpdate: Boolean,
                               val viewerDidAuthor: Boolean) : GHNode(id), GHPRIdentifier {
 
   @JsonIgnore
