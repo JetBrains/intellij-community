@@ -37,6 +37,16 @@ public interface PyDecorator extends PyCallExpression, StubBasedPsiElement<PyDec
   PyFunction getTarget();
 
   /**
+   * Return the expression directly after "@" or {@code null} if there is none.
+   * <p>
+   * In a syntactically correct program prior Python 3.9, where the grammar restrictions for decorators
+   * were relaxed in PEP 614, this method is expected to return either a plain reference expression
+   * (i.e. {@code foo.bar}, not {@code foo[0].bar}) or a call on such a reference.
+   */
+  @Nullable
+  PyExpression getExpression();
+
+  /**
    * True if the annotating function is a builtin, useful together with getName(). Implementation uses stub info.
    * @see PyElement#getName()
    */
@@ -48,14 +58,28 @@ public interface PyDecorator extends PyCallExpression, StubBasedPsiElement<PyDec
   boolean hasArgumentList();
 
   /**
-   * For cases when decorators are referenced via a qualified name, e.g. @property.setter.
-   * @return dot-separated qualified name, or just {@link #getName()}'s value if no qualifiers are present.
+   * If {@link #getCallee()} result for this decorator is a reference expression, return its
+   * {@link PyReferenceExpression#asQualifiedName()} and {@code null} otherwise.
+   * <p>
+   * Effectively, it means that the result is {@code null} for any non-trivial reference or a call target.
+   * <p>
+   * Examples:
+   * <ul>
+   *   <li>{@code @foo.bar} -> {@code foo.bar}</li>
+   *   <li>{@code @foo.bar(42)} -> {@code foo.bar}</li>
+   *   <li>{@code @(foo.bar)} -> {@code null}</li>
+   *   <li>{@code @foo.bar[42]} -> {@code null}</li>
+   *   <li>{@code @foo[42].bar} -> {@code null}</li>
+   * </ul>
+   * <p>
+   * In a syntactically correct program prior Python 3.9, this method is expected to return a non-null value.
+   * <p>
+   * This value is persisted in stubs as {@link PyDecoratorStub#getQualifiedName()}.
+   *
+   * @see #getCallee()
+   * @see PyReferenceExpression#asQualifiedName()
+   * @see PyDecoratorStub#getQualifiedName()
    */
   @Nullable
   QualifiedName getQualifiedName();
-
-  /**
-   * True if its callee name consists only of identifiers and dots, e.g. {@code x.y.z}
-   */
-  boolean hasPlainReferenceCallee();
 }

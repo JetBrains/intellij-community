@@ -747,7 +747,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     super.visitPyDecoratorList(node);
 
     for (PyDecorator decorator : node.getDecorators()) {
-      if (PsiTreeUtil.getChildOfType(decorator, PsiErrorElement.class) == null && !decorator.hasPlainReferenceCallee()) {
+      if (PsiTreeUtil.getChildOfType(decorator, PsiErrorElement.class) == null && decorator.getQualifiedName() == null) {
         registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON39) && registerForLanguageLevel(level),
                                        " not support arbitrary expressions as a decorator", decorator);
       }
