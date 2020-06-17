@@ -3,7 +3,10 @@ package com.intellij.internal.statistic.eventLog.whitelist
 
 import com.google.gson.GsonBuilder
 import com.intellij.internal.statistic.eventLog.*
-import com.intellij.internal.statistic.service.fus.collectors.*
+import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
+import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector
+import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.application.ApplicationStarter
 import kotlin.system.exitProcess
 
@@ -47,6 +50,9 @@ object WhitelistBuilder {
 
     EventFields.Version ->
       listOf("{regexp#version}")
+
+    EventFields.Language ->
+      listOf("{util#lang}")
 
     else -> {
       emptyList()

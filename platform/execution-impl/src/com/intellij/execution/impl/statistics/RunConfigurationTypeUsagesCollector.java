@@ -40,9 +40,10 @@ public class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector 
   private static final BooleanEventField ACTIVATE_BEFORE_RUN_FIELD = EventFields.Boolean("activate_before_run");
   private static final BooleanEventField TEMPORARY_FIELD = EventFields.Boolean("temporary");
   private static final BooleanEventField PARALLEL_FIELD = EventFields.Boolean("parallel");
+  private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP.getId(), CONFIGURED_IN_PROJECT);
   private static final VarargEventId CONFIGURED_IN_PROJECT_EVENT =
     GROUP.registerVarargEvent(CONFIGURED_IN_PROJECT, COUNT_FIELD, ID_FIELD, FACTORY_FIELD, SHARED_FIELD, EDIT_BEFORE_RUN_FIELD,
-                              ACTIVATE_BEFORE_RUN_FIELD, TEMPORARY_FIELD, PARALLEL_FIELD);
+                              ACTIVATE_BEFORE_RUN_FIELD, TEMPORARY_FIELD, PARALLEL_FIELD, ADDITIONAL_FIELD);
   private static final VarargEventId FEATURE_USED_EVENT =
     GROUP.registerVarargEvent("feature.used", COUNT_FIELD, ID_FIELD, EventFields.PluginInfo, FEATURE_NAME_FIELD);
 
@@ -78,6 +79,10 @@ public class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector 
           final Template template = new Template(CONFIGURED_IN_PROJECT_EVENT, pairs);
           addOrIncrement(templates, template);
           collectRunConfigurationFeatures(runConfiguration, templates);
+          if (runConfiguration instanceof FusAwareRunConfiguration) {
+            List<EventPair> additionalData = ((FusAwareRunConfiguration)runConfiguration).getAdditionalUsageData();
+            pairs.add(ADDITIONAL_FIELD.with(new ObjectEventData(additionalData.toArray(new EventPair[0]))));
+          }
         }
         Set<MetricEvent> metrics = new HashSet<>();
         templates.forEachEntry((template, value) -> {

@@ -35,6 +35,11 @@ public final class RunConfigurationUsageTriggerCollector {
     return new IdeActivity(project, GROUP).startedWithData(data -> {
       List<EventPair> eventPairs = createFeatureUsageData(configurationType, factory);
       eventPairs.add(EXECUTOR.with(executor.getId()));
+      if (runConfiguration instanceof FusAwareRunConfiguration) {
+        List<EventPair> additionalData = ((FusAwareRunConfiguration)runConfiguration).getAdditionalUsageData();
+        ObjectEventData objectEventData = new ObjectEventData(additionalData.toArray(new EventPair[0]));
+        eventPairs.add(ADDITIONAL_FIELD.with(objectEventData));
+      }
       eventPairs.forEach(pair -> pair.addData(data));
     });
   }
