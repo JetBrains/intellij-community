@@ -131,26 +131,13 @@ class InferenceCache {
     LinkedList<Pair<Instruction, VariableDescriptor>> queue = new LinkedList<>();
     queue.add(Pair.create(instruction, descriptor));
     Set<Instruction> dependentOnSharedVariables = new LinkedHashSet<>();
-
-    List<Pair<Instruction, Set<? extends VariableDescriptor>>> foreignDescriptors = new ArrayList<>();
-    if (!PsiUtil.isCompileStatic(myScope)) {
-      for (Instruction closureInstruction : myFlow) {
-        PsiElement closure = closureInstruction.getElement();
-        if (closure instanceof GrFunctionalExpression) {
-          GrControlFlowOwner owner =
-            Objects.requireNonNull(FunctionalExpressionFlowUtil.getControlFlowOwner((GrFunctionalExpression)closure));
-          Set<ResolvedVariableDescriptor> foreignVariables =
-            ControlFlowUtils.getForeignVariableDescriptors(owner, ReadWriteVariableInstruction::isWrite);
-          foreignDescriptors.add(Pair.create(closureInstruction, foreignVariables));
-        }
-      }
-    }
+    List<Pair<Instruction, Set<? extends VariableDescriptor>>> closureInstructions = getClosureInstructionsWithForeigns();
 
     while (!queue.isEmpty()) {
       Pair<Instruction, VariableDescriptor> pair = queue.removeFirst();
       if (!interesting.containsKey(pair)) {
         Set<Pair<Instruction, VariableDescriptor>> dependencies =
-          findDependencies(definitionMaps, foreignDescriptors, pair.first, pair.second);
+          findDependencies(definitionMaps, closureInstructions, pair.first, pair.second);
         interesting.put(pair, dependencies);
         if (dependencies.stream().anyMatch(it -> !it.second.equals(descriptor) && isSharedVariable(it.second))) {
           dependentOnSharedVariables.add(pair.first);
@@ -175,9 +162,27 @@ class InferenceCache {
                            dependentOnSharedVariables);
   }
 
+  private List<Pair<Instruction, Set<? extends VariableDescriptor>>> getClosureInstructionsWithForeigns() {
+    if (PsiUtil.isCompileStatic(myScope)) {
+      return emptyList();
+    }
+    List<Pair<Instruction, Set<? extends VariableDescriptor>>> closureInstructions = new ArrayList<>();
+    for (Instruction closureInstruction : myFlow) {
+      PsiElement closure = closureInstruction.getElement();
+      if (closure instanceof GrFunctionalExpression) {
+        GrControlFlowOwner owner =
+          Objects.requireNonNull(FunctionalExpressionFlowUtil.getControlFlowOwner((GrFunctionalExpression)closure));
+        Set<ResolvedVariableDescriptor> foreignVariables =
+          ControlFlowUtils.getForeignVariableDescriptors(owner, ReadWriteVariableInstruction::isWrite);
+        closureInstructions.add(Pair.create(closureInstruction, foreignVariables));
+      }
+    }
+    return closureInstructions;
+  }
+
   @NotNull
   private Set<Pair<Instruction, VariableDescriptor>> findDependencies(@NotNull List<DefinitionMap> definitionMaps,
-                                                                      @NotNull List<Pair<Instruction, Set<? extends VariableDescriptor>>> foreignDescriptors,
+                                                                      @NotNull List<Pair<Instruction, Set<? extends VariableDescriptor>>> closureInstructions,
                                                                       @NotNull Instruction instruction,
                                                                       @NotNull VariableDescriptor descriptor) {
     DefinitionMap definitionMap = definitionMaps.get(instruction.num());
@@ -187,10 +192,10 @@ class InferenceCache {
     LinkedHashSet<Pair<Instruction, VariableDescriptor>> pairs = new LinkedHashSet<>();
 
     int latestDefinition = Math.max(instruction.num(), definitions == null ? 0 : ArrayUtil.max(definitions));
-    for (Pair<Instruction, Set<? extends VariableDescriptor>> foreignVariables : foreignDescriptors) {
-      if (foreignVariables.first.num() > latestDefinition) break;
-      if (foreignVariables.second.contains(descriptor)) {
-        pairs.add(Pair.create(foreignVariables.first, descriptor));
+    for (Pair<Instruction, Set<? extends VariableDescriptor>> closureInstruction : closureInstructions) {
+      if (closureInstruction.first.num() > latestDefinition) break;
+      if (closureInstruction.second.contains(descriptor)) {
+        pairs.add(Pair.create(closureInstruction.first, descriptor));
       }
     }
 

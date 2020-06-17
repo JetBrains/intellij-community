@@ -222,9 +222,9 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
           for (VariableDescriptor descriptor : myFlowInfo.getInterestingDescriptors()) {
             PsiType upperBoundByWrites = TypeDfaInstanceUtilKt.getLeastUpperBoundByAllWrites(blockFlowOwner, initialTypes, descriptor);
             if (upperBoundByWrites != PsiType.NULL) {
-              DFAType currentType = state.getVariableType(descriptor);
-              currentType = currentType == null ? DFAType.create(null) : currentType;
-              DFAType flushedType = currentType.addFlushingType(upperBoundByWrites, myManager);
+              DFAType existingType = state.getVariableType(descriptor);
+              if (existingType == null) existingType = DFAType.create(null);
+              DFAType flushedType = existingType.addFlushingType(upperBoundByWrites, myManager);
               state.putType(descriptor, flushedType);
             }
           }
