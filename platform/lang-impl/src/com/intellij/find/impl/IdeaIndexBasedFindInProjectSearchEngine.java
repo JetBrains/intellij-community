@@ -3,11 +3,11 @@ package com.intellij.find.impl;
 
 import com.intellij.find.FindInProjectSearchEngine;
 import com.intellij.find.FindModel;
-import com.intellij.find.ngrams.TrigramIndex;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.find.TextSearchService;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -18,8 +18,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -35,6 +33,7 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
     private @NotNull final FileBasedIndexImpl myFileBasedIndex;
     private @NotNull final Project myProject;
     private @NotNull final FindModel myFindModel;
+    private @NotNull final TextSearchService myTextSearchService;
 
     private final boolean myHasTrigrams;
     private final String myStringToFindInIndices;
@@ -44,6 +43,7 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
       myFindModel = findModel;
       myFileIndex = ProjectFileIndex.SERVICE.getInstance(myProject);
       myFileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+      myTextSearchService = TextSearchService.getInstance();
       String stringToFind = findModel.getStringToFind();
 
       if (findModel.isRegularExpressions()) {
@@ -67,21 +67,12 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
       final GlobalSearchScope scope = GlobalSearchScopeUtil.toGlobalSearchScope(FindInProjectUtil.getScopeFromModel(myProject, myFindModel),
                                                                                 myProject);
 
-      IntSet keys = new IntOpenHashSet();
-      TrigramBuilder.processTrigrams(stringToFind, new TrigramBuilder.TrigramProcessor() {
-        @Override
-        public boolean test(int value) {
-          keys.add(value);
-          return true;
-        }
-      });
-
-      if (!keys.isEmpty()) {
-        List<VirtualFile> hits = new ArrayList<>();
-        FileBasedIndex.getInstance().ignoreDumbMode(() -> {
-          FileBasedIndex.getInstance().getFilesWithKey(TrigramIndex.INDEX_ID, keys, Processors.cancelableCollectProcessor(hits), scope);
-        }, DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE);
-
+      List<VirtualFile> hits = new ArrayList<>();
+      ThrowableComputable<TextSearchService.TextSearchResult, RuntimeException> findTextComputable =
+        () -> myTextSearchService.processFilesWithText(stringToFind, Processors.cancelableCollectProcessor(hits), scope);
+      TextSearchService.TextSearchResult result =
+        FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE, findTextComputable);
+      if (result != TextSearchService.TextSearchResult.NO_TRIGRAMS) {
         return Collections.unmodifiableCollection(hits);
       }
 
@@ -123,8 +114,7 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
     }
 
     private boolean isCoveredByIndex(@NotNull VirtualFile file) {
-      FileType fileType = file.getFileType();
-      return TrigramIndex.isIndexable(fileType) && myFileBasedIndex.isIndexingCandidate(file, TrigramIndex.INDEX_ID);
+      return myTextSearchService.isInSearchableScope(file);
     }
 
     private static boolean hasTrigrams(@NotNull String text) {

@@ -1328,6 +1328,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return new FileIndexingResult(setIndexedStatus.get(), perIndexerTimes, fileTypeRef.get());
   }
 
+  @Override
   public boolean isIndexingCandidate(@NotNull VirtualFile file, @NotNull ID<?, ?> indexId) {
     return !isTooLarge(file) && getAffectedIndexCandidates(file).contains(indexId);
   }

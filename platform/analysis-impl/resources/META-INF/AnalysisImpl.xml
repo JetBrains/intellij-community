@@ -35,6 +35,8 @@
     <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceCompletion"
                         serviceImplementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceCompletionImpl"/>
     <applicationService serviceImplementation="com.intellij.find.impl.FindSettingsImpl$FindRecents"/>
+    <applicationService serviceInterface="com.intellij.find.TextSearchService"
+                        serviceImplementation="com.intellij.find.ngrams.TrigramTextSearchService"/>
 
     <projectService serviceInterface="com.intellij.psi.impl.cache.CacheManager"
                     serviceImplementation="com.intellij.psi.impl.cache.impl.IndexCacheManagerImpl"/>

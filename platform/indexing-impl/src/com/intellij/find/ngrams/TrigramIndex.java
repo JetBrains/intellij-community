@@ -19,6 +19,11 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
 
+/**
+ * Implementation of <a href="https://en.wikipedia.org/wiki/Trigram">trigram index</a> for fast text search.
+ *
+ * Should not be used directly, please consider {@link com.intellij.find.TextSearchService}
+ */
 public final class TrigramIndex extends ScalarIndexExtension<Integer> implements CustomInputsIndexFileBasedIndexExtension<Integer> {
   /**
    * @deprecated not used anymore, always enabled
