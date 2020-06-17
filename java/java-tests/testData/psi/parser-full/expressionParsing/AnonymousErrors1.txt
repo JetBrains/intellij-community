@@ -14,8 +14,6 @@ PsiJavaFile:AnonymousErrors1.java
       <empty list>
     PsiReferenceList
       <empty list>
-    PsiReferenceList
-      <empty list>
     PsiWhiteSpace(' ')
     PsiJavaToken:LBRACE('{')
     PsiWhiteSpace('\n  ')
@@ -407,8 +405,6 @@ PsiJavaFile:AnonymousErrors1.java
                 PsiWhiteSpace(' ')
                 PsiIdentifier:a_ic_c2('a_ic_c2')
                 PsiTypeParameterList
-                  <empty list>
-                PsiReferenceList
                   <empty list>
                 PsiReferenceList
                   <empty list>

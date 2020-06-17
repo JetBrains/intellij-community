@@ -39,8 +39,6 @@ PsiJavaFile:EnumSmartTypeCompletion.java
       <empty list>
     PsiReferenceList
       <empty list>
-    PsiReferenceList
-      <empty list>
     PsiWhiteSpace(' ')
     PsiJavaToken:LBRACE('{')
     PsiJavaToken:RBRACE('}')
@@ -80,8 +78,6 @@ PsiJavaFile:EnumSmartTypeCompletion.java
     PsiWhiteSpace(' ')
     PsiIdentifier:TimeTravel('TimeTravel')
     PsiTypeParameterList
-      <empty list>
-    PsiReferenceList
       <empty list>
     PsiReferenceList
       <empty list>
@@ -135,8 +131,6 @@ PsiJavaFile:EnumSmartTypeCompletion.java
     PsiWhiteSpace(' ')
     PsiIdentifier:TimeTravel('TimeTravel')
     PsiTypeParameterList
-      <empty list>
-    PsiReferenceList
       <empty list>
     PsiReferenceList
       <empty list>

@@ -22,8 +22,6 @@ PsiJavaFile:NonSealedClass.java
         PsiIdentifier:I('I')
         PsiReferenceParameterList
           <empty list>
-    PsiReferenceList
-      <empty list>
     PsiWhiteSpace(' ')
     PsiJavaToken:LBRACE('{')
     PsiJavaToken:RBRACE('}')

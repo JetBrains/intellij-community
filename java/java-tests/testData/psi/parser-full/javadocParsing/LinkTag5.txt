@@ -35,8 +35,6 @@ PsiJavaFile:LinkTag5.java
       <empty list>
     PsiReferenceList
       <empty list>
-    PsiReferenceList
-      <empty list>
     PsiJavaToken:LBRACE('{')
     PsiWhiteSpace('\n')
     PsiMethod:foo

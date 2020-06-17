@@ -47,8 +47,6 @@ PsiJavaFile:UsesTag.java
       <empty list>
     PsiReferenceList
       <empty list>
-    PsiReferenceList
-      <empty list>
     PsiWhiteSpace(' ')
     PsiJavaToken:LBRACE('{')
     PsiJavaToken:RBRACE('}')

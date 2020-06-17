@@ -21,7 +21,5 @@ PsiJavaFile:Javadoc0.java
       <empty list>
     PsiReferenceList
       <empty list>
-    PsiReferenceList
-      <empty list>
     PsiJavaToken:LBRACE('{')
     PsiJavaToken:RBRACE('}')

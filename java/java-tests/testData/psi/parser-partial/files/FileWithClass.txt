@@ -31,8 +31,6 @@ PsiJavaFile:FileWithClass.java
       <empty list>
     PsiReferenceList
       <empty list>
-    PsiReferenceList
-      <empty list>
     PsiWhiteSpace(' ')
     PsiJavaToken:LBRACE('{')
     PsiWhiteSpace(' ')
@@ -45,8 +43,6 @@ PsiJavaFile:FileWithClass.java
     PsiWhiteSpace(' ')
     PsiIdentifier:D('D')
     PsiTypeParameterList
-      <empty list>
-    PsiReferenceList
       <empty list>
     PsiReferenceList
       <empty list>

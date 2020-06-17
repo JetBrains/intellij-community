@@ -35,7 +35,5 @@ PsiJavaFile:Symbols04.java
       <empty list>
     PsiReferenceList
       <empty list>
-    PsiReferenceList
-      <empty list>
     PsiJavaToken:LBRACE('{')
     PsiJavaToken:RBRACE('}')
