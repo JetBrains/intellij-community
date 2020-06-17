@@ -19,7 +19,6 @@ import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -31,7 +30,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.usages.*;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
@@ -60,8 +62,7 @@ public class ProjectProblemPassUtils {
                                                     @NotNull PsiMember member,
                                                     @NotNull Set<Problem> relatedProblems) {
     int column = offset - document.getLineStartOffset(document.getLineNumber(offset));
-    int columnWidth = EditorUtil.getPlainSpaceWidth(editor);
-    SpacePresentation problemsOffset = new SpacePresentation(column * columnWidth, 0);
+    InlayPresentation problemsOffset = factory.textSpacePlaceholder(column, true);
     InlayPresentation textPresentation = factory.smallText(JavaBundle.message("project.problems.hint.text", relatedProblems.size()));
     InlayPresentation errorTextPresentation = new AttributesTransformerPresentation(textPresentation, __ ->
       editor.getColorsScheme().getAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES));
