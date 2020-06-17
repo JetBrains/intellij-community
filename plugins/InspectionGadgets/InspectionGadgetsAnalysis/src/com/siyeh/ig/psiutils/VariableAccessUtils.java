@@ -544,10 +544,10 @@ public class VariableAccessUtils {
   public static boolean canUseAsNonFinal(PsiLocalVariable var) {
     if (var == null) return false;
     PsiElement block = PsiUtil.getVariableCodeBlock(var, null);
-    return block != null && ReferencesSearch.search(var).allMatch(ref -> {
-      PsiElement context = PsiTreeUtil.getParentOfType(ref.getElement(), PsiClass.class, PsiLambdaExpression.class);
-      return context == null || PsiTreeUtil.isAncestor(context, block, false);
-    });
+    return block != null &&
+           getVariableReferences(var, block).stream()
+             .map(ref -> PsiTreeUtil.getParentOfType(ref, PsiClass.class, PsiLambdaExpression.class))
+             .allMatch(context -> context == null || PsiTreeUtil.isAncestor(context, block, false));
   }
 
   private static class VariableCollectingVisitor extends JavaRecursiveElementWalkingVisitor {
