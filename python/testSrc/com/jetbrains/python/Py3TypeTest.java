@@ -1093,7 +1093,7 @@ public class Py3TypeTest extends PyTestCase {
   public void testApplyingSuperSubstitutionToGenericClass() {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
-      () -> doTest("Dict[T, int]",
+      () -> doTest("dict[T, int]",
                    "from typing import TypeVar, Generic, Dict, List\n" +
                    "\n" +
                    "T = TypeVar('T')\n" +
@@ -1114,7 +1114,7 @@ public class Py3TypeTest extends PyTestCase {
   public void testApplyingSuperSubstitutionToBoundedGenericClass() {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
-      () -> doTest("Dict[T, int]",
+      () -> doTest("dict[T, int]",
                    "from typing import TypeVar, Generic, Dict, List\n" +
                    "\n" +
                    "T = TypeVar('T', bound=str)\n" +
