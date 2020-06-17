@@ -64,7 +64,7 @@ public class EventLogWhitelistPersistence extends BaseEventLogWhitelistPersisten
   }
 
   private void initBuiltinMetadata(File file) throws IOException {
-    try (InputStream stream = getClass().getClassLoader().getResourceAsStream(builtinWhiteListPath())) {
+    try (InputStream stream = getClass().getClassLoader().getResourceAsStream(builtinEventSchemePath())) {
       if (stream == null) return;
       if (!file.getParentFile().exists() && !file.getParentFile().mkdirs()) {
         throw new IOException("Unable to create " + file.getParentFile().getAbsolutePath());
@@ -73,8 +73,8 @@ public class EventLogWhitelistPersistence extends BaseEventLogWhitelistPersisten
     }
   }
 
-  private String builtinWhiteListPath() {
-    return "resources/" + DEPRECATED_FUS_METADATA_DIR + "/" + myRecorderId + "/" + DEPRECATED_EVENTS_SCHEME_FILE;
+  private String builtinEventSchemePath() {
+    return "resources/" + FUS_METADATA_DIR + "/" + myRecorderId + "/" + EVENTS_SCHEME_FILE;
   }
 
   public long getLastModified() {
