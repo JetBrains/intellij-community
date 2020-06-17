@@ -626,13 +626,17 @@ public class EquivalenceChecker {
     }
     final PsiElement body1 = unwrapLambdaBody(expression1.getBody());
     final PsiElement body2 = unwrapLambdaBody(expression2.getBody());
+    Match match;
     if (body1 instanceof PsiCodeBlock && body2 instanceof PsiCodeBlock) {
-      return codeBlocksMatch((PsiCodeBlock)body1, (PsiCodeBlock)body2);
+      match = codeBlocksMatch((PsiCodeBlock)body1, (PsiCodeBlock)body2);
     }
     else if (body1 instanceof PsiExpression && body2 instanceof PsiExpression) {
-      return expressionsMatch((PsiExpression)body1, (PsiExpression)body2);
+      match = expressionsMatch((PsiExpression)body1, (PsiExpression)body2);
     }
-    return EXACT_MISMATCH;
+    else {
+      match = EXACT_MISMATCH;
+    }
+    return match == EXACT_MISMATCH ? new Match(body1, body2) : match;
   }
 
   private static PsiElement unwrapLambdaBody(PsiElement element) {
