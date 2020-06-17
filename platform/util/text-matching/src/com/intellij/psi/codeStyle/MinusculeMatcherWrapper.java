@@ -9,7 +9,9 @@ import org.jetbrains.annotations.Nullable;
 public abstract class MinusculeMatcherWrapper extends MinusculeMatcher {
   protected final MinusculeMatcher myDelegate;
 
-  protected MinusculeMatcherWrapper(MinusculeMatcher delegate) {myDelegate = delegate;}
+  protected MinusculeMatcherWrapper(MinusculeMatcher delegate) {
+    myDelegate = delegate;
+  }
 
   @Override
   @NotNull
