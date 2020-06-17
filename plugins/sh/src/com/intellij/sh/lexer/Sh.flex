@@ -123,6 +123,7 @@ Filedescriptor           = "&" {IntegerLiteral} | "&-"  //todo:: check the usage
 AssigOp                  = "=" | "+="
 
 ParamExpansionName       = ([a-zA-Z0-9_] | {EscapedAnyChar})*
+ParameterExpansionExpr   = [^}/$`\"]* | {EscapedChar}*
 ParamExpansionSeparator  = "#""#"? | "!" | ":" | ":"?"=" | ":"?"+" | ":"?"-" | ":"?"?" | "@" | ","","? | "^""^"? | "*"
 
 HeredocMarker            = [^\r\n|&\\;()[] \t\"'] | {EscapedChar}
@@ -307,8 +308,8 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedAnyChar}
 }
 
 <PARAMETER_EXPANSION_EXPR> {
-  [^}/$`\"]*                               { popState(); return WORD; }
-  [^]                                  { popState(); yypushback(yylength()); }
+  {ParameterExpansionExpr}          { popState(); return WORD; }
+  [^]                                { popState(); yypushback(yylength()); }
 }
 
 <CASE_CONDITION> {
