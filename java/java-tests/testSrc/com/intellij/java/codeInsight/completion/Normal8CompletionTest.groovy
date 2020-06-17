@@ -458,6 +458,8 @@ class Test88 {
     checkResultByFileName()
   }
 
+  void testSuggestOnlyAccessibleStreamMethod() { doAntiTest() }
+
   @NeedsIndex.ForStandardLibrary
   void testStreamMethodsOnArray() {
     configureByTestName()
