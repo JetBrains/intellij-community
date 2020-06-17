@@ -141,6 +141,11 @@ public class JUnitUtil {
     if (checkClass && checkRunWith) {
       PsiAnnotation annotation = getRunWithAnnotation(aClass);
       if (annotation != null) {
+        PsiClass containingClass = psiMethod.getContainingClass();
+        if (containingClass == null || 
+            CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
+          return false;
+        }
         return !isOneOf(annotation, RUNNERS_REQUIRE_ANNOTATION_ON_TEST_METHOD);
       }
     }
