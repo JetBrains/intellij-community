@@ -636,7 +636,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testUpperBoundGeneric() {
-    doTest("Union[int, str]",
+    doTest("Union[Union[int, str], Any]",
            "def foo(x):\n" +
            "    '''\n" +
            "    :type x: T <= int or str\n" +

@@ -215,7 +215,7 @@ public class PyTypeChecker {
       context.substitutions.put(expected, actual);
     }
     else if (bound != null) {
-      context.substitutions.put(expected, bound);
+      context.substitutions.put(expected, PyUnionType.createWeakType(bound));
     }
 
     return true;
