@@ -53,7 +53,7 @@ public class AssertWithoutMessageInspection extends BaseInspection {
       }
       PsiExpression message = assertHint.getMessage();
       if (message == null) {
-        registerMethodCallError(expression);
+        registerMethodCallError(expression, assertHint.isMessageOnFirstPosition());
       }
     }
   }
@@ -63,18 +63,30 @@ public class AssertWithoutMessageInspection extends BaseInspection {
     return new InspectionGadgetsFix() {
       @Override
       protected void doFix(Project project, ProblemDescriptor descriptor) {
+        Object firstArg = infos[0];
+        if (!(firstArg instanceof Boolean)) return;
+        boolean messageIsOnFirstPosition = (boolean)firstArg;
+
         PsiMethodCallExpression methodCallExpr = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
         if (methodCallExpr == null) return;
 
-        PsiExpressionList methodArgs = methodCallExpr.getArgumentList();
-        PsiExpression[] methodArgExprs = methodArgs.getExpressions();
-        PsiExpression firstMethodArgExpr = methodArgExprs.length > 0 ? methodArgExprs[0] : null;
         PsiExpression newMessageExpr = JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText("\"\"", methodCallExpr);
-        PsiElement createdMessageExpr = methodArgs.addBefore(newMessageExpr, firstMethodArgExpr);
+        PsiExpressionList methodArgs = methodCallExpr.getArgumentList();
+        PsiElement createdMessageExpr;
+        if (messageIsOnFirstPosition) {
+          PsiExpression[] methodArgExprs = methodArgs.getExpressions();
+          PsiExpression firstMethodArgExpr = methodArgExprs.length > 0 ? methodArgExprs[0] : null;
+          createdMessageExpr = methodArgs.addBefore(newMessageExpr, firstMethodArgExpr);
+        }
+        else {
+          createdMessageExpr = methodArgs.add(newMessageExpr);
+        }
 
-        final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-        if (editor == null) return;
-        editor.getCaretModel().moveToOffset(createdMessageExpr.getTextOffset() + 1);
+        if (isOnTheFly()) {
+          Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+          if (editor == null) return;
+          editor.getCaretModel().moveToOffset(createdMessageExpr.getTextOffset() + 1);
+        }
       }
 
       @Override
