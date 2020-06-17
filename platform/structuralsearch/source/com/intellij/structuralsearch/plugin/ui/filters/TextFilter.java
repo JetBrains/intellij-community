@@ -4,7 +4,6 @@ package com.intellij.structuralsearch.plugin.ui.filters;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchVariableConstraint;
-import com.intellij.structuralsearch.NamedScriptableDefinition;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
@@ -29,24 +28,19 @@ class TextFilter extends FilterAction {
 
   @Override
   public boolean hasFilter() {
-    final NamedScriptableDefinition variable = myTable.getVariable();
-    if (!(variable instanceof MatchVariableConstraint)) {
-      return false;
-    }
-    final MatchVariableConstraint constraint = (MatchVariableConstraint)variable;
-    return !StringUtil.isEmpty(constraint.getRegExp()) || constraint.isWithinHierarchy();
+    final MatchVariableConstraint variable = myTable.getMatchVariableConstraint();
+    return variable != null && (!StringUtil.isEmpty(variable.getRegExp()) || variable.isWithinHierarchy());
   }
 
   @Override
   public void clearFilter() {
-    final NamedScriptableDefinition variable = myTable.getVariable();
-    if (!(variable instanceof MatchVariableConstraint)) {
+    final MatchVariableConstraint variable = myTable.getMatchVariableConstraint();
+    if (variable == null) {
       return;
     }
-    final MatchVariableConstraint constraint = (MatchVariableConstraint)variable;
-    constraint.setRegExp("");
-    constraint.setWholeWordsOnly(false);
-    constraint.setWithinHierarchy(false);
+    variable.setRegExp("");
+    variable.setWholeWordsOnly(false);
+    variable.setWithinHierarchy(false);
   }
 
   @Override
@@ -61,7 +55,7 @@ class TextFilter extends FilterAction {
 
   @Override
   protected void setLabel(SimpleColoredComponent component) {
-    final MatchVariableConstraint constraint = (MatchVariableConstraint)myTable.getVariable();
+    final MatchVariableConstraint constraint = myTable.getMatchVariableConstraint();
     String value = constraint.isInvertRegExp() ? "!" + constraint.getRegExp() : constraint.getRegExp();
     myLabel.append(SSRBundle.message("text.0.label", value));
     if (constraint.isWholeWordsOnly()) myLabel.append(SSRBundle.message("whole.words.label"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
@@ -69,15 +63,14 @@ class TextFilter extends FilterAction {
   }
 
   @Override
-  public FilterEditor getEditor() {
-    return new FilterEditor<MatchVariableConstraint>(myTable.getVariable(), myTable.getConstraintChangedCallback()) {
+  public FilterEditor<MatchVariableConstraint> getEditor() {
+    return new FilterEditor<MatchVariableConstraint>(myTable.getMatchVariableConstraint(), myTable.getConstraintChangedCallback()) {
 
       private final EditorTextField myTextField = UIUtil.createRegexComponent("", myTable.getProject());
       private final JCheckBox myWordsCheckBox = new JCheckBox(SSRBundle.message("whole.words.check.box"), false);
       private final JCheckBox myHierarchyCheckBox = new JCheckBox(SSRBundle.message("within.type.hierarchy.check.box"), false);
       private final JLabel myTextLabel = new JLabel(SSRBundle.message("text.label"));
-      private final ContextHelpLabel myHelpLabel =
-        ContextHelpLabel.create(SSRBundle.message("text.filter.help.text"));
+      private final ContextHelpLabel myHelpLabel = ContextHelpLabel.create(SSRBundle.message("text.filter.help.text"));
 
       @Override
       protected void layoutComponents() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.structuralsearch.NamedScriptableDefinition;
@@ -15,9 +15,8 @@ public abstract class FilterEditor<T extends NamedScriptableDefinition> extends 
   protected final T myConstraint;
   private final Runnable myConstraintChangedCallback;
 
-  public FilterEditor(NamedScriptableDefinition constraint, Runnable constraintChangedCallback) {
-    //noinspection unchecked
-    myConstraint = (T)constraint;
+  public FilterEditor(T constraint, Runnable constraintChangedCallback) {
+    myConstraint = constraint;
     myConstraintChangedCallback = constraintChangedCallback;
   }
 

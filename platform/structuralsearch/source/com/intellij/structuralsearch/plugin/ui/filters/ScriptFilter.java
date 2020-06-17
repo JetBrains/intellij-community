@@ -51,7 +51,7 @@ class ScriptFilter extends FilterAction {
   }
 
   @Override
-  public FilterEditor getEditor() {
+  public FilterEditor<NamedScriptableDefinition> getEditor() {
     return new FilterEditor<NamedScriptableDefinition>(myTable.getVariable(), myTable.getConstraintChangedCallback()) {
 
       private final JLabel myLabel = new JLabel(SSRBundle.message("script.label"));

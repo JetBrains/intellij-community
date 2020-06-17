@@ -3,7 +3,6 @@ package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchVariableConstraint;
-import com.intellij.structuralsearch.NamedScriptableDefinition;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
@@ -28,28 +27,26 @@ class CountFilter extends FilterAction {
 
   @Override
   public boolean hasFilter() {
-    final NamedScriptableDefinition variable = myTable.getVariable();
-    if (!(variable instanceof MatchVariableConstraint)) {
+    final MatchVariableConstraint variable = myTable.getMatchVariableConstraint();
+    if (variable == null) {
       return false;
     }
-    final MatchVariableConstraint matchVariableConstraint = (MatchVariableConstraint)variable;
-    return matchVariableConstraint.getMinCount() != 1 || matchVariableConstraint.getMaxCount() != 1;
+    return variable.getMinCount() != 1 || variable.getMaxCount() != 1;
   }
 
   @Override
   public void clearFilter() {
-    final NamedScriptableDefinition variable = myTable.getVariable();
-    if (!(variable instanceof MatchVariableConstraint)) {
+    final MatchVariableConstraint variable = myTable.getMatchVariableConstraint();
+    if (variable == null) {
       return;
     }
-    final MatchVariableConstraint constraint = (MatchVariableConstraint)variable;
-    constraint.setMinCount(1);
-    constraint.setMaxCount(1);
+    variable.setMinCount(1);
+    variable.setMaxCount(1);
   }
 
   @Override
   public void initFilter() {
-    final MatchVariableConstraint constraint = (MatchVariableConstraint)myTable.getVariable();
+    final MatchVariableConstraint constraint = myTable.getMatchVariableConstraint();
     constraint.setMinCount(myMinZero ? 0 : 1);
     constraint.setMaxCount(myMaxUnlimited ? Integer.MAX_VALUE : 1);
   }
@@ -67,7 +64,7 @@ class CountFilter extends FilterAction {
 
   @Override
   protected void setLabel(SimpleColoredComponent component) {
-    final MatchVariableConstraint constraint = (MatchVariableConstraint)myTable.getVariable();
+    final MatchVariableConstraint constraint = myTable.getMatchVariableConstraint();
     final int min = constraint.getMinCount();
     final int max = constraint.getMaxCount();
     myLabel.append(SSRBundle.message("count.label", "[" + min + "," + (max == Integer.MAX_VALUE ? "∞" : max) + ']'));
@@ -77,8 +74,8 @@ class CountFilter extends FilterAction {
   }
 
   @Override
-  public FilterEditor getEditor() {
-    return new FilterEditor<MatchVariableConstraint>(myTable.getVariable(), myTable.getConstraintChangedCallback()) {
+  public FilterEditor<MatchVariableConstraint> getEditor() {
+    return new FilterEditor<MatchVariableConstraint>(myTable.getMatchVariableConstraint(), myTable.getConstraintChangedCallback()) {
 
       private final IntegerField myMinField = new IntegerField();
       private final IntegerField myMaxField = new IntegerField();

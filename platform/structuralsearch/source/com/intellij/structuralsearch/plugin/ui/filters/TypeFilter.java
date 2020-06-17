@@ -5,7 +5,6 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchVariableConstraint;
-import com.intellij.structuralsearch.NamedScriptableDefinition;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
@@ -31,29 +30,21 @@ class TypeFilter extends FilterAction {
 
   @Override
   public boolean hasFilter() {
-    final NamedScriptableDefinition variable = myTable.getVariable();
-    if (!(variable instanceof MatchVariableConstraint)) {
-      return false;
-    }
-    final MatchVariableConstraint constraint = (MatchVariableConstraint)variable;
-    return !StringUtil.isEmpty(constraint.getNameOfExprType());
+    final MatchVariableConstraint variable = myTable.getMatchVariableConstraint();
+    return variable != null && !StringUtil.isEmpty(variable.getNameOfExprType());
   }
 
   @Override
   public void clearFilter() {
-    final NamedScriptableDefinition variable = myTable.getVariable();
-    if (!(variable instanceof MatchVariableConstraint)) {
-      return;
-    }
-    final MatchVariableConstraint constraint = (MatchVariableConstraint)variable;
-    constraint.setNameOfExprType("");
-    constraint.setInvertExprType(false);
-    constraint.setExprTypeWithinHierarchy(false);
+    final MatchVariableConstraint variable = myTable.getMatchVariableConstraint();
+    variable.setNameOfExprType("");
+    variable.setInvertExprType(false);
+    variable.setExprTypeWithinHierarchy(false);
   }
 
   @Override
   public boolean isApplicable(List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
-    if (!(myTable.getVariable() instanceof MatchVariableConstraint)) {
+    if (myTable.getVariable() == null) {
       return false;
     }
     final StructuralSearchProfile profile = myTable.getProfile();
@@ -63,7 +54,7 @@ class TypeFilter extends FilterAction {
 
   @Override
   protected void setLabel(SimpleColoredComponent component) {
-    final MatchVariableConstraint constraint = (MatchVariableConstraint)myTable.getVariable();
+    final MatchVariableConstraint constraint = myTable.getMatchVariableConstraint();
     final String s = constraint.isRegexExprType() ? constraint.getNameOfExprType() : constraint.getExpressionTypes();
     final String value = constraint.isInvertExprType() ? "!" + s : s;
     myLabel.append(SSRBundle.message("type.0.label", value));
@@ -72,8 +63,8 @@ class TypeFilter extends FilterAction {
   }
 
   @Override
-  public FilterEditor getEditor() {
-    return new FilterEditor<MatchVariableConstraint>(myTable.getVariable(), myTable.getConstraintChangedCallback()) {
+  public FilterEditor<MatchVariableConstraint> getEditor() {
+    return new FilterEditor<MatchVariableConstraint>(myTable.getMatchVariableConstraint(), myTable.getConstraintChangedCallback()) {
 
       private final EditorTextField myTextField = UIUtil.createTextComponent("", myTable.getProject());
       private final JLabel myTypeLabel = new JLabel(SSRBundle.message("type.label"));
