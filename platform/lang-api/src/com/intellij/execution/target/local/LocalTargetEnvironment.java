@@ -72,7 +72,7 @@ public class LocalTargetEnvironment extends TargetEnvironment {
     }
 
     for (LocalPortBinding localPortBinding : request.getLocalPortBindings()) {
-      Integer theOnlyPort = localPortBinding.getLocal();
+      int theOnlyPort = localPortBinding.getLocal();
       if (localPortBinding.getTarget() != null && !localPortBinding.getTarget().equals(theOnlyPort)) {
         throw new UnsupportedOperationException("Local target's TCP port forwarder is not implemented");
       }
