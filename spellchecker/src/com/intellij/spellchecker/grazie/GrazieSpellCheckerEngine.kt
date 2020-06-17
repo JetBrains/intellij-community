@@ -13,6 +13,7 @@ import com.intellij.grazie.speller.suggestion.filter.ChainSuggestionFilter
 import com.intellij.grazie.speller.suggestion.filter.feature.CasingSuggestionFilter
 import com.intellij.grazie.speller.suggestion.filter.feature.ListSuggestionFilter
 import com.intellij.grazie.speller.utils.DictionaryResources
+import com.intellij.grazie.speller.utils.spitter.CamelCaseSplitter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.spellchecker.dictionary.Dictionary
@@ -23,7 +24,6 @@ import com.intellij.spellchecker.engine.Transformation
 import com.intellij.spellchecker.grazie.async.GrazieAsyncSpeller
 import com.intellij.spellchecker.grazie.async.WordListLoader
 import com.intellij.spellchecker.grazie.dictionary.WordListAdapter
-import com.intellij.spellchecker.util.Strings
 import java.util.*
 
 internal class GrazieSpellCheckerEngine(project: Project) : SpellCheckerEngine {
@@ -45,11 +45,11 @@ internal class GrazieSpellCheckerEngine(project: Project) : SpellCheckerEngine {
               //transform main dictionary -- add lower-cased versions for misspelled check
               TransformedDictionary(English.Lists.suggested, transformation),
               //add splits to support camel-cased words
-              DictionaryResources.getSplitsDictionary(English.Lists.suggested, transformation, GrazieIdentifierSplitter),
+              DictionaryResources.getSplitsDictionary(English.Lists.suggested, transformation, CamelCaseSplitter),
               //Should not be transformed, since it is already in lower case
               TransformingDictionary(adapter, transformation)
             ),
-            splitter = GrazieIdentifierSplitter
+            splitter = CamelCaseSplitter
           ),
           model = GrazieSpeller.UserConfig.Model(
             filter = ChainSuggestionFilter(
@@ -59,7 +59,7 @@ internal class GrazieSpellCheckerEngine(project: Project) : SpellCheckerEngine {
           )
         )
       ),
-      GrazieSplittingSpeller.UserConfig(splitter = GrazieIdentifierSplitter)
+      GrazieSplittingSpeller.UserConfig(splitter = CamelCaseSplitter)
     )
   }
 
@@ -85,19 +85,8 @@ internal class GrazieSpellCheckerEngine(project: Project) : SpellCheckerEngine {
     return mySpeller.isMisspelled(word).not()
   }
 
-  /**
-   * Normalization used before suggestion.
-   *
-   * Without normalization distance between word and suggestion candidate
-   * can be too big.
-   */
-  private fun normalize(word: String): String = when {
-    Strings.isUpperCase(word) -> word.toLowerCase(Locale.ENGLISH)
-    else -> word
-  }
-
   override fun getSuggestions(word: String, maxSuggestions: Int, maxMetrics: Int): List<String> {
-    return mySpeller.suggest(normalize(word)).take(maxSuggestions).toMutableList()
+    return mySpeller.suggest(word).take(maxSuggestions).toMutableList()
   }
 
   override fun reset() {
