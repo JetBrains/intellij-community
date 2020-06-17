@@ -136,6 +136,8 @@ public class CollapseIntoLoopAction implements IntentionAction {
         last = cur;
       }
       if (start == null || step == null) return null;
+      // Prefer for(int x : new int[] {12, 17}) over for(int x = 12; x <= 17; x+= 5)  
+      if (myLoopElements.size() == 2 && step != 1L && step != -1L) return null;
       String suffix = PsiType.LONG.equals(myType) ? "L" : "";
       String initial = myType.getCanonicalText() + " " + varName + "=" + start + suffix;
       String condition =
