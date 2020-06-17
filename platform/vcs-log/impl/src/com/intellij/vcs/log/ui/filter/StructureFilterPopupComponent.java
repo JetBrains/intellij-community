@@ -114,7 +114,7 @@ public class StructureFilterPopupComponent
   private String getTextFromFilePaths(@NotNull Collection<? extends FilePath> files,
                                       @Nls @NotNull String categoryText, boolean full) {
     return getText(files, categoryText, FILE_PATH_BY_PATH_COMPARATOR,
-                   file -> StringUtil.shortenPathWithEllipsis(path2Text(file), FILTER_LABEL_LENGTH), full);
+                   file -> StringUtil.shortenPathWithEllipsis(path2Text(file, true), FILTER_LABEL_LENGTH), full);
   }
 
   @NotNull
@@ -172,7 +172,7 @@ public class StructureFilterPopupComponent
 
   @NotNull
   private String getTooltipTextForFilePaths(@NotNull Collection<? extends FilePath> files) {
-    return getTooltipTextForFiles(files, FILE_PATH_BY_PATH_COMPARATOR, this::path2Text);
+    return getTooltipTextForFiles(files, FILE_PATH_BY_PATH_COMPARATOR, filePath -> path2Text(filePath, true));
   }
 
   @NotNull
@@ -262,21 +262,24 @@ public class StructureFilterPopupComponent
   }
 
   @NotNull
-  private String path2Text(@NotNull FilePath filePath) {
+  private String path2Text(@NotNull FilePath filePath, boolean systemDependent) {
     VirtualFile commonAncestor = VfsUtil.getCommonAncestor(getAllRoots());
     String path;
     if (commonAncestor == null) {
-      path = filePath.getPresentableUrl();
+      path = systemDependent ? filePath.getPresentableUrl() : filePath.getPath();
     }
     else {
-      path = FileUtil.toSystemDependentName(VcsFileUtil.relativePath(commonAncestor, filePath));
+      path = VcsFileUtil.relativePath(commonAncestor, filePath);
+      if (systemDependent) path = FileUtil.toSystemDependentName(path);
     }
-    return path + (filePath.isDirectory() ? File.separator : "");
+    return path + (filePath.isDirectory() ? separator(systemDependent) : "");
   }
 
   @NotNull
   private FilePath text2Path(@NotNull String path) {
-    boolean isDirectory = path.endsWith(File.separator);
+    path = FileUtil.toSystemIndependentName(path);
+    boolean isDirectory = StringUtil.endsWithChar(path, '/');
+
     VirtualFile commonAncestor = VfsUtil.getCommonAncestor(getAllRoots());
     if (commonAncestor != null && !FileUtil.isAbsolute(FileUtil.toSystemDependentName(path))) {
       path = commonAncestor.getPath() + '/' + path;
@@ -286,6 +289,10 @@ public class StructureFilterPopupComponent
       return VcsUtil.getFilePath(path, true);
     }
     return VcsUtil.getFilePath(path);
+  }
+
+  private static char separator(boolean systemDependent) {
+    return systemDependent ? File.separatorChar : '/';
   }
 
   private static class FileByNameComparator implements Comparator<VirtualFile> {
@@ -428,7 +435,7 @@ public class StructureFilterPopupComponent
 
       Collection<FilePath> filesPaths = ContainerUtil.sorted(getStructureFilterPaths(), HierarchicalFilePathComparator.NATURAL);
 
-      String oldValue = StringUtil.join(ContainerUtil.map(filesPaths, StructureFilterPopupComponent.this::path2Text), "\n");
+      String oldValue = StringUtil.join(ContainerUtil.map(filesPaths, filePath -> path2Text(filePath, false)), "\n");
       MultilinePopupBuilder popupBuilder = new MultilinePopupBuilder(project, oldValue, new char[]{'\n'});
 
       JBPopup popup = popupBuilder.createPopup();
@@ -436,7 +443,7 @@ public class StructureFilterPopupComponent
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {
           if (event.isOk()) {
-            List<FilePath> selectedPaths = ContainerUtil.map(popupBuilder.getSelectedValues(), StructureFilterPopupComponent.this::text2Path);
+            List<FilePath> selectedPaths = ContainerUtil.map(popupBuilder.getSelectedValues(), path -> text2Path(path));
             setStructureFilter(VcsLogFilterObject.fromPaths(selectedPaths));
           }
         }
