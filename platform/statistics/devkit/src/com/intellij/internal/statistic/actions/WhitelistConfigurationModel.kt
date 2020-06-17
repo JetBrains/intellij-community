@@ -2,8 +2,8 @@
 package com.intellij.internal.statistic.actions
 
 import com.intellij.internal.statistic.eventLog.getEventLogProviders
-import com.intellij.internal.statistic.eventLog.validator.persistence.BaseEventLogWhitelistPersistence.getDefaultWhitelistFile
-import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence.WHITE_LIST_DATA_FILE
+import com.intellij.internal.statistic.eventLog.validator.persistence.BaseEventLogWhitelistPersistence.getDefaultMetadataFile
+import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence.EVENTS_SCHEME_FILE
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistSettingsPersistence
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.ComboBox
@@ -112,7 +112,7 @@ class WhitelistConfigurationModel {
   }
 
   class WhitelistPathSettings(recorderId: String) {
-    private val defaultPath: String = getDefaultWhitelistFile(recorderId, WHITE_LIST_DATA_FILE).absolutePath
+    private val defaultPath: String = getDefaultMetadataFile(recorderId, EVENTS_SCHEME_FILE, null).absolutePath
     var customPath: String? = null
     var useCustomPath = false
 

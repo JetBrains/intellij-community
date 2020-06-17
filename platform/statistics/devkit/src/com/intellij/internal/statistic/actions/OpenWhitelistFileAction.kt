@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.StatisticsDevKitUtil
 import com.intellij.internal.statistic.StatisticsDevKitUtil.showNotification
 import com.intellij.internal.statistic.eventLog.validator.persistence.BaseEventLogWhitelistPersistence
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence
+import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence.EVENTS_SCHEME_FILE
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistSettingsPersistence
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -29,7 +30,7 @@ class OpenWhitelistFileAction(private val myRecorderId: String = StatisticsDevKi
       File(settings.customPath)
     }
     else {
-      BaseEventLogWhitelistPersistence.getDefaultWhitelistFile(myRecorderId, EventLogWhitelistPersistence.WHITE_LIST_DATA_FILE)
+      BaseEventLogWhitelistPersistence.getDefaultMetadataFile(myRecorderId, EVENTS_SCHEME_FILE, null)
     }
 
     openFileInEditor(file, project)
