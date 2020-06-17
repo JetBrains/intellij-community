@@ -116,20 +116,19 @@
               icon="AllIcons.Actions.Collapseall"
               use-shortcut-of="CollapseAll"
               class="com.intellij.analysis.problemsView.toolWindow.TreeCollapseAllAction"/>
-      <separator/>
+      <action id="ProblemsView.QuickFixes"
+              icon="AllIcons.Actions.IntentionBulb"
+              use-shortcut-of="ShowIntentionActions"
+              class="com.intellij.analysis.problemsView.toolWindow.ShowQuickFixesAction"/>
     </group>
 
     <group id="ProblemsView.ToolWindow.TreePopup">
+      <reference ref="ProblemsView.QuickFixes"/>
       <action id="ProblemsView.CopyProblemDescription"
               icon="AllIcons.Actions.Copy"
               use-shortcut-of="$Copy"
               class="com.intellij.analysis.problemsView.toolWindow.CopyProblemDescriptionAction"/>
       <reference ref="EditSource"/>
-      <separator/>
-      <group id="ProblemsView.QuickFixes"
-             icon="AllIcons.Actions.IntentionBulb"
-             use-shortcut-of="ShowIntentionActions"
-             class="com.intellij.analysis.problemsView.toolWindow.ProblemsViewQuickFixes"/>
     </group>
   </actions>
 
