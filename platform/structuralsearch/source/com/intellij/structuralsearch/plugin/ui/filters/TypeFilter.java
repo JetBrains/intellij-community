@@ -21,11 +21,11 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-public class TypeFilter extends FilterAction {
+class TypeFilter extends FilterAction {
 
   boolean showRegex;
 
-  public TypeFilter(FilterTable filterTable) {
+  TypeFilter(FilterTable filterTable) {
     super(SSRBundle.messagePointer("type.filter.name"), filterTable);
   }
 

@@ -19,11 +19,11 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-public class TextFilter extends FilterAction {
+class TextFilter extends FilterAction {
 
   boolean myShowHierarchy;
 
-  public TextFilter(FilterTable filterTable) {
+  TextFilter(FilterTable filterTable) {
     super(SSRBundle.messagePointer("text.filter.name"), filterTable);
   }
 

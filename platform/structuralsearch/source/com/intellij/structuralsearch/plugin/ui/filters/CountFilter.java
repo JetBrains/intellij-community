@@ -17,12 +17,12 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-public class CountFilter extends FilterAction {
+class CountFilter extends FilterAction {
 
   boolean myMinZero;
   boolean myMaxUnlimited;
 
-  public CountFilter(FilterTable filterTable) {
+  CountFilter(FilterTable filterTable) {
     super(SSRBundle.messagePointer("count.filter.name"), filterTable);
   }
 

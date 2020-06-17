@@ -23,10 +23,9 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-@SuppressWarnings("ComponentNotRegistered")
-public class ScriptFilter extends FilterAction {
+class ScriptFilter extends FilterAction {
 
-  public ScriptFilter(FilterTable filterTable) {
+  ScriptFilter(FilterTable filterTable) {
     super(SSRBundle.messagePointer("script.filter.name"), filterTable);
   }
 

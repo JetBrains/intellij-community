@@ -22,9 +22,9 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-public class ReferenceFilter extends FilterAction {
+class ReferenceFilter extends FilterAction {
 
-  public ReferenceFilter(FilterTable filterTable) {
+  ReferenceFilter(FilterTable filterTable) {
     super(SSRBundle.messagePointer("reference.filter.name"), filterTable);
   }
 

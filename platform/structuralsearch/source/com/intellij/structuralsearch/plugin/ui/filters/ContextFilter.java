@@ -21,8 +21,8 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
-public class ContextFilter extends FilterAction {
-  public ContextFilter(FilterTable table) {
+class ContextFilter extends FilterAction {
+  ContextFilter(FilterTable table) {
     super(SSRBundle.messagePointer("context.filter.name"), table);
   }
 
