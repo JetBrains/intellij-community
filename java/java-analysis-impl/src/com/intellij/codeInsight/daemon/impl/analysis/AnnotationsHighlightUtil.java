@@ -570,8 +570,7 @@ public class AnnotationsHighlightUtil {
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotation).descriptionAndTooltip(errorMessage).create();
           }
           
-          if (HighlightingFeature.SEALED_CLASSES.isSufficient(languageLevel) && 
-              ((PsiClass)parent).hasModifierProperty(PsiModifier.SEALED)) {
+          if (((PsiClass)parent).hasModifierProperty(PsiModifier.SEALED)) {
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
               .range(annotation)
               .descriptionAndTooltip(JavaErrorBundle.message("functional.interface.must.not.be.sealed.error.description", PsiModifier.SEALED))

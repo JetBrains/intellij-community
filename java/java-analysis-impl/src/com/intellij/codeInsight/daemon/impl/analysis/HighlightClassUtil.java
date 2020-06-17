@@ -31,12 +31,11 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PackageScope;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
-import com.intellij.util.ObjectUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1007,7 +1006,7 @@ public class HighlightClassUtil {
       if (PsiUtil.isLocalClass(aClass)) {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
           .range(elementToHighlight)
-          .descriptionAndTooltip(JavaErrorBundle.message("local.classes.must.extend.sealed.classes")).create();
+          .descriptionAndTooltip(JavaErrorBundle.message("local.classes.must.not.extend.sealed.classes")).create();
       }
 
       PsiClassType[] permittedTypes = superClass.getPermitsListTypes();
@@ -1016,14 +1015,8 @@ public class HighlightClassUtil {
           return null;
         }
       }
-      else if (JavaPsiFacade.getInstance(aClass.getProject()).arePackagesTheSame(aClass, superClass)) {
+      else if (aClass.getContainingFile() == superClass.getContainingFile()) {
         return null;
-      }
-      else {
-        PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(aClass);
-        if (javaModule != null && javaModule == JavaModuleGraphUtil.findDescriptorByElement(superClass)) {
-          return null;
-        }
       }
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
         .descriptionAndTooltip(JavaErrorBundle.message("not.allowed.in.sealed.hierarchy", aClass.getName()))
@@ -1039,7 +1032,7 @@ public class HighlightClassUtil {
       if (superClass != null && superClass.hasModifierProperty(PsiModifier.SEALED)) {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
           .range(aClass.getBaseClassReference())
-          .descriptionAndTooltip(JavaErrorBundle.message("anonymous.classes.must.extend.sealed.classes")).create();
+          .descriptionAndTooltip(JavaErrorBundle.message("anonymous.classes.must.not.extend.sealed.classes")).create();
       }
     }
     return null;
@@ -1098,21 +1091,7 @@ public class HighlightClassUtil {
     if (psiClass.hasModifierProperty(PsiModifier.SEALED) && psiClass.getPermitsListTypes().length == 0) {
       PsiIdentifier nameIdentifier = psiClass.getNameIdentifier();
       if (nameIdentifier == null) return null;
-      PsiJavaModule currentModule = JavaModuleGraphUtil.findDescriptorByElement(psiClass);
-      GlobalSearchScope searchScope = null;
-      if (currentModule == null) {
-        PsiClassOwner classOwner = ObjectUtils.tryCast(psiClass.getContainingFile(), PsiClassOwner.class);
-        if (classOwner != null) {
-          String packageName = classOwner.getPackageName();
-          PsiPackage aPackage = JavaPsiFacade.getInstance(psiClass.getProject()).findPackage(packageName);
-          searchScope = PackageScope.packageScope(Objects.requireNonNull(aPackage), false);
-        }
-      }
-      else {
-        searchScope = currentModule.getResolveScope();
-      }
-
-      if (searchScope != null && !DirectClassInheritorsSearch.search(psiClass, searchScope).anyMatch(c -> !PsiUtil.isLocalOrAnonymousClass(c))) {
+      if (!DirectClassInheritorsSearch.search(psiClass, new LocalSearchScope(psiClass.getContainingFile())).anyMatch(c -> !PsiUtil.isLocalOrAnonymousClass(c))) {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
           .range(nameIdentifier)
           .descriptionAndTooltip(JavaErrorBundle.message("sealed.must.have.inheritors"))
