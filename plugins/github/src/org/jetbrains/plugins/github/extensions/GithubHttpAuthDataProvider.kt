@@ -11,6 +11,7 @@ import com.intellij.util.AuthData
 import git4idea.remote.GitHttpAuthDataProvider
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
+import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
@@ -18,63 +19,54 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInforma
 private val LOG = logger<GithubHttpAuthDataProvider>()
 
 class GithubHttpAuthDataProvider : GitHttpAuthDataProvider {
-  override fun getAuthData(project: Project, url: String): GithubAccountAuthData? {
-    return getSuitableAccounts(project, url, null).singleOrNull()?.let { account ->
-      try {
-        val token = GithubAuthenticationManager.getInstance().getTokenForAccount(account) ?: return null
-        val username = service<GithubAccountInformationProvider>().getInformation(GithubApiRequestExecutor.Factory.getInstance().create(token),
-                                                                 DumbProgressIndicator(),
-                                                                 account).login
-        GithubAccountAuthData(account, username, token)
-      }
-      catch (e: Exception) {
-        if (e !is ProcessCanceledException) LOG.info("Cannot load username for $account", e)
-        null
-      }
-    }
-  }
-
   override fun isSilent(): Boolean = true
 
+  override fun getAuthData(project: Project, url: String): GithubAccountAuthData? {
+    val account = getSuitableAccounts(project, url, null).singleOrNull() ?: return null
+    val token = GithubAuthenticationManager.getInstance().getTokenForAccount(account) ?: return null
+    val accountDetails = getAccountDetails(account, token) ?: return null
+
+    return GithubAccountAuthData(account, accountDetails.login, token)
+  }
+
   override fun getAuthData(project: Project, url: String, login: String): GithubAccountAuthData? {
-    return getSuitableAccounts(project, url, login).singleOrNull()?.let { account ->
-      return GithubAuthenticationManager.getInstance().getTokenForAccount(account)?.let { GithubAccountAuthData(account, login, it) }
-    }
+    val account = getSuitableAccounts(project, url, login).singleOrNull() ?: return null
+    val token = GithubAuthenticationManager.getInstance().getTokenForAccount(account) ?: return null
+
+    return GithubAccountAuthData(account, login, token)
   }
 
   override fun forgetPassword(project: Project, url: String, authData: AuthData) {
-    if (authData is GithubAccountAuthData) {
-      project.service<GithubAccountGitAuthenticationFailureManager>().ignoreAccount(url, authData.account)
-    }
+    if (authData !is GithubAccountAuthData) return
+
+    project.service<GithubAccountGitAuthenticationFailureManager>().ignoreAccount(url, authData.account)
   }
 
   fun getSuitableAccounts(project: Project, url: String, login: String?): Set<GithubAccount> {
     val authenticationFailureManager = project.service<GithubAccountGitAuthenticationFailureManager>()
     val authenticationManager = GithubAuthenticationManager.getInstance()
-    var potentialAccounts = authenticationManager.getAccounts()
+    val potentialAccounts = authenticationManager.getAccounts()
       .filter { it.server.matches(url) }
-      .filter { !authenticationFailureManager.isAccountIgnored(url, it) }
-
-    if (login != null) {
-      potentialAccounts = potentialAccounts.filter {
-        try {
-          service<GithubAccountInformationProvider>().getInformation(GithubApiRequestExecutorManager.getInstance().getExecutor(it),
-                                                    DumbProgressIndicator(),
-                                                    it).login == login
-        }
-        catch (e: Exception) {
-          if (e !is ProcessCanceledException) LOG.info("Cannot load username for $it", e)
-          false
-        }
-      }
-    }
+      .filterNot { authenticationFailureManager.isAccountIgnored(url, it) }
+      .filter { login == null || login == getAccountDetails(it)?.login }
 
     val defaultAccount = authenticationManager.getDefaultAccount(project)
-    if (defaultAccount != null && potentialAccounts.contains(defaultAccount)) return setOf(defaultAccount)
+    if (defaultAccount != null && defaultAccount in potentialAccounts) return setOf(defaultAccount)
     return potentialAccounts.toSet()
   }
 
-  class GithubAccountAuthData(val account: GithubAccount,
-                              login: String,
-                              password: String) : AuthData(login, password)
+  class GithubAccountAuthData(val account: GithubAccount, login: String, token: String) : AuthData(login, token)
 }
+
+private fun getAccountDetails(account: GithubAccount, token: String? = null): GithubAuthenticatedUser? =
+  try {
+    service<GithubAccountInformationProvider>().getInformation(getRequestExecutor(account, token), DumbProgressIndicator(), account)
+  }
+  catch (e: Exception) {
+    if (e !is ProcessCanceledException) LOG.info("Cannot load details for $account", e)
+    null
+  }
+
+private fun getRequestExecutor(account: GithubAccount, token: String?): GithubApiRequestExecutor =
+  if (token != null) GithubApiRequestExecutor.Factory.getInstance().create(token)
+  else GithubApiRequestExecutorManager.getInstance().getExecutor(account)
