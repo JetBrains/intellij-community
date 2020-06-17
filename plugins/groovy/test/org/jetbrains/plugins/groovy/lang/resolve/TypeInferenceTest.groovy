@@ -1907,4 +1907,18 @@ static def foo() {
 }
 ''', JAVA_LANG_INTEGER
   }
+
+  void 'test no SOE in operator usage with shared variable'() {
+    allowNestedContextOnce(testRootDisposable)
+    doTest '''
+@groovy.transform.CompileStatic
+private void checkResult(String expected) {
+  def offset = 0
+  actualParameterHints.each { it ->
+   offset += hintString
+  }
+  <caret>offset
+}
+''', JAVA_LANG_INTEGER
+  }
 }

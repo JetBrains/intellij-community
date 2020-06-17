@@ -139,7 +139,7 @@ class InferenceCache {
         Set<Pair<Instruction, VariableDescriptor>> dependencies =
           findDependencies(definitionMaps, closureInstructions, pair.first, pair.second);
         interesting.put(pair, dependencies);
-        if (dependencies.stream().anyMatch(it -> !it.second.equals(descriptor) && isSharedVariable(it.second))) {
+        if (dependencies.stream().anyMatch(it -> isSharedVariable(it.second))) {
           dependentOnSharedVariables.add(pair.first);
         }
         dependencies.forEach(queue::addLast);
