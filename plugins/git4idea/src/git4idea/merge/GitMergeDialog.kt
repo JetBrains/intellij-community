@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.merge
 
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
@@ -13,6 +13,7 @@ import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.ui.components.JBTextArea
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.labels.DropDownLink
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.ui.JBDimension
@@ -37,6 +38,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
 import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
+import javax.swing.plaf.basic.BasicComboBoxEditor
 
 class GitMergeDialog(private val project: Project,
                      private val defaultRoot: VirtualFile,
@@ -250,9 +252,7 @@ class GitMergeDialog(private val project: Project,
     return ComboBox(model).apply {
       item = defaultRoot.name
       isSwingPopup = false
-
-      val bw = DarculaUIUtil.BW.get()
-      setUI(FlatComboBoxUI(outerInsets = Insets(bw, bw, bw, 0)))
+      ui = FlatComboBoxUI(outerInsets = Insets(BW.get(), BW.get(), BW.get(), 0))
 
       addItemListener { e ->
         if (e.stateChange == ItemEvent.SELECTED
@@ -273,12 +273,15 @@ class GitMergeDialog(private val project: Project,
     return ComboBox(model).apply<ComboBox<String>> {
       isSwingPopup = false
       isEditable = true
+      editor = object : BasicComboBoxEditor() {
+        override fun createEditorComponent() = JBTextField().apply {
+          emptyText.text = GitBundle.message("merge.branch.field.placeholder")
+        }
+      }
 
-      val bw = DarculaUIUtil.BW.get()
-
-      setUI(FlatComboBoxUI(
-        outerInsets = Insets(bw, 0, bw, bw),
-        popupEmptyText = GitBundle.message("merge.branch.popup.empty.text")))
+      ui = FlatComboBoxUI(
+        outerInsets = Insets(BW.get(), 0, BW.get(), BW.get()),
+        popupEmptyText = GitBundle.message("merge.branch.popup.empty.text"))
     }
   }
 
