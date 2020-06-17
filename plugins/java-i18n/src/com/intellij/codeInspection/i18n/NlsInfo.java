@@ -233,7 +233,7 @@ public abstract class NlsInfo {
 
     List<UExpression> arguments = callExpression.getValueArguments();
     OptionalInt idx = IntStream.range(0, arguments.size())
-      .filter(i -> UastUtils.isUastChildOf(expression, arguments.get(i), false))
+      .filter(i -> UastUtils.isUastChildOf(expression, UastLiteralUtils.wrapULiteral(arguments.get(i)), false))
       .findFirst();
 
     if (!idx.isPresent()) return Unspecified.UNKNOWN;
