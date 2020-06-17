@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.pom.PomRenameableTarget;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,6 +108,7 @@ public interface PsiClass
    * @return the permits list.
    */
   @Nullable
+  @ApiStatus.Experimental
   default PsiReferenceList getPermitsList() {
     return null;
   }
@@ -116,7 +118,7 @@ public interface PsiClass
    *
    * @return the list of explicitly permitted classes.
    */
-  @Nullable
+  @ApiStatus.Experimental
   default PsiClassType @NotNull [] getPermitsListTypes() {
     PsiReferenceList permitsList = getPermitsList();
     if (permitsList != null) {
