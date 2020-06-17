@@ -5,6 +5,7 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
+import com.intellij.debugger.jdi.JvmtiError;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.notification.NotificationType;
@@ -138,10 +139,15 @@ public class ThreadBlockedMonitor {
             }
             catch (ObjectCollectedException ignored) {
             }
+            catch (IncompatibleThreadStateException e) {
+              LOG.info(e);
+            }
+            catch (InternalException e) {
+              if (e.errorCode() != JvmtiError.THREAD_NOT_ALIVE) {
+                throw e;
+              }
+            }
           }
-        }
-        catch (IncompatibleThreadStateException e) {
-          LOG.info(e);
         }
         finally {
           vmProxy.getVirtualMachine().resume();
