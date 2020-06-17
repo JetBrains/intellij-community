@@ -80,7 +80,7 @@ public class PyDefinitionsAnnotator extends PyAnnotator {
     final PsiElement atSign = node.getFirstChild();
     if (atSign != null) {
       addHighlightingAnnotation(atSign, PyHighlighter.PY_DECORATOR);
-      if (node.hasPlainReferenceCallee()) {
+      if (node.getQualifiedName() != null) {
         addHighlightingAnnotation(Objects.requireNonNull(node.getCallee()), PyHighlighter.PY_DECORATOR);
       }
     }

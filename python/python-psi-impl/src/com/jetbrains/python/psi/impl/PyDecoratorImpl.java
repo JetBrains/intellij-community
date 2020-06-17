@@ -27,6 +27,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.jetbrains.python.psi.PyUtil.as;
+
 /**
  * @author dcheryasov
  */
@@ -56,6 +58,11 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
   }
 
   @Override
+  public @Nullable PyExpression getExpression() {
+    return findChildByClass(PyExpression.class);
+  }
+
+  @Override
   public boolean isBuiltin() {
     ASTNode node = getNode().findChildByType(PythonDialectsTokenSetProvider.getInstance().getReferenceExpressionTokens());
     if (node != null) {
@@ -68,12 +75,12 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
 
   @Override
   public boolean hasArgumentList() {
-    return findChildByClass(PyCallExpression.class) != null;
+    return getExpression() instanceof PyCallExpression;
   }
 
   @Override
   public PyArgumentList getArgumentList() {
-    final PyCallExpression callExpr = findChildByClass(PyCallExpression.class);
+    final PyCallExpression callExpr = as(getExpression(), PyCallExpression.class);
     return callExpr != null ? callExpr.getArgumentList() : null;
   }
 
@@ -85,19 +92,15 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
       return stub.getQualifiedName();
     }
     else {
-      final PyCallExpression callExpr = findChildByClass(PyCallExpression.class);
-      final PyReferenceExpression node = PsiTreeUtil.getChildOfType(callExpr != null ? callExpr : this, PyReferenceExpression.class);
-      if (node != null) {
-        return node.asQualifiedName();
-      }
-      return null;
+      final PyReferenceExpression refExpr = as(getCallee(), PyReferenceExpression.class);
+      return refExpr != null ? refExpr.asQualifiedName() : null;
     }
   }
 
   @Override
   @Nullable
   public PyExpression getCallee() {
-    final PyExpression exprAfterAt = findChildByClass(PyExpression.class);
+    final PyExpression exprAfterAt = getExpression();
     return exprAfterAt instanceof PyCallExpression ? ((PyCallExpression)exprAfterAt).getCallee() : exprAfterAt;
   }
 
@@ -149,11 +152,5 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
   @Nullable
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return PyCallExpressionHelper.getCallType(this, context, key);
-  }
-
-  @Override
-  public boolean hasPlainReferenceCallee() {
-    final PyExpression callee = getCallee();
-    return callee instanceof PyReferenceExpression && ((PyReferenceExpression)callee).asQualifiedName() != null;
   }
 }
