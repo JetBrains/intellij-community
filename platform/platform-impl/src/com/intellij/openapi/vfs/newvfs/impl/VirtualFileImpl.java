@@ -124,13 +124,15 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
       // optimisation: take the opportunity to not load bytes again in getCharset()
       // use getByFile() to not fall into recursive trap from vfile.getFileType() which would try to load contents again to detect charset
       FileType fileType = ObjectUtils.notNull(((FileTypeManagerImpl)FileTypeManager.getInstance()).getByFile(this), UnknownFileType.INSTANCE);
-
-      try {
-        // execute in impatient mode to not deadlock when the indexing process waits under write action for the queue to load contents in other threads
-        // and that other thread asks JspManager for encoding which requires read action for PSI
-        ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(() -> LoadTextUtil.detectCharsetAndSetBOM(this, bytes, fileType));
-      }
-      catch (ProcessCanceledException ignored) {
+      if (fileType != UnknownFileType.INSTANCE && !fileType.isBinary()) {
+        try {
+          // execute in impatient mode to not deadlock when the indexing process waits under write action for the queue to load contents in other threads
+          // and that other thread asks JspManager for encoding which requires read action for PSI
+          ((ApplicationImpl)ApplicationManager.getApplication())
+            .executeByImpatientReader(() -> LoadTextUtil.detectCharsetAndSetBOM(this, bytes, fileType));
+        }
+        catch (ProcessCanceledException ignored) {
+        }
       }
     }
     return bytes;
