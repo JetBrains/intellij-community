@@ -1,11 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.beans.MetricEventFactoryKt;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
@@ -25,15 +25,15 @@ import java.util.Set;
  * @author Konstantin Aleev
  */
 public class RunDashboardUsagesCollector extends ProjectUsagesCollector {
-  @NotNull
-  @Override
-  public String getGroupId() {
-    return "run.dashboard";
-  }
+  public static final EventLogGroup GROUP = new EventLogGroup("run.dashboard", 3);
+  public static final EventId1<Boolean> RUN_DASHBOARD = GROUP.registerEvent("run.dashboard", EventFields.Boolean("enabled"));
+  public static final VarargEventId ADDED_RUN_CONFIGURATION = GROUP.registerVarargEvent("added.run.configuration",
+                                                                                        RunConfigurationTypeUsagesCollector.ID_FIELD,
+                                                                                        RunConfigurationTypeUsagesCollector.FACTORY_FIELD);
 
   @Override
-  public int getVersion() {
-    return 2;
+  public EventLogGroup getGroup() {
+    return GROUP;
   }
 
   @NotNull
@@ -43,7 +43,7 @@ public class RunDashboardUsagesCollector extends ProjectUsagesCollector {
     RunDashboardManagerImpl runDashboardManager = (RunDashboardManagerImpl)RunDashboardManager.getInstance(project);
     final Set<String> dashboardTypes = new THashSet<>(runDashboardManager.getTypes());
     dashboardTypes.removeAll(runDashboardManager.getEnableByDefaultTypes()); // do not report enable by default types
-    metricEvents.add(MetricEventFactoryKt.newBooleanMetric("run.dashboard", !dashboardTypes.isEmpty()));
+    metricEvents.add(RUN_DASHBOARD.metric(!dashboardTypes.isEmpty()));
 
     if (!dashboardTypes.isEmpty()) {
       List<ConfigurationType> configurationTypes = ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList();
@@ -51,8 +51,8 @@ public class RunDashboardUsagesCollector extends ProjectUsagesCollector {
         ConfigurationType configurationType = ContainerUtil.find(configurationTypes, type -> type.getId().equals(dashboardType));
         if (configurationType == null) continue;
 
-        final FeatureUsageData data = RunConfigurationTypeUsagesCollector.newFeatureUsageData(configurationType, null);
-        metricEvents.add(MetricEventFactoryKt.newMetric("added.run.configuration", data));
+        List<EventPair> data = RunConfigurationTypeUsagesCollector.createFeatureUsageData(configurationType, null);
+        metricEvents.add(ADDED_RUN_CONFIGURATION.metric(data.toArray(new EventPair[0])));
       }
     }
     return metricEvents;

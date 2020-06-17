@@ -693,8 +693,9 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
 }
 
 private fun triggerUsage(environment: ExecutionEnvironment): IdeActivity? {
-  val configurationFactory = environment.runnerAndConfigurationSettings?.configuration?.factory ?: return null
-  return RunConfigurationUsageTriggerCollector.trigger(environment.project, configurationFactory, environment.executor)
+  val runConfiguration = environment.runnerAndConfigurationSettings?.configuration
+  val configurationFactory = runConfiguration?.factory ?: return null
+  return RunConfigurationUsageTriggerCollector.trigger(environment.project, configurationFactory, environment.executor, runConfiguration)
 }
 
 private fun createEnvironmentBuilder(project: Project,

@@ -29,7 +29,7 @@ abstract class EventField<T> {
 }
 
 data class EventPair<T>(val field: EventField<T>, val data: T) {
-   internal fun addData(featureUsageData: FeatureUsageData) = field.addData(featureUsageData, data)
+  fun addData(featureUsageData: FeatureUsageData) = field.addData(featureUsageData, data)
 }
 
 data class StringEventField(override val name: String): EventField<String?>() {

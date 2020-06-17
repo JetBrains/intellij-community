@@ -5,8 +5,7 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.*;
 import com.intellij.internal.statistic.beans.MetricEvent;
-import com.intellij.internal.statistic.beans.MetricEventFactoryKt;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
@@ -19,6 +18,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -29,18 +29,26 @@ import org.jetbrains.concurrency.CancellablePromise;
 import java.util.*;
 
 public class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector {
-  private static final String ID_FIELD = "id";
-  private static final String FACTORY_FIELD = "factory";
+  public static final String CONFIGURED_IN_PROJECT = "configured.in.project";
+  public static final EventLogGroup GROUP = new EventLogGroup("run.configuration.type", 7);
+  public static final StringEventField ID_FIELD = EventFields.String("id").withCustomRule("run_config_id");
+  public static final StringEventField FACTORY_FIELD = EventFields.String("factory").withCustomRule("run_config_factory");
+  private static final IntEventField COUNT_FIELD = EventFields.Int("count");
+  private static final StringEventField FEATURE_NAME_FIELD = EventFields.String("featureName").withCustomRule("plugin_info");
+  private static final BooleanEventField SHARED_FIELD = EventFields.Boolean("shared");
+  private static final BooleanEventField EDIT_BEFORE_RUN_FIELD = EventFields.Boolean("edit_before_run");
+  private static final BooleanEventField ACTIVATE_BEFORE_RUN_FIELD = EventFields.Boolean("activate_before_run");
+  private static final BooleanEventField TEMPORARY_FIELD = EventFields.Boolean("temporary");
+  private static final BooleanEventField PARALLEL_FIELD = EventFields.Boolean("parallel");
+  private static final VarargEventId CONFIGURED_IN_PROJECT_EVENT =
+    GROUP.registerVarargEvent(CONFIGURED_IN_PROJECT, COUNT_FIELD, ID_FIELD, FACTORY_FIELD, SHARED_FIELD, EDIT_BEFORE_RUN_FIELD,
+                              ACTIVATE_BEFORE_RUN_FIELD, TEMPORARY_FIELD, PARALLEL_FIELD);
+  private static final VarargEventId FEATURE_USED_EVENT =
+    GROUP.registerVarargEvent("feature.used", COUNT_FIELD, ID_FIELD, EventFields.PluginInfo, FEATURE_NAME_FIELD);
 
-  @NotNull
   @Override
-  public String getGroupId() {
-    return "run.configuration.type";
-  }
-
-  @Override
-  public int getVersion() {
-    return 6;
+  public EventLogGroup getGroup() {
+    return GROUP;
   }
 
   @NotNull
@@ -65,9 +73,9 @@ public class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector 
           }
 
           final ConfigurationType configurationType = configurationFactory.getType();
-          final FeatureUsageData data = newFeatureUsageData(configurationType, configurationFactory);
-          fillSettings(data, settings, runConfiguration);
-          final Template template = new Template("configured.in.project", data);
+          List<EventPair> pairs = createFeatureUsageData(configurationType, configurationFactory);
+          pairs.addAll(getSettings(settings, runConfiguration));
+          final Template template = new Template(CONFIGURED_IN_PROJECT_EVENT, pairs);
           addOrIncrement(templates, template);
           collectRunConfigurationFeatures(runConfiguration, templates);
         }
@@ -124,49 +132,50 @@ public class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector 
             continue;
           }
           if (featureUsed) {
-            FeatureUsageData data = new FeatureUsageData()
-              .addData(ID_FIELD, runConfiguration.getType().getId())
-              .addPluginInfo(info)
-              .addData("featureName", name);
-            addOrIncrement(templates, new Template("feature.used", data));
+            List<EventPair> pairs = new ArrayList<>();
+            pairs.add(ID_FIELD.with(runConfiguration.getType().getId()));
+            pairs.add(EventFields.PluginInfo.with(info));
+            pairs.add(FEATURE_NAME_FIELD.with(name));
+            addOrIncrement(templates, new Template(FEATURE_USED_EVENT, pairs));
           }
         }
       }
     }
   }
 
-  @NotNull
-  public static FeatureUsageData newFeatureUsageData(@NotNull ConfigurationType configuration, @Nullable ConfigurationFactory factory) {
+  public static @NotNull List<EventPair> createFeatureUsageData(@NotNull ConfigurationType configuration, @Nullable ConfigurationFactory factory) {
     final String id = configuration instanceof UnknownConfigurationType ? "unknown" : configuration.getId();
-    final FeatureUsageData data = new FeatureUsageData().addData(ID_FIELD, id);
+    List<EventPair> pairs = new ArrayList<>();
+    pairs.add(ID_FIELD.with(id));
     if (factory != null && configuration.getConfigurationFactories().length > 1) {
-      data.addData(FACTORY_FIELD, factory.getId());
+      pairs.add(FACTORY_FIELD.with(factory.getId()));
     }
-    return data;
+    return pairs;
   }
 
-  private static void fillSettings(@NotNull FeatureUsageData data,
-                                   @NotNull RunnerAndConfigurationSettings settings,
-                                   @NotNull RunConfiguration runConfiguration) {
-    data.addData("shared", settings.isShared()).
-      addData("edit_before_run", settings.isEditBeforeRun()).
-      addData("activate_before_run", settings.isActivateToolWindowBeforeRun()).
-      addData("parallel", runConfiguration.isAllowRunningInParallel()).
-      addData("temporary", settings.isTemporary());
+  private static @NotNull ArrayList<EventPair<Boolean>> getSettings(@NotNull RunnerAndConfigurationSettings settings,
+                                                                    @NotNull RunConfiguration runConfiguration) {
+    return ContainerUtil.newArrayList(SHARED_FIELD.with(settings.isShared()),
+                                      EDIT_BEFORE_RUN_FIELD.with(settings.isEditBeforeRun()),
+                                      ACTIVATE_BEFORE_RUN_FIELD.with(settings.isActivateToolWindowBeforeRun()),
+                                      PARALLEL_FIELD.with(runConfiguration.isAllowRunningInParallel()),
+                                      TEMPORARY_FIELD.with(settings.isTemporary()));
   }
 
   private static final class Template {
-    private final String myKey;
-    private final FeatureUsageData myData;
+    private final VarargEventId myEventId;
+    private final List<EventPair> myEventPairs;
 
-    private Template(String key, FeatureUsageData data) {
-      myKey = key;
-      myData = data;
+    private Template(VarargEventId id,
+                     List<EventPair> pairs) {
+      myEventId = id;
+      myEventPairs = pairs;
     }
 
     @NotNull
     private MetricEvent createMetricEvent(int count) {
-      return MetricEventFactoryKt.newCounterMetric(myKey, count, myData);
+      myEventPairs.add(COUNT_FIELD.with(count));
+      return myEventId.metric(myEventPairs.toArray(new EventPair[0]));
     }
 
     @Override
@@ -174,13 +183,13 @@ public class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector 
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       Template template = (Template)o;
-      return Objects.equals(myKey, template.myKey) &&
-             Objects.equals(myData, template.myData);
+      return Objects.equals(myEventId, template.myEventId) &&
+             Objects.equals(myEventPairs, template.myEventPairs);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(myKey, myData);
+      return Objects.hash(myEventId, myEventPairs);
     }
   }
 
@@ -195,8 +204,8 @@ public class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector 
     protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       if (isThirdPartyValue(data) || "unknown".equals(data)) return ValidationResultType.ACCEPTED;
 
-      final String configurationId = getEventDataField(context, ID_FIELD);
-      final String factoryId = getEventDataField(context, FACTORY_FIELD);
+      final String configurationId = getEventDataField(context, ID_FIELD.getName());
+      final String factoryId = getEventDataField(context, FACTORY_FIELD.getName());
       if (configurationId == null) {
         return ValidationResultType.REJECTED;
       }
