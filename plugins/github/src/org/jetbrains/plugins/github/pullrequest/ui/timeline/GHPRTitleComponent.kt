@@ -1,0 +1,67 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.plugins.github.pullrequest.ui.timeline
+
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.util.ui.UI
+import com.intellij.util.ui.UIUtil
+import icons.GithubIcons
+import net.miginfocom.layout.CC
+import net.miginfocom.layout.LC
+import net.miginfocom.swing.MigLayout
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
+import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModel
+import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
+import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import javax.swing.JComponent
+import javax.swing.JLabel
+
+internal object GHPRTitleComponent {
+
+  fun create(model: SingleValueModel<GHPullRequestShort>): JComponent {
+    val icon = JLabel()
+    val title = HtmlEditorPane().apply {
+      font = font.deriveFont((font.size * 1.5).toFloat())
+    }
+
+    model.addAndInvokeValueChangedListener {
+      icon.icon = getStateIcon(model.value.state)
+      title.setBody(getTitleBody(model.value.title, model.value.number.toString()))
+    }
+
+    return layout(icon, title)
+  }
+
+  fun create(detailsModel: GHPRDetailsModel): JComponent {
+    val icon = JLabel()
+    val title = HtmlEditorPane().apply {
+      font = font.deriveFont((font.size * 1.2).toFloat())
+    }
+
+    detailsModel.addAndInvokeDetailsChangedListener {
+      icon.icon = getStateIcon(detailsModel.state)
+      title.setBody(getTitleBody(detailsModel.title, detailsModel.number))
+    }
+
+    return layout(icon, title)
+  }
+
+  private fun getStateIcon(state: GHPullRequestState) = when (state) {
+    GHPullRequestState.CLOSED -> GithubIcons.PullRequestClosed
+    GHPullRequestState.MERGED -> GithubIcons.PullRequestMerged
+    GHPullRequestState.OPEN -> GithubIcons.PullRequestOpen
+  }
+
+  private fun getTitleBody(title: String, number: String): String {
+    val contextHelpColorText = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground())
+    //language=html
+    return title + "&nbsp<span style='color: $contextHelpColorText'>#${number}</span>"
+  }
+
+  private fun layout(icon: JLabel, title: HtmlEditorPane) =
+    NonOpaquePanel(MigLayout(LC().insets("0").gridGap("0", "0").fill())).apply {
+      add(icon, CC().gapRight("${UI.scale(4)}"))
+      add(title, CC())
+    }
+}
