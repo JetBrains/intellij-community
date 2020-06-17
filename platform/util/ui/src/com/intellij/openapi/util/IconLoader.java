@@ -477,7 +477,7 @@ public final class IconLoader {
       double scale;
       ScaleContextSupport ctxSupport = getScaleContextSupport(icon);
       if (ctxSupport != null) {
-        scale = ctxSupport.getScale(SYS_SCALE);
+        scale = StartupUiUtil.isJreHiDPI() ? ctxSupport.getScale(SYS_SCALE) : 1f;
       }
       else {
         scale = StartupUiUtil.isJreHiDPI() ? JBUIScale.sysScale(ancestor) : 1f;
