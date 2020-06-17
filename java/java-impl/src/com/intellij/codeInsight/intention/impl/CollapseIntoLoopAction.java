@@ -110,7 +110,11 @@ public class CollapseIntoLoopAction implements IntentionAction {
       block.addRangeBefore(myStatements.get(0), myStatements.get(myStatementCount - 1), brace);
       PsiElement origBlock = context.getParent();
       JavaCodeStyleManager.getInstance(block.getProject()).shortenClassReferences(origBlock.addBefore(loop, myStatements.get(0)));
-      origBlock.deleteChildRange(myStatements.get(0), myStatements.get(myStatements.size() - 1));
+      CommentTracker ct = new CommentTracker();
+      myLoopElements.forEach(ct::markUnchanged);
+      ct.delete(myStatements.subList(myStatementCount, myStatements.size()).toArray(PsiStatement.EMPTY_ARRAY));
+      ct.insertCommentsBefore(myStatements.get(0));
+      origBlock.deleteChildRange(myStatements.get(0), myStatements.get(myStatementCount - 1));
     }
 
     private String tryCollapseIntoCountingLoop(String varName) {
@@ -221,12 +225,14 @@ public class CollapseIntoLoopAction implements IntentionAction {
       PsiExpression firstIterationExpression = null;
       PsiExpression curIterationExpression = null;
       boolean secondIteration = count == offset;
+      int mismatchedStatements = 0;
       for (int index = 0; index < count; index++) {
         PsiStatement first = statements.get(index);
         PsiStatement cur = statements.get(index + offset);
         EquivalenceChecker.Match match = new TrackingEquivalenceChecker().statementsMatch(first, cur);
         if (match.isExactMismatch()) return false;
         if (match.isExactMatch()) continue;
+        mismatchedStatements++;
         PsiElement leftDiff = match.getLeftDiff();
         PsiElement rightDiff = match.getRightDiff();
         if (!(leftDiff instanceof PsiExpression) || !(rightDiff instanceof PsiExpression)) return false;
@@ -258,6 +264,10 @@ public class CollapseIntoLoopAction implements IntentionAction {
       }
       if (secondIteration) {
         ContainerUtil.addIfNotNull(expressionsToIterate, firstIterationExpression);
+      } else {
+        if (mismatchedStatements != expressionsToReplace.size()) {
+          return false;
+        }
       }
       ContainerUtil.addIfNotNull(expressionsToIterate, curIterationExpression);
       return true;
