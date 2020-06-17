@@ -62,7 +62,13 @@ public class MoveIntoIfBranchesAction implements IntentionAction {
         afterLast.add(e);
       }
     }
-    List<String> declaredInIf = StreamEx.of(ifStatement.getThenBranch(), ifStatement.getElseBranch()).flatArray(ControlFlowUtils::unwrapBlock)
+    PsiStatement thenBranch = ifStatement.getThenBranch();
+    PsiStatement elseBranch = ifStatement.getElseBranch();
+    if (!ControlFlowUtils.statementMayCompleteNormally(thenBranch) ||
+        !ControlFlowUtils.statementMayCompleteNormally(elseBranch)) {
+      return true;
+    }
+    List<String> declaredInIf = StreamEx.of(thenBranch, elseBranch).flatArray(ControlFlowUtils::unwrapBlock)
       .select(PsiDeclarationStatement.class).flatArray(PsiDeclarationStatement::getDeclaredElements)
       .select(PsiNamedElement.class).map(PsiNamedElement::getName).nonNull().toList();
     if (afterLast.isEmpty() && declaredInIf.isEmpty()) return false;
