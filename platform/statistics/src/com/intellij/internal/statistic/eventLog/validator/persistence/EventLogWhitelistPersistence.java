@@ -13,9 +13,10 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
 public class EventLogWhitelistPersistence extends BaseEventLogWhitelistPersistence {
-  public static final String WHITE_LIST_DATA_FILE = "white-list.json";
-  private static final Logger LOG =
-    Logger.getInstance(EventLogWhitelistPersistence.class);
+  private static final String DEPRECATED_EVENTS_SCHEME_FILE = "white-list.json";
+  public static final String EVENTS_SCHEME_FILE = "events-scheme.json";
+
+  private static final Logger LOG = Logger.getInstance(EventLogWhitelistPersistence.class);
   @NotNull
   private final String myRecorderId;
 
@@ -25,7 +26,7 @@ public class EventLogWhitelistPersistence extends BaseEventLogWhitelistPersisten
 
   @Override
   @Nullable
-  public String getCachedWhitelist() {
+  public String getCachedMetadata() {
     try {
       File file = getWhitelistFile();
       if (file.exists()) return FileUtil.loadFile(file);
@@ -44,7 +45,9 @@ public class EventLogWhitelistPersistence extends BaseEventLogWhitelistPersisten
     }
     else {
       File file = getDefaultFile();
-      if (!file.exists()) initBuiltinWhiteList(file);
+      if (!file.exists()) {
+        initBuiltinMetadata(file);
+      }
       return file;
     }
   }
@@ -60,7 +63,7 @@ public class EventLogWhitelistPersistence extends BaseEventLogWhitelistPersisten
     }
   }
 
-  private void initBuiltinWhiteList(File file) throws IOException {
+  private void initBuiltinMetadata(File file) throws IOException {
     try (InputStream stream = getClass().getClassLoader().getResourceAsStream(builtinWhiteListPath())) {
       if (stream == null) return;
       if (!file.getParentFile().exists() && !file.getParentFile().mkdirs()) {
@@ -71,7 +74,7 @@ public class EventLogWhitelistPersistence extends BaseEventLogWhitelistPersisten
   }
 
   private String builtinWhiteListPath() {
-    return "resources/" + FUS_WHITELIST_PATH + "/" + myRecorderId + "/" + WHITE_LIST_DATA_FILE;
+    return "resources/" + DEPRECATED_FUS_METADATA_DIR + "/" + myRecorderId + "/" + DEPRECATED_EVENTS_SCHEME_FILE;
   }
 
   public long getLastModified() {
@@ -79,7 +82,7 @@ public class EventLogWhitelistPersistence extends BaseEventLogWhitelistPersisten
   }
 
   @NotNull
-  private File getDefaultFile() throws IOException {
-    return getDefaultWhitelistFile(myRecorderId, WHITE_LIST_DATA_FILE);
+  public File getDefaultFile() throws IOException {
+    return getDefaultMetadataFile(myRecorderId, EVENTS_SCHEME_FILE, DEPRECATED_EVENTS_SCHEME_FILE);
   }
 }

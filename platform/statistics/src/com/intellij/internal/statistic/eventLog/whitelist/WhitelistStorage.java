@@ -55,7 +55,7 @@ public class WhitelistStorage extends BaseWhitelistStorage {
   }
 
   private @Nullable String loadValidatorsFromLocalCache(@NotNull String recorderId) {
-    String whiteListContent = myWhitelistPersistence.getCachedWhitelist();
+    String whiteListContent = myWhitelistPersistence.getCachedMetadata();
     if (whiteListContent != null) {
       try {
         String newVersion = updateValidators(whiteListContent);
