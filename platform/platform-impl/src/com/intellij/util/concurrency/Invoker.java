@@ -117,7 +117,7 @@ public abstract class Invoker implements Disposable {
    */
   @NotNull
   public final CancellablePromise<?> invoke(@NotNull Runnable task) {
-    return promise(new Task<>(task));
+    return compute(new Wrapper(task));
   }
 
   /**
@@ -143,7 +143,7 @@ public abstract class Invoker implements Disposable {
    */
   @NotNull
   public final CancellablePromise<?> invokeLater(@NotNull Runnable task, int delay) {
-    return promise(new Task<>(task), delay);
+    return computeLater(new Wrapper(task), delay);
   }
 
   /**
@@ -277,31 +277,6 @@ public abstract class Invoker implements Disposable {
     Task(@NotNull Supplier<? extends T> supplier) {
       this.supplier = supplier;
     }
-    Task(@NotNull Runnable runnable) {
-      this.supplier = new RunnableSupplier<>(runnable);
-    }
-    private static class RunnableSupplier<T> implements Supplier<T>, Obsolescent {
-      private @NotNull final Runnable myRunnable;
-
-      RunnableSupplier(@NotNull Runnable runnable) {myRunnable = runnable;}
-
-      @Override
-      public T get() {
-        myRunnable.run();
-        return null;
-      }
-
-      @Override
-      public boolean isObsolete() {
-        return myRunnable instanceof Obsolescent && ((Obsolescent)myRunnable).isObsolete();
-      }
-
-      @Override
-      public String toString() {
-        return myRunnable.toString();
-      }
-    }
-
 
     boolean canRestart(boolean disposed, int attempt) {
       LOG.debug("Task is canceled");
@@ -346,6 +321,35 @@ public abstract class Invoker implements Disposable {
       return "Invoker.Task: " + supplier;
     }
   }
+
+
+  /**
+   * This wrapping class is intended to convert a developer's runnable to the obsolescent supplier.
+   */
+  private static final class Wrapper implements Obsolescent, Supplier<Void> {
+    private final Runnable task;
+
+    Wrapper(@NotNull Runnable task) {
+      this.task = task;
+    }
+
+    @Override
+    public Void get() {
+      task.run();
+      return null;
+    }
+
+    @Override
+    public boolean isObsolete() {
+      return task instanceof Obsolescent && ((Obsolescent)task).isObsolete();
+    }
+
+    @Override
+    public String toString() {
+      return task.toString();
+    }
+  }
+
 
   @NotNull
   private ProgressIndicatorBase indicator(@NotNull AsyncPromise<?> promise) {
