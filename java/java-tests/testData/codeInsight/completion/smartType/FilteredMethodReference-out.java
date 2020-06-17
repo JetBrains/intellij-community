@@ -8,6 +8,6 @@ class Test {
   }
 
   {
-    I i = Test::aa
+    I i = Test::aa;<caret>
   }
 }

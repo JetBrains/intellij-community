@@ -542,10 +542,6 @@ public class JavaCompletionUtil {
       }
     }
 
-    if (reference instanceof PsiMethodReferenceExpression && completion instanceof PsiMethod && ((PsiMethod)completion).isConstructor()) {
-      return Collections.singletonList(createConstructorReferenceItem((PsiMethod)completion, (PsiMethodReferenceExpression)reference));
-    }
-
     PsiSubstitutor substitutor = completionElement.getSubstitutor();
     if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
     if (completion instanceof PsiClass) {
@@ -555,7 +551,8 @@ public class JavaCompletionUtil {
     }
     if (completion instanceof PsiMethod) {
       if (reference instanceof PsiMethodReferenceExpression) {
-        return Collections.singleton(new JavaMethodReferenceElement((PsiMethod)completion, (PsiMethodReferenceExpression)reference));
+        return Collections.singleton((LookupElement)new JavaMethodReferenceElement(
+          (PsiMethod)completion, (PsiMethodReferenceExpression)reference, completionElement.getMethodRefType()));
       }
 
       JavaMethodCallElement item = new JavaMethodCallElement((PsiMethod)completion).setQualifierSubstitutor(substitutor);
@@ -570,15 +567,6 @@ public class JavaCompletionUtil {
     }
 
     return Collections.singletonList(LookupItemUtil.objectToLookupItem(completion));
-  }
-
-  @NotNull
-  private static LookupElement createConstructorReferenceItem(@NotNull PsiMethod completion, @NotNull PsiMethodReferenceExpression context) {
-    LookupElementBuilder item = JavaLookupElementBuilder
-      .forMethod(completion, "new", PsiSubstitutor.EMPTY, null)
-      .withPresentableText("new")
-      .bold();
-    return LambdaHighlightingUtil.insertSemicolon(context.getParent()) ? TailTypeDecorator.withTail(item, TailType.SEMICOLON) : item;
   }
 
   public static boolean hasAccessibleConstructor(@NotNull PsiType type, @NotNull PsiElement place) {
@@ -821,7 +809,7 @@ public class JavaCompletionUtil {
     }
   }
 
-  public static boolean insertTail(InsertionContext context, LookupElement item, TailType tailType, boolean hasTail) {
+  private static boolean insertTail(InsertionContext context, LookupElement item, TailType tailType, boolean hasTail) {
     TailType toInsert = tailType;
     LookupItem<?> lookupItem = item.as(LookupItem.CLASS_CONDITION_KEY);
     if (lookupItem == null || lookupItem.getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN) {
@@ -834,18 +822,12 @@ public class JavaCompletionUtil {
         boolean insertAdditionalSemicolon = true;
         PsiElement leaf = context.getFile().findElementAt(context.getStartOffset());
         PsiElement composite = leaf == null ? null : leaf.getParent();
-        if (composite instanceof PsiMethodReferenceExpression && !LambdaHighlightingUtil.insertSemicolon(composite.getParent())) {
-          insertAdditionalSemicolon = false;
-        }
-        else if (composite instanceof PsiReferenceExpression) {
+        if (composite instanceof PsiReferenceExpression) {
           PsiElement parent = composite.getParent();
           if (parent instanceof PsiMethodCallExpression) {
             parent = parent.getParent();
           }
           if (parent instanceof PsiLambdaExpression && !LambdaHighlightingUtil.insertSemicolonAfter((PsiLambdaExpression)parent)) {
-            insertAdditionalSemicolon = false;
-          }
-          if (parent instanceof PsiMethodReferenceExpression && !LambdaHighlightingUtil.insertSemicolon(parent.getParent())) {
             insertAdditionalSemicolon = false;
           }
         }
