@@ -31,13 +31,14 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler, HighPriorityAction {
   private static final Logger LOG = Logger.getInstance(I18nizeQuickFix.class);
-  private static final Set<String> AUXILIARY_WORDS = ContainerUtil.immutableSet("is", "not", "the", "of", "and", "a", "an");
+  private static final Set<String> AUXILIARY_WORDS = ContainerUtil.immutableSet("is", "the", "of", "and", "a", "an");
   private final NlsInfo.Localized myInfo;
   private TextRange mySelectionRange;
 
