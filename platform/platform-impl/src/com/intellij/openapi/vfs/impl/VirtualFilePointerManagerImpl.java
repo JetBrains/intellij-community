@@ -68,8 +68,11 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     myPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFilePointerListener.TOPIC);
   }
 
-  public void addAsyncFileListenerTo(@NotNull List<? super AsyncFileListener> listeners) {
-    listeners.add((AsyncFileListener)events -> prepareChange(events));
+  static final class MyAsyncFileListener implements AsyncFileListener {
+    @Override
+    public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+      return ((VirtualFilePointerManagerImpl)getInstance()).prepareChange(events);
+    }
   }
 
   @Override
@@ -554,7 +557,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   }
 
   @NotNull
-  public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+  ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
     myCollectedEvents = collectEvents(events);
     return new ChangeApplier() {
       @Override
