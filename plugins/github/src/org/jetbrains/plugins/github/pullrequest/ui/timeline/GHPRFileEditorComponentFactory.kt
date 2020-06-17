@@ -105,7 +105,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
 
     val avatarIconsProvider = editor.avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, mainPanel)
 
-    val header = GHPRHeaderPanel.create(detailsModel)
+    val header = GHPRTitleComponent.create(detailsModel)
 
     val timeline = GHPRTimelineComponent(detailsModel,
                                          timelineModel,
