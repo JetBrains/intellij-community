@@ -45,6 +45,7 @@ import com.intellij.util.ui.StartupUiUtil;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
+import org.apache.log4j.helpers.LogLog;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -593,6 +594,10 @@ public final class StartupUtil {
     if (Boolean.parseBoolean(System.getProperty("intellij.log.stdout", "true"))) {
       System.setOut(new PrintStreamLogger("STDOUT", System.out));
       System.setErr(new PrintStreamLogger("STDERR", System.err));
+      // Disabling output to System.err seems to be the only way to avoid deadlock (https://youtrack.jetbrains.com/issue/IDEA-243708)
+      // with Log4j 1.x if an internal error happens during logging (e.g. a disk space issue).
+      // Should be revisited in case of migration to Log4j 2.
+      LogLog.setQuietMode(true);
     }
     return log;
   }
