@@ -71,9 +71,9 @@ public class ClsStubBuilderTest extends LightIdeaTestCase {
 
   private static void doTest(VirtualFile clsFile, String resultFileName) {
     try {
-      PsiFileStub stub = ClsFileImpl.buildFileStub(clsFile, clsFile.contentsToByteArray());
+      PsiFileStub<?> stub = ClsFileImpl.buildFileStub(clsFile, clsFile.contentsToByteArray());
       assertNotNull(stub);
-      String actual = ((StubBase)stub).printTree().trim();
+      String actual = ((StubBase<?>)stub).printTree().trim();
 
       File resultFile = new File(JavaTestUtil.getJavaTestDataPath() + "/psi/cls/stubBuilder/" + resultFileName);
       if (!resultFile.exists()) {
