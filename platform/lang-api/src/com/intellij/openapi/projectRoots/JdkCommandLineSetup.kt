@@ -67,13 +67,14 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
    * @param uploadPathIsFile
    *   * true: [uploadPathString] points to a file, the volume should be created for the file's directory.
    *   * false: [uploadPathString] points to a directory, the volume should be created for the path.
-   *   * null: Determine whether [uploadPathString] a file or a directory,
-   *     throws an error if [uploadPathString] does not exist or is not readable.
+   *   * null: Determine whether [uploadPathString] is a file or a directory. If [uploadPathString] does not exist, it is treated as file.
    */
   private fun uploadIntoTempDir(uploadPathString: String, uploadPathIsFile: Boolean? = null): TargetValue<String> {
     val uploadPath = Paths.get(FileUtil.toSystemDependentName(uploadPathString))
     val isDir = uploadPathIsFile ?: uploadPath.isDirectory()
-    val localRootPath = if (isDir) uploadPath else uploadPath.parent
+    val localRootPath =
+      if (isDir) uploadPath
+      else (uploadPath.parent ?: Paths.get("."))  // Normally, paths should be absolute, but there are tests that check relative paths.
     val uploadRoot = TargetEnvironment.UploadRoot(
       localRootPath = localRootPath,
       targetRootPath = TargetEnvironment.TargetPath.Temporary()
