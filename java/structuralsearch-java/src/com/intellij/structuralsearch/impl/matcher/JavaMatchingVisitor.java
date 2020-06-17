@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.StructuralSearchUtil;
+import com.intellij.structuralsearch.impl.matcher.handlers.LiteralWithSubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.iterators.DocValuesIterator;
@@ -84,6 +85,15 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       else {
         myMatchingVisitor.setResult(substitutionHandler.handle(other, start, end, myMatchingVisitor.getMatchContext()));
       }
+    }
+    else if (handler instanceof LiteralWithSubstitutionHandler) {
+      final LiteralWithSubstitutionHandler lwsHandler = (LiteralWithSubstitutionHandler) handler;
+      int offset = other.getTokenType() == JavaDocTokenType.DOC_COMMENT_START ? 3 : 2;
+      String commentText = comment.getText();
+      while (commentText.length() > offset && commentText.charAt(offset) <= ' ') {
+        offset++;
+      }
+      myMatchingVisitor.setResult(lwsHandler.match(other, JavaMatchUtil.getCommentText(other).trim(), offset, myMatchingVisitor.getMatchContext()));
     }
     else if (handler != null) {
       myMatchingVisitor.setResult(handler.match(comment, other, myMatchingVisitor.getMatchContext()));

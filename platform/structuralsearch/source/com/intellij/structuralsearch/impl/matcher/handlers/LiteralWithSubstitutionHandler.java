@@ -22,10 +22,14 @@ public class LiteralWithSubstitutionHandler extends MatchingHandler {
 
   @Override
   public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
-    final String text = matchedNode.getText();
+    return match(matchedNode, matchedNode.getText(), 0, context);
+  }
+
+  public boolean match(PsiElement matchedNode, String text, int textOffset, MatchContext context) {
     if (myMatcher == null) {
       myMatcher = Pattern.compile(myRegexp, myCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE).matcher(text);
-    } else {
+    }
+    else {
       myMatcher.reset(text);
     }
 
@@ -35,7 +39,7 @@ public class LiteralWithSubstitutionHandler extends MatchingHandler {
     for (int i = 0; i < myHandlers.size(); ++i) {
       final SubstitutionHandler handler = myHandlers.get(i);
 
-      if (!handler.handle(matchedNode, myMatcher.start(i + 1), myMatcher.end(i + 1), context)) {
+      if (!handler.handle(matchedNode, textOffset + myMatcher.start(i + 1), textOffset + myMatcher.end(i + 1), context)) {
         return false;
       }
     }
