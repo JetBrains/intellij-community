@@ -27,6 +27,8 @@ Adds support for working with shell script files
     <resolveScopeProvider id="shResolveScopeProvider" implementation="com.intellij.sh.psi.impl.ShResolveScopeProvider"/>
     <lang.elementManipulator id="shLiteralManipulator" forClass="com.intellij.sh.psi.ShLiteral"
                              implementationClass="com.intellij.sh.psi.manipulator.ShLiteralManipulator" />
+    <targetElementEvaluator id="shTargetElementEvaluator" language="Shell Script"
+                            implementationClass="com.intellij.sh.codeInsight.ShTargetElementEvaluator"/>
     <editor.backspaceModeOverride id="shBackspaceModeOverride" language="Shell Script" implementationClass="com.intellij.sh.ShBackspaceModeOverride"/>
 
     <lang.psiStructureViewFactory id="shStructureViewFactory" language="Shell Script" implementationClass="com.intellij.sh.ShStructureViewFactory"/>
