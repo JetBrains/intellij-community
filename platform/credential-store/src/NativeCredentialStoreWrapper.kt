@@ -10,12 +10,14 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.QueueProcessor
 import org.jetbrains.annotations.TestOnly
 import java.io.Closeable
 import java.util.concurrent.TimeUnit
+import java.util.function.BiConsumer
 
 internal val NOTIFICATION_MANAGER by lazy {
   // we use name "Password Safe" instead of "Credentials Store" because it was named so previously (and no much sense to rename it)
@@ -25,10 +27,14 @@ internal val NOTIFICATION_MANAGER by lazy {
 private val REMOVED_CREDENTIALS = Credentials("REMOVED_CREDENTIALS")
 
 // used only for native keychains, not for KeePass, so, postponedCredentials and other is not overhead if KeePass is used
-private class NativeCredentialStoreWrapper(private val store: CredentialStore) : CredentialStore, Closeable {
-  private val fallbackStore = lazy { InMemoryCredentialStore() }
+private class NativeCredentialStoreWrapper internal constructor(
+  private val store: CredentialStore,
+  private val queueProcessor: QueueProcessor<() -> Unit>
+) : CredentialStore, Closeable {
 
-  private val queueProcessor = QueueProcessor<() -> Unit> { it() }
+  constructor(store: CredentialStore): this(store, QueueProcessor<() -> Unit> { it() })
+
+  private val fallbackStore = lazy { InMemoryCredentialStore() }
 
   private val postponedCredentials = InMemoryCredentialStore()
 
@@ -148,4 +154,12 @@ private class LinuxCredentialStoreFactory : CredentialStoreFactory {
 }
 
 @TestOnly
-fun wrappedInMemory(): CredentialStore = NativeCredentialStoreWrapper(InMemoryCredentialStore())
+fun wrappedInMemory(): CredentialStore = NativeCredentialStoreWrapper(InMemoryCredentialStore(), QueueProcessor<() -> Unit>(
+  BiConsumer { item, continuation ->
+    try {
+      QueueProcessor.runSafely(item)
+    }
+    finally {
+      continuation.run()
+    }
+  }, true, QueueProcessor.ThreadToUse.AWT, Conditions.alwaysFalse<Any>()))
