@@ -101,7 +101,8 @@ open class MarketplaceRequests {
   ).addParameters(param)
 
   fun getFeatures(param: Map<String, String>): List<FeatureImpl> = try {
-    if (param.isNotEmpty()) {
+    if (param.isEmpty()) emptyList()
+    else {
       HttpRequests
         .request(createFeatureUrl(param))
         .throwStatusCodeException(false)
@@ -113,7 +114,6 @@ open class MarketplaceRequests {
           )
         }
     }
-    else emptyList()
   }
   catch (e: Exception) {
     logWarnOrPrintIfDebug("Can not get features from Marketplace", e)
@@ -253,7 +253,8 @@ open class MarketplaceRequests {
   }
 
   fun getLastCompatiblePluginUpdate(ids: List<String>, buildNumber: BuildNumber? = null): List<IdeCompatibleUpdate> = try {
-    if (ids.isNotEmpty()) {
+    if (ids.isEmpty()) emptyList()
+    else {
       val data = objectMapper.writeValueAsString(CompatibleUpdateRequest(PluginDownloader.getBuildNumberForDownload(buildNumber), ids))
       val url = Urls.newFromEncoded(COMPATIBLE_UPDATE_URL).toExternalForm()
       HttpRequests
@@ -269,7 +270,6 @@ open class MarketplaceRequests {
             )
         }
     }
-    else emptyList()
   }
   catch (e: Exception) {
     logWarnOrPrintIfDebug("Can not get compatible updates from Marketplace", e)
