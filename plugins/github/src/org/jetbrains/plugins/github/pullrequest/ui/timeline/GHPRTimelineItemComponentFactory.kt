@@ -20,15 +20,18 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.intellij.lang.annotations.Language
 import org.jetbrains.plugins.github.api.data.*
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestCommitShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState.*
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadComponent
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
 import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
@@ -40,7 +43,8 @@ import javax.swing.*
 import kotlin.math.ceil
 import kotlin.math.floor
 
-class GHPRTimelineItemComponentFactory(private val commentsDataProvider: GHPRCommentsDataProvider,
+class GHPRTimelineItemComponentFactory(private val detailsDataProvider: GHPRDetailsDataProvider,
+                                       private val commentsDataProvider: GHPRCommentsDataProvider,
                                        private val reviewDataProvider: GHPRReviewDataProvider,
                                        private val avatarIconsProvider: GHAvatarIconsProvider,
                                        private val reviewsThreadsModelsProvider: GHPRReviewsThreadsModelsProvider,
@@ -64,6 +68,36 @@ class GHPRTimelineItemComponentFactory(private val commentsDataProvider: GHPRCom
     catch (e: Exception) {
       return Item(AllIcons.General.Warning, HtmlEditorPane(GithubBundle.message("cannot.display.item", e.message ?: "")))
     }
+  }
+
+  fun createComponent(details: GHPullRequestShort): Item {
+    val contentPanel: JPanel?
+    val actionsPanel: JPanel?
+    if (details is GHPullRequest) {
+      val textPane = HtmlEditorPane(details.bodyHTML)
+      val panelHandle = GHEditableHtmlPaneHandle(textPane,
+                                                 { detailsDataProvider.getDescriptionMarkdownBody(EmptyProgressIndicator()) },
+                                                 { newText ->
+                                                   detailsDataProvider.updateDetails(EmptyProgressIndicator(), newText).successOnEdt {
+                                                     textPane.setBody(it.bodyHTML)
+                                                   }
+                                                 })
+      contentPanel = panelHandle.panel
+      actionsPanel = if (details.viewerCanUpdate) NonOpaquePanel(HorizontalLayout(UI.scale(8))).apply {
+        add(GHTextActions.createEditButton(panelHandle))
+      }
+      else null
+    }
+    else {
+      contentPanel = null
+      actionsPanel = null
+    }
+    val titlePanel = NonOpaquePanel(HorizontalLayout(UI.scale(12))).apply {
+      add(actionTitle(details.author, GithubBundle.message("pull.request.timeline.created"), details.createdAt))
+      if (actionsPanel != null && actionsPanel.componentCount > 0) add(actionsPanel)
+    }
+
+    return Item(userAvatar(details.author), titlePanel, contentPanel)
   }
 
   private fun createComponent(comment: GHIssueComment): Item {

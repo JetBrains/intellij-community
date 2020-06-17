@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.util.EventDispatcher
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
@@ -15,7 +15,7 @@ open class GHSubmittableTextFieldModel(initialText: String, private val submitte
 
   constructor(submitter: (String) -> CompletableFuture<*>) : this("", submitter)
 
-  val document = EditorFactory.getInstance().createDocument(initialText)
+  val document = DocumentImpl(initialText, true, false)
 
   protected val stateEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 

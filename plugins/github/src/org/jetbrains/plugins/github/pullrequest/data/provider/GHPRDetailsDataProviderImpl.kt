@@ -10,6 +10,7 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCommentService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRDetailsService
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.CollectionDelta
@@ -20,6 +21,7 @@ import java.util.concurrent.CompletableFuture
 import kotlin.properties.Delegates
 
 class GHPRDetailsDataProviderImpl(private val detailsService: GHPRDetailsService,
+                                  private val commentService: GHPRCommentService,
                                   private val pullRequestId: GHPRIdentifier,
                                   private val messageBus: MessageBus)
   : GHPRDetailsDataProvider, Disposable {
@@ -41,6 +43,17 @@ class GHPRDetailsDataProviderImpl(private val detailsService: GHPRDetailsService
   override fun loadDetails(): CompletableFuture<GHPullRequest> = detailsRequestValue.value
 
   override fun reloadDetails() = detailsRequestValue.drop()
+
+  override fun getDescriptionMarkdownBody(indicator: ProgressIndicator) =
+    commentService.getCommentMarkdownBody(indicator, pullRequestId.id)
+
+  override fun updateDetails(indicator: ProgressIndicator, description: String?): CompletableFuture<GHPullRequest> {
+    val future = detailsService.updateDetails(indicator, pullRequestId, description).completionOnEdt {
+      messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onMetadataChanged()
+    }
+    detailsRequestValue.overrideProcess(future)
+    return future
+  }
 
   override fun adjustReviewers(indicator: ProgressIndicator,
                                delta: CollectionDelta<GHPullRequestRequestedReviewer>) =

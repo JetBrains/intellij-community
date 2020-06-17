@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
-import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
@@ -36,6 +35,12 @@ interface GHPRDetailsDataProvider {
 
   @CalledInAwt
   fun addDetailsLoadedListener(disposable: Disposable, listener: () -> Unit)
+
+  @CalledInAwt
+  fun getDescriptionMarkdownBody(indicator: ProgressIndicator): CompletableFuture<String>
+
+  @CalledInAwt
+  fun updateDetails(indicator: ProgressIndicator, description: String? = null): CompletableFuture<GHPullRequest>
 
   @CalledInAwt
   fun adjustReviewers(indicator: ProgressIndicator, delta: CollectionDelta<GHPullRequestRequestedReviewer>)

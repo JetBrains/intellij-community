@@ -81,6 +81,15 @@ object GHGQLRequests {
                                               "repository", "pullRequest")
     }
 
+
+    fun update(repository: GHRepositoryCoordinates, pullRequestId: String, description: String?): GQLQuery<GHPullRequest> {
+      return GQLQuery.TraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.updatePullRequest,
+                                      mapOf("pullRequestId" to pullRequestId,
+                                            "body" to description),
+                                      GHPullRequest::class.java,
+                                      "updatePullRequest", "pullRequest")
+    }
+
     fun mergeabilityData(repository: GHRepositoryCoordinates, number: Long): GQLQuery<GHPullRequestMergeabilityData?> =
       GQLQuery.OptionalTraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.pullRequestMergeabilityData,
                                        mapOf("repoOwner" to repository.repositoryPath.owner,
