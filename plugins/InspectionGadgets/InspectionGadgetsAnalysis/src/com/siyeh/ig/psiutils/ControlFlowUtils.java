@@ -792,14 +792,14 @@ public class ControlFlowUtils {
    *
    * @param flow      ControlFlow to analyze
    * @param start     start point
-   * @param statement loop to check
+   * @param statement statement to check
    * @param variable  variable to analyze
    * @param excluded  instructions to exclude
    * @return true if variable can be referenced between start point and statement entry
    */
   public static boolean isVariableReferencedBeforeStatementEntry(@NotNull ControlFlow flow,
                                                                  final int start,
-                                                                 final PsiStatement statement,
+                                                                 final PsiElement statement,
                                                                  @NotNull PsiVariable variable,
                                                                  @NotNull Set<Integer> excluded) {
     final int statementStart = flow.getStartOffset(statement);
