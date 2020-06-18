@@ -6,7 +6,7 @@ import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.filters.LogEventFilter;
 import com.intellij.internal.statistic.eventLog.filters.LogEventWhitelistFilter;
-import com.intellij.internal.statistic.service.fus.EventLogWhitelistParseException;
+import com.intellij.internal.statistic.service.fus.EventLogMetadataParseException;
 import com.intellij.internal.statistic.service.fus.StatisticsWhitelistConditions;
 import com.intellij.internal.statistic.service.fus.StatisticsWhitelistLoader;
 import com.intellij.lang.Language;
@@ -194,7 +194,7 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
       String parsed = parseLogAndFilter(new LogEventWhitelistFilter(scheme), myEventLogPanel.getText());
       updateResultRequest(parsed.trim());
     }
-    catch (EventLogWhitelistParseException e) {
+    catch (EventLogMetadataParseException e) {
       Messages.showErrorDialog(myProject, e.getMessage(), "Failed Parsing Events Scheme");
     }
     catch (IOException | ParseEventLogWhitelistException e) {

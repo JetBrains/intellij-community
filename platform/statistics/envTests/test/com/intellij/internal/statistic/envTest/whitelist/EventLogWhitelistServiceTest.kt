@@ -28,7 +28,7 @@ internal class EventLogWhitelistServiceTest : StatisticsServiceBaseTest() {
       exception = e
     }
     TestCase.assertNotNull(exception)
-    TestCase.assertTrue(exception is EventLogWhitelistLoadException)
+    TestCase.assertTrue(exception is EventLogMetadataLoadException)
   }
 
   fun `test get last modified whitelist`() {

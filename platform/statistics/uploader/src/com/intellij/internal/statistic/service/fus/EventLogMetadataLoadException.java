@@ -1,18 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.fus;
 
-public class EventLogWhitelistLoadException extends Exception implements EventLogWhitelistUpdateError {
+public class EventLogMetadataLoadException extends Exception implements EventLogMetadataUpdateError {
   private int myErrorCode = -1;
 
-  public EventLogWhitelistLoadException(EventLogWhitelistLoadErrorType type) {
+  public EventLogMetadataLoadException(EventLogMetadataLoadErrorType type) {
     super(type.name());
   }
 
-  public EventLogWhitelistLoadException(EventLogWhitelistLoadErrorType type, Throwable throwable) {
+  public EventLogMetadataLoadException(EventLogMetadataLoadErrorType type, Throwable throwable) {
     super(type.name(), throwable);
   }
 
-  public EventLogWhitelistLoadException(EventLogWhitelistLoadErrorType type, int errorCode) {
+  public EventLogMetadataLoadException(EventLogMetadataLoadErrorType type, int errorCode) {
     super(type.name());
     myErrorCode = errorCode;
   }
@@ -28,11 +28,11 @@ public class EventLogWhitelistLoadException extends Exception implements EventLo
   }
 
   @Override
-  public EventLogWhitelistUpdateStage getUpdateStage() {
-    return EventLogWhitelistUpdateStage.LOADING;
+  public EventLogMetadataUpdateStage getUpdateStage() {
+    return EventLogMetadataUpdateStage.LOADING;
   }
 
-  public enum EventLogWhitelistLoadErrorType {
+  public enum EventLogMetadataLoadErrorType {
     EMPTY_SERVICE_URL, UNREACHABLE_SERVICE, EMPTY_RESPONSE_BODY, ERROR_ON_LOAD
   }
 }
