@@ -35,7 +35,7 @@ import java.util.List;
 
 public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
   private static final String CODE_LENS_ID = "JavaLens";
-  private static final String FUS_GROUP_ID = "java.lens";
+  public static final String FUS_GROUP_ID = "java.lens";
   private static final String USAGES_CLICKED_EVENT_ID = "usages.clicked";
   private static final String IMPLEMENTATIONS_CLICKED_EVENT_ID = "implementations.clicked";
   private static final String SETTING_CLICKED_EVENT_ID = "setting.clicked";
