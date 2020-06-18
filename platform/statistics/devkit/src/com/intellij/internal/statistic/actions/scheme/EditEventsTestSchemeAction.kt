@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal.statistic.actions.localWhitelist
+package com.intellij.internal.statistic.actions.scheme
 
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
@@ -28,65 +28,65 @@ import java.awt.Font
 import java.io.IOException
 
 /**
- * Action opens `Edit Local Whitelist` dialog.
+ * Action opens `Edit Events Test Scheme` dialog.
  *
  * If "Add custom validation rules" is disabled, all event id and event data values from the group will be allowed.
  */
-class EditLocalWhitelistAction(private val recorderId: String = StatisticsDevKitUtil.DEFAULT_RECORDER)
-  : DumbAwareAction(ActionsBundle.messagePointer("action.EditLocalWhitelistAction.text"),
-                    ActionsBundle.messagePointer("action.EditLocalWhitelistAction.description"),
+class EditEventsTestSchemeAction(private val recorderId: String = StatisticsDevKitUtil.DEFAULT_RECORDER)
+  : DumbAwareAction(ActionsBundle.messagePointer("action.EditTestSchemeAction.text"),
+                    ActionsBundle.messagePointer("action.EditTestSchemeAction.description"),
                     ICON) {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val testWhitelistStorage = WhitelistTestGroupStorage.getTestStorage(recorderId)
-    if (testWhitelistStorage == null) {
-      showNotification(project, NotificationType.ERROR, StatisticsBundle.message("stats.cannot.find.test.whitelist.storage"))
+    val testSchemeStorage = WhitelistTestGroupStorage.getTestStorage(recorderId)
+    if (testSchemeStorage == null) {
+      showNotification(project, NotificationType.ERROR, StatisticsBundle.message("stats.cannot.find.test.scheme.storage"))
       return
     }
-    val whitelist = loadWhitelist(project, testWhitelistStorage)
-    if (whitelist == null) return
+    val scheme = loadEventsScheme(project, testSchemeStorage)
+    if (scheme == null) return
 
-    val editLocalWhitelistPanel = EditLocalWhitelistPanel(project, whitelist.localGroups, whitelist.productionGroups)
+    val editTestSchemePanel = EditEventsTestSchemePanel(project, scheme.localGroups, scheme.productionGroups)
     val dialog = dialog(
-      StatisticsBundle.message("stats.edit.local.whitelist"),
-      panel = editLocalWhitelistPanel,
+      StatisticsBundle.message("stats.edit.test.scheme"),
+      panel = editTestSchemePanel,
       resizable = true,
-      focusedComponent = editLocalWhitelistPanel.getFocusedComponent(),
+      focusedComponent = editTestSchemePanel.getFocusedComponent(),
       project = project,
-      ok = { editLocalWhitelistPanel.validateGroups() }
+      ok = { editTestSchemePanel.validateGroups() }
     )
-    Disposer.register(dialog.disposable, editLocalWhitelistPanel)
+    Disposer.register(dialog.disposable, editTestSchemePanel)
 
     if (!dialog.showAndGet()) return
 
-    runBackgroundableTask(StatisticsBundle.message("stats.updating.local.whitelist"), project, false) {
+    runBackgroundableTask(StatisticsBundle.message("stats.updating.test.scheme"), project, false) {
       try {
-        testWhitelistStorage.updateTestGroups(editLocalWhitelistPanel.getGroups())
-        showNotification(project, NotificationType.INFORMATION, StatisticsBundle.message("stats.local.whitelist.was.updated"))
+        testSchemeStorage.updateTestGroups(editTestSchemePanel.getGroups())
+        showNotification(project, NotificationType.INFORMATION, StatisticsBundle.message("stats.test.scheme.was.updated"))
       }
       catch (ex: IOException) {
-        showNotification(project, NotificationType.ERROR, StatisticsBundle.message("stats.failed.updating.local.whitelist.0", ex.message))
+        showNotification(project, NotificationType.ERROR, StatisticsBundle.message("stats.failed.updating.test.scheme.0", ex.message))
       }
     }
   }
 
-  private fun loadWhitelist(project: Project, testWhitelistStorage: WhitelistTestGroupStorage): Whitelist? {
-    return ProgressManager.getInstance().run(object : Task.WithResult<Whitelist?, IOException>(
-      project, StatisticsBundle.message("stats.loading.local.whitelist"), true) {
-      override fun compute(indicator: ProgressIndicator): Whitelist? {
-        val localGroups = testWhitelistStorage.loadLocalWhitelistGroups()
+  private fun loadEventsScheme(project: Project, testSchemeStorage: WhitelistTestGroupStorage): EventsTestScheme? {
+    return ProgressManager.getInstance().run(object : Task.WithResult<EventsTestScheme?, IOException>(
+      project, StatisticsBundle.message("stats.loading.test.scheme"), true) {
+      override fun compute(indicator: ProgressIndicator): EventsTestScheme? {
+        val localGroups = testSchemeStorage.loadLocalWhitelistGroups()
         if (indicator.isCanceled) return null
-        val productionGroups = testWhitelistStorage.loadProductionGroups()
+        val productionGroups = testSchemeStorage.loadProductionGroups()
         if (indicator.isCanceled) return null
-        return Whitelist(localGroups, productionGroups)
+        return EventsTestScheme(localGroups, productionGroups)
       }
     })
   }
 
   override fun update(e: AnActionEvent) {
-    val localWhitelistSize = WhitelistTestGroupStorage.getTestStorage(recorderId)?.size() ?: 0
-    val text = if (localWhitelistSize < 100) localWhitelistSize.toString() else "99+"
+    val testSchemeSize = WhitelistTestGroupStorage.getTestStorage(recorderId)?.size() ?: 0
+    val text = if (testSchemeSize < 100) testSchemeSize.toString() else "99+"
     val sizeCountIcon = TextIcon(text, JBColor.DARK_GRAY, UIUtil.getLabelBackground(), 1)
     sizeCountIcon.setFont(Font(UIUtil.getLabelFont().name, Font.BOLD, JBUIScale.scale(9)))
     sizeCountIcon.setInsets(1, 1, 0, 0)
@@ -102,7 +102,7 @@ class EditLocalWhitelistAction(private val recorderId: String = StatisticsDevKit
     }
   }
 
-  class Whitelist(
+  class EventsTestScheme(
     val localGroups: List<LocalWhitelistGroup>,
     val productionGroups: FUStatisticsWhiteListGroupsService.WLGroups
   )

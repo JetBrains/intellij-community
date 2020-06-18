@@ -3,18 +3,18 @@
     <group id="FeatureUsage.Internal" popup="true" internal="true" compact="true">
       <action internal="true" id="RecordStateCollectors"
               class="com.intellij.internal.statistic.actions.RecordStateStatisticsEventLogAction"/>
-      <action internal="true" id="AddTestGroupToLocalWhitelistAction"
-              class="com.intellij.internal.statistic.actions.localWhitelist.AddTestGroupToLocalWhitelistAction"/>
-      <action internal="true" id="EditLocalWhitelistAction"
-              class="com.intellij.internal.statistic.actions.localWhitelist.EditLocalWhitelistAction"/>
-      <action internal="true" id="CleanupLocalWhitelistAction"
-              class="com.intellij.internal.statistic.actions.CleanupLocalWhitelistAction"/>
+      <action internal="true" id="AddGroupToTestSchemeAction"
+              class="com.intellij.internal.statistic.actions.scheme.AddGroupToTestSchemeAction"/>
+      <action internal="true" id="EditTestSchemeAction"
+              class="com.intellij.internal.statistic.actions.scheme.EditEventsTestSchemeAction"/>
+      <action internal="true" id="CleanupEventsTestSchemeAction"
+              class="com.intellij.internal.statistic.actions.CleanupEventsTestSchemeAction"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
     <action internal="true" id="SendEventLogStatistics" class="com.intellij.internal.statistic.actions.SendEventLogAction"/>
-    <action internal="true" id="OpenLocalWhitelistFileAction" class="com.intellij.internal.statistic.actions.OpenLocalWhitelistFileAction"/>
-    <action internal="true" id="ConfigureWhitelistAction" class="com.intellij.internal.statistic.actions.ConfigureWhitelistAction"/>
-    <action internal="true" id="OpenWhitelistFileAction" class="com.intellij.internal.statistic.actions.OpenWhitelistFileAction"/>
+    <action internal="true" id="OpenEventsTestSchemeFileAction" class="com.intellij.internal.statistic.actions.OpenEventsTestSchemeFileAction"/>
+    <action internal="true" id="ConfigureEventsSchemeFileAction" class="com.intellij.internal.statistic.actions.ConfigureEventsSchemeFileAction"/>
+    <action internal="true" id="OpenEventsSchemeFileAction" class="com.intellij.internal.statistic.actions.OpenEventsSchemeFileAction"/>
     <action internal="true" id="ReportSettingsToFUS" class="com.intellij.internal.statistic.actions.ReportSettingsToFUSAction"/>
     <group internal="true" id="OpenEventLogFileAction" class="com.intellij.internal.statistic.groups.OpenEventLogFileActionGroup"/>
     <group internal="true" id="CleanupEventLog" class="com.intellij.internal.statistic.groups.CleanupEventLogByIdActionGroup"/>
@@ -24,9 +24,9 @@
                 anchor="bottom" canCloseContents="true" order="last"/>
     <notificationAllowlist groupIds="FeatureUsageStatistics"/>
     <completion.contributor language="JSON"
-                            implementationClass="com.intellij.internal.statistic.actions.localWhitelist.ValidationRulesCompletionContributor"/>
+                            implementationClass="com.intellij.internal.statistic.actions.scheme.ValidationRulesCompletionContributor"/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
-    <ProviderFactory implementation="com.intellij.internal.statistic.actions.localWhitelist.LocalWhitelistJsonSchemaProviderFactory"/>
+    <ProviderFactory implementation="com.intellij.internal.statistic.actions.scheme.EventsSchemeJsonSchemaProviderFactory"/>
   </extensions>
 </idea-plugin>

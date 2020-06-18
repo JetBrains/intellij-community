@@ -1,9 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
-  "$id": "https://jetbrains.com/local-whitelist.schema.json",
+  "$id": "https://jetbrains.com/events-test-scheme.schema.json",
   "type": "object",
-  "title": "Feature Usage Statistics Local Whitelist",
-  "description": "Feature Usage Statistics Local Whitelist",
+  "title": "Feature Usage Statistics Test Scheme",
+  "description": "Feature Usage Statistics Test Scheme",
   "required": [
     "event_id",
     "event_data"

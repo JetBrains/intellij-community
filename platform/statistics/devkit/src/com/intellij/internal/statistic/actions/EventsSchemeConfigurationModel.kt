@@ -16,7 +16,7 @@ import com.intellij.ui.layout.*
 import javax.swing.JCheckBox
 import javax.swing.event.DocumentEvent
 
-class WhitelistConfigurationModel {
+class EventsSchemeConfigurationModel {
   val panel: DialogPanel
   val recorderToSettings: MutableMap<String, WhitelistPathSettings> = mutableMapOf()
   private val recorderComboBox = ComboBox<String>()
@@ -31,7 +31,7 @@ class WhitelistConfigurationModel {
     }
     recorderComboBox.addActionListener { updatePanel() }
 
-    pathField.addBrowseFolderListener("Select Whitelist Location ", null, null, FileChooserDescriptorFactory.createSingleFileDescriptor())
+    pathField.addBrowseFolderListener("Select Events Scheme Location ", null, null, FileChooserDescriptorFactory.createSingleFileDescriptor())
     pathField.textField.document.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
         if (useCustomPathCheckBox.isSelected) {
@@ -103,7 +103,7 @@ class WhitelistConfigurationModel {
 
     val customPath = settings.customPath
     if (customPath.isNullOrBlank()) {
-      return ValidationInfo("Specify whitelist path.", pathField.textField)
+      return ValidationInfo("Specify events scheme path.", pathField.textField)
     }
     else if (!FileUtil.exists(customPath)) {
       return ValidationInfo("File doesn't exist.", pathField.textField)
@@ -126,9 +126,9 @@ class WhitelistConfigurationModel {
 
     val currentPath: String
       get() {
-        val customWhitelistPath = customPath
-        return if (useCustomPath && customWhitelistPath != null) {
-          customWhitelistPath
+        val customEventsSchemePath = customPath
+        return if (useCustomPath && customEventsSchemePath != null) {
+          customEventsSchemePath
         }
         else {
           defaultPath

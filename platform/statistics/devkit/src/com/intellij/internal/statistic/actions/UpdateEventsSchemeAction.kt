@@ -3,30 +3,28 @@ package com.intellij.internal.statistic.actions
 
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
-import com.intellij.internal.statistic.eventLog.whitelist.WhitelistTestGroupStorage
+import com.intellij.internal.statistic.StatisticsBundle
+import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
 
-class CleanupLocalWhitelistAction(private val recorderId: String? = null)
-  : DumbAwareAction(ActionsBundle.message("action.CleanupLocalWhitelistAction.text"),
-                    ActionsBundle.message("action.CleanupLocalWhitelistAction.description"),
-                    AllIcons.Actions.GC) {
-
+class UpdateEventsSchemeAction(val recorder: String)
+  : DumbAwareAction(StatisticsBundle.message("stats.update.events.scheme"),
+                    ActionsBundle.message("group.UpdateEventsSchemeAction.description"),
+                    AllIcons.Actions.Refresh) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
 
-    ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Removing Local Whitelist", false) {
+    ProgressManager.getInstance().run(object : Task.Backgroundable(project, StatisticsBundle.message("stats.updating.events.scheme"), false) {
       override fun run(indicator: ProgressIndicator) {
-        if (recorderId == null) {
-          WhitelistTestGroupStorage.cleanupAll()
-        }
-        else {
-          WhitelistTestGroupStorage.cleanupAll(listOf(recorderId))
-        }
+        val validator = SensitiveDataValidator.getInstance(recorder)
+        validator.update()
+        validator.reload()
       }
     })
   }
+
 }
