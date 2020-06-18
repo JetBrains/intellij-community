@@ -26,18 +26,19 @@ import java.util.Set;
  *   <li>Inherit the class, implement {@link ProjectUsagesCollector#getMetrics(Project)} and register collector in plugin.xml;</li>
  *   <li>Specify collectors data scheme and implement custom validation rules if necessary.<br/>
  *   For more information see {@link SensitiveDataValidator};</li>
- *   <li>Create an <a href="https://youtrack.jetbrains.com/issues/FUS">issue</a> to add group, its data scheme and description to the whitelist;</li>
+ *   <li>Create an <a href="https://youtrack.jetbrains.com/issues/FUS">issue</a> with group data scheme and descriptions
+ *   to register it on the server in statistic metadata repository</li>
  * </ol>
  *
  * To test collector:
  * <ol>
  *  <li>
- *    If group is not whitelisted, add it to local whitelist with "Add Test Group to Local Whitelist" action.<br/>
+ *    If group is not registered on the server, add it to events test scheme with "Add Group to Events Test Scheme" action.<br/>
  *    {@link com.intellij.internal.statistic.actions.scheme.AddGroupToTestSchemeAction}
  *  </li>
  *  <li>
  *    Open toolwindow with event logs with "Show Statistics Event Log" action.<br/>
- *    {@link com.intellij.internal.statistic.actions.ShowStatisticsEventLogAction}
+ *    {@link com.intellij.internal.statistic.actions.OpenEventLogFileAction}
  *  </li>
  *  <li>
  *    Record all state collectors with "Record State Collectors to Event Log" action.<br/>
