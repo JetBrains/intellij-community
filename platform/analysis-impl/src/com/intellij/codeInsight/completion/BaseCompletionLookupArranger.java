@@ -337,9 +337,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     List<LookupElement> items = getMatchingItems();
     Iterable<? extends LookupElement> sortedByRelevance = sortByRelevance(groupItemsBySorter(items));
 
-    if (sortedByRelevance.iterator().hasNext()) {
-      sortedByRelevance = myFinalSorter.sort(sortedByRelevance, Objects.requireNonNull(myProcess.getParameters()));
-    }
+    sortedByRelevance = applyFinalSorter(sortedByRelevance);
 
     LookupElement relevantSelection = findMostRelevantItem(sortedByRelevance);
     List<LookupElement> listModel = isAlphaSorted() ?
@@ -350,6 +348,15 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     LOG.assertTrue(toSelect >= 0);
 
     return new Pair<>(listModel, toSelect);
+  }
+
+  // visible for plugins, see https://intellij-support.jetbrains.com/hc/en-us/community/posts/360008625980-Sorting-completions-in-provider
+  @NotNull
+  protected Iterable<? extends LookupElement> applyFinalSorter(Iterable<? extends LookupElement> sortedByRelevance) {
+    if (sortedByRelevance.iterator().hasNext()) {
+      return myFinalSorter.sort(sortedByRelevance, Objects.requireNonNull(myProcess.getParameters()));
+    }
+    return sortedByRelevance;
   }
 
   private List<LookupElement> fillModelByRelevance(LookupElementListPresenter lookup,
