@@ -25,14 +25,13 @@ internal class GithubLoginDialog @JvmOverloads constructor(
   project: Project?,
   parent: Component? = null,
   isAccountUnique: UniqueLoginPredicate = { _, _ -> true },
-  @Nls(capitalization = Nls.Capitalization.Title) title: String = GithubBundle.message("login.to.github"),
   @Nls(capitalization = Nls.Capitalization.Sentence) private val message: String? = null
 ) : BaseLoginDialog(project, parent, executorFactory, isAccountUnique) {
 
   private val switchLoginUiLink = loginPanel.createSwitchUiLink()
 
   init {
-    this.title = title
+    title = GithubBundle.message("login.to.github")
     setOKButtonText(GitBundle.message("login.dialog.button.login"))
     init()
   }
