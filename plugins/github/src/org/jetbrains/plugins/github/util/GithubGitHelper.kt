@@ -84,6 +84,12 @@ class GithubGitHelper {
 
   private fun GitRepository.getRemoteUrls() = remotes.map { it.urls }.flatten()
 
+  fun findRemoteUrlsForRepository(project: Project, repository: GHRepositoryCoordinates): List<GitRemoteUrlCoordinates> {
+    return getPossibleRemoteUrlCoordinates(project).filter {
+      repository.serverPath.matches(it.url) && GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(it.url) == repository.repositoryPath
+    }
+  }
+
   companion object {
     @JvmStatic
     fun findGitRepository(project: Project, file: VirtualFile? = null): GitRepository? {
