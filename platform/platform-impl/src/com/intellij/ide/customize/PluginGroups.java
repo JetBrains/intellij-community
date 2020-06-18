@@ -217,11 +217,9 @@ public class PluginGroups {
       "GlassFish",
       "JBoss",
       "Jetty",
-      "Resin",
       "Tomcat",
       "Weblogic",
       "WebSphere",
-      "com.intellij.dmserver",
       "JSR45Plugin"
     )));
     //myTree.put("Groovy", Arrays.asList("org.intellij.grails"));
