@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.test
 
 import com.intellij.notification.NotificationType
@@ -10,10 +10,7 @@ import com.intellij.testFramework.VfsTestUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.text.DateFormatUtil
 import git4idea.test.GitPlatformTest
-import org.jetbrains.plugins.github.api.GHRepositoryPath
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
-import org.jetbrains.plugins.github.api.GithubApiRequests
+import org.jetbrains.plugins.github.api.*
 import org.jetbrains.plugins.github.api.data.GithubRepo
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -50,11 +47,10 @@ abstract class GithubTest : GitPlatformTest() {
   override fun setUp() {
     super.setUp()
 
-    val host = System.getenv("idea.test.github.host")
+    val host = GithubServerPath.from(System.getenv("idea.test.github.host"))
     val token1 = System.getenv("idea.test.github.token1")
     val token2 = System.getenv("idea.test.github.token2")
 
-    assertNotNull(host)
     assertNotNull(token1)
     assertNotNull(token2)
 
@@ -67,7 +63,7 @@ abstract class GithubTest : GitPlatformTest() {
     setCurrentAccount(mainAccount)
   }
 
-  private fun createAccountData(host: String, token: String): AccountData {
+  private fun createAccountData(host: GithubServerPath, token: String): AccountData {
     val executorManager = service<GithubApiRequestExecutorManager>()
     val account = authenticationManager.registerAccount("token", host, token)
     val executor = executorManager.getExecutor(account)
