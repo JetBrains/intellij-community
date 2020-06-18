@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.ide.actions.ActionsCollector;
@@ -61,15 +61,21 @@ public class ActionsCollectorImpl extends ActionsCollector {
     data.add(EventFields.PluginInfoFromInstance.with(action));
 
     if (event != null) {
-      data.add(EventFields.InputEvent.with(FusInputEvent.from(event)));
-      data.add(EventFields.ActionPlace.with(event.getPlace()));
-      data.add(ActionsEventLogGroup.CONTEXT_MENU.with(event.isFromContextMenu()));
+      data.addAll(actionEventData(event));
     }
     if (customData != null) {
       data.addAll(customData);
     }
     addActionClass(data, action, info);
     eventId.log(project, data.toArray(new EventPair[0]));
+  }
+
+  public static @NotNull List<@NotNull EventPair<?>> actionEventData(@NotNull AnActionEvent event) {
+    List<EventPair<?>> data = new ArrayList<>();
+    data.add(EventFields.InputEvent.with(FusInputEvent.from(event)));
+    data.add(EventFields.ActionPlace.with(event.getPlace()));
+    data.add(ActionsEventLogGroup.CONTEXT_MENU.with(event.isFromContextMenu()));
+    return data;
   }
 
   @NotNull
