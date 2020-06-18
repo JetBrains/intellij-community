@@ -38,6 +38,10 @@ internal abstract class GitMultipleCommitEditingOperation(protected val reposito
     private val params: GitRebaseParams,
     spec: GitRebaseSpec
   ) : GitRebaseProcess(repository.project, spec, null) {
+    init {
+      repository.update()
+    }
+
     private val initialHead = repository.currentRevision!!
     var result: GitMultipleCommitEditingOperationResult = GitMultipleCommitEditingOperationResult.Incomplete
 
