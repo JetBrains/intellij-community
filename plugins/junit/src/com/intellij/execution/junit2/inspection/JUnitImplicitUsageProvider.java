@@ -4,7 +4,6 @@ package com.intellij.execution.junit2.inspection;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PsiEnumConstantImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -28,8 +27,12 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
 
   @Override
   public boolean isImplicitUsage(@NotNull PsiElement element) {
-    if (element instanceof PsiEnumConstantImpl) {
-      PsiClass psiClass = ((PsiEnumConstantImpl)element).getContainingClass();
+    return isReferencedInsideEnumSourceAnnotation(element);
+  }
+
+  private static boolean isReferencedInsideEnumSourceAnnotation(@NotNull PsiElement element) {
+    if (element instanceof PsiEnumConstant) {
+      PsiClass psiClass = ((PsiEnumConstant)element).getContainingClass();
       String className = psiClass != null ? psiClass.getName() : null;
       if (className == null) return false;
       SearchScope useScope = psiClass.getUseScope();
@@ -46,19 +49,15 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
       return ReferencesSearch.search(psiClass, useScope, false)
         .anyMatch(reference -> {
           PsiElement referenceElement = reference.getElement();
-          return isReferencedInsideEnumSourceAnnotation(referenceElement);
+          PsiAnnotation annotation = PsiTreeUtil.getParentOfType(referenceElement, PsiAnnotation.class);
+          if (annotation != null) {
+            String annotationName = annotation.getQualifiedName();
+            if (ENUM_SOURCE.equals(annotationName) && annotation.getAttributes().size() == 1) {
+              return true;
+            }
+          }
+          return false;
         });
-    }
-    return false;
-  }
-
-  private static boolean isReferencedInsideEnumSourceAnnotation(PsiElement referenceElement) {
-    PsiAnnotation annotation = PsiTreeUtil.getParentOfType(referenceElement, PsiAnnotation.class);
-    if (annotation != null) {
-      String annotationName = annotation.getQualifiedName();
-      if (ENUM_SOURCE.equals(annotationName) && annotation.getAttributes().size() == 1) {
-        return true;
-      }
     }
     return false;
   }
