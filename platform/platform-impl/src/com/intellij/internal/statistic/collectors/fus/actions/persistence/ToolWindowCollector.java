@@ -56,7 +56,7 @@ public final class ToolWindowCollector {
    * If toolwindow is registered in plugin.xml, it's whitelisted automatically. <br/>
    * To whitelist dynamically registered plugin toolwindow use {@link ToolWindowWhitelistEP#EP_NAME}
    */
-  public static final Map<String, ToolWindowInfo> ourToolwindowWhitelist = new HashMap<>();
+  private static final Map<String, ToolWindowInfo> ourToolwindowWhitelist = new HashMap<>();
   static {
     ourToolwindowWhitelist.put(MESSAGES_WINDOW, new ToolWindowInfo("Messages"));
     ourToolwindowWhitelist.put(DEBUG, new ToolWindowInfo("Debug"));
@@ -97,20 +97,20 @@ public final class ToolWindowCollector {
     }
   }
 
-  public static void recordActivation(@Nullable String toolWindowId, @Nullable WindowInfoImpl info) {
+  public void recordActivation(@Nullable String toolWindowId, @Nullable WindowInfoImpl info) {
     record(toolWindowId, ACTIVATED, info);
   }
 
-  public static void recordHidden(@NotNull WindowInfoImpl info) {
+  public void recordHidden(@NotNull WindowInfoImpl info) {
     record(info.getId(), HIDDEN, info);
   }
 
-  public static void recordShown(@NotNull WindowInfoImpl info) {
+  public void recordShown(@NotNull WindowInfoImpl info) {
     record(info.getId(), SHOWN, info);
   }
 
   //todo[kb] provide a proper way to track activations by clicks
-  public static void recordClick(String toolWindowId, @Nullable WindowInfoImpl info) {
+  public void recordClick(String toolWindowId, @Nullable WindowInfoImpl info) {
     record(toolWindowId, CLICKED, info);
   }
 
