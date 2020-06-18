@@ -43,13 +43,7 @@ fun canLinkAndRefreshGradleProject(projectFilePath: String, project: Project, sh
 }
 
 fun linkAndRefreshGradleProject(projectFilePath: String, project: Project) {
-  val localFileSystem = LocalFileSystem.getInstance()
-  val projectFile = localFileSystem.refreshAndFindFileByPath(projectFilePath)
-  if (projectFile == null) {
-    val shortPath = FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(projectFilePath), false)
-    throw IllegalArgumentException(ExternalSystemBundle.message("error.project.does.not.exist", "Gradle", shortPath))
-  }
-  GradleOpenProjectProvider().linkToExistingProject(projectFile, project)
+  GradleOpenProjectProvider().linkToExistingProject(projectFilePath, project)
 }
 
 @ApiStatus.Internal
