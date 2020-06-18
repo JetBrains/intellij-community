@@ -2,7 +2,7 @@
 package com.intellij.internal.statistics.whitelist.storage
 
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence
-import com.intellij.internal.statistic.eventLog.whitelist.EventLogWhitelistLoader
+import com.intellij.internal.statistic.eventLog.whitelist.EventLogMetadataLoader
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorage
 
 class TestWhitelistStorageBuilder(private val recorderId: String = "TEST") {
@@ -44,7 +44,7 @@ class TestWhitelistStorageBuilder(private val recorderId: String = "TEST") {
 }
 
 class TestWhitelistStorage(
-  recorderId: String, persistence: EventLogWhitelistPersistence, loader: EventLogWhitelistLoader
+  recorderId: String, persistence: EventLogWhitelistPersistence, loader: EventLogMetadataLoader
 ) : WhitelistStorage(recorderId, persistence, loader) {
   fun getGroups(): Set<String> {
     return HashSet<String>(eventsValidators.keys)
@@ -62,8 +62,8 @@ private class TestEventLogWhitelistPersistence(recorderId: String, private var c
   override fun getLastModified(): Long = modified
 }
 
-private class TestEventLogWhitelistLoader(private val provider: () -> String, private val lastModified: Long) : EventLogWhitelistLoader {
-  override fun loadWhiteListFromServer(): String = provider.invoke()
+private class TestEventLogWhitelistLoader(private val provider: () -> String, private val lastModified: Long) : EventLogMetadataLoader {
+  override fun loadMetadataFromServer(): String = provider.invoke()
 
   override fun getLastModifiedOnServer(): Long = lastModified
 }

@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules
-import com.intellij.internal.statistic.eventLog.whitelist.EventLogWhitelistLoader
+import com.intellij.internal.statistic.eventLog.whitelist.EventLogMetadataLoader
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorage
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
 import com.intellij.openapi.util.io.FileUtil
@@ -86,8 +86,8 @@ class TestEventLogWhitelistPersistence(private val myContent: String) : EventLog
   }
 }
 
-class TestEventLogWhitelistLoader(private val myContent: String) : EventLogWhitelistLoader {
+class TestEventLogWhitelistLoader(private val myContent: String) : EventLogMetadataLoader {
   override fun getLastModifiedOnServer(): Long = 0
 
-  override fun loadWhiteListFromServer(): String = myContent
+  override fun loadMetadataFromServer(): String = myContent
 }
