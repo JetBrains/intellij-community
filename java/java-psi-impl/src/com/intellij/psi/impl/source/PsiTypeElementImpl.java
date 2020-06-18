@@ -25,8 +25,13 @@ import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -200,17 +205,102 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   public boolean isInferredType() {
     return PsiUtil.isJavaToken(getFirstChild(), JavaTokenType.VAR_KEYWORD) || getTypeInfo().myInferred;
   }
+  
+  private boolean isArrayType() {
+    for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (PsiUtil.isJavaToken(child, JavaTokenType.ELLIPSIS) || PsiUtil.isJavaToken(child, JavaTokenType.LBRACKET)) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   private @NotNull ClassReferencePointer getReferenceComputable(@NotNull PsiJavaCodeReferenceElement ref) {
-    final PsiElement parent = getParent();
-    if (parent instanceof PsiMethod || parent instanceof PsiVariable) {
+    PsiElement parent = getParent();
+    int depth = 0;
+    PsiElement cur = this;
+    boolean arrayOnly = true;
+    while (parent instanceof PsiTypeElementImpl && PsiTreeUtil.getChildOfType(parent, PsiTypeElementImpl.class) == cur) {
+      cur = parent;
+      if (!((PsiTypeElementImpl)parent).isArrayType()) {
+        arrayOnly = false;
+      }
+      parent = parent.getParent();
+      depth++;
+    }
+    if ((parent instanceof PsiMethod || parent instanceof PsiVariable) && arrayOnly) {
       return computeFromTypeOwner(parent, new WeakReference<>(ref));
+    }
+    if (parent instanceof PsiReferenceParameterList) {
+      PsiJavaCodeReferenceElement parentRef = ObjectUtils.tryCast(parent.getParent(), PsiJavaCodeReferenceElement.class);
+      if (parentRef != null) {
+        PsiTypeElementImpl parentType = ObjectUtils.tryCast(parentRef.getParent(), PsiTypeElementImpl.class);
+        if (parentType != null) {
+          int index = ArrayUtil.indexOf(((PsiReferenceParameterList)parent).getTypeParameterElements(), cur);
+          if (index != -1) {
+            ClassReferencePointer computable = parentType.getReferenceComputable(parentRef);
+            return computeFromParentType(computable, index, depth);
+          }
+        }
+      }
     }
 
     return ClassReferencePointer.constant(ref);
   }
 
-  private static @NotNull ClassReferencePointer computeFromTypeOwner(PsiElement parent, @NotNull WeakReference<PsiJavaCodeReferenceElement> ref) {
+  private static @NotNull ClassReferencePointer computeFromParentType(ClassReferencePointer parent, int index, int depth) {
+    return new ClassReferencePointer() {
+      @Override
+      public @Nullable PsiJavaCodeReferenceElement retrieveReference() {
+        PsiJavaCodeReferenceElement ref = parent.retrieveReference();
+        if (ref == null) return null;
+        PsiReferenceParameterList list = ref.getParameterList();
+        if (list == null) return null;
+        PsiTypeElement[] elements = list.getTypeParameterElements();
+        if (index >= elements.length) return null;
+        PsiTypeElementImpl subElement = ObjectUtils.tryCast(elements[index], PsiTypeElementImpl.class);
+        if (subElement == null) return null;
+        for (int i = 0; i < depth; i++) {
+          subElement = PsiTreeUtil.getChildOfType(subElement, PsiTypeElementImpl.class);
+          if (subElement == null) return null;
+        }
+        return subElement.getReferenceElement();
+      }
+
+      @Override
+      public @NotNull PsiJavaCodeReferenceElement retrieveNonNullReference() {
+        PsiJavaCodeReferenceElement ref = parent.retrieveNonNullReference();
+        PsiReferenceParameterList list = ref.getParameterList();
+        if (list == null) {
+          throw new IllegalStateException("Parent reference has type arguments: " + ref.getText());
+        }
+        PsiTypeElement[] elements = list.getTypeParameterElements();
+        if (index >= elements.length) {
+          throw new IllegalStateException(
+            "Parent reference has too few type arguments (required: " + (index + 1) + "; " + ref.getText() + ")");
+        }
+        PsiTypeElementImpl subElement = ObjectUtils.tryCast(elements[index], PsiTypeElementImpl.class);
+        for (int i = 0; i < depth; i++) {
+          subElement = PsiTreeUtil.getChildOfType(subElement, PsiTypeElementImpl.class);
+          if (subElement == null) break;
+        }
+        PsiJavaCodeReferenceElement subRef = subElement == null ? null : subElement.getReferenceElement();
+        if (subRef == null) {
+          throw new IllegalStateException(
+            "Invalid subElement: " + ref.getText() + ";" + elements[index].getText() + "; wanted depth = " + depth);
+        }
+        return subRef;
+      }
+
+      @Override
+      public String toString() {
+        return parent + "<#" + index + ">" + (depth == 0 ? "" : "-> " + depth);
+      }
+    };
+  }
+
+  private static @NotNull ClassReferencePointer computeFromTypeOwner(PsiElement parent,
+                                                                     @NotNull WeakReference<PsiJavaCodeReferenceElement> ref) {
     return new ClassReferencePointer() {
       volatile WeakReference<PsiJavaCodeReferenceElement> myCache = ref;
 
@@ -230,7 +320,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       @Nullable
       private PsiType calcTypeByParent() {
         PsiType type = parent instanceof PsiMethod ? ((PsiMethod)parent).getReturnType() : ((PsiVariable)parent).getType();
-        if (type instanceof PsiArrayType) { //for c-style array, e.g. String args[]
+        if (type instanceof PsiArrayType) { //also, for c-style array, e.g. String args[]
           return type.getDeepComponentType();
         }
         return type;
