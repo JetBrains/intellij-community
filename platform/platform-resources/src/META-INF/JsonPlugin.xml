@@ -120,7 +120,7 @@
       <className>com.intellij.json.intentions.JsonSortPropertiesIntention</className>
       <category>JSON</category>
     </intentionAction>
-    <notificationWhitelist groupIds="JSON Schema"/>
+    <notificationAllowlist groupIds="JSON Schema"/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript">
     <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaUserDefinedProviderFactory"/>

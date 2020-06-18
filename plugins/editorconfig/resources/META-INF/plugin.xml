@@ -390,7 +390,7 @@ To create an EditorConfig file in a directory, right-click this directory and se
         name="EditorConfig File"
         schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
         implementationClass="org.editorconfig.configmanagement.export.EditorConfigExporter"/>
-    <notificationWhitelist groupIds="EditorConfig;editorconfig"/>
+    <notificationAllowlist groupIds="EditorConfig;editorconfig"/>
   </extensions>
 
 

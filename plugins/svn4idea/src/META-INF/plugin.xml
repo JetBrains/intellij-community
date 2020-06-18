@@ -163,6 +163,6 @@
     <diff.DiffTool implementation="org.jetbrains.idea.svn.difftool.SvnPhantomChangeDiffRequestProvider$SvnPhantomDiffTool"/>
     <diff.DiffTool implementation="org.jetbrains.idea.svn.difftool.SvnTreeConflictDiffRequestProvider$SvnTreeConflictDiffTool"/>
     <applicationService serviceImplementation="org.jetbrains.idea.svn.difftool.SvnDiffSettingsHolder"/>
-    <notificationWhitelist groupIds="Svn Roots Detection Errors"/>
+    <notificationAllowlist groupIds="Svn Roots Detection Errors"/>
   </extensions>
 </idea-plugin>

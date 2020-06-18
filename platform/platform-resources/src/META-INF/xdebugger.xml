@@ -69,7 +69,7 @@
     <projectService serviceImplementation="com.intellij.xdebugger.memory.component.InstancesTracker" />
 
     <titleInfoProvider implementation="com.intellij.xdebugger.impl.ui.DebuggerTitleInfoProvider"/>
-    <notificationWhitelist groupIds="Debugger messages;Attach to Process action"/>
+    <notificationAllowlist groupIds="Debugger messages;Attach to Process action"/>
   </extensions>
 
   <actions>
