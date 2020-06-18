@@ -7,10 +7,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
-import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.roots.libraries.LibraryProperties
-import com.intellij.openapi.roots.libraries.LibraryTable
-import com.intellij.openapi.roots.libraries.PersistentLibraryKind
+import com.intellij.openapi.roots.libraries.*
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
@@ -229,7 +226,7 @@ internal class LibraryModifiableModelBridgeImpl(
 
     val kind = currentLibrary.kind
     if (kind == null) {
-      if (properties != null) error("Setting properties with null kind is unsupported")
+      if (properties != null && properties !is DummyLibraryProperties) error("Setting properties with null kind is unsupported")
       return
     }
 

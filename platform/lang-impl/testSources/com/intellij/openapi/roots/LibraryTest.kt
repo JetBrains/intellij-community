@@ -3,6 +3,7 @@ package com.intellij.openapi.roots
 
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.roots.libraries.DummyLibraryProperties
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -232,6 +233,15 @@ class LibraryTest {
     }
 
     assertThat(library.getFiles(OrderRootType.CLASSES)).containsExactly(root1, root2)
+  }
+
+  @Test
+  fun `set dummy properties for library without type`() {
+    val library = projectModel.addProjectLevelLibrary("a")
+    edit(library) {
+      it.properties = DummyLibraryProperties.INSTANCE
+    }
+    assertThat(library.properties).isNull()
   }
 
   @Test

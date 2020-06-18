@@ -221,6 +221,12 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   @Override
   public void setProperties(LibraryProperties properties) {
     LOG.assertTrue(isWritable());
+    if (myKind == null) {
+      if (properties != null && !(properties instanceof DummyLibraryProperties)) {
+        LOG.error("Cannot set properties for library with default type");
+      }
+      return;
+    }
     myProperties = properties;
   }
 
