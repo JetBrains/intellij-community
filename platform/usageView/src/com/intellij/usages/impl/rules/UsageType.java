@@ -15,6 +15,7 @@ public final class UsageType {
   public static final UsageType CLASS_IMPORT = new UsageType(UsageViewBundle.messagePointer("usage.type.import"));
   public static final UsageType CLASS_CAST_TO = new UsageType(UsageViewBundle.messagePointer("usage.type.cast.target"));
   public static final UsageType CLASS_EXTENDS_IMPLEMENTS_LIST = new UsageType(UsageViewBundle.messagePointer("usage.type.extends"));
+  public static final UsageType CLASS_PERMITS_LIST = new UsageType(UsageViewBundle.messagePointer("usage.type.permits"));
   public static final UsageType CLASS_STATIC_MEMBER_ACCESS = new UsageType(UsageViewBundle.messagePointer("usage.type.static.member"));
   public static final UsageType CLASS_NESTED_CLASS_ACCESS = new UsageType(UsageViewBundle.messagePointer("usage.type.nested.class"));
   public static final UsageType CLASS_METHOD_THROWS_LIST = new UsageType(UsageViewBundle.messagePointer("usage.type.throws.list"));
