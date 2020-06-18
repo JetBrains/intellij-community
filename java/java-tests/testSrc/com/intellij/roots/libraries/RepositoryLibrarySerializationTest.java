@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.roots.libraries;
 
 import com.intellij.configurationStore.StoreReloadManager;
@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.roots.ModuleRootManagerTestCase;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 
@@ -23,14 +22,13 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public class RepositoryLibrarySerializationTest extends ModuleRootManagerTestCase {
-
   @NotNull
   @Override
   protected Path getProjectDirOrFile() {
     return getProjectDirOrFile(true);
   }
 
-  public void testPlain() throws JDOMException, IOException {
+  public void testPlain() throws IOException {
     RepositoryLibraryProperties properties = loadLibrary("plain");
     assertEquals("junit", properties.getGroupId());
     assertEquals("junit", properties.getArtifactId());
@@ -39,20 +37,20 @@ public class RepositoryLibrarySerializationTest extends ModuleRootManagerTestCas
     assertEmpty(properties.getExcludedDependencies());
   }
 
-  public void testWithoutTransitiveDependencies() throws JDOMException, IOException {
+  public void testWithoutTransitiveDependencies() throws IOException {
     RepositoryLibraryProperties properties = loadLibrary("without-transitive-dependencies");
     assertFalse(properties.isIncludeTransitiveDependencies());
     assertEmpty(properties.getExcludedDependencies());
   }
 
-  public void testWithExcludedDependencies() throws JDOMException, IOException {
+  public void testWithExcludedDependencies() throws IOException {
     RepositoryLibraryProperties properties = loadLibrary("with-excluded-dependencies");
     assertTrue(properties.isIncludeTransitiveDependencies());
     assertSameElements(properties.getExcludedDependencies(), "org.apache.httpcomponents:httpclient");
   }
 
   @NotNull
-  private RepositoryLibraryProperties loadLibrary(String name) throws JDOMException, IOException {
+  private RepositoryLibraryProperties loadLibrary(String name) throws IOException {
     LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
     String libraryPath = "jps/model-serialization/testData/repositoryLibraries/.idea/libraries/" + name + ".xml";
     File librarySource = PathManagerEx.findFileUnderCommunityHome(libraryPath);

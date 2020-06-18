@@ -2,7 +2,9 @@
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.DisabledPluginsState;
+import com.intellij.ide.plugins.PluginManagerMain;
+import com.intellij.ide.plugins.PluginNode;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
@@ -10,7 +12,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -64,7 +65,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
   }
 
   public static AllVcsesI getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, AllVcsesI.class);
+    return project.getService(AllVcsesI.class);
   }
 
   @Override

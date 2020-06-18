@@ -41,10 +41,11 @@ public class ImmediatePainterTest extends AbstractEditorTest {
   protected void setUp() throws Exception {
     super.setUp();
 
-    myDefaultFontName = getDefaultColorScheme().getEditorFontName();
-    myDefaultFontSize = getDefaultColorScheme().getEditorFontSize();
-    myDefaultLineSpacing = getDefaultColorScheme().getLineSpacing();
-    myDefaultCaretColor = getDefaultColorScheme().getColor(EditorColors.CARET_COLOR);
+    EditorColorsScheme defaultColorScheme = getDefaultColorScheme();
+    myDefaultFontName = defaultColorScheme.getEditorFontName();
+    myDefaultFontSize = defaultColorScheme.getEditorFontSize();
+    myDefaultLineSpacing = defaultColorScheme.getLineSpacing();
+    myDefaultCaretColor = defaultColorScheme.getColor(EditorColors.CARET_COLOR);
     myDefaultFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     myDefaultAntiAliasing = UISettings.getInstance().getEditorAAType();
 

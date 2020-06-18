@@ -34,10 +34,9 @@ internal class ModuleVcsDetector(private val project: Project) {
       val vcsDetector = project.service<ModuleVcsDetector>()
 
       val listener = vcsDetector.MyModulesListener()
-      project.messageBus.connect().apply {
-        subscribe(ProjectTopics.MODULES, listener)
-        subscribe(ProjectTopics.PROJECT_ROOTS, listener)
-      }
+      val busConnection = project.messageBus.connect()
+      busConnection.subscribe(ProjectTopics.MODULES, listener)
+      busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, listener)
 
       if (vcsDetector.vcsManager.needAutodetectMappings()) {
         vcsDetector.autoDetectVcsMappings(true)
