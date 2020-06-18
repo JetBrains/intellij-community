@@ -23,6 +23,9 @@
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.util.environment.Environment"
                         serviceImplementation="com.intellij.openapi.externalSystem.util.environment.SystemEnvironment"/>
 
+    <projectConfigurable groupId="build" id="build.tools" groupWeight="1000"
+                         instance="com.intellij.openapi.externalSystem.service.settings.ExternalSystemGroupConfigurable"/>
+
     <!--Auto-reload-->
     <projectService serviceInterface="com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker"
                     serviceImplementation="com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker"/>
@@ -30,8 +33,11 @@
                     serviceImplementation="com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTrackerSettings"/>
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware"/>
     <editorFloatingToolbarProvider implementation="com.intellij.openapi.externalSystem.autoimport.ProjectRefreshFloatingProvider"/>
-    <projectConfigurable groupId="build" id="build.tools" groupWeight="1000"
-                         instance="com.intellij.openapi.externalSystem.service.settings.ExternalSystemGroupConfigurable"/>
+
+    <!--Auto-link-->
+    <projectService serviceImplementation="com.intellij.openapi.externalSystem.autolink.UnlinkedProjectNotificationAware"/>
+    <postStartupActivity implementation="com.intellij.openapi.externalSystem.autolink.UnlinkedProjectStartupActivity"/>
+    <notificationWhitelist groupIds="External System Auto-Link Notification Group"/>
 
     <!--Project structure management services-->
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.ProjectDataManager"
