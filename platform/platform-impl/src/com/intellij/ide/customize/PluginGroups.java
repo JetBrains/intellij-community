@@ -170,7 +170,6 @@ public class PluginGroups {
       "com.intellij.quarkus",
       "com.intellij.helidon",
 
-      "com.intellij.gwt",
       "JBoss Seam:com.intellij.seam,com.intellij.seam.pages,com.intellij.seam.pageflow",
       "JBoss jBPM:JBPM",
       "Struts:com.intellij.struts2",
