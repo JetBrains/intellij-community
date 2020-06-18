@@ -14,7 +14,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -118,6 +117,7 @@ public final class AboutPopup {
 
     Disposer.register(ourPopup, new Disposable() {
       @Override
+      @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
       public void dispose() {
         ourPopup = null;
       }
@@ -151,7 +151,7 @@ public final class AboutPopup {
     private final Alarm myAlarm = new Alarm();
 
     InfoSurface(Icon image, final boolean showDebugInfo) {
-      ApplicationInfoImpl appInfo = (ApplicationInfoImpl)ApplicationInfoEx.getInstanceEx();
+      ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
 
       myImage = image;
       //noinspection UseJBColor
@@ -338,7 +338,7 @@ public final class AboutPopup {
       return null;
     }
 
-    private Rectangle getCopyIconArea() {
+    private static Rectangle getCopyIconArea() {
       return new Rectangle(getCopyIconCoord(), JBUI.size(16));
     }
 
@@ -377,40 +377,35 @@ public final class AboutPopup {
         catch (TextRenderer.OverflowException ignore) { }
       }
 
-      ApplicationInfo appInfo = ApplicationInfo.getInstance();
+      ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
       int[] aboutLogoRect = appInfo.getAboutLogoRect();
       if (aboutLogoRect != null) {
         myLinks.add(new Link(new JBRectangle(aboutLogoRect[0], aboutLogoRect[1], aboutLogoRect[2], aboutLogoRect[3]), appInfo.getCompanyURL()));
       }
 
-      if (appInfo instanceof ApplicationInfoEx) {
-        long copyrightForeground = ((ApplicationInfoEx)appInfo).getCopyrightForeground();
-        Color color;
-        if (copyrightForeground < 0) {
-          color = JBColor.BLACK;
-        }
-        else {
-          //noinspection UseJBColor
-          color = new Color((int)copyrightForeground, copyrightForeground > 0xffffff);
-        }
-        g2.setColor(color);
-        if (SystemInfo.isMac) {
-          g2.setFont(JBUI.Fonts.miniFont());
-        }
-        else {
-          g2.setFont(JBUI.Fonts.create(SystemInfo.isWinVistaOrNewer ? "Segoe UI" : "Tahoma", 12));
-        }
-
-        g2.setColor(createColor(((ApplicationInfoEx)appInfo).getAboutForeground()));
+      long copyrightForeground = appInfo.getCopyrightForeground();
+      Color color;
+      if (copyrightForeground < 0) {
+        color = JBColor.BLACK;
       }
       else {
-        g2.setColor(JBColor.BLACK);
+        //noinspection UseJBColor
+        color = new Color((int)copyrightForeground, copyrightForeground > 0xffffff);
       }
+      g2.setColor(color);
+      if (SystemInfo.isMac) {
+        g2.setFont(JBUI.Fonts.miniFont());
+      }
+      else {
+        g2.setFont(JBUI.Fonts.create(SystemInfo.isWinVistaOrNewer ? "Segoe UI" : "Tahoma", 12));
+      }
+
+      g2.setColor(createColor(appInfo.getAboutForeground()));
 
       JBPoint copyrightCoord = getCopyrightCoord();
       g2.drawString(getCopyrightText(), copyrightCoord.x, copyrightCoord.y);
       if (myShowDebugInfo) {
-        g2.setColor(createColor(((ApplicationInfoEx)appInfo).getAboutForeground()));
+        g2.setColor(createColor(appInfo.getAboutForeground()));
         for (Link link : myLinks) {
           g2.drawRect(link.myRectangle.x, link.myRectangle.y, link.myRectangle.width, link.myRectangle.height);
         }
@@ -426,14 +421,9 @@ public final class AboutPopup {
       }
     }
 
-    protected @NotNull String getCopyrightText() {
-      ApplicationInfo applicationInfo = ApplicationInfo.getInstance();
-      return "Copyright \u00A9 " +
-             ((ApplicationInfoImpl)applicationInfo).getCopyrightStart() +
-             "\u2013" +
-             Calendar.getInstance(Locale.US).get(Calendar.YEAR) +
-             " " +
-             applicationInfo.getCompanyName();
+    private static @NotNull String getCopyrightText() {
+      ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+      return "Copyright © " + appInfo.getCopyrightStart() + '–' + Calendar.getInstance(Locale.US).get(Calendar.YEAR) + ' ' + appInfo.getCompanyName();
     }
 
     private @NotNull TextRenderer createTextRenderer(Graphics2D g) {
@@ -441,15 +431,15 @@ public final class AboutPopup {
       return new TextRenderer(r.x, r.y, r.width, r.height, g);
     }
 
-    protected JBRectangle getTextRendererRect() {
+    private static JBRectangle getTextRendererRect() {
       return new JBRectangle(115, 156, 500, 220);
     }
 
-    protected JBPoint getCopyrightCoord() {
+    private static JBPoint getCopyrightCoord() {
       return new JBPoint(115, 395);
     }
 
-    protected JBPoint getCopyIconCoord() {
+    private static JBPoint getCopyIconCoord() {
       return new JBPoint(66, 156);
     }
 

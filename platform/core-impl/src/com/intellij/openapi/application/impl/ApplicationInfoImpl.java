@@ -566,6 +566,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return myProgressColor;
   }
 
+  @Override
   public long getCopyrightForeground() {
     return myCopyrightForeground;
   }
@@ -730,6 +731,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return myAboutForeground;
   }
 
+  @Override
   public long getAboutLinkColor() {
     return myAboutLinkColor;
   }
@@ -744,6 +746,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return myShowLicensee;
   }
 
+  @Override
   public String getCopyrightStart() {
     return myCopyrightStart;
   }
@@ -768,8 +771,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  @SuppressWarnings("SSBasedInspection")
-  public @Nullable int[] getAboutLogoRect() {
+  public int @Nullable [] getAboutLogoRect() {
     return myAboutLogoRect;
   }
 
