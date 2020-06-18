@@ -444,8 +444,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       return false;
     });
     if (targetNode != null) {
-      TreeNode[] path = ((DefaultMutableTreeNode)targetNode).getPath();
-      return getRowForPath(new TreePath(path));
+      return TreeUtil.getRowForNode(this, (DefaultMutableTreeNode)targetNode);
     }
     else {
       return -1;

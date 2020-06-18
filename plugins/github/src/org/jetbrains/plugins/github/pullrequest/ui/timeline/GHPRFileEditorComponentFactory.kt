@@ -215,11 +215,13 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
                                          currentUser: GHUser)
     : GHPRTimelineItemComponentFactory {
 
-    val diffFactory = GHPRReviewThreadDiffComponentFactory(FileTypeRegistry.getInstance(), project, EditorFactory.getInstance())
+    val selectInToolWindowHelper = GHPRSelectInToolWindowHelper(project, editor.remoteUrl, detailsModel.value)
+    val diffFactory = GHPRReviewThreadDiffComponentFactory(FileTypeRegistry.getInstance(), project, EditorFactory.getInstance(),
+                                                           selectInToolWindowHelper)
     val eventsFactory = GHPRTimelineEventComponentFactoryImpl(avatarIconsProvider)
     return GHPRTimelineItemComponentFactory(detailsDataProvider, commentsDataProvider, reviewDataProvider,
                                             avatarIconsProvider, reviewThreadsModelsProvider, diffFactory,
                                             eventsFactory,
-                                            currentUser)
+                                            selectInToolWindowHelper, currentUser)
   }
 }

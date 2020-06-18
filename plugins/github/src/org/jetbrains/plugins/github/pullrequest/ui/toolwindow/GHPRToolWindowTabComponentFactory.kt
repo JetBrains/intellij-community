@@ -32,7 +32,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.BorderLayout
-import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.properties.Delegates
@@ -47,11 +46,13 @@ internal class GHPRToolWindowTabComponentFactory(private val project: Project,
     val panel = JPanel().apply {
       background = UIUtil.getListBackground()
     }
-    AuthorizationController(panel)
+    AuthorizationController(panel).also {
+      UIUtil.putClientProperty(panel, GHPRToolWindowTabComponentController.KEY, it)
+    }
     return panel
   }
 
-  private inner class AuthorizationController(private val panel: JPanel) {
+  private inner class AuthorizationController(private val panel: JPanel) : GHPRToolWindowTabComponentController {
     private var selectedAccount: GithubAccount? = null
     private var requestExecutor: GithubApiRequestExecutor? = null
 
@@ -187,19 +188,6 @@ internal class GHPRToolWindowTabComponentFactory(private val project: Project,
         validate()
         repaint()
       }
-
-      val propertyChangeListener = PropertyChangeListener { evt ->
-        if (evt.propertyName == GHPRToolWindowTabComponentController.KEY.toString()) {
-          val controller = UIUtil.getClientProperty(component, GHPRToolWindowTabComponentController.KEY)
-          UIUtil.putClientProperty(panel, GHPRToolWindowTabComponentController.KEY, controller)
-        }
-      }
-
-      component.addPropertyChangeListener(propertyChangeListener)
-      Disposer.register(newDisposable, Disposable {
-        component.removePropertyChangeListener(propertyChangeListener)
-        UIUtil.putClientProperty(panel, GHPRToolWindowTabComponentController.KEY, null)
-      })
     }
 
     private fun createDataContextLoadingPanel(account: GithubAccount,
@@ -222,20 +210,36 @@ internal class GHPRToolWindowTabComponentFactory(private val project: Project,
                                      contextRepository.clearContext(remoteUrl)
                                      loadingModel.future = contextRepository.acquireContext(remoteUrl, account, requestExecutor)
                                    }).create { parent, result ->
-        createComponent(result, uiDisposable).also {
-          val controller = UIUtil.getClientProperty(it, GHPRToolWindowTabComponentController.KEY)
-          UIUtil.putClientProperty(parent, GHPRToolWindowTabComponentController.KEY, controller)
+        val wrapper = Wrapper()
+        ComponentController(result, wrapper, disposable).also {
+          UIUtil.putClientProperty(parent, GHPRToolWindowTabComponentController.KEY, it)
         }
+        wrapper
       }
     }
-  }
 
-  private fun createComponent(dataContext: GHPRDataContext, disposable: Disposable): JComponent {
-    val wrapper = Wrapper()
-    ComponentController(dataContext, wrapper, disposable).also {
-      UIUtil.putClientProperty(wrapper, GHPRToolWindowTabComponentController.KEY, it)
+    override fun viewList() {
+      getActualController()?.viewList()
     }
-    return wrapper
+
+    override fun viewPullRequest(id: GHPRIdentifier, onShown: ((GHPRViewComponentController?) -> Unit)?) {
+      getActualController()?.viewPullRequest(id, onShown)
+    }
+
+    override fun refreshList() {
+      getActualController()?.refreshList()
+    }
+
+    override fun openPullRequestTimeline(id: GHPRIdentifier, requestFocus: Boolean) {
+      getActualController()?.openPullRequestTimeline(id, requestFocus)
+    }
+
+    override fun openPullRequestDiff(id: GHPRIdentifier, requestFocus: Boolean) {
+      getActualController()?.openPullRequestDiff(id, requestFocus)
+    }
+
+    private fun getActualController(): GHPRToolWindowTabComponentController? =
+      panel.components.firstOrNull()?.let { UIUtil.getClientProperty(it, GHPRToolWindowTabComponentController.KEY) }
   }
 
   private inner class ComponentController(private val dataContext: GHPRDataContext,
@@ -270,7 +274,7 @@ internal class GHPRToolWindowTabComponentFactory(private val project: Project,
       dataContext.repositoryDataService.resetData()
     }
 
-    override fun viewPullRequest(id: GHPRIdentifier) {
+    override fun viewPullRequest(id: GHPRIdentifier, onShown: ((GHPRViewComponentController?) -> Unit)?) {
       if (currentPullRequest != id) {
         currentDisposable?.let { Disposer.dispose(it) }
         currentDisposable = Disposer.newDisposable("Pull request component disposable").also {
@@ -283,7 +287,8 @@ internal class GHPRToolWindowTabComponentFactory(private val project: Project,
         wrapper.setContent(pullRequestComponent)
         wrapper.repaint()
       }
-      GithubUIUtil.focusPanel(wrapper)
+      if (onShown == null) GithubUIUtil.focusPanel(wrapper.targetComponent)
+      else onShown(UIUtil.getClientProperty(wrapper.targetComponent, GHPRViewComponentController.KEY))
     }
 
     override fun openPullRequestTimeline(id: GHPRIdentifier, requestFocus: Boolean) =
