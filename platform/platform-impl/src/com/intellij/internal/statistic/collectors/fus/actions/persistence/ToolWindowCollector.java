@@ -17,8 +17,8 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.ToolWindowAllowlistEP;
 import com.intellij.openapi.wm.ToolWindowEP;
-import com.intellij.openapi.wm.ToolWindowWhitelistEP;
 import com.intellij.openapi.wm.ext.LibraryDependentToolWindow;
 import com.intellij.openapi.wm.impl.WindowInfoImpl;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +40,7 @@ import static com.intellij.openapi.wm.ToolWindowId.*;
  *
  * <p>
  *   If toolwindow is registered dynamically is <b>should</b> be explicitly whitelisted
- *   in plugin.xml {@link ToolWindowWhitelistEP#EP_NAME} or here in {@link ToolWindowCollector#ourToolwindowWhitelist}
+ *   in plugin.xml {@link ToolWindowAllowlistEP#EP_NAME} or here in {@link ToolWindowCollector#ourToolwindowWhitelist}
  * </p>
  */
 public final class ToolWindowCollector {
@@ -54,7 +54,7 @@ public final class ToolWindowCollector {
    * Use this set to whitelist dynamically registered platform toolwindows.<br/><br/>
    *
    * If toolwindow is registered in plugin.xml, it's whitelisted automatically. <br/>
-   * To whitelist dynamically registered plugin toolwindow use {@link ToolWindowWhitelistEP#EP_NAME}
+   * To whitelist dynamically registered plugin toolwindow use {@link ToolWindowAllowlistEP#EP_NAME}
    */
   private static final Map<String, ToolWindowInfo> ourToolwindowWhitelist = new HashMap<>();
   static {
@@ -78,18 +78,18 @@ public final class ToolWindowCollector {
   }
 
   private ToolWindowCollector() {
-    for (ToolWindowWhitelistEP extension : ToolWindowWhitelistEP.EP_NAME.getExtensionList()) {
+    for (ToolWindowAllowlistEP extension : ToolWindowAllowlistEP.EP_NAME.getExtensionList()) {
       addToolwindowToWhitelist(extension);
     }
-    ToolWindowWhitelistEP.EP_NAME.addExtensionPointListener(new ExtensionPointListener<ToolWindowWhitelistEP>() {
+    ToolWindowAllowlistEP.EP_NAME.addExtensionPointListener(new ExtensionPointListener<ToolWindowAllowlistEP>() {
       @Override
-      public void extensionAdded(@NotNull ToolWindowWhitelistEP extension, @NotNull PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(@NotNull ToolWindowAllowlistEP extension, @NotNull PluginDescriptor pluginDescriptor) {
         addToolwindowToWhitelist(extension);
       }
     }, ApplicationManager.getApplication());
   }
 
-  private static void addToolwindowToWhitelist(ToolWindowWhitelistEP extension) {
+  private static void addToolwindowToWhitelist(ToolWindowAllowlistEP extension) {
     PluginDescriptor pluginDescriptor = extension == null ? null : extension.getPluginDescriptor();
     PluginInfo info = pluginDescriptor != null ? PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor) : null;
     if (info != null && info.isDevelopedByJetBrains()) {
