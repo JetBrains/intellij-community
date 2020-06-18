@@ -67,7 +67,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
     final VirtualFile selectedRoot;
     final String progressTitle;
     final Supplier<GitLineHandler> handlerProvider;
-    @NotNull private final List<String> selectedBranches;
+    @NotNull final List<String> selectedBranches;
     final boolean commitAfterMerge;
     @NotNull final List<String> selectedOptions;
 
