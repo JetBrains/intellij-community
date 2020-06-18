@@ -15,7 +15,6 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -32,6 +31,7 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -433,25 +433,27 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   private int findRowContainingFile(@NotNull TreeNode root, @NotNull FilePath toSelect) {
-    final Ref<Integer> row = Ref.create(-1);
-    TreeUtil.traverse(root, node -> {
+    TreeNode targetNode = TreeUtil.treeNodeTraverser(root).traverse(TreeTraversal.POST_ORDER_DFS).find(node -> {
       if (node instanceof DefaultMutableTreeNode) {
         Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
         if (userObject instanceof Change) {
-          if (matches((Change)userObject, toSelect)) {
-            TreeNode[] path = ((DefaultMutableTreeNode)node).getPath();
-            row.set(getRowForPath(new TreePath(path)));
-          }
+          return matches((Change)userObject, toSelect);
         }
       }
 
-      return row.get() == -1;
+      return false;
     });
-    return row.get();
+    if (targetNode != null) {
+      TreeNode[] path = ((DefaultMutableTreeNode)targetNode).getPath();
+      return getRowForPath(new TreePath(path));
+    }
+    else {
+      return -1;
+    }
   }
 
   private static boolean matches(@NotNull Change change, @NotNull FilePath toSelect) {
-    return toSelect.equals(ChangesUtil.getAfterPath(change));
+    return toSelect.equals(ChangesUtil.getAfterPath(change)) || toSelect.equals(ChangesUtil.getBeforePath(change));
   }
 
   @NotNull
