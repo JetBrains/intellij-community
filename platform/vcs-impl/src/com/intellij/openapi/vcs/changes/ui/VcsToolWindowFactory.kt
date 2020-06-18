@@ -17,6 +17,8 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
+import com.intellij.ui.content.ContentManagerEvent
+import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.ui.UIUtil.getClientProperty
 import com.intellij.util.ui.UIUtil.putClientProperty
 import javax.swing.JPanel
@@ -48,9 +50,11 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
       }
     })
     ChangesViewContentEP.EP_NAME.addExtensionPointListener(project, ExtensionListener(window), window.disposable)
+
+    window.addContentManagerListener(getContentManagerListener(project, window))
   }
 
-  override fun shouldBeAvailable(project: Project): Boolean = project.vcsManager.hasAnyMappings()
+  override fun shouldBeAvailable(project: Project): Boolean = project.vcsManager.hasAnyMappings() || project.vcsManager.isConsoleVisible
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     updateContent(project, toolWindow)
@@ -111,6 +115,11 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
 
       extension.newPreloaderInstance(project)?.preloadTabContent(this)
     }
+  }
+
+  private fun getContentManagerListener(project: Project, toolWindow: ToolWindow) = object : ContentManagerListener {
+    override fun contentAdded(event: ContentManagerEvent) = updateState(project, toolWindow)
+    override fun contentRemoved(event: ContentManagerEvent) = updateState(project, toolWindow)
   }
 
   private inner class ExtensionListener(private val toolWindow: ToolWindowEx) : ExtensionPointListener<ChangesViewContentEP> {
