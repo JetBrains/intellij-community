@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public interface IProjectStore extends IComponentStore {
   @SystemIndependent
@@ -59,9 +60,9 @@ public interface IProjectStore extends IComponentStore {
   /**
    * Directory of project configuration files for directory-based project. Or null.
    */
-  @SystemIndependent
-  default String getDirectoryStorePath() {
-    return getDirectoryStorePath(false);
+  default Path getDirectoryStorePath() {
+    String result = getDirectoryStorePath(false);
+    return result == null ? null : Paths.get(result);
   }
 
   @NotNull

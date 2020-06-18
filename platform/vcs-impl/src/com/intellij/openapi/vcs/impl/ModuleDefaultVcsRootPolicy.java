@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.impl;
 
@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.messages.MessageBusConnection;
@@ -36,13 +37,12 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     Set<VirtualFile> result = new HashSet<>();
 
     VirtualFile baseDir = myProject.getBaseDir();
-
     if (baseDir != null) {
       result.add(baseDir);
     }
 
     if (ProjectKt.isDirectoryBased(myProject) && baseDir != null) {
-      final VirtualFile ideaDir = ProjectKt.getStateStore(myProject).getDirectoryStoreFile();
+      VirtualFile ideaDir = LocalFileSystem.getInstance().findFileByNioFile(ProjectKt.getStateStore(myProject).getDirectoryStorePath());
       if (ideaDir != null) {
         result.add(ideaDir);
       }
