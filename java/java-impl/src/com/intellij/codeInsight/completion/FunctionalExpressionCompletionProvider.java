@@ -321,8 +321,7 @@ class MethodReferenceCompletion {
   }
 
   boolean hasExactReturnType(PsiMethod psiMethod) {
-    PsiType returnType = psiMethod.getReturnType();
-    return returnType != null && myExpectedReturnType.equals(mySubstitutor.substitute(returnType));
+    return myExpectedReturnType.equals(mySubstitutor.substitute(psiMethod.getReturnType()));
   }
 
   private boolean isSignatureAppropriate(PsiMethod psiMethod, int offset, PsiClass accessObjectClass) {
