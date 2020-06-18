@@ -229,7 +229,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
                                                                 getActionName(), null);
     }
     else {
-      GitUIUtil.notifyError(project, "Git " + getActionName() + " Failed", result.getErrorOutputAsJoinedString(), true, null);
+      GitUIUtil.notifyError(project, GitBundle.message("merge.action.operation.failed", getActionName()), result.getErrorOutputAsJoinedString(), true, null);
       repository.update();
     }
   }
