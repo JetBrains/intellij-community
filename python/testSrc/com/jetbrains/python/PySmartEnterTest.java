@@ -162,6 +162,11 @@ public class PySmartEnterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-43053
+  public void testMultilineListLiteralAfterClosingBracket() {
+    doTest();
+  }
+
   // PY-25001
   public void testMultilineSetLiteral() {
     doTest();
@@ -204,6 +209,11 @@ public class PySmartEnterTest extends PyTestCase {
 
   // PY-25001
   public void testMultilineDictAfterUnpacking() {
+    doTest();
+  }
+
+  // PY-43053
+  public void testAfterFunctionDecoratedWithExpressionContainingCollectionLiteral() {
     doTest();
   }
 

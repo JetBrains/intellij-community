@@ -5,14 +5,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.SmartEnterUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -30,7 +28,9 @@ public class PyCollectionLiteralFixer extends PyFixer<PySequenceExpression> {
   protected void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PySequenceExpression collection) {
     int caretOffset = editor.getCaretModel().getOffset();
     PsiElement collectionItemAnchor = collection.getContainingFile().findElementAt(caretOffset);
-    assert collectionItemAnchor != null;
+    if (collectionItemAnchor == null) {
+      return;
+    }
     if (collectionItemAnchor instanceof PsiWhiteSpace) {
       collectionItemAnchor = PyPsiUtils.getPrevNonWhitespaceSiblingOnSameLine(collectionItemAnchor);
     }
