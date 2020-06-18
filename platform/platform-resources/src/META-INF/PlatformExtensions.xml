@@ -645,7 +645,7 @@
     <statistics.counterUsagesCollector groupId="gutter.icon.click" version="2"/>
     <statistics.counterUsagesCollector groupId="inspection.widget" version="1"/>
 
-    <statistics.counterUsagesCollector groupId="new.project.wizard" version="1"/>
+    <statistics.counterUsagesCollector groupId="new.project.wizard" version="2"/>
 
     <statistics.counterUsagesCollector groupId="vfs" version="2"/>
     <statistics.counterUsagesCollector groupId="indexing" version="2"/>
