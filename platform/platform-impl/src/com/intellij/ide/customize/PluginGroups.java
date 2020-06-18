@@ -172,7 +172,6 @@ public class PluginGroups {
 
       "JBoss Seam:com.intellij.seam,com.intellij.seam.pages,com.intellij.seam.pageflow",
       "JBoss jBPM:JBPM",
-      "Struts:com.intellij.struts2",
       "com.intellij.guice",
 
       "com.intellij.freemarker",
