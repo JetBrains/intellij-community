@@ -22,7 +22,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <toolWindow id="Statistics Event Log" factoryClass="com.intellij.internal.statistic.toolwindow.StatisticsEventLogToolWindowFactory"
                 anchor="bottom" canCloseContents="true" order="last"/>
-    <notificationWhitelist groupIds="FeatureUsageStatistics"/>
+    <notificationAllowlist groupIds="FeatureUsageStatistics"/>
     <completion.contributor language="JSON"
                             implementationClass="com.intellij.internal.statistic.actions.localWhitelist.ValidationRulesCompletionContributor"/>
   </extensions>

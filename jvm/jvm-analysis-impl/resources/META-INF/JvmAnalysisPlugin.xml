@@ -35,7 +35,7 @@
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.must.already.be.removed.api.display.name"
                      implementationClass="com.intellij.codeInspection.MustAlreadyBeRemovedApiInspection"/>
-    <notificationWhitelist groupIds="UAST"/>
+    <notificationAllowlist groupIds="UAST"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.codeInsight">
     <blockingMethodChecker implementation="com.intellij.codeInspection.blockingCallsDetection.ThrowsTypeBlockingMethodChecker"/>

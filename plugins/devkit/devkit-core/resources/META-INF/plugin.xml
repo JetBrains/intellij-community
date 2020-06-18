@@ -341,7 +341,7 @@
     <lang.documentationProvider language="JSON"
                                 order="first"
                                 implementationClass="org.jetbrains.idea.devkit.themes.ThemeJsonDocumentationProvider"/>
-    <notificationWhitelist groupIds="Update from Sources;IntelliJ API Annotations;Plugin DevKit Deployment;testdata;DevKit Errors"/>
+    <notificationAllowlist groupIds="Update from Sources;IntelliJ API Annotations;Plugin DevKit Deployment;testdata;DevKit Errors"/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="org.jetbrains.idea.devkit.themes.ThemeJsonSchemaProviderFactory"/>

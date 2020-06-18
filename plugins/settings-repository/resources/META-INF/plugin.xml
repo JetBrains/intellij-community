@@ -19,7 +19,7 @@
                              key="ics.settings" bundle="messages.IcsBundle"/>
 
     <statistics.counterUsagesCollector groupId="settings.repository" version="1"/>
-    <notificationWhitelist groupIds="Settings Repository"/>
+    <notificationAllowlist groupIds="Settings Repository"/>
   </extensions>
 
   <actions>

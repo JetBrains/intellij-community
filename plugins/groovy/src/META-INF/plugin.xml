@@ -1220,7 +1220,7 @@
     <compilableFileTypesProvider implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilableFileTypesProvider"/>
 
     <pathMacroContributor implementation="org.jetbrains.plugins.groovy.mvc.MvcPathMacros"/>
-    <notificationWhitelist groupIds="Groovy DSL errors;Grape;Mvc notifications;"/>
+    <notificationAllowlist groupIds="Groovy DSL errors;Grape;Mvc notifications;"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

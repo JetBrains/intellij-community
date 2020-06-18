@@ -269,7 +269,7 @@
     </intentionAction>
 
     <module.workingDirectoryProvider implementation="org.jetbrains.idea.maven.project.MavenWorkingDirectoryProvider"/>
-    <notificationWhitelist groupIds="Maven: non-managed pom.xml"/>
+    <notificationAllowlist groupIds="Maven: non-managed pom.xml"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
