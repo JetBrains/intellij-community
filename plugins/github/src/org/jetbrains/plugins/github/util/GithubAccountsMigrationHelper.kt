@@ -31,23 +31,15 @@ class GithubAccountsMigrationHelper {
   private val LOG = logger<GithubAccountsMigrationHelper>()
 
   internal fun getOldServer(): GithubServerPath? {
-    try {
-      if (hasOldAccount()) {
-        return GithubServerPath.from(GithubSettings.getInstance().host ?: GithubServerPath.DEFAULT_HOST)
-      }
-    }
-    catch (ignore: Exception) {
-      // it could be called from AnAction.update()
-    }
-    return null
+    if (!GithubSettings.getInstance().hasOldAccount) return null
+
+    val host = GithubSettings.getInstance().host ?: return GithubServerPath.DEFAULT_SERVER
+    return runCatching { GithubServerPath.from(host) }.getOrNull() // could be called from AnAction.update()
   }
 
-  private fun hasOldAccount(): Boolean {
-    // either password-based with specified login or token based
-    val settings = GithubSettings.getInstance()
-    return ((settings.authType == GithubAuthData.AuthType.BASIC && settings.login != null) ||
-            (settings.authType == GithubAuthData.AuthType.TOKEN))
-  }
+  private val GithubSettings.hasOldAccount: Boolean
+    get() = authType == GithubAuthData.AuthType.BASIC && login != null ||
+            authType == GithubAuthData.AuthType.TOKEN
 
   /**
    * @return false if process was cancelled by user, true otherwise
@@ -63,57 +55,50 @@ class GithubAccountsMigrationHelper {
     val authType = settings.authType
     LOG.debug("Old auth data: { login: $login, host: $host, authType: $authType, password null: ${password == null} }")
 
-    val hasAnyInfo = login != null || host != null || authType != null || password != null
-    if (!hasAnyInfo) return true
+    if (login == null && host == null && authType == null && password == null) return true
+    if (service<GithubAccountManager>().accounts.isNotEmpty()) return true
 
-    var dialogCancelled = false
+    val hostToUse = host ?: GithubServerPath.DEFAULT_HOST
+    when (authType) {
+      GithubAuthData.AuthType.TOKEN -> {
+        LOG.debug("Migrating token auth")
+        if (password == null) return true
 
-    if (service<GithubAccountManager>().accounts.isEmpty()) {
-      val hostToUse = host ?: GithubServerPath.DEFAULT_HOST
-      when (authType) {
-        GithubAuthData.AuthType.TOKEN -> {
-          LOG.debug("Migrating token auth")
-          if (password != null) {
-            val executorFactory = GithubApiRequestExecutor.Factory.getInstance()
-            try {
-              val server = GithubServerPath.from(hostToUse)
-              val progressManager = ProgressManager.getInstance()
-              val accountName = progressManager.runProcessWithProgressSynchronously(ThrowableComputable<String, IOException> {
-                executorFactory.create(password).execute(progressManager.progressIndicator,
-                                                         GithubApiRequests.CurrentUser.get(server)).login
-              }, GithubBundle.message("accessing.github"), true, project)
-              val account = GithubAccountManager.createAccount(accountName, server)
-              registerAccount(account, password)
-            }
-            catch (e: Exception) {
-              LOG.debug("Failed to migrate old token-based auth. Showing dialog.", e)
-              val dialog = GithubLoginDialog(executorFactory, project, parentComponent)
-                .withServer(hostToUse, false).withToken(password).withError(e)
-              dialogCancelled = !registerFromDialog(dialog)
-            }
-          }
+        val executorFactory = GithubApiRequestExecutor.Factory.getInstance()
+        try {
+          val server = GithubServerPath.from(hostToUse)
+          val progressManager = ProgressManager.getInstance()
+          val accountName = progressManager.runProcessWithProgressSynchronously(ThrowableComputable<String, IOException> {
+            executorFactory.create(password).execute(progressManager.progressIndicator, GithubApiRequests.CurrentUser.get(server)).login
+          }, GithubBundle.message("accessing.github"), true, project)
+          val account = GithubAccountManager.createAccount(accountName, server)
+          registerAccount(account, password)
+          return true
         }
-        GithubAuthData.AuthType.BASIC -> {
-          LOG.debug("Migrating basic auth")
-          val dialog = GithubLoginDialog(GithubApiRequestExecutor.Factory.getInstance(), project, parentComponent,
-                                         message = GithubBundle.message("accounts.password.auth.not.supported"))
-            .withServer(hostToUse, false).withCredentials(login, password)
-          dialogCancelled = !registerFromDialog(dialog)
-        }
-        else -> {
+        catch (e: Exception) {
+          LOG.debug("Failed to migrate old token-based auth. Showing dialog.", e)
+          val dialog = GithubLoginDialog(executorFactory, project, parentComponent)
+            .withServer(hostToUse, false).withToken(password).withError(e)
+          return dialog.registerAccount()
         }
       }
+      GithubAuthData.AuthType.BASIC -> {
+        LOG.debug("Migrating basic auth")
+        val dialog = GithubLoginDialog(GithubApiRequestExecutor.Factory.getInstance(), project, parentComponent,
+                                       message = GithubBundle.message("accounts.password.auth.not.supported"))
+          .withServer(hostToUse, false).withCredentials(login, password)
+        return dialog.registerAccount()
+      }
+      else -> return true
     }
-    return !dialogCancelled
   }
 
-  private fun registerFromDialog(dialog: GithubLoginDialog): Boolean {
-    DialogManager.show(dialog)
-    return if (dialog.isOK) {
-      registerAccount(GithubAccountManager.createAccount(dialog.login, dialog.server), dialog.token)
-      true
-    }
-    else false
+  private fun GithubLoginDialog.registerAccount(): Boolean {
+    DialogManager.show(this)
+    if (!isOK) return false
+
+    registerAccount(GithubAccountManager.createAccount(login, server), token)
+    return true
   }
 
   private fun registerAccount(account: GithubAccount, token: String) {
