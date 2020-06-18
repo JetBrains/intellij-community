@@ -174,8 +174,7 @@ public class PluginGroups {
 
       "com.intellij.freemarker",
       "com.intellij.velocity",
-      "com.intellij.aspectj",
-      "Osmorc"
+      "com.intellij.aspectj"
     )));
     groups.add(new Group("Build Tools", PlatformImplIcons.BuildTools, null, Arrays.asList(
       "AntSupport",
