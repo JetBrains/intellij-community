@@ -1083,6 +1083,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Arrow_left = load("/vcs/arrow_left.svg");
     /** 16x16 */ public static final @NotNull Icon Arrow_right = load("/vcs/arrow_right.svg");
     /** 16x16 */ public static final @NotNull Icon Branch = load("/vcs/branch.svg");
+    /** 16x16 */ public static final @NotNull Icon Branch_node = load("/vcs/branch_node.svg");
     /** 16x16 */ public static final @NotNull Icon Changelist = load("/vcs/changelist.svg");
     /** 16x16 */ public static final @NotNull Icon Clone = load("/vcs/clone.svg");
     /** 16x16 */ public static final @NotNull Icon CommitNode = load("/vcs/commitNode.svg");
