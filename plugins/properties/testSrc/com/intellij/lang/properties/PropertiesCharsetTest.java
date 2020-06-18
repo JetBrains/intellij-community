@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
@@ -74,7 +74,6 @@ public class PropertiesCharsetTest extends JavaCodeInsightTestCase {
     // copy to other file type to stop charset mingling
 
     VirtualFile newFile = copy(virtualFile, virtualFile.getParent(), "xxx.txt");
-    myFilesToDelete.add(VfsUtilCore.virtualToIoFile(newFile));
     String chars = VfsUtilCore.loadText(newFile);
     assertEquals("\\u041F\\uyyyy\\n\\t\\y=\\u3210\\uzzzz\\n\\t\\y", chars);
   }
@@ -98,7 +97,6 @@ public class PropertiesCharsetTest extends JavaCodeInsightTestCase {
       VirtualFile virtualFile = myFile.getVirtualFile();
       // copy to other file type to stop charset mingling
       VirtualFile newFile = copy(virtualFile, virtualFile.getParent(), "xxx.txt");
-      myFilesToDelete.add(VfsUtilCore.virtualToIoFile(newFile));
       String chars = VfsUtilCore.loadText(newFile);
       // 0x41f converted to '?' because it cannot be represented in ISO-8859-1
       assertEquals("?\\uyyyy\\n\\t\\y=\\u3210\\uzzzz\\n\\t\\y", chars);
@@ -125,7 +123,6 @@ public class PropertiesCharsetTest extends JavaCodeInsightTestCase {
       VirtualFile virtualFile = myFile.getVirtualFile();
       // copy to other file type to stop charset mingling
       VirtualFile newFile = copy(virtualFile, virtualFile.getParent(), "xxx.txt");
-      myFilesToDelete.add(VfsUtilCore.virtualToIoFile(newFile));
       String chars = VfsUtilCore.loadText(newFile);
       assertEquals("\u041f\\uyyyy\\n\\t\\y=\\u3210\\uzzzz\\n\\t\\y", chars);
     });
@@ -146,7 +143,6 @@ public class PropertiesCharsetTest extends JavaCodeInsightTestCase {
     VirtualFile virtualFile = myFile.getVirtualFile();
     // copy to other file type to stop charset mingling
     VirtualFile newFile = copy(virtualFile, virtualFile.getParent(), "xxx.txt");
-    myFilesToDelete.add(VfsUtilCore.virtualToIoFile(newFile));
     String chars = VfsUtilCore.loadText(newFile);
     assertEquals("xxx=\\u00E7\u007F\\u0080\\u00FF\u0024", chars);
   }

@@ -911,6 +911,11 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     return baseDir;
   }
 
+  protected final @NotNull Path createTempDirectoryWithSuffix(@Nullable String suffix) throws IOException {
+    // heavy test sets canonical temp path per test and deletes it on the end - no need to add created directory to myFilesToDelete
+    return FileUtilRt.createTempDirectory(getTestName(true), suffix, false).toPath();
+  }
+
   protected static @NotNull VirtualFile getOrCreateModuleDir(@NotNull Module module) throws IOException {
     File moduleDir = new File(PathUtil.getParentPath(module.getModuleFilePath()));
     FileUtil.ensureExists(moduleDir);
