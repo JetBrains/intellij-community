@@ -134,11 +134,18 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
     @Nullable
     private PsiModifierList createNewModifierList(@NotNull PsiModifierList oldModifierList, @NotNull String newModifiersText) {
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(oldModifierList.getProject());
-      if (oldModifierList.getParent() instanceof PsiRequiresStatement) {
+      PsiElement parent = oldModifierList.getParent();
+      if (parent instanceof PsiRequiresStatement) {
         String text = "requires " + newModifiersText + " x;";
         PsiRequiresStatement statement = (PsiRequiresStatement) factory.createModuleStatementFromText(text, oldModifierList);
         return statement.getModifierList();
-      } else {
+      }
+      else if (parent instanceof PsiClass) {
+        PsiDeclarationStatement declarationStatement =
+          (PsiDeclarationStatement)factory.createStatementFromText(newModifiersText + " class X {}", oldModifierList);
+        return ((PsiClass)declarationStatement.getDeclaredElements()[0]).getModifierList();
+      }
+      else {
         PsiMethod method = factory.createMethodFromText(newModifiersText + " void x() {}", oldModifierList);
         return method.getModifierList();
       }
@@ -295,7 +302,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
 
   private static class ModifierComparator implements Comparator<String> {
 
-    @NonNls private static final Map<String, Integer> s_modifierOrder = new HashMap<>(12);
+    @NonNls private static final Map<String, Integer> s_modifierOrder = new HashMap<>(15);
 
     static {
       s_modifierOrder.put(PsiModifier.PUBLIC, Integer.valueOf(0));
@@ -311,6 +318,8 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
       s_modifierOrder.put(PsiModifier.NATIVE, Integer.valueOf(10));
       s_modifierOrder.put(PsiModifier.STRICTFP, Integer.valueOf(11));
       s_modifierOrder.put(PsiModifier.TRANSITIVE, Integer.valueOf(12));
+      s_modifierOrder.put(PsiModifier.SEALED, Integer.valueOf(13));
+      s_modifierOrder.put(PsiModifier.NON_SEALED, Integer.valueOf(14));
     }
 
     @Override
