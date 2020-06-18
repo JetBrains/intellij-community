@@ -4,13 +4,14 @@ package git4idea.rebase.log.squash
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.interactive.GitRebaseTodoModel
+import git4idea.rebase.log.GitMultipleCommitEditingEditorHandler
 import git4idea.rebase.log.GitMultipleCommitEditingOperation
 import git4idea.repo.GitRepository
 
 internal class GitSquashOperation(repository: GitRepository) : GitMultipleCommitEditingOperation(repository) {
   fun execute(commitsToSquash: List<VcsCommitMetadata>, newMessage: String) {
     val rebaseEditor = SquashRebaseEditorHandler(repository, commitsToSquash, newMessage)
-    execute(commitsToSquash, rebaseEditor)
+    rebase(commitsToSquash, rebaseEditor)
   }
 
   private class SquashRebaseEditorHandler(

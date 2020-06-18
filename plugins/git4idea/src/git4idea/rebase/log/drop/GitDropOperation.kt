@@ -5,13 +5,14 @@ import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsShortCommitDetails
 import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.interactive.GitRebaseTodoModel
+import git4idea.rebase.log.GitMultipleCommitEditingEditorHandler
 import git4idea.rebase.log.GitMultipleCommitEditingOperation
 import git4idea.repo.GitRepository
 
 internal class GitDropOperation(repository: GitRepository) : GitMultipleCommitEditingOperation(repository) {
   fun execute(commitsToDrop: List<VcsCommitMetadata>) {
     val rebaseEditor = DropRebaseEditorHandler(repository, commitsToDrop)
-    execute(commitsToDrop, rebaseEditor)
+    rebase(commitsToDrop, rebaseEditor)
   }
 
   private class DropRebaseEditorHandler(
