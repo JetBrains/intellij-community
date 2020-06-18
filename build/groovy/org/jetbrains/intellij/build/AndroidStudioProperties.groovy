@@ -58,7 +58,11 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       )
     }
 
-    productLayout.productApiModules = JAVA_IDE_API_MODULES
+    productLayout.productApiModules = JAVA_IDE_API_MODULES +
+                                                  [
+                                                    // Android Studio: CIDR/CLion: Must be included here to be packaged into core, not as separate plugins
+                                                    "intellij.cidr.common.testFramework"
+                                                  ]
     productLayout.productImplementationModules = JAVA_IDE_IMPLEMENTATION_MODULES +
                                                   [
                                                     // Android Studio: CIDR/CLion: Must be included here to be packaged into core, not as separate plugins
