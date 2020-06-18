@@ -38,6 +38,7 @@ import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
@@ -1317,7 +1318,14 @@ public class PluginManagerConfigurable
     if (plugin instanceof PluginNode) {
       size = ((PluginNode)plugin).getSize();
     }
-    return getFormatLength(size);
+    if (!StringUtil.isEmptyOrSpaces(size)) {
+      try {
+        return StringUtilRt.formatFileSize(Long.parseLong(size)).toUpperCase(Locale.ENGLISH);
+      }
+      catch (NumberFormatException ignore) {
+      }
+    }
+    return null;
   }
 
   @NotNull
