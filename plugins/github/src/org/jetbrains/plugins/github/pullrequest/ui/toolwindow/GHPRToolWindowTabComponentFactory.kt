@@ -1,12 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
+import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.CalledInAwt
@@ -19,8 +22,10 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
 import org.jetbrains.plugins.github.authentication.ui.GithubChooseAccountDialog
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
@@ -31,9 +36,9 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.properties.Delegates
 
-internal class GHPRToolWindowComponentFactory(private val project: Project,
-                                              private val remoteUrl: GitRemoteUrlCoordinates,
-                                              private val parentDisposable: Disposable) {
+internal class GHPRToolWindowTabComponentFactory(private val project: Project,
+                                                 private val remoteUrl: GitRemoteUrlCoordinates,
+                                                 private val parentDisposable: Disposable) {
   private val dataContextRepository = GHPRDataContextRepository.getInstance(project)
 
   @CalledInAwt
@@ -41,11 +46,11 @@ internal class GHPRToolWindowComponentFactory(private val project: Project,
     val panel = JPanel().apply {
       background = UIUtil.getListBackground()
     }
-    Controller(panel)
+    AuthorizationController(panel)
     return panel
   }
 
-  private inner class Controller(private val panel: JPanel) {
+  private inner class AuthorizationController(private val panel: JPanel) {
     private var selectedAccount: GithubAccount? = null
     private var requestExecutor: GithubApiRequestExecutor? = null
 
@@ -203,8 +208,63 @@ internal class GHPRToolWindowComponentFactory(private val project: Project,
                                      contextRepository.clearContext(remoteUrl)
                                      loadingModel.future = contextRepository.acquireContext(remoteUrl, account, requestExecutor)
                                    }).create { _, result ->
-        GHPRComponentFactory(project).createComponent(result, uiDisposable)
+        createComponent(result, uiDisposable)
       }
     }
+  }
+
+  private fun createComponent(dataContext: GHPRDataContext, disposable: Disposable): JComponent {
+    val wrapper = Wrapper()
+    ComponentController(dataContext, wrapper, disposable)
+    return wrapper
+  }
+
+  private inner class ComponentController(private val dataContext: GHPRDataContext,
+                                          private val wrapper: Wrapper,
+                                          private val parentDisposable: Disposable) : GHPRToolWindowTabComponentController {
+
+    private val listComponent = GHPRListComponent.create(project, dataContext, parentDisposable)
+
+    private var currentDisposable: Disposable? = null
+
+    init {
+      viewList()
+
+      DataManager.registerDataProvider(wrapper) { dataId ->
+        when {
+          GHPRActionKeys.PULL_REQUESTS_TAB_CONTROLLER.`is`(dataId) -> this
+          else -> null
+        }
+      }
+    }
+
+    override fun viewList() {
+      currentDisposable?.let { Disposer.dispose(it) }
+      wrapper.setContent(listComponent)
+      wrapper.repaint()
+    }
+
+    override fun refreshList() {
+      dataContext.listLoader.reset()
+      dataContext.repositoryDataService.resetData()
+    }
+
+    override fun viewPullRequest(id: GHPRIdentifier) {
+      currentDisposable?.let { Disposer.dispose(it) }
+      currentDisposable = Disposer.newDisposable("Pull request component disposable").also {
+        Disposer.register(parentDisposable, it)
+      }
+      val pullRequestComponent = GHPRViewComponentFactory(ActionManager.getInstance(), project, dataContext, this, id, currentDisposable!!)
+        .create()
+      wrapper.setContent(pullRequestComponent)
+      wrapper.repaint()
+      GithubUIUtil.focusPanel(wrapper)
+    }
+
+    override fun openPullRequestTimeline(id: GHPRIdentifier, requestFocus: Boolean) =
+      dataContext.filesManager.createAndOpenTimelineFile(id, requestFocus)
+
+    override fun openPullRequestDiff(id: GHPRIdentifier, requestFocus: Boolean) =
+      dataContext.filesManager.createAndOpenDiffFile(id, requestFocus)
   }
 }

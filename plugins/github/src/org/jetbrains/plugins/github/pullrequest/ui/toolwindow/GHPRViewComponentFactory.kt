@@ -58,7 +58,7 @@ import kotlin.properties.Delegates.observable
 internal class GHPRViewComponentFactory(private val actionManager: ActionManager,
                                         private val project: Project,
                                         private val dataContext: GHPRDataContext,
-                                        private val viewController: GHPRViewController,
+                                        private val viewController: GHPRToolWindowTabComponentController,
                                         pullRequest: GHPRIdentifier,
                                         disposable: Disposable) {
   private val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, disposable)
