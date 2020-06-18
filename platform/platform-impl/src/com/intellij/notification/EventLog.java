@@ -109,6 +109,14 @@ public final class EventLog {
     getProjectService(project).clearNMore(groups);
   }
 
+  public static boolean isClearAvailable(@NotNull Project project) {
+    return getProjectService(project).isClearAvailable();
+  }
+
+  public static void doClear(@NotNull Project project) {
+    getProjectService(project).doClear();
+  }
+
   public static @Nullable Trinity<Notification, String, Long> getStatusMessage(@Nullable Project project) {
     return getLogModel(project).getStatusMessage();
   }
@@ -536,6 +544,24 @@ public final class EventLog {
         if (console != null) {
           console.clearNMore();
         }
+      }
+    }
+
+    private boolean isClearAvailable() {
+      return !myProjectModel.getNotifications().isEmpty();
+    }
+
+    private void doClear() {
+      for (Notification notification : myProjectModel.getNotifications()) {
+        notification.expire();
+        myProjectModel.removeNotification(notification);
+      }
+      myInitial.clear();
+      myProjectModel.setStatusMessage(null, 0);
+
+      for (EventLogConsole console : myCategoryMap.values()) {
+        Document document = console.getConsoleEditor().getDocument();
+        document.deleteString(0, document.getTextLength());
       }
     }
 
