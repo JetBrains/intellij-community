@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
 import com.intellij.openapi.application.AccessToken
@@ -15,15 +15,18 @@ import com.intellij.openapi.vcs.BaseLineStatusTrackerTestCase.Companion.parseInp
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
-import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses
+import com.intellij.openapi.vcs.impl.projectlevelman.AllVcsesI
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.io.createDirectories
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
 import org.mockito.Mockito
+import java.nio.file.Paths
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 
@@ -47,25 +50,24 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
 
   protected lateinit var testRoot: VirtualFile
 
-  protected lateinit var vcsManager: ProjectLevelVcsManagerImpl
+  private lateinit var vcsManager: ProjectLevelVcsManagerImpl
 
   protected var arePartialChangelistsSupported: Boolean = true
 
   override fun setUp() {
     super.setUp()
-    testRoot = runWriteAction {
-      VfsUtil.markDirtyAndRefresh(false, false, true, this.project.baseDir)
-      VfsUtil.createDirectoryIfMissing(this.project.baseDir, getTestName(true))
-    }
+    val project = project
+    val testRootPath = Paths.get(project.basePath!!).resolve(getTestName(true)).createDirectories()
+    testRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(testRootPath)!!
 
-    vcs = MyMockVcs(this.project)
+    vcs = MyMockVcs(project)
     changeProvider = MyMockChangeProvider()
     vcs.changeProvider = changeProvider
 
-    clm = ChangeListManagerImpl.getInstanceImpl(this.project)
-    dirtyScopeManager = VcsDirtyScopeManager.getInstance(this.project) as VcsDirtyScopeManagerImpl
+    clm = ChangeListManagerImpl.getInstanceImpl(project)
+    dirtyScopeManager = VcsDirtyScopeManager.getInstance(project) as VcsDirtyScopeManagerImpl
 
-    vcsManager = ProjectLevelVcsManager.getInstance(this.project) as ProjectLevelVcsManagerImpl
+    vcsManager = ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl
     vcsManager.registerVcs(vcs)
     vcsManager.directoryMappings = listOf(VcsDirectoryMapping(testRoot.path, vcs.name))
     vcsManager.waitForInitialized()
@@ -81,15 +83,15 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
   }
 
   override fun tearDown() {
-    RunAll()
-      .append(ThrowableRunnable { resetSettings() })
-      .append(ThrowableRunnable { resetChanges() })
-      .append(ThrowableRunnable { resetChangelists() })
-      .append(ThrowableRunnable { vcsManager.directoryMappings = emptyList() })
-      .append(ThrowableRunnable { AllVcses.getInstance(getProject()).unregisterManually(vcs) })
-      .append(ThrowableRunnable { runWriteAction { testRoot.delete(this) } })
-      .append(ThrowableRunnable { super.tearDown() })
-      .run()
+    RunAll.runAll(
+      ThrowableRunnable { resetSettings() },
+      ThrowableRunnable { resetChanges() },
+      ThrowableRunnable { resetChangelists() },
+      ThrowableRunnable { vcsManager.directoryMappings = emptyList() },
+      ThrowableRunnable { project.getServiceIfCreated(AllVcsesI::class.java)?.unregisterManually(vcs) },
+      ThrowableRunnable { runWriteAction { testRoot.delete(this) } },
+      ThrowableRunnable { super.tearDown() }
+    )
   }
 
   protected open fun resetSettings() {
@@ -173,7 +175,7 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
 
   protected val String.toFilePath: FilePath get() = VcsUtil.getFilePath(testRoot, this)
   protected fun Array<out String>.toFilePaths() = this.asList().toFilePaths()
-  protected fun List<String>.toFilePaths() = this.map { it.toFilePath }
+  private fun List<String>.toFilePaths() = this.map { it.toFilePath }
   protected val VirtualFile.change: Change? get() = clm.getChange(this)
   protected val VirtualFile.document: Document get() = FileDocumentManager.getInstance().getDocument(this)!!
 
