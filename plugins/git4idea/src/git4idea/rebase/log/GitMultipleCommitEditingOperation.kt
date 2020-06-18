@@ -3,7 +3,6 @@ package git4idea.rebase.log
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.Project
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.branch.GitRebaseParams
 import git4idea.rebase.GitRebaseEditorHandler
@@ -18,7 +17,7 @@ internal abstract class GitMultipleCommitEditingOperation(protected val reposito
     commits: List<VcsCommitMetadata>,
     rebaseEditor: GitRebaseEditorHandler,
     preserveMerges: Boolean = false
-  ): OperationResult {
+  ): GitMultipleCommitEditingOperationResult {
     val base = commits.last().parents.first().asString()
     val params = GitRebaseParams.editCommits(
       repository.vcs.version,
@@ -29,21 +28,23 @@ internal abstract class GitMultipleCommitEditingOperation(protected val reposito
     )
     val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
     val spec = GitRebaseSpec.forNewRebase(project, params, listOf(repository), indicator)
-    val process = GitMultipleCommitEditingProcess(project, spec)
+    val process = GitMultipleCommitEditingProcess(repository, params, spec)
     process.rebase()
     return process.result
   }
 
-  private class GitMultipleCommitEditingProcess(project: Project, spec: GitRebaseSpec) : GitRebaseProcess(project, spec, null) {
-    var result = OperationResult.INCOMPLETE
+  private class GitMultipleCommitEditingProcess(
+    private val repository: GitRepository,
+    private val params: GitRebaseParams,
+    spec: GitRebaseSpec
+  ) : GitRebaseProcess(repository.project, spec, null) {
+    private val initialHead = repository.currentRevision!!
+    var result: GitMultipleCommitEditingOperationResult = GitMultipleCommitEditingOperationResult.Incomplete
 
     override fun notifySuccess() {
-      result = OperationResult.COMPLETE
+      repository.update()
+      val newHead = repository.currentRevision!!
+      result = GitMultipleCommitEditingOperationResult.Complete(repository, params.upstream, initialHead, newHead)
     }
-  }
-
-  protected enum class OperationResult {
-    COMPLETE,
-    INCOMPLETE
   }
 }
