@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
@@ -48,13 +49,27 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
    * This constructor can be used in UI forms. <strong>Don't forget to call {@link #setDefaultJreSelector(DefaultJreSelector)}!</strong>
    */
   public JrePathEditor() {
-    myComboBoxModel = new SortedComboBoxModel<>((o1, o2) -> {
+    this(true);
+  }
+
+  public JrePathEditor(boolean editable) {
+    myComboBoxModel = new SortedComboBoxModel<JreComboBoxItem>((o1, o2) -> {
       int result = Comparing.compare(o1.getOrder(), o2.getOrder());
       if (result != 0) {
         return result;
       }
       return o1.getPresentableText().compareToIgnoreCase(o2.getPresentableText());
-    });
+    }) {
+      @Override
+      public void setSelectedItem(Object anItem) {
+        if (anItem instanceof AddJreItem) {
+          getComponent().hidePopup();
+          getBrowseRunnable().run();
+        }
+        else
+          super.setSelectedItem(anItem);
+      }
+    };
     myDefaultJreItem = new DefaultJreItem();
     myComboBoxModel.add(myDefaultJreItem);
     final Sdk[] allJDKs = ProjectJdkTable.getInstance().getAllJdks();
@@ -86,8 +101,12 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
         myComboBoxModel.add(new CustomJreItem(homePath));
       }
     }
+    if (!editable) {
+      myComboBoxModel.add(new AddJreItem());
+    }
+
     ComboBox<JreComboBoxItem> comboBox = new ComboBox<>(myComboBoxModel, 100);
-    comboBox.setEditable(true);
+    comboBox.setEditable(editable);
     comboBox.setRenderer(new ColoredListCellRenderer<JreComboBoxItem>() {
       {
         setIpad(JBInsets.create(1, 0));
@@ -105,18 +124,12 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
         }
       }
     });
-
-    Runnable action = new BrowseFolderRunnable<>(ExecutionBundle.message("run.configuration.select.alternate.jre.label"),
-                                                 ExecutionBundle.message("run.configuration.select.jre.dir.label"),
-                                                 null,
-                                                 BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR,
-                                                 comboBox,
-                                                 JreComboboxEditor.TEXT_COMPONENT_ACCESSOR);
+    setComponent(comboBox);
 
     myComboboxEditor = new JreComboboxEditor(myComboBoxModel) {
       @Override
       protected JTextField createEditorComponent() {
-        JBTextField field = new ExtendableTextField().addBrowseExtension(action, null);
+        JBTextField field = new ExtendableTextField().addBrowseExtension(getBrowseRunnable(), null);
         field.setBorder(null);
         field.addFocusListener(new FocusListener() {
           @Override public void focusGained(FocusEvent e) {
@@ -145,9 +158,18 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
 
     setLabelLocation(BorderLayout.WEST);
     setText(ExecutionBundle.message("run.configuration.jre.label"));
-    setComponent(comboBox);
 
     updateUI();
+  }
+
+  @NotNull
+  private Runnable getBrowseRunnable() {
+    return new BrowseFolderRunnable<>(ExecutionBundle.message("run.configuration.select.alternate.jre.label"),
+                                      ExecutionBundle.message("run.configuration.select.jre.dir.label"),
+                                      null,
+                                      BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR,
+                                      (ComboBox<JreComboBoxItem>)getComponent(),
+                                      JreComboboxEditor.TEXT_COMPONENT_ACCESSOR);
   }
 
   @Nullable
@@ -302,6 +324,30 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
     @Override
     public int getOrder() {
       return 0;
+    }
+  }
+
+  private static class AddJreItem implements JreComboBoxItem {
+
+    @Override
+    public void render(SimpleColoredComponent component, boolean selected) {
+      component.append(getPresentableText());
+      component.setIcon(EmptyIcon.ICON_16);
+    }
+
+    @Override
+    public String getPresentableText() {
+      return ExecutionBundle.message("run.configuration.select.alternate.jre.action");
+    }
+
+    @Override
+    public @Nullable String getPathOrName() {
+      return null;
+    }
+
+    @Override
+    public int getOrder() {
+      return Integer.MAX_VALUE;
     }
   }
 }
