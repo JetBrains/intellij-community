@@ -2,14 +2,12 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,8 +74,7 @@ public class PyFunctionTypeImpl implements PyFunctionType {
       delegate = selectCallableType(((PyReferenceExpression)location).getQualifier(), typeEvalContext);
     }
     else {
-      final PyClass cls = as(PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(PyNames.TYPES_FUNCTION_TYPE),
-                                                                       PyResolveImportUtil.fromFoothold(myCallable)), PyClass.class);
+      final PyClass cls = PyPsiFacade.getInstance(myCallable.getProject()).createClassByQName(PyNames.TYPES_FUNCTION_TYPE, myCallable);
       delegate = cls != null ? new PyClassTypeImpl(cls, false) : null;
     }
     if (delegate == null) {
@@ -95,8 +92,7 @@ public class PyFunctionTypeImpl implements PyFunctionType {
     else {
       className = PyNames.TYPES_FUNCTION_TYPE;
     }
-    final PyClass cls = as(PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(className),
-                                                                     PyResolveImportUtil.fromFoothold(myCallable)), PyClass.class);
+    final PyClass cls = PyPsiFacade.getInstance(myCallable.getProject()).createClassByQName(className, myCallable);
     return cls != null ? new PyClassTypeImpl(cls, false) : null;
   }
 

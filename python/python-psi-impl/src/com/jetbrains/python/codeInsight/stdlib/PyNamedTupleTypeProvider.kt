@@ -3,7 +3,6 @@ package com.jetbrains.python.codeInsight.stdlib
 
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.QualifiedName
 import com.intellij.util.ArrayUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
@@ -11,8 +10,6 @@ import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator
 import com.jetbrains.python.psi.impl.stubs.PyNamedTupleStubImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
-import com.jetbrains.python.psi.resolve.fromFoothold
-import com.jetbrains.python.psi.resolve.resolveTopLevelMember
 import com.jetbrains.python.psi.stubs.PyNamedTupleStub
 import com.jetbrains.python.psi.types.*
 import one.util.streamex.StreamEx
@@ -200,8 +197,7 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
     private fun getNamedTupleTypeForTypingNTInheritorAsCallee(cls: PyClass, context: TypeEvalContext): PyNamedTupleType? {
       if (isTypingNamedTupleDirectInheritor(cls, context)) {
         val name = cls.name ?: return null
-        val typingNT = resolveTopLevelMember(QualifiedName.fromDottedString(PyTypingTypeProvider.NAMEDTUPLE), fromFoothold(cls))
-        val tupleClass = typingNT as? PyClass ?: return null
+        val tupleClass = PyPsiFacade.getInstance(cls.project).createClassByQName(PyTypingTypeProvider.NAMEDTUPLE, cls) ?: return null
 
         return PyNamedTupleType(tupleClass,
                                 name,
@@ -220,8 +216,9 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
                                           definitionLevel: PyNamedTupleType.DefinitionLevel): PyNamedTupleType? {
       if (stub == null) return null
 
-      val typingNT = resolveTopLevelMember(QualifiedName.fromDottedString(PyTypingTypeProvider.NAMEDTUPLE), fromFoothold(targetOrCall))
-      val tupleClass = typingNT as? PyClass ?: return null
+      val tupleClass = PyPsiFacade
+                         .getInstance(targetOrCall.project)
+                         .createClassByQName(PyTypingTypeProvider.NAMEDTUPLE, targetOrCall) ?: return null
       val fields = stub.fields
 
       return PyNamedTupleType(tupleClass,

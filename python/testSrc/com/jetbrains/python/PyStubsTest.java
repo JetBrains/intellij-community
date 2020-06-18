@@ -22,7 +22,6 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyFileImpl;
-import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.stubs.*;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.Maybe;
@@ -621,9 +620,7 @@ public class PyStubsTest extends PyTestCase {
   }
 
   private void doTestUnsupportedTypingNamedTuple(@NotNull PsiElement anchor) {
-    final QualifiedName typingNTName = QualifiedName.fromDottedString(PyTypingTypeProvider.NAMEDTUPLE);
-
-    final PsiElement member = PyResolveImportUtil.resolveTopLevelMember(typingNTName, PyResolveImportUtil.fromFoothold(anchor));
+    final PsiElement member = PyPsiFacade.getInstance(anchor.getProject()).createClassByQName(PyTypingTypeProvider.NAMEDTUPLE, anchor);
     assertInstanceOf(member, PyClass.class);
 
     doTestUnsupportedNT(
