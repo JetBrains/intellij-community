@@ -16,6 +16,7 @@
 package com.intellij.execution.filters;
 
 import com.intellij.execution.filters.ExceptionAnalysisProvider.StackLine;
+import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -483,6 +484,7 @@ public class ExceptionWorker {
                   Disposer.dispose(b);
                 }
                 myAnalysisWasActivated = true;
+                ActionsCollector.getInstance().record(project, action, null, element.getLanguage());
                 action.actionPerformed(AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, DataContext.EMPTY_CONTEXT));
               }
             }
