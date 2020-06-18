@@ -88,7 +88,7 @@ internal class StatisticsEventLogToolWindow(project: Project, private val record
   }
 
   companion object {
-    val rejectedValidationTypes = setOf(REJECTED, INCORRECT_RULE, UNDEFINED_RULE, UNREACHABLE_WHITELIST, PERFORMANCE_ISSUE)
+    val rejectedValidationTypes = setOf(REJECTED, INCORRECT_RULE, UNDEFINED_RULE, UNREACHABLE_METADATA, PERFORMANCE_ISSUE)
   }
 }
 
