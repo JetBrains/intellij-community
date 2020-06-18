@@ -3,9 +3,15 @@ package com.intellij.java.navigation
 
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.mixed.SearchEverywhereUIMixedResults
+import com.intellij.ide.util.gotoByName.GotoActionTest
+import com.intellij.openapi.actionSystem.AbbreviationManager
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.Processor
 import org.jetbrains.annotations.NotNull
@@ -79,6 +85,72 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
       def ui = createTestUI([contributor2, contributor1, contributor3])
       def future = ui.findElementsForPattern("ignored")
       assert waitForFuture(future, SEARCH_TIMEOUT) == ["item8", "item7", "item2", "item5", "item1", "item4", "item6", "item3"]
+    })
+  }
+
+  void "test priority for actions with space in pattern"() {
+    withMixingEnabled({
+      def action1 = new StubAction("Imaginary Action")
+      def action2 = new StubAction("Another Imaginary Action")
+      def class1 = myFixture.addClass("class ImaginaryAction{}")
+      def class2 = myFixture.addClass("class AnotherImaginaryAction{}")
+
+      def ui = createTestUI([
+        ChooseByNameTest.createClassContributor(project),
+        GotoActionTest.createActionContributor(project)
+      ])
+
+      def actions = ["ia1": action1, "ia2": action2]
+      def actionManager = ActionManager.getInstance()
+      actions.each {actionManager.registerAction(it.key, it.value)}
+      try {
+        def future = ui.findElementsForPattern("imaginaryaction")
+        def matchedAction1 = GotoActionTest.createMatchedAction(project, action1, "imaginaryaction")
+        def matchedAction2 = GotoActionTest.createMatchedAction(project, action2, "imaginaryaction")
+        assert PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT) == [class1, matchedAction1, class2, matchedAction2]
+
+        future = ui.findElementsForPattern("imaginary action")
+        matchedAction1 = GotoActionTest.createMatchedAction(project, action1, "imaginary action")
+        matchedAction2 = GotoActionTest.createMatchedAction(project, action2, "imaginary action")
+        assert PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT) == [matchedAction1, class1, matchedAction2,  class2]
+      }
+      finally {
+        actions.each {actionManager.unregisterAction(it.key)}
+      }
+    })
+  }
+
+  void "test top hit priority"() {
+    withMixingEnabled({
+      def action1 = new StubAction("Imaginary Action")
+      def action2 = new StubAction("Another Imaginary Action")
+      def class1 = myFixture.addClass("class ImaginaryAction{}")
+      def class2 = myFixture.addClass("class AnotherImaginaryAction{}")
+
+      def ui = createTestUI([
+        ChooseByNameTest.createClassContributor(project),
+        GotoActionTest.createActionContributor(project),
+        new TopHitSEContributor(project, null, null)
+      ])
+
+      def actions = ["ia1": action1, "ia2": action2]
+      def actionManager = ActionManager.getInstance()
+      def abbreviationManager = AbbreviationManager.getInstance()
+      actions.each {actionManager.registerAction(it.key, it.value)}
+      try {
+        def matchedAction1 = GotoActionTest.createMatchedAction(project, action1, "imaginary")
+        def matchedAction2 = GotoActionTest.createMatchedAction(project, action2, "imaginary")
+        def future = ui.findElementsForPattern("imaginary")
+        assert PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT) == [class1, matchedAction1, class2, matchedAction2]
+
+        abbreviationManager.register("imaginary", "ia2")
+        future = ui.findElementsForPattern("imaginary")
+        assert PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT) == [action2, class1, matchedAction1, class2]
+      }
+      finally {
+        actions.each {actionManager.unregisterAction(it.key)}
+        abbreviationManager.removeAllAbbreviations("ia2" )
+      }
     })
   }
 
@@ -159,5 +231,14 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
       return null
     }
+  }
+
+  private static class StubAction extends AnAction{
+    StubAction(String text) {
+      super(text)
+    }
+
+    @Override
+    void actionPerformed(@NotNull AnActionEvent e) {}
   }
 }
