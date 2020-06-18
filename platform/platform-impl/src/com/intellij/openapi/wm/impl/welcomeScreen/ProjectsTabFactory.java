@@ -17,9 +17,11 @@ import com.intellij.openapi.wm.WelcomeTabFactory;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearch;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -108,9 +110,12 @@ public class ProjectsTabFactory implements WelcomeTabFactory {
         SearchTextField projectSearch = new SearchTextField(false);
         projectSearch.setOpaque(false);
         projectSearch.setBorder(JBUI.Borders.empty());
-        projectSearch.getTextEditor().setOpaque(false);
-        projectSearch.getTextEditor().setBorder(JBUI.Borders.empty());
-        projectSearch.getTextEditor().getEmptyText().setText(IdeBundle.message("welcome.screen.search.projects.empty.text"));
+        JBTextField textEditor = projectSearch.getTextEditor();
+        textEditor.setOpaque(false);
+        textEditor.setBorder(JBUI.Borders.empty());
+        textEditor.getEmptyText().setText(IdeBundle.message("welcome.screen.search.projects.empty.text"));
+        projectSearch.getTextEditor()
+          .putClientProperty("StatusVisibleFunction", (BooleanFunction<JBTextField>)editor -> editor.getText().isEmpty());
         return projectSearch;
       }
 
