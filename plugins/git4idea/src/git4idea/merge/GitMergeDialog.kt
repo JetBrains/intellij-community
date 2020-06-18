@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.ui.components.JBTextArea
@@ -38,6 +39,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
 import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
+import javax.swing.event.DocumentEvent
 import javax.swing.plaf.basic.BasicComboBoxEditor
 
 class GitMergeDialog(private val project: Project,
@@ -276,6 +278,12 @@ class GitMergeDialog(private val project: Project,
       editor = object : BasicComboBoxEditor() {
         override fun createEditorComponent() = JBTextField().apply {
           emptyText.text = GitBundle.message("merge.branch.field.placeholder")
+
+          document.addDocumentListener(object : DocumentAdapter() {
+            override fun textChanged(e: DocumentEvent) {
+              startTrackingValidation()
+            }
+          })
         }
       }
 

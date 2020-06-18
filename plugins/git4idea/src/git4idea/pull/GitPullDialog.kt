@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBTextField
@@ -36,6 +37,7 @@ import java.awt.event.ItemEvent
 import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.event.DocumentEvent
 import javax.swing.plaf.basic.BasicComboBoxEditor
 
 class GitPullDialog(private val project: Project,
@@ -138,6 +140,10 @@ class GitPullDialog(private val project: Project,
     val matchingBranch = repository.currentBranch?.findTrackedBranch(repository)?.nameForRemoteOperations
                          ?: branches.find { branch -> branch == repository.currentBranchName }
                          ?: ""
+
+    if (matchingBranch.isEmpty()) {
+      startTrackingValidation()
+    }
 
     model.selectedItem = matchingBranch
   }
@@ -340,6 +346,12 @@ class GitPullDialog(private val project: Project,
     editor = object : BasicComboBoxEditor() {
       override fun createEditorComponent() = JBTextField().apply {
         emptyText.text = GitBundle.message("pull.branch.field.placeholder")
+
+        document.addDocumentListener(object : DocumentAdapter() {
+          override fun textChanged(e: DocumentEvent) {
+            startTrackingValidation()
+          }
+        })
       }
     }
 
