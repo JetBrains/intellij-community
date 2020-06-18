@@ -93,7 +93,6 @@ public class TemporaryCacheServerClient implements JpsServerClient {
   @Override
   public File downloadCacheById(@NotNull SegmentedProgressIndicatorManager downloadIndicatorManager, @NotNull String cacheId,
                                 @NotNull File targetDir) {
-    long start = System.currentTimeMillis();
     String downloadUrl = stringThree + REPOSITORY_NAME + "/caches/" + cacheId;
     String fileName = "portable-build-cache.zip";
     DownloadableFileService service = DownloadableFileService.getInstance();
