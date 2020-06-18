@@ -56,6 +56,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
             }
 
             val ideaPlugin = DescriptorUtil.getIdeaPlugin(pluginXmlFile) ?: continue
+            if (ideaPlugin.requireRestart.value == true) continue
             val status = analyzeUnloadable(ideaPlugin, pluginXmlFiles)
             result.add(status)
             pi.text = status.pluginId
