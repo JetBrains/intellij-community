@@ -18,6 +18,7 @@
     <lang.parserDefinition language="JSON5" implementationClass="com.intellij.json.json5.Json5ParserDefinition"/>
     <lang.syntaxHighlighterFactory language="JSON" implementationClass="com.intellij.json.highlighting.JsonSyntaxHighlighterFactory"/>
     <lang.syntaxHighlighterFactory language="JSON5" implementationClass="com.intellij.json.json5.highlighting.Json5SyntaxHighlightingFactory"/>
+    <outerLanguageRangePatcher language="JSON" implementationClass="com.intellij.psi.templateLanguages.DefaultOuterLanguagePatcher"/>
     <statusBarWidgetFactory implementation="com.jetbrains.jsonSchema.widget.JsonSchemaStatusWidgetFactory" order="after codeStyleWidget, before readOnlyWidget"/>
     <fileBasedIndex implementation="com.jetbrains.jsonSchema.impl.JsonSchemaFileValuesIndex" />
 
