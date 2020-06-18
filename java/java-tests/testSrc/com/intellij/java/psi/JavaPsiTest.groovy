@@ -4,6 +4,8 @@ package com.intellij.java.psi
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.project.DumbServiceImpl
+import com.intellij.openapi.roots.LanguageLevelProjectExtension
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightRecordMethod
 import com.intellij.psi.impl.source.PsiClassReferenceType
@@ -235,6 +237,12 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
     def elements = clazz.permitsList.referenceElements
     assert 1 == elements.size()
     assert "B" == elements.first().referenceName
+  }
+
+  void "test enum with name sealed"() {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_15_PREVIEW)
+    def clazz = configureFile("enum sealed {}").classes[0]
+    assert !clazz.getAllMethods().any { it.name == "values" }
   }
 
   private PsiJavaFile configureFile(String text) {
