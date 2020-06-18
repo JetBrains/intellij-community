@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 
-interface GHPRViewController {
+interface GHPRToolWindowTabComponentController {
 
   fun viewList()
 
