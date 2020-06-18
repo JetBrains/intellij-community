@@ -15,7 +15,7 @@ import org.cef.handler.CefLoadHandlerAdapter
 import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
 
-class HTMLFileEditor : FileEditor {
+class HTMLFileEditor(url: String? = null, html: String? = null) : FileEditor {
   private val htmlPanelComponent = JCEFHtmlPanel(null)
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this).apply { setLoadingText(CommonBundle.getLoadingTreeNodeText()) }
 
@@ -27,12 +27,11 @@ class HTMLFileEditor : FileEditor {
     }
   }
 
-  var url: String = "about:blank"
-    set(value) {
-      field = value
-      htmlPanelComponent.loadURL(value)
-      multiPanel.select(CONTENT_KEY, true)
-    }
+  init {
+    if (url != null) { htmlPanelComponent.loadURL(url) }
+    if (html != null) { htmlPanelComponent.loadHTML(html) }
+    multiPanel.select(CONTENT_KEY, true)
+  }
 
   init {
     htmlPanelComponent.jbCefClient.addLoadHandler(object : CefLoadHandlerAdapter() {

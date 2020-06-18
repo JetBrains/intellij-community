@@ -98,7 +98,7 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
         @Override
         public void actionPerformed(ActionEvent e) {
           String title = IdeBundle.message("update.whats.new.file.name", ApplicationInfo.getInstance().getFullVersion());
-          HTMLEditorProvider.Companion.openEditor(project, myNewBuild.getBlogPost() + WhatsNewAction.getEmbeddedSuffix(), title);
+          HTMLEditorProvider.Companion.openEditor(project, title, myNewBuild.getBlogPost() + WhatsNewAction.getEmbeddedSuffix(), null);
           close(OK_EXIT_CODE);
         }
       };

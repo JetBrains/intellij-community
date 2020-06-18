@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
@@ -33,7 +32,6 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -128,9 +126,8 @@ final class UpdateCheckerComponent {
       .addAction(new NotificationAction(IdeBundle.message("update.whats.new.notification.action")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          LightVirtualFile file = new LightVirtualFile(IdeBundle.message("update.whats.new.file.name", ApplicationInfo.getInstance().getFullVersion()), updateHtmlMessage);
-          file.putUserData(HTMLEditorProvider.Companion.getHTML_CONTENT_TYPE(), true);
-          FileEditorManager.getInstance(project).openFile(file, true);
+          String title = IdeBundle.message("update.whats.new.file.name", ApplicationInfo.getInstance().getFullVersion());
+          HTMLEditorProvider.Companion.openEditor(project, title, null, updateHtmlMessage);
           IdeUpdateUsageTriggerCollector.trigger("update.whats.new");
           notification.expire();
         }

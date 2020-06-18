@@ -8,29 +8,31 @@ import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.KeyWithDefaultValue
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 
 class HTMLEditorProvider : FileEditorProvider, DumbAware {
-  override fun createEditor(project: Project, file: VirtualFile): FileEditor = HTMLFileEditor()
+  override fun createEditor(project: Project, file: VirtualFile): FileEditor =
+    HTMLFileEditor(file.getUserData(URL_KEY), file.getUserData(HTML_KEY))
 
-  override fun accept(project: Project, file: VirtualFile) = file.getUserData(HTML_CONTENT_TYPE)!!
+  override fun accept(project: Project, file: VirtualFile) = file.getUserData(URL_KEY) != null
 
   override fun getEditorTypeId() = "html-editor"
 
   override fun getPolicy() = FileEditorPolicy.HIDE_DEFAULT_EDITOR
 
   companion object {
-    val HTML_CONTENT_TYPE: Key<Boolean> = KeyWithDefaultValue.create("HTML_CONTENT_TYPE", false)
+    private val URL_KEY: Key<String> = Key.create("URL_KEY")
+    private val HTML_KEY: Key<String> = Key.create("HTML_KEY")
 
-    fun openEditor(project: Project, url: String, title: String) {
+    fun openEditor(project: Project, title: String, url: String? = null, html: String? = null) {
       val file = LightVirtualFile(title)
-      file.putUserData(HTML_CONTENT_TYPE, true)
-      val fileEditors = FileEditorManager.getInstance(project).openFile(file, true)
-      if (fileEditors.isNotEmpty() && fileEditors[0] is HTMLFileEditor) {
-        (fileEditors[0] as HTMLFileEditor).url = url
-      }
+      if (url != null) { file.apply { putUserData(URL_KEY, url) } }
+      if (html != null) { file.apply { putUserData(HTML_KEY, html) } }
+
+      FileEditorManager.getInstance(project).openFile(file, true)
     }
+
+    fun isHTMLEditor(file: VirtualFile) = file.getUserData(URL_KEY) != null || file.getUserData(HTML_KEY) != null
   }
 }
