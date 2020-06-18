@@ -151,6 +151,7 @@
     <changesViewContent tabName="Local Changes"
                         className="com.intellij.openapi.vcs.changes.ChangesViewManager$ContentProvider"
                         preloaderClassName="com.intellij.openapi.vcs.changes.ChangesViewManager$ContentPreloader"
+                        predicateClassName="com.intellij.openapi.vcs.changes.ChangesViewManager$ContentPredicate"
                         displayNameSupplierClassName="com.intellij.openapi.vcs.changes.ChangesViewManager$DisplayNameSupplier"/>
 
     <statusBarWidgetProvider implementation="com.intellij.openapi.vcs.changes.committed.IncomingChangesIndicatorProvider"/>
