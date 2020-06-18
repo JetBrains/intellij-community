@@ -116,14 +116,16 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
       sideComponent = createReturnToListSideComponent()
     }
 
-    commitsLoadingModel.addStateChangeListener(object : GHLoadingModel.StateChangeListener {
+    val commitsTabTitleListener = object : GHLoadingModel.StateChangeListener {
       override fun onLoadingCompleted() {
         val commits = if (commitsLoadingModel.resultAvailable) commitsLoadingModel.result!! else null
         val commitsCount = commits?.size
         commitsTabInfo.text = if (commitsCount == null) GithubBundle.message("pull.request.commits")
         else GithubBundle.message("pull.request.commits.count", commitsCount)
       }
-    })
+    }
+    commitsLoadingModel.addStateChangeListener(commitsTabTitleListener)
+    commitsTabTitleListener.onLoadingCompleted()
 
     return object : SingleHeightTabs(project, uiDisposable) {
       override fun adjust(each: TabInfo?) {}
