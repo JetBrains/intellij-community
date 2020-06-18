@@ -12,7 +12,7 @@
   <depends>com.intellij.modules.java</depends>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.jetbrains.jpsServerAuthExtension"
+    <extensionPoint qualifiedName="com.intellij.jpsServerAuthExtension"
                     interface="com.intellij.jps.cache.client.JpsServerAuthExtension"
                     dynamic="true"/>
   </extensionPoints>

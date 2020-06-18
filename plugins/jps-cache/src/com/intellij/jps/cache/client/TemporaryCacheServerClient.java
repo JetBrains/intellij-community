@@ -43,12 +43,12 @@ public class TemporaryCacheServerClient implements JpsServerClient {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.client.TemporaryCacheServerClient");
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   static final TemporaryCacheServerClient INSTANCE = new TemporaryCacheServerClient();
-  private static final String REPOSITORY_NAME = "jps/intellij";
+  private static final String REPOSITORY_NAME = "";
   private final String stringThree;
 
   private TemporaryCacheServerClient() {
     byte[] decodedBytes = Base64.getDecoder().decode("aHR0cHM6Ly90ZW1wb3JhcnktZmlsZXMtY2FjaGUubGFicy5qYi5nZy9jYWNoZS8=");
-    stringThree = new String(decodedBytes, CharsetToolkit.UTF8_CHARSET);
+    stringThree = "https://d1lc5k9lerg6km.cloudfront.net";
   }
 
   @NotNull
@@ -93,6 +93,7 @@ public class TemporaryCacheServerClient implements JpsServerClient {
   @Override
   public File downloadCacheById(@NotNull SegmentedProgressIndicatorManager downloadIndicatorManager, @NotNull String cacheId,
                                 @NotNull File targetDir) {
+    long start = System.currentTimeMillis();
     String downloadUrl = stringThree + REPOSITORY_NAME + "/caches/" + cacheId;
     String fileName = "portable-build-cache.zip";
     DownloadableFileService service = DownloadableFileService.getInstance();
