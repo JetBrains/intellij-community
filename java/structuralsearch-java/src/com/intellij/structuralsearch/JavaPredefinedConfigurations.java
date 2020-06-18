@@ -245,6 +245,9 @@ class JavaPredefinedConfigurations {
 
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.annotation.declarations"),
                                "@interface 'Interface {}", getMetadataType()),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.comments.containing.word"),
+                               "// '_before bug '_after",
+                               getMetadataType(), JavaFileType.INSTANCE),
 
       // J2EE templates
       createSearchTemplateInfoSimple(SSRBundle.message("predefined.configuration.struts.1.1.actions"),"public class '_StrutsActionClass extends '_ParentClass*:Action {\n" +
