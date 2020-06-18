@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.wm;
 
@@ -12,8 +12,8 @@ import com.intellij.util.xmlb.annotations.Attribute;
  *
  * This extension point doesn't create a toolwindow but it only adds an ID to the toolwindow whitelist.
  */
-public class ToolWindowWhitelistEP extends AbstractExtensionPointBean {
-  public static final ExtensionPointName<ToolWindowWhitelistEP> EP_NAME = ExtensionPointName.create("com.intellij.toolWindowWhitelist");
+public class ToolWindowAllowlistEP extends AbstractExtensionPointBean {
+  public static final ExtensionPointName<ToolWindowAllowlistEP> EP_NAME = ExtensionPointName.create("com.intellij.toolWindowAllowlist");
 
   @Attribute("id")
   public String id;
