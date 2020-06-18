@@ -1218,8 +1218,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     notifyByBalloon(toolWindowId, type, htmlBody, null, null)
   }
 
-  override fun notifyByBalloon(toolWindowId: String, type: MessageType, htmlBody: String, icon: Icon?, listener: HyperlinkListener?) {
-    val entry = idToEntry.get(toolWindowId)!!
+  override fun notifyByBalloon(options: ToolWindowBalloonShowOptions) {
+    val entry = idToEntry.get(options.toolWindowId)!!
     val existing = entry.balloon
     if (existing != null) {
       Disposer.dispose(existing)
@@ -1242,13 +1242,16 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       ToolWindowAnchor.RIGHT == anchor -> position.set(Balloon.Position.atLeft)
     }
 
-    val listenerWrapper = BalloonHyperlinkListener(listener)
-    val balloon = JBPopupFactory.getInstance()
-      .createHtmlTextBalloonBuilder(htmlBody.replace("\n", "<br>"), icon, type.titleForeground, type.popupBackground, listenerWrapper)
-      .setBorderColor(type.borderColor)
+    val listenerWrapper = BalloonHyperlinkListener(options.listener)
+    val balloonBuilder = JBPopupFactory.getInstance()
+      .createHtmlTextBalloonBuilder(options.htmlBody.replace("\n", "<br>"), options.icon, options.type.titleForeground, options.type.popupBackground, listenerWrapper)
+      .setBorderColor(options.type.borderColor)
       .setHideOnClickOutside(false)
       .setHideOnFrameResize(false)
-      .createBalloon() as BalloonImpl
+
+    options.balloonCustomizer?.accept(balloonBuilder)
+
+    val balloon = balloonBuilder.createBalloon() as BalloonImpl
     NotificationsManagerImpl.frameActivateBalloonListener(balloon, Runnable {
       AppExecutorUtil.getAppScheduledExecutorService().schedule({ balloon.setHideOnClickOutside(true) }, 100, TimeUnit.MILLISECONDS)
     })
@@ -1264,8 +1267,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     })
     Disposer.register(entry.disposable, balloon)
 
-    val button = stripe.getButtonFor(toolWindowId)
-    LOG.assertTrue(button != null, ("Button was not found, popup won't be shown. Toolwindow id: $toolWindowId, message: $htmlBody, message type: $type"))
+    val button = stripe.getButtonFor(options.toolWindowId)
+    LOG.assertTrue(button != null, ("Button was not found, popup won't be shown. $options"))
     if (button == null) {
       return
     }
@@ -1275,7 +1278,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       if (button.isShowing) {
         tracker = object : PositionTracker<Balloon>(button) {
           override fun recalculateLocation(`object`: Balloon): RelativePoint? {
-            val otherEntry = idToEntry.get(toolWindowId) ?: return null
+            val otherEntry = idToEntry.get(options.toolWindowId) ?: return null
             val stripeButton = otherEntry.stripeButton
             if (otherEntry.readOnlyWindowInfo.anchor != anchor) {
               `object`.hide()
