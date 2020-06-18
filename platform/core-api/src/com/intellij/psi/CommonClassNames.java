@@ -115,8 +115,6 @@ public interface CommonClassNames {
   String JAVA_UTIL_FUNCTION_BI_FUNCTION = "java.util.function.BiFunction";
   String JAVA_UTIL_FUNCTION_SUPPLIER = "java.util.function.Supplier";
 
-  String JDK_INTERNAL_PREVIEW_FEATURE = "jdk.internal.PreviewFeature";
-
   String JAVA_LANG_INVOKE_MH_POLYMORPHIC = "java.lang.invoke.MethodHandle.PolymorphicSignature";
 
   String CLASS_FILE_EXTENSION = ".class";

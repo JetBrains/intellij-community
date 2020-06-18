@@ -1,3 +1,6 @@
 package org.myorg.preview;
 
-public interface FromPreview {}
+public interface FromPreview {
+  static void f();
+  void g();
+}

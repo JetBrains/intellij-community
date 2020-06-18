@@ -11,9 +11,9 @@ class Main {
   Main(int i){}
 
   static {
-    <error descr="Patterns in 'instanceof' are not supported at language level '8'">new Main()</error>;
-    <error descr="Records are not supported at language level '8'">new Main(42l)</error>;
-    <error descr="Text block literals are not supported at language level '8'">new Main("42")</error>;
+    <error descr="Patterns in 'instanceof' are not supported at language level '9'">new Main()</error>;
+    <error descr="Records are not supported at language level '9'">new Main(42l)</error>;
+    <error descr="Text block literals are not supported at language level '9'">new Main("42")</error>;
     new Main(42);
   }
 

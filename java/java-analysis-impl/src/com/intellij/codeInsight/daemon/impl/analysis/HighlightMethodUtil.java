@@ -1321,7 +1321,7 @@ public class HighlightMethodUtil {
 
   /**
    * This method validates that the language level of the project where a call expression accesses
-   * the method that is annotated with {@link CommonClassNames#JDK_INTERNAL_PREVIEW_FEATURE} is sufficient
+   * the method that is annotated with {@link HighlightingFeature#JDK_INTERNAL_PREVIEW_FEATURE} is sufficient
    *
    * @param methodCallExpression the expression to examine
    * @param level the current language level
@@ -1330,15 +1330,9 @@ public class HighlightMethodUtil {
    */
   static HighlightInfo checkMethodCallPreviewFeatureAnnotation(@NotNull final PsiMethodCallExpression methodCallExpression,
                                                                @NotNull final LanguageLevel level) {
-    final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-    final PsiElement targetMethod = methodExpression.resolve();
-    if (!(targetMethod instanceof PsiJvmModifiersOwner)) return null;
+    final PsiMethod targetMethod = methodCallExpression.resolveMethod();
 
-    final PsiAnnotation annotation = ((PsiJvmModifiersOwner)targetMethod).getAnnotation(CommonClassNames.JDK_INTERNAL_PREVIEW_FEATURE);
-    final HighlightingFeature feature = GenericsHighlightUtil.extractHighlightingFeature(annotation);
-    if (feature == null) return null;
-
-    return HighlightUtil.checkFeature(methodCallExpression, feature, level, methodCallExpression.getContainingFile());
+    return HighlightUtil.checkPreviewFeatureElement(methodCallExpression, targetMethod, level);
   }
 
   static HighlightInfo checkConstructorCallsBaseClassConstructor(@NotNull PsiMethod constructor,

@@ -682,6 +682,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         }
       }
     }
+    if (!myHolder.hasErrorResults()) {
+      myHolder.add(HighlightUtil.checkPackagePreviewFeatureAnnotation(statement, myLanguageLevel));
+    }
   }
 
   @Override
@@ -1405,7 +1408,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults() && resolved instanceof PsiField) {
       try {
         myHolder.add(HighlightUtil.checkIllegalForwardReferenceToField(expression, (PsiField)resolved));
-        if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkFieldPreviewFeatureAnnotation(expression, (PsiField)resolved, myLanguageLevel));
+        if (!myHolder.hasErrorResults())
+          myHolder.add(HighlightUtil.checkPreviewFeatureElement(expression, (PsiField)resolved, myLanguageLevel));
       }
       catch (IndexNotReadyException ignored) { }
     }
@@ -1424,6 +1428,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         myHolder.add(GenericsHighlightUtil.checkMemberSignatureTypesAccessibility(expression));
       }
     }
+    if (!myHolder.hasErrorResults() && resolved instanceof PsiClass) myHolder.add(HighlightUtil.checkPreviewFeatureElement(expression, (PsiClass)resolved, myLanguageLevel));
   }
 
   @Override
@@ -1911,6 +1916,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkClashingReads(module));
     if (!myHolder.hasErrorResults()) myHolder.addAll(ModuleHighlightUtil.checkUnusedServices(module, myFile));
     if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkFileLocation(module, myFile));
+  }
+
+  @Override
+  public void visitModuleStatement(PsiStatement statement) {
+    super.visitModuleStatement(statement);
+    if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkModulePreviewFeatureAnnotation(statement, myLanguageLevel));
   }
 
   @Override

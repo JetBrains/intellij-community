@@ -301,8 +301,14 @@ public class JavaResolveUtil {
       .resolveConstructor(PsiTypesUtil.getClassType(superClassWhichTheSuperCallMustResolveTo), expressionList, place).getElement();
   }
 
-  public static PsiPackage getContainingPackage(@NotNull PsiClass psiClass) {
-    PsiDirectory directory = psiClass.getContainingFile().getContainingDirectory();
-    return directory == null ? null : JavaDirectoryService.getInstance().getPackage(directory);
+  @Nullable
+  public static PsiPackage getContainingPackage(@NotNull final PsiElement element) {
+    final PsiFile file = element.getContainingFile();
+    if (file == null) return null;
+
+    final PsiDirectory directory = file.getContainingDirectory();
+    if (directory == null) return null;
+
+    return JavaDirectoryService.getInstance().getPackage(directory);
   }
 }

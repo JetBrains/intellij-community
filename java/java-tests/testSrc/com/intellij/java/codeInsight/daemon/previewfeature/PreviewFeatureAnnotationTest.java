@@ -14,23 +14,33 @@ public class PreviewFeatureAnnotationTest extends LightJavaCodeInsightFixtureTes
   protected void setUp() throws Exception {
     super.setUp();
     final String previewFeatureAnnotation = BASE_PATH + "/PreviewFeature.java";
-    final String packagePreview = BASE_PATH + "/" + "packagepreview/package-info.java";
-    final String interfaceInPreviewPackage = BASE_PATH + "/" + "packagepreview/FromPreview.java";
+    final String packagePreview = BASE_PATH + "/packagepreview/package-info.java";
+    final String interfaceInPreviewPackage = BASE_PATH + "/packagepreview/FromPreview.java";
+    final String moduleInfo = BASE_PATH + "/packagepreview/module-info.java";
     myFixture.configureByFile(previewFeatureAnnotation);
     myFixture.configureByFile(packagePreview);
     myFixture.configureByFile(interfaceInPreviewPackage);
+    myFixture.configureByFile(moduleInfo);
+
+    final String packagePreviewImpl = BASE_PATH + "/packagepreview.impl/package-info.java";
+    final String fromPreviewImpl = BASE_PATH + "/packagepreview.impl/FromPreviewImpl.java";
+
+    myFixture.configureByFile(packagePreviewImpl);
+    myFixture.configureByFile(fromPreviewImpl);
   }
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+    return JAVA_9;
   }
 
   public void testCallMethodsWithPreviewFeature() { doTest(); }
   public void testCallConstructorWithPreviewFeature() { doTest(); }
   public void testTypeWithPreviewFeature() { doTest(); }
   public void testFieldsWithPreviewFeature() { doTest(); }
-  public void testImportWithPreviewFeature() { doTest();}
+  public void testImportWithPreviewFeature() { doTest(); }
+  public void testReferenceWithPreviewFeature() { doTest(); }
+  public void testRequiresModuleWithPreviewFeature() { doTest(); }
 
   private void doTest() {
     String filePath = BASE_PATH + "/" + getTestName(false) + ".java";
@@ -42,9 +52,4 @@ public class PreviewFeatureAnnotationTest extends LightJavaCodeInsightFixtureTes
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
   }
-
-  //@Override
-  //protected String getBasePath() {
-  //  return BASE_PATH;
-  //}
 }

@@ -62,6 +62,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -1592,36 +1593,41 @@ public class HighlightUtil {
     return null;
   }
 
-  public static HighlightInfo checkFieldPreviewFeatureAnnotation(@NotNull final PsiReferenceExpression expression,
-                                                                 @NotNull final PsiField field,
-                                                                 @NotNull final LanguageLevel level) {
-    final HighlightingFeature feature = GenericsHighlightUtil.extractHighlightingFeature(field.getAnnotation(CommonClassNames.JDK_INTERNAL_PREVIEW_FEATURE));
-    if (feature == null) return null;
-
-    return checkFeature(expression, feature, level, expression.getContainingFile());
-  }
-
-  public static HighlightInfo checkPackagePreviewFeatureAnnotation(@NotNull final PsiImportStatement statement,
+  public static HighlightInfo checkPackagePreviewFeatureAnnotation(@NotNull final PsiImportStatementBase statement,
                                                                    @NotNull final LanguageLevel level) {
     final PsiElement resolve = statement.resolve();
-    final PsiPackage psiPackage;
-    if (resolve instanceof PsiPackage) {
-      psiPackage = (PsiPackage)resolve;
-    }
-    else if (resolve instanceof PsiClass) {
-      psiPackage = JavaResolveUtil.getContainingPackage((PsiClass)resolve);
-    }
-    else {
-      return null;
-    }
+    if (!(resolve instanceof PsiModifierListOwner)) return null;
 
-    if (psiPackage == null) return null;
+    final PsiModifierListOwner owner = (PsiModifierListOwner)resolve;
+    return checkPreviewFeatureElement(statement, owner, level);
+  }
 
-    final PsiAnnotation annotation = psiPackage.getAnnotation(CommonClassNames.JDK_INTERNAL_PREVIEW_FEATURE);
-    final HighlightingFeature feature = GenericsHighlightUtil.extractHighlightingFeature(annotation);
+  @Nullable
+  @Contract(value = "null, _, _ -> null; _, null, _ -> null", pure = true)
+  static HighlightInfo checkPreviewFeatureElement(@Nullable final PsiElement context,
+                                                  @Nullable final PsiModifierListOwner owner,
+                                                  @NotNull final LanguageLevel level) {
+    if (context == null) return null;
+    if (owner == null) return null;
+
+    final PsiAnnotation annotation = getPreviewFeatureAnnotation(owner);
+    final HighlightingFeature feature = HighlightingFeature.fromPreviewFeatureAnnotation(annotation);
     if (feature == null) return null;
 
-    return checkFeature(statement, feature, level, statement.getContainingFile());
+    return checkFeature(context, feature, level, context.getContainingFile());
+  }
+
+  @Nullable
+  @Contract(value = "null -> null", pure = true)
+  private static PsiAnnotation getPreviewFeatureAnnotation(@Nullable final PsiModifierListOwner owner) {
+    if (owner == null) return null;
+
+    final PsiAnnotation annotation = owner.getAnnotation(HighlightingFeature.JDK_INTERNAL_PREVIEW_FEATURE);
+    if (annotation != null) return annotation;
+
+    final PsiPackage psiPackage = JavaResolveUtil.getContainingPackage(owner);
+    if (psiPackage  == null) return null;
+    return psiPackage.getAnnotation(HighlightingFeature.JDK_INTERNAL_PREVIEW_FEATURE);
   }
 
   private enum SelectorKind { INT, ENUM, STRING }

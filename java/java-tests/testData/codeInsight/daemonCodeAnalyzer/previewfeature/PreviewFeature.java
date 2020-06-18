@@ -21,6 +21,7 @@ public @interface PreviewFeature {
     PATTERN_MATCHING_IN_INSTANCEOF,
     TEXT_BLOCKS,
     RECORDS,
+    SEALED_CLASSES
     ;
   }
 }

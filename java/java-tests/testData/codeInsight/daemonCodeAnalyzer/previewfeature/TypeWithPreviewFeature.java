@@ -10,8 +10,8 @@ class Main {
   class TextBlocks{}
   class Empty{}
 
-  private void f(<error descr="Patterns in 'instanceof' are not supported at language level '8'">InstanceOf</error> o, Empty e) {}
-  private void f(Empty e, <error descr="Records are not supported at language level '8'">Records</error> r) {}
-  private void f(<error descr="Text block literals are not supported at language level '8'">TextBlocks</error> e, <error descr="Records are not supported at language level '8'">Records</error> r) {}
-  private void f(<error descr="Patterns in 'instanceof' are not supported at language level '8'">org.myorg.preview.FromPreview</error> p) {}
+  private void f(<error descr="Patterns in 'instanceof' are not supported at language level '9'">InstanceOf</error> o, Empty e) {}
+  private void f(Empty e, <error descr="Records are not supported at language level '9'">Records</error> r) {}
+  private void f(<error descr="Text block literals are not supported at language level '9'">TextBlocks</error> e, <error descr="Records are not supported at language level '9'">Records</error> r) {}
+  private void f(<error descr="Patterns in 'instanceof' are not supported at language level '9'">org.myorg.preview.FromPreview</error> p) {}
 }

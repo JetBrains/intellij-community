@@ -3,12 +3,20 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.lang.jvm.JvmEnumField;
+import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
+import com.intellij.lang.jvm.annotation.JvmAnnotationAttributeValue;
+import com.intellij.lang.jvm.annotation.JvmAnnotationEnumFieldValue;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public enum HighlightingFeature {
   GENERICS(LanguageLevel.JDK_1_5, "feature.generics"),
@@ -63,6 +71,8 @@ public enum HighlightingFeature {
   LOCAL_INTERFACES(LanguageLevel.JDK_15_PREVIEW, "feature.local.interfaces"),
   LOCAL_ENUMS(LanguageLevel.JDK_15_PREVIEW, "feature.local.enums");
 
+  public static final String JDK_INTERNAL_PREVIEW_FEATURE = "jdk.internal.PreviewFeature";
+
   final LanguageLevel level;
   @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE)
   final String key;
@@ -92,7 +102,29 @@ public enum HighlightingFeature {
   }
 
   @Nullable
-  public static HighlightingFeature convertFromPreviewFeature(@NotNull final String feature) {
+  @Contract(value = "null -> null", pure = true)
+  static HighlightingFeature fromPreviewFeatureAnnotation(@Nullable final PsiAnnotation annotation) {
+    if (annotation == null) return null;
+    if (!annotation.hasQualifiedName(JDK_INTERNAL_PREVIEW_FEATURE)) return null;
+
+    final JvmAnnotationAttribute feature = annotation.findAttribute("feature");
+    if (feature == null) return null;
+
+    final JvmAnnotationAttributeValue attributeValue = feature.getAttributeValue();
+    if (attributeValue == null) return null;
+
+    final JvmAnnotationEnumFieldValue annotationEnumFieldValue = tryCast(attributeValue, JvmAnnotationEnumFieldValue.class);
+    if (annotationEnumFieldValue == null) return null;
+
+    final JvmEnumField field = annotationEnumFieldValue.getField();
+    if (field == null) return null;
+
+    return convertFromPreviewFeatureName(field.getName());
+  }
+
+  @Nullable
+  @Contract(pure = true)
+  private static HighlightingFeature convertFromPreviewFeatureName(@NotNull final String feature) {
     switch (feature) {
       case "PATTERN_MATCHING_IN_INSTANCEOF":
         return PATTERNS;
@@ -100,6 +132,8 @@ public enum HighlightingFeature {
         return TEXT_BLOCKS;
       case "RECORDS":
         return RECORDS;
+      case "SEALED_CLASSES":
+        return SEALED_CLASSES;
       default:
         return null;
     }

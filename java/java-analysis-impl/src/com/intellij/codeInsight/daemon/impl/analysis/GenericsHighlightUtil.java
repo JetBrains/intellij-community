@@ -7,10 +7,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.lang.jvm.JvmEnumField;
-import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
-import com.intellij.lang.jvm.annotation.JvmAnnotationAttributeValue;
-import com.intellij.lang.jvm.annotation.JvmAnnotationEnumFieldValue;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -26,7 +22,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
@@ -37,14 +32,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-
-import static com.intellij.util.ObjectUtils.tryCast;
 
 public class GenericsHighlightUtil {
   private static final Logger LOG = Logger.getInstance(GenericsHighlightUtil.class);
@@ -1557,49 +1549,10 @@ public class GenericsHighlightUtil {
     return null;
   }
 
-  @Nullable
-  @Contract(value = "null -> null", pure = true)
-  static HighlightingFeature extractHighlightingFeature(@Nullable final PsiAnnotation annotation) {
-    if (annotation == null) return null;
-    if (!CommonClassNames.JDK_INTERNAL_PREVIEW_FEATURE.equals(annotation.getQualifiedName())) return null;
-
-    final JvmAnnotationAttribute feature = annotation.findAttribute("feature");
-    if (feature == null) return null;
-
-    final JvmAnnotationAttributeValue attributeValue = feature.getAttributeValue();
-    if (attributeValue == null) return null;
-
-    final JvmAnnotationEnumFieldValue annotationEnumFieldValue = tryCast(attributeValue, JvmAnnotationEnumFieldValue.class);
-    if (annotationEnumFieldValue == null) return null;
-
-    final JvmEnumField field = annotationEnumFieldValue.getField();
-    if (field == null) return null;
-
-    return HighlightingFeature.convertFromPreviewFeature(field.getName());
-  }
-
   public static HighlightInfo checkTypePreviewFeatureAnnotation(@NotNull final PsiTypeElement type,
                                                                 @NotNull final LanguageLevel level) {
     final PsiClass clazz = PsiTypesUtil.getPsiClass(type.getType());
 
-    final PsiAnnotation annotation = getPreviewFeatureAnnotation(clazz);
-    if (annotation == null) return null;
-
-    final HighlightingFeature feature = extractHighlightingFeature(annotation);
-    if (feature == null) return null;
-
-    return HighlightUtil.checkFeature(type, feature, level, type.getContainingFile());
-  }
-
-  @Nullable
-  @Contract(value = "null -> null", pure = true)
-  private static PsiAnnotation getPreviewFeatureAnnotation(@Nullable final PsiClass clazz) {
-    if (clazz == null) return null;
-    final PsiAnnotation annotation = clazz.getAnnotation(CommonClassNames.JDK_INTERNAL_PREVIEW_FEATURE);
-    if (annotation != null) return annotation;
-
-    final PsiPackage psiPackage = JavaResolveUtil.getContainingPackage(clazz);
-    if (psiPackage  == null) return null;
-    return psiPackage.getAnnotation(CommonClassNames.JDK_INTERNAL_PREVIEW_FEATURE);
+    return HighlightUtil.checkPreviewFeatureElement(type, clazz, level);
   }
 }
