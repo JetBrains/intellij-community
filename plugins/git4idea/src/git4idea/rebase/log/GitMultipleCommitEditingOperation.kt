@@ -24,10 +24,6 @@ internal fun <T> List<T>.indicesByPredicate(predicate: (T) -> Boolean): List<Int
 internal open class GitMultipleCommitEditingOperation(protected val repository: GitRepository) {
   protected val project = repository.project
 
-  init {
-    repository.update()
-  }
-
   protected fun execute(commits: List<VcsCommitMetadata>, rebaseEditor: GitRebaseEditorHandler) {
     val base = commits.last().parents.first().asString()
     val params = GitRebaseParams.editCommits(
