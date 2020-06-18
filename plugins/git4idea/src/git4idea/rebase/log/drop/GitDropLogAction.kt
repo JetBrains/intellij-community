@@ -6,7 +6,9 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import git4idea.i18n.GitBundle
 import git4idea.rebase.log.GitMultipleCommitEditingAction
+import git4idea.rebase.log.GitMultipleCommitEditingOperationResult
 import git4idea.rebase.log.getOrLoadDetails
+import git4idea.rebase.log.notifySuccess
 
 internal class GitDropLogAction : GitMultipleCommitEditingAction() {
   override fun update(e: AnActionEvent, commitEditingData: MultipleCommitEditingData) {
@@ -18,7 +20,15 @@ internal class GitDropLogAction : GitMultipleCommitEditingAction() {
     val commitDetails = getOrLoadDetails(project, commitEditingData.logData, commitEditingData.selectedCommitList)
     object : Task.Backgroundable(project, GitBundle.message("rebase.log.drop.progress.indicator.title", commitDetails.size)) {
       override fun run(indicator: ProgressIndicator) {
-        GitDropOperation(commitEditingData.repository).execute(commitDetails)
+        val operationResult = GitDropOperation(commitEditingData.repository).execute(commitDetails)
+        if (operationResult is GitMultipleCommitEditingOperationResult.Complete) {
+          operationResult.notifySuccess(
+            GitBundle.message("rebase.log.drop.success.notification.title", commitDetails.size),
+            GitBundle.getString("rebase.log.drop.undo.progress.title"),
+            GitBundle.getString("rebase.log.drop.undo.impossible.title"),
+            GitBundle.getString("rebase.log.drop.undo.failed.title")
+          )
+        }
       }
     }.queue()
   }
