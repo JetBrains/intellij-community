@@ -1,6 +1,10 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
@@ -1155,5 +1159,21 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "foo(MyCls())\n" +
                          "foo(<warning descr=\"Expected type 'MyCls', got 'DifferentCls' instead\">DifferentCls()</warning>)")
     );
+  }
+
+  public void testNewTypeInForeignUnstubbedFile() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
+      myFixture.configureFromTempProjectFile("a.py");
+      VirtualFile foreignVFile = myFixture.findFileInTempDir("b.py");
+      assertNotNull(foreignVFile);
+      PsiFile foreignFilePsi = PsiManager.getInstance(myFixture.getProject()).findFile(foreignVFile);
+      assertNotNull(foreignFilePsi);
+      assertNotParsed(foreignFilePsi);
+      //noinspection ResultOfMethodCallIgnored
+      foreignFilePsi.getNode();
+      assertNotNull(((PsiFileImpl)foreignFilePsi).getTreeElement());
+      configureInspection();
+    });
   }
 }

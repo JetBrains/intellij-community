@@ -8,6 +8,7 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator
+import com.jetbrains.python.psi.impl.StubAwareComputation
 import com.jetbrains.python.psi.impl.stubs.PyNamedTupleStubImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.stubs.PyNamedTupleStub
@@ -183,15 +184,11 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
     }
 
     private fun getNamedTupleTypeForTarget(target: PyTargetExpression, context: TypeEvalContext): PyNamedTupleType? {
-      val stub = target.stub
-
-      return if (stub != null) {
-        getNamedTupleTypeFromStub(target,
-                                  stub.getCustomStub(PyNamedTupleStub::class.java),
-                                  context,
-                                  PyNamedTupleType.DefinitionLevel.NEW_TYPE)
-      }
-      else getNamedTupleTypeFromAST(target, context)
+      return StubAwareComputation.on(target)
+        .withCustomStub { it.getCustomStub(PyNamedTupleStub::class.java) }
+        .overStub { getNamedTupleTypeFromStub(target, it, context, PyNamedTupleType.DefinitionLevel.NEW_TYPE) }
+        .withStubBuilder { PyNamedTupleStubImpl.create(it) }
+        .compute(context)
     }
 
     private fun getNamedTupleTypeForTypingNTInheritorAsCallee(cls: PyClass, context: TypeEvalContext): PyNamedTupleType? {
@@ -227,13 +224,6 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
                               definitionLevel,
                               fields.values.any { it.isPresent },
                               getDeclaration(targetOrCall))
-    }
-
-    private fun getNamedTupleTypeFromAST(target: PyTargetExpression, context: TypeEvalContext): PyNamedTupleType? {
-      return if (context.maySwitchToAST(target)) {
-        getNamedTupleTypeFromStub(target, PyNamedTupleStubImpl.create(target), context, PyNamedTupleType.DefinitionLevel.NEW_TYPE)
-      }
-      else null
     }
 
     private fun createTypedNamedTupleReplaceType(anchor: PsiElement,

@@ -9,6 +9,7 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.*
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator
+import com.jetbrains.python.psi.impl.StubAwareComputation
 import com.jetbrains.python.psi.impl.stubs.PyTypedDictStubImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.stubs.PyTypedDictStub
@@ -192,15 +193,11 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
     }
 
     private fun getTypedDictTypeForTarget(target: PyTargetExpression, context: TypeEvalContext): PyTypedDictType? {
-      val stub = target.stub
-
-      return if (stub != null) {
-        getTypedDictTypeFromStub(target,
-                                 stub.getCustomStub(PyTypedDictStub::class.java),
-                                 context,
-                                 false)
-      }
-      else getTypedDictTypeFromAST(target, context)
+      return StubAwareComputation.on(target)
+        .withCustomStub { it.getCustomStub(PyTypedDictStub::class.java) }
+        .overStub { getTypedDictTypeFromStub(target, it, context, false) }
+        .withStubBuilder { PyTypedDictStubImpl.create(it) }
+        .compute(context)
     }
 
     fun getTypedDictTypeForResolvedElement(resolved: PsiElement, context: TypeEvalContext): PyType? {
@@ -223,13 +220,6 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
     private fun getTypedDictTypeFromAST(call: PyCallExpression, context: TypeEvalContext): PyTypedDictType? {
       return if (context.maySwitchToAST(call)) {
         getTypedDictTypeFromStub(call, PyTypedDictStubImpl.create(call), context, true)
-      }
-      else null
-    }
-
-    private fun getTypedDictTypeFromAST(target: PyTargetExpression, context: TypeEvalContext): PyTypedDictType? {
-      return if (context.maySwitchToAST(target)) {
-        getTypedDictTypeFromStub(target, PyTypedDictStubImpl.create(target), context, false)
       }
       else null
     }
