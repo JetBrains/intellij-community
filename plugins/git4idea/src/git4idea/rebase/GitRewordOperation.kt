@@ -5,7 +5,6 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -16,7 +15,6 @@ import com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
-import git4idea.branch.GitRebaseParams
 import git4idea.checkin.GitCheckinEnvironment
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
@@ -28,6 +26,7 @@ import git4idea.history.GitLogUtil
 import git4idea.i18n.GitBundle
 import git4idea.rebase.GitRebaseEntry.Action.PICK
 import git4idea.rebase.GitRebaseEntry.Action.REWORD
+import git4idea.rebase.log.GitMultipleCommitEditingOperation
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.reset.GitResetMode
@@ -35,16 +34,15 @@ import java.io.File
 import java.io.IOException
 
 internal class GitRewordOperation(
-  private val repository: GitRepository,
+  repository: GitRepository,
   private val commit: VcsCommitMetadata,
   private val newMessage: String
-) {
+) : GitMultipleCommitEditingOperation(repository) {
   init {
     repository.update()
   }
 
   private val LOG = logger<GitRewordOperation>()
-  private val project = repository.project
   private val notifier = VcsNotifier.getInstance(project)
 
   private val initialHeadPosition = repository.currentRevision!!
@@ -52,15 +50,15 @@ internal class GitRewordOperation(
   private var rewordedCommit: Hash? = null
 
   fun execute() {
-    var reworded = false
+    var reworded = OperationResult.INCOMPLETE
     if (canRewordViaAmend()) {
       reworded = rewordViaAmend()
     }
-    if (!reworded) {
+    if (reworded == OperationResult.INCOMPLETE) {
       reworded = rewordViaRebase()
     }
 
-    if (reworded) {
+    if (reworded == OperationResult.COMPLETE) {
       headAfterReword = repository.currentRevision
       rewordedCommit = findNewHashOfRewordedCommit(headAfterReword!!)
       notifySuccess()
@@ -73,30 +71,23 @@ internal class GitRewordOperation(
 
   private fun isLatestCommit() = commit.id.asString() == initialHeadPosition
 
-  private fun rewordViaRebase(): Boolean {
+  private fun rewordViaRebase(): OperationResult {
     val rebaseEditor = GitAutomaticRebaseEditor(project, commit.root,
                                                 entriesEditor = { list -> injectRewordAction(list) },
                                                 plainTextEditor = { editorText -> supplyNewMessage(editorText) })
 
-    val params = GitRebaseParams.editCommits(repository.vcs.version,
-                                             commit.parents.first().asString(), rebaseEditor, true,
-                                             GitRebaseParams.AutoSquashOption.DISABLE)
-    val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
-    val spec = GitRebaseSpec.forNewRebase(project, params, listOf(repository), indicator)
-    val rewordProcess = RewordProcess(spec)
-    rewordProcess.rebase()
-    return rewordProcess.succeeded
+    return rebase(listOf(commit), rebaseEditor)
   }
 
-  private fun rewordViaAmend(): Boolean {
+  private fun rewordViaAmend(): OperationResult {
     val handler = GitLineHandler(project, repository.root, GitCommand.COMMIT)
     val messageFile: File
     try {
       messageFile = GitCheckinEnvironment.createCommitMessageFile(project, repository.root, newMessage)
     }
-    catch(e: IOException) {
+    catch (e: IOException) {
       LOG.warn("Couldn't create message file", e)
-      return false
+      return OperationResult.INCOMPLETE
     }
     handler.addParameters("--amend")
     handler.addParameters("-F")
@@ -107,11 +98,11 @@ internal class GitRewordOperation(
     val result = Git.getInstance().runCommand(handler)
     repository.update()
     if (result.success()) {
-      return true
+      return OperationResult.COMPLETE
     }
     else {
       LOG.warn("Couldn't reword via amend: " + result.errorOutputAsJoinedString)
-      return false
+      return OperationResult.INCOMPLETE
     }
   }
 
@@ -236,13 +227,5 @@ internal class GitRewordOperation(
     object HeadMoved : UndoPossibility()
     class PushedToProtectedBranch(val branch: String) : UndoPossibility()
     object Error : UndoPossibility()
-  }
-
-  private inner class RewordProcess(spec: GitRebaseSpec) : GitRebaseProcess(project, spec, null) {
-    var succeeded = false
-
-    override fun notifySuccess() {
-      succeeded = true
-    }
   }
 }
