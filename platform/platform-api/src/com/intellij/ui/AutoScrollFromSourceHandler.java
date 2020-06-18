@@ -2,6 +2,7 @@
 
 package com.intellij.ui;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -71,6 +72,9 @@ public abstract class AutoScrollFromSourceHandler {
   }
 
   private void selectInAlarm(final FileEditor editor) {
+    // Code WithMe: do not process changes from remote (client) editor switching
+    if (!ClientId.isCurrentlyUnderLocalId()) return;
+
     if (editor != null && myComponent.isShowing() && isAutoScrollEnabled()) {
       myAlarm.cancelAllRequests();
       myAlarm.addRequest(() -> selectElementFromEditor(editor), getAlarmDelay(), getModalityState());
