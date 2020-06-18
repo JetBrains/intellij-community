@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.roots;
 
 import com.intellij.application.options.ReplacePathToMacroMap;
@@ -49,8 +49,7 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
 
   private ModuleRootManager createTempModuleRootManager() {
     File tmpModule = getTempDir().createTempFile("tst", ModuleFileType.DOT_DEFAULT_EXTENSION, false);
-    myFilesToDelete.add(tmpModule);
-    final Module module = createModule(tmpModule);
+    Module module = createModule(tmpModule);
     return ModuleRootManager.getInstance(module);
   }
 

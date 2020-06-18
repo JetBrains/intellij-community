@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,8 +21,7 @@ public abstract class TestSourceBasedTestCase extends JavaProjectTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myTempDirectory = FileUtil.createTempDirectory(getTestName(true), "test",false);
-    myFilesToDelete.add(myTempDirectory);
+    myTempDirectory = createTempDirectoryWithSuffix("test").toFile();
     String testPath = getTestPath();
     if (testPath != null) {
       final File testRoot = new File(getTestDataPath(), testPath);
