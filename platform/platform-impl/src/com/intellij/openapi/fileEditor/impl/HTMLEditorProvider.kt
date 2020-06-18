@@ -15,7 +15,7 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
   override fun createEditor(project: Project, file: VirtualFile): FileEditor =
     HTMLFileEditor(file.getUserData(URL_KEY), file.getUserData(HTML_KEY))
 
-  override fun accept(project: Project, file: VirtualFile) = file.getUserData(URL_KEY) != null
+  override fun accept(project: Project, file: VirtualFile) = isHTMLEditor(file)
 
   override fun getEditorTypeId() = "html-editor"
 
@@ -27,8 +27,9 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
 
     fun openEditor(project: Project, title: String, url: String? = null, html: String? = null) {
       val file = LightVirtualFile(title)
-      if (url != null) { file.apply { putUserData(URL_KEY, url) } }
-      if (html != null) { file.apply { putUserData(HTML_KEY, html) } }
+      if (url == null && html == null) return
+      if (url != null) { file.putUserData(URL_KEY, url) }
+      if (html != null) { file.putUserData(HTML_KEY, html) }
 
       FileEditorManager.getInstance(project).openFile(file, true)
     }
