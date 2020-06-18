@@ -87,10 +87,14 @@ public class ArtifactRepositoryManager {
 
   public ArtifactRepositoryManager(@NotNull File localRepositoryPath, @NotNull final ProgressConsumer progressConsumer) {
     // recreate remote repository objects to ensure the latest proxy settings are used
-    this(localRepositoryPath, Arrays.asList(createRemoteRepository(MAVEN_CENTRAL_REPOSITORY), createRemoteRepository(JBOSS_COMMUNITY_REPOSITORY)), progressConsumer);
+    this(localRepositoryPath, createDefaultRemoteRepositories(), progressConsumer);
   }
 
   public ArtifactRepositoryManager(@NotNull File localRepositoryPath, List<RemoteRepository> remoteRepositories, @NotNull final ProgressConsumer progressConsumer) {
+    this(localRepositoryPath, remoteRepositories, progressConsumer, false);
+  }
+
+  public ArtifactRepositoryManager(@NotNull File localRepositoryPath, List<RemoteRepository> remoteRepositories, @NotNull final ProgressConsumer progressConsumer, boolean offline) {
     myRemoteRepositories.addAll(remoteRepositories);
     final DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
     if (progressConsumer != ProgressConsumer.DEAF) {
@@ -135,6 +139,7 @@ public class ArtifactRepositoryManager {
 
     session.setLocalRepositoryManager(ourSystem.newLocalRepositoryManager(session, new LocalRepository(localRepositoryPath)));
     session.setProxySelector(ourProxySelector);
+    session.setOffline(offline);
     session.setReadOnly();
     mySession = session;
   }
@@ -354,6 +359,11 @@ public class ArtifactRepositoryManager {
   public static RemoteRepository createRemoteRepository(RemoteRepository prototype) {
     final String url = prototype.getUrl();
     return new RemoteRepository.Builder(prototype.getId(), prototype.getContentType(), url).setProxy(ourProxySelector.getProxy(url)).build();
+  }
+
+  @NotNull
+  public static List<RemoteRepository> createDefaultRemoteRepositories() {
+    return Arrays.asList(createRemoteRepository(MAVEN_CENTRAL_REPOSITORY), createRemoteRepository(JBOSS_COMMUNITY_REPOSITORY));
   }
 
   private CollectRequest createCollectRequest(String groupId, String artifactId, Collection<VersionConstraint> versions, final Set<ArtifactKind> kinds) {
