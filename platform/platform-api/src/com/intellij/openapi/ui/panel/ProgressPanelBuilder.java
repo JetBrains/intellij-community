@@ -6,7 +6,9 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.InplaceButton;
+import com.intellij.ui.SeparatorComponent;
+import com.intellij.ui.SeparatorOrientation;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -296,7 +298,11 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
     @Override
     public void setText2(@Nullable String text) {
       if (text2 != null) {
-        text2.setText(text);
+        boolean empty = StringUtil.isEmpty(text);
+        if (empty && !text2.isVisible()) {
+          return;
+        }
+        text2.setText(empty ? " " : text);
         text2.setVisible(true);
       }
     }
@@ -359,12 +365,14 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
 
       if (state == State.PLAYING) {
         mySuspendButton.setIcons(pauseIcon);
-        setCommentText(IdeBundle.message("comment.text.pause"), true);
+        setCommentText(null, true);
       }
       else {
         mySuspendButton.setIcons(resumeIcon);
         setCommentText(IdeBundle.message("comment.text.paused"), true);
       }
+      mySuspendButton.revalidate();
+      mySuspendButton.repaint();
     }
 
     private void addToPanel(JPanel panel, GridBagConstraints gc) {
