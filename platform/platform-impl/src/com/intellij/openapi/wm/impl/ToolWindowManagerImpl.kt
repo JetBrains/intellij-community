@@ -583,7 +583,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   private fun activateToolWindow(entry: ToolWindowEntry, info: WindowInfoImpl, autoFocusContents: Boolean = true) {
     LOG.debug { "activateToolWindow($entry)" }
 
-    ToolWindowCollector.recordActivation(entry.id, info)
+    ToolWindowCollector.getInstance().recordActivation(entry.id, info)
 
     if (!entry.toolWindow.isAvailable) {
       // Tool window can be "logically" active but not focused. For example,
@@ -638,7 +638,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   private fun setHiddenState(info: WindowInfoImpl, entry: ToolWindowEntry) {
-    ToolWindowCollector.recordHidden(info)
+    ToolWindowCollector.getInstance().recordHidden(info)
 
     info.isActiveOnStart = false
     info.isVisible = false
@@ -875,7 +875,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       return false
     }
 
-    ToolWindowCollector.recordShown(toBeShownInfo)
+    ToolWindowCollector.getInstance().recordShown(toBeShownInfo)
     toBeShownInfo.isVisible = true
     toBeShownInfo.isShowStripeButton = true
 
@@ -1443,7 +1443,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     task()
 
     if (wasVisible) {
-      ToolWindowCollector.recordShown(info)
+      ToolWindowCollector.getInstance().recordShown(info)
       info.isVisible = true
       val infoSnapshot = info.copy()
       entry.applyWindowInfo(infoSnapshot)
