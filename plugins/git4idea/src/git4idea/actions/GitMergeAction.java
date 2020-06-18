@@ -69,16 +69,19 @@ abstract class GitMergeAction extends GitRepositoryAction {
     final Supplier<GitLineHandler> handlerProvider;
     @NotNull private final List<String> selectedBranches;
     final boolean commitAfterMerge;
+    @NotNull final List<String> selectedOptions;
 
     DialogState(@NotNull VirtualFile root,
                 @NotNull String title,
                 @NotNull Supplier<GitLineHandler> provider,
                 @NotNull List<String> selectedBranches,
-                boolean commitAfterMerge) {
+                boolean commitAfterMerge,
+                @NotNull List<String> selectedOptions) {
       selectedRoot = root;
       progressTitle = title;
       handlerProvider = provider;
       this.selectedBranches = selectedBranches;
+      this.selectedOptions = selectedOptions;
       this.commitAfterMerge = commitAfterMerge;
     }
   }

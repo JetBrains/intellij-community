@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
@@ -59,9 +60,12 @@ public class GitPull extends GitMergeAction {
     GitRepository repository = repositoryManager.getRepositoryForRootQuick(dialog.gitRoot());
     assert repository != null : "Repository can't be null for root " + dialog.gitRoot();
 
-    return new DialogState(dialog.gitRoot(), GitBundle.message("pulling.title", dialog.getRemote().getName()),
+    return new DialogState(dialog.gitRoot(),
+                           GitBundle.message("pulling.title", dialog.getRemote().getName()),
                            getHandlerProvider(project, dialog),
-                           dialog.getSelectedBranches(), dialog.isCommitAfterMerge());
+                           dialog.getSelectedBranches(),
+                           dialog.isCommitAfterMerge(),
+                           ContainerUtil.map(dialog.getSelectedOptions(), option -> option.getOption()));
   }
 
   @Override

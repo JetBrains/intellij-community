@@ -17,6 +17,7 @@ package git4idea.actions;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
@@ -44,8 +45,12 @@ public class GitMerge extends GitMergeAction {
     if (!dialog.showAndGet()) {
       return null;
     }
-    return new DialogState(dialog.getSelectedRoot(), GitBundle.message("merging.title", dialog.getSelectedRoot().getPath()),
-                           getHandlerProvider(project, dialog), dialog.getSelectedBranches(), dialog.shouldCommitAfterMerge());
+    return new DialogState(dialog.getSelectedRoot(),
+                           GitBundle.message("merging.title", dialog.getSelectedRoot().getPath()),
+                           getHandlerProvider(project, dialog),
+                           dialog.getSelectedBranches(),
+                           dialog.shouldCommitAfterMerge(),
+                           ContainerUtil.map(dialog.getSelectedOptions(), option -> option.getOption()));
   }
 
   @NotNull
