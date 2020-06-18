@@ -111,11 +111,11 @@ else
   if [[ "${STUDIO_SDK}" == "false" ]]; then
     cp -Rfv "${BAZEL_BIN}"/tools/idea/updater/updater_deploy.jar "$DIST"/android-studio-updater.jar
     cp -Rfv "$OUT"/updater/artifacts/sdk-patcher.zip "$DIST"/sdk-patcher.zip
-  fi
 
-  # write the version number into the windows installer dir
-  echo $BNUM > ../adt/idea/native/installer/win/version
-  (cd ../adt/idea/native/installer/win && zip -r - ".") > "$DIST"/android-studio-bundle-data.zip
+    # write the version number into the windows installer dir
+    echo $BNUM > ../adt/idea/native/installer/win/version
+    (cd ../adt/idea/native/installer/win && zip -r - ".") > "$DIST"/android-studio-bundle-data.zip
+  fi
 fi
 
 if [[ "${STUDIO_SDK}" == "false" ]]; then
