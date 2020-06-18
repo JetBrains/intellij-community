@@ -16,7 +16,7 @@ internal class GitDropLogAction : GitMultipleCommitEditingAction() {
   override fun actionPerformedAfterChecks(commitEditingData: MultipleCommitEditingData) {
     val project = commitEditingData.project
     val commitDetails = getOrLoadDetails(project, commitEditingData.logData, commitEditingData.selectedCommitList)
-    object : Task.Backgroundable(project, GitBundle.getString("rebase.log.drop.progress.indicator.title")) {
+    object : Task.Backgroundable(project, GitBundle.message("rebase.log.drop.progress.indicator.title", commitDetails.size)) {
       override fun run(indicator: ProgressIndicator) {
         GitDropOperation(commitEditingData.repository).execute(commitDetails)
       }
