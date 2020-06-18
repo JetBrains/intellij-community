@@ -5,19 +5,23 @@ import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 public class DisposableWrapper<T extends Disposable> implements Disposable {
-  private volatile T myObject;
+  private final @NotNull AtomicReference<T> myObjectRef;
 
   public DisposableWrapper(@Nullable T object, @NotNull Disposable parent) {
-    myObject = object;
+    myObjectRef = new AtomicReference<>(object);
     Disposer.register(parent, this);
   }
 
-  @NotNull
-  public DisposableWrapper<T> moveTo(@NotNull Disposable parent) {
-    DisposableWrapper<T> newWrapper = createNewWrapper(myObject, parent);
-    myObject = null;
-    return newWrapper;
+  public @Nullable DisposableWrapper<T> moveTo(@NotNull Disposable parent) {
+    T object = myObjectRef.getAndSet(null);
+    if (object != null) {
+      Disposer.dispose(this);  // only unregisters this; can't harm the child anymore
+      return createNewWrapper(object, parent);
+    }
+    return null;  // has been moved or disposed already
   }
 
   @NotNull
@@ -27,8 +31,9 @@ public class DisposableWrapper<T extends Disposable> implements Disposable {
 
   @Override
   public void dispose() {
-    if (myObject != null) {
-      Disposer.dispose(myObject);
+    T object = myObjectRef.getAndSet(null);
+    if (object != null) {
+      Disposer.dispose(object);
     }
   }
 }

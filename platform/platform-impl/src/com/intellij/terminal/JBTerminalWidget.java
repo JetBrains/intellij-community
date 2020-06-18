@@ -57,7 +57,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   private final CompositeFilterWrapper myCompositeFilterWrapper;
   private JBTerminalWidgetListener myListener;
 
-  private JBTerminalWidgetDisposableWrapper myDisposableWrapper;
+  private @NotNull JBTerminalWidgetDisposableWrapper myDisposableWrapper;
   private VirtualFile myVirtualFile;
 
   public JBTerminalWidget(@NotNull Project project,
@@ -281,7 +281,10 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   }
 
   public void moveDisposable(@NotNull Disposable newParent) {
-    myDisposableWrapper = (JBTerminalWidgetDisposableWrapper)myDisposableWrapper.moveTo(newParent);
+    JBTerminalWidgetDisposableWrapper newWrapper = myDisposableWrapper.moveTo(newParent);
+    if (newWrapper != null) {
+      myDisposableWrapper = newWrapper;
+    }
   }
 
   public void setVirtualFile(@Nullable VirtualFile virtualFile) {
@@ -349,6 +352,11 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
         return; // don't dispose terminal widget during file reopening
       }
       super.dispose();
+    }
+
+    @Override
+    public @Nullable JBTerminalWidgetDisposableWrapper moveTo(@NotNull Disposable parent) {
+      return (JBTerminalWidgetDisposableWrapper)super.moveTo(parent);
     }
 
     @NotNull
