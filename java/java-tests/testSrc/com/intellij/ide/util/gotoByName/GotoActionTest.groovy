@@ -372,10 +372,10 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private MatchedValue matchedAction(String text, String pattern, MatchMode mode = MatchMode.NAME, boolean isAvailable = true) {
-    return matchedAction(createAction(text), pattern, mode, isAvailable)
+    return createMatchedAction(project, createAction(text), pattern, mode, isAvailable)
   }
 
-  private MatchedValue matchedAction(AnAction action, String pattern, MatchMode mode = MatchMode.NAME, boolean isAvailable = true) {
+  public static MatchedValue createMatchedAction(Project project, AnAction action, String pattern, MatchMode mode = MatchMode.NAME, boolean isAvailable = true) {
     def model = new GotoActionModel(project, null, null)
     def wrapper = new ActionWrapper(action, null, mode, DataContext.EMPTY_CONTEXT, model) {
       @Override
@@ -422,7 +422,7 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     return new MatchedValue(option, pattern)
   }
 
-  private static SearchEverywhereContributor<?> createActionContributor(Project project) {
+  public static SearchEverywhereContributor<?> createActionContributor(Project project) {
     def res = new TestActionContributor(project, null, null)
     res.setShowDisabled(true)
     return res
