@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal.statistic.actions.localWhitelist
+package com.intellij.internal.statistic.actions.scheme
 
 import com.google.gson.Gson
 import com.google.gson.JsonObject
@@ -10,7 +10,7 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.internal.statistic.StatisticsBundle
-import com.intellij.internal.statistic.actions.TestParseEventLogWhitelistDialog
+import com.intellij.internal.statistic.actions.TestParseEventsSchemeDialog
 import com.intellij.internal.statistic.eventLog.whitelist.LocalWhitelistGroup
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
 import com.intellij.json.JsonLanguage
@@ -45,14 +45,14 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class LocalWhitelistGroupConfiguration(private val project: Project,
-                                       private val productionGroups: FUStatisticsWhiteListGroupsService.WLGroups,
-                                       initialGroup: LocalWhitelistGroup,
-                                       groupIdChangeListener: ((LocalWhitelistGroup) -> Unit)? = null) : Disposable {
+class EventsTestSchemeGroupConfiguration(private val project: Project,
+                                         private val productionGroups: FUStatisticsWhiteListGroupsService.WLGroups,
+                                         initialGroup: LocalWhitelistGroup,
+                                         groupIdChangeListener: ((LocalWhitelistGroup) -> Unit)? = null) : Disposable {
 
   val panel: JPanel
   val groupIdTextField: TextFieldWithCompletion
-  private val log = logger<LocalWhitelistGroupConfiguration>()
+  private val log = logger<EventsTestSchemeGroupConfiguration>()
   private var currentGroup: LocalWhitelistGroup = initialGroup
   private val addCustomRuleCheckBox: JBCheckBox = JBCheckBox(StatisticsBundle.message("stats.use.custom.validation.rules"),
                                                              initialGroup.useCustomRules)
@@ -69,9 +69,9 @@ class LocalWhitelistGroupConfiguration(private val project: Project,
     }
     groupIdTextField = TextFieldWithCompletion(project, completionProvider, initialGroup.groupId, true, true, false)
 
-    tempFile = TestParseEventLogWhitelistDialog.createTempFile(project, "event-log-validation-rules", currentGroup.customRules)!!
-    tempFile.virtualFile.putUserData(LocalWhitelistJsonSchemaProviderFactory.LOCAL_WHITELIST_VALIDATION_RULES_KEY, true)
-    tempFile.putUserData(FUS_WHITELIST_COMMON_RULES_KEY, ProductionRules(productionGroups.rules))
+    tempFile = TestParseEventsSchemeDialog.createTempFile(project, "event-log-validation-rules", currentGroup.customRules)!!
+    tempFile.virtualFile.putUserData(EventsSchemeJsonSchemaProviderFactory.EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY, true)
+    tempFile.putUserData(FUS_TEST_SCHEME_COMMON_RULES_KEY, ProductionRules(productionGroups.rules))
     validationRulesEditor = createEditor(project, tempFile)
     validationRulesEditor.document.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: com.intellij.openapi.editor.event.DocumentEvent) {
@@ -103,7 +103,7 @@ class LocalWhitelistGroupConfiguration(private val project: Project,
       row {
         cell {
           addCustomRuleCheckBox()
-          ContextHelpLabel.create(StatisticsBundle.message("stats.local.whitelist.custom.rules.help"))()
+          ContextHelpLabel.create(StatisticsBundle.message("stats.test.scheme.custom.rules.help"))()
         }
       }
       row {
@@ -175,30 +175,30 @@ class LocalWhitelistGroupConfiguration(private val project: Project,
   }
 
   fun validate(): List<ValidationInfo> {
-    return validateWhitelistGroup(project, currentGroup, groupIdTextField, tempFile)
+    return validateTestSchemeGroup(project, currentGroup, groupIdTextField, tempFile)
   }
 
   companion object {
-    internal val FUS_WHITELIST_COMMON_RULES_KEY = Key.create<ProductionRules>("statistics.localWhitelist.validation.rules.file")
+    internal val FUS_TEST_SCHEME_COMMON_RULES_KEY = Key.create<ProductionRules>("statistics.test.scheme.validation.rules.file")
 
-    fun validateWhitelistGroup(project: Project,
-                               localWhitelistGroup: LocalWhitelistGroup,
-                               groupIdTextField: JComponent): List<ValidationInfo> {
-      return validateWhitelistGroup(project, localWhitelistGroup, groupIdTextField, null)
+    fun validateTestSchemeGroup(project: Project,
+                                testSchemeGroup: LocalWhitelistGroup,
+                                groupIdTextField: JComponent): List<ValidationInfo> {
+      return validateTestSchemeGroup(project, testSchemeGroup, groupIdTextField, null)
     }
 
-    private fun validateWhitelistGroup(project: Project,
-                                       localWhitelistGroup: LocalWhitelistGroup,
-                                       groupIdTextField: JComponent,
-                                       customRulesFile: PsiFile?): List<ValidationInfo> {
-      val groupId: String = localWhitelistGroup.groupId
+    private fun validateTestSchemeGroup(project: Project,
+                                        testSchemeGroup: LocalWhitelistGroup,
+                                        groupIdTextField: JComponent,
+                                        customRulesFile: PsiFile?): List<ValidationInfo> {
+      val groupId: String = testSchemeGroup.groupId
       val validationInfo = mutableListOf<ValidationInfo>()
       if (groupId.isEmpty()) {
         validationInfo.add(ValidationInfo(StatisticsBundle.message("stats.specify.group.id"), groupIdTextField))
       }
 
-      if (localWhitelistGroup.useCustomRules) {
-        validationInfo.addAll(validateCustomValidationRules(project, localWhitelistGroup.customRules, customRulesFile))
+      if (testSchemeGroup.useCustomRules) {
+        validationInfo.addAll(validateCustomValidationRules(project, testSchemeGroup.customRules, customRulesFile))
       }
       return validationInfo
     }
@@ -210,7 +210,7 @@ class LocalWhitelistGroupConfiguration(private val project: Project,
         customRulesFile
       } else {
         val psiFile = PsiFileFactory.getInstance(project).createFileFromText(JsonLanguage.INSTANCE, customRules)
-        psiFile.virtualFile.putUserData(LocalWhitelistJsonSchemaProviderFactory.LOCAL_WHITELIST_VALIDATION_RULES_KEY, true)
+        psiFile.virtualFile.putUserData(EventsSchemeJsonSchemaProviderFactory.EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY, true)
         psiFile
       }
       if (!isValidJson(customRules)) return listOf(ValidationInfo(StatisticsBundle.message("stats.unable.to.parse.validation.rules")))

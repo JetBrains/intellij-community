@@ -16,41 +16,41 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.components.dialog
 
-class ConfigureWhitelistAction(private var myRecorderId: String = StatisticsDevKitUtil.DEFAULT_RECORDER)
-  : DumbAwareAction(ActionsBundle.message("action.ConfigureWhitelistAction.text"),
-                    ActionsBundle.message("action.ConfigureWhitelistAction.description"),
+class ConfigureEventsSchemeFileAction(private var myRecorderId: String = StatisticsDevKitUtil.DEFAULT_RECORDER)
+  : DumbAwareAction(ActionsBundle.message("action.ConfigureEventsSchemeFileAction.text"),
+                    ActionsBundle.message("action.ConfigureEventsSchemeFileAction.description"),
                     null) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val whitelistConfigurationModel = WhitelistConfigurationModel()
+    val configurationModel = EventsSchemeConfigurationModel()
     val dialog = dialog(
-      title = "Configure Whitelist",
-      panel = whitelistConfigurationModel.panel,
+      title = "Configure Custom Events Scheme",
+      panel = configurationModel.panel,
       resizable = true,
       project = project,
-      ok = { listOfNotNull(whitelistConfigurationModel.validate()) }
+      ok = { listOfNotNull(configurationModel.validate()) }
     )
 
     if (!dialog.showAndGet()) return
 
-    ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Saving Whitelist Configuration...", false) {
+    ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Saving Events Scheme Configuration...", false) {
       override fun run(indicator: ProgressIndicator) {
-        updateWhitelistSettings(whitelistConfigurationModel.recorderToSettings)
+        updateSchemeSettings(configurationModel.recorderToSettings)
       }
     })
   }
 
-  private fun updateWhitelistSettings(recorderToSettings: MutableMap<String, WhitelistConfigurationModel.WhitelistPathSettings>) {
-    val whitelistSettingsPersistence = EventLogWhitelistSettingsPersistence.getInstance()
+  private fun updateSchemeSettings(recorderToSettings: MutableMap<String, EventsSchemeConfigurationModel.WhitelistPathSettings>) {
+    val settingsPersistence = EventLogWhitelistSettingsPersistence.getInstance()
     for ((recorder, settings) in recorderToSettings) {
       val customPath = settings.customPath
       if (settings.useCustomPath && customPath != null) {
-        whitelistSettingsPersistence.setPathSettings(recorder, WhitelistPathSettings(customPath, true))
+        settingsPersistence.setPathSettings(recorder, WhitelistPathSettings(customPath, true))
       }
       else {
-        val oldSettings = whitelistSettingsPersistence.getPathSettings(recorder)
+        val oldSettings = settingsPersistence.getPathSettings(recorder)
         if (oldSettings != null && oldSettings.isUseCustomPath) {
-          whitelistSettingsPersistence.setPathSettings(recorder, WhitelistPathSettings(oldSettings.customPath, false))
+          settingsPersistence.setPathSettings(recorder, WhitelistPathSettings(oldSettings.customPath, false))
         }
       }
       val validator = SensitiveDataValidator.getInstance(recorder)

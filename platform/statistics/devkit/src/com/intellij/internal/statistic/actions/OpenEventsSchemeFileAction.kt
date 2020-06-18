@@ -7,7 +7,6 @@ import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.StatisticsDevKitUtil
 import com.intellij.internal.statistic.StatisticsDevKitUtil.showNotification
 import com.intellij.internal.statistic.eventLog.validator.persistence.BaseEventLogWhitelistPersistence
-import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence.EVENTS_SCHEME_FILE
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistSettingsPersistence
 import com.intellij.notification.NotificationType
@@ -18,9 +17,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import java.io.File
 
-class OpenWhitelistFileAction(private val myRecorderId: String = StatisticsDevKitUtil.DEFAULT_RECORDER)
-  : DumbAwareAction(StatisticsBundle.message("stats.open.0.whitelist.file", myRecorderId),
-                    ActionsBundle.message("group.OpenWhitelistFileAction.description"),
+class OpenEventsSchemeFileAction(private val myRecorderId: String = StatisticsDevKitUtil.DEFAULT_RECORDER)
+  : DumbAwareAction(StatisticsBundle.message("stats.open.0.scheme.file", myRecorderId),
+                    ActionsBundle.message("group.OpenEventsSchemeFileAction.description"),
                     AllIcons.FileTypes.Config) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return

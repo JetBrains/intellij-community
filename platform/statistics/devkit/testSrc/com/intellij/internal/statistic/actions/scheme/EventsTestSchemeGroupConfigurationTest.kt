@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal.statistic.actions.localWhitelist
+package com.intellij.internal.statistic.actions.scheme
 
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
 import com.intellij.testFramework.UsefulTestCase
@@ -7,7 +7,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 
-class LocalWhitelistGroupConfigurationTest : BasePlatformTestCase() {
+class EventsTestSchemeGroupConfigurationTest : BasePlatformTestCase() {
 
   override fun setUp() {
     super.setUp()
@@ -50,7 +50,7 @@ class LocalWhitelistGroupConfigurationTest : BasePlatformTestCase() {
     globalRules.regexps = mapOf("integer" to "testIntegerRegexp")
     globalRules.enums = mapOf("boolean" to setOf("true", "false"))
 
-    val validationInfo = LocalWhitelistGroupConfiguration.validateCustomValidationRules(project, rules, null)
+    val validationInfo = EventsTestSchemeGroupConfiguration.validateCustomValidationRules(project, rules, null)
     assertEmpty("Validation errors were found: ${validationInfo.joinToString { "\"${it.message}\"" }}", validationInfo)
   }
 
@@ -63,7 +63,7 @@ class LocalWhitelistGroupConfigurationTest : BasePlatformTestCase() {
         }
       }
     """.trimIndent()
-    val validationInfo = LocalWhitelistGroupConfiguration.validateCustomValidationRules(project, rules, null)
+    val validationInfo = EventsTestSchemeGroupConfiguration.validateCustomValidationRules(project, rules, null)
     UsefulTestCase.assertSize(1, validationInfo)
     TestCase.assertTrue("Validation info should contains error",
                         validationInfo.first().message.contains("Line 4"))
@@ -78,7 +78,7 @@ class LocalWhitelistGroupConfigurationTest : BasePlatformTestCase() {
         }
       }
     """.trimIndent()
-    val validationInfo = LocalWhitelistGroupConfiguration.validateCustomValidationRules(project, rules, null)
+    val validationInfo = EventsTestSchemeGroupConfiguration.validateCustomValidationRules(project, rules, null)
     UsefulTestCase.assertSize(1, validationInfo)
     TestCase.assertTrue("Validation info should contains incorrect eventId",
                         validationInfo.first().message.contains("Line 2"))

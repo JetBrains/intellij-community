@@ -52,24 +52,24 @@ import java.util.List;
 
 import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction;
 
-public class TestParseEventLogWhitelistDialog extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance(TestParseEventLogWhitelistDialog.class);
+public class TestParseEventsSchemeDialog extends DialogWrapper {
+  private static final Logger LOG = Logger.getInstance(TestParseEventsSchemeDialog.class);
   private static final int IN_DIVIDER_LOCATION = 650;
   private static final int IN_OUT_DIVIDER_LOCATION = 300;
 
   private JPanel myMainPanel;
-  private JPanel myWhitelistPanel;
+  private JPanel myEventsSchemePanel;
   private JPanel myResultPanel;
   private JEditorPane myEventLogPanel;
   private JSplitPane myInputDataSplitPane;
   private JSplitPane myInputOutputSplitPane;
 
   private final Project myProject;
-  private final EditorEx myWhitelistEditor;
+  private final EditorEx myEventsSchemeEditor;
   private final EditorEx myResultEditor;
   private final List<PsiFile> myTempFiles = new ArrayList<>();
 
-  protected TestParseEventLogWhitelistDialog(@NotNull Project project, @Nullable Editor selectedEditor) {
+  protected TestParseEventsSchemeDialog(@NotNull Project project, @Nullable Editor selectedEditor) {
     super(project);
     myProject = project;
     setOKButtonText("&Filter Event Log");
@@ -77,8 +77,8 @@ public class TestParseEventLogWhitelistDialog extends DialogWrapper {
     Disposer.register(myProject, getDisposable());
     VirtualFile selectedFile = selectedEditor == null ? null : FileDocumentManager.getInstance().getFile(selectedEditor.getDocument());
     setTitle(selectedFile == null ? "Event Log Filter" : "Event Log Filter by: " + selectedFile.getName());
-    myWhitelistEditor = initEditor(selectedEditor, "event-log-whitelist", "{\"groups\":[]}");
-    myWhitelistEditor.getSettings().setLineMarkerAreaShown(false);
+    myEventsSchemeEditor = initEditor(selectedEditor, "events-scheme", "{\"groups\":[]}");
+    myEventsSchemeEditor.getSettings().setLineMarkerAreaShown(false);
 
     myResultEditor = initEditor(null, "event-log-filter-result", "{}");
     myResultEditor.getSettings().setLineMarkerAreaShown(false);
@@ -89,9 +89,9 @@ public class TestParseEventLogWhitelistDialog extends DialogWrapper {
 
       ApplicationManager.getApplication().invokeLater(() -> {
         IdeFocusManager.getGlobalInstance()
-          .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myWhitelistEditor.getContentComponent(), true));
-        myWhitelistEditor.getCaretModel().moveToOffset(selectedEditor.getCaretModel().getOffset());
-        myWhitelistEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+          .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myEventsSchemeEditor.getContentComponent(), true));
+        myEventsSchemeEditor.getCaretModel().moveToOffset(selectedEditor.getCaretModel().getOffset());
+        myEventsSchemeEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
       }, ModalityState.stateForComponent(myMainPanel));
     }
   }
@@ -151,7 +151,7 @@ public class TestParseEventLogWhitelistDialog extends DialogWrapper {
 
   @Override
   protected void init() {
-    configEditorPanel(myProject, myWhitelistPanel, myWhitelistEditor);
+    configEditorPanel(myProject, myEventsSchemePanel, myEventsSchemeEditor);
     configEditorPanel(myProject, myResultPanel, myResultEditor);
 
     myInputDataSplitPane.setDividerLocation(IN_DIVIDER_LOCATION);
@@ -179,26 +179,26 @@ public class TestParseEventLogWhitelistDialog extends DialogWrapper {
   @Override
   @NotNull
   protected String getDimensionServiceKey() {
-    return TestParseEventLogWhitelistDialog.class.getCanonicalName();
+    return TestParseEventsSchemeDialog.class.getCanonicalName();
   }
 
   @SuppressWarnings("TestOnlyProblems")
   @Override
   protected void doOKAction() {
-    myWhitelistEditor.getSelectionModel().removeSelection();
+    myEventsSchemeEditor.getSelectionModel().removeSelection();
     myResultEditor.getSelectionModel().removeSelection();
     updateResultRequest("{}");
 
     try {
-      StatisticsWhitelistConditions whitelist = StatisticsWhitelistLoader.parseApprovedGroups(myWhitelistEditor.getDocument().getText());
-      String parsed = parseLogAndFilter(new LogEventWhitelistFilter(whitelist), myEventLogPanel.getText());
+      StatisticsWhitelistConditions scheme = StatisticsWhitelistLoader.parseApprovedGroups(myEventsSchemeEditor.getDocument().getText());
+      String parsed = parseLogAndFilter(new LogEventWhitelistFilter(scheme), myEventLogPanel.getText());
       updateResultRequest(parsed.trim());
     }
     catch (EventLogWhitelistParseException e) {
-      Messages.showErrorDialog(myProject, e.getMessage(), "Failed Parsing Whitelist");
+      Messages.showErrorDialog(myProject, e.getMessage(), "Failed Parsing Events Scheme");
     }
     catch (IOException | ParseEventLogWhitelistException e) {
-      Messages.showErrorDialog(myProject, e.getMessage(), "Failed Applying Whitelist to Event Log");
+      Messages.showErrorDialog(myProject, e.getMessage(), "Failed Applying Events Scheme to Event Log");
     }
   }
 
@@ -257,8 +257,8 @@ public class TestParseEventLogWhitelistDialog extends DialogWrapper {
       }
     });
 
-    if (!myWhitelistEditor.isDisposed()) {
-      EditorFactory.getInstance().releaseEditor(myWhitelistEditor);
+    if (!myEventsSchemeEditor.isDisposed()) {
+      EditorFactory.getInstance().releaseEditor(myEventsSchemeEditor);
     }
 
     if (!myResultEditor.isDisposed()) {

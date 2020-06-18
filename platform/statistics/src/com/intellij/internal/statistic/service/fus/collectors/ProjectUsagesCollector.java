@@ -33,7 +33,7 @@ import java.util.Set;
  * <ol>
  *  <li>
  *    If group is not whitelisted, add it to local whitelist with "Add Test Group to Local Whitelist" action.<br/>
- *    {@link com.intellij.internal.statistic.actions.localWhitelist.AddTestGroupToLocalWhitelistAction}
+ *    {@link com.intellij.internal.statistic.actions.scheme.AddGroupToTestSchemeAction}
  *  </li>
  *  <li>
  *    Open toolwindow with event logs with "Show Statistics Event Log" action.<br/>

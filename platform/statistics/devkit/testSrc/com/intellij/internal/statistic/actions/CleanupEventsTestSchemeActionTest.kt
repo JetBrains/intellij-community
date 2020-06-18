@@ -12,10 +12,10 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import junit.framework.TestCase
 import org.junit.Test
 
-class CleanupLocalWhitelistActionTest : BasePlatformTestCase() {
+class CleanupEventsTestSchemeActionTest : BasePlatformTestCase() {
 
   @Test
-  fun testCleanupLocalWhitelist() {
+  fun testCleanupEventsTestScheme() {
     val groupId = "test.group"
     val recorderId = "FUS"
 
@@ -23,7 +23,7 @@ class CleanupLocalWhitelistActionTest : BasePlatformTestCase() {
     WhitelistTestGroupStorage.getTestStorage(recorderId)!!.addTestGroup(LocalWhitelistGroup("groupId", false))
     val dataContext = getProjectContext(myFixture.project)
     val e = AnActionEvent(null, dataContext, "test", Presentation(), ActionManager.getInstance(), 0)
-    CleanupLocalWhitelistAction(recorderId).actionPerformed(e)
+    CleanupEventsTestSchemeAction(recorderId).actionPerformed(e)
 
     TestCase.assertNull(
       WhitelistTestGroupStorage.getTestStorage(recorderId)!!.getGroupRules(groupId)

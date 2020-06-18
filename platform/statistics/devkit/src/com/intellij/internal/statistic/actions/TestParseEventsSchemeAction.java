@@ -12,7 +12,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class TestParseEventLogWhitelistAction extends DumbAwareAction {
+public class TestParseEventsSchemeAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -22,7 +22,7 @@ public class TestParseEventLogWhitelistAction extends DumbAwareAction {
       final Editor editor =
         fileType != null && StringUtil.equalsIgnoreCase(fileType.getFileType().getName(), "json") ?
         e.getData(CommonDataKeys.EDITOR) : null;
-      new TestParseEventLogWhitelistDialog(project, editor).show();
+      new TestParseEventsSchemeDialog(project, editor).show();
     }
   }
 

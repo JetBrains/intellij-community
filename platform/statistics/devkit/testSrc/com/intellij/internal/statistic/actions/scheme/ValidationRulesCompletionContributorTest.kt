@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal.statistic.actions.localWhitelist
+package com.intellij.internal.statistic.actions.scheme
 
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.psi.PsiFile
@@ -118,8 +118,8 @@ class ValidationRulesCompletionContributorTest : BasePlatformTestCase() {
         }
       }
     """.trimIndent())
-    file.putUserData(LocalWhitelistGroupConfiguration.FUS_WHITELIST_COMMON_RULES_KEY,
-                     LocalWhitelistGroupConfiguration.ProductionRules(setOf("version", "integer"), setOf("boolean")))
+    file.putUserData(EventsTestSchemeGroupConfiguration.FUS_TEST_SCHEME_COMMON_RULES_KEY,
+                     EventsTestSchemeGroupConfiguration.ProductionRules(setOf("version", "integer"), setOf("boolean")))
     markValidationRulesFile(file)
     myFixture.completeBasic()
     val strings = myFixture.lookupElementStrings!!
@@ -127,6 +127,6 @@ class ValidationRulesCompletionContributorTest : BasePlatformTestCase() {
   }
 
   private fun markValidationRulesFile(file: PsiFile) {
-    file.virtualFile.putUserData(LocalWhitelistJsonSchemaProviderFactory.LOCAL_WHITELIST_VALIDATION_RULES_KEY, true)
+    file.virtualFile.putUserData(EventsSchemeJsonSchemaProviderFactory.EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY, true)
   }
 }

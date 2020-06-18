@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal.statistic.actions.localWhitelist
+package com.intellij.internal.statistic.actions.scheme
 
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.eventLog.whitelist.LocalWhitelistGroup
@@ -21,12 +21,12 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
-class EditLocalWhitelistPanel(private val project: Project,
-                              localWhitelistGroups: List<LocalWhitelistGroup>,
-                              productionGroups: FUStatisticsWhiteListGroupsService.WLGroups) : JPanel(), Disposable {
-  private val groupsModel = CollectionListModel(localWhitelistGroups)
+class EditEventsTestSchemePanel(private val project: Project,
+                                testSchemeGroups: List<LocalWhitelistGroup>,
+                                productionGroups: FUStatisticsWhiteListGroupsService.WLGroups) : JPanel(), Disposable {
+  private val groupsModel = CollectionListModel(testSchemeGroups)
   private val groupsList: JBList<LocalWhitelistGroup> = JBList(groupsModel)
-  private var groupConfiguration: LocalWhitelistGroupConfiguration
+  private var groupConfiguration: EventsTestSchemeGroupConfiguration
   private val cardLayout = CardLayout()
   private val detailsComponent: JPanel = JPanel(cardLayout)
 
@@ -35,7 +35,7 @@ class EditLocalWhitelistPanel(private val project: Project,
 
   init {
     val initialGroup = LocalWhitelistGroup("", false)
-    groupConfiguration = LocalWhitelistGroupConfiguration(project, productionGroups, initialGroup) { group ->
+    groupConfiguration = EventsTestSchemeGroupConfiguration(project, productionGroups, initialGroup) { group ->
       groupsModel.contentsChanged(group)
     }
 
@@ -65,7 +65,7 @@ class EditLocalWhitelistPanel(private val project: Project,
     detailsComponent.add(EMPTY_KEY, emptyPanel)
     detailsComponent.add(CONTENT_KEY, groupConfiguration.panel)
     val splitter = JBSplitter(false, .3f).apply {
-      splitterProportionKey = "EditLocalWhitelist.splitter"
+      splitterProportionKey = "EditTestScheme.splitter"
       firstComponent = groupListPanel
       secondComponent = detailsComponent
     }
@@ -94,11 +94,11 @@ class EditLocalWhitelistPanel(private val project: Project,
   fun getGroups(): List<LocalWhitelistGroup> = groupsModel.items
 
   fun validateGroups(): List<ValidationInfo> {
-    for (whitelistGroup in groupsModel.items) {
-      val validationInfo = LocalWhitelistGroupConfiguration.validateWhitelistGroup(project, whitelistGroup,
-                                                                                   groupConfiguration.groupIdTextField)
+    for (group in groupsModel.items) {
+      val validationInfo = EventsTestSchemeGroupConfiguration.validateTestSchemeGroup(project, group,
+                                                                                      groupConfiguration.groupIdTextField)
       if (validationInfo.isNotEmpty()) {
-        groupsList.selectedIndex = groupsModel.getElementIndex(whitelistGroup)
+        groupsList.selectedIndex = groupsModel.getElementIndex(group)
         return validationInfo
       }
     }

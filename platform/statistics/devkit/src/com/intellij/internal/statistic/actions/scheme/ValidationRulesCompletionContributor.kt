@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal.statistic.actions.localWhitelist
+package com.intellij.internal.statistic.actions.scheme
 
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionParameters
@@ -18,7 +18,7 @@ internal class ValidationRulesCompletionContributor : CompletionContributor() {
 
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val file = parameters.originalFile
-    if (file.virtualFile?.getUserData(LocalWhitelistJsonSchemaProviderFactory.LOCAL_WHITELIST_VALIDATION_RULES_KEY) != true) return
+    if (file.virtualFile?.getUserData(EventsSchemeJsonSchemaProviderFactory.EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY) != true) return
 
     val element = parameters.position
     val parent = element.originalElement.parent as? JsonStringLiteral ?: return
@@ -37,7 +37,7 @@ internal class ValidationRulesCompletionContributor : CompletionContributor() {
     }
     resultSet.addAllElements(prefixVariants)
 
-    val commonRules = file.getUserData(LocalWhitelistGroupConfiguration.FUS_WHITELIST_COMMON_RULES_KEY)
+    val commonRules = file.getUserData(EventsTestSchemeGroupConfiguration.FUS_TEST_SCHEME_COMMON_RULES_KEY)
     if (commonRules != null) {
       result.addAllElements(commonRules.enums.map { LookupElementBuilder.create("{enum#$it}") })
       result.addAllElements(commonRules.regexps.map { LookupElementBuilder.create("{regexp#$it}") })
