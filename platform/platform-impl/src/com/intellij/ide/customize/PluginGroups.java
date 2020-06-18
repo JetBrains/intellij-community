@@ -170,7 +170,6 @@ public class PluginGroups {
       "com.intellij.quarkus",
       "com.intellij.helidon",
 
-      "JBoss jBPM:JBPM",
       "com.intellij.guice",
 
       "com.intellij.freemarker",
