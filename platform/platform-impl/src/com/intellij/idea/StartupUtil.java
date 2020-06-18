@@ -19,6 +19,7 @@ import com.intellij.ide.gdpr.ConsentOptions;
 import com.intellij.ide.gdpr.EndUserAgreement;
 import com.intellij.ide.instrument.WriteIntentLockInstrumenter;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.StartupAbortedException;
 import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -367,6 +368,7 @@ public final class StartupUtil {
       }
       catch (Throwable e) {
         initUiFuture.completeExceptionally(e);
+        StartupAbortedException.processException(e);
       }
     });
 
@@ -660,6 +662,9 @@ public final class StartupUtil {
         }
       }
     }
+
+    log.info("library path: " + System.getProperty("java.library.path"));
+    log.info("boot library path: " + System.getProperty("sun.boot.library.path"));
 
     logEnvVar(log, "_JAVA_OPTIONS");
     logEnvVar(log, "JDK_JAVA_OPTIONS");
