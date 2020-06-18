@@ -7,17 +7,11 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.execution.process.ProcessIOExecutorService.INSTANCE;
-
 public class JpsUpdateCachesAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent actionEvent) {
     Project project = actionEvent.getProject();
     if (project == null) return;
-    INSTANCE.execute(() -> {
-      JpsServerAuthExtension.EP_NAME.extensions().findFirst().ifPresent(extension -> {
-        extension.checkAuthenticated("Jps Caches Downloader", () -> JpsOutputLoaderManager.getInstance(project).load(false));
-      });
-    });
+    JpsServerAuthExtension.checkAuthenticatedInBackgroundThread(() -> JpsOutputLoaderManager.getInstance(project).load(false));
   }
 }

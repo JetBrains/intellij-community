@@ -101,29 +101,23 @@ public class JpsOutputLoaderManager {
   }
 
   public void notifyAboutNearestCache() {
-    INSTANCE.execute(() -> {
-      JpsServerAuthExtension.EP_NAME.extensions().findFirst().ifPresent(extension -> {
-        extension.checkAuthenticated("Jps Caches Downloader", () -> {
-          Pair<String, Integer> commitInfo = getNearestCommit(false);
-          if (commitInfo == null) return;
+    Pair<String, Integer> commitInfo = getNearestCommit(false);
+    if (commitInfo == null) return;
 
-          String notificationContent = commitInfo.second == 1
-                                       ? "Caches are for the current commit."
-                                       : "Caches are for the commit " + (commitInfo.second - 1) + " commits prior to yours.";
+    String notificationContent = commitInfo.second == 1
+                                 ? "Caches are for the current commit."
+                                 : "Caches are for the commit " + (commitInfo.second - 1) + " commits prior to yours.";
 
-          ApplicationManager.getApplication().invokeLater(() -> {
-            Notification notification = STICKY_NOTIFICATION_GROUP.createNotification("Compiler caches available", notificationContent,
-                                                                                     NotificationType.INFORMATION, null);
-            notification
-              .addAction(NotificationAction.createSimple(JpsCacheBundle.messagePointer(
-                "action.NotificationAction.JpsOutputLoaderManager.text.update.caches"), () -> {
-                notification.expire();
-                load(false);
-              }));
-            Notifications.Bus.notify(notification, myProject);
-          });
-        });
-      });
+    ApplicationManager.getApplication().invokeLater(() -> {
+      Notification notification = STICKY_NOTIFICATION_GROUP.createNotification("Compiler caches available", notificationContent,
+                                                                               NotificationType.INFORMATION, null);
+      notification
+        .addAction(NotificationAction.createSimple(JpsCacheBundle.messagePointer(
+          "action.NotificationAction.JpsOutputLoaderManager.text.update.caches"), () -> {
+          notification.expire();
+          load(false);
+        }));
+      Notifications.Bus.notify(notification, myProject);
     });
   }
 
