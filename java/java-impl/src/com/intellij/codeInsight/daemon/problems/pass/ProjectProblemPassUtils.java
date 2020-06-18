@@ -15,6 +15,7 @@ import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.SmartHashMap;
 import com.intellij.ide.util.PsiNavigationSupport;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.*;
@@ -53,6 +54,9 @@ public class ProjectProblemPassUtils {
 
   private static final Key<Long> PREV_MODIFICATION_COUNT = Key.create("ProjectProblemModificationCount");
 
+  private static final String RELATED_PROBLEMS_CLICKED_EVENT_ID = "related.problems.clicked";
+
+
   static @NotNull InlayPresentation getPresentation(@NotNull Project project,
                                                     @NotNull Editor editor,
                                                     @NotNull Document document,
@@ -82,6 +86,8 @@ public class ProjectProblemPassUtils {
   }
 
   private static void showProblems(@NotNull PsiMember member, @NotNull Set<Problem> relatedProblems) {
+    FUCounterUsageLogger.getInstance().logEvent(member.getProject(), JavaLensProvider.FUS_GROUP_ID, RELATED_PROBLEMS_CLICKED_EVENT_ID);
+
     Project project = member.getProject();
     if (relatedProblems.size() == 1) {
       Problem problem = relatedProblems.iterator().next();
