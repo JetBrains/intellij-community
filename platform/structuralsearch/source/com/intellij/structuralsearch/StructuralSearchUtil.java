@@ -150,6 +150,13 @@ public final class StructuralSearchUtil {
     return shieldRegExpMetaChars(word, new StringBuilder(word.length())).toString();
   }
 
+  public static String makeExtremeSpacesOptional(String word) {
+    String result = word;
+    if (result.length() >= 1 && word.startsWith(" ")) result = "\\s?" + result.substring(1);
+    if (result.length() >= 1 && word.endsWith(" ")) result = result.substring(0, result.length() - 1) + "\\s?";
+    return result;
+  }
+
   @NotNull
   public static StringBuilder shieldRegExpMetaChars(String word, StringBuilder out) {
     for (int i = 0, length = word.length(); i < length; ++i) {

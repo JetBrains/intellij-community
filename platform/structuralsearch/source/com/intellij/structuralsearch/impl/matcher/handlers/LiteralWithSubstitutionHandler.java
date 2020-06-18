@@ -27,7 +27,7 @@ public class LiteralWithSubstitutionHandler extends MatchingHandler {
 
   public boolean match(PsiElement matchedNode, String text, int textOffset, MatchContext context) {
     if (myMatcher == null) {
-      myMatcher = Pattern.compile(myRegexp, myCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE).matcher(text);
+      myMatcher = Pattern.compile(myRegexp, (myCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE) | Pattern.DOTALL).matcher(text);
     }
     else {
       myMatcher.reset(text);

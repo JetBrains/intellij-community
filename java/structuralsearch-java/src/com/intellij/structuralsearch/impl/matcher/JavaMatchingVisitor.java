@@ -87,13 +87,17 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       }
     }
     else if (handler instanceof LiteralWithSubstitutionHandler) {
-      final LiteralWithSubstitutionHandler lwsHandler = (LiteralWithSubstitutionHandler) handler;
-      int offset = other.getTokenType() == JavaDocTokenType.DOC_COMMENT_START ? 3 : 2;
-      String commentText = comment.getText();
-      while (commentText.length() > offset && commentText.charAt(offset) <= ' ') {
-        offset++;
+      if (comment instanceof PsiDocComment) {
+        myMatchingVisitor.setResult(handler.match(comment, other, myMatchingVisitor.getMatchContext()));
+      } else {
+        final LiteralWithSubstitutionHandler lwsHandler = (LiteralWithSubstitutionHandler) handler;
+        int offset = other.getTokenType() == JavaDocTokenType.DOC_COMMENT_START ? 3 : 2;
+        String commentText = other.getText();
+        while (commentText.length() > offset && commentText.charAt(offset) <= ' ') {
+          offset++;
+        }
+        myMatchingVisitor.setResult(lwsHandler.match(other, JavaMatchUtil.getCommentText(other).trim(), offset, myMatchingVisitor.getMatchContext()));
       }
-      myMatchingVisitor.setResult(lwsHandler.match(other, JavaMatchUtil.getCommentText(other).trim(), offset, myMatchingVisitor.getMatchContext()));
     }
     else if (handler != null) {
       myMatchingVisitor.setResult(handler.match(comment, other, myMatchingVisitor.getMatchContext()));
