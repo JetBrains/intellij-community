@@ -53,5 +53,10 @@ public enum ElemType {
   /**
    * Module declaration.
    */
-  MODULE
+  MODULE,
+
+  /**
+   * Record component
+   */
+  RECORD_COMPONENT
 }
