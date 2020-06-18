@@ -48,7 +48,8 @@ public final class FeatureStatisticsBundle {
     private ProvidersBundles() {
       for (FeatureStatisticsBundleEP bundleEP : FeatureStatisticsBundleEP.EP_NAME.getExtensionList()) {
         try {
-          ResourceBundle bundle = ResourceBundle.getBundle(bundleEP.qualifiedName, Locale.getDefault(), bundleEP.getLoaderForClass());
+          ClassLoader pluginClassLoader = bundleEP.getPluginDescriptor().getPluginClassLoader();
+          ResourceBundle bundle = ResourceBundle.getBundle(bundleEP.qualifiedName, Locale.getDefault(), pluginClassLoader);
           for (String key : bundle.keySet()) {
             put(key, bundle);
           }
