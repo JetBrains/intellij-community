@@ -4,6 +4,7 @@ package com.intellij.openapi.updateSettings.impl;
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.WhatsNewAction;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
@@ -30,7 +31,6 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,8 +98,7 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
         @Override
         public void actionPerformed(ActionEvent e) {
           String title = IdeBundle.message("update.whats.new.file.name", ApplicationInfo.getInstance().getFullVersion());
-          HTMLEditorProvider.Companion
-            .openEditor(project, myNewBuild.getBlogPost() + "/?var=embed" + (UIUtil.isUnderDarcula() ? "&theme=dark" : ""), title);
+          HTMLEditorProvider.Companion.openEditor(project, myNewBuild.getBlogPost() + WhatsNewAction.getEmbeddedSuffix(), title);
           close(OK_EXIT_CODE);
         }
       };
