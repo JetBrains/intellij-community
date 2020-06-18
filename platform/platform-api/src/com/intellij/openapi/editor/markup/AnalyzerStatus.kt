@@ -16,7 +16,7 @@ import kotlin.math.roundToInt
  */
 enum class InspectionsLevel(@PropertyKey(resourceBundle = EditorBundle.BUNDLE) private val bundleKey: String) {
   NONE("iw.level.none"),
-  ERRORS("iw.level.errors"),
+  SYNTAX("iw.level.syntax"),
   ALL("iw.level.all");
 
   override fun toString(): String = EditorBundle.message(bundleKey)
