@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -23,6 +24,7 @@ public final class TreeTestUtil {
   private Function<Object, String> converter = node -> PlatformTestUtil.toString(node, null);
 
   public TreeTestUtil(@NotNull JTree tree) {
+    assertTreeUI(tree);
     this.tree = tree;
   }
 
@@ -89,5 +91,10 @@ public final class TreeTestUtil {
     DefaultMutableTreeNode node = new DefaultMutableTreeNode(object);
     for (Object child : children) node.add(node(child));
     return node;
+  }
+
+
+  public static void assertTreeUI(@NotNull JTree tree) {
+    Assert.assertTrue(tree.getUI() instanceof DefaultTreeUI);
   }
 }

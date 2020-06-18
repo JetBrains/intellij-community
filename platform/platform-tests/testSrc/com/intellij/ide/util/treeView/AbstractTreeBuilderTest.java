@@ -5,6 +5,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.tree.TreeTestUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.WaitFor;
 import org.jetbrains.annotations.NotNull;
@@ -92,6 +93,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
 
 
     myTree = new Tree(myTreeModel);
+    TreeTestUtil.assertTreeUI(myTree);
     myStructure = new MyStructure();
     myRoot = new Node(null, "/");
 

@@ -4,6 +4,7 @@ package com.intellij.ui.tree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
@@ -11,6 +12,7 @@ import com.intellij.util.ui.tree.AbstractTreeModel;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
+import org.junit.Before;
 import org.junit.Test;
 
 import javax.swing.*;
@@ -38,6 +40,11 @@ public final class AsyncTreeModelTest {
    * Set to true to print some debugging information.
    */
   private static final boolean PRINT = false;
+
+  @Before
+  public void setUp() {
+    TestApplicationManager.getInstance();
+  }
 
   @Test
   public void testAggressiveUpdating() {
@@ -437,6 +444,7 @@ public final class AsyncTreeModelTest {
 
       runOnSwingThread(() -> {
         tree = new JTree(createModelForTree(model, disposable));
+        TreeTestUtil.assertTreeUI(tree);
         runOnSwingThreadWhenProcessingDone(() -> consumer.accept(this));
       });
       try {

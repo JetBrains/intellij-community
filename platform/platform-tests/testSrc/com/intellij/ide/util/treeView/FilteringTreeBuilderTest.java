@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.util.Disposer;
@@ -8,6 +8,7 @@ import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
+import com.intellij.util.ui.tree.TreeUtilTest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -55,7 +56,18 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
     Disposer.register(getRootDisposable(), myBuilder);
   }
 
-  public void testFilter() throws Exception {
+  public void testFilter() {
+    TreeUtilTest.waitForTestOnEDT(() -> {
+      try {
+        implFilter();
+      }
+      catch (Exception exception) {
+        throw new IllegalStateException(exception);
+      }
+    });
+  }
+
+  private void implFilter() throws Exception {
     myTree.setRootVisible(false);
 
     final Node f1 = myRoot.addChild("folder1");
