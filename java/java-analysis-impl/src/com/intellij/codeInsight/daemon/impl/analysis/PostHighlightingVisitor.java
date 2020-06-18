@@ -421,7 +421,7 @@ class PostHighlightingVisitor {
       String message = JavaErrorBundle.message(parameter instanceof PsiPatternVariable ? 
                                                "pattern.variable.is.not.used" : "parameter.is.not.used", identifier.getText());
       HighlightInfo info = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
-      if (declarationMethod != null && declarationMethod.isConstructor()) {
+      if (declarationMethod != null) {
         QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createAssignFieldFromParameterFix());
         QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createCreateFieldFromParameterFix());
       }

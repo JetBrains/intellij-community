@@ -32,6 +32,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +42,6 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
   private final boolean myIsFix;
 
   public AssignFieldFromParameterAction() {
-    // an intention should be available for regular methods only, because for constructors there will be quickfix
     this(false);
   }
   public AssignFieldFromParameterAction(boolean isFix) {
@@ -62,13 +62,15 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     if (!field.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return false;
     PsiElement scope = myParameter.getDeclarationScope();
     if (scope instanceof PsiMethod) {
-      if (((PsiMethod)scope).isConstructor() != myIsFix) return false;
+      PsiMethod method = (PsiMethod)scope;
+      PsiCodeBlock body = method.getBody();
+      if (body == null) return false;
+      if (!myIsFix && !VariableAccessUtils.variableIsUsed(myParameter, body)) {
+        // for unused parameter there will be a separate quick fix
+        return false;
+      }
       if (field.hasModifierProperty(PsiModifier.FINAL)) {
-        PsiMethod method = (PsiMethod)scope;
-        if (!method.isConstructor()) return false;
         if (!JavaHighlightUtil.getChainedConstructors(method).isEmpty()) return false;
-        PsiCodeBlock body = method.getBody();
-        LOG.assertTrue(body != null);
         try {
           ControlFlow flow =
             ControlFlowFactory.getInstance(project).getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());

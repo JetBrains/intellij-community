@@ -29,7 +29,6 @@ public class CreateFieldFromParameterAction extends CreateFieldFromParameterActi
   private final boolean myIsFix;
 
   public CreateFieldFromParameterAction() {
-    // an intention should be available for regular methods only, because for constructors there will be quickfix
     this(false);
   }
 
@@ -43,11 +42,12 @@ public class CreateFieldFromParameterAction extends CreateFieldFromParameterActi
     if (!(scope instanceof PsiMethod)) {
       return false;
     }
-    boolean isConstructor = ((PsiMethod)scope).isConstructor();
-    if (myIsFix && !isConstructor) return false;
     PsiCodeBlock body = ((PsiMethod)scope).getBody();
     if (body == null) return false;
-    if (!myIsFix && isConstructor && !VariableAccessUtils.variableIsUsed(parameter, body)) return false;
+    if (!myIsFix && !VariableAccessUtils.variableIsUsed(parameter, body)) {
+      // for unused parameter there will be a separate quick fix
+      return false;
+    }
     final PsiType type = getSubstitutedType(parameter);
     final PsiClass targetClass = PsiTreeUtil.getParentOfType(parameter, PsiClass.class);
     return FieldFromParameterUtils.isAvailable(parameter, type, targetClass, false) &&
