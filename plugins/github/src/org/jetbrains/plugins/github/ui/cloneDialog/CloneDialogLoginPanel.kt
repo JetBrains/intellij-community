@@ -154,7 +154,7 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
           authenticationManager.updateAccountToken(account, token)
         }
         else {
-          authenticationManager.registerAccount(login, loginPanel.getServer().host, token)
+          authenticationManager.registerAccount(login, loginPanel.getServer(), token)
         }
       }
   }
