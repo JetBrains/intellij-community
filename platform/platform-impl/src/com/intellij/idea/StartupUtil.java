@@ -683,13 +683,12 @@ public final class StartupUtil {
     if (value != null) log.info(var + '=' + value);
   }
 
-  public static String logPath(String path) {
+  private static String logPath(String path) {
     try {
       Path configured = Paths.get(path), real = configured.toRealPath();
       if (!configured.equals(real)) return path + " -> " + real;
     }
-    catch (IOException | InvalidPathException ignored) {
-    }
+    catch (IOException | InvalidPathException ignored) { }
     return path;
   }
 
