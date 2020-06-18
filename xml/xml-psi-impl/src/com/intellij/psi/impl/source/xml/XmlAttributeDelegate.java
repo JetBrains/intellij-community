@@ -58,19 +58,15 @@ public abstract class XmlAttributeDelegate {
 
   @Nullable
   private static XmlAttributeDescriptor getDescriptionImpl(@NotNull XmlAttribute attribute) {
-    XmlAttributeDescriptor result = null;
     final XmlTag tag = attribute.getParent();
     // e.g. XmlDecl or PI
     if (tag != null) {
       final XmlElementDescriptor descr = tag.getDescriptor();
       if (descr != null) {
-        final XmlAttributeDescriptor attributeDescr = descr.getAttributeDescriptor(attribute);
-        result = attributeDescr == null
-                 ? descr.getAttributeDescriptor(attribute.getName(), tag)
-                 : attributeDescr;
+        return descr.getAttributeDescriptor(attribute);
       }
     }
-    return result;
+    return null;
   }
 
   @NotNull
