@@ -18,7 +18,6 @@ import com.intellij.util.EditSourceOnDoubleClickHandler.isToggleEvent
 import com.intellij.util.PlatformIcons
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.SmartHashSet
-import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import git4idea.config.GitVcsSettings
@@ -79,7 +78,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
           AllIcons.Nodes.Favorite
         }
         isBranchNode -> {
-          EmptyIcon.ICON_16
+          AllIcons.Vcs.Branch_node
         }
         isGroupNode -> {
           PlatformIcons.FOLDER_ICON
