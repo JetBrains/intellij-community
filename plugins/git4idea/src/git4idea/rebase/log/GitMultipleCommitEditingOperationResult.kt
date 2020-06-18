@@ -10,7 +10,7 @@ import git4idea.reset.GitResetMode
 
 internal sealed class GitMultipleCommitEditingOperationResult {
   class Complete(
-    private val repository: GitRepository,
+    val repository: GitRepository,
     private val base: String,
     private val oldHead: String,
     private val newHead: String
@@ -26,7 +26,7 @@ internal sealed class GitMultipleCommitEditingOperationResult {
     fun checkUndoPossibility(): UndoPossibility {
       repository.update()
       if (repository.currentRevision != newHead) {
-        return UndoPossibility.HeadMoved
+        return UndoPossibility.Impossible.HeadMoved
       }
       if (firstChangedHash == null) {
         // list of changed commits is empty and head wasn't moved, so we can easily do undo action
@@ -34,7 +34,7 @@ internal sealed class GitMultipleCommitEditingOperationResult {
       }
       val protectedBranch = findProtectedRemoteBranchContainingCommit(repository, firstChangedHash)
       if (protectedBranch != null) {
-        return UndoPossibility.PushedToProtectedBranch(protectedBranch)
+        return UndoPossibility.Impossible.PushedToProtectedBranch(protectedBranch)
       }
       return UndoPossibility.Possible
     }
@@ -56,9 +56,12 @@ internal sealed class GitMultipleCommitEditingOperationResult {
     }
 
     sealed class UndoPossibility {
+      sealed class Impossible : UndoPossibility() {
+        object HeadMoved : Impossible()
+        class PushedToProtectedBranch(val branch: String) : Impossible()
+      }
+
       object Possible : UndoPossibility()
-      object HeadMoved : UndoPossibility()
-      class PushedToProtectedBranch(val branch: String) : UndoPossibility()
     }
   }
 

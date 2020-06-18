@@ -5,11 +5,14 @@ import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.util.VcsUserUtil.getShortPresentation
 import git4idea.i18n.GitBundle
+import git4idea.rebase.log.GitMultipleCommitEditingOperationResult
 import git4idea.rebase.log.GitNewCommitMessageActionDialog
 import git4idea.rebase.log.getOrLoadDetails
+import git4idea.rebase.log.notifySuccess
 import git4idea.repo.GitRepository
 
 internal class GitRewordAction : GitSingleCommitEditingAction() {
@@ -40,7 +43,16 @@ internal class GitRewordAction : GitSingleCommitEditingAction() {
   private fun rewordInBackground(project: Project, commit: VcsCommitMetadata, repository: GitRepository, newMessage: String) {
     object : Task.Backgroundable(project, GitBundle.getString("rebase.log.reword.action.progress.indicator.title")) {
       override fun run(indicator: ProgressIndicator) {
-        GitRewordOperation(repository, commit, newMessage).execute()
+        val operationResult = GitRewordOperation(repository, commit, newMessage).execute()
+        if (operationResult is GitMultipleCommitEditingOperationResult.Complete) {
+          operationResult.notifySuccess(
+            GitBundle.getString("rebase.log.reword.action.notification.successful.title"),
+            GitBundle.getString("rebase.log.reword.action.progress.indicator.undo.title"),
+            GitBundle.getString("rebase.log.reword.action.notification.undo.not.allowed.title"),
+            GitBundle.getString("rebase.log.reword.action.notification.undo.failed.title")
+          )
+          ChangeListManagerImpl.getInstanceImpl(project).replaceCommitMessage(commit.fullMessage, newMessage)
+        }
       }
     }.queue()
   }
