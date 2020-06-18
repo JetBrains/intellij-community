@@ -187,9 +187,8 @@ public class TemporaryCacheServerClient implements JpsServerClient {
   }
 
   private static @NotNull Map<String, String> getRequestHeaders() {
-    Optional<JpsServerAuthExtension> optional = JpsServerAuthExtension.EP_NAME.extensions().findFirst();
-    if (!optional.isPresent()) return Collections.emptyMap();
-    Map<String, String> authHeader = optional.get().getAuthHeader();
+    JpsServerAuthExtension authExtension = JpsServerAuthExtension.getInstance();
+    Map<String, String> authHeader = authExtension.getAuthHeader();
     if (authHeader == null) return Collections.emptyMap();
     return authHeader;
   }
