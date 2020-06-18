@@ -133,7 +133,7 @@ public class SensitiveDataValidator {
 
   public String guaranteeCorrectEventId(@NotNull EventLogGroup group,
                                         @NotNull EventContext context) {
-    if (myWhiteListStorage.isUnreachableWhitelist()) return UNREACHABLE_WHITELIST.getDescription();
+    if (myWhiteListStorage.isUnreachableWhitelist()) return UNREACHABLE_METADATA.getDescription();
     if (SYSTEM_EVENTS.contains(context.eventId)) return context.eventId;
 
     ValidationResultType validationResultType = validateEvent(group, context);
@@ -182,7 +182,7 @@ public class SensitiveDataValidator {
                                    @Nullable WhiteListGroupRules whiteListRule,
                                    @NotNull String key,
                                    @NotNull Object entryValue) {
-    if (myWhiteListStorage.isUnreachableWhitelist()) return UNREACHABLE_WHITELIST;
+    if (myWhiteListStorage.isUnreachableWhitelist()) return UNREACHABLE_METADATA;
     if (whiteListRule == null) return UNDEFINED_RULE;
     return whiteListRule.validateEventData(key, entryValue, context);
   }
