@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class WhatsNewAction extends AnAction implements DumbAware {
@@ -18,7 +19,8 @@ public class WhatsNewAction extends AnAction implements DumbAware {
     if (e.getProject() == null || text == null) {
       BrowserUtil.browse(ApplicationInfoEx.getInstanceEx().getWhatsNewUrl());
     } else {
-      HTMLEditorProvider.Companion.openEditor(e.getProject(), ApplicationInfoEx.getInstanceEx().getWhatsNewUrl(), text);
+      HTMLEditorProvider.Companion
+        .openEditor(e.getProject(), ApplicationInfoEx.getInstanceEx().getWhatsNewUrl() + getEmbeddedSuffix(), text);
     }
   }
 
@@ -32,5 +34,10 @@ public class WhatsNewAction extends AnAction implements DumbAware {
       e.getPresentation().setDescription(
         IdeBundle.messagePointer("whatsnew.action.custom.description", ApplicationNamesInfo.getInstance().getFullProductName()));
     }
+  }
+
+  @NotNull
+  public static String getEmbeddedSuffix() {
+    return "?var=embed" + (UIUtil.isUnderDarcula() ? "&theme=dark" : "");
   }
 }
