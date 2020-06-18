@@ -9,6 +9,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.isNestedFlowProcessingAllowed
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import java.util.concurrent.atomic.AtomicReferenceArray
@@ -44,7 +45,7 @@ class SharedVariableInferenceCache(val scope: GrControlFlowOwner) {
   private val finalTypes: AtomicReferenceArray<PsiType?> = AtomicReferenceArray(sharedVariableDescriptors.size)
 
   fun getSharedVariableType(descriptor: VariableDescriptor): PsiType? {
-    if (descriptor !in sharedVariableDescriptors) {
+    if (descriptor !in sharedVariableDescriptors || !isNestedFlowProcessingAllowed()) {
       return null
     }
     val indexInFinalTypes: Int = sharedVariableDescriptors.indexOf(descriptor)
