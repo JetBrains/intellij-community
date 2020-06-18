@@ -113,8 +113,11 @@ class GithubAuthenticationManager internal constructor() {
     accountManager.updateAccountToken(account, newToken)
 
   @CalledInAwt
-  internal fun registerAccount(name: String, server: GithubServerPath, token: String): GithubAccount {
-    val account = GithubAccountManager.createAccount(name, server)
+  internal fun registerAccount(name: String, server: GithubServerPath, token: String): GithubAccount =
+    registerAccount(GithubAccountManager.createAccount(name, server), token)
+
+  @CalledInAwt
+  internal fun registerAccount(account: GithubAccount, token: String): GithubAccount {
     accountManager.accounts += account
     accountManager.updateAccountToken(account, token)
     return account
