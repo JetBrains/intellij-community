@@ -65,7 +65,7 @@ class GitRewordTest : GitSingleRepoTest() {
     val result = operation.execute() as Complete
 
     assertTrue(result.checkUndoPossibility() is Possible)
-    operation.undo(result)
+    result.undo()
 
     assertLastMessage("Wrong message", "Message reworded incorrectly")
   }
@@ -81,14 +81,13 @@ class GitRewordTest : GitSingleRepoTest() {
 
     file("b").create().addCommit("New commit")
 
-    assertTrue(result.checkUndoPossibility() is Complete.UndoPossibility.HeadMoved)
-    operation.undo(result)
+    val undoPossibility = result.checkUndoPossibility()
+    assertTrue(undoPossibility is Complete.UndoPossibility.Impossible.HeadMoved)
 
     repo.assertLatestHistory(
       "New commit",
       "Correct message"
     )
-    assertErrorNotification("Can't Undo Commit Message Edit", "Repository has already been changed")
   }
 
   fun `test undo is not possible if commit was pushed`() {
@@ -107,15 +106,13 @@ class GitRewordTest : GitSingleRepoTest() {
     git("update-ref refs/remotes/origin/master HEAD")
 
     val undoPossibility = result.checkUndoPossibility()
-    assertTrue(undoPossibility is Complete.UndoPossibility.PushedToProtectedBranch && undoPossibility.branch == "origin/master")
-    operation.undo(result)
+    assertTrue(undoPossibility is Complete.UndoPossibility.Impossible.PushedToProtectedBranch && undoPossibility.branch == "origin/master")
 
     repo.assertLatestHistory(
       "Third commit",
       "Correct message",
       "First commit"
     )
-    assertErrorNotification("Can't Undo Commit Message Edit", "Commit has already been pushed to origin/master")
   }
 
   // IDEA-175002
