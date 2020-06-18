@@ -70,7 +70,7 @@ internal class ModuleStoreRenameTest {
           ModuleRootModificationUtil.addDependency(dependentModule, module)
         }
 
-        module.messageBus.connect().subscribe(ProjectTopics.MODULES, object : ModuleListener {
+        projectRule.project.messageBus.connect(module).subscribe(ProjectTopics.MODULES, object : ModuleListener {
           override fun modulesRenamed(project: Project, modules: MutableList<Module>, oldNameProvider: Function<Module, String>) {
             assertThat(modules).containsOnly(module)
             oldModuleNames.add(oldNameProvider.`fun`(module))

@@ -49,7 +49,7 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
 
   private final PathMacroSubstitutor myPathMacroSubstitutor;
 
-  public ClasspathStorage(@NotNull final Module module, @NotNull StateStorageManager storageManager) {
+  public ClasspathStorage(@NotNull Module module, @NotNull StateStorageManager storageManager) {
     String storageType = module.getOptionValue(JpsProjectLoader.CLASSPATH_ATTRIBUTE);
     if (storageType == null) {
       throw new IllegalStateException("Classpath storage requires non-default storage type");
@@ -67,7 +67,8 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
       }
 
       myConverter = new MissingClasspathConverter();
-    } else {
+    }
+    else {
       myConverter = provider.createConverter(module);
     }
 
@@ -100,7 +101,7 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
       }
     });
 
-    busConnection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
+    module.getProject().getMessageBus().connect(module).subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
       public void modulesRenamed(@NotNull Project project,
                                  @NotNull List<Module> modules,
