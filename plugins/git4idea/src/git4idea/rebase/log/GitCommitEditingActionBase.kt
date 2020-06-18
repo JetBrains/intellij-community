@@ -221,8 +221,9 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
 
     val commitList = log.selectedShortDetails.takeIf { it.isNotEmpty() } ?: return null
     val repositoryManager = GitUtil.getRepositoryManager(project)
-    // assume that commits are from one repo, we will check it in actionPerformed
-    val repository = repositoryManager.getRepositoryForRootQuick(commitList.first().root) ?: return null
+
+    val root = commitList.map { it.root }.distinct().singleOrNull() ?: return null
+    val repository = repositoryManager.getRepositoryForRootQuick(root) ?: return null
     if (repositoryManager.isExternal(repository)) {
       return null
     }
