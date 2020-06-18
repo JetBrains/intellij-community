@@ -41,8 +41,13 @@ public final class PathUtilRt {
   }
 
   private static int getEnd(@NotNull String path) {
-    char c = path.charAt(path.length() - 1);
-    return c == '/' || c == '\\' ? path.length() - 1 : path.length();
+    for (int index = path.length() - 1; index >= 0; --index) {
+      char c = path.charAt(index);
+      if (c != '/' && c != '\\') {
+        return index + 1;
+      }
+    }
+    return path.length() - 1;
   }
 
   @NotNull
