@@ -115,7 +115,9 @@ class BundledJreManager {
   }
 
   private static void fixJbrPermissions(String destination, boolean forWin) {
-    Set<PosixFilePermission> exeOrDir = EnumSet.of(OWNER_READ, OWNER_WRITE, OWNER_EXECUTE, GROUP_READ, GROUP_EXECUTE, OTHERS_READ, OTHERS_EXECUTE)
+    Set<PosixFilePermission> exeOrDir = EnumSet.noneOf(PosixFilePermission.class)
+    Collections.addAll(exeOrDir, OWNER_READ, OWNER_WRITE, OWNER_EXECUTE, GROUP_READ, GROUP_EXECUTE, OTHERS_READ, OTHERS_EXECUTE)
+    
     Set<PosixFilePermission> regular = EnumSet.of(OWNER_READ, OWNER_WRITE, GROUP_READ, OTHERS_READ)
 
     Path root = Paths.get(destination)
