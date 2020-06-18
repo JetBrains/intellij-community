@@ -13,7 +13,7 @@ import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubServerPath
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
+import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.authentication.ui.GithubLoginDialog
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -29,6 +29,8 @@ internal const val GITHUB_SETTINGS_PASSWORD_KEY = "GITHUB_SETTINGS_PASSWORD_KEY"
 @Suppress("DEPRECATION")
 class GithubAccountsMigrationHelper {
   private val LOG = logger<GithubAccountsMigrationHelper>()
+
+  private val authManager get() = GithubAuthenticationManager.getInstance()
 
   internal fun getOldServer(): GithubServerPath? {
     if (!GithubSettings.getInstance().hasOldAccount) return null
@@ -71,15 +73,21 @@ class GithubAccountsMigrationHelper {
           val accountName = progressManager.runProcessWithProgressSynchronously(ThrowableComputable<String, IOException> {
             executorFactory.create(password).execute(progressManager.progressIndicator, GithubApiRequests.CurrentUser.get(server)).login
           }, GithubBundle.message("accessing.github"), true, project)
-          val account = GithubAccountManager.createAccount(accountName, server)
-          registerAccount(account, password)
+
+          val account = authManager.registerAccount(accountName, server, password)
+          LOG.debug("Registered account $account")
           return true
         }
         catch (e: Exception) {
           LOG.debug("Failed to migrate old token-based auth. Showing dialog.", e)
           val dialog = GithubLoginDialog(executorFactory, project, parentComponent)
             .withServer(hostToUse, false).withToken(password).withError(e)
-          return dialog.registerAccount()
+          DialogManager.show(dialog)
+          if (!dialog.isOK) return false
+
+          val account = authManager.registerAccount(dialog.login, dialog.server, dialog.token)
+          LOG.debug("Registered account $account")
+          return true
         }
       }
       GithubAuthData.AuthType.BASIC -> {
@@ -87,25 +95,15 @@ class GithubAccountsMigrationHelper {
         val dialog = GithubLoginDialog(GithubApiRequestExecutor.Factory.getInstance(), project, parentComponent,
                                        message = GithubBundle.message("accounts.password.auth.not.supported"))
           .withServer(hostToUse, false).withCredentials(login, password)
-        return dialog.registerAccount()
+        DialogManager.show(dialog)
+        if (!dialog.isOK) return false
+
+        val account = authManager.registerAccount(dialog.login, dialog.server, dialog.token)
+        LOG.debug("Registered account $account")
+        return true
       }
       else -> return true
     }
-  }
-
-  private fun GithubLoginDialog.registerAccount(): Boolean {
-    DialogManager.show(this)
-    if (!isOK) return false
-
-    registerAccount(GithubAccountManager.createAccount(login, server), token)
-    return true
-  }
-
-  private fun registerAccount(account: GithubAccount, token: String) {
-    val accountManager = service<GithubAccountManager>()
-    accountManager.accounts += account
-    accountManager.updateAccountToken(account, token)
-    LOG.debug("Registered account $account")
   }
 
   companion object {
