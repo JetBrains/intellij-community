@@ -3,6 +3,8 @@ package git4idea.rebase
 
 import com.intellij.openapi.util.text.StringUtil
 import git4idea.config.GitVersionSpecialty
+import git4idea.rebase.log.GitMultipleCommitEditingOperationResult.Complete
+import git4idea.rebase.log.GitMultipleCommitEditingOperationResult.Complete.UndoPossibility.Possible
 import git4idea.test.*
 import org.junit.Assume.assumeTrue
 
@@ -60,8 +62,10 @@ class GitRewordTest : GitSingleRepoTest() {
     updateChangeListManager()
 
     val operation = GitRewordOperation(repo, commit, "Correct message")
-    operation.execute()
-    operation.undo()
+    val result = operation.execute() as Complete
+
+    assertTrue(result.checkUndoPossibility() is Possible)
+    operation.undo(result)
 
     assertLastMessage("Wrong message", "Message reworded incorrectly")
   }
@@ -73,11 +77,12 @@ class GitRewordTest : GitSingleRepoTest() {
     updateChangeListManager()
 
     val operation = GitRewordOperation(repo, commit, "Correct message")
-    operation.execute()
+    val result = operation.execute() as Complete
 
     file("b").create().addCommit("New commit")
 
-    operation.undo()
+    assertTrue(result.checkUndoPossibility() is Complete.UndoPossibility.HeadMoved)
+    operation.undo(result)
 
     repo.assertLatestHistory(
       "New commit",
@@ -97,11 +102,13 @@ class GitRewordTest : GitSingleRepoTest() {
     updateChangeListManager()
 
     val operation = GitRewordOperation(repo, commit, "Correct message")
-    operation.execute()
+    val result = operation.execute() as Complete
 
     git("update-ref refs/remotes/origin/master HEAD")
 
-    operation.undo()
+    val undoPossibility = result.checkUndoPossibility()
+    assertTrue(undoPossibility is Complete.UndoPossibility.PushedToProtectedBranch && undoPossibility.branch == "origin/master")
+    operation.undo(result)
 
     repo.assertLatestHistory(
       "Third commit",
