@@ -689,6 +689,15 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     assertEquals(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToReloadIn(file, text, bytes, CharsetToolkit.UTF_16LE_CHARSET));
   }
 
+  public void testMustBeSafeToReloadISO859TextMistakenlyLoadedInUTF8() throws IOException {
+    String isoText = "No se ha encontrado ningún puesto con ese criterio de búsqueda";
+    VirtualFile file = createTempFile("txt", null, isoText, StandardCharsets.ISO_8859_1);
+    byte[] bytes = isoText.getBytes(StandardCharsets.ISO_8859_1);
+    file.setCharset(StandardCharsets.UTF_8);
+    String utfText = new String(bytes, StandardCharsets.UTF_8);
+    assertEquals(EncodingUtil.Magic8.WELL_IF_YOU_INSIST, EncodingUtil.isSafeToReloadIn(file, utfText, bytes, StandardCharsets.ISO_8859_1));
+  }
+
   public void testUndoChangeEncoding() throws IOException {
     VirtualFile file = createTempFile("txt", null, "xxx", StandardCharsets.UTF_8);
     file.setCharset(StandardCharsets.UTF_8);

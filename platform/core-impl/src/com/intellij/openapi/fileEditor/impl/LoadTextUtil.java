@@ -18,13 +18,11 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.LineSeparator;
-import com.intellij.util.NotNullFunction;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.*;
 import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashSet;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,16 +87,22 @@ public final class LoadTextUtil {
     return new ConvertResult(result, crCount, lfCount, crlfCount);
   }
 
+  private static final char UNDEFINED_CHAR = 0xFDFF;
+
   @NotNull
   private static ConvertResult convertLineSeparatorsToSlashN(byte @NotNull [] charsAsBytes, int startOffset, int endOffset) {
-    int crIndex = indexOf(charsAsBytes, (byte)'\r', startOffset, endOffset);
-    if (crIndex == -1) {
-      // optimisation: if there is no CR in the file, no line separator conversion is necessary. we can re-use the passed byte buffer in place
+    int lineBreak = findLineBreakOrWideChar(charsAsBytes, startOffset, endOffset);
+    if (!BitUtil.isSet(lineBreak, CR) && !BitUtil.isSet(lineBreak, WIDE)) {
+      // optimisation: if there is no CR in the file, no line separator conversion is necessary. we can re-use the passed byte buffer inplace
       ByteArrayCharSequence sequence = new ByteArrayCharSequence(charsAsBytes, startOffset, endOffset);
-      int lfIndex = indexOf(charsAsBytes, (byte)'\n', startOffset, endOffset);
-      return new ConvertResult(sequence, 0, lfIndex == -1 ? 0 : 1, 0);
+      return new ConvertResult(sequence, 0, BitUtil.isSet(lineBreak, LF) ? 1 : 0, 0);
     }
 
+    if (BitUtil.isSet(lineBreak, WIDE)) {
+      // characters outside AS_ASCII range found, insert UNDEFINED_CHAR
+      return convertWideCharacters(charsAsBytes, startOffset, endOffset);
+    }
+    // convert \r\n to \n, \r to \n
     int dst = 0;
     char prev = ' ';
     int crCount = 0;
@@ -134,16 +138,63 @@ public final class LoadTextUtil {
     return new ConvertResult(sequence, crCount, lfCount, crlfCount);
   }
 
-  private static int indexOf(byte[] ints, byte value, int start, int end) {
-    for (int i = start; i < end; i++) {
-      if (ints[i] == value) return i;
+  @NotNull
+  private static ConvertResult convertWideCharacters(byte @NotNull [] charsAsBytes, int startOffset, int endOffset) {
+    // convert \r\n to \n, \r to \n, wide char to UNDEFINED_CHAR
+    char prev = ' ';
+    int crCount = 0;
+    int lfCount = 0;
+    int crlfCount = 0;
+    StringBuilder result = new StringBuilder(endOffset - startOffset);
+
+    for (int src = startOffset; src < endOffset; src++) {
+      char c = (char)charsAsBytes[src];
+      if (c > 128) {
+        result.append(UNDEFINED_CHAR);
+        continue;
+      }
+      switch (c) {
+        case '\r':
+          result.append('\n');
+          crCount++;
+          break;
+        case '\n':
+          if (prev == '\r') {
+            crCount--;
+            crlfCount++;
+          }
+          else {
+            result.append('\n');
+            lfCount++;
+          }
+          break;
+        default:
+          result.append(c);
+          break;
+      }
+      prev = c;
     }
-    return -1;
+    return new ConvertResult(result, crCount, lfCount, crlfCount);
+  }
+
+  private static final int CR = 1;
+  private static final int LF = 2;
+  private static final int WIDE = 4;
+  @MagicConstant(flags = {CR, LF, WIDE})
+  private static int findLineBreakOrWideChar(byte @NotNull [] ints, int start, int end) {
+    int flags = 0;
+    for (int i = start; i < end; i++) {
+      byte c = ints[i];
+      if (c == (byte)'\r') flags |= CR;
+      if (c == (byte)'\n') flags |= LF;
+      if (c < 0) flags |= WIDE;
+    }
+    return flags;
   }
 
   // private fake charsets for files which have one-byte-for-ascii-characters encoding but contain seven bits characters only. used for optimization since we don't have to encode-decode bytes here.
   private static final Charset INTERNAL_SEVEN_BIT_UTF8 = new SevenBitCharset(StandardCharsets.UTF_8);
-  private static final Charset INTERNAL_SEVEN_BIT_ISO_8859_1 = new SevenBitCharset(CharsetToolkit.ISO_8859_1_CHARSET);
+  private static final Charset INTERNAL_SEVEN_BIT_ISO_8859_1 = new SevenBitCharset(StandardCharsets.ISO_8859_1);
   private static final Charset INTERNAL_SEVEN_BIT_WIN_1251 = new SevenBitCharset(CharsetToolkit.WIN_1251_CHARSET);
   private static class SevenBitCharset extends Charset {
     private final Charset myBaseCharset;
@@ -242,7 +293,7 @@ public final class LoadTextUtil {
       if (charset == StandardCharsets.UTF_8) {
         result = INTERNAL_SEVEN_BIT_UTF8;
       }
-      else if (charset == CharsetToolkit.ISO_8859_1_CHARSET) {
+      else if (charset == StandardCharsets.ISO_8859_1) {
         result = INTERNAL_SEVEN_BIT_ISO_8859_1;
       }
       else if (charset == CharsetToolkit.WIN_1251_CHARSET) {
