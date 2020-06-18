@@ -2,7 +2,6 @@
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.util.Key;
-import com.sun.jdi.connect.IllegalConnectorArgumentsException;
 import org.jetbrains.annotations.NotNull;
 
 public interface LineNumbersMapping {
