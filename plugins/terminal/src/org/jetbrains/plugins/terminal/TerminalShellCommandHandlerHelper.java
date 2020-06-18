@@ -27,8 +27,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.function.Function;
 
-public class TerminalShellCommandHandlerHelper {
-
+public final class TerminalShellCommandHandlerHelper {
   private static final Logger LOG = Logger.getInstance(TerminalShellCommandHandler.class);
   @NonNls private static final String TERMINAL_CUSTOM_COMMANDS_GOT_IT = "TERMINAL_CUSTOM_COMMANDS_GOT_IT";
   @NonNls private static final String GOT_IT = "got_it";
@@ -88,7 +87,7 @@ public class TerminalShellCommandHandlerHelper {
     if (result != null) {
       String title = TerminalBundle.message("smart_command_execution.notification.title");
       String content = TerminalBundle.message("smart_command_execution.notification.text", GOT_IT);
-      new SingletonNotificationManager(
+        new SingletonNotificationManager(
         NotificationGroup.toolWindowGroup("Terminal", TerminalToolWindowFactory.TOOL_WINDOW_ID), NotificationType.INFORMATION, null)
         .notify(title, content, project,
                 new NotificationListener.Adapter() {

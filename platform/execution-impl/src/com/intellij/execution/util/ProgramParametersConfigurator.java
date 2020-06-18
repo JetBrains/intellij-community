@@ -32,7 +32,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -189,7 +190,7 @@ public class ProgramParametersConfigurator {
         ExecutionBundle.message("dialog.message.working.directory.null.for.project.module", project.getName(), project.getBasePath(),
                                 module == null ? "null" : "'" + module.getName() + "' (" + module.getModuleFilePath() + ")"));
     }
-    if (!new File(workingDir).exists()) {
+    if (!Files.exists(Paths.get(workingDir))) {
       throw new RuntimeConfigurationWarning(ExecutionBundle.message("dialog.message.working.directory.doesn.t.exist", workingDir));
     }
   }

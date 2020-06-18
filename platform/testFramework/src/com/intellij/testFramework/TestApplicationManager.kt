@@ -42,7 +42,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Disposer
@@ -50,6 +49,7 @@ import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings
+import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.ProjectRule.Companion.checkThatNoOpenProjects
 import com.intellij.ui.UiInterceptors
 import com.intellij.util.ReflectionUtil
@@ -145,7 +145,7 @@ class TestApplicationManager private constructor() {
 
   fun dispose() {
     val app = ApplicationManager.getApplication() as ApplicationImpl? ?: return
-    runInEdtAndWait {
+    app.invokeAndWait {
       // `ApplicationManager#ourApplication` will be automatically set to `null`
       app.disposeContainer()
       ourInstance = null
@@ -348,7 +348,7 @@ private fun checkJavaSwingTimersAreDisposed() {
 @ApiStatus.Internal
 @JvmOverloads
 fun waitForProjectLeakingThreads(project: Project, timeout: Long = 10, timeUnit: TimeUnit = TimeUnit.SECONDS) {
-  if (project is ProjectImpl) {
+  if (project is ComponentManagerImpl) {
     project.stopServicePreloading()
   }
 

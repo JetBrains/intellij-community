@@ -41,7 +41,6 @@ import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.io.FileUtil
@@ -609,8 +608,8 @@ object DynamicPlugins {
     appMessageBus.unsubscribeLazyListeners(pluginId, pluginDescriptor.appContainerDescriptor.getListeners())
 
     for (project in openedProjects) {
-      (project as ProjectImpl).unloadServices(pluginDescriptor.projectContainerDescriptor.getServices(), pluginId)
-      (project.messageBus as MessageBusEx).unsubscribeLazyListeners(pluginId, pluginDescriptor.projectContainerDescriptor.getListeners())
+      (project as ComponentManagerImpl).unloadServices(pluginDescriptor.projectContainerDescriptor.getServices(), pluginId)
+      ((project as ComponentManagerImpl).messageBus as MessageBusEx).unsubscribeLazyListeners(pluginId, pluginDescriptor.projectContainerDescriptor.getListeners())
 
       val moduleServices = pluginDescriptor.moduleContainerDescriptor.getServices()
       for (module in ModuleManager.getInstance(project).modules) {
@@ -730,7 +729,7 @@ object DynamicPlugins {
     val listenerCallbacks = mutableListOf<Runnable>()
     app.registerComponents(pluginsToLoad, listenerCallbacks)
     for (openProject in ProjectUtil.getOpenProjects()) {
-      (openProject as ProjectImpl).registerComponents(pluginsToLoad, listenerCallbacks)
+      (openProject as ComponentManagerImpl).registerComponents(pluginsToLoad, listenerCallbacks)
       for (module in ModuleManager.getInstance(openProject).modules) {
         (module as ComponentManagerImpl).registerComponents(pluginsToLoad, listenerCallbacks)
       }

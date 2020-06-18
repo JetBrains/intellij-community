@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -58,9 +59,8 @@ public class FileUtil extends FileUtilRt {
 
   private static final Logger LOG = Logger.getInstance(FileUtil.class);
 
-  @NotNull
-  public static String join(final String @NotNull ... parts) {
-    return StringUtil.join(parts, File.separator);
+  public static @NotNull String join(String @NotNull ... parts) {
+    return String.join(File.separator, parts);
   }
 
   /**
@@ -779,7 +779,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static int pathHashCode(@Nullable String path) {
-    return StringUtil.isEmpty(path) ? 0 : PATH_HASHING_STRATEGY.computeHashCode(toCanonicalPath(path));
+    return Strings.isEmpty(path) ? 0 : PATH_HASHING_STRATEGY.computeHashCode(toCanonicalPath(path));
   }
 
   /**
@@ -790,7 +790,7 @@ public class FileUtil extends FileUtilRt {
   @Deprecated
   @NotNull
   public static String getExtension(@NotNull String fileName) {
-    return StringUtil.toLowerCase(FileUtilRt.getExtension(fileName));
+    return Strings.toLowerCase(FileUtilRt.getExtension(fileName));
   }
 
   @NotNull
@@ -804,26 +804,27 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean containsWindowsShortName(@NotNull String path) {
-    if (StringUtil.containsChar(path, '~')) {
-      path = toSystemIndependentName(path);
-
-      int start = 0;
-      while (start < path.length()) {
-        int end = path.indexOf('/', start);
-        if (end < 0) end = path.length();
-
-        // "How Windows Generates 8.3 File Names from Long File Names", https://support.microsoft.com/en-us/kb/142982
-        int dot = path.lastIndexOf('.', end);
-        if (dot < start) dot = end;
-        if (dot - start > 2 && dot - start <= 8 && end - dot - 1 <= 3 &&
-            path.charAt(dot - 2) == '~' && Character.isDigit(path.charAt(dot - 1))) {
-          return true;
-        }
-
-        start = end + 1;
-      }
+    if (path.indexOf('~') < 0) {
+      return false;
     }
 
+    path = toSystemIndependentName(path);
+
+    int start = 0;
+    while (start < path.length()) {
+      int end = path.indexOf('/', start);
+      if (end < 0) end = path.length();
+
+      // "How Windows Generates 8.3 File Names from Long File Names", https://support.microsoft.com/en-us/kb/142982
+      int dot = path.lastIndexOf('.', end);
+      if (dot < start) dot = end;
+      if (dot - start > 2 && dot - start <= 8 && end - dot - 1 <= 3 &&
+          path.charAt(dot - 2) == '~' && Character.isDigit(path.charAt(dot - 1))) {
+        return true;
+      }
+
+      start = end + 1;
+    }
     return false;
   }
 
@@ -1099,7 +1100,7 @@ public class FileUtil extends FileUtilRt {
   @Nullable
   public static File findFirstThatExist(String @NotNull ... paths) {
     for (String path : paths) {
-      if (!StringUtil.isEmptyOrSpaces(path)) {
+      if (!Strings.isEmptyOrSpaces(path)) {
         File file = new File(toSystemDependentName(path));
         if (file.exists()) return file;
       }
@@ -1110,8 +1111,8 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static List<File> findFilesByMask(@NotNull Pattern pattern, @NotNull File dir) {
-    final ArrayList<File> found = new ArrayList<>();
-    final File[] files = dir.listFiles();
+    List<File> found = new ArrayList<>();
+    File[] files = dir.listFiles();
     if (files != null) {
       for (File file : files) {
         if (file.isDirectory()) {
@@ -1127,8 +1128,8 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static List<File> findFilesOrDirsByMask(@NotNull Pattern pattern, @NotNull File dir) {
-    final ArrayList<File> found = new ArrayList<>();
-    final File[] files = dir.listFiles();
+    List<File> found = new ArrayList<>();
+    File[] files = dir.listFiles();
     if (files != null) {
       for (File file : files) {
         if (pattern.matcher(file.getName()).matches()) {
@@ -1153,7 +1154,7 @@ public class FileUtil extends FileUtilRt {
    */
   @Nullable
   public static String findFileInProvidedPath(String providedPath, String... fileNames) {
-    if (StringUtil.isEmpty(providedPath)) {
+    if (Strings.isEmpty(providedPath)) {
       return "";
     }
 
@@ -1251,8 +1252,8 @@ public class FileUtil extends FileUtilRt {
       return false;
     }
 
-    final int lineBreak = StringUtil.indexOf(firstCharsIfText, '\n', 2);
-    return lineBreak >= 0 && StringUtil.indexOf(firstCharsIfText, marker, 2, lineBreak) != -1;
+    final int lineBreak = Strings.indexOf(firstCharsIfText, '\n', 2);
+    return lineBreak >= 0 && Strings.indexOf(firstCharsIfText, marker, 2, lineBreak) != -1;
   }
 
   @NotNull
@@ -1418,7 +1419,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static List<String> splitPath(@NotNull String path, char separatorChar) {
-    ArrayList<String> list = new ArrayList<>();
+    List<String> list = new ArrayList<>();
     int index = 0;
     int nextSeparator;
     while ((nextSeparator = path.indexOf(separatorChar, index)) != -1) {
@@ -1458,8 +1459,8 @@ public class FileUtil extends FileUtilRt {
       throw new FileNotFoundException(path);
     }
 
-    FileAttributes upper = FileSystemUtil.getAttributes(StringUtil.toUpperCase(path));
-    FileAttributes lower = FileSystemUtil.getAttributes(StringUtil.toLowerCase(path));
+    FileAttributes upper = FileSystemUtil.getAttributes(Strings.toUpperCase(path));
+    FileAttributes lower = FileSystemUtil.getAttributes(Strings.toLowerCase(path));
     return !(attributes.equals(upper) && attributes.equals(lower));
   }
 

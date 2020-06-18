@@ -71,7 +71,9 @@ public final class CommonRefactoringUtil {
                                    @NotNull @DialogMessage String message,
                                    @NotNull @DialogTitle String title,
                                    @Nullable String helpId) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) throw new RefactoringErrorHintException(message);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      throw new RefactoringErrorHintException(message);
+    }
 
     ApplicationManager.getApplication().invokeLater(() -> {
       if (editor == null || editor.getComponent().getRootPane() == null) {
