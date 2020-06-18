@@ -49,11 +49,10 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
     fragments.addAll(commonParameterFragments.getFragments());
     fragments.add(CommonJavaFragments.createBuildBeforeRun(beforeRunComponent));
 
-    JrePathEditor jrePathEditor = new JrePathEditor();
-    setMinimumWidth(jrePathEditor, 100);
-    jrePathEditor.getLabel().setVisible(false);
-    jrePathEditor.setDefaultJreSelector(DefaultJreSelector.projectSdk(myProject));
+    SettingsEditorFragment<ApplicationConfiguration, JrePathEditor> jrePath = CommonJavaFragments.createJrePath(myProject);
+    fragments.add(jrePath);
 
+    String group = ExecutionBundle.message("group.java.options");
     RawCommandLineEditor vmOptions = new RawCommandLineEditor() {
       @Override
       public void setBounds(int x, int y, int width, int height) {
@@ -63,16 +62,11 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
     setMinimumWidth(vmOptions, 400);
     vmOptions.getEditorField().getEmptyText().setText(ExecutionBundle.message("run.configuration.java.vm.parameters.empty.text"));
     MacrosDialog.addMacroSupport(vmOptions.getEditorField(), MacrosDialog.Filters.ALL, hasModule);
-    String group = ExecutionBundle.message("group.java.options");
-    fragments.add(new SettingsEditorFragment<>("jrePath", null, null, jrePathEditor, 5,
-                                               (configuration, editor) -> editor
-                                                 .setPathOrName(configuration.getAlternativeJrePath(),
-                                                                configuration.isAlternativeJrePathEnabled()),
-                                               (configuration, editor) -> {
-                                                 configuration.setAlternativeJrePath(editor.getJrePathOrName());
-                                                 configuration.setAlternativeJrePathEnabled(editor.isAlternativeJreSelected());
-                                               },
-                                               configuration -> true));
+    fragments.add(new SettingsEditorFragment<>("vmParameters", ExecutionBundle.message("run.configuration.java.vm.parameters.name"), group, vmOptions, 15,
+                                               (configuration, component) -> component.setText(configuration.getVMParameters()),
+                                               (configuration, component) -> configuration.setVMParameters(component.getText()),
+                                               configuration -> isNotEmpty(configuration.getVMParameters())));
+
     EditorTextField mainClass = ClassEditorField.createClassField(myProject, () -> classpathCombo.getSelectedModule());
     mainClass.setPlaceholder(ExecutionBundle.message("application.configuration.main.class.placeholder"));
     setMinimumWidth(mainClass, 300);
@@ -80,13 +74,9 @@ public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEdi
                                                (configuration, component) -> component.setText(configuration.getMainClassName()),
                                                (configuration, component) -> configuration.setMainClassName(component.getText()),
                                                configuration -> true));
-    fragments.add(new SettingsEditorFragment<>("vmParameters", ExecutionBundle.message("run.configuration.java.vm.parameters.name"), group, vmOptions, 15,
-                                               (configuration, component) -> component.setText(configuration.getVMParameters()),
-                                               (configuration, component) -> configuration.setVMParameters(component.getText()),
-                                               configuration -> isNotEmpty(configuration.getVMParameters())));
     fragments.add(moduleClasspath);
 
-    ShortenCommandLineModeCombo combo = new ShortenCommandLineModeCombo(myProject, jrePathEditor, () -> classpathCombo.getSelectedModule(),
+    ShortenCommandLineModeCombo combo = new ShortenCommandLineModeCombo(myProject, jrePath.component(), () -> classpathCombo.getSelectedModule(),
                                                                         listener -> classpathCombo.addActionListener(listener));
     fragments.add(new SettingsEditorFragment<>("shorten.command.line",
                                                ExecutionBundle.message("application.configuration.shorten.command.line"),
