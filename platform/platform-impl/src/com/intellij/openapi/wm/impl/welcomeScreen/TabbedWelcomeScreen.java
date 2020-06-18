@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WelcomeScreenTab;
 import com.intellij.openapi.wm.WelcomeTabFactory;
+import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.CardLayoutPanel;
 import com.intellij.ui.components.JBList;
@@ -11,6 +13,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +26,6 @@ import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.
 
 public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
   private final JBSlidingPanel mySlidingPanel = new JBSlidingPanel();
-
 
   TabbedWelcomeScreen() {
     mySlidingPanel.add("root", this);
@@ -40,7 +42,6 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     tabList.setFixedCellHeight(JBUI.scale(32));
     tabList.setCellRenderer(new MyCellRenderer());
     tabList.addListSelectionListener(e -> centralPanel.select(tabList.getSelectedValue(), true));
-    tabList.setSelectedIndex(0);
 
     JComponent logoComponent = createSmallLogo();
     logoComponent.setBorder(JBUI.Borders.emptyLeft(16));
@@ -52,6 +53,14 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
 
     add(leftPanel, BorderLayout.WEST);
     add(centralPanel, BorderLayout.CENTER);
+
+    //select and install focused component
+    if (!mainListModel.isEmpty()) {
+      tabList.setSelectedIndex(0);
+      JComponent firstShownPanel = mainListModel.get(0).getAssociatedComponent();
+      UiNotifyConnector.doWhenFirstShown(firstShownPanel, () -> IdeFocusManager.getGlobalInstance()
+        .requestFocus(IdeFocusTraversalPolicy.getPreferredFocusedComponent(firstShownPanel), true));
+    }
   }
 
   @Override
