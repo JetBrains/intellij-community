@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,20 +39,24 @@ public class NotificationCollector {
   private static final String NOTIFICATION_GROUP = "notification_group";
 
   private NotificationCollector() {
-    for (NotificationWhitelistEP extension : NotificationWhitelistEP.EP_NAME.getExtensionList()) {
-      addNotificationsToWhitelist(extension);
-    }
-    NotificationWhitelistEP.EP_NAME.addExtensionPointListener(new ExtensionPointListener<NotificationWhitelistEP>() {
+    //noinspection deprecation
+    ContainerUtil.concat(NotificationWhitelistEP.EP_NAME.getExtensionList(), NotificationAllowlistEP.EP_NAME.getExtensionList())
+      .forEach(NotificationCollector::addNotificationsToWhitelist);
+
+    ExtensionPointListener<NotificationAllowlistEP> extensionPointListener = new ExtensionPointListener<NotificationAllowlistEP>() {
       @Override
-      public void extensionAdded(@NotNull NotificationWhitelistEP extension, @NotNull PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(@NotNull NotificationAllowlistEP extension, @NotNull PluginDescriptor pluginDescriptor) {
         addNotificationsToWhitelist(extension);
       }
 
       @Override
-      public void extensionRemoved(@NotNull NotificationWhitelistEP extension, @NotNull PluginDescriptor pluginDescriptor) {
+      public void extensionRemoved(@NotNull NotificationAllowlistEP extension, @NotNull PluginDescriptor pluginDescriptor) {
         removeNotificationsFromWhitelist(extension);
       }
-    }, ApplicationManager.getApplication());
+    };
+    //noinspection deprecation
+    NotificationWhitelistEP.EP_NAME.addExtensionPointListener(extensionPointListener, ApplicationManager.getApplication());
+    NotificationAllowlistEP.EP_NAME.addExtensionPointListener(extensionPointListener, ApplicationManager.getApplication());
   }
 
   public void logBalloonShown(@Nullable Project project,
@@ -132,7 +137,7 @@ public class NotificationCollector {
     return ServiceManager.getService(NotificationCollector.class);
   }
 
-  private static void removeNotificationsFromWhitelist(@NotNull NotificationWhitelistEP extension) {
+  private static void removeNotificationsFromWhitelist(@NotNull NotificationAllowlistEP extension) {
     PluginDescriptor pluginDescriptor = extension.getPluginDescriptor();
     if (pluginDescriptor == null) return;
     PluginInfo info = PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor);
@@ -155,7 +160,7 @@ public class NotificationCollector {
     return getPluginInfoById(group.getPluginId());
   }
 
-  private static void addNotificationsToWhitelist(@NotNull NotificationWhitelistEP extension) {
+  private static void addNotificationsToWhitelist(@NotNull NotificationAllowlistEP extension) {
     PluginDescriptor pluginDescriptor = extension.getPluginDescriptor();
     if (pluginDescriptor == null) return;
     PluginInfo info = PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor);

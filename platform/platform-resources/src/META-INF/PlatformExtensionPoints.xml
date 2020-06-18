@@ -305,6 +305,7 @@
     <extensionPoint name="notification.parentGroup" beanClass="com.intellij.notification.impl.NotificationParentGroupBean"/>
     <extensionPoint name="notification.group" beanClass="com.intellij.notification.impl.NotificationGroupBean"/>
     <extensionPoint name="notificationWhitelist" beanClass="com.intellij.notification.impl.NotificationWhitelistEP" dynamic="true"/>
+    <extensionPoint name="notificationAllowlist" beanClass="com.intellij.notification.impl.NotificationAllowlistEP" dynamic="true"/>
 
     <extensionPoint name="troubleInfoCollector" interface="com.intellij.troubleshooting.TroubleInfoCollector" dynamic="true"/>
     <extensionPoint name="generalTroubleInfoCollector" interface="com.intellij.troubleshooting.GeneralTroubleInfoCollector" dynamic="true"/>
