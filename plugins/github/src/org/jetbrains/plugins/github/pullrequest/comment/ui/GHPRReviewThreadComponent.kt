@@ -39,7 +39,7 @@ object GHPRReviewThreadComponent {
       isOpaque = false
     }
     if (diffComponentFactory != null) {
-      panel.add(diffComponentFactory.createComponent(thread.filePath, thread.diffHunk), VerticalLayout.FILL_HORIZONTAL)
+      panel.add(diffComponentFactory.createComponent(thread.filePath, thread.diffHunk, thread.commit?.oid), VerticalLayout.FILL_HORIZONTAL)
     }
 
     panel.add(

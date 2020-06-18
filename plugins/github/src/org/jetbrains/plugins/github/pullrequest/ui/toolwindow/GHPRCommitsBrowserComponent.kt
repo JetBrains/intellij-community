@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.ui.FontUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
@@ -28,10 +29,13 @@ import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.Rectangle
 import javax.swing.JComponent
+import javax.swing.JList
 import javax.swing.ListSelectionModel
 import javax.swing.ScrollPaneConstants
 
 internal object GHPRCommitsBrowserComponent {
+
+  val COMMITS_LIST_KEY = Key.create<JList<GHCommit>>("COMMITS_LIST")
 
   fun create(commitsModel: SingleValueModel<List<GHCommit>>, onCommitSelected: (GHCommit?) -> Unit): JComponent {
     val commitsListModel = CollectionListModel(commitsModel.value)
@@ -80,6 +84,8 @@ internal object GHPRCommitsBrowserComponent {
     val commitsBrowser = OnePixelSplitter(true, "Github.PullRequest.Commits.Browser", 0.7f).apply {
       firstComponent = commitsScrollPane
       secondComponent = commitDetailsComponent
+
+      UIUtil.putClientProperty(this, COMMITS_LIST_KEY, commitsList)
     }
 
     commitsList.addListSelectionListener { e ->

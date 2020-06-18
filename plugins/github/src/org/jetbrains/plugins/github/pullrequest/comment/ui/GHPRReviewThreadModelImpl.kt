@@ -16,6 +16,7 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
     private set
   override var isResolved: Boolean = thread.isResolved
     private set
+  override val commit = thread.originalCommit
   override val filePath = thread.path
   override val diffHunk = thread.diffHunk
 

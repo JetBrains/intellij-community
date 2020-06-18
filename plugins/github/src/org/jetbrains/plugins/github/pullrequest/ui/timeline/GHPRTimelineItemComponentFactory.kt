@@ -50,12 +50,13 @@ class GHPRTimelineItemComponentFactory(private val detailsDataProvider: GHPRDeta
                                        private val reviewsThreadsModelsProvider: GHPRReviewsThreadsModelsProvider,
                                        private val reviewDiffComponentFactory: GHPRReviewThreadDiffComponentFactory,
                                        private val eventComponentFactory: GHPRTimelineEventComponentFactory<GHPRTimelineEvent>,
+                                       private val selectInToolWindowHelper: GHPRSelectInToolWindowHelper,
                                        private val currentUser: GHUser) {
 
   fun createComponent(item: GHPRTimelineItem): Item {
     try {
       return when (item) {
-        is GHPullRequestCommitShort -> Item(AllIcons.Vcs.CommitNode, commitTitle(item.commit, item.url))
+        is GHPullRequestCommitShort -> createComponent(item)
 
         is GHIssueComment -> createComponent(item)
         is GHPullRequestReview -> createComponent(item)
@@ -68,6 +69,19 @@ class GHPRTimelineItemComponentFactory(private val detailsDataProvider: GHPRDeta
     catch (e: Exception) {
       return Item(AllIcons.General.Warning, HtmlEditorPane(GithubBundle.message("cannot.display.item", e.message ?: "")))
     }
+  }
+
+  private fun createComponent(commit: GHPullRequestCommitShort): Item {
+    val gitCommit = commit.commit
+    val titlePanel = NonOpaquePanel(HorizontalLayout(UI.scale(8))).apply {
+      add(userAvatar(gitCommit.author))
+      add(HtmlEditorPane(gitCommit.messageHeadlineHTML))
+      add(LinkLabel<Any?>(gitCommit.abbreviatedOid, null) { _, _ ->
+        selectInToolWindowHelper.selectCommit(gitCommit.abbreviatedOid)
+      })
+    }
+
+    return Item(AllIcons.Vcs.CommitNode, titlePanel)
   }
 
   fun createComponent(details: GHPullRequestShort): Item {
@@ -181,17 +195,6 @@ class GHPRTimelineItemComponentFactory(private val detailsDataProvider: GHPRDeta
     return LinkLabel<Any>("", avatarIconsProvider.getIcon(user?.avatarUrl), LinkListener { _, _ ->
       user?.url?.let { BrowserUtil.browse(it) }
     })
-  }
-
-  private fun commitTitle(commit: GHCommitShort, commitUrl: String): JComponent {
-    //language=HTML
-    val text = """${commit.messageHeadlineHTML} <a href='${commitUrl}'>${commit.abbreviatedOid}</a>"""
-
-    return HorizontalBox().apply {
-      add(userAvatar(commit.author))
-      add(Box.createRigidArea(JBDimension(8, 0)))
-      add(HtmlEditorPane(text))
-    }
   }
 
   class Item(val marker: JLabel, title: JComponent, content: JComponent? = null) : JPanel() {

@@ -19,15 +19,18 @@ import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.*
 import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.tabs.JBTabs
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.TabsListener
 import com.intellij.ui.tabs.impl.SingleHeightTabs
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.Processor
+import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -45,7 +48,9 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelper
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelperImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModelImpl
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRCommitsBrowserComponent.COMMITS_LIST_KEY
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.beans.PropertyChangeEvent
@@ -53,6 +58,8 @@ import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.event.TreeSelectionListener
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.TreeNode
 import kotlin.properties.Delegates.observable
 
 internal class GHPRViewComponentFactory(private val actionManager: ActionManager,
@@ -100,8 +107,6 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     dataProvider.changesData.reloadChanges()
   }
 
-  private val selectedChangesUpdater = SelectedChangesUpdater(dataProvider.diffController)
-
   private val uiDisposable = Disposer.newDisposable().also {
     Disposer.register(disposable, it)
   }
@@ -140,7 +145,18 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
       }
       addTab(infoTabInfo)
       addTab(commitsTabInfo)
-    }.also { tabs ->
+    }.also {
+      val controller = Controller(it, infoTabInfo, commitsTabInfo)
+      UIUtil.putClientProperty(it, GHPRViewComponentController.KEY, controller)
+    }
+  }
+
+  private inner class Controller(private val tabs: JBTabs,
+                                 private val infoTab: TabInfo,
+                                 private val commitsTab: TabInfo) : GHPRViewComponentController {
+    private val selectedChangesUpdater = SelectedChangesUpdater(dataProvider.diffController)
+
+    init {
       val listener = object : TabsListener {
         private val propertyListener = PropertyChangeListener { evt ->
           if (evt.propertyName == CHANGES_TREE_KEY.toString()) {
@@ -159,6 +175,57 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
       tabs.addListener(listener)
       listener.selectionChanged(null, tabs.selectedInfo)
     }
+
+    override fun selectCommit(oid: String) {
+      tabs.select(commitsTab, false)
+      val list = ComponentUtil.getClientProperty(commitsTab.component, COMMITS_LIST_KEY) ?: return
+      for (i in 0 until list.model.size) {
+        val commit = list.model.getElementAt(i)
+        if (commit.oid == oid || commit.abbreviatedOid == oid) {
+          list.selectedIndex = i
+          break
+        }
+      }
+      GithubUIUtil.focusPanel(list)
+    }
+
+    override fun selectChange(oid: String?, filePath: String) {
+      tabs.select(infoTab, false)
+      val tree = ComponentUtil.getClientProperty(infoTab.component, CHANGES_TREE_KEY) ?: return
+      GithubUIUtil.focusPanel(tree)
+
+      if (oid == null || !changesLoadingModel.resultAvailable) {
+        tree.selectFile(VcsUtil.getFilePath(filePath, false))
+      }
+      else {
+        val change = changesLoadingModel.result!!.findCumulativeChange(oid, filePath)
+        if (change == null) {
+          tree.selectFile(VcsUtil.getFilePath(filePath, false))
+        }
+        else {
+          tree.selectChange(change)
+        }
+      }
+    }
+  }
+
+  private fun ChangesTree.selectChange(toSelect: Change) {
+    val rowInTree = findRowContainingChange(root, toSelect)
+    if (rowInTree == -1) return
+    setSelectionRow(rowInTree)
+    TreeUtil.showRowCentered(this, rowInTree, false)
+  }
+
+  private fun ChangesTree.findRowContainingChange(root: TreeNode, toSelect: Change): Int {
+    val targetNode = TreeUtil.treeNodeTraverser(root).traverse(TreeTraversal.POST_ORDER_DFS).find { node ->
+      node is DefaultMutableTreeNode && node.userObject?.let {
+        it is Change &&
+        it == toSelect &&
+        it.beforeRevision == toSelect.beforeRevision &&
+        it.afterRevision == toSelect.afterRevision
+      } ?: false
+    }
+    return if (targetNode != null) TreeUtil.getRowForNode(this, targetNode as DefaultMutableTreeNode) else -1
   }
 
   private fun createReturnToListSideComponent(): JComponent {
@@ -227,7 +294,10 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                                     null, GithubBundle.message("cannot.load.commits"),
                                                     changesLoadingErrorHandler)
       .createWithUpdatesStripe(uiDisposable) { _, model ->
-        GHPRCommitsBrowserComponent.create(model, commitSelectionListener)
+        val browser = GHPRCommitsBrowserComponent.create(model, commitSelectionListener)
+        val list = UIUtil.getClientProperty(browser, COMMITS_LIST_KEY)
+        UIUtil.putClientProperty(splitter, COMMITS_LIST_KEY, list)
+        browser
       }
 
     val changesLoadingPanel = GHLoadingPanelFactory(changesLoadingModel,

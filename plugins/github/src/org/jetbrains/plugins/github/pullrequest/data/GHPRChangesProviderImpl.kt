@@ -38,6 +38,12 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
 
   override fun findChangeDiffData(change: Change) = diffDataByChange[change]
 
+  override fun findCumulativeChange(commitSha: String, filePath: String): Change? {
+    return diffDataByChange.entries.find {
+      it.value is GHPRChangeDiffData.Cumulative && it.value.contains(commitSha, filePath)
+    }?.key
+  }
+
   init {
     val commitsBySha = LinkedHashMap<String, GHCommitWithPatches>()
     Traverser.forGraph(commitsGraph).depthFirstPostOrder(lastCommit).forEach {
