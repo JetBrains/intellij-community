@@ -47,7 +47,10 @@ class SharedVariableInferenceCache(val scope: GrControlFlowOwner) {
   private val finalTypes: AtomicReferenceArray<PsiType?> = AtomicReferenceArray(sharedVariableDescriptors.size)
 
   fun getSharedVariableType(descriptor: VariableDescriptor): PsiType? {
-    if (descriptor !in sharedVariableDescriptors || !isNestedFlowProcessingAllowed()) {
+    if (!isNestedFlowProcessingAllowed()) {
+      return null
+    }
+    if (descriptor !in sharedVariableDescriptors) {
       return null
     }
     val indexInFinalTypes: Int = sharedVariableDescriptors.indexOf(descriptor)
