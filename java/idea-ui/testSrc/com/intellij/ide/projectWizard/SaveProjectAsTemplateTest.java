@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.application.UtilKt;
@@ -12,6 +12,7 @@ import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.module.BasePackageParameterFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -27,6 +28,7 @@ import com.intellij.platform.templates.LocalArchivedTemplate;
 import com.intellij.platform.templates.SaveProjectAsTemplateAction;
 import com.intellij.project.ProjectKt;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.testFramework.FixtureRuleKt;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.text.DateFormatUtil;
@@ -152,7 +154,7 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
   @Override
   protected Project doCreateProject(@NotNull Path projectFile) throws Exception {
     FileUtil.ensureExists(projectFile.getParent().resolve(Project.DIRECTORY_STORE_FOLDER).toFile());
-    return createProject(projectFile.getParent());
+    return ProjectManagerEx.getInstanceEx().newProject(projectFile.getParent(), FixtureRuleKt.createTestOpenProjectOptions());
   }
 
   @NotNull

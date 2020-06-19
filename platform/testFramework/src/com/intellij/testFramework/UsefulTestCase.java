@@ -159,8 +159,8 @@ public abstract class UsefulTestCase extends TestCase {
       if (testName == null) {
         testName = FileUtil.sanitizeFileName(getTestName(true));
       }
-      testName = new File(testName).getName(); // in case the test name contains file separators
-      myTempDir = FileUtil.createTempDirectory(TEMP_DIR_MARKER + testName, "", false).toPath();
+      myTempDir = TemporaryDirectory.generateTemporaryPath(TEMP_DIR_MARKER + testName);
+      Files.createDirectories(myTempDir);
       FileUtil.resetCanonicalTempPathCache(myTempDir.toString());
     }
 

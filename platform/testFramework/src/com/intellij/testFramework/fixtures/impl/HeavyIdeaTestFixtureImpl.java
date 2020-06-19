@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures.impl;
 
-import com.intellij.ProjectTopics;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -163,13 +162,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   }
 
   private void setUpProject() {
-    Path tempDirectory = myProjectPath != null ? myProjectPath : TemporaryDirectory.generateTemporaryPath(myName);
-    HeavyPlatformTestCase.synchronizeTempDirVfs(tempDirectory);
-    if (myProjectPath == null) {
-      myFilesToDelete.add(tempDirectory);
-    }
-    myProject = HeavyPlatformTestCase.createProject(generateProjectPath(tempDirectory));
-    myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(ProjectTopics.MODULES, new ModuleListener() {
+    myProject = HeavyTestHelper.openHeavyTestFixtureProject(generateProjectPath(), new ModuleListener() {
       @Override
       public void moduleAdded(@NotNull Project project, @NotNull Module module) {
         if (myModule == null) {
@@ -178,7 +171,6 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
       }
     });
 
-    PlatformTestUtil.openProject(myProject);
     EdtTestUtil.runInEdtAndWait(() -> {
       for (ModuleFixtureBuilder<?> moduleFixtureBuilder : myModuleFixtureBuilders) {
         moduleFixtureBuilder.getFixture().setUp();
@@ -190,9 +182,16 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   }
 
   @NotNull
-  private Path generateProjectPath(@NotNull Path tempDirectory) {
-    String suffix = myIsDirectoryBasedProject ? "" : ProjectFileType.DOT_DEFAULT_EXTENSION;
-    return tempDirectory.resolve(myName + suffix);
+  private Path generateProjectPath() {
+    Path tempDirectory;
+    if (myProjectPath == null) {
+      tempDirectory = TemporaryDirectory.generateTemporaryPath(myName);
+      myFilesToDelete.add(tempDirectory);
+    }
+    else {
+      tempDirectory = myProjectPath;
+    }
+    return tempDirectory.resolve(myName + (myIsDirectoryBasedProject ? "" : ProjectFileType.DOT_DEFAULT_EXTENSION));
   }
 
   private void initApplication() {
