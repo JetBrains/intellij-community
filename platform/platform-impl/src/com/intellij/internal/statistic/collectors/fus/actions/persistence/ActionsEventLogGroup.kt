@@ -15,6 +15,7 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     @JvmField val ACTION_CLASS = EventFields.String("class").withCustomRule("class")
     @JvmField val ACTION_PARENT = EventFields.String("parent").withCustomRule("class")
     @JvmField val CONTEXT_MENU = EventFields.Boolean("context_menu")
+    @JvmField val DUMB = EventFields.Boolean("dumb")
 
     @JvmField val ADDITIONAL = EventFields.createAdditionalDataField(GROUP.id, ACTION_INVOKED_EVENT_ID)
     @JvmField val ACTION_INVOKED = registerActionInvokedEvent(GROUP, ACTION_INVOKED_EVENT_ID, ADDITIONAL)
@@ -28,6 +29,7 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
         EventFields.ActionPlace,
         EventFields.CurrentFile,
         CONTEXT_MENU,
+        DUMB,
         ACTION_ID,
         ACTION_CLASS,
         ACTION_PARENT,

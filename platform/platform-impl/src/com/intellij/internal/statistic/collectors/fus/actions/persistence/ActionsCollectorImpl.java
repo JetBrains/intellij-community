@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ActionWithDelegate;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -62,6 +63,9 @@ public class ActionsCollectorImpl extends ActionsCollector {
 
     if (event != null) {
       data.addAll(actionEventData(event));
+    }
+    if (project != null) {
+      data.add(ActionsEventLogGroup.DUMB.with(DumbService.isDumb(project)));
     }
     if (customData != null) {
       data.addAll(customData);
