@@ -9,13 +9,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.util.io.ByteArraySequence;
-import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.ZipHandlerBase;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
@@ -75,7 +73,9 @@ public final class FSRecords {
                                      (ourStoreRootsSeparately ? 0x63 : 0) +
                                      (useCompressionUtil ? 0x7f : 0) +
                                      (useSmallAttrTable ? 0x31 : 0) +
-                                     (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 0x15 : 0);
+                                     (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 0x15 : 0) +
+                                     (FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS ? 0x3b : 0) +
+                                     (ZipHandlerBase.USE_CRC_INSTEAD_OF_TIMESTAMP ? 0x4f : 0);
 
   private static final int PARENT_OFFSET = 0;
   private static final int PARENT_SIZE = 4;

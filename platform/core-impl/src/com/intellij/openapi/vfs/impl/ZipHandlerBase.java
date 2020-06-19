@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.ResourceHandle;
 import com.intellij.util.text.ByteArrayCharSequence;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +25,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public abstract class ZipHandlerBase extends ArchiveHandler {
-  private static final boolean IGNORE_TIMESTAMPS = SystemProperties.is("zip.handler.ignores.timestamps");
+  @ApiStatus.Internal
+  public static final boolean USE_CRC_INSTEAD_OF_TIMESTAMP = SystemProperties.is("zip.handler.uses.crc.instead.of.timestamp");
 
   public ZipHandlerBase(@NotNull String path) {
     super(path);
@@ -71,7 +73,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
     if (".".equals(path.second)) {
       return parentInfo;
     }
-    long fileStamp = IGNORE_TIMESTAMPS ? entry.getCrc() : getEntryFileStamp();
+    long fileStamp = USE_CRC_INSTEAD_OF_TIMESTAMP ? entry.getCrc() : getEntryFileStamp();
     info = store(map, parentInfo, path.second, isDirectory, entry.getSize(), fileStamp, path.third);
     return info;
   }
