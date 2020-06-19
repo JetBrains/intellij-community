@@ -90,7 +90,7 @@ public class ProjectProblemPass extends EditorBoundHighlightingPass {
     Inlay<?> newInlay = myEditor.getInlayModel().addBlockElement(offset, true, true, BlockInlayPriority.PROBLEMS, renderer);
     if (newInlay == null) return;
     addListener(renderer, newInlay);
-    HighlightInfo newHighlightInfo = createHighlightInfo(myEditor, identifier, relatedProblems);
+    HighlightInfo newHighlightInfo = createHighlightInfo(myEditor, psiMember, identifier, relatedProblems);
     editorInfos.put(psiMember, new EditorInfo(newInlay, newHighlightInfo));
   }
 

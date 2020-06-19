@@ -30,10 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.usages.Usage;
-import com.intellij.usages.UsageTarget;
-import com.intellij.usages.UsageViewManager;
-import com.intellij.usages.UsageViewPresentation;
+import com.intellij.usages.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
@@ -135,22 +132,25 @@ public class ProjectProblemPassUtils {
   }
 
   static @NotNull HighlightInfo createHighlightInfo(@NotNull Editor editor,
+                                                    @NotNull PsiMember member,
                                                     @NotNull PsiElement identifier,
                                                     @NotNull Set<Problem> relatedProblems) {
     ShowRelatedProblemsAction relatedProblemsAction = new ShowRelatedProblemsAction(relatedProblems);
-    return createHighlightInfo(editor, identifier, relatedProblemsAction);
+    return createHighlightInfo(editor, member, identifier, relatedProblemsAction);
   }
 
   private static @NotNull HighlightInfo createHighlightInfo(@NotNull Editor editor,
+                                                            @NotNull PsiMember member,
                                                             @NotNull PsiElement identifier,
                                                             @NotNull IntentionAction action) {
     Color textColor = editor.getColorsScheme().getAttributes(CodeInsightColors.WEAK_WARNING_ATTRIBUTES).getEffectColor();
     TextAttributes attributes = new TextAttributes(null, null, textColor, null, Font.PLAIN);
+    String memberName = UsageViewUtil.getLongName(member);
 
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING)
       .range(identifier.getTextRange())
       .textAttributes(attributes)
-      .descriptionAndTooltip(JavaBundle.message("project.problems.fix.description", identifier.getText()))
+      .descriptionAndTooltip(JavaBundle.message("project.problems.fix.description", memberName))
       .createUnconditionally();
 
     QuickFixAction.registerQuickFixAction(info, action);
@@ -207,7 +207,7 @@ public class ProjectProblemPassUtils {
           if (!identifier.getTextRange().equalsToRange(oldHighlightInfo.getActualStartOffset(), oldHighlightInfo.getActualEndOffset())) {
             IntentionAction action = getRegisteredAction(oldHighlightInfo);
             if (action != null) {
-              HighlightInfo newHighlightInfo = createHighlightInfo(editor, identifier, action);
+              HighlightInfo newHighlightInfo = createHighlightInfo(editor, member, identifier, action);
               UpdateHighlightersUtil.setHighlightersToEditor(member.getProject(), editor.getDocument(), 0,
                                                              member.getContainingFile().getTextLength(),
                                                              Collections.singletonList(newHighlightInfo), editor.getColorsScheme(), -1);
