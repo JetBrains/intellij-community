@@ -1306,6 +1306,8 @@
     <iconDescriptionBundle resourceBundle="messages.IdeBundle"/>
 
     <findInProjectSearchEngine implementation="com.intellij.find.impl.IdeaIndexBasedFindInProjectSearchEngine"/>
+
+    <registerToolWindowTaskProvider implementation="com.intellij.facet.impl.ui.FacetDependentToolWindowManager"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.ide.script.IdeStartupScripts" topic="com.intellij.openapi.project.ProjectManagerListener"/>
