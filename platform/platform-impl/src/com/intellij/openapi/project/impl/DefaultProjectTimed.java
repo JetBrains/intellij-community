@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -6,12 +6,11 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.TimedReference;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class DefaultProjectTimed extends TimedReference<ProjectEx> {
+public abstract class DefaultProjectTimed extends TimedReference<Project> {
   @NotNull
   private final DefaultProject myParentDisposable;
 
@@ -21,14 +20,14 @@ public abstract class DefaultProjectTimed extends TimedReference<ProjectEx> {
   }
 
   @NotNull
-  abstract ProjectEx compute();
+  abstract Project compute();
 
-  abstract void init(Project project);
+  abstract void init(@NotNull Project project);
 
   @NotNull
   @Override
-  public synchronized ProjectEx get() {
-    ProjectEx value = super.get();
+  public synchronized Project get() {
+    Project value = super.get();
     if (value == null) {
       value = compute();
       set(value);

@@ -20,20 +20,13 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
                             */
                            val project: Project? = null,
                            val projectName: String? = null,
-                           val sendFrameBack: Boolean = false,
                            /**
                             * Whether to show welcome screen if failed to open project.
                             */
                            val showWelcomeScreen: Boolean = true,
                            @set:Deprecated(message = "Pass to constructor", level = DeprecationLevel.ERROR)
                            var callback: ProjectOpenedCallback? = null,
-                           /**
-                            * Ignored if project is explicitly set.
-                            */
-                           internal val beforeOpen: ((Project) -> Boolean)? = null,
-                           internal val preparedToOpen: ((Module) -> Unit)? = null,
                            val frame: FrameInfo? = null,
-                           val projectWorkspaceId: String? = null,
                            val line: Int = -1,
                            val column: Int = -1,
                            val isRefreshVfsNeeded: Boolean = true,
@@ -42,7 +35,15 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
                             */
                            val runConfigurators: Boolean = false,
                            val runConversionBeforeOpen: Boolean = true,
-                           internal val isProjectCreatedWithWizard: Boolean = false) {
+                           internal val projectWorkspaceId: String? = null,
+                           internal val isProjectCreatedWithWizard: Boolean = false,
+                           internal val sendFrameBack: Boolean = false,
+                           internal val beforeInit: ((Project) -> Unit)? = null,
+                           /**
+                            * Ignored if project is explicitly set.
+                            */
+                           internal val beforeOpen: ((Project) -> Boolean)? = null,
+                           internal val preparedToOpen: ((Module) -> Unit)? = null) {
   @ApiStatus.Internal
   fun withBeforeOpenCallback(callback: Predicate<Project>) = copy(beforeOpen = { callback.test(it) })
 

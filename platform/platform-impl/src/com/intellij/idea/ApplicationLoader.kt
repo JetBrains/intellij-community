@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.DialogEarthquakeShaker
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemPropertyBean
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.RegistryKeyBean
 import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.openapi.wm.WindowManager
@@ -32,6 +31,7 @@ import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.touchbar.TouchBarsManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.NonUrgentExecutor
+import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
 import com.intellij.util.ui.AsyncProcessIcon
 import net.miginfocom.layout.PlatformDefaults
@@ -414,10 +414,10 @@ fun findStarter(key: String) = ApplicationStarter.EP_NAME.iterable.find { it == 
 @ApiStatus.Internal
 fun initConfigurationStore(app: ApplicationImpl, configPath: String?) {
   var activity = StartUpMeasurer.startMainActivity("beforeApplicationLoaded")
-  val effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath ?: PathManager.getConfigPath())
+  val effectiveConfigPath = configPath?.let { Paths.get(it) } ?: PathManager.getConfigDir()
   for (listener in ApplicationLoadListener.EP_NAME.iterable) {
     try {
-      (listener ?: break).beforeApplicationLoaded(app, effectiveConfigPath)
+      (listener ?: break).beforeApplicationLoaded(app, effectiveConfigPath.systemIndependentPath)
     }
     catch (e: ProcessCanceledException) {
       throw e

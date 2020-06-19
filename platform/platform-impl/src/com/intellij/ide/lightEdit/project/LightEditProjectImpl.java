@@ -9,7 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.impl.ProjectImpl;
+import com.intellij.openapi.project.impl.ProjectExImpl;
 import com.intellij.openapi.project.impl.ProjectLoadHelper;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -21,7 +21,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-final class LightEditProjectImpl extends ProjectImpl implements LightEditCompatible {
+final class LightEditProjectImpl extends ProjectExImpl implements LightEditCompatible {
   private static final Logger LOG = Logger.getInstance(LightEditProjectImpl.class);
   private static final String NAME = "LightEditProject";
 

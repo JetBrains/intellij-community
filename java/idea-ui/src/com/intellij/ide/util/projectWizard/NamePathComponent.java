@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
@@ -146,7 +146,7 @@ public class NamePathComponent extends JPanel {
       throw new ConfigurationException(JavaUiBundle.message("project.directory.is.not.writable", projectDirectoryPath));
     }
     for (Project p : ProjectManager.getInstance().getOpenProjects()) {
-      if (ProjectUtil.isSameProject(projectDirectoryPath, p)) {
+      if (ProjectUtil.isSameProject(projectDirectory.toPath(), p)) {
         throw new ConfigurationException(JavaUiBundle.message("project.directory.is.already.taken", projectDirectoryPath, p.getName()));
       }
     }

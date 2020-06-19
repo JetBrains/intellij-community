@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.JavaUiBundle;
@@ -158,7 +158,7 @@ public class ImportModuleAction extends AnAction implements NewProjectOrModuleAc
     final VirtualFile file = files[0];
     if (project == null) { // wizard will create a new project
       for (Project p : ProjectManager.getInstance().getOpenProjects()) {
-        if (ProjectUtil.isSameProject(file.getPath(), p)) {
+        if (ProjectUtil.isSameProject(file.toNioPath(), p)) {
           ProjectUtil.focusProjectWindow(p, false);
           return null;
         }

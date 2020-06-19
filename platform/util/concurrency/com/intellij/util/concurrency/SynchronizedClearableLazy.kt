@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency
 
 @Suppress("ClassName")
@@ -11,6 +11,13 @@ private object UNINITIALIZED_VALUE
 class SynchronizedClearableLazy<T>(private val initializer: () -> T) : Lazy<T> {
   @Volatile
   private var _value: Any? = UNINITIALIZED_VALUE
+
+  val valueIfInitialized: T?
+    @Suppress("UNCHECKED_CAST")
+    get() {
+      val value = _value
+      return if (value === UNINITIALIZED_VALUE) null else value as T?
+    }
 
   override var value: T
     get() {

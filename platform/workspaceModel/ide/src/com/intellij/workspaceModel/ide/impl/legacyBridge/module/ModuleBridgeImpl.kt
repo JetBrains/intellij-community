@@ -19,24 +19,25 @@ import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.externalSystem.ExternalSystemModulePropertyManagerBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProvider
 import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProviderImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.picocontainer.MutablePicoContainer
 import java.io.File
+import java.nio.file.Path
 
 internal class ModuleBridgeImpl(
   override var moduleEntityId: ModuleId,
   name: String,
   project: Project,
-  filePath: String?,
+  filePath: Path?,
   override var entityStorage: VersionedEntityStorage,
   override var diff: WorkspaceEntityStorageDiffBuilder?
-) : ModuleImpl(name, project, filePath), ModuleBridge {
-  private val directoryPath: String? = filePath?.let { File(it).parent }
+) : ModuleImpl(name, project, filePath.toString()), ModuleBridge {
+  private val directoryPath: String? = filePath?.parent?.toString()
   private var vfsRefreshWasCalled = false
 
   init {

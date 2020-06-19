@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer
 
 import com.google.common.io.Files
@@ -27,14 +27,15 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.workspaceModel.storage.VersionedStorageChanged
-import com.intellij.workspaceModel.storage.VirtualFileUrl
-import com.intellij.workspaceModel.ide.impl.bracket
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.ide.impl.bracket
+import com.intellij.workspaceModel.storage.VersionedStorageChanged
+import com.intellij.workspaceModel.storage.VirtualFileUrl
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 
@@ -43,10 +44,7 @@ import java.util.concurrent.Future
  * It's implemented by a listener to VirtualFilePointerContainer containing all project roots
  */
 @ApiStatus.Internal
-class RootsChangeWatcher(
-  val project: Project
-): Disposable {
-
+internal class RootsChangeWatcher(val project: Project): Disposable {
   private val LOG = Logger.getInstance(javaClass)
 
   private val rootsValidityChangedListener
@@ -143,7 +141,7 @@ class RootsChangeWatcher(
 
           val moduleFilePath = module.moduleFilePath
           if (FileUtil.isAncestor(oldAncestorPath, moduleFilePath, true)) {
-            module.stateStore.setPath("$newAncestorPath/${FileUtil.getRelativePath(oldAncestorPath, moduleFilePath, '/')}")
+            module.stateStore.setPath(Paths.get(newAncestorPath, FileUtil.getRelativePath(oldAncestorPath, moduleFilePath, '/')))
             ClasspathStorage.modulePathChanged(module)
             someModulePathIsChanged = true
           }
