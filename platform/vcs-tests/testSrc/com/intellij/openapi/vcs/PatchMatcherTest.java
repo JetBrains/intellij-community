@@ -4,11 +4,11 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.vcs.changes.patch.AbstractFilePatchInProgress;
 import com.intellij.openapi.vcs.changes.patch.MatchPatchPaths;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.util.io.PathKt;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
@@ -16,18 +16,15 @@ import static com.intellij.openapi.vcs.PatchAutoInitTest.create;
 
 public class PatchMatcherTest extends HeavyPlatformTestCase {
   public void testMatchPathAboveProject() {
-    final VirtualFile root = myProject.getBaseDir();
-    VirtualFile vf = createChildData(root.getParent(), "file.txt");
-
-    final File ioFile = VfsUtilCore.virtualToIoFile(vf);
-    assertNotNull(ioFile);
+    Path ioFile = Paths.get(myProject.getBasePath()).getParent().resolve("file.txt");
+    PathKt.createFile(ioFile);
     myFilesToDelete.add(ioFile);
-    final TextFilePatch patch = create("../file.txt");
+    TextFilePatch patch = create("../file.txt");
 
-    final MatchPatchPaths iterator = new MatchPatchPaths(myProject);
-    final List<AbstractFilePatchInProgress> filePatchInProgresses = iterator.execute(Collections.singletonList(patch));
+    MatchPatchPaths iterator = new MatchPatchPaths(myProject);
+    List<AbstractFilePatchInProgress> filePatchInProgresses = iterator.execute(Collections.singletonList(patch));
 
     assertEquals(1, filePatchInProgresses.size());
-    assertEquals(root.getParent(), filePatchInProgresses.get(0).getBase());
+    assertEquals(ioFile.getParent(), filePatchInProgresses.get(0).getBase().toNioPath());
   }
 }
