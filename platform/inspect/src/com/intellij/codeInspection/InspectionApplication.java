@@ -16,10 +16,7 @@ import com.intellij.ide.CommandLineInspectionProjectConfigurator;
 import com.intellij.ide.impl.PatchProjectUtil;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -330,6 +327,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
         configurator.configureProject(project, context);
       }
     }
+   ApplicationManager.getApplication().invokeAndWait(()->{}, ModalityState.any());
   }
 
   private void runAnalysis(Project project,
