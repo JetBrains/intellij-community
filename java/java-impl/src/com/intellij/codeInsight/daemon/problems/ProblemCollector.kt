@@ -61,9 +61,8 @@ internal class ProblemCollector {
                               containingFile: PsiFile,
                               scope: GlobalSearchScope): Set<Problem>? {
       val usageExtractor: (PsiFile, Int) -> PsiElement? = { file, index -> extractUsage(file, index, isMethodSearch) }
-      val project = containingFile.project
-      val collector = MemberUsageCollector(memberName, project, usageExtractor)
-      PsiSearchHelper.getInstance(project).processAllFilesWithWord(memberName, scope, collector, true)
+      val collector = MemberUsageCollector(memberName, containingFile, usageExtractor)
+      PsiSearchHelper.getInstance(containingFile.project).processAllFilesWithWord(memberName, scope, collector, true)
       val usages = collector.collectedUsages ?: return null
       return usages.flatMapTo(mutableSetOf()) { ProblemSearcher.getProblems(it, containingFile) }
     }
