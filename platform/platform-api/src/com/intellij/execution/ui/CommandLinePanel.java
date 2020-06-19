@@ -17,6 +17,7 @@ public class CommandLinePanel extends JPanel {
     myComponents = components;
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     setMinimumSize(new Dimension(500, 100));
+    buildRows();
   }
 
   @Override
