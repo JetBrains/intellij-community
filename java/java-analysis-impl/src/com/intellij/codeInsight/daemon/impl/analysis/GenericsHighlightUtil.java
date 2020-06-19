@@ -1000,6 +1000,9 @@ public class GenericsHighlightUtil {
         }
       }
       if (superMethod == null) {
+        if (languageLevel != LanguageLevel.JDK_14_PREVIEW && JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) {
+          return null;
+        }
         String description = JavaErrorBundle.message("method.does.not.override.super");
         HighlightInfo highlightInfo =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(overrideAnnotation).descriptionAndTooltip(description).create();

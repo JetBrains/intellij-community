@@ -16,7 +16,6 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -42,19 +41,26 @@ public class MissingOverrideAnnotationInspectionTest extends LightJavaInspection
     doTest();
   }
   
+  public void testSimpleJava5() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_5, this::doTest);
+  }
+  
   public void testNotAvailableMethodInLanguageLevel7() {
-    doTest();
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_7, this::doTest);
+  }
+  
+  public void testRecordAccessorJava14() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_14_PREVIEW, this::doTest);
+  }
+  
+  public void testRecordAccessorJava15() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15_PREVIEW, this::doTest);
   }
 
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return new ProjectDescriptor(LanguageLevel.JDK_1_7) {
-      @Override
-      public Sdk getSdk() {
-        return IdeaTestUtil.getMockJdk18();
-      }
-    };
+    return JAVA_8;
   }
 
   @Nullable
