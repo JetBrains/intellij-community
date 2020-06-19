@@ -1593,12 +1593,6 @@ public class HighlightUtil {
     return null;
   }
 
-  public static HighlightInfo checkPackagePreviewFeatureAnnotation(@NotNull final PsiImportStatementBase statement,
-                                                                   @NotNull final LanguageLevel level) {
-    final PsiModifierListOwner owner = ObjectUtils.tryCast(statement.resolve(), PsiModifierListOwner.class);
-    return checkPreviewFeatureElement(statement, owner, level);
-  }
-
   /**
    * This method validates that the language level of the project where the context accesses
    * the owner that is annotated with {@link HighlightingFeature#JDK_INTERNAL_PREVIEW_FEATURE} is sufficient

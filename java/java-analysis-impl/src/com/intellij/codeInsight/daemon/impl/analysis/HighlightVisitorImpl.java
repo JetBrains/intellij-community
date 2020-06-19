@@ -764,7 +764,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myHolder.add(HighlightUtil.checkSingleImportClassConflict(statement, mySingleImportedClasses,myFile));
     }
     if (!myHolder.hasErrorResults()) {
-      myHolder.add(HighlightUtil.checkPackagePreviewFeatureAnnotation(statement, myLanguageLevel));
+      final PsiModifierListOwner owner = ObjectUtils.tryCast(statement.resolve(), PsiModifierListOwner.class);
+      myHolder.add(HighlightUtil.checkPreviewFeatureElement(statement, owner, myLanguageLevel));
     }
   }
 
