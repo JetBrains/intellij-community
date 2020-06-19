@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -52,6 +53,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
   public static final ExecutorService GLOBAL_INDEXING_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor(
     "Indexing", getMaxNumberOfIndexingThreads()
   );
+  private static final @NotNull Key<Boolean> CONTENT_SCANNED = Key.create("CONTENT_SCANNED");
 
   private final FileBasedIndexImpl myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
   private final Project myProject;
@@ -69,6 +71,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
         DumbService.getInstance(project).cancelTask(UnindexedFilesUpdater.this);
       }
     });
+    myProject.putUserData(CONTENT_SCANNED, null);
   }
 
   public UnindexedFilesUpdater(@NotNull Project project) {
@@ -108,17 +111,13 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     snapshot = PerformanceWatcher.takeSnapshot();
 
     projectIndexingHistory.getTimes().setIndexExtensionsStart(Instant.now());
-
     FileBasedIndexInfrastructureExtension.EP_NAME.extensions().forEach(ex -> ex.processIndexingProject(myProject, indicator));
-
     projectIndexingHistory.getTimes().setIndexExtensionsEnd(Instant.now());
 
     projectIndexingHistory.getTimes().setScanFilesStart(Instant.now());
-
     List<IndexableFilesProvider> orderedProviders = getOrderedProviders();
-
     Map<IndexableFilesProvider, List<VirtualFile>> providerToFiles = collectIndexableFilesConcurrently(myProject, indicator, orderedProviders);
-
+    myProject.putUserData(CONTENT_SCANNED, true);
     projectIndexingHistory.getTimes().setScanFilesEnd(Instant.now());
 
     if (trackResponsiveness) snapshot.logResponsivenessSinceCreation("Indexable file iteration");
@@ -189,6 +188,10 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
 
     FileBasedIndexInfrastructureExtension.EP_NAME.extensions().forEach(ex -> ex.noFilesFoundToProcessIndexingProject(myProject, indicator));
     myIndex.dumpIndexStatistics();
+  }
+
+  static boolean isProjectContentFullyScanned(@NotNull Project project) {
+    return Boolean.TRUE.equals(project.getUserData(CONTENT_SCANNED));
   }
 
   /**
