@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  * @author erokhins
  */
 public final class VcsRefImpl implements VcsRef {
-  private static final Interner<String> ourNames = new WeakInterner<>();
+  private static final Interner<String> ourNames = Interner.createWeakInterner();
   @NotNull private final Hash myCommitHash;
   @NotNull private final String myName;
   @NotNull private final VcsRefType myType;

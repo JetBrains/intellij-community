@@ -303,7 +303,7 @@ public class VcsStructureChooser extends DialogWrapper {
       myFictive = new JBList();
       myFictive.setBackground(RenderingUtil.getBackground(tree));
       myFictive.setSelectionBackground(UIUtil.getListSelectionBackground(true));
-      myFictive.setSelectionForeground(UIUtil.getListSelectionForeground());
+      myFictive.setSelectionForeground(UIUtil.getListSelectionForeground(true));
 
       myTextRenderer = new WithModulesListCellRenderer(project, myModulesSet) {
         @Override
