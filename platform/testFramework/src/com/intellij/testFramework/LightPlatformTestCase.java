@@ -84,6 +84,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Objects;
 
 import static com.intellij.testFramework.RunAll.runAll;
 
@@ -185,8 +186,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ApplicationManager.getApplication().runWriteAction(LightPlatformTestCase::cleanPersistedVFSContent);
 
     Path tempDirectory = TemporaryDirectory.generateTemporaryPath(ProjectImpl.LIGHT_PROJECT_NAME + ProjectFileType.DOT_DEFAULT_EXTENSION);
+    ourProject = Objects.requireNonNull(ProjectManagerEx.getInstanceEx().newProject(tempDirectory, FixtureRuleKt.createTestOpenProjectOptions()));
     HeavyPlatformTestCase.synchronizeTempDirVfs(tempDirectory);
-    setProject(HeavyPlatformTestCase.createProject(tempDirectory));
     ourPsiManager = null;
 
     try {

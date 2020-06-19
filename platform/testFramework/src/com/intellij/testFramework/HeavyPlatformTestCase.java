@@ -259,12 +259,17 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   protected @NotNull Project doCreateProject(@NotNull Path projectFile) throws Exception {
-    return createProject(projectFile);
+    // doCreateRealModule uses myProject.getName() as module name - use constant project name because projectFile here unique temp file
+    return createProject(projectFile, getProjectFilename());
   }
 
   public static @NotNull Project createProject(@NotNull Path file) {
+    return createProject(file, null);
+  }
+
+  private static @NotNull Project createProject(@NotNull Path file, @Nullable String projectName) {
     try {
-      return Objects.requireNonNull(ProjectManagerEx.getInstanceEx().newProject(file, FixtureRuleKt.createTestOpenProjectOptions()));
+      return Objects.requireNonNull(ProjectManagerEx.getInstanceEx().newProject(file, FixtureRuleKt.createTestOpenProjectOptions().withProjectName(projectName)));
     }
     catch (TooManyProjectLeakedException e) {
       if (ourReportedLeakedProjects) {
@@ -339,9 +344,14 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       }
     }
 
-    Path tempFile = TemporaryDirectory.generateTemporaryPath(FileUtil.sanitizeFileName(getName(), false) + (isDirectoryBasedProject ? "" : ProjectFileType.DOT_DEFAULT_EXTENSION));
+    Path tempFile = TemporaryDirectory.generateTemporaryPath(getProjectFilename() + (isDirectoryBasedProject ? "" : ProjectFileType.DOT_DEFAULT_EXTENSION));
     myFilesToDelete.add(tempFile);
     return tempFile;
+  }
+
+  private @Nullable String getProjectFilename() {
+    String testName = getName();
+    return testName == null ? null : FileUtil.sanitizeFileName(testName, false);
   }
 
   protected void setUpModule() {
