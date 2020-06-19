@@ -185,6 +185,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     final BaseTestsOutputConsoleView consoleView = SMTestRunnerConnectionUtil.createConsole(getFrameworkName(), testConsoleProperties);
     final SMTestRunnerResultsForm viewer = ((SMTRunnerConsoleView)consoleView).getResultsViewer();
     Disposer.register(getConfiguration().getProject(), consoleView);
+    viewer.getTestsRootNode().setExecutionId(getEnvironment().getExecutionId());
 
     final OSProcessHandler handler = createHandler(executor);
 

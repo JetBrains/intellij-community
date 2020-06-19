@@ -961,6 +961,7 @@ public class SMTestProxy extends AbstractTestProxy {
     private String myRootLocationUrl;
     private ProcessHandler myHandler;
     private boolean myShouldPrintOwnContentOnly = false;
+    private long myExecutionId;
     @NotNull
     private TestDurationStrategy myDurationStrategy = TestDurationStrategy.AUTOMATIC;
 
@@ -1001,6 +1002,14 @@ public class SMTestProxy extends AbstractTestProxy {
 
     public void setComment(String comment) {
       myComment = comment;
+    }
+
+    public long getExecutionId() {
+      return myExecutionId;
+    }
+
+    public void setExecutionId(long executionId) {
+      myExecutionId = executionId;
     }
 
     @Override
