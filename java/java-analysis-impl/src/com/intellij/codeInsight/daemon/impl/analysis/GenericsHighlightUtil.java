@@ -1551,11 +1551,4 @@ public class GenericsHighlightUtil {
     }
     return null;
   }
-
-  public static HighlightInfo checkTypePreviewFeatureAnnotation(@NotNull final PsiTypeElement type,
-                                                                @NotNull final LanguageLevel level) {
-    final PsiClass clazz = PsiTypesUtil.getPsiClass(type.getType());
-
-    return HighlightUtil.checkPreviewFeatureElement(type, clazz, level);
-  }
 }

@@ -681,9 +681,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           myHolder.add(GenericsHighlightUtil.checkClassSupersAccessibility(targetClass, referenceNameElement));
         }
       }
-    }
-    if (!myHolder.hasErrorResults()) {
-      myHolder.add(HighlightUtil.checkPackagePreviewFeatureAnnotation(statement, myLanguageLevel));
+      if (!myHolder.hasErrorResults()) {
+        myHolder.add(HighlightUtil.checkPreviewFeatureElement(statement, targetClass, myLanguageLevel));
+      }
     }
   }
 
@@ -996,7 +996,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkSuperAbstractMethodDirectCall(expression));
 
     if (!myHolder.hasErrorResults()) visitExpression(expression);
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodCallPreviewFeatureAnnotation(expression, myLanguageLevel));
+    if (!myHolder.hasErrorResults()) {
+      myHolder.add(HighlightUtil.checkPreviewFeatureElement(expression, expression.resolveMethod(), myLanguageLevel));
+    }
   }
 
   @Override
@@ -1089,7 +1091,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
     if (!myHolder.hasErrorResults()) visitExpression(expression);
 
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkConstructorPreviewFeature(expression, myLanguageLevel));
+    if (!myHolder.hasErrorResults())
+      myHolder.add(HighlightUtil.checkPreviewFeatureElement(expression, expression.resolveMethod(), myLanguageLevel));
   }
 
   @Override
@@ -1408,8 +1411,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults() && resolved instanceof PsiField) {
       try {
         myHolder.add(HighlightUtil.checkIllegalForwardReferenceToField(expression, (PsiField)resolved));
-        if (!myHolder.hasErrorResults())
-          myHolder.add(HighlightUtil.checkPreviewFeatureElement(expression, (PsiField)resolved, myLanguageLevel));
       }
       catch (IndexNotReadyException ignored) { }
     }
@@ -1428,7 +1429,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         myHolder.add(GenericsHighlightUtil.checkMemberSignatureTypesAccessibility(expression));
       }
     }
-    if (!myHolder.hasErrorResults() && resolved instanceof PsiClass) myHolder.add(HighlightUtil.checkPreviewFeatureElement(expression, (PsiClass)resolved, myLanguageLevel));
+    if (!myHolder.hasErrorResults() && resolved instanceof PsiModifierListOwner) {
+      myHolder.add(HighlightUtil.checkPreviewFeatureElement(expression, (PsiModifierListOwner)resolved, myLanguageLevel));
+    }
   }
 
   @Override
@@ -1818,7 +1821,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkIllegalType(type));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkReferenceTypeUsedAsTypeArgument(type, myLanguageLevel));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkWildcardUsage(type));
-    if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkTypePreviewFeatureAnnotation(type, myLanguageLevel));
+    if (!myHolder.hasErrorResults()) {
+      final PsiClass psiClass = PsiTypesUtil.getPsiClass(type.getType());
+      myHolder.add(HighlightUtil.checkPreviewFeatureElement(type, psiClass, myLanguageLevel));
+    }
   }
 
   @Override

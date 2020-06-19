@@ -1595,13 +1595,19 @@ public class HighlightUtil {
 
   public static HighlightInfo checkPackagePreviewFeatureAnnotation(@NotNull final PsiImportStatementBase statement,
                                                                    @NotNull final LanguageLevel level) {
-    final PsiElement resolve = statement.resolve();
-    if (!(resolve instanceof PsiModifierListOwner)) return null;
-
-    final PsiModifierListOwner owner = (PsiModifierListOwner)resolve;
+    final PsiModifierListOwner owner = ObjectUtils.tryCast(statement.resolve(), PsiModifierListOwner.class);
     return checkPreviewFeatureElement(statement, owner, level);
   }
 
+  /**
+   * This method validates that the language level of the project where the context accesses
+   * the owner that is annotated with {@link HighlightingFeature#JDK_INTERNAL_PREVIEW_FEATURE} is sufficient
+   *
+   * @param context the expression to examine
+   * @param level the current language level
+   * @return an instance of HighlightInfo with a quickfix to set the appropriate language level
+   * if the current language level is not sufficient or null
+   */
   @Nullable
   @Contract(value = "null, _, _ -> null; _, null, _ -> null", pure = true)
   static HighlightInfo checkPreviewFeatureElement(@Nullable final PsiElement context,

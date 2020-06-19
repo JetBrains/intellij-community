@@ -860,22 +860,6 @@ public class HighlightClassUtil {
     return checkCreateInnerClassFromStaticContext(expression, qualifier, aClass);
   }
 
-  /**
-   * This method validates that the language level of the project where a new expression accesses
-   * the constructor that is annotated with {@link HighlightingFeature#JDK_INTERNAL_PREVIEW_FEATURE} is sufficient
-   *
-   * @param expression the expression to examine
-   * @param level the current language level
-   * @return an instance of HighlightInfo with a quickfix to set the appropriate language level
-   * if the current language level is not sufficient or null
-   */
-  static HighlightInfo checkConstructorPreviewFeature(@NotNull final PsiNewExpression expression,
-                                                      @NotNull final LanguageLevel level) {
-    final PsiMethod method = expression.resolveMethod();
-
-    return HighlightUtil.checkPreviewFeatureElement(expression, method, level);
-  }
-
   public static HighlightInfo checkCreateInnerClassFromStaticContext(@NotNull PsiElement element,
                                                                      @Nullable PsiExpression qualifier,
                                                                      @Nullable PsiClass aClass) {

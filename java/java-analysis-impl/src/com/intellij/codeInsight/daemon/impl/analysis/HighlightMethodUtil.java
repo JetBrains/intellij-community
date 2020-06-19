@@ -1319,22 +1319,6 @@ public class HighlightMethodUtil {
     return null;
   }
 
-  /**
-   * This method validates that the language level of the project where a call expression accesses
-   * the method that is annotated with {@link HighlightingFeature#JDK_INTERNAL_PREVIEW_FEATURE} is sufficient
-   *
-   * @param methodCallExpression the expression to examine
-   * @param level the current language level
-   * @return an instance of HighlightInfo with a quickfix to set the appropriate language level
-   * if the current language level is not sufficient or null
-   */
-  static HighlightInfo checkMethodCallPreviewFeatureAnnotation(@NotNull final PsiMethodCallExpression methodCallExpression,
-                                                               @NotNull final LanguageLevel level) {
-    final PsiMethod targetMethod = methodCallExpression.resolveMethod();
-
-    return HighlightUtil.checkPreviewFeatureElement(methodCallExpression, targetMethod, level);
-  }
-
   static HighlightInfo checkConstructorCallsBaseClassConstructor(@NotNull PsiMethod constructor,
                                                                  @Nullable RefCountHolder refCountHolder,
                                                                  @NotNull PsiResolveHelper resolveHelper) {
