@@ -42,6 +42,11 @@ public class AssertWithoutMessageInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("assert.without.message.problem.descriptor");
   }
 
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
   private static class AssertionsWithoutMessagesVisitor extends BaseInspectionVisitor {
 
     @Override
@@ -82,11 +87,9 @@ public class AssertWithoutMessageInspection extends BaseInspection {
           createdMessageExpr = methodArgs.add(newMessageExpr);
         }
 
-        if (isOnTheFly()) {
-          Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-          if (editor == null) return;
-          editor.getCaretModel().moveToOffset(createdMessageExpr.getTextOffset() + 1);
-        }
+        Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+        if (editor == null) return;
+        editor.getCaretModel().moveToOffset(createdMessageExpr.getTextOffset() + 1);
       }
 
       @Override
