@@ -404,8 +404,6 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
               list.add(new IndexEntry(element.getStartOffset(), index,
                                       context.getStartOffset(), context.getEndOffset(),
                                       createOccurrence(element, resolver)));
-            } else {
-              LOG.error("Functional expression outside of a member in " + inputData.getFile());
             }
             index++;
           }

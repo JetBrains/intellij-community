@@ -10,3 +10,5 @@ class A {
 interface I {
   void run();
 }
+
+@Anno(() -> {})
