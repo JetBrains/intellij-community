@@ -79,7 +79,8 @@ public enum LanguageLevel {
   PYTHON36(36, true, false, true, true),
   PYTHON37(37, true, false, true, true),
   PYTHON38(38, true, false, true, true),
-  PYTHON39(39, true, false, true, true);
+  PYTHON39(39, true, false, true, true),
+  PYTHON310(310, true, false, true, true);
 
   /**
    * This value is mostly bound to the compatibility of our debugger and helpers.
@@ -178,6 +179,9 @@ public enum LanguageLevel {
       if (pythonVersion.startsWith("3.0")) {
         return PYTHON30;
       }
+      if (pythonVersion.startsWith("3.10")) {
+        return PYTHON310;
+      }
       if (pythonVersion.startsWith("3.1")) {
         return PYTHON31;
       }
@@ -215,7 +219,10 @@ public enum LanguageLevel {
   public static String toPythonVersion(@Nullable LanguageLevel level) {
     if (level == null) return null;
     final int version = level.getVersion();
-    return version / 10 + "." + version % 10;
+    if (version > 300)
+      return version / 100 + "." + version % 100;
+    else
+      return version / 10 + "." + version % 10;
   }
 
   @NotNull
