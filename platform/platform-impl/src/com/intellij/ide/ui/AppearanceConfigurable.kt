@@ -64,6 +64,8 @@ private val cdUseTransparentMode                      get() = CheckboxDescriptor
 private val cdOverrideLaFFont                         get() = CheckboxDescriptor(message("checkbox.override.default.laf.fonts"), settings::overrideLafFonts)
 private val cdUseContrastToolbars                     get() = CheckboxDescriptor(message("checkbox.acessibility.contrast.scrollbars"), settings::useContrastScrollbars)
 private val cdFullPathsInTitleBar                     get() = CheckboxDescriptor(message("checkbox.full.paths.in.window.header"), settings::fullPathsInWindowHeader)
+private val cdShowMenuIcons                           get() = CheckboxDescriptor(message("checkbox.show.icons.in.menu.items"), settings::showIconsInMenus, groupName = windowOptionGroupName)
+
 // @formatter:on
 
 internal val appearanceOptionDescriptors: List<OptionDescription>
@@ -186,9 +188,10 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           { checkBox(cdEnableMenuMnemonics) },
           { checkBox(cdFullPathsInTitleBar) }
         )
-        fullRow {
-          checkBox(cdEnableControlsMnemonics)
-        }
+        twoColumnRow(
+          { checkBox(cdEnableControlsMnemonics) },
+          { checkBox(cdShowMenuIcons) }
+        )
         val backgroundImageAction = ActionManager.getInstance().getAction("Images.SetBackgroundImage")
         if (backgroundImageAction != null) {
           fullRow {
