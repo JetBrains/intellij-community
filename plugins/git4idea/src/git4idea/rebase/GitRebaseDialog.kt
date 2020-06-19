@@ -13,6 +13,7 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBTextField
@@ -41,6 +42,7 @@ import java.awt.event.ItemEvent
 import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.event.DocumentEvent
 import javax.swing.plaf.basic.BasicComboBoxEditor
 
 class GitRebaseDialog(private val project: Project,
@@ -373,6 +375,12 @@ class GitRebaseDialog(private val project: Project,
     editor = object : BasicComboBoxEditor() {
       override fun createEditorComponent() = JBTextField().apply {
         emptyText.text = GitBundle.message("rebase.dialog.onto.field")
+
+        document.addDocumentListener(object : DocumentAdapter() {
+          override fun textChanged(e: DocumentEvent) {
+            startTrackingValidation()
+          }
+        })
       }
     }
     ui = FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0))
@@ -385,6 +393,12 @@ class GitRebaseDialog(private val project: Project,
     editor = object : BasicComboBoxEditor() {
       override fun createEditorComponent() = JBTextField().apply {
         emptyText.text = GitBundle.message("rebase.dialog.upstream.field.placeholder")
+
+        document.addDocumentListener(object : DocumentAdapter() {
+          override fun textChanged(e: DocumentEvent) {
+            startTrackingValidation()
+          }
+        })
       }
     }
     ui = FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0))
@@ -409,6 +423,12 @@ class GitRebaseDialog(private val project: Project,
     editor = object : BasicComboBoxEditor() {
       override fun createEditorComponent() = JBTextField().apply {
         emptyText.text = GitBundle.message("rebase.dialog.branch.field")
+
+        document.addDocumentListener(object : DocumentAdapter() {
+          override fun textChanged(e: DocumentEvent) {
+            startTrackingValidation()
+          }
+        })
       }
     }
     ui = FlatComboBoxUI(
