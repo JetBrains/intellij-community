@@ -26,8 +26,8 @@ enum class PullOption(@NonNls val option: String,
 
   companion object {
     private val REBASE_INCOMPATIBLE = listOf(FF_ONLY, NO_FF, SQUASH, NO_COMMIT)
-    private val FF_ONLY_INCOMPATIBLE = listOf(NO_FF, SQUASH)
-    private val NO_FF_INCOMPATIBLE = listOf(FF_ONLY, SQUASH)
-    private val SQUASH_COMMIT_INCOMPATIBLE = listOf(NO_FF, FF_ONLY)
+    private val FF_ONLY_INCOMPATIBLE = listOf(NO_FF, SQUASH, REBASE)
+    private val NO_FF_INCOMPATIBLE = listOf(FF_ONLY, SQUASH, REBASE)
+    private val SQUASH_COMMIT_INCOMPATIBLE = listOf(NO_FF, FF_ONLY, REBASE)
   }
 }
