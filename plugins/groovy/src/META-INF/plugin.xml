@@ -331,7 +331,7 @@
                  description="Allows to collect method usages for more precise type inference"/>
     <registryKey key="groovy.use.explicitly.typed.closure.in.inference" defaultValue="true"
                  description="Enable type inference with using info from explicitly typed closures"/>
-    <registryKey key="groovy.process.nested.dfa" defaultValue="true"
+    <registryKey key="groovy.process.nested.dfa" defaultValue="false"
                  description="Allows to run nested DFA inside the outer one"/>
 
     <postStartupActivity implementation="org.jetbrains.plugins.groovy.mvc.MvcModuleStructureSynchronizer$MyPostStartUpActivity"/>
