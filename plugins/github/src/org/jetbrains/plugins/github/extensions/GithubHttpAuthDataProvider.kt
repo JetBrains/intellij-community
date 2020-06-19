@@ -24,7 +24,7 @@ class GithubHttpAuthDataProvider : GitHttpAuthDataProvider {
   override fun isSilent(): Boolean = true
 
   override fun getAuthData(project: Project, url: String): GHAccountAuthData? {
-    val account = getSuitableAccounts(project, url, null).singleOrNull() ?: return null
+    val account = getGitAuthenticationAccounts(project, url, null).singleOrNull() ?: return null
     val token = GithubAuthenticationManager.getInstance().getTokenForAccount(account) ?: return null
     val accountDetails = getAccountDetails(account, token) ?: return null
 
@@ -32,7 +32,7 @@ class GithubHttpAuthDataProvider : GitHttpAuthDataProvider {
   }
 
   override fun getAuthData(project: Project, url: String, login: String): GHAccountAuthData? {
-    val account = getSuitableAccounts(project, url, login).singleOrNull() ?: return null
+    val account = getGitAuthenticationAccounts(project, url, login).singleOrNull() ?: return null
     val token = GithubAuthenticationManager.getInstance().getTokenForAccount(account) ?: return null
 
     return GHAccountAuthData(account, login, token)
@@ -44,17 +44,19 @@ class GithubHttpAuthDataProvider : GitHttpAuthDataProvider {
     project.service<GithubAccountGitAuthenticationFailureManager>().ignoreAccount(url, authData.account)
   }
 
-  fun getSuitableAccounts(project: Project, url: String, login: String?): Set<GithubAccount> {
-    val authenticationFailureManager = project.service<GithubAccountGitAuthenticationFailureManager>()
-    val authenticationManager = GithubAuthenticationManager.getInstance()
-    val potentialAccounts = authenticationManager.getAccounts()
-      .filter { it.server.matches(url) }
-      .filterNot { authenticationFailureManager.isAccountIgnored(url, it) }
-      .filter { login == null || login == getAccountDetails(it)?.login }
+  companion object {
+    fun getGitAuthenticationAccounts(project: Project, url: String, login: String?): Set<GithubAccount> {
+      val authenticationFailureManager = project.service<GithubAccountGitAuthenticationFailureManager>()
+      val authenticationManager = GithubAuthenticationManager.getInstance()
+      val potentialAccounts = authenticationManager.getAccounts()
+        .filter { it.server.matches(url) }
+        .filterNot { authenticationFailureManager.isAccountIgnored(url, it) }
+        .filter { login == null || login == getAccountDetails(it)?.login }
 
-    val defaultAccount = authenticationManager.getDefaultAccount(project)
-    if (defaultAccount != null && defaultAccount in potentialAccounts) return setOf(defaultAccount)
-    return potentialAccounts.toSet()
+      val defaultAccount = authenticationManager.getDefaultAccount(project)
+      if (defaultAccount != null && defaultAccount in potentialAccounts) return setOf(defaultAccount)
+      return potentialAccounts.toSet()
+    }
   }
 }
 

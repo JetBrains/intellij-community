@@ -5,7 +5,6 @@ import com.intellij.dvcs.hosting.RepositoryListLoader
 import com.intellij.dvcs.hosting.RepositoryListLoadingException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import git4idea.remote.GitHttpAuthDataProvider
 import git4idea.remote.GitRepositoryHostingService
 import git4idea.remote.InteractiveGitHttpAuthDataProvider
 import one.util.streamex.StreamEx
@@ -21,6 +20,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
+import org.jetbrains.plugins.github.extensions.GithubHttpAuthDataProvider.Companion.getGitAuthenticationAccounts
 import org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper
 import org.jetbrains.plugins.github.util.GithubGitHelper
 import org.jetbrains.plugins.github.util.GithubUtil
@@ -34,7 +34,6 @@ internal class GithubRepositoryHostingService : GitRepositoryHostingService() {
   private val authenticationManager get() = GithubAuthenticationManager.getInstance()
   private val executorManager get() = GithubApiRequestExecutorManager.getInstance()
   private val gitHelper get() = GithubGitHelper.getInstance()
-  private val authDataProvider = GitHttpAuthDataProvider.EP_NAME.findExtensionOrFail(GithubHttpAuthDataProvider::class.java)
 
   override fun getServiceDisplayName(): String = GithubUtil.SERVICE_DISPLAY_NAME
 
@@ -109,7 +108,7 @@ internal class GithubRepositoryHostingService : GitRepositoryHostingService() {
     getProvider(project, url, login)
 
   private fun getProvider(project: Project, url: String, login: String?): InteractiveGitHttpAuthDataProvider? {
-    val potentialAccounts = authDataProvider.getSuitableAccounts(project, url, login)
+    val potentialAccounts = getGitAuthenticationAccounts(project, url, login)
     if (!potentialAccounts.isEmpty()) {
       return InteractiveSelectGithubAccountHttpAuthDataProvider(project, potentialAccounts, authenticationManager)
     }
