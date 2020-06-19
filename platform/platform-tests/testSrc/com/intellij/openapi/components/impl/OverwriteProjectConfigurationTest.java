@@ -1,15 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.testFramework.FixtureRuleKt;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,38 +27,46 @@ public class OverwriteProjectConfigurationTest extends HeavyPlatformTestCase {
   }
 
   public void testOverwriteModulesList() {
-    Disposable disposable = Disposer.newDisposable();
-    Project project = PlatformTestUtil.createProject(myProjectDir, disposable);
+    Project project = ProjectManagerEx.getInstanceEx().newProject(myProjectDir, FixtureRuleKt.createTestOpenProjectOptions());
     try {
       createModule(project, "module", ModuleTypeId.JAVA_MODULE);
       PlatformTestUtil.saveProject(project);
     }
     finally {
-      Disposer.dispose(disposable);
+      PlatformTestUtil.forceCloseProjectWithoutSaving(project);
     }
 
-    Project recreated = PlatformTestUtil.createProject(myProjectDir, ((ProjectEx)myProject).getEarlyDisposable());
-    PlatformTestUtil.saveProject(recreated);
-    assertThat(ModuleManager.getInstance(recreated).getModules()).isEmpty();
+    project = ProjectManagerEx.getInstanceEx().newProject(myProjectDir, FixtureRuleKt.createTestOpenProjectOptions());
+    try {
+      PlatformTestUtil.saveProject(project);
+      assertThat(ModuleManager.getInstance(project).getModules()).isEmpty();
+    }
+    finally {
+      PlatformTestUtil.forceCloseProjectWithoutSaving(project);
+    }
   }
 
   public void testOverwriteModuleType() {
-    Disposable disposable = Disposer.newDisposable();
-    Project project = PlatformTestUtil.createProject(myProjectDir, disposable);
+    Project project = ProjectManagerEx.getInstanceEx().newProject(myProjectDir, FixtureRuleKt.createTestOpenProjectOptions());
     try {
       Path imlFile = createModule(project, "module", ModuleTypeId.JAVA_MODULE);
       PlatformTestUtil.saveProject(project);
       assertThat(imlFile).isRegularFile();
     }
     finally {
-      Disposer.dispose(disposable);
+      PlatformTestUtil.forceCloseProjectWithoutSaving(project);
     }
 
-    Project recreated = PlatformTestUtil.createProject(myProjectDir, ((ProjectEx)myProject).getEarlyDisposable());
-    createModule(recreated, "module", ModuleTypeId.WEB_MODULE);
-    PlatformTestUtil.saveProject(recreated);
-    Module module = assertOneElement(ModuleManager.getInstance(recreated).getModules());
-    assertEquals(ModuleTypeId.WEB_MODULE, ModuleType.get(module).getId());
+    project = ProjectManagerEx.getInstanceEx().newProject(myProjectDir, FixtureRuleKt.createTestOpenProjectOptions());
+    try {
+      createModule(project, "module", ModuleTypeId.WEB_MODULE);
+      PlatformTestUtil.saveProject(project);
+      Module module = assertOneElement(ModuleManager.getInstance(project).getModules());
+      assertEquals(ModuleTypeId.WEB_MODULE, ModuleType.get(module).getId());
+    }
+    finally {
+      PlatformTestUtil.forceCloseProjectWithoutSaving(project);
+    }
   }
 
   @NotNull
