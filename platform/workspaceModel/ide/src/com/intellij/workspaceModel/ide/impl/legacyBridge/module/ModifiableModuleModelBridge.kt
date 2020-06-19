@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.google.common.collect.HashBiMap
@@ -13,15 +14,15 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.PathUtil
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.mutableModuleMap
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.storage.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 
 internal class ModifiableModuleModelBridge(
@@ -29,7 +30,6 @@ internal class ModifiableModuleModelBridge(
   private val moduleManager: ModuleManagerComponentBridge,
   diff: WorkspaceEntityStorageBuilder
 ) : LegacyBridgeModifiableBase(diff), ModifiableModuleModel {
-
   override fun getProject(): Project = project
 
   private val myModulesToAdd = HashBiMap.create<String, ModuleBridge>()
@@ -60,7 +60,7 @@ internal class ModifiableModuleModelBridge(
     diff.mutableModuleMap.addMapping(moduleEntity, module)
     myModulesToAdd[moduleName] = module
 
-    module.init {}
+    module.init(null)
     module.setModuleType(moduleTypeId)
     return module
   }

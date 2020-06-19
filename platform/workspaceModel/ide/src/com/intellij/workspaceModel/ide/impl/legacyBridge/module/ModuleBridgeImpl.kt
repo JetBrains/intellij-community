@@ -36,7 +36,7 @@ internal class ModuleBridgeImpl(
   filePath: Path?,
   override var entityStorage: VersionedEntityStorage,
   override var diff: WorkspaceEntityStorageDiffBuilder?
-) : ModuleImpl(name, project, filePath.toString()), ModuleBridge {
+) : ModuleImpl(name, project, filePath?.toString()), ModuleBridge {
   private val directoryPath: String? = filePath?.parent?.toString()
   private var vfsRefreshWasCalled = false
 

@@ -349,9 +349,8 @@ public final class ProjectUtil {
       return null;
     }
 
-    String path = FileUtil.toSystemIndependentName(file.toString());
     for (Project project : openProjects) {
-      if (isSameProject(path, project)) {
+      if (isSameProject(file, project)) {
         focusProjectWindow(project, false);
         return project;
       }
@@ -424,6 +423,10 @@ public final class ProjectUtil {
     return returnValue;
   }
 
+  /**
+   * @deprecated Use {@link #isSameProject(Path, Project)}
+   */
+  @Deprecated
   public static boolean isSameProject(@Nullable String projectFilePath, @NotNull Project project) {
     return projectFilePath != null && isSameProject(Paths.get(projectFilePath), project);
   }

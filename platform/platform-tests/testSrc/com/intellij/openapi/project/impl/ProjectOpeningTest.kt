@@ -102,10 +102,10 @@ class ProjectOpeningTest {
     projectDir.createDirectories()
     val fileBasedProject = ProjectManagerEx.getInstanceEx().newProject(projectDir.resolve("project.ipr"), createTestOpenProjectOptions())!!
     fileBasedProject.use {
-      assertThat(ProjectUtil.isSameProject(projectDir.toString(), fileBasedProject)).isTrue()
-      assertThat(ProjectUtil.isSameProject(inMemoryFs.fs.getPath("/p2").toString(), fileBasedProject)).isFalse()
+      assertThat(ProjectUtil.isSameProject(projectDir, fileBasedProject)).isTrue()
+      assertThat(ProjectUtil.isSameProject(inMemoryFs.fs.getPath("/p2"), fileBasedProject)).isFalse()
       val iprFilePath2 = projectDir.resolve("project2.ipr")
-      assertThat(ProjectUtil.isSameProject(iprFilePath2.toString(), fileBasedProject)).isFalse()
+      assertThat(ProjectUtil.isSameProject(iprFilePath2, fileBasedProject)).isFalse()
     }
   }
 }
