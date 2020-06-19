@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.extensions
 
 import com.intellij.openapi.project.Project
@@ -23,13 +23,13 @@ internal class InteractiveCreateGithubAccountHttpAuthDataProvider(private val pr
       val account = authenticationManager.requestNewAccountForServer(serverPath, project, parentComponent)
                     ?: return null
       val token = getToken(account, parentComponent) ?: return null
-      return GithubHttpAuthDataProvider.GithubAccountAuthData(account, GithubUtil.GIT_AUTH_PASSWORD_SUBSTITUTE, token)
+      return GHAccountAuthData(account, GithubUtil.GIT_AUTH_PASSWORD_SUBSTITUTE, token)
     }
     else {
       val account = authenticationManager.requestNewAccountForServer(serverPath, login, project, parentComponent)
                     ?: return null
       val token = getToken(account, parentComponent) ?: return null
-      return GithubHttpAuthDataProvider.GithubAccountAuthData(account, login, token)
+      return GHAccountAuthData(account, login, token)
     }
   }
 
