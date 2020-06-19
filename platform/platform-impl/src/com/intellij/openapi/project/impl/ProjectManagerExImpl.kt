@@ -257,7 +257,7 @@ private fun prepareProject(options: OpenProjectTask, projectStoreBaseDir: Path, 
 
 private fun instantiateProject(projectStoreBaseDir: Path, options: OpenProjectTask): ProjectImpl {
   val activity = StartUpMeasurer.startMainActivity("project instantiation")
-  val project = ProjectExImpl(projectStoreBaseDir, ProjectFrameAllocator.getPresentableName(options, projectStoreBaseDir))
+  val project = ProjectExImpl(projectStoreBaseDir, options.projectName)
   activity.end()
   options.beforeInit?.invoke(project)
   return project
