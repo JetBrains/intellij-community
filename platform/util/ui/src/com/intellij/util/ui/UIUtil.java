@@ -1718,6 +1718,8 @@ public final class UIUtil {
     g.setComposite(X_RENDER_ACTIVE.getValue() ? AlphaComposite.SrcOver : AlphaComposite.Src);
   }
 
+  private static final Method dispatchEventMethod =
+    Objects.requireNonNull(ReflectionUtil.getDeclaredMethod(EventQueue.class, "dispatchEvent", AWTEvent.class));
   /**
    * Dispatch all pending invocation events (if any) in the {@link com.intellij.ide.IdeEventQueue}, ignores and removes all other events from the queue.
    * In tests, consider using {@link com.intellij.testFramework.PlatformTestUtil#dispatchAllInvocationEventsInIdeEventQueue()}
@@ -1727,8 +1729,6 @@ public final class UIUtil {
   public static void dispatchAllInvocationEvents() {
     assert EdtInvocationManager.getInstance().isEventDispatchThread() : Thread.currentThread() + "; EDT: "+getEventQueueThread();
     EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-    Method dispatchEventMethod =
-      Objects.requireNonNull(ReflectionUtil.getDeclaredMethod(eventQueue.getClass(), "dispatchEvent", AWTEvent.class));
     for (int i = 1; ; i++) {
       AWTEvent event = eventQueue.peekEvent();
       if (event == null) break;
