@@ -27,6 +27,7 @@ import git4idea.merge.dialog.*
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
+import git4idea.util.GitUIUtil
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -108,10 +109,14 @@ class GitPullDialog(private val project: Project,
   fun isCommitAfterMerge() = PullOption.NO_COMMIT !in selectedOptions
 
   private fun validateBranchField(): ValidationInfo? {
-    if (branchField.item.isNullOrEmpty()) {
+    val item = branchField.item ?: ""
+    val text = GitUIUtil.getTextField(branchField).text
+    val value = if (item == text) item else text
+
+    if (value.isNullOrEmpty()) {
       return ValidationInfo(GitBundle.message("pull.branch.not.selected.error"), branchField)
     }
-    if (branchField.item !in (branchField.model as CollectionComboBoxModel).items) {
+    if (value !in (branchField.model as CollectionComboBoxModel).items) {
       return ValidationInfo(GitBundle.message("pull.branch.no.matching.error"), branchField)
     }
     return null

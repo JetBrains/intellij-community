@@ -26,6 +26,7 @@ import git4idea.config.GitVersionSpecialty.NO_VERIFY_SUPPORTED
 import git4idea.i18n.GitBundle
 import git4idea.merge.dialog.*
 import git4idea.repo.GitRepository
+import git4idea.util.GitUIUtil
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -133,13 +134,19 @@ class GitMergeDialog(private val project: Project,
     .forEach { option -> selectedOptions += option }
 
   private fun validateBranchField(): ValidationInfo? {
-    if (branchField.item == null) {
+    val item = branchField.item ?: ""
+    val text = GitUIUtil.getTextField(branchField).text
+    val value = if (item == text) item else text
+
+    if (value.isNullOrEmpty()) {
       return ValidationInfo(GitBundle.message("merge.no.branch.selected.error"), branchField)
     }
+
     val items = (branchField.model as CollectionComboBoxModel).items
-    if (branchField.item !in items) {
+    if (value !in items) {
       return ValidationInfo(GitBundle.message("merge.no.matching.branch.error"), branchField)
     }
+
     return null
   }
 
