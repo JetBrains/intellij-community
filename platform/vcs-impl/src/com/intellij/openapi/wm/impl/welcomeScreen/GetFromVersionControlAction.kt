@@ -28,8 +28,7 @@ open class GetFromVersionControlAction : DumbAwareAction() {
       }
       else {
         presentation.icon = AllIcons.Welcome.FromVCS
-        presentation.text = ActionsBundle.message("Vcs.VcsClone.Tabbed.Welcome.text")
-        ActionsBundle.message("Vcs.VcsClone.Welcome.text")
+        presentation.text = ActionsBundle.message("Vcs.VcsClone.Welcome.text");
       }
     }
     else {
