@@ -101,9 +101,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   @Override
   @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    if (Registry.is("ide.new.run.config", false) ||
-        ApplicationManager.getApplication().isInternal() ||
-        Experiments.getInstance().isFeatureEnabled("ide.new.run.config")) {
+    if (Registry.is("ide.new.run.config", true)) {
       return new JavaApplicationSettingsEditor(this);
     }
     SettingsEditorGroup<ApplicationConfiguration> group = new SettingsEditorGroup<>();
