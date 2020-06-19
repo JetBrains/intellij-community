@@ -43,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
