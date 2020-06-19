@@ -81,6 +81,18 @@ public class ChangeModifierIntentionTest extends IPPTestCase {
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTestWithChooser("protected"));
   }
 
+  public void testRecordConstructor1() { 
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_15_PREVIEW, () -> doTest("Make 'Foo' protected")); 
+  }
+
+  public void testRecordConstructor1Java14() {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_14_PREVIEW, () -> assertIntentionNotAvailable("Make 'Foo' protected"));
+  }
+
+  public void testRecordConstructor2() {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_15_PREVIEW, () -> doTestWithChooser("public"));
+  }
+  
   void doTestWithChooser(String wanted) {
     UiInterceptors
       .register(new ChooserInterceptor(Arrays.asList("public", "protected", "package-private", "private"), Pattern.quote(wanted)));

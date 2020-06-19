@@ -17,8 +17,10 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaPsiRecordUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -104,9 +106,10 @@ public class PublicConstructorInNonPublicClassInspection extends BaseInspection 
       if (containingClass == null) {
         return;
       }
-      if (containingClass.isRecord() &&
+      if (containingClass.isRecord() && PsiUtil.getLanguageLevel(containingClass) == LanguageLevel.JDK_14_PREVIEW &&
           (JavaPsiRecordUtil.isCompactConstructor(method) || JavaPsiRecordUtil.isExplicitCanonicalConstructor(method))) {
-        // compact and canonical constructors in record must be public, according to spec
+        // compact and canonical constructors in record must be public, according to Java 14-preview spec
+        // this restriction is relaxed in Java 15-preview, so the inspection makes sense again
         return;
       }
       if (containingClass.hasModifierProperty(PsiModifier.PUBLIC) ||
