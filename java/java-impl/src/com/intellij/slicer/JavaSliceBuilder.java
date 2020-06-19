@@ -89,14 +89,16 @@ final class JavaSliceBuilder {
    */
   @Contract(pure = true)
   @NotNull JavaSliceBuilder updateNesting(@NotNull Flow anno) {
-    JavaSliceBuilder result = this;
+    if (anno.targetIsContainer() && anno.sourceIsContainer()) {
+      return new JavaSliceBuilder(myParent, mySubstitutor, myIndexNesting, mySyntheticField, myFilter.unwrap().wrap());
+    }
     if (anno.targetIsContainer()) {
-      result = result.decrementNesting();
+      return decrementNesting();
     }
     if (anno.sourceIsContainer()) {
-      result = result.incrementNesting();
+      return incrementNesting();
     }
-    return result;
+    return this;
   }
 
   @Contract(pure = true)

@@ -103,6 +103,7 @@ public class SliceBackwardTest extends SliceTestCase {
   public void testSearchOverriddenMethodsInThisClassHierarchyParamDfa() throws Exception { doTest();}
   public void testAppend() throws Exception { doTest();}
   public void testRequireNonNull() throws Exception { doTest();}
+  public void testBackAndForward() throws Exception { doTest();}
   
   public void testFilterIntRange() throws Exception { doTest(">=0");}
   public void testFilterIntRangeArray() throws Exception { doTest(">=0");}
