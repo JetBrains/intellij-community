@@ -679,11 +679,12 @@ public class EditorModel {
   }
 
   private void tryNormalizeTargetVisiblePosition() {
-    boolean smthChanged = true;
+    boolean needToRepeat;
     try {
-      while (smthChanged) {
-        smthChanged = tryNormalizeTargetEditorViewPosition_iteration();
+      do {
+        needToRepeat = tryNormalizeTargetEditorViewPosition_iteration();
       }
+      while (needToRepeat);
     }
     catch (IOException e) {
       LOG.info(e);
@@ -692,6 +693,12 @@ public class EditorModel {
 
   private boolean tryNormalizeTargetEditorViewPosition_iteration() throws IOException {
     long pagesAmountInFile = dataProvider.getPagesAmount();
+
+    if (pagesAmountInFile == 0) {
+      targetVisiblePosition.set(0, 0);
+      return false;
+    }
+
     if (targetVisiblePosition.pageNumber >= pagesAmountInFile) {
       targetVisiblePosition.set(pagesAmountInFile, -1);
     }
