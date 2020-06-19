@@ -14,8 +14,6 @@ import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.target.java.JavaLanguageRuntimeType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
