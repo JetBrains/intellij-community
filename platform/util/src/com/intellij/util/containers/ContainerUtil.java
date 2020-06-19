@@ -691,6 +691,8 @@ public class ContainerUtil {
 
   @Contract(pure = true)
   public static @NotNull <K, V> Map<K, V> intersection(@NotNull Map<? extends K, ? extends V> map1, @NotNull Map<? extends K, ? extends V> map2) {
+    if (map1.isEmpty() || map2.isEmpty()) return Collections.emptyMap();
+
     if (map2.size() < map1.size()) {
       Map<? extends K, ? extends V> t = map1;
       map1 = map2;
@@ -1634,6 +1636,8 @@ public class ContainerUtil {
    */
   @Contract(pure = true)
   public static @NotNull <T> Collection<T> intersection(@NotNull Collection<? extends T> collection1, @NotNull Collection<? extends T> collection2) {
+    if (collection1.isEmpty() || collection2.isEmpty()) return emptyList();
+
     List<T> result = new ArrayList<>();
     for (T t : collection1) {
       if (collection2.contains(t)) {
@@ -1645,6 +1649,9 @@ public class ContainerUtil {
 
   @Contract(pure = true)
   public static @NotNull <E extends Enum<E>> EnumSet<E> intersection(@NotNull EnumSet<E> collection1, @NotNull EnumSet<E> collection2) {
+    if (collection1.isEmpty()) return collection1;
+    if (collection2.isEmpty()) return collection2;
+
     EnumSet<E> result = EnumSet.copyOf(collection1);
     result.retainAll(collection2);
     return result;
