@@ -18,7 +18,10 @@ package com.jetbrains.python.validation;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -41,8 +44,8 @@ public class PyDefinitionsAnnotator extends PyAnnotator {
 
   @Override
   public void visitPyFunction(PyFunction node) {
-    ASTNode name_node = node.getNameNode();
-    if (name_node != null) {
+    ASTNode nameNode = node.getNameNode();
+    if (nameNode != null) {
       final String name = node.getName();
       LanguageLevel languageLevel = LanguageLevel.forElement(node);
       if (PyNames.UNDERSCORED_ATTRIBUTES.contains(name) || PyNames.getBuiltinMethods(languageLevel).containsKey(name)) {
@@ -55,15 +58,20 @@ public class PyDefinitionsAnnotator extends PyAnnotator {
           catch (IndexNotReadyException ignored) {
           }
           if (new_style_class) {
-            addHighlightingAnnotation(name_node, PyHighlighter.PY_PREDEFINED_DEFINITION);
+            addHighlightingAnnotation(nameNode, PyHighlighter.PY_PREDEFINED_DEFINITION);
           }
         }
         else {
-          addHighlightingAnnotation(name_node, PyHighlighter.PY_PREDEFINED_DEFINITION);
+          addHighlightingAnnotation(nameNode, PyHighlighter.PY_PREDEFINED_DEFINITION);
         }
       }
       else {
-        addHighlightingAnnotation(name_node, PyHighlighter.PY_FUNC_DEFINITION);
+        if (ScopeUtil.getScopeOwner(node) instanceof PyFunction) {
+          addHighlightingAnnotation(nameNode, PyHighlighter.PY_NESTED_FUNC_DEFINITION);
+        }
+        else {
+          addHighlightingAnnotation(nameNode, PyHighlighter.PY_FUNC_DEFINITION);
+        }
       }
     }
   }
