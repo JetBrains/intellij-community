@@ -8,16 +8,18 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collection;
 
 public final class TempFiles {
-  private final Collection<File> myFilesToDelete;
+  private final Collection<Path> myFilesToDelete;
 
-  public TempFiles(@NotNull Collection<File> filesToDelete) {
+  public TempFiles(@NotNull Collection<Path> filesToDelete) {
     myFilesToDelete = filesToDelete;
   }
 
@@ -45,7 +47,7 @@ public final class TempFiles {
   public File createTempFile(@NotNull String prefix, String suffix, boolean isRefreshVfs) {
     try {
       File tempFile = FileUtilRt.createTempFile(prefix, suffix, false);
-      tempFileCreated(tempFile);
+      tempFileCreated(tempFile.toPath());
       if (isRefreshVfs) {
         getVFileByFile(tempFile);
       }
@@ -56,7 +58,7 @@ public final class TempFiles {
     }
   }
 
-  private void tempFileCreated(@NotNull File tempFile) {
+  private void tempFileCreated(@NotNull Path tempFile) {
     myFilesToDelete.add(tempFile);
   }
 
@@ -73,7 +75,7 @@ public final class TempFiles {
   private File createTempDir(@NotNull String prefix) {
     try {
       File dir = FileUtil.createTempDirectory(prefix, "test",false);
-      tempFileCreated(dir);
+      tempFileCreated(dir.toPath());
       HeavyPlatformTestCase.synchronizeTempDirVfs(getVFileByFile(dir));
       return dir;
     }
@@ -93,11 +95,8 @@ public final class TempFiles {
   }
 
   public void deleteAll() {
-    for (File file : myFilesToDelete) {
-      if (!FileUtil.delete(file)) {
-        //noinspection SSBasedInspection
-        file.deleteOnExit();
-      }
+    for (Path file : myFilesToDelete) {
+      PathKt.delete(file);
     }
   }
 

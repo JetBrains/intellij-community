@@ -41,7 +41,9 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     // Disable IndexableSetContributor (ExternalResourcesRootsProvider and others) to not affect project file index.
     // They provide files for indexing, which are irrelevant to the current test.
     // These files are checked on "ProjectFileIndex.isExcluded" (see de4d445d7e24) and pollute the index's cache.
-    runWriteAction { ExtensionTestUtil.maskExtensions(IndexableSetContributor.EP_NAME, emptyList(), testRootDisposable) }
+    runWriteAction {
+      ExtensionTestUtil.maskExtensions(IndexableSetContributor.EP_NAME, emptyList(), testRootDisposable)
+    }
 
     TestLoggerFactory.enableDebugLogging(testRootDisposable,
                                          "#" + NewMappings::class.java.name,
@@ -476,28 +478,27 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     }.assertTiming()
   }
 
-
   private fun createDirectories(paths: List<String>): List<VirtualFile> {
-    return paths.map { createDirectory(it) }
-  }
-
-  private fun createDirectory(path: String): VirtualFile {
-    return createFile(path, true)
+    return paths.map { createFile(it, isDirectory = true) }
   }
 
   private fun createFile(path: String, isDirectory: Boolean = false): VirtualFile {
+    // passed path contains backslash - that's why toSystemDependentName is used here
     val file = File(FileUtil.toSystemDependentName(path))
     if (isDirectory) {
       val created = file.exists() && file.isDirectory || file.mkdirs()
       assertTrue("Can't create directory: $file", created)
     }
     else {
-      createDirectory(file.parent)
+      createFile(file.parent, isDirectory = true)
       val created = file.exists() && file.isFile || file.createNewFile()
       assertTrue("Can't create file: $file", created)
     }
-    myFilesToDelete.add(file)
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)!!
+    if (path != "/" && !FileUtil.isAncestor(FileUtil.getTempDirectory(), file.path, false)) {
+      myFilesToDelete.add(file.toPath())
+    }
+    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
+           ?: throw IllegalStateException("Cannot find virtual file: $file")
   }
 
   private fun getVcsFor(file: VirtualFile): String? {

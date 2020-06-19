@@ -15,6 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -74,14 +76,12 @@ public class CachesHolder {
       .computeIfAbsent(location.getKey(), key -> new ChangesCacheFile(myProject, getCachePath(location), vcs, root, location));
   }
 
-  public @NotNull File getCacheBasePath() {
-    File file = new File(PathManager.getSystemPath(), VCS_CACHE_PATH);
-    file = new File(file, myProject.getLocationHash());
-    return file;
+  public @NotNull Path getCacheBasePath() {
+    return Paths.get(PathManager.getSystemPath(), VCS_CACHE_PATH, myProject.getLocationHash());
   }
 
   private @NotNull File getCachePath(@NotNull RepositoryLocation location) {
-    File file = getCacheBasePath();
+    File file = getCacheBasePath().toFile();
     file.mkdirs();
     return new File(file, md5Hex(location.getKey()));
   }

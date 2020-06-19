@@ -41,7 +41,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.junit.Assert;
 
 import java.io.File;
-import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -50,12 +50,12 @@ public final class PsiTestUtil {
   public static VirtualFile createTestProjectStructure(@NotNull Project project,
                                                        @NotNull Module module,
                                                        String rootPath,
-                                                       @NotNull Collection<? super File> filesToDelete) throws Exception {
+                                                       @NotNull Collection<Path> filesToDelete) {
     return createTestProjectStructure(project, module, rootPath, filesToDelete, true);
   }
 
   @NotNull
-  public static VirtualFile createTestProjectStructure(@NotNull Project project, @NotNull Module module, @NotNull Collection<? super File> filesToDelete) throws IOException {
+  public static VirtualFile createTestProjectStructure(@NotNull Project project, @NotNull Module module, @NotNull Collection<Path> filesToDelete) {
     return createTestProjectStructure(project, module, null, filesToDelete, true);
   }
 
@@ -63,8 +63,8 @@ public final class PsiTestUtil {
   public static VirtualFile createTestProjectStructure(@NotNull Project project,
                                                        @Nullable Module module,
                                                        String rootPath,
-                                                       @NotNull Collection<? super File> filesToDelete,
-                                                       boolean addProjectRoots) throws IOException {
+                                                       @NotNull Collection<Path> filesToDelete,
+                                                       boolean addProjectRoots) {
     VirtualFile vDir = createTestProjectStructure("unitTest", module, rootPath, filesToDelete, addProjectRoots);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     return vDir;
@@ -74,30 +74,9 @@ public final class PsiTestUtil {
   public static VirtualFile createTestProjectStructure(@NotNull String tempName,
                                                        @Nullable Module module,
                                                        String rootPath,
-                                                       @NotNull Collection<? super File> filesToDelete,
-                                                       boolean addProjectRoots) throws IOException {
-    File dir = FileUtil.createTempDirectory(tempName, null, false);
-    filesToDelete.add(dir);
-
-    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
-    assert vDir != null && vDir.isDirectory() : dir;
-    HeavyPlatformTestCase.synchronizeTempDirVfs(vDir);
-
-    EdtTestUtil.runInEdtAndWait(() -> WriteAction.run(() -> {
-      if (rootPath != null) {
-        VirtualFile vDir1 =
-          LocalFileSystem.getInstance().findFileByPath(rootPath.replace(File.separatorChar, '/'));
-        if (vDir1 == null) {
-          throw new Exception(rootPath + " not found");
-        }
-        VfsUtil.copyDirectory(null, vDir1, vDir, null);
-      }
-
-      if (addProjectRoots) {
-        addSourceContentToRoots(module, vDir);
-      }
-    }));
-    return vDir;
+                                                       @NotNull Collection<Path> filesToDelete,
+                                                       boolean addProjectRoots) {
+    return HeavyTestHelper.createTestProjectStructure(tempName, module, rootPath, filesToDelete, addProjectRoots);
   }
 
   public static void removeAllRoots(@NotNull Module module, Sdk jdk) {
@@ -614,7 +593,7 @@ public final class PsiTestUtil {
     }
   }
 
-  public static class LibraryBuilder {
+  public static final class LibraryBuilder {
     private final String myName;
     private final List<VirtualFile> myClassesRoots = new ArrayList<>();
     private final List<VirtualFile> mySourceRoots = new ArrayList<>();
