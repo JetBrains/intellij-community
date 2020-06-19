@@ -2,7 +2,6 @@
 package com.intellij.notification.impl;
 
 import com.intellij.codeInsight.hint.TooltipController;
-import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
@@ -80,6 +79,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   public static final Color BORDER_COLOR = JBColor.namedColor("Notification.borderColor", new JBColor(Gray._178.withAlpha(205), new Color(86, 90, 92, 205)));
 
   private final List<Notification> myEarlyNotifications = new ArrayList<>();
+  private boolean myUiReady = false;
 
   public NotificationsManagerImpl() {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
@@ -94,8 +94,9 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     });
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
-      public void appUiReady() {
+      public void appStarting(@Nullable Project projectFromCommandLine) {
         GuiUtils.invokeLaterIfNeeded(() -> {
+          myUiReady = true;
           if (!myEarlyNotifications.isEmpty()) {
             myEarlyNotifications.forEach(notification -> showNotification(notification, null));
             myEarlyNotifications.clear();
@@ -159,7 +160,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
   @CalledInAwt
   private void showNotification(Notification notification, @Nullable Project project) {
-    if (!LoadingState.APP_STARTED.isOccurred()) {
+    if (!myUiReady) {
       myEarlyNotifications.add(notification);
       return;
     }
