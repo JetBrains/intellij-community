@@ -177,10 +177,6 @@ object UpdateChecker {
   }
 
   private fun checkPlatformUpdate(settings: UpdateSettings): CheckForUpdateResult {
-    if (!settings.isPlatformUpdateEnabled) {
-      return CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)
-    }
-
     val updateInfo = try {
       var updateUrl = Urls.newFromEncoded(updateUrl)
       if (updateUrl.scheme != URLUtil.FILE_PROTOCOL) {
@@ -199,7 +195,7 @@ object UpdateChecker {
       return CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, e)
     }
 
-    if (updateInfo == null) {
+    if (updateInfo == null || !settings.isPlatformUpdateEnabled) {
       return CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)
     }
 
