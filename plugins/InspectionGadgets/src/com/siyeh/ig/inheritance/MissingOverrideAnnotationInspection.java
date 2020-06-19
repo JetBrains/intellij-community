@@ -14,10 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.siyeh.InspectionGadgetsBundle;
@@ -174,7 +171,12 @@ public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalIn
         if (hasOverrideAnnotation(method)) {
           return;
         }
-        final boolean useJdk6Rules = PsiUtil.isLanguageLevel6OrHigher(method);
+        LanguageLevel level = PsiUtil.getLanguageLevel(method);
+        if (level != LanguageLevel.JDK_14_PREVIEW && JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) {
+          result.requireAnnotation = true;
+          return;
+        }
+        final boolean useJdk6Rules = level.isAtLeast(LanguageLevel.JDK_1_6);
         if (useJdk6Rules) {
           if (!isJdk6Override(method, methodClass)) {
             return;
