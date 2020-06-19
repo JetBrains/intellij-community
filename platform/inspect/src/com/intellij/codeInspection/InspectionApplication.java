@@ -15,6 +15,7 @@ import com.intellij.ide.CommandLineInspectionProgressReporter;
 import com.intellij.ide.CommandLineInspectionProjectConfigurator;
 import com.intellij.ide.impl.PatchProjectUtil;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -207,6 +208,8 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       gracefulExit();
       return;
     }
+    waitPostStartupActivitiesPassed(project);
+
     MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> isMappingLoaded.setResult(null));
 
@@ -275,6 +278,17 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       }
       LOG.info("Used scope: " + scope.toString());
       runAnalysisOnScope(projectPath, parentDisposable, project, myInspectionProfile, scope);
+    }
+  }
+
+  @SuppressWarnings("BusyWait")
+  private static void waitPostStartupActivitiesPassed(@NotNull Project project) {
+    while (!StartupManagerEx.getInstanceEx(project).postStartupActivityPassed()) {
+      try {
+        LOG.info("Post startup activities still running. Sleep for 10 seconds.");
+        Thread.sleep(10000);
+      }
+      catch (InterruptedException ignored) {}
     }
   }
 
