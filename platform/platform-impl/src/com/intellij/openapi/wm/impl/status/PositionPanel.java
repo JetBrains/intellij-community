@@ -205,10 +205,13 @@ public class PositionPanel extends EditorBasedWidget
         message.append(UIBundle.message("position.panel.caret.count", caretCount));
       }
       else {
+        LogicalPosition caret = editor.getCaretModel().getLogicalPosition();
+        message.append(caret.line + 1).append(SEPARATOR).append(caret.column + 1);
         if (selectionModel.hasSelection()) {
           int selectionStart = selectionModel.getSelectionStart();
           int selectionEnd = selectionModel.getSelectionEnd();
           if (selectionEnd > selectionStart) {
+            message.append(" (");
             CodePointCountTask countTask = new CodePointCountTask(editor.getDocument().getImmutableCharSequence(),
                                                                   selectionStart, selectionEnd);
             if (countTask.isQuick()) {
@@ -227,11 +230,9 @@ public class PositionPanel extends EditorBasedWidget
               message.append(", ");
               message.append(UIBundle.message("position.panel.selected.line.breaks.count", selectionEndLine - selectionStartLine));
             }
-            message.append(SPACE);
+            message.append(")");
           }
         }
-        LogicalPosition caret = editor.getCaretModel().getLogicalPosition();
-        message.append(caret.line + 1).append(SEPARATOR).append(caret.column + 1);
       }
 
       return message.toString();
