@@ -35,6 +35,6 @@ internal class InteractiveSelectGithubAccountHttpAuthDataProvider(private val pr
                 ?: authenticationManager.requestNewToken(account, project, parentComponent)
                 ?: return null
     if (dialog.setDefault) authenticationManager.setDefaultAccount(project, account)
-    return GithubHttpAuthDataProvider.GithubAccountAuthData(account, GithubUtil.GIT_AUTH_PASSWORD_SUBSTITUTE, token)
+    return GHAccountAuthData(account, GithubUtil.GIT_AUTH_PASSWORD_SUBSTITUTE, token)
   }
 }

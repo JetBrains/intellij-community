@@ -18,26 +18,28 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInforma
 
 private val LOG = logger<GithubHttpAuthDataProvider>()
 
+class GHAccountAuthData(val account: GithubAccount, login: String, token: String) : AuthData(login, token)
+
 class GithubHttpAuthDataProvider : GitHttpAuthDataProvider {
   override fun isSilent(): Boolean = true
 
-  override fun getAuthData(project: Project, url: String): GithubAccountAuthData? {
+  override fun getAuthData(project: Project, url: String): GHAccountAuthData? {
     val account = getSuitableAccounts(project, url, null).singleOrNull() ?: return null
     val token = GithubAuthenticationManager.getInstance().getTokenForAccount(account) ?: return null
     val accountDetails = getAccountDetails(account, token) ?: return null
 
-    return GithubAccountAuthData(account, accountDetails.login, token)
+    return GHAccountAuthData(account, accountDetails.login, token)
   }
 
-  override fun getAuthData(project: Project, url: String, login: String): GithubAccountAuthData? {
+  override fun getAuthData(project: Project, url: String, login: String): GHAccountAuthData? {
     val account = getSuitableAccounts(project, url, login).singleOrNull() ?: return null
     val token = GithubAuthenticationManager.getInstance().getTokenForAccount(account) ?: return null
 
-    return GithubAccountAuthData(account, login, token)
+    return GHAccountAuthData(account, login, token)
   }
 
   override fun forgetPassword(project: Project, url: String, authData: AuthData) {
-    if (authData !is GithubAccountAuthData) return
+    if (authData !is GHAccountAuthData) return
 
     project.service<GithubAccountGitAuthenticationFailureManager>().ignoreAccount(url, authData.account)
   }
@@ -54,8 +56,6 @@ class GithubHttpAuthDataProvider : GitHttpAuthDataProvider {
     if (defaultAccount != null && defaultAccount in potentialAccounts) return setOf(defaultAccount)
     return potentialAccounts.toSet()
   }
-
-  class GithubAccountAuthData(val account: GithubAccount, login: String, token: String) : AuthData(login, token)
 }
 
 private fun getAccountDetails(account: GithubAccount, token: String? = null): GithubAuthenticatedUser? =
