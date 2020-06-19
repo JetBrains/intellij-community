@@ -740,6 +740,10 @@ idea.fatal.error.notification=disabled
       scramble()
     }
     layoutShared()
+    Map<String, String> checkerConfig = buildContext.productProperties.versionCheckerConfig
+    if (checkerConfig != null) {
+      new ClassVersionChecker(checkerConfig).checkVersions(buildContext, new File(buildContext.paths.distAll))
+    }
   }
 
   @Override
