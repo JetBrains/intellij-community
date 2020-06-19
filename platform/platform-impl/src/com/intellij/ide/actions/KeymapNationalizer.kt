@@ -19,6 +19,7 @@ import javax.swing.JLabel
 import javax.swing.JTextArea
 import javax.swing.KeyStroke
 
+// TODO move out to external plugin
 internal class KeymapNationalizer : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -66,14 +67,14 @@ internal class KeymapNationalizer : DumbAwareAction() {
 
 
 class KeymapGenerator {
-  val supportedLocales = mapOf("de" to "Deutch",
+  val supportedLocales = mapOf("de" to "Deutsch",
                                "it" to "Italian",
                                "cz" to "Czech",
                                "ot" to "Other")
   //"fr" to "French",
   //"no" to "Norwegian",
 
-  var chosenLang = "Deutch"
+  var chosenLang = "Deutsch"
   val deutchReplacement = mapOf(KeyEvent.VK_SEMICOLON to 1014, //ö
                                 KeyEvent.VK_EQUALS to KeyEvent.VK_DEAD_GRAVE,
                                 KeyEvent.VK_SLASH to KeyEvent.VK_MINUS,
@@ -126,7 +127,7 @@ class KeymapGenerator {
   }
 
   fun inaccessibleKeysLabel(): String {
-    return "<html>On your keyboard these keys are inaccessible: " + getInaccessibleKeys() + "</html>"
+    return "<html>Your keyboard is missing these primary keys: " + getInaccessibleKeys() + "</html>"
   }
 
   fun getInaccessibleKeys(): String {
