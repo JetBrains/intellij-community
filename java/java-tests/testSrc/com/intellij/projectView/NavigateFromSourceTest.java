@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectView;
 
 import com.intellij.ide.DataManager;
@@ -46,8 +46,9 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
                                                      "  -PsiDirectory: src\n" +
                                                      "   -PsiDirectory: com\n" +
                                                      "    -PsiDirectory: package1\n" +
-                                                     "     [Class1]\n" +
-                                                     "     Class2\n" +
+                                                     "     -[Class1]\n" +
+                                                     "      InnerClass\n" +
+                                                     "     +Class2\n" +
                                                      getRootFiles() +
                                                      " +External Libraries\n"
       , true);
@@ -59,7 +60,7 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
                                                                                            "    -PsiDirectory: package1\n" +
                                                                                            "     -Class1.java\n" +
                                                                                            "      [Class11]\n" +
-                                                                                           "     Class2\n" +
+                                                                                           "     +Class2\n" +
                                                                                            getRootFiles() +
                                                                                            " +External Libraries\n");
 
@@ -69,7 +70,7 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
                                                                                           "   -PsiDirectory: com\n" +
                                                                                           "    -PsiDirectory: package1\n" +
                                                                                           "     [Class1]\n" +
-                                                                                          "     Class2\n" +
+                                                                                          "     +Class2\n" +
                                                                                           getRootFiles() +
                                                                                           " +External Libraries\n");
 

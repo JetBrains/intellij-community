@@ -69,7 +69,18 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
     myStructure.setShowMembers(false);
     assertStructureEqual(getPackageDirectory(), "package1\n" +
                                                 " Class1\n" +
-                                                " Class2\n");
+                                                "  InnerClass\n" +
+                                                " Class2\n" +
+                                                "  InnerClass1\n" +
+                                                "   InnerClass12\n" +
+                                                "    InnerClass13\n" +
+                                                "     InnerClass14\n" +
+                                                "      InnerClass15\n" +
+                                                "  InnerClass2\n" +
+                                                "   InnerClass22\n" +
+                                                "    InnerClass23\n" +
+                                                "     InnerClass24\n" +
+                                                "      InnerClass25\n");
 
     myStructure.setShowMembers(true);
     assertStructureEqual(getPackageDirectory(), "package1\n" +

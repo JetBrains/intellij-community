@@ -2,7 +2,6 @@
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.ide.projectView.PsiClassChildrenSource;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -37,35 +36,30 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
   public Collection<AbstractTreeNode<?>> getChildrenImpl() {
     PsiClass parent = getValue();
     List<AbstractTreeNode<?>> treeNodes = new ArrayList<>(myMandatoryChildren);
-    if (getSettings().isShowMembers()) {
-      ArrayList<PsiElement> result = new ArrayList<>();
+    if (parent != null) {
       try {
-        PsiClassChildrenSource.DEFAULT_CHILDREN.addChildren(parent, result);
+        for (PsiClass psi : parent.getInnerClasses()) {
+          if (psi.isPhysical()) {
+            treeNodes.add(new ClassTreeNode(getProject(), psi, getSettings()));
+          }
+        }
+        if (getSettings().isShowMembers()) {
+          for (PsiMethod psi : parent.getMethods()) {
+            if (psi.isPhysical()) {
+              treeNodes.add(new PsiMethodNode(getProject(), psi, getSettings()));
+            }
+          }
+          for (PsiField psi : parent.getFields()) {
+            if (psi.isPhysical()) {
+              treeNodes.add(new PsiFieldNode(getProject(), psi, getSettings()));
+            }
+          }
+        }
       }
       catch (IndexNotReadyException ignore) {
       }
-      for (PsiElement psiElement : result) {
-        if (!psiElement.isPhysical()) {
-          continue;
-        }
-
-        if (psiElement instanceof PsiClass) {
-          treeNodes.add(new ClassTreeNode(getProject(), (PsiClass)psiElement, getSettings()));
-        }
-        else if (psiElement instanceof PsiMethod) {
-          treeNodes.add(new PsiMethodNode(getProject(), (PsiMethod)psiElement, getSettings()));
-        }
-        else if (psiElement instanceof PsiField) {
-          treeNodes.add(new PsiFieldNode(getProject(), (PsiField)psiElement, getSettings()));
-        }
-      }
     }
     return treeNodes;
-  }
-
-  @Override
-  public boolean isAlwaysLeaf() {
-    return !getSettings().isShowMembers() && myMandatoryChildren.isEmpty();
   }
 
   @Override
