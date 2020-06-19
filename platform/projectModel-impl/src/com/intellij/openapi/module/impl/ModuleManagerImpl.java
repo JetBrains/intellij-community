@@ -51,9 +51,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -281,7 +284,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
         progressIndicator.setFraction(progressIndicator.getFraction() + myProgressStep);
         return ProgressManager.getInstance().runProcess(() -> {
           try {
-            return myProject.isDisposed() ? null : loadModuleInternal(path, this);
+            return myProject.isDisposed() ? null : loadModuleInternal(Paths.get(path), this);
           }
           catch (IOException e) {
             reportError(errors, modulePath, e);
@@ -350,15 +353,16 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     showUnknownModuleTypeNotification(modulesWithUnknownTypes);
   }
 
-  private static @NotNull Module loadModuleInternal(@NotNull String filePath, @NotNull ModuleManagerImpl manager) throws IOException {
+  private static @NotNull Module loadModuleInternal(@NotNull Path filePath, @NotNull ModuleManagerImpl manager) throws IOException {
     // we cannot call refreshAndFindFileByPath during module init under read action because it is forbidden
-    VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(filePath);
+    String systemIndependentPath = filePath.toString().replace(File.separatorChar, '/');
+    VirtualFile virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(systemIndependentPath);
     if (virtualFile != null) {
       // otherwise virtualFile.contentsToByteArray() will query expensive FileTypeManager.getInstance()).getByFile()
       virtualFile.setCharset(StandardCharsets.UTF_8, null, false);
     }
     return ReadAction.compute(() -> {
-      ModuleEx module = manager.createAndLoadModule(filePath);
+      ModuleEx module = manager.createAndLoadModule(systemIndependentPath);
       initModule(module, () -> ((ModuleStore)module.getService(IComponentStore.class)).setPath(filePath, virtualFile, false));
       return module;
     });
@@ -809,7 +813,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
 
       module = myManager.createModule(filePath);
       final ModuleEx newModule = module;
-      String finalFilePath = filePath;
+      Path finalFilePath = Paths.get(filePath);
       initModule(module, () -> {
         ((ModuleStore)newModule.getService(IComponentStore.class)).setPath(finalFilePath, null, true);
 
@@ -852,7 +856,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       try {
         Module module = getModuleByFilePath(resolvedPath);
         if (module == null) {
-          module = loadModuleInternal(resolvedPath, myManager);
+          module = loadModuleInternal(Paths.get(resolvedPath), myManager);
           addModule(module);
         }
         return module;

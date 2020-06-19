@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.execution.actions.ChooseRunConfigurationPopup
@@ -41,7 +41,7 @@ internal class RunConfigurableTest {
   companion object {
     @JvmField
     @ClassRule
-    val projectRule = ProjectRule()
+    val projectRule = ProjectRule(runPostStartUpActivities = false)
 
     private fun createRunManager(element: Element): RunManagerImpl {
       val runManager = RunManagerImpl(projectRule.project)

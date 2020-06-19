@@ -1,12 +1,11 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.project
 
 import com.intellij.configurationStore.*
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectStoreFactory
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentWriter
@@ -36,12 +35,6 @@ internal class ProjectStoreBridge(project: Project) : ProjectWithModulesStoreImp
                                       errors: MutableList<Throwable>) {
     super.commitModuleComponents(moduleStore, moduleSaveSessionManager, projectSaveSessionManager, isForceSavingAllSettings, errors)
     (projectSaveSessionManager as ProjectWithModulesSaveSessionProducerManager).commitComponents(moduleStore, moduleSaveSessionManager)
-  }
-}
-
-internal class ProjectStoreBridgeFactory : ProjectStoreFactory {
-  override fun createStore(project: Project): IComponentStore {
-    return if (project.isDefault) DefaultProjectStoreImpl(project) else ProjectStoreBridge(project)
   }
 }
 
@@ -111,7 +104,7 @@ private class ProjectWithModulesSaveSessionProducerManager(project: Project) : P
     if (internalComponents != null) {
       commitToStorage(MODULE_FILE_STORAGE_ANNOTATION, internalComponents)
     }
-    
+
     val moduleFileName = FileUtil.getNameWithoutExtension(PathUtil.getFileName(moduleFilePath))
     val externalComponents = externalModuleComponents[moduleFileName]
     if (externalComponents != null) {

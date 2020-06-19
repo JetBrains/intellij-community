@@ -24,7 +24,6 @@ import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -426,30 +425,38 @@ public final class ProjectUtil {
   }
 
   public static boolean isSameProject(@Nullable String projectFilePath, @NotNull Project project) {
-    if (projectFilePath == null) {
+    return projectFilePath != null && isSameProject(Paths.get(projectFilePath), project);
+  }
+
+  public static boolean isSameProject(@NotNull Path projectFile, @NotNull Project project) {
+    IProjectStore projectStore = ProjectKt.getStateStore(project);
+    Path existingBaseDirPath = projectStore.getProjectBasePath();
+
+    if (existingBaseDirPath.getFileSystem() != projectFile.getFileSystem()) {
       return false;
     }
 
-    IProjectStore projectStore = ProjectKt.getStateStore(project);
-    String existingBaseDirPath = projectStore.getProjectBasePath();
-    File projectFile = new File(projectFilePath);
-    if (projectFile.isDirectory()) {
-      return FileUtil.pathsEqual(projectFilePath, existingBaseDirPath);
+    if (Files.isDirectory(projectFile)) {
+      return FileUtil.pathsEqual(projectFile.toString(), existingBaseDirPath.toString());
     }
 
     if (projectStore.getStorageScheme() == StorageScheme.DEFAULT) {
-      return FileUtil.pathsEqual(projectFilePath, projectStore.getProjectFilePath());
+      return FileUtil.pathsEqual(FileUtil.toSystemIndependentName(projectFile.toString()), projectStore.getProjectFilePath());
     }
 
-    File parent = projectFile.getParentFile();
-    if (parent == null) return false;
-    if (parent.getName().equals(Project.DIRECTORY_STORE_FOLDER)) {
-      parent = parent.getParentFile();
-      return parent != null && FileUtil.pathsEqual(parent.getPath(), existingBaseDirPath);
+    Path parent = projectFile.getParent();
+    if (parent == null) {
+      return false;
     }
 
-    return FileUtil.pathsEqual(parent.getPath(), existingBaseDirPath) &&
-           ProjectFileType.DEFAULT_EXTENSION.equals(FileUtilRt.getExtension(projectFile.getName()));
+    Path parentFileName = parent.getFileName();
+    if (parentFileName != null && parentFileName.toString().equals(Project.DIRECTORY_STORE_FOLDER)) {
+      parent = parent.getParent();
+      return parent != null && FileUtil.pathsEqual(parent.toString(), existingBaseDirPath.toString());
+    }
+
+    return projectFile.getFileName().toString().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) &&
+           FileUtil.pathsEqual(parent.toString(), existingBaseDirPath.toString());
   }
 
   public static void focusProjectWindow(@Nullable Project project, boolean executeIfAppInactive) {

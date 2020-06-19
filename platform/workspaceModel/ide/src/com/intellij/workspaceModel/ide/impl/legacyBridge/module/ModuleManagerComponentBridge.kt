@@ -19,7 +19,6 @@ import com.intellij.openapi.module.impl.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
-import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.impl.ProjectServiceContainerInitializedListener
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
@@ -29,19 +28,19 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.graph.*
+import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.bracket
 import com.intellij.workspaceModel.ide.impl.executeOrQueueOnDispatchThread
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import org.jetbrains.annotations.ApiStatus
 import java.io.File
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.Callable
 
@@ -335,7 +334,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   private fun loadModules(entities: List<ModuleEntity>) {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       val fileSystem = LocalFileSystem.getInstance()
-      entities.forEach { module -> fileSystem.refreshAndFindFileByPath(getModuleFilePath(module)) }
+      entities.forEach { module -> fileSystem.refreshAndFindFileByNioFile(getModuleFilePath(module)) }
     }
 
     val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", JobSchedulerImpl.getCPUCoresCount())
@@ -534,14 +533,14 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     UnloadedModulesListStorage.getInstance(project).unloadedModuleNames = this.unloadedModules.keys.toList()
   }
 
-  private fun getModuleFilePath(moduleEntity: ModuleEntity): String {
+  private fun getModuleFilePath(moduleEntity: ModuleEntity): Path {
     val entitySource = (moduleEntity.entitySource as? JpsImportedEntitySource)?.internalFile ?: moduleEntity.entitySource
     val directoryPath = when (entitySource) {
-      is JpsFileEntitySource.FileInDirectory -> entitySource.directory.filePath
+      is JpsFileEntitySource.FileInDirectory -> entitySource.directory.filePath!!
       // TODO Is this fallback fake path ok?
       else -> outOfTreeModulesPath
     }
-    return "$directoryPath/${moduleEntity.name}.iml"
+    return Paths.get(directoryPath, "${moduleEntity.name}.iml")
   }
 
   fun createModuleInstance(moduleEntity: ModuleEntity,
