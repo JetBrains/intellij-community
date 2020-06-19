@@ -1,15 +1,22 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl.indexing
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.SyntheticLibrary
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.impl.cache.CacheManager
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.UsageSearchContext
 import com.intellij.testFramework.RunsInEdt
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.indexing.IndexableSetContributor
 import org.junit.Test
+import kotlin.test.assertEquals
 
 @RunsInEdt
 class IndexableFilesRegularTest : IndexableFilesBaseTest() {
@@ -137,6 +144,17 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
     }
     maskIndexableSetContributors(contributor)
     assertIndexableFiles(additionalProjectRootJava.file, additionalRootJava.file)
+    assertIdIndexContainsWord(additionalRootJava.file, "AdditionalRoot")
+    assertIdIndexContainsWord(additionalProjectRootJava.file, "AdditionalProjectRoot")
+
+    // make some change
+    runWriteAction {
+      VfsUtil.saveText(additionalRootJava.file, "class Foo {}")
+      VfsUtil.saveText(additionalProjectRootJava.file, "class Foo {}")
+    }
+
+    assertIdIndexContainsWord(additionalRootJava.file, "Foo")
+    assertIdIndexContainsWord(additionalProjectRootJava.file, "Foo")
   }
 
   @Test
@@ -199,5 +217,17 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
     }
     maskAdditionalLibraryRootsProviders(additionalLibraryRootsProvider)
     assertIndexableFiles(sourceFile.file, binaryFile.file, reIncludedSource.file, reIncludedBinary.file)
+  }
+
+  private fun assertIdIndexContainsWord(file: VirtualFile, word: String) {
+    val fileScope = GlobalSearchScope.fileScope(project, file)
+    val cacheManager = CacheManager.getInstance(project)
+    val filesFromIndex = cacheManager.getVirtualFilesWithWord(word,
+                                                              UsageSearchContext.ANY,
+                                                              fileScope,
+                                                              true)
+
+    val fileFromIndex = UsefulTestCase.assertOneElement(filesFromIndex)
+    assertEquals(file, fileFromIndex)
   }
 }
