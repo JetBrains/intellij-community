@@ -1,9 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.actions.ShowFilePathAction;
@@ -19,11 +17,10 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.fileEditor.impl.tabActions.EditorTabActions;
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -41,7 +38,6 @@ import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.*;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutSettingsManager;
-import com.intellij.util.BitUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
@@ -54,7 +50,6 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.FocusEvent;
-import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -270,10 +265,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       .setDragOutDelegate(myDragOutDelegate);
     tab.setTestableUi(new MyQueryable(tab));
 
-    DefaultActionGroup tabActions = new DefaultActionGroup();
-    tabActions.add(new CloseTab(component, file, parentDisposable));
-
-    tab.setTabLabelActions(tabActions, ActionPlaces.EDITOR_TAB);
+    new EditorTabActions(tab, file, myProject, myWindow, parentDisposable);
     myTabs.addTabSilently(tab, indexToInsert);
   }
 
@@ -328,47 +320,6 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
   public Component getComponentAt(int i) {
     TabInfo tab = myTabs.getTabAt(i);
     return tab.getComponent();
-  }
-
-  public final class CloseTab extends AnAction implements DumbAware {
-    @NotNull
-    private final VirtualFile myFile;
-
-    CloseTab(@NotNull JComponent c, @NotNull VirtualFile file, @NotNull Disposable parentDisposable) {
-      myFile = file;
-      new ShadowAction(this, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE), c, parentDisposable);
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setIcon(AllIcons.Actions.Close);
-      e.getPresentation().setHoveredIcon(AllIcons.Actions.CloseHovered);
-      e.getPresentation().setVisible(UISettings.getInstance().getShowCloseButton());
-      e.getPresentation().setText(IdeBundle.messagePointer("action.presentation.EditorTabbedContainer.text"));
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      FileEditorManagerEx mgr = FileEditorManagerEx.getInstanceEx(myProject);
-      EditorWindow window;
-      if (ActionPlaces.EDITOR_TAB.equals(e.getPlace())) {
-        window = myWindow;
-      }
-      else {
-        window = mgr.getCurrentWindow();
-      }
-
-      if (window != null) {
-        if (BitUtil.isSet(e.getModifiers(), InputEvent.ALT_MASK)) {
-          window.closeAllExcept(myFile);
-        }
-        else {
-          if (window.findFileComposite(myFile) != null) {
-            mgr.closeFile(myFile, window);
-          }
-        }
-      }
-    }
   }
 
   private final class MyDataProvider implements DataProvider {
