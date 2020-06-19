@@ -183,7 +183,11 @@ public final class StartupUtil {
     activity = activity.endAndStart("LaF init scheduling");
     // EndUserAgreement.Document type is not specified to avoid class loading
     Future<Object> euaDocument = loadEuaDocument(executorService);
-    CompletableFuture<?> initUiTask = scheduleInitUi(args, executorService, euaDocument);
+    CompletableFuture<?> initUiTask = scheduleInitUi(args, executorService, euaDocument)
+      .exceptionally(e -> {
+        StartupAbortedException.processException(new StartupAbortedException("UI initialization failed", e));
+        return null;
+      });
     activity.end();
 
     if (!checkJdkVersion()) {
@@ -366,7 +370,6 @@ public final class StartupUtil {
       }
       catch (Throwable e) {
         initUiFuture.completeExceptionally(e);
-        StartupAbortedException.processException(e);
       }
     });
 
