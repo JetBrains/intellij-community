@@ -4,11 +4,13 @@ package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types
 import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.getControlFlowOwner
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.isNestedFlowProcessingAllowed
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
@@ -97,7 +99,7 @@ class SharedVariableInferenceCache(val scope: GrControlFlowOwner) {
     }
     val flow = scope.controlFlow
     val foreignDescriptors: List<ResolvedVariableDescriptor> = flow
-      .mapNotNull { it?.element as? GrControlFlowOwner }
+      .mapNotNull { (it?.element as? GrFunctionalExpression)?.getControlFlowOwner() }
       .flatMap { ControlFlowUtils.getForeignVariableDescriptors(it) { true } }
     val sharedVariables: Set<VariableDescriptor> = flow
       .asSequence()
