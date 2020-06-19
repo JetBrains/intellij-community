@@ -991,7 +991,10 @@
     IDE and Plugin Updates;Plugins Suggestion;File Watcher Messages;Built-in Server;Password Safe;Structural Search;Branch Context group;
     Automatic Module Unloading;Error Copying File;Project Startup Tasks Messages;scrolling-capabilities-debug;editor-rendering-benchmark;
     Test Runner;Merge;Diff;System shortcuts conflicts;Settings Error;Plugin Error;Memory;Low Memory;Failed to remove BOM;
-    File type recognized;Project Settings;Tutorials;System Messages"/>
+    File type recognized;Project Settings;Tutorials;System Messages"
+    notificationIds="plugins.updated.suggest.restart;plugins.updated.without.restart;ide.update.installed;ide.update.channel.switched;ide.updated.by.snap;
+       plugins.updated.after.restart;ide.patch.download.failed;ide.update.suggest.restart;ide.update.available;plugins.update.available;
+       external.components.available;no.updates.available"/>
 
     <projectService serviceImplementation="com.intellij.openapi.fileTypes.impl.FileTypeHintPersistentComponent" configurationSchemaKey="fileTypes"/>
     <fileTypeOverrider implementation="com.intellij.openapi.fileTypes.impl.FileTypeHintService"/>

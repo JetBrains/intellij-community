@@ -89,7 +89,9 @@ final class PluginUpdateInfoDialog extends AbstractUpdateDialog {
                   else {
                     message = "Updated " + result.getPluginsInstalled() + " plugins";
                   }
-                  UpdateChecker.getNotificationGroup().createNotification(message, NotificationType.INFORMATION).notify(myProject);
+                  UpdateChecker.getNotificationGroup()
+                    .createNotification("", message, NotificationType.INFORMATION, null, "plugins.updated.without.restart")
+                    .notify(myProject);
                 }
               }
             });
