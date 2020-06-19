@@ -12,34 +12,47 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WritingAccessProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-
-import static com.intellij.openapi.util.text.StringUtil.isEmpty;
+import java.util.*;
 
 @State(name = "ReadonlyStatusHandler", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements PersistentStateComponent<ReadonlyStatusHandlerImpl.State> {
+public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements PersistentStateComponent<ReadonlyStatusHandlerImpl.State> {
   private static final Logger LOG = Logger.getInstance(ReadonlyStatusHandlerImpl.class);
-  private final Project myProject;
-  protected boolean myClearReadOnlyInTests;
 
-  public static class State {
+  private final Project myProject;
+  private boolean myClearReadOnlyInTests;
+
+  public static final class State {
     public boolean SHOW_DIALOG = true;
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      State state = (State)o;
+
+      if (SHOW_DIALOG != state.SHOW_DIALOG) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return (SHOW_DIALOG ? 1 : 0);
+    }
   }
 
   private State myState = new State();
@@ -68,7 +81,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
 
     checkThreading();
 
-    Set<VirtualFile> realFiles = new THashSet<>(originalFiles.size());
+    Set<VirtualFile> realFiles = new HashSet<>(originalFiles.size());
     for (VirtualFile file : originalFiles) {
       if (file instanceof LightVirtualFile) {
         VirtualFile originalFile = ((LightVirtualFile)file).getOriginalFile();
@@ -76,7 +89,9 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
           file = originalFile;
         }
       }
-      if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
+      if (file instanceof VirtualFileWindow) {
+        file = ((VirtualFileWindow)file).getDelegate();
+      }
       if (file != null) {
         realFiles.add(file);
       }
@@ -166,11 +181,11 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     return fileInfos;
   }
 
-  public static void processFiles(final List<FileInfo> fileInfos, @Nullable String changelist) {
+  public static void processFiles(@NotNull List<FileInfo> fileInfos, @Nullable String changelist) {
     FileInfo[] copy = fileInfos.toArray(new FileInfo[0]);
-    MultiValuesMap<HandleType, VirtualFile> handleTypeToFile = new MultiValuesMap<>();
+    MultiMap<HandleType, VirtualFile> handleTypeToFile = new MultiMap<>();
     for (FileInfo fileInfo : copy) {
-      handleTypeToFile.put(fileInfo.getSelectedHandleType(), fileInfo.getFile());
+      handleTypeToFile.putValue(fileInfo.getSelectedHandleType(), fileInfo.getFile());
     }
 
     for (HandleType handleType : handleTypeToFile.keySet()) {
@@ -197,8 +212,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     myClearReadOnlyInTests = clearReadOnlyInTests;
   }
 
-  private static class OperationStatusImpl extends OperationStatus {
-
+  private static final class OperationStatusImpl extends OperationStatus {
     private final VirtualFile[] myReadonlyFiles;
     @NotNull private final String myReadOnlyReason;
 
@@ -225,7 +239,9 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     @NotNull
     public String getReadonlyFilesMessage() {
       if (hasReadonlyFiles()) {
-        if (!isEmpty(myReadOnlyReason)) return myReadOnlyReason;
+        if (!Strings.isEmpty(myReadOnlyReason)) {
+          return myReadOnlyReason;
+        }
         if (myReadonlyFiles.length > 1) {
           StringBuilder buf = new StringBuilder();
           for (VirtualFile file : myReadonlyFiles) {
