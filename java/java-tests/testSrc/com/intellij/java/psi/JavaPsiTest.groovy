@@ -240,9 +240,20 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   void "test enum with name sealed"() {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_15_PREVIEW)
-    def clazz = configureFile("enum sealed {}").classes[0]
-    assert !clazz.getAllMethods().any { it.name == "values" }
+    withLanguageLevel(LanguageLevel.JDK_15_PREVIEW) {
+      def clazz = configureFile("enum sealed {}").classes[0]
+      assert !clazz.getAllMethods().any { it.name == "values" }
+    }
+  }
+
+  private void withLanguageLevel(LanguageLevel level, Runnable r) {
+    def old = LanguageLevelProjectExtension.getInstance(getProject()).getLanguageLevel()
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(level)
+    try {
+      r.run()
+    } finally {
+      LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(old)
+    }
   }
 
   private PsiJavaFile configureFile(String text) {
