@@ -20,7 +20,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class BuildErrorNotification implements MavenLoggedEventParser {
-  private static final Pattern LINE_AND_COLUMN = Pattern.compile("[^\\d]*?(\\d+)[^\\d]*(\\d*)[])]");
+  private static final Pattern LINE_AND_COLUMN = Pattern.compile("[^\\d]+?(\\d+)[^\\d]+(\\d+)");
+  private static final Pattern LINE_ONLY = Pattern.compile("[^\\d]+?(\\d+)");
   private final String myLanguage;
   private final String myExtension;
   private final String myMessageGroup;
@@ -61,18 +62,18 @@ public abstract class BuildErrorNotification implements MavenLoggedEventParser {
 
     File parsedFile = new File(filename);
     String lineWithPosition = line.substring(fullFileNameIdx);
-    Matcher matcher = LINE_AND_COLUMN.matcher(lineWithPosition);
+    Matcher matcher = getMatcher(lineWithPosition);
     String message;
     FilePosition position;
-    if (matcher.find()) {
-      position = withLineAndColumn(parsedFile, matcher);
-      message = lineWithPosition.substring(matcher.end());
-    }
-    else {
+
+    if (matcher == null) {
       position = new FilePosition(parsedFile, 0, 0);
       message = lineWithPosition;
     }
-
+    else {
+      position = withLineAndColumn(parsedFile, matcher);
+      message = lineWithPosition.substring(matcher.end());
+    }
 
     String errorMessage = getErrorMessage(position, message);
     messageConsumer
@@ -81,32 +82,48 @@ public abstract class BuildErrorNotification implements MavenLoggedEventParser {
     return true;
   }
 
+  private Matcher getMatcher(String string) {
+    Matcher result = LINE_AND_COLUMN.matcher(string);
+    if (result.lookingAt()) {
+      return result;
+    }
+    result = LINE_ONLY.matcher(string);
+    if (result.lookingAt()) {
+      return result;
+    }
+    return null;
+  }
+
   @NotNull
   private String getErrorMessage(@NotNull FilePosition position, @NotNull String message) {
-    if (position.getStartLine() == 0) {
-      return "Error: " + myLanguage + ":" + message;
+    message = message.trim();
+    while (message.startsWith(":") || message.startsWith("]") || message.startsWith(")")) {
+      message = message.substring(1);
     }
-    if (position.getStartColumn() == 0) {
-      return "Error:(" + (position.getStartLine() + 1) + ") " + myLanguage + ":" + message;
-    }
-    return "Error:(" + (position.getStartLine() + 1) + "," + (position.getStartColumn() + 1) + ") " + myLanguage + ":" + message;
+    message = message.trim();
+
+    return message;
   }
 
   @NotNull
   private static FilePosition withLineAndColumn(File toTest, Matcher matcher) {
-    try {
-      if (matcher.groupCount() == 2) {
-        if (matcher.start(2) < 0) {
-          return new FilePosition(toTest, Integer.valueOf(matcher.group(1)) - 1, 0);
-        }
-        else {
-          return new FilePosition(toTest, Integer.valueOf(matcher.group(1)) - 1, Integer.valueOf(matcher.group(2)) - 1);
-        }
-      }
+    if (matcher.groupCount() == 2) {
+      return new FilePosition(toTest, atoi(matcher.group(1)) - 1, atoi(matcher.group(2)) - 1);
+    }
+    else if (matcher.groupCount() == 1) {
+      return new FilePosition(toTest, atoi(matcher.group(1)) - 1, 0);
+    }
+    else {
       return new FilePosition(toTest, 0, 0);
     }
+  }
+
+  private static int atoi(String s) {
+    try {
+      return Integer.valueOf(s);
+    }
     catch (NumberFormatException ignore) {
-      return new FilePosition(toTest, 0, 0);
+      return 0;
     }
   }
 }
