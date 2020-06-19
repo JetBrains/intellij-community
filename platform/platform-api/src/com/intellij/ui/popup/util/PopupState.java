@@ -15,7 +15,7 @@ import static com.intellij.openapi.util.registry.Registry.intValue;
  */
 public class PopupState implements JBPopupListener, PopupMenuListener {
   private final long threshold = intValue("ide.popup.hide.show.threshold", 200);
-  private boolean hidden;
+  private boolean hidden = true;
   private long time;
 
   private void markAsShown() {
@@ -31,6 +31,10 @@ public class PopupState implements JBPopupListener, PopupMenuListener {
     if (!hidden) return false;
     hidden = false;
     return (System.currentTimeMillis() - time) < threshold;
+  }
+
+  public boolean isHidden() {
+    return hidden;
   }
 
   // JBPopupListener
