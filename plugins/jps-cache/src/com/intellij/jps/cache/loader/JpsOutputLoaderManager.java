@@ -50,7 +50,7 @@ import static com.intellij.jps.cache.ui.JpsLoaderNotifications.STICKY_NOTIFICATI
 import static org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.OUTPUT_TAG;
 import static org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.URL_ATTRIBUTE;
 
-public class JpsOutputLoaderManager {
+public class JpsOutputLoaderManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.loader.JpsOutputLoaderManager");
   private static final String LATEST_COMMIT_ID = "JpsOutputLoaderManager.latestCommitId";
   private static final String PROGRESS_TITLE = "Updating Compiler Caches";
@@ -62,6 +62,9 @@ public class JpsOutputLoaderManager {
   private final JpsServerClient myServerClient;
   private final String myBuildOutDir;
   private final Project myProject;
+
+  @Override
+  public void dispose() { }
 
   @NotNull
   public static JpsOutputLoaderManager getInstance(@NotNull Project project) {

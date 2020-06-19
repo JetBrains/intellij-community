@@ -1,6 +1,8 @@
 package com.intellij.jps.cache.client;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -19,9 +21,10 @@ public interface JpsServerAuthExtension {
    * If the user was authenticated the callback should be invoked.
    *
    * @param presentableReason reason for the token request
+   * @param parentDisposable controls the lifetime of the authentication
    * @param onAuthCompleted callback on authentication complete, if token already exists it also should be invoked
    */
-   void checkAuthenticated(@NotNull String presentableReason, @NotNull Runnable onAuthCompleted);
+   void checkAuthenticated(@NotNull String presentableReason, @NotNull Disposable parentDisposable, @NotNull Runnable onAuthCompleted);
 
   /**
    * The method provides HTTP authentication headers for the requests to the server.
@@ -37,7 +40,12 @@ public interface JpsServerAuthExtension {
     return EP_NAME.findExtensionOrFail(JpsServerAuthExtension.class);
   }
 
-  static void checkAuthenticatedInBackgroundThread(@NotNull Runnable onAuthCompleted) {
-    INSTANCE.execute(() -> getInstance().checkAuthenticated("Jps Caches Downloader", onAuthCompleted));
+  static void checkAuthenticatedInBackgroundThread(@NotNull Disposable parentDisposable, @NotNull Runnable onAuthCompleted) {
+    Disposable disposable = Disposer.newDisposable();
+    Disposer.register(parentDisposable, disposable);
+    INSTANCE.execute(() -> getInstance().checkAuthenticated("Jps Caches Downloader", disposable, () -> {
+      Disposer.dispose(disposable);
+      onAuthCompleted.run();
+    }));
   }
 }
