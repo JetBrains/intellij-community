@@ -5,7 +5,6 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.DisposableWrapper;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -57,8 +56,8 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   private final CompositeFilterWrapper myCompositeFilterWrapper;
   private JBTerminalWidgetListener myListener;
 
-  private @NotNull JBTerminalWidgetDisposableWrapper myDisposableWrapper;
-  private VirtualFile myVirtualFile;
+  private final @NotNull JBTerminalWidgetDisposableWrapper myDisposableWrapper;
+  private @Nullable VirtualFile myVirtualFile;
 
   public JBTerminalWidget(@NotNull Project project,
                           @NotNull JBTerminalSystemSettingsProviderBase settingsProvider,
@@ -77,7 +76,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     myCompositeFilterWrapper = new CompositeFilterWrapper(project, console);
     addHyperlinkFilter(line -> runFilters(project, line));
     setName("terminal");
-    myDisposableWrapper = new JBTerminalWidgetDisposableWrapper(this, parent);
+    myDisposableWrapper = new JBTerminalWidgetDisposableWrapper(parent);
   }
 
   @Nullable
@@ -281,10 +280,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   }
 
   public void moveDisposable(@NotNull Disposable newParent) {
-    JBTerminalWidgetDisposableWrapper newWrapper = myDisposableWrapper.moveTo(newParent);
-    if (newWrapper != null) {
-      myDisposableWrapper = newWrapper;
-    }
+    Disposer.register(newParent, myDisposableWrapper);
   }
 
   public void setVirtualFile(@Nullable VirtualFile virtualFile) {
@@ -292,11 +288,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
       throw new IllegalStateException("assigning a second virtual file to a terminal widget");
     }
     myVirtualFile = virtualFile;
-  }
-
-  @Nullable
-  public VirtualFile getVirtualFile() {
-    return myVirtualFile;
   }
 
   public void notifyStarted() {
@@ -337,32 +328,22 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     return null;
   }
 
-  private static final class JBTerminalWidgetDisposableWrapper extends DisposableWrapper<JBTerminalWidget> {
-    private final JBTerminalWidget myObject;
-
-    private JBTerminalWidgetDisposableWrapper(JBTerminalWidget object, Disposable parent) {
-      super(object, parent);
-      myObject = object;
+  private final class JBTerminalWidgetDisposableWrapper implements Disposable {
+    private JBTerminalWidgetDisposableWrapper(@NotNull Disposable parent) {
+      Disposer.register(parent, this);
     }
 
     @Override
     public void dispose() {
-      VirtualFile virtualFile = myObject.getVirtualFile();
+      VirtualFile virtualFile = myVirtualFile;
       if (virtualFile != null && virtualFile.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN) != null) {
         return; // don't dispose terminal widget during file reopening
       }
-      super.dispose();
+      Disposer.dispose(JBTerminalWidget.this);
     }
 
-    @Override
-    public @Nullable JBTerminalWidgetDisposableWrapper moveTo(@NotNull Disposable parent) {
-      return (JBTerminalWidgetDisposableWrapper)super.moveTo(parent);
-    }
-
-    @NotNull
-    @Override
-    protected JBTerminalWidgetDisposableWrapper createNewWrapper(JBTerminalWidget object, @NotNull Disposable parent) {
-      return new JBTerminalWidgetDisposableWrapper(object, parent);
+    public void setParentDisposable(@NotNull Disposable parent) {
+      Disposer.register(parent, this);
     }
   }
 }
