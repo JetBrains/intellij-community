@@ -6,7 +6,6 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationDisplayType.STICKY_BALLOON
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
@@ -19,12 +18,13 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.DisposableWrapperList
 
 @State(name = "UnlinkedProjectNotification", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 class UnlinkedProjectNotificationAware(private val project: Project) : PersistentStateComponent<UnlinkedProjectNotificationAware.State> {
 
   private val disabledNotifications = ContainerUtil.newConcurrentSet<String>()
-  private val notificationDisposables = HashMap<String, Disposable>()
+  private val notifiedNotifications = DisposableWrapperList<String>()
 
   fun notify(unlinkedProjectAware: ExternalSystemUnlinkedProjectAware, externalProjectPath: String) {
     ApplicationManager.getApplication().assertIsDispatchThread()
@@ -33,7 +33,7 @@ class UnlinkedProjectNotificationAware(private val project: Project) : Persisten
     val systemName = unlinkedProjectAware.systemId.readableName
 
     if (systemId in disabledNotifications) return
-    if (systemId in notificationDisposables) return
+    if (systemId in notifiedNotifications) return
 
     val notification = NOTIFICATION_GROUP.createNotification(
       message("unlinked.project.notification.title", systemName),
@@ -41,21 +41,21 @@ class UnlinkedProjectNotificationAware(private val project: Project) : Persisten
     )
 
     val notificationDisposable = Disposer.newDisposable()
-    notificationDisposables[systemId] = notificationDisposable
-    Disposer.register(notificationDisposable, Disposable { notificationDisposables.remove(systemId) })
-    Disposer.register(notificationDisposable, Disposable { notification.expire() })
+    Disposer.register(project, notificationDisposable)
+    notifiedNotifications.add(systemId, notificationDisposable)
+    notification.whenExpired { Disposer.dispose(notificationDisposable) }
     unlinkedProjectAware.subscribe(project, object : ExternalSystemProjectListener {
       override fun onProjectLinked(externalProjectPath: String) {
-        Disposer.dispose(notificationDisposable)
+        notification.expire()
       }
     }, notificationDisposable)
 
     notification.addAction(NotificationAction.createSimpleExpiring(message("unlinked.project.notification.load.action", systemName)) {
-      Disposer.dispose(notificationDisposable)
+      notification.expire()
       unlinkedProjectAware.linkAndLoadProject(project, externalProjectPath)
     })
     notification.addAction(NotificationAction.createSimple(message("unlinked.project.notification.skip.action")) {
-      Disposer.dispose(notificationDisposable)
+      notification.expire()
       disabledNotifications.add(systemId)
     })
     notification.contextHelpAction = object : DumbAwareAction(

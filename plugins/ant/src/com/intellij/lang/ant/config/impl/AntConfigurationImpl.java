@@ -260,9 +260,9 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
                   myInitThread = Thread.currentThread();
                   // first, remove existing files
                   for (AntBuildFile file : myBuildFiles) {
+                    myBuildFiles.remove(file);
                     removeBuildFileImpl(file);
                   }
-                  myBuildFiles.clear();
 
                   // then fill the configuration with the files configured in xml
                   final VirtualFileManager vfManager = VirtualFileManager.getInstance();
@@ -446,9 +446,9 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   private void removeBuildFiles(Collection<AntBuildFileBase> files) {
     for (AntBuildFileBase file : files) {
       incModificationCount();
+      myBuildFiles.remove(file);
       removeBuildFileImpl(file);
     }
-    myBuildFiles.removeAll(files);
     updateRegisteredActions();
   }
 

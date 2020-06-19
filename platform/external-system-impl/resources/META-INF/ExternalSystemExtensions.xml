@@ -36,7 +36,7 @@
 
     <!--Auto-link-->
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.autolink.UnlinkedProjectNotificationAware"/>
-    <postStartupActivity implementation="com.intellij.openapi.externalSystem.autolink.UnlinkedProjectStartupActivity"/>
+    <backgroundPostStartupActivity implementation="com.intellij.openapi.externalSystem.autolink.UnlinkedProjectStartupActivity"/>
     <notificationWhitelist groupIds="External System Auto-Link Notification Group"/>
 
     <!--Project structure management services-->

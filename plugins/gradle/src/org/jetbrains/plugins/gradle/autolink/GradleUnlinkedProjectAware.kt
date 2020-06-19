@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemProjectListener
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
 import com.intellij.openapi.project.Project
-import com.intellij.util.PathUtil
+import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter
 import org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
@@ -16,9 +16,8 @@ import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 class GradleUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
   override val systemId = SYSTEM_ID
 
-  override fun isBuildFile(buildFile: String): Boolean {
-    val buildFileName = PathUtil.getFileName(buildFile)
-    return buildFileName in KNOWN_GRADLE_FILES
+  override fun isBuildFile(project: Project, buildFile: VirtualFile): Boolean {
+    return buildFile.name in KNOWN_GRADLE_FILES
   }
 
   override fun isLinkedProject(project: Project, externalProjectPath: String): Boolean {

@@ -34,6 +34,7 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem" />
   </component>
   <component name="copyright">
     <Base>
