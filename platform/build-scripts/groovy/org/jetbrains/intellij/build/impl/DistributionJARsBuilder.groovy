@@ -1125,10 +1125,10 @@ class DistributionJARsBuilder {
                     "<version>[\\d.]*</version>",
                     "<version>${pluginVersion}</version>")
             .replaceFirst(
-                    "<idea-version\\s+since-build=\"\\d+\\.\\d+\"\\s+until-build=\"\\d+\\.\\d+\"",
+                    "<idea-version\\s+since-build=\"(\\d+\\.)+\\d+\"\\s+until-build=\"(\\d+\\.)+\\d+\"",
                     "<idea-version since-build=\"${sinceUntil.first}\" until-build=\"${sinceUntil.second}\"")
             .replaceFirst(
-                    "<idea-version\\s+since-build=\"\\d+\\.\\d+\"",
+                    "<idea-version\\s+since-build=\"(\\d+\\.)+\\d+\"",
                     "<idea-version since-build=\"${sinceUntil.first}\"")
             .replaceFirst(
                     "<change-notes>\\s+<\\!\\[CDATA\\[\\s*Plugin version: \\\$\\{version\\}",
