@@ -14,9 +14,12 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.GithubUtil
 import java.awt.Component
 
-internal class InteractiveSelectGithubAccountHttpAuthDataProvider(private val project: Project,
-                                                                  private val potentialAccounts: Collection<GithubAccount>,
-                                                                  private val authenticationManager: GithubAuthenticationManager) : InteractiveGitHttpAuthDataProvider {
+internal class InteractiveSelectGithubAccountHttpAuthDataProvider(
+  private val project: Project,
+  private val potentialAccounts: Collection<GithubAccount>
+) : InteractiveGitHttpAuthDataProvider {
+
+  private val authenticationManager get() = GithubAuthenticationManager.getInstance()
 
   @CalledInAwt
   override fun getAuthData(parentComponent: Component?): AuthData? {
