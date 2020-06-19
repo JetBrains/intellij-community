@@ -214,8 +214,11 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.showMainToolbar = value
     }
 
-  val showIconsInMenus: Boolean
-    get() = Registry.`is`("ide.show.icons.in.menus")
+  var showIconsInMenus: Boolean
+    get() = state.showIconsInMenus
+    set(value) {
+      state.showIconsInMenus = value
+    }
 
   var sortLookupElementsLexicographically: Boolean
     get() = state.sortLookupElementsLexicographically
