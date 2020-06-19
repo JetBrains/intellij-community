@@ -664,7 +664,7 @@
     <runConfigurationProducer implementation="com.intellij.execution.scratch.JavaScratchConfigurationProducer"/>
     <configurationType implementation="com.intellij.execution.remote.RemoteConfigurationType"/>
 
-    <experimentalFeature id="ide.new.run.config" percentOfUsers="100">
+    <experimentalFeature id="ide.new.run.config" percentOfUsers="0">
       <description>Enable new run configuration UI (for Java Application run configurations)</description>
     </experimentalFeature>
 
