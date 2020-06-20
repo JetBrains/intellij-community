@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.history;
 
+import static com.intellij.util.ObjectUtils.notNull;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.reverseOrder;
 
@@ -53,16 +54,7 @@ import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.ColoredTableCellRenderer;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.OnePixelSplitter;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SideBorder;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.SpeedSearchComparator;
-import com.intellij.ui.TableSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.dualView.CellWrapper;
 import com.intellij.ui.dualView.DualView;
 import com.intellij.ui.dualView.DualViewColumnInfo;
@@ -76,6 +68,7 @@ import com.intellij.util.TreeItem;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -102,6 +95,7 @@ import javax.swing.JTable;
 import javax.swing.JTree;
 import javax.swing.RowSorter;
 import javax.swing.SortOrder;
+import javax.swing.border.CompoundBorder;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 import javax.swing.tree.TreeCellRenderer;
@@ -209,7 +203,17 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
       action.registerCustomShortcutSet(action.getShortcutSet(), centerPanel);
     }
 
-    add(centerPanel, BorderLayout.CENTER);
+    JComponent mainPanel = new JPanel(new BorderLayout());
+
+    EditorNotificationPanel notificationLabel = components.getNotificationPanel();
+    if (notificationLabel != null) {
+      notificationLabel.setBorder(new CompoundBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 1, 1),
+                                                     notNull(notificationLabel.getBorder(), JBUI.Borders.empty())));
+      mainPanel.add(notificationLabel, BorderLayout.NORTH);
+    }
+    mainPanel.add(centerPanel, BorderLayout.CENTER);
+
+    add(mainPanel, BorderLayout.CENTER);
     add(toolbar.getComponent(), isStaticEmbedded ? BorderLayout.NORTH : BorderLayout.WEST);
 
     chooseView();

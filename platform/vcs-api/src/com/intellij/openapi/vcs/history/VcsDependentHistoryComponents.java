@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.history;
 
+import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
@@ -27,14 +28,22 @@ public class VcsDependentHistoryComponents {
   private final @Nullable Consumer<VcsFileRevision> myRevisionListener;
   private final @Nullable JComponent myDetailsComponent;
 
-  public VcsDependentHistoryComponents(ColumnInfo[] columns, @Nullable Consumer<VcsFileRevision> revisionListener, @Nullable JComponent detailsComponent) {
+  private final @Nullable EditorNotificationPanel myNotificationPanel;
+
+  public VcsDependentHistoryComponents(ColumnInfo[] columns, @Nullable Consumer<VcsFileRevision> revisionListener, @Nullable JComponent detailsComponent,
+                                       @Nullable EditorNotificationPanel notificationPanel) {
     myColumns = columns;
     myRevisionListener = revisionListener;
     myDetailsComponent = detailsComponent;
+    myNotificationPanel = notificationPanel;
+  }
+
+  public VcsDependentHistoryComponents(ColumnInfo[] columns, @Nullable Consumer<VcsFileRevision> revisionListener, @Nullable JComponent detailsComponent) {
+    this(columns, revisionListener, detailsComponent, null);
   }
 
   public static @NotNull VcsDependentHistoryComponents createOnlyColumns(ColumnInfo @NotNull [] columns) {
-    return new VcsDependentHistoryComponents(columns, null, null);
+    return new VcsDependentHistoryComponents(columns, null, null, null);
   }
 
   public ColumnInfo[] getColumns() {
@@ -47,5 +56,9 @@ public class VcsDependentHistoryComponents {
 
   public @Nullable JComponent getDetailsComponent() {
     return myDetailsComponent;
+  }
+
+  public @Nullable EditorNotificationPanel getNotificationPanel() {
+    return myNotificationPanel;
   }
 }
