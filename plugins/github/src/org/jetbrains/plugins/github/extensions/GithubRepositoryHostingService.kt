@@ -11,7 +11,6 @@ import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.GithubApiRequests
-import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubRepo
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader.loadAll
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
@@ -40,13 +39,8 @@ internal class GithubRepositoryHostingService : GitRepositoryHostingService() {
 
   private fun getProvider(project: Project, url: String, login: String?): InteractiveGitHttpAuthDataProvider? {
     val accounts = getGitAuthenticationAccounts(project, url, login)
-    if (accounts.isNotEmpty()) {
-      return InteractiveSelectGithubAccountHttpAuthDataProvider(project, accounts)
-    }
-    if (GithubServerPath.DEFAULT_SERVER.matches(url)) {
-      return InteractiveCreateGithubAccountHttpAuthDataProvider(project, GithubServerPath.DEFAULT_SERVER, login)
-    }
-    return null
+
+    return if (accounts.isNotEmpty()) InteractiveSelectGithubAccountHttpAuthDataProvider(project, accounts) else null
   }
 }
 
