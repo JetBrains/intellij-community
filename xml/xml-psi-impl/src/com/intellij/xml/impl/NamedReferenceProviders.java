@@ -78,8 +78,8 @@ public final class NamedReferenceProviders {
     private final Map<String, List<XmlNamedReferenceProviderBean>> myCaseInsensitiveMap;
 
     ByHostClass(@NotNull List<XmlNamedReferenceProviderBean> beans) {
-      THashMap<String, List<XmlNamedReferenceProviderBean>> caseSensitiveMap = new THashMap<>();
-      THashMap<String, List<XmlNamedReferenceProviderBean>> caseInsensitiveMap = new THashMap<>(
+      Map<String, List<XmlNamedReferenceProviderBean>> caseSensitiveMap = new THashMap<>();
+      Map<String, List<XmlNamedReferenceProviderBean>> caseInsensitiveMap = new THashMap<>(
         CaseInsensitiveStringHashingStrategy.INSTANCE
       );
 
@@ -91,8 +91,8 @@ public final class NamedReferenceProviders {
         }
       }
 
-      caseSensitiveMap.compact();
-      caseInsensitiveMap.compact();
+      ContainerUtil.trimMap(caseSensitiveMap);
+      ContainerUtil.trimMap(caseInsensitiveMap);
 
       myCaseSensitiveMap = caseSensitiveMap;
       myCaseInsensitiveMap = caseInsensitiveMap;

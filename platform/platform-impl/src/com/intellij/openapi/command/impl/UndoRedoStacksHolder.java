@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,7 @@ final class UndoRedoStacksHolder {
   private final LinkedList<UndoableGroup> myGlobalStack = new LinkedList<>();
   // strongly reference local files for which we can undo file removal
   // document without files and nonlocal files are stored without strong reference
-  private final Object2ObjectOpenHashMap<DocumentReference, LinkedList<UndoableGroup>> myDocumentStacks = new Object2ObjectOpenHashMap<>();
+  private final Map<DocumentReference, LinkedList<UndoableGroup>> myDocumentStacks = new Object2ObjectOpenHashMap<>();
   private final Collection<Document> myDocumentsWithStacks = new WeakList<>();
   private final Collection<VirtualFile> myNonlocalVirtualFilesWithStacks = new WeakList<>();
 
@@ -172,7 +173,7 @@ final class UndoRedoStacksHolder {
     }
 
     myDocumentStacks.entrySet().removeIf(each -> each.getValue().isEmpty());
-    myDocumentStacks.trim(); // make sure the following entrySet iteration will not go over empty buckets.
+    ContainerUtil.trimMap(myDocumentStacks); // make sure the following entrySet iteration will not go over empty buckets.
 
     cleanWeaklyTrackedEmptyStacks(myDocumentsWithStacks);
     cleanWeaklyTrackedEmptyStacks(myNonlocalVirtualFilesWithStacks);

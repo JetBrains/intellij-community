@@ -53,8 +53,8 @@ public class TextMateServiceImpl extends TextMateService {
 
   private final AtomicBoolean myInitialized = new AtomicBoolean(false);
 
-  private final THashMap<CharSequence, TextMateTextAttributesAdapter> myCustomHighlightingColors = new THashMap<>();
-  private final THashMap<String, CharSequence> myExtensionsMapping = new THashMap<>();
+  private final Map<CharSequence, TextMateTextAttributesAdapter> myCustomHighlightingColors = new THashMap<>();
+  private final Map<String, CharSequence> myExtensionsMapping = new THashMap<>();
 
   private final PlistReader myPlistReader = new CompositePlistReader();
   private final BundleFactory myBundleFactory = new BundleFactory(myPlistReader);
@@ -80,7 +80,7 @@ public class TextMateServiceImpl extends TextMateService {
   }
 
   private void registerBundles(boolean fireEvents) {
-    THashMap<String, CharSequence> oldExtensionsMapping = myExtensionsMapping.clone();
+    Map<String, CharSequence> oldExtensionsMapping = new THashMap<>(myExtensionsMapping);
     unregisterAllBundles();
 
     TextMateSettings settings = TextMateSettings.getInstance();
@@ -105,7 +105,7 @@ public class TextMateServiceImpl extends TextMateService {
       Runnable update = () -> {
         myExtensionsMapping.clear();
         myExtensionsMapping.putAll(newExtensionsMapping);
-        myExtensionsMapping.trimToSize();
+        ContainerUtil.trimMap(myExtensionsMapping);
       };
 
       if (fireEvents) {
@@ -116,7 +116,7 @@ public class TextMateServiceImpl extends TextMateService {
       }
     }
     mySyntaxTable.compact();
-    myCustomHighlightingColors.trimToSize();
+    ContainerUtil.trimMap(myCustomHighlightingColors);
   }
 
   private static void fireFileTypesChangedEvent(@NotNull Runnable update) {

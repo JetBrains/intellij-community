@@ -5,6 +5,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.*;
 import com.intellij.util.*;
 import gnu.trove.*;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -321,6 +323,7 @@ public class ContainerUtil {
   @SafeVarargs
   @Contract(pure = true)
   public static @NotNull <T> HashSet<T> newHashSet(T @NotNull ... elements) {
+    //noinspection SSBasedInspection
     return new HashSet<>(Arrays.asList(elements));
   }
 
@@ -612,6 +615,18 @@ public class ContainerUtil {
         iterator.remove();
       }
     };
+  }
+
+  public static void trimMap(@NotNull Map<?,?> map) {
+    if (map instanceof Object2ObjectOpenHashMap<?, ?>) {
+      ((Object2ObjectOpenHashMap<?, ?>)map).trim();
+    }
+    else if (map instanceof THashMap) {
+      ((THashMap<?, ?>)map).trimToSize();
+    }
+    else if (map instanceof Object2ObjectOpenCustomHashMap) {
+      ((Object2ObjectOpenCustomHashMap<?, ?>)map).trim();
+    }
   }
 
   public static final class ImmutableMapBuilder<K, V> {
@@ -1042,7 +1057,7 @@ public class ContainerUtil {
   }
 
   @Contract(pure=true)
-  public static <T, V> V @NotNull [] map2Array(@NotNull Collection<? extends T> collection, V @NotNull [] to, @NotNull Function<? super T, V> mapper) {
+  public static <T, V> V @NotNull [] map2Array(@NotNull Collection<? extends T> collection, V @NotNull [] to, @NotNull Function<? super T, ? extends V> mapper) {
     return map2List(collection, mapper).toArray(to);
   }
 
