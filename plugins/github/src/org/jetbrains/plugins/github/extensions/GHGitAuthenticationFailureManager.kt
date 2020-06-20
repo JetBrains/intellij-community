@@ -7,7 +7,7 @@ import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedL
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import java.util.concurrent.ConcurrentHashMap
 
-class GithubAccountGitAuthenticationFailureManager {
+internal class GHGitAuthenticationFailureManager {
   private val storeMap = ConcurrentHashMap<GithubAccount, Set<String>>()
 
   fun ignoreAccount(url: String, account: GithubAccount) {
@@ -18,7 +18,7 @@ class GithubAccountGitAuthenticationFailureManager {
 
   class AccountTokenListener(private val project: Project) : AccountTokenChangedListener {
     override fun tokenChanged(account: GithubAccount) {
-      project.service<GithubAccountGitAuthenticationFailureManager>().storeMap.remove(account)
+      project.service<GHGitAuthenticationFailureManager>().storeMap.remove(account)
     }
   }
 }

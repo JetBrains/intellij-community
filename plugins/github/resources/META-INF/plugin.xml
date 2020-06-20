@@ -37,7 +37,7 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubImageResizer"/>
 
-    <projectService serviceImplementation="org.jetbrains.plugins.github.extensions.GithubAccountGitAuthenticationFailureManager"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.github.extensions.GHGitAuthenticationFailureManager"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.util.GithubProjectSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.util.GithubSharedProjectSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder"/>
@@ -91,7 +91,7 @@
     <listener class="org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder$RemovalListener"
               topic="org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
-    <listener class="org.jetbrains.plugins.github.extensions.GithubAccountGitAuthenticationFailureManager$AccountTokenListener"
+    <listener class="org.jetbrains.plugins.github.extensions.GHGitAuthenticationFailureManager$AccountTokenListener"
               topic="org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
 
@@ -107,9 +107,9 @@
   </projectListeners>
 
   <extensions defaultExtensionNs="Git4Idea">
-    <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.github.extensions.GithubHttpAuthDataProvider"/>
+    <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.github.extensions.GHHttpAuthDataProvider"/>
     <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.github.extensions.GHComHttpAuthDataProvider"/>
-    <gitRepositoryHostingService implementation="org.jetbrains.plugins.github.extensions.GithubRepositoryHostingService"/>
+    <gitRepositoryHostingService implementation="org.jetbrains.plugins.github.extensions.GHRepositoryHostingService"/>
   </extensions>
 
   <actions>

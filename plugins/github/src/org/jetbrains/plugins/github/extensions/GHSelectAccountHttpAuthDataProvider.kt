@@ -14,7 +14,7 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.GithubUtil
 import java.awt.Component
 
-internal class InteractiveSelectGithubAccountHttpAuthDataProvider(
+internal class GHSelectAccountHttpAuthDataProvider(
   private val project: Project,
   private val potentialAccounts: Collection<GithubAccount>
 ) : InteractiveGitHttpAuthDataProvider {

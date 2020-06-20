@@ -18,13 +18,13 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
-import org.jetbrains.plugins.github.extensions.GithubHttpAuthDataProvider.Companion.getGitAuthenticationAccounts
+import org.jetbrains.plugins.github.extensions.GHHttpAuthDataProvider.Companion.getGitAuthenticationAccounts
 import org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper
 import org.jetbrains.plugins.github.util.GithubGitHelper
 import org.jetbrains.plugins.github.util.GithubUtil
 import java.awt.Component
 
-internal class GithubRepositoryHostingService : GitRepositoryHostingService() {
+internal class GHRepositoryHostingService : GitRepositoryHostingService() {
   override fun getServiceDisplayName(): String = GithubUtil.SERVICE_DISPLAY_NAME
 
   override fun getRepositoryListLoader(project: Project): RepositoryListLoader = GHRepositoryListLoader(project)
@@ -40,7 +40,7 @@ internal class GithubRepositoryHostingService : GitRepositoryHostingService() {
   private fun getProvider(project: Project, url: String, login: String?): InteractiveGitHttpAuthDataProvider? {
     val accounts = getGitAuthenticationAccounts(project, url, login)
 
-    return if (accounts.isNotEmpty()) InteractiveSelectGithubAccountHttpAuthDataProvider(project, accounts) else null
+    return if (accounts.isNotEmpty()) GHSelectAccountHttpAuthDataProvider(project, accounts) else null
   }
 }
 
