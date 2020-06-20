@@ -53,7 +53,8 @@ public final class GitHistoryProvider implements VcsHistoryProviderEx,
 
   @Override
   public VcsDependentHistoryComponents getUICustomization(final VcsHistorySession session, JComponent forShortcutRegistration) {
-    return VcsDependentHistoryComponents.createOnlyColumns(ColumnInfo.EMPTY_ARRAY);
+    return new VcsDependentHistoryComponents(ColumnInfo.EMPTY_ARRAY, null, null,
+                                             GitHistoryNotificationPanel.create(myProject, session));
   }
 
   @Override
@@ -92,32 +93,7 @@ public final class GitHistoryProvider implements VcsHistoryProviderEx,
 
   private VcsAbstractHistorySession createSession(final FilePath filePath, final List<? extends VcsFileRevision> revisions,
                                                   @Nullable final VcsRevisionNumber number) {
-    return new VcsAbstractHistorySession(revisions, number) {
-      @Override
-      @Nullable
-      protected VcsRevisionNumber calcCurrentRevisionNumber() {
-        try {
-          return GitHistoryUtils.getCurrentRevision(myProject, filePath, "HEAD");
-        }
-        catch (VcsException e) {
-          // likely the file is not under VCS anymore.
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Unable to retrieve the current revision number", e);
-          }
-          return null;
-        }
-      }
-
-      @Override
-      public HistoryAsTreeProvider getHistoryAsTreeProvider() {
-        return null;
-      }
-
-      @Override
-      public VcsHistorySession copy() {
-        return createSession(filePath, getRevisionList(), getCurrentRevisionNumber());
-      }
-    };
+    return new GitHistorySession(filePath, number, revisions);
   }
 
   @Nullable
@@ -180,5 +156,43 @@ public final class GitHistoryProvider implements VcsHistoryProviderEx,
     GitRepositoryManager manager = GitUtil.getRepositoryManager(myProject);
     GitRepository repository = manager.getRepositoryForFileQuick(file);
     return repository != null && !repository.isFresh();
+  }
+
+  class GitHistorySession extends VcsAbstractHistorySession {
+    private final @NotNull FilePath myFilePath;
+
+    GitHistorySession(@NotNull FilePath filePath, @Nullable VcsRevisionNumber number, @NotNull List<? extends VcsFileRevision> revisions) {
+      super(revisions, number);
+      myFilePath = filePath;
+    }
+
+    @Override
+    @Nullable
+    protected VcsRevisionNumber calcCurrentRevisionNumber() {
+      try {
+        return GitHistoryUtils.getCurrentRevision(myProject, myFilePath, "HEAD");
+      }
+      catch (VcsException e) {
+        // likely the file is not under VCS anymore.
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Unable to retrieve the current revision number", e);
+        }
+        return null;
+      }
+    }
+
+    @Override
+    public HistoryAsTreeProvider getHistoryAsTreeProvider() {
+      return null;
+    }
+
+    @Override
+    public VcsHistorySession copy() {
+      return createSession(myFilePath, getRevisionList(), getCurrentRevisionNumber());
+    }
+
+    @NotNull FilePath getFilePath() {
+      return myFilePath;
+    }
   }
 }
