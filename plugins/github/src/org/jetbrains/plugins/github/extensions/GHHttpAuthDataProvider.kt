@@ -16,11 +16,11 @@ import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 
-private val LOG = logger<GithubHttpAuthDataProvider>()
+private val LOG = logger<GHHttpAuthDataProvider>()
 
 class GHAccountAuthData(val account: GithubAccount, login: String, token: String) : AuthData(login, token)
 
-class GithubHttpAuthDataProvider : GitHttpAuthDataProvider {
+internal class GHHttpAuthDataProvider : GitHttpAuthDataProvider {
   override fun isSilent(): Boolean = true
 
   override fun getAuthData(project: Project, url: String): GHAccountAuthData? {
@@ -41,12 +41,12 @@ class GithubHttpAuthDataProvider : GitHttpAuthDataProvider {
   override fun forgetPassword(project: Project, url: String, authData: AuthData) {
     if (authData !is GHAccountAuthData) return
 
-    project.service<GithubAccountGitAuthenticationFailureManager>().ignoreAccount(url, authData.account)
+    project.service<GHGitAuthenticationFailureManager>().ignoreAccount(url, authData.account)
   }
 
   companion object {
     fun getGitAuthenticationAccounts(project: Project, url: String, login: String?): Set<GithubAccount> {
-      val authenticationFailureManager = project.service<GithubAccountGitAuthenticationFailureManager>()
+      val authenticationFailureManager = project.service<GHGitAuthenticationFailureManager>()
       val authenticationManager = GithubAuthenticationManager.getInstance()
       val potentialAccounts = authenticationManager.getAccounts()
         .filter { it.server.matches(url) }

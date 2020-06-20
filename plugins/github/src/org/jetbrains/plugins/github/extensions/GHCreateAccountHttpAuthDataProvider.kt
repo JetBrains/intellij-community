@@ -11,7 +11,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.util.GithubUtil
 import java.awt.Component
 
-internal class InteractiveCreateGithubAccountHttpAuthDataProvider(
+internal class GHCreateAccountHttpAuthDataProvider(
   private val project: Project,
   private val serverPath: GithubServerPath,
   private val login: String? = null

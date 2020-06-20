@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
 import git4idea.remote.GitHttpAuthDataProvider
 import org.jetbrains.plugins.github.api.GithubServerPath.DEFAULT_SERVER
-import org.jetbrains.plugins.github.extensions.GithubHttpAuthDataProvider.Companion.getGitAuthenticationAccounts
+import org.jetbrains.plugins.github.extensions.GHHttpAuthDataProvider.Companion.getGitAuthenticationAccounts
 
 private class GHComHttpAuthDataProvider : GitHttpAuthDataProvider {
   override fun isSilent(): Boolean = false
@@ -28,8 +28,8 @@ private class GHComHttpAuthDataProvider : GitHttpAuthDataProvider {
 private fun getAuthDataOrCancel(project: Project, url: String, login: String?): AuthData {
   val accounts = getGitAuthenticationAccounts(project, url, login)
   val provider =
-    if (accounts.isEmpty()) InteractiveCreateGithubAccountHttpAuthDataProvider(project, DEFAULT_SERVER, login)
-    else InteractiveSelectGithubAccountHttpAuthDataProvider(project, accounts)
+    if (accounts.isEmpty()) GHCreateAccountHttpAuthDataProvider(project, DEFAULT_SERVER, login)
+    else GHSelectAccountHttpAuthDataProvider(project, accounts)
   val authData = invokeAndWaitIfNeeded { provider.getAuthData(null) }
 
   return authData ?: throw ProcessCanceledException()
