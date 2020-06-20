@@ -437,7 +437,7 @@ public final class CommandLineUtil {
   /**
    * Counts quote parity needed to ^-escape special chars on Windows properly.
    */
-  private static class QuoteFlag {
+  private static final class QuoteFlag {
     private boolean enabled;
 
     private QuoteFlag(boolean value) {

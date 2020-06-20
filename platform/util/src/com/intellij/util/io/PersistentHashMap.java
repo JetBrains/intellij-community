@@ -85,7 +85,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
     return myEnumerator.isCorrupted();
   }
 
-  private static class AppendStream extends DataOutputStream {
+  private static final class AppendStream extends DataOutputStream {
     private AppendStream() {
       super(null);
     }

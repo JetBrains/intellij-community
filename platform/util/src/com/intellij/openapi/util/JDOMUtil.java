@@ -723,7 +723,7 @@ public final class JDOMUtil {
     }
   }
 
-  private static class ElementInfo {
+  private static final class ElementInfo {
     final @NotNull CharSequence name;
     final boolean hasNullAttributes;
 

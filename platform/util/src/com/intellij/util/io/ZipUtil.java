@@ -130,7 +130,7 @@ public final class ZipUtil {
     new Decompressor.Zip(file).filter(FileFilterAdapter.wrap(outputDir, filter)).overwrite(overwrite).extract(outputDir);
   }
 
-  private static class FileFilterAdapter implements Condition<String> {
+  private static final class FileFilterAdapter implements Condition<String> {
     private static FileFilterAdapter wrap(File outputDir, @Nullable FilenameFilter filter) {
       return filter == null ? null : new FileFilterAdapter(outputDir, filter);
     }

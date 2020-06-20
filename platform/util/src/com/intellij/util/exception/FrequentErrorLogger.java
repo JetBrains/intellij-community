@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.exception;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * so that instead of polluting the log with hundreds of {@link Logger#error(Throwable) LOG.errors} it prints the error message
  * and the stacktrace once in a while.
  */
-public class FrequentErrorLogger {
+public final class FrequentErrorLogger {
 
   private static final int REPORT_EVERY_NUM = 1000;
   @NotNull private final Map<Integer, Integer> ourReportedIssues = new ConcurrentHashMap<>(); // stacktrace hash -> number of reports

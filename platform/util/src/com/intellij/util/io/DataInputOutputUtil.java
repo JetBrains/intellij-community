@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-public class DataInputOutputUtil extends DataInputOutputUtilRt {
+public final class DataInputOutputUtil extends DataInputOutputUtilRt {
   public static final long timeBase = 33L * 365L * 24L * 3600L * 1000L;
 
   private DataInputOutputUtil() { }

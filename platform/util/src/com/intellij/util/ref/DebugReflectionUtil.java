@@ -11,9 +11,10 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.FList;
 import com.intellij.util.containers.Queue;
-import gnu.trove.THashMap;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Unsafe;
@@ -28,18 +29,19 @@ import java.util.List;
 import java.util.Map;
 
 public final class DebugReflectionUtil {
-  private static final Map<Class, Field[]> allFields = new THashMap<>(new TObjectHashingStrategy<Class>() {
+  private static final Map<Class<?>, Field[]> allFields = new Object2ObjectOpenCustomHashMap<>(new Hash.Strategy<Class<?>>() {
     // default strategy seems to be too slow
     @Override
-    public int computeHashCode(Class aClass) {
-      return aClass.getName().hashCode();
+    public int hashCode(@Nullable Class<?> aClass) {
+      return aClass == null ? 0 : aClass.getName().hashCode();
     }
 
     @Override
-    public boolean equals(Class o1, Class o2) {
+    public boolean equals(@Nullable Class<?> o1, @Nullable Class<?> o2) {
       return o1 == o2;
     }
   });
+
   private static final Field[] EMPTY_FIELD_ARRAY = new Field[0];
   private static final Method Unsafe_shouldBeInitialized = ReflectionUtil.getDeclaredMethod(Unsafe.class, "shouldBeInitialized", Class.class);
 
@@ -96,6 +98,7 @@ public final class DebugReflectionUtil {
       isInitialized = !(Boolean)Unsafe_shouldBeInitialized.invoke(AtomicFieldUpdater.getUnsafe(), root);
     }
     catch (Exception e) {
+      //noinspection CallToPrintStackTrace
       e.printStackTrace();
     }
     return isInitialized;
@@ -108,7 +111,7 @@ public final class DebugReflectionUtil {
                                     @NotNull final Class<?> lookFor,
                                     @NotNull Condition<Object> shouldExamineValue,
                                     @NotNull final PairProcessor<Object, ? super BackLink> leakProcessor) {
-    TIntHashSet visited = new TIntHashSet(100);
+    IntSet visited = new IntOpenHashSet(100);
     Queue<BackLink> toVisit = new Queue<>(100);
 
     for (Map.Entry<Object, String> entry : startRoots.entrySet()) {
@@ -124,11 +127,17 @@ public final class DebugReflectionUtil {
     }
 
     while (true) {
-      if (toVisit.isEmpty()) return true;
+      if (toVisit.isEmpty()) {
+        return true;
+      }
       final BackLink backLink = toVisit.pullFirst();
-      if (backLink.depth > maxDepth) continue;
+      if (backLink.depth > maxDepth) {
+        continue;
+      }
       Object value = backLink.value;
-      if (lookFor.isAssignableFrom(value.getClass()) && markLeaked(value) && !leakProcessor.process(value, backLink)) return false;
+      if (lookFor.isAssignableFrom(value.getClass()) && markLeaked(value) && !leakProcessor.process(value, backLink)) {
+        return false;
+      }
 
       if (visited.add(System.identityHashCode(value))) {
         queueStronglyReferencedValues(toVisit, value, shouldExamineValue, backLink);
@@ -164,8 +173,8 @@ public final class DebugReflectionUtil {
       }
     }
     // check for objects leaking via static fields. process initialized classes only
-    if (root instanceof Class && isInitialized((Class)root)) {
-        for (Field field : getAllFields((Class)root)) {
+    if (root instanceof Class && isInitialized((Class<?>)root)) {
+        for (Field field : getAllFields((Class<?>)root)) {
           if ((field.getModifiers() & Modifier.STATIC) == 0) continue;
           try {
             Object value = field.get(null);
@@ -205,14 +214,13 @@ public final class DebugReflectionUtil {
 
     @Override
     public String toString() {
-      String result = "";
+      StringBuilder result = new StringBuilder();
       BackLink backLink = this;
       while (backLink != null) {
-        String s = backLink.print();
-        result += s;
+        result.append(backLink.print());
         backLink = backLink.backLink;
       }
-      return result;
+      return result.toString();
     }
 
     @NotNull
@@ -221,8 +229,8 @@ public final class DebugReflectionUtil {
       Object value = this.value;
       try {
         valueStr = value instanceof FList
-                   ? "FList (size=" + ((FList)value).size() + ")" :
-                   value instanceof Collection ? "Collection (size=" + ((Collection)value).size() + ")" :
+                   ? "FList (size=" + ((FList<?>)value).size() + ")" :
+                   value instanceof Collection ? "Collection (size=" + ((Collection<?>)value).size() + ")" :
                    String.valueOf(value);
         valueStr = StringUtil.first(StringUtil.convertLineSeparators(valueStr, "\\n"), 200, true);
       }

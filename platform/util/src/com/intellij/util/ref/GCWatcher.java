@@ -24,7 +24,7 @@ import java.util.Set;
  * so, if you pass fields or local variables there, nullify them before calling {@link #ensureCollected()}.
  *
  */
-public class GCWatcher {
+public final class GCWatcher {
   private final ReferenceQueue<Object> myQueue = new ReferenceQueue<>();
   private final Set<Reference<?>> myReferences = ContainerUtil.newConcurrentSet();
 

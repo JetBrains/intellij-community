@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class DeprecatedMethodException extends RuntimeException {
+public final class DeprecatedMethodException extends RuntimeException {
   private static final Set<String> BEAT_DEAD_HORSE = ContainerUtil.newConcurrentSet();
   private static final Logger LOG = Logger.getInstance(DeprecatedMethodException.class);
   private DeprecatedMethodException(@NotNull String message) {

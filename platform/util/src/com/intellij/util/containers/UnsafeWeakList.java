@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
@@ -31,7 +31,7 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
   private int myAlive;
   private int modCount;
 
-  private static class MyReference<T> extends WeakReference<T> {
+  private static final class MyReference<T> extends WeakReference<T> {
     private final int index;
 
     private MyReference(int index, T referent, ReferenceQueue<? super T> queue) {
@@ -131,7 +131,7 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
   public Iterator<T> iterator() {
     return new MyIterator();
   }
-  private class MyIterator implements Iterator<T> {
+  private final class MyIterator implements Iterator<T> {
     private final int startModCount;
     private int curIndex;
     private T curElement;
