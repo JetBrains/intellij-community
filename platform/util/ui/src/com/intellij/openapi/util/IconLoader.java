@@ -345,7 +345,7 @@ public final class IconLoader {
   @Nullable
   public static Image toImage(@NotNull Icon icon, @Nullable ScaleContext ctx) {
     if (icon instanceof RetrievableIcon) {
-      icon = ((RetrievableIcon)icon).retrieveIcon();
+      icon = getOrigin((RetrievableIcon)icon);
     }
     if (icon instanceof CachedImageIcon) {
       icon = ((CachedImageIcon)icon).getRealIcon(ctx);
@@ -447,6 +447,7 @@ public final class IconLoader {
     }
 
     if (icon instanceof LazyIcon) icon = ((LazyIcon)icon).getOrComputeIcon();
+    if (icon instanceof RetrievableIcon) icon = getOrigin((RetrievableIcon)icon);
 
     Icon disabledIcon = ourIcon2DisabledIcon.get(icon);
     if (disabledIcon == null) {
@@ -556,8 +557,8 @@ public final class IconLoader {
   @ApiStatus.Internal
   @NotNull
   public static Icon getMenuBarIcon(@NotNull Icon icon, boolean dark) {
-    while (icon instanceof RetrievableIcon) {
-      icon = ((RetrievableIcon)icon).retrieveIcon();
+    if (icon instanceof RetrievableIcon) {
+      icon = getOrigin((RetrievableIcon)icon);
     }
     if (icon instanceof MenuBarIconProvider) {
       return ((MenuBarIconProvider)icon).getMenuBarIcon(dark);
