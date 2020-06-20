@@ -10,7 +10,6 @@ import com.intellij.util.io.Ksuid
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
 import com.intellij.util.io.sanitizeFileName
-import com.intellij.util.lang.CompoundRuntimeException
 import org.junit.rules.ExternalResource
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -60,21 +59,13 @@ class TemporaryDirectory : ExternalResource() {
       return
     }
 
-    val errors = SmartList<Throwable>()
+    val errors = mutableListOf<Throwable>()
     for (path in paths) {
-      try {
-        path.delete()
-      }
-      catch (e: Throwable) {
-        errors.add(e)
-      }
+      errors.catchAndStoreExceptions { path.delete() }
     }
 
     paths.clear()
-
-    if (errors.isNotEmpty()) {
-      throw if (errors.size == 1) errors.first() else CompoundRuntimeException(errors)
-    }
+    errors.throwIfNotEmpty()
   }
 
   fun newPath(suffix: String? = null, refreshVfs: Boolean = false): Path {
