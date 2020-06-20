@@ -46,7 +46,7 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   protected abstract TestResultsPanel createTestResultsPanel();
 
   @Override
-  public void attachToProcess(final ProcessHandler processHandler) {
+  public void attachToProcess(final @NotNull ProcessHandler processHandler) {
     myConsole.attachToProcess(processHandler);
   }
 

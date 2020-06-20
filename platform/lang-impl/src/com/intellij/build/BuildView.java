@@ -219,7 +219,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
   }
 
   @Override
-  public void attachToProcess(ProcessHandler processHandler) {
+  public void attachToProcess(@NotNull ProcessHandler processHandler) {
     delegateToConsoleView(view -> view.attachToProcess(processHandler));
   }
 

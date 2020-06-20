@@ -144,7 +144,7 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
   }
 
   @Override
-  public void attachToProcess(ProcessHandler processHandler) {
+  public void attachToProcess(@NotNull ProcessHandler processHandler) {
     myProcessHandler = processHandler;
 
     myPrimaryConsoleView.attachToProcess(processHandler);

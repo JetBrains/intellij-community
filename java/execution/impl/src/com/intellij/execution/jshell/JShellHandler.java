@@ -483,7 +483,7 @@ public class JShellHandler {
       super(project, GlobalSearchScope.allScope(project), true, new ConsoleState.NotStartedStated() {
         @NotNull
         @Override
-        public ConsoleState attachTo(@NotNull ConsoleViewImpl console, ProcessHandler processHandler) {
+        public ConsoleState attachTo(@NotNull ConsoleViewImpl console, @NotNull ProcessHandler processHandler) {
           // do not automatically display all the text that is sent/recieved between processes
           // the ootput from console will be formatted and sent to console view
           return new ConsoleViewRunningState(console, processHandler, this, false, false);

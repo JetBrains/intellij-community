@@ -112,7 +112,7 @@ public class ConsoleViewRunningState extends ConsoleState {
 
   @NotNull
   @Override
-  public ConsoleState attachTo(@NotNull final ConsoleViewImpl console, final ProcessHandler processHandler) {
+  public ConsoleState attachTo(@NotNull final ConsoleViewImpl console, final @NotNull ProcessHandler processHandler) {
     return dispose().attachTo(console, processHandler);
   }
 

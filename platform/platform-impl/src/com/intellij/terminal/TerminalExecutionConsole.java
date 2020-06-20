@@ -169,7 +169,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   }
 
   @Override
-  public void attachToProcess(ProcessHandler processHandler) {
+  public void attachToProcess(@NotNull ProcessHandler processHandler) {
     if (processHandler != null) {
       attachToProcess(processHandler, true);
     }

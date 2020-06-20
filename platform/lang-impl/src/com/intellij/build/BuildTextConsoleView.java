@@ -33,7 +33,7 @@ public class BuildTextConsoleView extends ConsoleViewImpl implements BuildConsol
   }
 
   @Override
-  protected CompositeFilter createCompositeFilter() {
+  protected @NotNull CompositeFilter createCompositeFilter() {
     CompositeFilter compositeFilter = super.createCompositeFilter();
     // add build execution filters with higher priority than all other predefined message filters
     Project project = getProject();

@@ -29,7 +29,7 @@ public interface ConsoleView extends ExecutionConsole {
 
   void scrollTo(int offset);
 
-  void attachToProcess(ProcessHandler processHandler);
+  void attachToProcess(@NotNull ProcessHandler processHandler);
 
   default void requestScrollingToEnd() {}
 

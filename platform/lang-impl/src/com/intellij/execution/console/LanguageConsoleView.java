@@ -37,7 +37,7 @@ public interface LanguageConsoleView extends ConsoleView, Disposable {
   @NotNull
   String getTitle();
 
-  void setTitle(String title);
+  void setTitle(@NotNull String title);
 
   @NotNull
   PsiFile getFile();
