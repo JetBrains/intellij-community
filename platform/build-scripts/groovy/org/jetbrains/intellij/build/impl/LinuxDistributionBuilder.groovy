@@ -53,6 +53,8 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       }
 
+      if (customizer.buildOnlyBareTarGz) return
+      
       if (customizer.includeX86Files) {
         buildContext.bundledJreManager.repackageX86Jre(OsFamily.LINUX)
       }
