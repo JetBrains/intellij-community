@@ -417,6 +417,13 @@ public final class InjectedLanguageUtil {
   }
 
   /**
+   * Quick check if we should bother injecting something inside this PSI at all
+   */
+  public static boolean isInjectable(@NotNull PsiElement element, boolean probeUp) {
+    return stopLookingForInjection(element) || element.getFirstChild() != null || probeUp;
+  }
+
+  /**
    * We can only inject into injection hosts or their ancestors, so if we're sure there are no PsiLanguageInjectionHost descendants,
    * we can skip that PSI safely.
    */

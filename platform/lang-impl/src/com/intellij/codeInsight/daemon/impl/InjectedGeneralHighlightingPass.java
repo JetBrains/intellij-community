@@ -44,7 +44,6 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
-import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -167,7 +166,17 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     }
 
     InjectedLanguageManagerImpl injectedLanguageManager = InjectedLanguageManagerImpl.getInstanceImpl(myProject);
-    Processor<PsiElement> collectInjectableProcessor = Processors.cancelableCollectProcessor(hosts);
+    final boolean probeUp = false;
+    Processor<PsiElement> collectInjectableProcessor = new CommonProcessors.CollectProcessor<PsiElement>(hosts){
+      @Override
+      public boolean process(PsiElement t) {
+        ProgressManager.checkCanceled();
+        if (InjectedLanguageUtil.isInjectable(t, probeUp)) {
+          super.process(t);
+        }
+        return true;
+      }
+    };
     injectedLanguageManager.processInjectableElements(elements1, collectInjectableProcessor);
     injectedLanguageManager.processInjectableElements(elements2, collectInjectableProcessor);
 
@@ -183,14 +192,13 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     // so instead of showing "highlighted 1% of injected fragments", show "ran injectors for 1% of hosts"
     setProgressLimit(hosts.size());
 
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(hosts), progress,
-                                                                   element -> {
-                                                                     ApplicationManager.getApplication().assertReadAccessAllowed();
-                                                                     InjectedLanguageManager.getInstance(myFile.getProject()).enumerateEx(
-                                                                       element, myFile, false, visitor);
-                                                                     advanceProgress(1);
-                                                                     return true;
-                                                                   })) {
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
+      new ArrayList<>(hosts), progress, element -> {
+        ApplicationManager.getApplication().assertReadAccessAllowed();
+        injectedLanguageManager.enumerateEx(element, myFile, probeUp, visitor);
+        advanceProgress(1);
+        return true;
+      })) {
       throw new ProcessCanceledException();
     }
     synchronized (outInjected) {
