@@ -170,18 +170,6 @@ fun replaceIdeEventQueueSafely() {
   EventQueue.invokeAndWait(EmptyRunnable.getInstance())
 }
 
-private inline fun MutableList<Throwable>.catchAndStoreExceptions(executor: () -> Unit) {
-  try {
-    executor()
-  }
-  catch (e: CompoundRuntimeException) {
-    addAll(e.exceptions)
-  }
-  catch (e: Throwable) {
-    add(e)
-  }
-}
-
 inline fun <reified T : Any, reified TI : Any> Application.serviceIfCreated(): TI? = this.getServiceIfCreated(T::class.java) as TI?
 
 private var testCounter = 0
@@ -259,7 +247,7 @@ fun tearDownProjectAndApp(project: Project) {
     }
   }
 
-  CompoundRuntimeException.throwIfNotEmpty(l)
+  l.throwIfNotEmpty()
 }
 
 /**

@@ -36,8 +36,10 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2IntMap;
+import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -58,7 +60,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   private final FilePartNodeRoot myLocalRoot = FilePartNodeRoot.createFakeRoot(LocalFileSystem.getInstance()); // guarded by this
   private final FilePartNodeRoot myTempRoot = FilePartNodeRoot.createFakeRoot(TempFileSystem.getInstance()); // guarded by this
   // compare by identity because VirtualFilePointerContainer has too smart equals
-  private final Set<VirtualFilePointerContainerImpl> myContainers = ContainerUtil.newIdentityTroveSet();  // guarded by myContainers
+  private final Set<VirtualFilePointerContainerImpl> myContainers = new ReferenceOpenHashSet<>();  // guarded by myContainers
   private final @NotNull VirtualFilePointerListener myPublisher;
 
   private int myPointerSetModCount;
@@ -80,7 +82,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     assertAllPointersDisposed();
   }
 
-  private static class EventDescriptor {
+  private static final class EventDescriptor {
     @NotNull private final VirtualFilePointerListener myListener;
     private final VirtualFilePointer @NotNull [] myPointers;
 
@@ -220,7 +222,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     return getOrCreate((VirtualFileSystemEntry)file, path, url, recursive, parentDisposable, listener, (NewVirtualFileSystem)fileSystem);
   }
 
-  private final Map<String, IdentityVirtualFilePointer> myUrlToIdentity = new THashMap<>(); // guarded by this
+  private final Map<String, IdentityVirtualFilePointer> myUrlToIdentity = new Object2ObjectOpenHashMap<>(); // guarded by this
 
   @NotNull
   private synchronized IdentityVirtualFilePointer getOrCreateIdentity(@NotNull String url,
@@ -663,9 +665,9 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     return super.getModificationCount() + PersistentFS.getInstance().getStructureModificationCount();
   }
 
-  private static class DelegatingDisposable implements Disposable {
+  private static final class DelegatingDisposable implements Disposable {
     private static final ConcurrentMap<Disposable, DelegatingDisposable> ourInstances = ConcurrentCollectionFactory.createMap(ContainerUtil.identityStrategy());
-    private final TObjectIntHashMap<VirtualFilePointerImpl> myCounts = new TObjectIntHashMap<>(ContainerUtil.identityStrategy()); // guarded by this
+    private final Reference2IntOpenHashMap<VirtualFilePointerImpl> myCounts = new Reference2IntOpenHashMap<>(); // guarded by this
     private final Disposable myParent;
 
     private DelegatingDisposable(@NotNull Disposable parent, @NotNull VirtualFilePointerImpl firstPointer) {
@@ -690,9 +692,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     }
 
     synchronized void increment(@NotNull VirtualFilePointerImpl pointer) {
-      if (!myCounts.increment(pointer)) {
-        myCounts.put(pointer, 1);
-      }
+      myCounts.addTo(pointer, 1);
     }
 
     @Override
@@ -700,7 +700,10 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       ourInstances.remove(myParent);
       //noinspection SynchronizeOnThis
       synchronized (this) {
-        myCounts.forEachEntry((pointer, disposeCount) -> {
+        for (Iterator<Reference2IntMap.Entry<VirtualFilePointerImpl>> iterator = myCounts.reference2IntEntrySet().fastIterator(); iterator.hasNext(); ) {
+          Reference2IntMap.Entry<VirtualFilePointerImpl> entry = iterator.next();
+          VirtualFilePointerImpl pointer = entry.getKey();
+          int disposeCount = entry.getIntValue();
           boolean isDisposed = !(pointer instanceof IdentityVirtualFilePointer) && pointer.myNode == null;
           if (isDisposed) {
             pointer.throwDisposalError("Already disposed:\n" + pointer.getStackTrace());
@@ -708,8 +711,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
           int after = pointer.incrementUsageCount(-(disposeCount - 1));
           LOG.assertTrue(after > 0, after);
           pointer.dispose();
-          return true;
-        });
+        }
         myCounts.clear();
       }
     }

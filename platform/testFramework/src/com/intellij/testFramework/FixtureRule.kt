@@ -24,6 +24,7 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.project.stateStore
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.forEachGuaranteed
@@ -56,8 +57,6 @@ open class ApplicationRule : ExternalResource() {
  */
 class ProjectRule(private val runPostStartUpActivities: Boolean = true, private val projectDescriptor: LightProjectDescriptor = LightProjectDescriptor()) : ApplicationRule() {
   companion object {
-    private var sharedProject: ProjectEx? = null
-
     @JvmStatic
     fun withoutRunningStartUpActivities() = ProjectRule(runPostStartUpActivities = false)
 
@@ -92,7 +91,9 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = true, private 
     }
   }
 
+  private var sharedProject: ProjectEx? = null
   private var testClassName: String? = null
+  var virtualFilePointerTracker: VirtualFilePointerTracker? = null
 
   override fun apply(base: Statement, description: Description): Statement {
     testClassName = sanitizeFileName(description.className.substringAfterLast('.'))
@@ -101,18 +102,19 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = true, private 
 
   private fun createProject(): ProjectEx {
     val projectFile = TemporaryDirectory.generateTemporaryPath("project_${testClassName}${ProjectFileType.DOT_DEFAULT_EXTENSION}")
-    // TODO uncomment and figure out where to put this statement
-    //(VirtualFilePointerManager.getInstance() as VirtualFilePointerManagerImpl).storePointers()
     val options = createTestOpenProjectOptions(runPostStartUpActivities = runPostStartUpActivities)
-    return ProjectManagerEx.getInstanceEx().openProject(projectFile, options) as ProjectEx
+    val project = ProjectManagerEx.getInstanceEx().openProject(projectFile, options) as ProjectEx
+    virtualFilePointerTracker = VirtualFilePointerTracker()
+    return project
   }
 
   public override fun after() {
     val project = sharedProject ?: return
     try {
-      // TODO uncomment and figure out where to put this statement
-      //(VirtualFilePointerManager.getInstance() as VirtualFilePointerManagerImpl).assertPointersAreDisposed()
-      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+      val l = mutableListOf<Throwable>()
+      l.catchAndStoreExceptions { PlatformTestUtil.forceCloseProjectWithoutSaving(project) }
+      l.catchAndStoreExceptions { virtualFilePointerTracker?.assertPointersAreDisposed() }
+      l.throwIfNotEmpty()
     }
     finally {
       sharedProject = null
