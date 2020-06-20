@@ -9,6 +9,8 @@ Method calls inspected are:
   <li>Calls to Methods annotated with .*.<b>CheckReturnValue</b></li>
   <li>Calls to Methods located in a class annotated with <b>javax.annotation.CheckReturnValue</b></li>
   <li>Calls to Methods located in a package annotated with <b>javax.annotation.CheckReturnValue</b></li>
+  <li>Optionally calls to Methods located in a class annotated with <b>.*.CheckReturnValue</b></li>
+  <li>Optionally calls to Methods located in a package annotated with <b>.*.CheckReturnValue</b></li>
   <li>Optionally all calls to non-library methods</li>
 </ul>
 <p>For calls to many methods ignoring the result is perfectly
@@ -23,7 +25,9 @@ Use the panel below to specify the names of the classes containing the methods a
 Class names have to be specified as a fully qualified name string and will match a class and all its inheritors.
 Method name patterns use the Java regular expression syntax.
 <p>
-Use the checkbox below to report all calls to non-library methods where the result of that call is ignored
+Use the first checkbox below to report all calls to non-library methods where the result of that call is ignored
+<p>
+Use the second checkbox below to report calls to Methods located in a class or in a package annotated with  <b>.*.CheckReturnValue</b>
 <p>
 
 </body>

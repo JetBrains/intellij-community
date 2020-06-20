@@ -22,6 +22,7 @@ import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -33,7 +34,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -48,10 +48,16 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
+import java.util.Set;
 
 public class IgnoreResultOfCallInspection extends BaseInspection {
+
+  public static final String SHORT_NAME_RETURN_VALUE_ANNOTATION = "CheckReturnValue";
+  private static final Set<String> RETURN_VALUE_ANNOTATIONS = ContainerUtil
+    .immutableSet("javax.annotation.CheckReturnValue", "org.assertj.core.util.CheckReturnValue ");
   private static final CallMatcher STREAM_COLLECT =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "collect").parameterCount(1);
   private static final CallMatcher COLLECTOR_TO_COLLECTION =
@@ -63,10 +69,10 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "parseLong", "valueOf"),
       CallMatcher.staticCall(CommonClassNames.JAVA_LANG_DOUBLE, "parseDouble", "valueOf"),
       CallMatcher.staticCall(CommonClassNames.JAVA_LANG_FLOAT, "parseFloat", "valueOf")), "java.lang.NumberFormatException")
-    .register(CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS, 
-                                       "getMethod", "getDeclaredMethod", "getConstructor", "getDeclaredConstructor"), 
+    .register(CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS,
+                                       "getMethod", "getDeclaredMethod", "getConstructor", "getDeclaredConstructor"),
               "java.lang.NoSuchMethodException")
-    .register(CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS, 
+    .register(CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS,
                                        "getField", "getDeclaredField"), "java.lang.NoSuchFieldException");
   private static final CallMatcher MOCK_LIBS_EXCLUDED_QUALIFIER_CALLS =
     CallMatcher.anyOf(
@@ -74,6 +80,8 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       CallMatcher.staticCall("org.mockito.Mockito", "verify"),
       CallMatcher.instanceCall("org.jmock.Expectations", "allowing", "ignoring", "never", "one", "oneOf", "with")
         .parameterTypes("T"));
+
+  public static final String SHORT_NAME_IGNORE_ANNOTATIONS = "CanIgnoreReturnValue";
   private static final Set<String> IGNORE_ANNOTATIONS = ContainerUtil
     .immutableSet("org.assertj.core.util.CanIgnoreReturnValue", "com.google.errorprone.annotations.CanIgnoreReturnValue");
   protected final MethodMatcher myMethodMatcher;
@@ -81,29 +89,30 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
    * @noinspection PublicField
    */
   public boolean m_reportAllNonLibraryCalls = false;
+  public boolean m_reportClassAndPackageShortNameAnnotated = false;
 
   public IgnoreResultOfCallInspection() {
     myMethodMatcher = new MethodMatcher(true, "callCheckString")
       .add("java.io.File", ".*")
-      .add("java.io.InputStream","read|skip|available|markSupported")
-      .add("java.io.Reader","read|skip|ready|markSupported")
-      .add("java.lang.Boolean",".*")
-      .add("java.lang.Byte",".*")
-      .add("java.lang.Character",".*")
-      .add("java.lang.Double",".*")
-      .add("java.lang.Float",".*")
-      .add("java.lang.Integer",".*")
-      .add("java.lang.Long",".*")
-      .add("java.lang.Math",".*")
-      .add("java.lang.Object","equals|hashCode|toString")
-      .add("java.lang.Short",".*")
-      .add("java.lang.StrictMath",".*")
-      .add("java.lang.String",".*")
+      .add("java.io.InputStream", "read|skip|available|markSupported")
+      .add("java.io.Reader", "read|skip|ready|markSupported")
+      .add("java.lang.Boolean", ".*")
+      .add("java.lang.Byte", ".*")
+      .add("java.lang.Character", ".*")
+      .add("java.lang.Double", ".*")
+      .add("java.lang.Float", ".*")
+      .add("java.lang.Integer", ".*")
+      .add("java.lang.Long", ".*")
+      .add("java.lang.Math", ".*")
+      .add("java.lang.Object", "equals|hashCode|toString")
+      .add("java.lang.Short", ".*")
+      .add("java.lang.StrictMath", ".*")
+      .add("java.lang.String", ".*")
       .add("java.lang.Thread", "interrupted")
-      .add("java.math.BigInteger",".*")
-      .add("java.math.BigDecimal",".*")
-      .add("java.net.InetAddress",".*")
-      .add("java.net.URI",".*")
+      .add("java.math.BigInteger", ".*")
+      .add("java.math.BigDecimal", ".*")
+      .add("java.net.InetAddress", ".*")
+      .add("java.net.URI", ".*")
       .add("java.util.Arrays", ".*")
       .add("java.util.List", "of")
       .add("java.util.Set", "of")
@@ -124,9 +133,15 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title"),
       InspectionGadgetsBundle.message("result.of.method.call.ignored.method.column.title")));
     final JPanel tablePanel = UiUtils.createAddRemoveTreeClassChooserPanel(table, "Choose class");
-    final CheckBox checkBox =
-      new CheckBox(InspectionGadgetsBundle.message("result.of.method.call.ignored.non.library.option"), this, "m_reportAllNonLibraryCalls");
     panel.add(tablePanel, BorderLayout.CENTER);
+
+    MultipleCheckboxOptionsPanel checkBox = new MultipleCheckboxOptionsPanel(this);
+
+    checkBox.addCheckbox(InspectionGadgetsBundle.message("result.of.method.call.ignored.non.library.option"), "m_reportAllNonLibraryCalls");
+
+    checkBox.addCheckbox(InspectionGadgetsBundle.message("result.of.method.call.ignored.class.and.package.short.name"),
+                         "m_reportClassAndPackageShortNameAnnotated");
+
     panel.add(checkBox, BorderLayout.SOUTH);
     return panel;
   }
@@ -223,10 +238,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
         return !isIgnored(method, null);
       }
 
-      PsiAnnotation annotation = findAnnotationInTree(method, null, Collections.singleton("javax.annotation.CheckReturnValue"));
-      if (annotation == null) {
-        annotation = getAnnotationByShortNameCheckReturnValue(method);
-      }
+      PsiAnnotation annotation = findAnnotationInTree(method, null, RETURN_VALUE_ANNOTATIONS, SHORT_NAME_RETURN_VALUE_ANNOTATION);
 
       if (!myMethodMatcher.matches(method) && annotation == null) return false;
       if (isHardcodedException(call)) return false;
@@ -235,14 +247,33 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
 
     private boolean isIgnored(@NotNull PsiMethod method, @Nullable PsiAnnotation annotation) {
       final PsiElement owner = annotation == null ? null : (PsiElement)annotation.getOwner();
-      return findAnnotationInTree(method, owner, IGNORE_ANNOTATIONS) != null;
+      return findAnnotationInTree(method, owner, IGNORE_ANNOTATIONS, SHORT_NAME_IGNORE_ANNOTATIONS) != null;
     }
 
-    private PsiAnnotation getAnnotationByShortNameCheckReturnValue(PsiMethod method) {
-      for (PsiAnnotation psiAnnotation : method.getAnnotations()) {
-        String qualifiedName = psiAnnotation.getQualifiedName();
-        if (qualifiedName != null && "CheckReturnValue".equals(StringUtil.getShortName(qualifiedName))) {
-          return psiAnnotation;
+
+    private PsiAnnotation findAnnotationByShortNameCheckReturnValue(PsiModifierListOwner listOwner, String shortName) {
+
+      if (StringUtil.isEmpty(shortName)) {
+        return null;
+      }
+
+      final String findName;
+
+      if (shortName.startsWith(".")) {
+        findName = shortName;
+      }
+      else {
+        findName = "." + shortName;
+      }
+
+      final PsiModifierList list = listOwner.getModifierList();
+      if (list == null) {
+        return null;
+      }
+      for (PsiAnnotation annotation : list.getAnnotations()) {
+        String name = annotation.getQualifiedName();
+        if (name != null && (name.endsWith(findName) || name.equals(shortName))) {
+          return annotation;
         }
       }
       return null;
@@ -313,21 +344,28 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       if (call instanceof PsiMethodCallExpression) {
         registerMethodCallError((PsiMethodCallExpression)call, aClass);
       }
-      else if (call instanceof PsiMethodReferenceExpression){
+      else if (call instanceof PsiMethodReferenceExpression) {
         registerError(ObjectUtils.notNull(((PsiMethodReferenceExpression)call).getReferenceNameElement(), call), aClass);
       }
     }
 
     @Nullable
-    private PsiAnnotation findAnnotationInTree(PsiElement element, @Nullable PsiElement stop, @NotNull Set<String> fqAnnotationNames) {
+    private PsiAnnotation findAnnotationInTree(PsiElement element, @Nullable PsiElement stop, @NotNull Set<String> fqAnnotationNames, @NotNull String shortAnnotationName) {
       while (element != null) {
         if (element == stop) {
           return null;
         }
         if (element instanceof PsiModifierListOwner) {
           final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)element;
-          final PsiAnnotation annotation =
-            AnnotationUtil.findAnnotationInHierarchy(modifierListOwner, fqAnnotationNames);
+          final PsiAnnotation annotation;
+          if (m_reportClassAndPackageShortNameAnnotated) {
+            annotation =
+              findAnnotationByShortNameCheckReturnValue(modifierListOwner, shortAnnotationName);
+          }
+          else {
+            annotation =
+              AnnotationUtil.findAnnotationInHierarchy(modifierListOwner, fqAnnotationNames);
+          }
           if (annotation != null) {
             return annotation;
           }
@@ -340,13 +378,22 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
           if (aPackage == null) {
             return null;
           }
-          PsiAnnotation annotation = AnnotationUtil.findAnnotation(aPackage, fqAnnotationNames);
-          if(annotation != null) {
+          final PsiAnnotation annotation;
+          if (m_reportClassAndPackageShortNameAnnotated) {
+            annotation =
+              findAnnotationByShortNameCheckReturnValue(aPackage, shortAnnotationName);
+          }
+          else {
+            annotation =
+              AnnotationUtil.findAnnotation(aPackage, fqAnnotationNames);
+          }
+
+          if (annotation != null) {
             // Check that annotation actually belongs to the same library/source root
             // which could be important in case of split-packages
             VirtualFile annotationFile = PsiUtilCore.getVirtualFile(annotation);
             VirtualFile currentFile = classOwner.getVirtualFile();
-            if(annotationFile != null && currentFile != null) {
+            if (annotationFile != null && currentFile != null) {
               ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(element.getProject());
               VirtualFile annotationClassRoot = projectFileIndex.getClassRootForFile(annotationFile);
               VirtualFile currentClassRoot = projectFileIndex.getClassRootForFile(currentFile);

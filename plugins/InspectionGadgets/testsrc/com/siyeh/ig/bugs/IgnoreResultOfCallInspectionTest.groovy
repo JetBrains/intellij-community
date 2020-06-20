@@ -72,6 +72,8 @@ public @interface CheckReturnValue {
 
       """package a;
  public @interface CheckReturnValue {}""",
+      """package a;
+ public @interface CanIgnoreReturnValue {}""",
 
       """package com.google.errorprone.annotations;
 import java.lang.annotation.ElementType;
@@ -87,6 +89,46 @@ public class Validate {
   public native static <T> T notNull(T object);
 }"""
     ] as String[]
+  }
+
+  void testCanIgnoreReturnValueWithStaticMethod() {
+    doTest("import com.google.errorprone.annotations.CanIgnoreReturnValue;\n" +
+           "import javax.annotation.CheckReturnValue;\n" +
+           "\n" +
+           "@CheckReturnValue\n" +
+           "class Test {\n" +
+           "  static int lookAtMe() { return 1; }\n" +
+           "\n" +
+           "  @CanIgnoreReturnValue\n" +
+           "  static int ignoreMe() { return 2; }\n" +
+           "\n" +
+           "  void run() {\n" +
+           "    /*Result of 'Test.lookAtMe()' is ignored*/lookAtMe/**/(); // Bad!  This line should produce a warning.\n" +
+           "    ignoreMe(); // OK.  This line should *not* produce a warning.\n" +
+           "  }\n" +
+           "}")
+  }
+
+  void testCustomAnnotation() {
+    final IgnoreResultOfCallInspection inspection = new IgnoreResultOfCallInspection()
+    inspection.m_reportClassAndPackageShortNameAnnotated = true
+    myFixture.enableInspections(inspection)
+
+    doTest("import a.CanIgnoreReturnValue;\n" +
+           "import a.CheckReturnValue;\n" +
+           "\n" +
+           "@CheckReturnValue\n" +
+           "class Test {\n" +
+           "  int lookAtMe() { return 1; }\n" +
+           "\n" +
+           "  @CanIgnoreReturnValue\n" +
+           "  int ignoreMe() { return 2; }\n" +
+           "\n" +
+           "  void run() {\n" +
+           "    /*Result of 'Test.lookAtMe()' is ignored*/lookAtMe/**/(); // Bad!  This line should produce a warning.\n" +
+           "    ignoreMe(); // OK.  This line should *not* produce a warning.\n" +
+           "  }\n" +
+           "}")
   }
 
   void testCanIgnoreReturnValue() {
@@ -107,7 +149,7 @@ public class Validate {
            "}")
   }
 
-  void testCustomCheckReturnValue() {
+  void testCustomCheckReturnValueWithoutShortNameAnnotationSearch() {
     doTest("import a.CheckReturnValue;\n" +
            "\n" +
            "class Test {\n" +
@@ -115,7 +157,7 @@ public class Validate {
            "  int lookAtMe() { return 1; }\n" +
            "\n" +
            "  void run() {\n" +
-           "    /*Result of 'Test.lookAtMe()' is ignored*/lookAtMe/**/();\n" +
+           "   lookAtMe();\n" +
            "  }\n" +
            "}")
   }
