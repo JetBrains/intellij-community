@@ -65,11 +65,9 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
     final Editor editor = CommonDataKeys.EDITOR.getData(context);
     if (editor != null) {
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      if (file == null || !FileTypeUtil.isSupportedFile(file)) {
-        return false;
-      }
+      return FileTypeUtil.isSupportedFile(file);
     }
-    else if (files != null && areFiles(files)) {
+    if (files != null && areFiles(files)) {
       boolean copyrightEnabled  = false;
       for (VirtualFile vfile : files) {
         if (vfile != null && FileTypeUtil.isSupportedFile(vfile)) {
@@ -77,12 +75,9 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
           break;
         }
       }
-      if (!copyrightEnabled) {
-        return false;
-      }
-
+      return copyrightEnabled;
     }
-    else if ((files == null || files.length != 1) &&
+    if ((files == null || files.length != 1) &&
              LangDataKeys.MODULE_CONTEXT.getData(context) == null &&
              LangDataKeys.MODULE_CONTEXT_ARRAY.getData(context) == null &&
              PlatformDataKeys.PROJECT_CONTEXT.getData(context) == null) {
@@ -98,9 +93,7 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
             }
           }
         }
-        if (!copyrightEnabled){
-          return false;
-        }
+        return copyrightEnabled;
       }
     }
     return true;
@@ -162,7 +155,7 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
     private final int mySize;
     private final Iterator<Runnable> myRunnables;
     private final SequentialModalProgressTask myProgressTask;
-    private int myIdx = 0;
+    private int myIdx;
 
     private UpdateCopyrightSequentialTask(Map<PsiFile, Runnable> runnables, SequentialModalProgressTask progressTask) {
       myRunnables = runnables.values().iterator();
@@ -192,8 +185,8 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
     }
   }
 
-  private static boolean areFiles(VirtualFile[] files) {
-    if (files == null || files.length < 2) {
+  private static boolean areFiles(VirtualFile @NotNull [] files) {
+    if (files.length < 2) {
       return false;
     }
 

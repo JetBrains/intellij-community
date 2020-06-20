@@ -73,6 +73,7 @@ public interface CheckinProjectPanel extends Refreshable, CommitMessageI {
    *
    * @return the project instance.
    */
+  @NotNull
   Project getProject();
 
   /**

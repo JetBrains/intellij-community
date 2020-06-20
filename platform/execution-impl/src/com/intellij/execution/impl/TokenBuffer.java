@@ -43,6 +43,7 @@ class TokenBuffer {
 
   TokenBuffer(int maxCapacity) {
     this.maxCapacity = maxCapacity;
+    if (maxCapacity <= 0) throw new IllegalArgumentException(String.valueOf(maxCapacity));
   }
 
   void print(@NotNull String text, @NotNull ConsoleViewContentType contentType, @Nullable HyperlinkInfo info) {
@@ -144,14 +145,6 @@ class TokenBuffer {
   }
 
   @NotNull
-  CharSequence getText() {
-    if (hasTrailingCR()) {
-      removeLastLine();
-    }
-    return getRawText(getInfos());
-  }
-
-  @NotNull
   static CharSequence getRawText(@NotNull List<? extends TokenInfo> tokens) {
     int size = 0;
     for (TokenInfo token : tokens) {
@@ -226,5 +219,10 @@ class TokenBuffer {
     String getText() {
       return text;
     }
+  }
+
+  @Override
+  public String toString() {
+    return getRawText(getInfos()).toString();
   }
 }
