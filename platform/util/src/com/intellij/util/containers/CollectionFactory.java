@@ -60,23 +60,23 @@ public final class CollectionFactory {
   }
 
   public static @NotNull <T> Map<CharSequence, T> createCharSequenceMap(boolean caseSensitive, int expectedSize, float loadFactor) {
-    return new Object2ObjectOpenCustomHashMap<>(expectedSize, loadFactor, caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
+    return new Object2ObjectOpenCustomHashMap<>(expectedSize, loadFactor, caseSensitive ? FastUtilCharSequenceHashingStrategy.CASE_SENSITIVE : FastUtilCharSequenceHashingStrategy.CASE_INSENSITIVE);
   }
 
   public static @NotNull Set<CharSequence> createCharSequenceSet(boolean caseSensitive, int expectedSize, float loadFactor) {
-    return new ObjectOpenCustomHashSet<>(expectedSize, loadFactor, caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
+    return new ObjectOpenCustomHashSet<>(expectedSize, loadFactor, caseSensitive ? FastUtilCharSequenceHashingStrategy.CASE_SENSITIVE : FastUtilCharSequenceHashingStrategy.CASE_INSENSITIVE);
   }
 
   public static @NotNull <T> Map<CharSequence, T> createCharSequenceMap(boolean caseSensitive) {
-    return new Object2ObjectOpenCustomHashMap<>(caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
+    return new Object2ObjectOpenCustomHashMap<>(caseSensitive ? FastUtilCharSequenceHashingStrategy.CASE_SENSITIVE : FastUtilCharSequenceHashingStrategy.CASE_INSENSITIVE);
   }
 
   public static @NotNull Set<String> createCaseInsensitiveStringSet() {
-    return new ObjectOpenCustomHashSet<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+    return new ObjectOpenCustomHashSet<>(FastUtilCaseInsensitiveStringHashingStrategy.INSTANCE);
   }
 
   public static <V> @NotNull Map<String, V> createCaseInsensitiveStringMap() {
-    return new Object2ObjectOpenCustomHashMap<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+    return new Object2ObjectOpenCustomHashMap<>(FastUtilCaseInsensitiveStringHashingStrategy.INSTANCE);
   }
 
   public static @NotNull Set<String> createFilePathSet() {
@@ -97,7 +97,7 @@ public final class CollectionFactory {
       return new HashSet<>(expectedSize);
     }
     else {
-      return new ObjectOpenCustomHashSet<>(expectedSize, CaseInsensitiveStringHashingStrategy.INSTANCE);
+      return new ObjectOpenCustomHashSet<>(expectedSize, FastUtilCaseInsensitiveStringHashingStrategy.INSTANCE);
     }
   }
 
@@ -106,7 +106,7 @@ public final class CollectionFactory {
       return new HashSet<>(paths);
     }
     else {
-      return new ObjectOpenCustomHashSet<>(paths, CaseInsensitiveStringHashingStrategy.INSTANCE);
+      return new ObjectOpenCustomHashSet<>(paths, FastUtilCaseInsensitiveStringHashingStrategy.INSTANCE);
     }
   }
 
@@ -128,7 +128,7 @@ public final class CollectionFactory {
       return new HashMap<>(expectedSize);
     }
     else {
-      return new Object2ObjectOpenCustomHashMap<>(expectedSize, CaseInsensitiveStringHashingStrategy.INSTANCE);
+      return new Object2ObjectOpenCustomHashMap<>(expectedSize, FastUtilCaseInsensitiveStringHashingStrategy.INSTANCE);
     }
   }
 
@@ -149,7 +149,7 @@ public final class CollectionFactory {
       return new ObjectLinkedOpenHashSet<>();
     }
     else {
-      return new ObjectLinkedOpenCustomHashSet<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+      return new ObjectLinkedOpenCustomHashSet<>(FastUtilCaseInsensitiveStringHashingStrategy.INSTANCE);
     }
   }
 
@@ -161,7 +161,7 @@ public final class CollectionFactory {
       return new Object2ObjectLinkedOpenHashMap<>();
     }
     else {
-      return new Object2ObjectLinkedOpenCustomHashMap<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+      return new Object2ObjectLinkedOpenCustomHashMap<>(FastUtilCaseInsensitiveStringHashingStrategy.INSTANCE);
     }
   }
 
@@ -204,19 +204,19 @@ public final class CollectionFactory {
       return new HashSet<>(paths);
     }
     else {
-      return new ObjectOpenCustomHashSet<>(paths, CaseInsensitiveStringHashingStrategy.INSTANCE);
+      return new ObjectOpenCustomHashSet<>(paths, FastUtilCaseInsensitiveStringHashingStrategy.INSTANCE);
     }
   }
 }
 
 // must be not exposed to avoid exposing Hash.Strategy interface
-final class CharSequenceHashingStrategy implements Hash.Strategy<CharSequence> {
-  static final CharSequenceHashingStrategy CASE_SENSITIVE = new CharSequenceHashingStrategy(true);
-  static final CharSequenceHashingStrategy CASE_INSENSITIVE = new CharSequenceHashingStrategy(false);
+final class FastUtilCharSequenceHashingStrategy implements Hash.Strategy<CharSequence> {
+  static final FastUtilCharSequenceHashingStrategy CASE_SENSITIVE = new FastUtilCharSequenceHashingStrategy(true);
+  static final FastUtilCharSequenceHashingStrategy CASE_INSENSITIVE = new FastUtilCharSequenceHashingStrategy(false);
 
   private final boolean isCaseSensitive;
 
-  private CharSequenceHashingStrategy(boolean caseSensitive) {
+  private FastUtilCharSequenceHashingStrategy(boolean caseSensitive) {
     isCaseSensitive = caseSensitive;
   }
 
@@ -235,8 +235,8 @@ final class CharSequenceHashingStrategy implements Hash.Strategy<CharSequence> {
 }
 
 // must be not exposed to avoid exposing Hash.Strategy interface
-final class CaseInsensitiveStringHashingStrategy implements Hash.Strategy<String> {
-  static final CaseInsensitiveStringHashingStrategy INSTANCE = new CaseInsensitiveStringHashingStrategy();
+final class FastUtilCaseInsensitiveStringHashingStrategy implements Hash.Strategy<String> {
+  static final FastUtilCaseInsensitiveStringHashingStrategy INSTANCE = new FastUtilCaseInsensitiveStringHashingStrategy();
 
   @Override
   public int hashCode(String s) {
@@ -245,6 +245,6 @@ final class CaseInsensitiveStringHashingStrategy implements Hash.Strategy<String
 
   @Override
   public boolean equals(String s1, String s2) {
-    return s1 == s2 || (s1 != null && s2 != null && s1.equalsIgnoreCase(s2));
+    return s1 == s2 || (s1 != null && s1.equalsIgnoreCase(s2));
   }
 }

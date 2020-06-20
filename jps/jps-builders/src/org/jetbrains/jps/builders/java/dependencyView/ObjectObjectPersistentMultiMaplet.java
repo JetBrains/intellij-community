@@ -26,7 +26,7 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
   public ObjectObjectPersistentMultiMaplet(final File file,
                                         final KeyDescriptor<K> keyExternalizer,
                                         final DataExternalizer<V> valueExternalizer,
-                                        final CollectionFactory<V> collectionFactory) throws IOException {
+                                        final BuilderCollectionFactory<V> collectionFactory) throws IOException {
     myValueExternalizer = valueExternalizer;
     myMap = new PersistentHashMap<>(file, keyExternalizer,
                                     new CollectionDataExternalizer<>(valueExternalizer, collectionFactory));
@@ -220,10 +220,10 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
 
   private static class CollectionDataExternalizer<V> implements DataExternalizer<Collection<V>> {
     private final DataExternalizer<V> myElementExternalizer;
-    private final CollectionFactory<V> myCollectionFactory;
+    private final BuilderCollectionFactory<V> myCollectionFactory;
 
     CollectionDataExternalizer(DataExternalizer<V> elementExternalizer,
-                                      CollectionFactory<V> collectionFactory) {
+                                      BuilderCollectionFactory<V> collectionFactory) {
       myElementExternalizer = elementExternalizer;
       myCollectionFactory = collectionFactory;
     }

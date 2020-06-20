@@ -129,7 +129,7 @@ public class Mappings {
       myRemovedSuperClasses = myIsDelta ? new IntIntTransientMultiMaplet() : null;
       myAddedSuperClasses = myIsDelta ? new IntIntTransientMultiMaplet() : null;
 
-      final CollectionFactory<String> fileCollectionFactory = new CollectionFactory<String>() {
+      final BuilderCollectionFactory<String> fileCollectionFactory = new BuilderCollectionFactory<String>() {
         @Override
         public Collection<String> create() {
           return new THashSet<>(FileUtil.PATH_HASHING_STRATEGY); // todo: do we really need set and not a list here?

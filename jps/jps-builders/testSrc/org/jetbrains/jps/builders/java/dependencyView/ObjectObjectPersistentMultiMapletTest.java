@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 public class ObjectObjectPersistentMultiMapletTest extends UsefulTestCase {
-  private static final CollectionFactory<IntValueStreamable> COLLECTION_FACTORY = () -> new ArrayList<>();
+  private static final BuilderCollectionFactory<IntValueStreamable> COLLECTION_FACTORY = () -> new ArrayList<>();
 
   public void testReplaceWithEqualButNotSameKey() throws IOException {
     File file = FileUtil.createTempFile(getTestDirectoryName(), null);

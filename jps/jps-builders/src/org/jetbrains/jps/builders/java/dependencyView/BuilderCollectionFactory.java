@@ -20,6 +20,6 @@ import java.util.Collection;
 /**
 * @author Eugene Zhuravlev
 */
-public interface CollectionFactory<X> {
+interface BuilderCollectionFactory<X> {
   Collection<X> create();
 }
