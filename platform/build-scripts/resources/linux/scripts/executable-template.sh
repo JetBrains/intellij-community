@@ -1,8 +1,5 @@
 #!/bin/sh
 # Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-# ---------------------------------------------------------------------
-# __product_full__ startup script.
-# ---------------------------------------------------------------------
 
 message()
 {
@@ -214,10 +211,10 @@ IFS="$(printf '\n\t')"
   ${VM_OPTIONS} \
   "-XX:ErrorFile=$HOME/java_error_in___product_uc___%p.log" \
   "-XX:HeapDumpPath=$HOME/java_error_in___product_uc__.hprof" \
-  -Didea.vendor.name=${PRODUCT_VENDOR} \
-  -Didea.paths.selector=${PATHS_SELECTOR} \
+  "-Didea.vendor.name=${PRODUCT_VENDOR}" \
+  "-Didea.paths.selector=${PATHS_SELECTOR}" \
   "-Djb.vmOptionsFile=$VM_OPTIONS_FILE" \
-  ${IDE_PROPERTIES_PROPERTY} \
+  "${IDE_PROPERTIES_PROPERTY}" \
   __ide_jvm_args__ \
   com.intellij.idea.Main \
   "$@"
