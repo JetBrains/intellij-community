@@ -241,10 +241,6 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
   }
 }
 
-fun createHeavyProject(path: Path, useDefaultProjectAsTemplate: Boolean = false): Project {
-  return ProjectManagerEx.getInstanceEx().newProject(path, OpenProjectTask(useDefaultProjectAsTemplate = useDefaultProjectAsTemplate, isNewProject = true))!!
-}
-
 @JvmOverloads
 fun createTestOpenProjectOptions(runPostStartUpActivities: Boolean = true): OpenProjectTask {
   // In tests it is caller responsibility to refresh VFS (because often not only the project file must be refreshed, but the whole dir - so, no need to refresh several times).
@@ -274,10 +270,12 @@ inline fun Project.use(task: (Project) -> Unit) {
 
 class DisposeNonLightProjectsRule : ExternalResource() {
   override fun after() {
-    val projectManager = if (ApplicationManager.getApplication().isDisposed) null else ProjectManagerEx.getInstanceEx()
-    projectManager?.openProjects?.forEachGuaranteed {
+    val projectManager = ProjectManagerEx.getInstanceExIfCreated() ?: return
+    projectManager.openProjects.forEachGuaranteed {
       if (!ProjectManagerImpl.isLight(it)) {
-        runInEdtAndWait { projectManager.forceCloseProject(it) }
+        ApplicationManager.getApplication().invokeAndWait {
+          projectManager.forceCloseProject(it)
+        }
       }
     }
   }
@@ -287,7 +285,7 @@ class DisposeModulesRule(private val projectRule: ProjectRule) : ExternalResourc
   override fun after() {
     val project = projectRule.projectIfOpened ?: return
     val moduleManager = ModuleManager.getInstance(project)
-    runInEdtAndWait {
+    ApplicationManager.getApplication().invokeAndWait {
       moduleManager.modules.forEachGuaranteed {
         if (!it.isDisposed && it !== sharedModule) {
           moduleManager.disposeModule(it)

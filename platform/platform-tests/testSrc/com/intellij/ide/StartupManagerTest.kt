@@ -4,6 +4,7 @@ package com.intellij.ide
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbServiceImpl
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -29,7 +30,7 @@ class StartupManagerTest {
   @Test(timeout = 5_000)
   //@Test()
   fun runAfterOpenedMustBeDumbAware() {
-    val project = createHeavyProject(fsRule.fs.getPath("/"))
+    val project = ProjectManagerEx.getInstanceEx().newProject(fsRule.fs.getPath("/"), createTestOpenProjectOptions())!!
     try {
       val startupManager = StartupManagerImpl.getInstance(project) as StartupManagerImpl
       assertThat(startupManager.postStartupActivityPassed()).isFalse()

@@ -77,8 +77,8 @@ class TemporaryDirectory : ExternalResource() {
     }
   }
 
-  fun newPath(directoryName: String? = null, refreshVfs: Boolean = false): Path {
-    val path = generatePath(directoryName)
+  fun newPath(suffix: String? = null, refreshVfs: Boolean = false): Path {
+    val path = generatePath(suffix)
     if (refreshVfs) {
       path.refreshVfs()
     }
