@@ -280,9 +280,11 @@ TODO(b/118034991): generate product-info.json files (or not) */
         dirs.each {
           zipfileset(dir: it, prefix: zipPrefix)
         }
-        zipfileset(dir: jdkDirectoryPath, prefix: "$zipPrefix/jre") {
-          exclude(name: "src.zip")
-          type(type: "file")
+        if (!buildContext.options.studioSdk) {
+          zipfileset(dir: jdkDirectoryPath, prefix: "$zipPrefix/jre") {
+            exclude(name: "src.zip")
+            type(type: "file")
+          }
         }
       }
 

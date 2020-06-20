@@ -308,16 +308,18 @@ TODO(b/118034991): generate product-info.json files (or not) */
 
         // Android Studio: added by Change Idc07b110 / commit f20681e
         // Bundle JDK
-        def binaries = ["Contents/Home/bin/*", "Contents/Home/jre/bin/*", "Contents/Home/jre/lib/jspawnhelper", "Contents/Home/jre/lib/*.dylib.*"]
-        zipfileset(dir: jdkDirectoryPath, prefix: "$zipRoot/jre/jdk") {
-          binaries.each {
-            exclude(name: it)
+        if (!buildContext.options.studioSdk) {
+          def binaries = ["Contents/Home/bin/*", "Contents/Home/jre/bin/*", "Contents/Home/jre/lib/jspawnhelper", "Contents/Home/jre/lib/*.dylib.*"]
+          zipfileset(dir: jdkDirectoryPath, prefix: "$zipRoot/jre/jdk") {
+            binaries.each {
+              exclude(name: it)
+            }
+            exclude(name: "Contents/Home/src.zip")
           }
-          exclude(name: "Contents/Home/src.zip")
-        }
-        zipfileset(dir: jdkDirectoryPath, filemode: "755", prefix: "$zipRoot/jre/jdk") {
-          binaries.each {
-            include(name: it)
+          zipfileset(dir: jdkDirectoryPath, filemode: "755", prefix: "$zipRoot/jre/jdk") {
+            binaries.each {
+              include(name: it)
+            }
           }
         }
 

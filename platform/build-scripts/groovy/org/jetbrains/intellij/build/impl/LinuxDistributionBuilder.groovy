@@ -236,19 +236,21 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         }
 
         // Android Studio: bundle the JDK
-        def binaries = ["bin/*", "jre/bin/*", "jre/lib/jexec"]
-        tarfileset(dir: jreDirectoryPath, prefix: "$tarRoot/jre") {
-          binaries.each {
-            exclude(name: it)
+        if (!buildContext.options.studioSdk) {
+          def binaries = ["bin/*", "jre/bin/*", "jre/lib/jexec"]
+          tarfileset(dir: jreDirectoryPath, prefix: "$tarRoot/jre") {
+            binaries.each {
+              exclude(name: it)
+            }
+            exclude(name: "src.zip")
+            type(type: "file")
           }
-          exclude(name: "src.zip")
-          type(type: "file")
-        }
-        tarfileset(dir: jreDirectoryPath, filemode: "755", prefix: "$tarRoot/jre") {
-          binaries.each {
-            include(name: it)
+          tarfileset(dir: jreDirectoryPath, filemode: "755", prefix: "$tarRoot/jre") {
+            binaries.each {
+              include(name: it)
+            }
+            type(type: "file")
           }
-          type(type: "file")
         }
       }
 
