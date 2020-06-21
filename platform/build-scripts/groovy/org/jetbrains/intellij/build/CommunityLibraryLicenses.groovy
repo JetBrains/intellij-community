@@ -256,7 +256,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Grazie Language Tool (English)", libraryName: "tanvd.grazi.languagetool:grazi-language-tool-en:4.7.10",
                        license: "LGPL 2.1",
                        licenseUrl: "http://www.gnu.org/licenses/lgpl-2.1.txt"),
-    new LibraryLicense(name: "Grazie SpellChecker", libraryName: "com.intellij.grazie:grazie-spellchecker:0.1.8",
+    new LibraryLicense(name: "Grazie SpellChecker", libraryName: "com.intellij.grazie:grazie-spellchecker:0.1.9",
                        license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     new LibraryLicense(name: "Groovy", libraryName: "org.codehaus.groovy:groovy",

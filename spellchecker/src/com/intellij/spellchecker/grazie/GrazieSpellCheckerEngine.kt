@@ -86,7 +86,7 @@ internal class GrazieSpellCheckerEngine(project: Project) : SpellCheckerEngine {
   }
 
   override fun getSuggestions(word: String, maxSuggestions: Int, maxMetrics: Int): List<String> {
-    return mySpeller.suggest(word).take(maxSuggestions).toMutableList()
+    return mySpeller.suggest(word, maxSuggestions).take(maxSuggestions).toList()
   }
 
   override fun reset() {
