@@ -24,14 +24,14 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="module-library">
-      <library name="com.intellij.grazie:grazie-spellchecker:0.1.8" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.intellij.grazie:grazie-spellchecker:0.1.8" />
+      <library name="com.intellij.grazie:grazie-spellchecker:0.1.9" type="repository">
+        <properties include-transitive-deps="false" maven-id="com.intellij.grazie:grazie-spellchecker:0.1.9" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/intellij/grazie/grazie-spellchecker/0.1.8/grazie-spellchecker-0.1.8.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/intellij/grazie/grazie-spellchecker/0.1.9/grazie-spellchecker-0.1.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/intellij/grazie/grazie-spellchecker/0.1.8/grazie-spellchecker-0.1.8-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/intellij/grazie/grazie-spellchecker/0.1.9/grazie-spellchecker-0.1.9-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
