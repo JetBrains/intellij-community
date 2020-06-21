@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.terminal.TerminalShellCommandHandler;
@@ -91,8 +92,13 @@ public final class TerminalShellCommandHandlerHelper {
     }
 
     if (result != null) {
+      AnAction action = ActionManager.getInstance().getAction("Terminal.SmartCommandExecution");
+      if (action == null) {
+        LOG.error("Terminal Smart Execution action isn't registered");
+        return;
+      }
       String title = TerminalBundle.message("smart_command_execution.notification.title");
-      String content = TerminalBundle.message("smart_command_execution.notification.text");
+      String content = TerminalBundle.message("smart_command_execution.notification.text", KeymapUtil.getFirstKeyboardShortcutText(action));
       mySingletonNotificationManager.notify(title, content, project, null,
                                             new NotificationAction(TerminalBundle.message("smart_command_execution.notification.got.it")) {
                                               @Override
