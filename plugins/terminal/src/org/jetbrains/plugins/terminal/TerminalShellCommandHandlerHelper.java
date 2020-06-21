@@ -4,7 +4,10 @@ package org.jetbrains.plugins.terminal;
 import com.google.common.base.Ascii;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ReadAction;
@@ -21,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 
-import java.awt.event.InputEvent;
+import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.Arrays;
@@ -167,7 +170,7 @@ public final class TerminalShellCommandHandlerHelper {
     }
     myAlarm.cancelAllRequests();
 
-    if ((keyPressed.getModifiers() & InputEvent.CTRL_MASK) == 0) {
+    if (!matchSmartCommandAction(keyPressed)) {
       onShellCommandExecuted();
       return false;
     }
@@ -202,5 +205,12 @@ public final class TerminalShellCommandHandlerHelper {
     catch (IOException e) {
       LOG.info("Cannot clear shell command " + command, e);
     }
+  }
+
+  static boolean matchSmartCommandAction(@NotNull KeyEvent e) {
+    final KeyboardShortcut eventShortcut = new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent(e), null);
+    AnAction action = ActionManager.getInstance().getAction("Terminal.SmartCommandExecution");
+    return action != null &&
+           Arrays.stream(action.getShortcutSet().getShortcuts()).anyMatch(sc -> sc.isKeyboard() && sc.startsWith(eventShortcut));
   }
 }
