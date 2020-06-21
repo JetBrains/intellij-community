@@ -27,7 +27,6 @@ import com.intellij.vcs.log.util.*
 import com.intellij.vcs.log.util.VcsLogUtil.FULL_HASH_LENGTH
 import com.intellij.vcs.log.util.VcsLogUtil.SHORT_HASH_LENGTH
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
-import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromHashes
 import com.intellij.vcs.log.visible.filters.with
 import com.intellij.vcs.log.visible.filters.without
 import gnu.trove.TIntHashSet
