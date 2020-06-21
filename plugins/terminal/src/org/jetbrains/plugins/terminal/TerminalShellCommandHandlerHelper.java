@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal;
 import com.google.common.base.Ascii;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ReadAction;
@@ -20,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 
-import javax.swing.event.HyperlinkEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
@@ -89,16 +89,14 @@ public final class TerminalShellCommandHandlerHelper {
 
     if (result != null) {
       String title = TerminalBundle.message("smart_command_execution.notification.title");
-      String content = TerminalBundle.message("smart_command_execution.notification.text", GOT_IT);
-      mySingletonNotificationManager.notify(title, content, project,
-                new NotificationListener.Adapter() {
-                  @Override
-                  protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-                    if (GOT_IT.equals(e.getDescription())) {
-                      getPropertiesComponent().setValue(TERMINAL_CUSTOM_COMMANDS_GOT_IT, true, false);
-                    }
-                  }
-                });
+      String content = TerminalBundle.message("smart_command_execution.notification.text");
+      mySingletonNotificationManager.notify(title, content, project, null,
+                                            new NotificationAction(TerminalBundle.message("smart_command_execution.notification.got.it")) {
+                                              @Override
+                                              public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+                                                getPropertiesComponent().setValue(TERMINAL_CUSTOM_COMMANDS_GOT_IT, true, false);
+                                              }
+                                            });
     }
   }
 
