@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal
 
+import com.intellij.execution.configurations.ParametersList
 import com.intellij.internal.statistic.collectors.fus.os.OsVersionUsageCollector
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
@@ -17,8 +18,10 @@ class TerminalUsageTriggerCollector {
     }
 
     @JvmStatic
-    fun triggerCommandExecuted(project: Project) {
+    fun triggerSmartCommandExecuted(project: Project, command: String) {
       FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, "terminal.command.executed")
+      FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, "terminal.smart.command.executed",
+                                                  FeatureUsageData().addData("smart.command", ParametersList.parse(command)[0]))
     }
 
     @JvmStatic

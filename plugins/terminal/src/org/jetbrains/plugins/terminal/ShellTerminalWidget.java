@@ -57,7 +57,6 @@ public class ShellTerminalWidget extends JBTerminalWidget {
 
       if (e.getKeyCode() == KeyEvent.VK_ENTER) {
         String command = getTypedShellCommand();
-        TerminalUsageTriggerCollector.Companion.triggerCommandExecuted(myProject);
         if (myShellCommandHandlerHelper.processEnterKeyPressed(command, e)) {
           e.consume();
         }
