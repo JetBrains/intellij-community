@@ -27,12 +27,12 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.TripleFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LimitedPool;
-import com.intellij.util.containers.Stack;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,7 +82,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
   private IElementType myCachedTokenType;
 
-  private final TIntObjectHashMap<LazyParseableToken> myChameleonCache = new TIntObjectHashMap<>();
+  private final Int2ObjectOpenHashMap<LazyParseableToken> myChameleonCache = new Int2ObjectOpenHashMap<>();
   private final MarkerPool myPool = new MarkerPool(this);
   private final MarkerOptionalData myOptionalData = new MarkerOptionalData();
   private final MarkerProduction myProduction = new MarkerProduction(myPool, myOptionalData);
@@ -263,9 +263,6 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       throw new UnsupportedOperationException("Shall not be called on this kind of markers");
     }
 
-    @NotNull
-    abstract WhitespacesAndCommentsBinder getBinder(boolean done);
-
     abstract void setLexemeIndex(int lexemeIndex, boolean done);
 
     abstract int getLexemeIndex(boolean done);
@@ -307,12 +304,6 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     @Override
     public int getEndIndex() {
       return myDoneLexeme;
-    }
-
-    @NotNull
-    @Override
-    WhitespacesAndCommentsBinder getBinder(boolean done) {
-      return myBuilder.myOptionalData.getBinder(markerId, done);
     }
 
     @Override
@@ -617,13 +608,6 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     void clean() {
       super.clean();
       myMessage = null;
-    }
-
-    @NotNull
-    @Override
-    public WhitespacesAndCommentsBinder getBinder(boolean done) {
-      assert !done;
-      return DEFAULT_RIGHT_BINDER;
     }
 
     @Override
@@ -1009,22 +993,23 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     StartMarker rootMarker = (StartMarker)Objects.requireNonNull(myProduction.getStartMarkerAt(0));
     if (rootMarker.myFirstChild != null) return rootMarker;
 
-    myOptionalData.compact();
-
     myTokenTypeChecked = true;
     balanceWhiteSpaces();
 
     rootMarker.myParent = rootMarker.myFirstChild = rootMarker.myLastChild = rootMarker.myNext = null;
     StartMarker curNode = rootMarker;
-    final Stack<StartMarker> nodes = new Stack<>();
+    ObjectArrayList<StartMarker> nodes = new ObjectArrayList<>();
     nodes.push(rootMarker);
 
     int lastErrorIndex = -1;
     int maxDepth = 0;
     int curDepth = 0;
     boolean hasCollapsedChameleons = false;
-    for (int i = 1; i < myProduction.size(); i++) {
-      ProductionMarker item = myProduction.getStartMarkerAt(i);
+    int[] productions = myProduction.elements();
+    Object[] markers = myPool.elements();
+    for (int i = 1, size = myProduction.size(); i < size; i++) {
+      int id = productions[i];
+      ProductionMarker item = id > 0 ? (ProductionMarker)markers[id] : null;
 
       if (item instanceof StartMarker) {
         final StartMarker marker = (StartMarker)item;
@@ -1047,7 +1032,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
         if (isCollapsedChameleon(curNode)) {
           hasCollapsedChameleons = true;
         }
-        assertMarkersBalanced(myProduction.getDoneMarkerAt(i) == curNode, item);
+        assertMarkersBalanced(id < 0 && markers[-id] == curNode, item);
         curNode = nodes.pop();
         curDepth--;
       }
@@ -1094,19 +1079,36 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     RelativeTokenTextView tokenTextGetter = new RelativeTokenTextView();
     int lastIndex = 0;
 
+    int[] productions = myProduction.elements();
+    Object[] markers = myPool.elements();
     for (int i = 1, size = myProduction.size() - 1; i < size; i++) {
-      ProductionMarker starting = myProduction.getStartMarkerAt(i);
+      int id = productions[i];
+      ProductionMarker starting = id > 0 ? (ProductionMarker)markers[id] : null;
       if (starting instanceof StartMarker) {
         assertMarkersBalanced(((StartMarker)starting).isDone(), starting);
       }
       boolean done = starting == null;
-      ProductionMarker item = starting != null ? starting : Objects.requireNonNull(myProduction.getDoneMarkerAt(i));
+      ProductionMarker item = starting != null ? starting : (ProductionMarker)markers[-id];
 
-      WhitespacesAndCommentsBinder binder = item.getBinder(done);
+      WhitespacesAndCommentsBinder binder;
+      if (item instanceof ErrorItem) {
+        assert !done;
+        binder = DEFAULT_RIGHT_BINDER;
+      }
+      else {
+        binder = myOptionalData.getBinder(item.markerId, done);
+      }
       int lexemeIndex = item.getLexemeIndex(done);
 
       boolean recursive = binder instanceof WhitespacesAndCommentsBinder.RecursiveBinder;
-      int prevProductionLexIndex = recursive ? 0 : myProduction.getLexemeIndexAt(i - 1);
+      int prevProductionLexIndex;
+      if (recursive) {
+        prevProductionLexIndex = 0;
+      }
+      else {
+        int prevId = productions[i - 1];
+        prevProductionLexIndex = ((ProductionMarker)markers[Math.abs(prevId)]).getLexemeIndex(prevId < 0);
+      }
       int wsStartIndex = Math.max(lexemeIndex, lastIndex);
       while (wsStartIndex > prevProductionLexIndex && whitespaceOrComment(myLexTypes[wsStartIndex - 1])) wsStartIndex--;
 
