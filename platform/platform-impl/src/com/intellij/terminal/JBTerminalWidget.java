@@ -341,9 +341,5 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
       }
       Disposer.dispose(JBTerminalWidget.this);
     }
-
-    public void setParentDisposable(@NotNull Disposable parent) {
-      Disposer.register(parent, this);
-    }
   }
 }
