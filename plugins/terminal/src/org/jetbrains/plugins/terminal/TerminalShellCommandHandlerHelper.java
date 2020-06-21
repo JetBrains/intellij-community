@@ -40,6 +40,9 @@ public final class TerminalShellCommandHandlerHelper {
   private volatile String myWorkingDirectory;
   private volatile Boolean myHasRunningCommands;
   private PropertiesComponent myPropertiesComponent;
+  private final SingletonNotificationManager mySingletonNotificationManager =
+    new SingletonNotificationManager(NotificationGroup.toolWindowGroup("Terminal", TerminalToolWindowFactory.TOOL_WINDOW_ID),
+                                     NotificationType.INFORMATION, null);
 
   TerminalShellCommandHandlerHelper(@NotNull ShellTerminalWidget widget) {
     myWidget = widget;
@@ -87,9 +90,7 @@ public final class TerminalShellCommandHandlerHelper {
     if (result != null) {
       String title = TerminalBundle.message("smart_command_execution.notification.title");
       String content = TerminalBundle.message("smart_command_execution.notification.text", GOT_IT);
-        new SingletonNotificationManager(
-        NotificationGroup.toolWindowGroup("Terminal", TerminalToolWindowFactory.TOOL_WINDOW_ID), NotificationType.INFORMATION, null)
-        .notify(title, content, project,
+      mySingletonNotificationManager.notify(title, content, project,
                 new NotificationListener.Adapter() {
                   @Override
                   protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
