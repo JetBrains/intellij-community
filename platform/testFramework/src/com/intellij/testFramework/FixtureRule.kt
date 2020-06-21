@@ -5,6 +5,7 @@ import com.intellij.configurationStore.LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
@@ -17,6 +18,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerExImpl
@@ -25,12 +27,14 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
+import com.intellij.project.TestProjectManager
 import com.intellij.project.stateStore
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.io.sanitizeFileName
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
 import org.junit.runner.Description
@@ -39,15 +43,32 @@ import java.nio.file.Path
 
 private var sharedModule: Module? = null
 
-open class ApplicationRule : ExternalResource() {
+open class ApplicationRule : TestRule {
   companion object {
     init {
       Logger.setFactory(TestLoggerFactory::class.java)
     }
   }
 
-  public final override fun before() {
+  final override fun apply(base: Statement, description: Description): Statement? {
+    return object : Statement() {
+      override fun evaluate() {
+        before(description)
+        try {
+          base.evaluate()
+        }
+        finally {
+          after()
+        }
+      }
+    }
+  }
+
+  protected open fun before(description: Description) {
     TestApplicationManager.getInstance()
+  }
+
+  protected open fun after() {
   }
 }
 
@@ -71,55 +92,63 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = true, private 
       val tasks = mutableListOf<ThrowableRunnable<Throwable>>()
       val errors = mutableListOf<IllegalStateException>()
       for (project in openProjects) {
-        errors.add(IllegalStateException("Test project is not disposed: $project;\n created in: ${getCreationPlace(project)}"))
+        errors.add(IllegalStateException("Project is not disposed: $project;\ncreated in: ${TestProjectManager.getCreationPlace(project)}"))
         tasks.add(ThrowableRunnable { projectManager.forceCloseProject(project) })
       }
       RunAll(tasks).run(errors)
     }
 
-    @JvmStatic
-    fun getCreationPlace(project: Project): String {
-      val base = try {
-        if (project.isDisposed) "" else project.basePath
-      }
-      catch (e: Exception) {
-        " ($e while getting base dir)"
-      }
 
-      val place = if (project is ProjectEx) project.creationTrace else null
-      return "$project ${place ?: ""}$base"
+    /**
+     * Think twice before use. And then do not use. To support old code.
+     */
+    @ApiStatus.Internal
+    fun createStandalone(): ProjectRule {
+      val result = ProjectRule()
+      result.before(Description.EMPTY)
+      return result
     }
   }
 
   private var sharedProject: ProjectEx? = null
   private var testClassName: String? = null
   var virtualFilePointerTracker: VirtualFilePointerTracker? = null
+  var projectTracker: AccessToken? = null
 
-  override fun apply(base: Statement, description: Description): Statement {
+  override fun before(description: Description) {
+    super.before(description)
+
     testClassName = sanitizeFileName(description.className.substringAfterLast('.'))
-    return super.apply(base, description)
+    projectTracker = (ProjectManager.getInstance() as TestProjectManager).startTracking()
   }
 
   private fun createProject(): ProjectEx {
     val projectFile = TemporaryDirectory.generateTemporaryPath("project_${testClassName}${ProjectFileType.DOT_DEFAULT_EXTENSION}")
     val options = createTestOpenProjectOptions(runPostStartUpActivities = runPostStartUpActivities)
-    val project = ProjectManagerEx.getInstanceEx().openProject(projectFile, options) as ProjectEx
+    val project = (ProjectManager.getInstance() as TestProjectManager).openProject(projectFile, options) as ProjectEx
     virtualFilePointerTracker = VirtualFilePointerTracker()
     return project
   }
 
-  public override fun after() {
-    val project = sharedProject ?: return
-    try {
-      val l = mutableListOf<Throwable>()
-      l.catchAndStoreExceptions { PlatformTestUtil.forceCloseProjectWithoutSaving(project) }
-      l.catchAndStoreExceptions { virtualFilePointerTracker?.assertPointersAreDisposed() }
-      l.throwIfNotEmpty()
-    }
-    finally {
+  override fun after() {
+    val l = mutableListOf<Throwable>()
+    l.catchAndStoreExceptions { super.after() }
+    l.catchAndStoreExceptions { sharedProject?.let { PlatformTestUtil.forceCloseProjectWithoutSaving(it) } }
+    l.catchAndStoreExceptions { projectTracker?.finish() }
+    l.catchAndStoreExceptions { virtualFilePointerTracker?.assertPointersAreDisposed() }
+    l.catchAndStoreExceptions {
       sharedProject = null
       sharedModule = null
     }
+    l.throwIfNotEmpty()
+  }
+
+  /**
+   * Think twice before use. And then do not use. To support old code.
+   */
+  @ApiStatus.Internal
+  fun close() {
+    after()
   }
 
   val projectIfOpened: ProjectEx?

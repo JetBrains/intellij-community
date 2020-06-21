@@ -42,7 +42,7 @@ public abstract class ProjectImpl extends ComponentManagerImpl implements Projec
 
   protected String myName;
   static boolean ourClassesAreLoaded;
-  protected final String creationTrace = ApplicationManager.getApplication().isUnitTestMode() ? ExceptionUtil.currentStackTrace() : null;
+  private final String creationTrace = ApplicationManager.getApplication().isUnitTestMode() ? ExceptionUtil.currentStackTrace() : null;
 
   protected ProjectImpl(@NotNull ComponentManagerImpl parent) {
     super(parent);

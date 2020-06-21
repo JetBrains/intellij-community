@@ -183,8 +183,7 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
 
   final override fun toString(): String {
     val store = componentStoreValue.valueIfInitialized
-    return "Project(name=" + myName + ", containerState=" + containerStateName +
-           ", componentStore=" + (if (store == null) "<not initialized>" else if (store.storageScheme == StorageScheme.DIRECTORY_BASED) store.projectBasePath.toString() else store.projectFilePath) + ") " +
-           if (isTemporarilyDisposed) " (disposed" + " temporarily)" else ""
+    return "Project(name=$myName, containerState=${if (isTemporarilyDisposed) "disposed temporarily" else containerStateName}" +
+           ", componentStore=" + (if (store == null) "<not initialized>" else if (store.storageScheme == StorageScheme.DIRECTORY_BASED) store.projectBasePath.toString() else store.projectFilePath) + ")"
   }
 }
