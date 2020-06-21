@@ -173,12 +173,15 @@ public final class TerminalShellCommandHandlerHelper {
       return false;
     }
 
-    if (!TerminalShellCommandHandler.Companion.matches(myWidget.getProject(), getWorkingDirectory(),
-                                                       !hasRunningCommands(), command)) {
+    Project project = myWidget.getProject();
+    String workingDirectory = getWorkingDirectory();
+    boolean localSession = !hasRunningCommands();
+    if (!TerminalShellCommandHandler.Companion.matches(project, workingDirectory, localSession, command)) {
       onShellCommandExecuted();
       return false;
     }
 
+    TerminalUsageTriggerCollector.Companion.triggerSmartCommandExecuted(project, command);
     TerminalShellCommandHandler.Companion.executeShellCommandHandler(myWidget.getProject(), getWorkingDirectory(),
                                                                      !hasRunningCommands(), command);
     clearTypedCommand(command);
