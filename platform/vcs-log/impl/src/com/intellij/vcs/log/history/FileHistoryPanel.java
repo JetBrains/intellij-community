@@ -114,9 +114,17 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myDetailsPanel.installCommitSelectionListener(myGraphTable);
     VcsLogUiUtil.installDetailsListeners(myGraphTable, myDetailsPanel, logData, this);
 
-    JBPanel tablePanel = new JBPanel(new BorderLayout());
+    JComponent actionsToolbar = createActionsToolbar();
+    JBPanel tablePanel = new JBPanel(new BorderLayout()) {
+      @Override
+      public Dimension getMinimumSize() {
+        Dimension minimumSize = super.getMinimumSize();
+        int minSize = Math.round(actionsToolbar.getPreferredSize().width * 1.5f);
+        return new Dimension(Math.max(minimumSize.width, minSize), Math.max(minimumSize.height, minSize));
+      }
+    };
     tablePanel.add(myDetailsSplitter, BorderLayout.CENTER);
-    tablePanel.add(createActionsToolbar(), BorderLayout.WEST);
+    tablePanel.add(actionsToolbar, BorderLayout.WEST);
 
     setLayout(new BorderLayout());
     if (withDiffPreview) {
