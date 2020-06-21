@@ -64,7 +64,6 @@ abstract class FrameDiffPreview<D : DiffRequestProcessor>(protected val previewD
     get() = previewDiffSplitter
 
   init {
-    previewDiffSplitter.setHonorComponentsMinimumSize(false)
     previewDiffSplitter.firstComponent = mainComponent
 
     toggleDiffPreviewOnPropertyChange(uiProperties, previewDiff, ::showDiffPreview)
