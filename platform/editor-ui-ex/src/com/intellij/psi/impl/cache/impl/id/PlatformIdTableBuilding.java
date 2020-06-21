@@ -34,6 +34,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.intellij.psi.impl.cache.impl.BaseFilterLexer.createTodoScanningState;
+
 /**
  * Author: dmitrylomov
  */
@@ -81,7 +83,7 @@ public abstract class PlatformIdTableBuilding {
   }
 
   private static class TokenSetTodoIndexer extends VersionedTodoIndexer {
-    @NotNull private final TokenSet myCommentTokens;
+    final TokenSet myCommentTokens;
 
     TokenSetTodoIndexer(@NotNull final TokenSet commentTokens) {
       myCommentTokens = commentTokens;
@@ -90,51 +92,51 @@ public abstract class PlatformIdTableBuilding {
     @Override
     @NotNull
     public Map<TodoIndexEntry, Integer> map(@NotNull final FileContent inputData) {
-      if (IndexPatternUtil.getIndexPatternCount() > 0) {
-        final CharSequence chars = inputData.getContentAsText();
-        final OccurrenceConsumer occurrenceConsumer = new OccurrenceConsumer(null, true);
-        EditorHighlighter highlighter;
+      IndexPattern[] patterns = IndexPatternUtil.getIndexPatterns();
+      BaseFilterLexer.TodoScanningState todoScanningState = createTodoScanningState(patterns);
+      if (patterns.length == 0) return Collections.emptyMap();
 
-        final EditorHighlighter editorHighlighter = inputData.getUserData(EDITOR_HIGHLIGHTER);
-        if (editorHighlighter != null && checkCanUseCachedEditorHighlighter(chars, editorHighlighter)) {
-          highlighter = editorHighlighter;
-        }
-        else {
-          highlighter = HighlighterFactory.createHighlighter(inputData.getProject(), inputData.getFile());
-          highlighter.setText(chars);
-        }
+      final CharSequence chars = inputData.getContentAsText();
+      final OccurrenceConsumer occurrenceConsumer = new OccurrenceConsumer(null, true);
+      EditorHighlighter highlighter;
 
-        final int documentLength = chars.length();
-        BaseFilterLexer.TodoScanningState todoScanningState = null;
-        final HighlighterIterator iterator = highlighter.createIterator(0);
-
-        while (!iterator.atEnd()) {
-          final IElementType token = iterator.getTokenType();
-
-          if (myCommentTokens.contains(token) || CacheUtil.isInComments(token)) {
-            int start = iterator.getStart();
-            if (start >= documentLength) break;
-            int end = iterator.getEnd();
-
-            todoScanningState = BaseFilterLexer.advanceTodoItemsCount(
-              chars.subSequence(start, Math.min(end, documentLength)),
-              occurrenceConsumer,
-              todoScanningState
-            );
-            if (end > documentLength) break;
-          }
-          iterator.advance();
-        }
-        final Map<TodoIndexEntry, Integer> map = new HashMap<>();
-        for (IndexPattern pattern : IndexPatternUtil.getIndexPatterns()) {
-          final int count = occurrenceConsumer.getOccurrenceCount(pattern);
-          if (count > 0) {
-            map.put(new TodoIndexEntry(pattern.getPatternString(), pattern.isCaseSensitive()), count);
-          }
-        }
-        return map;
+      final EditorHighlighter editorHighlighter = inputData.getUserData(EDITOR_HIGHLIGHTER);
+      if (editorHighlighter != null && checkCanUseCachedEditorHighlighter(chars, editorHighlighter)) {
+        highlighter = editorHighlighter;
       }
-      return Collections.emptyMap();
+      else {
+        highlighter = HighlighterFactory.createHighlighter(inputData.getProject(), inputData.getFile());
+        highlighter.setText(chars);
+      }
+
+      final int documentLength = chars.length();
+      final HighlighterIterator iterator = highlighter.createIterator(0);
+
+      while (!iterator.atEnd()) {
+        final IElementType token = iterator.getTokenType();
+
+        if (myCommentTokens.contains(token) || CacheUtil.isInComments(token)) {
+          int start = iterator.getStart();
+          if (start >= documentLength) break;
+          int end = iterator.getEnd();
+
+          BaseFilterLexer.advanceTodoItemsCount(
+            chars.subSequence(start, Math.min(end, documentLength)),
+            occurrenceConsumer,
+            todoScanningState
+          );
+          if (end > documentLength) break;
+        }
+        iterator.advance();
+      }
+      final Map<TodoIndexEntry, Integer> map = new HashMap<>();
+      for (IndexPattern pattern : patterns) {
+        final int count = occurrenceConsumer.getOccurrenceCount(pattern);
+        if (count > 0) {
+          map.put(new TodoIndexEntry(pattern.getPatternString(), pattern.isCaseSensitive()), count);
+        }
+      }
+      return map;
     }
 
     @Override
