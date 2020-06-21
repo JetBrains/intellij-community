@@ -266,9 +266,10 @@ fun Path.copy(target: Path): Path {
 /**
  * Opposite to Java, parent directories will be created
  */
-fun Path.createFile() {
+fun Path.createFile(): Path {
   parent?.createDirectories()
   Files.createFile(this)
+  return this
 }
 
 inline fun <R> Path.directoryStreamIfExists(task: (stream: DirectoryStream<Path>) -> R): R? {
