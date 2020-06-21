@@ -61,6 +61,8 @@ public final class Disposer {
 
   /**
    * Registers {@code child} so it is disposed right before its {@code parent}. See {@link Disposer class JavaDoc} for more details.
+   * This overrides parent disposable for {@code child}, i.e. if {@code child} is already registered with {@code oldParent},
+   * it's unregistered from {@code oldParent} before registering with {@code parent}.
    *
    * @throws com.intellij.util.IncorrectOperationException If {@code child} has been registered with {@code parent} before;
    *                                                       if {@code parent} is being disposed ({@link #isDisposing(Disposable)}) or
