@@ -112,7 +112,14 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     }, this);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
     JBLoadingPanel changesLoadingPane = new JBLoadingPanel(new BorderLayout(), this,
-                                                           ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+                                                           ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
+      @Override
+      public Dimension getMinimumSize() {
+        Dimension minimumSize = super.getMinimumSize();
+        int minSize = Math.round(myChangesBrowser.getToolbar().getComponent().getPreferredSize().height * 1.5f);
+        return new Dimension(Math.max(minimumSize.width, minSize), Math.max(minimumSize.height, minSize));
+      }
+    };
     changesLoadingPane.add(myChangesBrowser);
 
     myToolbar = createActionsToolbar();
@@ -150,7 +157,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     if (withDiffPreview) {
       myDiffPreview = new FrameDiffPreview<VcsLogChangeProcessor>(createDiffPreview(false, myChangesBrowser),
                                                                   myUiProperties, myChangesBrowserSplitter, DIFF_SPLITTER_PROPORTION,
-                                                                  myUiProperties.get(MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT), 0.7f) {
+                                                                  myUiProperties.get(MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT),
+                                                                  0.7f) {
         @Override
         public void updatePreview(boolean state) {
           getPreviewDiff().updatePreview(state);
