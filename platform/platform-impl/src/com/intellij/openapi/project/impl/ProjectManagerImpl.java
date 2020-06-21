@@ -9,7 +9,6 @@ import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollect
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
@@ -17,7 +16,6 @@ import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.command.impl.DummyProject;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
@@ -44,9 +42,7 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.UnsafeWeakList;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ref.GCUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -54,11 +50,11 @@ import org.jetbrains.annotations.TestOnly;
 import java.awt.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 public abstract class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   protected static final Logger LOG = Logger.getInstance(ProjectManagerImpl.class);
@@ -157,56 +153,6 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
     Disposer.dispose(myDefaultProject);
   }
 
-  @SuppressWarnings("StaticNonFinalField") public static int TEST_PROJECTS_CREATED;
-  protected static final boolean LOG_PROJECT_LEAKAGE_IN_TESTS = Boolean.parseBoolean(System.getProperty("idea.log.leaked.projects.in.tests", "true"));
-  private static final int MAX_LEAKY_PROJECTS = 5;
-  private static final long LEAK_CHECK_INTERVAL = TimeUnit.MINUTES.toMillis(30);
-  private static long CHECK_START = System.currentTimeMillis();
-  protected final Map<Project, String> myProjects = new WeakHashMap<>();
-
-  @TestOnly
-  protected final void checkProjectLeaksInTests() {
-    if (!LOG_PROJECT_LEAKAGE_IN_TESTS || getLeakedProjectsCount() < MAX_LEAKY_PROJECTS) {
-      return;
-    }
-
-    long currentTime = System.currentTimeMillis();
-    if (currentTime - CHECK_START < LEAK_CHECK_INTERVAL) {
-      return; // check every N minutes
-    }
-
-    for (int i = 0; i < 3 && getLeakedProjectsCount() >= MAX_LEAKY_PROJECTS; i++) {
-      GCUtil.tryGcSoftlyReachableObjects();
-    }
-
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    CHECK_START = currentTime;
-
-    if (getLeakedProjectsCount() >= MAX_LEAKY_PROJECTS) {
-      //noinspection CallToSystemGC
-      System.gc();
-      Collection<Project> copy = getLeakedProjects();
-      myProjects.clear();
-      if (ContainerUtil.collect(copy.iterator()).size() >= MAX_LEAKY_PROJECTS) {
-        throw new TooManyProjectLeakedException(copy);
-      }
-    }
-  }
-
-  @TestOnly
-  private Collection<Project> getLeakedProjects() {
-    myProjects.remove(DummyProject.getInstance()); // process queue
-    return myProjects.keySet().stream()
-      .filter(p -> p.isDisposed() && !((ProjectExImpl)p).isTemporarilyDisposed())
-      .collect(Collectors.toCollection(UnsafeWeakList::new));
-  }
-
-  @TestOnly
-  private int getLeakedProjectsCount() {
-    myProjects.remove(DummyProject.getInstance()); // process queue
-    return (int)myProjects.keySet().stream().filter(project -> project.isDisposed() && !((ProjectExImpl)project).isTemporarilyDisposed()).count();
-  }
-
   protected static void initProject(@NotNull Path file,
                                     @NotNull ProjectImpl project,
                                     boolean isRefreshVfsNeeded,
@@ -274,19 +220,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
   }
 
   @Override
-  public final boolean openProject(@NotNull Project project) {
-    //noinspection TestOnlyProblems
-    if (isLight(project)) {
-      //noinspection TestOnlyProblems
-      ((ProjectExImpl)project).setTemporarilyDisposed(false);
-      boolean isInitialized = StartupManagerEx.getInstanceEx(project).startupActivityPassed();
-      if (isInitialized) {
-        addToOpened(project);
-        // events already fired
-        return true;
-      }
-    }
-
+  public boolean openProject(@NotNull Project project) {
     IProjectStore store = project instanceof ProjectStoreOwner ? ((ProjectStoreOwner)project).getComponentStore() : null;
     if (store != null) {
       Path projectFilePath = store.getStorageScheme() == StorageScheme.DIRECTORY_BASED ? store.getDirectoryStorePath() : Paths.get(store.getProjectFilePath());
@@ -370,7 +304,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
   }
 
   @SuppressWarnings("TestOnlyProblems")
-  protected final boolean closeProject(@NotNull Project project, boolean saveProject, boolean dispose, boolean checkCanClose) {
+  protected boolean closeProject(@NotNull Project project, boolean saveProject, boolean dispose, boolean checkCanClose) {
     Application app = ApplicationManager.getApplication();
     if (app.isWriteAccessAllowed()) {
       throw new IllegalStateException(

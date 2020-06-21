@@ -51,14 +51,13 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
   }
 
   final override fun createProject(name: String?, path: String): Project? {
-    return newProject(toCanonicalName(path),
-                      OpenProjectTask(isNewProject = true, runConfigurators = false).withProjectName(name))
+    return newProject(toCanonicalName(path), OpenProjectTask(isNewProject = true, runConfigurators = false, projectName = name))
   }
 
   final override fun newProject(projectName: String?, path: String, useDefaultProjectAsTemplate: Boolean, isDummy: Boolean): Project? {
     return newProject(toCanonicalName(path), OpenProjectTask(isNewProject = true,
-                                                                        useDefaultProjectAsTemplate = useDefaultProjectAsTemplate,
-                                                                        projectName = projectName))
+                                                             useDefaultProjectAsTemplate = useDefaultProjectAsTemplate,
+                                                             projectName = projectName))
   }
 
   final override fun loadAndOpenProject(originalFilePath: String): Project? {
@@ -66,7 +65,71 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
   }
 
   final override fun openProject(projectStoreBaseDir: Path, options: OpenProjectTask): Project? {
-    return doOpenProject(projectStoreBaseDir, options, this)
+    val app = ApplicationManager.getApplication()
+    if (LOG.isDebugEnabled && !app.isUnitTestMode) {
+      LOG.debug("open project: $options", Exception())
+    }
+
+    if (options.project != null && isProjectOpened(options.project)) {
+      return null
+    }
+
+    val activity = StartUpMeasurer.startMainActivity("project opening preparation")
+    if (!options.forceOpenInNewFrame) {
+      val openProjects = openProjects
+      if (!openProjects.isNullOrEmpty()) {
+        var projectToClose = options.projectToClose
+        if (projectToClose == null) {
+          // if several projects are opened, ask to reuse not last opened project frame, but last focused (to avoid focus switching)
+          val lastFocusedFrame = IdeFocusManager.getGlobalInstance().lastFocusedFrame
+          projectToClose = lastFocusedFrame?.project
+          if (projectToClose == null || projectToClose is LightEditCompatible) {
+            projectToClose = openProjects[openProjects.size - 1]
+          }
+        }
+        if (checkExistingProjectOnOpen(projectToClose, options.callback, projectStoreBaseDir, this)) {
+          return null
+        }
+      }
+    }
+
+    val frameAllocator = if (app.isHeadlessEnvironment) ProjectFrameAllocator() else ProjectUiFrameAllocator(options, projectStoreBaseDir)
+    val result = runInAutoSaveDisabledMode {
+      frameAllocator.run {
+        activity.end()
+        val result: PrepareProjectResult
+        if (options.project == null) {
+          result = prepareProject(options, projectStoreBaseDir) ?: return@run null
+        }
+        else {
+          result = PrepareProjectResult(options.project, null)
+        }
+
+        val project = result.project
+        frameAllocator.projectLoaded(project)
+        if (doOpenProject(project)) {
+          frameAllocator.projectOpened(project)
+          result
+        }
+        else {
+          null
+        }
+      }
+    }
+
+    if (result == null) {
+      frameAllocator.projectNotLoaded(error = null)
+      if (options.showWelcomeScreen) {
+        WelcomeFrame.showIfNoProjectOpened()
+      }
+      return null
+    }
+
+    val project = result.project
+    if (options.callback != null) {
+      options.callback!!.projectOpened(project, result.module ?: ModuleManager.getInstance(project).modules[0])
+    }
+    return project
   }
 
   @ApiStatus.Internal
@@ -85,46 +148,96 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
     }
     catch (e: ProcessCanceledException) {
       app.invokeAndWait { closeProject(project, /* saveProject = */false, /* dispose = */true, /* checkCanClose = */false) }
-      notifyProjectOpenFailed()
+      app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed()
+      if (!app.isUnitTestMode) {
+        WelcomeFrame.showIfNoProjectOpened()
+      }
       return false
     }
     return true
   }
 
   override fun newProject(projectFile: Path, options: OpenProjectTask): Project? {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      TEST_PROJECTS_CREATED++
-      checkProjectLeaksInTests()
-    }
-
     removeProjectDirContentOrFile(projectFile)
 
     val project = instantiateProject(projectFile, options)
     try {
       val template = if (options.useDefaultProjectAsTemplate) defaultProject else null
       initProject(projectFile, project, options.isRefreshVfsNeeded, template, ProgressManager.getInstance().progressIndicator)
-      if (LOG_PROJECT_LEAKAGE_IN_TESTS) {
-        myProjects.put(project, null)
-      }
       return project
     }
     catch (t: Throwable) {
-      if (ApplicationManager.getApplication().isUnitTestMode) {
-        throw t
+      handleErrorOnNewProject(t)
+      return null
+    }
+  }
+
+  protected open fun handleErrorOnNewProject(t: Throwable) {
+    LOG.warn(t)
+    try {
+      val errorMessage = message(t)
+      ApplicationManager.getApplication().invokeAndWait {
+        Messages.showErrorDialog(errorMessage, ProjectBundle.message("project.load.default.error"))
+      }
+    }
+    catch (e: NoClassDefFoundError) {
+      // error icon not loaded
+      LOG.info(e)
+    }
+  }
+
+  protected open fun instantiateProject(projectStoreBaseDir: Path, options: OpenProjectTask): ProjectImpl {
+    val activity = StartUpMeasurer.startMainActivity("project instantiation")
+    val project = ProjectExImpl(projectStoreBaseDir, options.projectName)
+    activity.end()
+    options.beforeInit?.invoke(project)
+    return project
+  }
+
+  private fun prepareProject(options: OpenProjectTask, projectStoreBaseDir: Path): PrepareProjectResult? {
+    val project: Project?
+    val indicator = ProgressManager.getInstance().progressIndicator
+    if (options.isNewProject) {
+      removeProjectDirContentOrFile(projectStoreBaseDir)
+      project = instantiateProject(projectStoreBaseDir, options)
+      val template = if (options.useDefaultProjectAsTemplate) defaultProject else null
+      initProject(projectStoreBaseDir, project, options.isRefreshVfsNeeded, template, indicator)
+    }
+    else {
+      var conversionResult: ConversionResult? = null
+      if (options.runConversionBeforeOpen) {
+        indicator?.text = IdeUICustomization.getInstance().projectMessage("progress.text.project.checking.configuration")
+        conversionResult = runMainActivity("project conversion") {
+          ConversionService.getInstance().convert(projectStoreBaseDir)
+        }
+        if (conversionResult.openingIsCanceled()) {
+          return null
+        }
+        indicator?.text = ""
       }
 
-      LOG.warn(t)
-      try {
-        val errorMessage = message(t)
-        ApplicationManager.getApplication().invokeAndWait {
-          Messages.showErrorDialog(errorMessage, ProjectBundle.message("project.load.default.error"))
+      project = instantiateProject(projectStoreBaseDir, options)
+      // template as null here because it is not a new project
+      initProject(projectStoreBaseDir, project, options.isRefreshVfsNeeded, null, indicator)
+      if (conversionResult != null && !conversionResult.conversionNotNeeded()) {
+        StartupManager.getInstance(project).runAfterOpened {
+          conversionResult.postStartupActivity(project)
         }
       }
-      catch (e: NoClassDefFoundError) {
-        // error icon not loaded
-        LOG.info(e)
-      }
+    }
+
+    @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
+    if (options.beforeOpen != null && !options.beforeOpen!!(project)) {
       return null
+    }
+
+    if (options.runConfigurators && (options.isNewProject || ModuleManager.getInstance(project).modules.isEmpty())) {
+      val module = PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(projectStoreBaseDir, project, options.isProjectCreatedWithWizard)
+      options.preparedToOpen?.invoke(module)
+      return PrepareProjectResult(project, module)
+    }
+    else {
+      return PrepareProjectResult(project, module = null)
     }
   }
 }
@@ -138,129 +251,6 @@ private fun message(e: Throwable): String {
   message = e.toString()
   val causeMessage = message(e.cause ?: return message)
   return "$message (cause: $causeMessage)"
-}
-
-private fun doOpenProject(projectStoreBaseDir: Path, options: OpenProjectTask, projectManager: ProjectManagerExImpl): Project? {
-  val app = ApplicationManager.getApplication()
-  if (ProjectManagerImpl.LOG.isDebugEnabled && !app.isUnitTestMode) {
-    ProjectManagerImpl.LOG.debug("open project: $options", Exception())
-  }
-
-  if (options.project != null && projectManager.isProjectOpened(options.project)) {
-    return null
-  }
-
-  val activity = StartUpMeasurer.startMainActivity("project opening preparation")
-  if (!options.forceOpenInNewFrame) {
-    val openProjects = projectManager.openProjects
-    if (!openProjects.isNullOrEmpty()) {
-      var projectToClose = options.projectToClose
-      if (projectToClose == null) {
-        // if several projects are opened, ask to reuse not last opened project frame, but last focused (to avoid focus switching)
-        val lastFocusedFrame = IdeFocusManager.getGlobalInstance().lastFocusedFrame
-        projectToClose = lastFocusedFrame?.project
-        if (projectToClose == null || projectToClose is LightEditCompatible) {
-          projectToClose = openProjects[openProjects.size - 1]
-        }
-      }
-      if (checkExistingProjectOnOpen(projectToClose, options.callback, projectStoreBaseDir, projectManager)) {
-        return null
-      }
-    }
-  }
-
-  val frameAllocator = if (app.isHeadlessEnvironment) ProjectFrameAllocator() else ProjectUiFrameAllocator(options, projectStoreBaseDir)
-  val result = runInAutoSaveDisabledMode {
-    frameAllocator.run {
-      activity.end()
-      val result: PrepareProjectResult?
-      if (options.project == null) {
-        result = prepareProject(options, projectStoreBaseDir, projectManager) ?: return@run null
-      }
-      else {
-        result = PrepareProjectResult(options.project, null)
-      }
-
-      val project = result.project
-      frameAllocator.projectLoaded(project)
-      if (projectManager.doOpenProject(project)) {
-        frameAllocator.projectOpened(project)
-        result
-      }
-      else {
-        null
-      }
-    }
-  }
-
-  if (result == null) {
-    frameAllocator.projectNotLoaded(error = null)
-    if (options.showWelcomeScreen) {
-      WelcomeFrame.showIfNoProjectOpened()
-    }
-    return null
-  }
-
-  val project = result.project
-  if (options.callback != null) {
-    options.callback!!.projectOpened(project, result.module ?: ModuleManager.getInstance(project).modules[0])
-  }
-  return project
-}
-
-private fun prepareProject(options: OpenProjectTask, projectStoreBaseDir: Path, projectManager: ProjectManagerExImpl): PrepareProjectResult? {
-  val project: Project?
-  val indicator = ProgressManager.getInstance().progressIndicator
-  if (options.isNewProject) {
-    removeProjectDirContentOrFile(projectStoreBaseDir)
-    project = instantiateProject(projectStoreBaseDir, options)
-    val template = if (options.useDefaultProjectAsTemplate) projectManager.defaultProject else null
-    ProjectManagerImpl.initProject(projectStoreBaseDir, project, options.isRefreshVfsNeeded, template, indicator)
-  }
-  else {
-    var conversionResult: ConversionResult? = null
-    if (options.runConversionBeforeOpen) {
-      indicator?.text = IdeUICustomization.getInstance().projectMessage("progress.text.project.checking.configuration")
-      conversionResult = runMainActivity("project conversion") {
-        ConversionService.getInstance().convert(projectStoreBaseDir)
-      }
-      if (conversionResult.openingIsCanceled()) {
-        return null
-      }
-      indicator?.text = ""
-    }
-
-    project = instantiateProject(projectStoreBaseDir, options)
-    // template as null here because it is not a new project
-    ProjectManagerImpl.initProject(projectStoreBaseDir, project, options.isRefreshVfsNeeded, null, indicator)
-    if (conversionResult != null && !conversionResult.conversionNotNeeded()) {
-      StartupManager.getInstance(project).runAfterOpened {
-        conversionResult.postStartupActivity(project)
-      }
-    }
-  }
-
-  @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
-  if (options.beforeOpen != null && !options.beforeOpen!!(project)) {
-    return null
-  }
-
-  if (options.runConfigurators && (options.isNewProject || ModuleManager.getInstance(project).modules.isEmpty())) {
-    val module = PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(projectStoreBaseDir, project, options.isProjectCreatedWithWizard)
-    options.preparedToOpen?.invoke(module)
-    return PrepareProjectResult(project, module)
-  }
-  else {
-    return PrepareProjectResult(project, module = null)
-  }
-}
-
-private fun instantiateProject(projectStoreBaseDir: Path, options: OpenProjectTask): ProjectImpl {
-  val activity = StartUpMeasurer.startMainActivity("project instantiation")
-  val project = ProjectExImpl(projectStoreBaseDir, options.projectName)
-  activity.end()
-  options.beforeInit?.invoke(project)
-  return project
 }
 
 private fun checkExistingProjectOnOpen(projectToClose: Project,
@@ -363,14 +353,6 @@ internal fun waitAndProcessInvocationEventsInIdeEventQueue(startupManager: Start
     if (event is InvocationEvent) {
       eventQueue.dispatchEvent(event)
     }
-  }
-}
-
-private fun notifyProjectOpenFailed() {
-  val app = ApplicationManager.getApplication()
-  app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed()
-  if (!app.isUnitTestMode) {
-    WelcomeFrame.showIfNoProjectOpened()
   }
 }
 

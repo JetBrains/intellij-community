@@ -12,6 +12,7 @@ import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.project.TestProjectManager;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.io.PersistentEnumeratorBase;
@@ -52,7 +53,7 @@ public final class LeakHunter {
                                    @NotNull Class<T> suspectClass,
                                    @Nullable final Condition<? super T> isReallyLeak) throws AssertionError {
     processLeaks(rootsSupplier, suspectClass, isReallyLeak, (leaked, backLink)->{
-      String place = leaked instanceof Project ? ProjectRule.getCreationPlace((Project)leaked) : "";
+      String place = leaked instanceof Project ? TestProjectManager.getCreationPlace((Project)leaked) : "";
       String message ="Found leaked "+leaked.getClass() + ": "+leaked +
                       "; hash: " + System.identityHashCode(leaked) + "; place: " + place + "\n" +
                       backLink;

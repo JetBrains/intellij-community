@@ -47,6 +47,7 @@ import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
+import com.intellij.project.TestProjectManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -313,7 +314,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       .processLeaks(LeakHunter.allRoots(), ProjectImpl.class, p -> hashCodes.contains(System.identityHashCode(p)), (leaked, backLink) -> {
         int hashCode = System.identityHashCode(leaked);
         leakers.append("Leaked project found:").append(leaked).append("; hash: ").append(hashCode).append("; place: ")
-          .append(ProjectRule.getCreationPlace(leaked)).append("\n");
+          .append(TestProjectManager.getCreationPlace(leaked)).append("\n");
         leakers.append(backLink).append("\n");
         leakers.append(";-----\n");
 
