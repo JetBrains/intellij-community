@@ -48,6 +48,9 @@
     <action id="Terminal.SwitchFocusToEditor" class="org.jetbrains.plugins.terminal.action.TerminalSwitchFocusToEditorAction">
       <keyboard-shortcut first-keystroke="ESCAPE" keymap="$default"/>
     </action>
+    <action id="Terminal.SmartCommandExecution" class="org.jetbrains.plugins.terminal.TerminalShellCommandAction">
+      <keyboard-shortcut first-keystroke="ctrl ENTER" keymap="$default"/>
+    </action>
   </actions>
 
 </idea-plugin>
