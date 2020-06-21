@@ -751,10 +751,18 @@ public final class IdeKeyEventDispatcher implements Disposable {
   /**
    * This method fills {@code myActions} list.
    */
+  KeyEvent lastKeyEventForCurrentContext;
   public void updateCurrentContext(Component component, @NotNull Shortcut sc) {
+    KeyEvent keyEvent = myContext.getInputEvent();
     myContext.setFoundComponent(null);
     myContext.setHasSecondStroke(false);
     myContext.getActions().clear();
+
+    if (Registry.is("ide.edt.update.context.only.on.key.pressed.event")) {
+      if (keyEvent == null || keyEvent.getID() != KeyEvent.KEY_PRESSED) return;
+      if (keyEvent == lastKeyEventForCurrentContext) return;
+      lastKeyEventForCurrentContext = keyEvent;
+    }
 
     if (isControlEnterOnDialog(component, sc)) return;
 
