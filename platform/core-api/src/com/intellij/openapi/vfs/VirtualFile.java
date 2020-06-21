@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.function.Supplier;
 
 /**
  * <p>Represents a file in {@link VirtualFileSystem}. A particular file is represented by equal
@@ -726,7 +727,9 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     putUserData(DETECTED_LINE_SEPARATOR_KEY, separator);
   }
 
-  public void setPreloadedContentHint(byte[] preloadedContentHint) { }
+  public <T> T computeWithPreloadedContentHint(byte @NotNull [] preloadedContentHint, @NotNull Supplier<? extends T> computable) {
+    return null;
+  }
 
   /**
    * Returns {@code true} if this file is a symlink that is either <i>recursive</i> (i.e. points to this file' parent) or

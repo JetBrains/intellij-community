@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Supplier;
 
 /**
  * @author max
@@ -92,8 +93,14 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   private static final Key<byte[]> ourPreloadedContentKey = Key.create("preloaded.content.key");
 
   @Override
-  public void setPreloadedContentHint(byte[] preloadedContentHint) {
+  public <T> T computeWithPreloadedContentHint(byte @NotNull [] preloadedContentHint, @NotNull Supplier<? extends T> computable) {
     putUserData(ourPreloadedContentKey, preloadedContentHint);
+    try {
+      return computable.get();
+    }
+    finally {
+      putUserData(ourPreloadedContentKey, null);
+    }
   }
 
   @Override

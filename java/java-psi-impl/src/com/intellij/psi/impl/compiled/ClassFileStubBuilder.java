@@ -33,13 +33,8 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder.CompositeBina
 
   @Override
   public @Nullable ClassFileDecompilers.Decompiler getSubBuilder(@NotNull FileContent fileContent) {
-    fileContent.getFile().setPreloadedContentHint(fileContent.getContent());
-    try {
-      return ClassFileDecompilers.getInstance().find(fileContent.getFile());
-    }
-    finally {
-      fileContent.getFile().setPreloadedContentHint(null);
-    }
+    return fileContent.getFile()
+      .computeWithPreloadedContentHint(fileContent.getContent(), () -> ClassFileDecompilers.getInstance().find(fileContent.getFile()));
   }
 
   @Override
@@ -51,8 +46,7 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder.CompositeBina
 
   @Override
   public @Nullable Stub buildStubTree(@NotNull FileContent fileContent, @Nullable ClassFileDecompilers.Decompiler decompiler) {
-    fileContent.getFile().setPreloadedContentHint(fileContent.getContent());
-    try {
+    return fileContent.getFile().computeWithPreloadedContentHint(fileContent.getContent(), () -> {
       VirtualFile file = fileContent.getFile();
       try {
         if (decompiler instanceof Full) {
@@ -77,10 +71,7 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder.CompositeBina
       }
 
       return null;
-    }
-    finally {
-      fileContent.getFile().setPreloadedContentHint(null);
-    }
+    });
   }
 
   @Override

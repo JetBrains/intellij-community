@@ -173,11 +173,6 @@ public class StubVirtualFile extends VirtualFile {
   }
 
   @Override
-  public void setPreloadedContentHint(byte[] preloadedContentHint) {
-    throw unsupported();
-  }
-
-  @Override
   public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
     throw unsupported();
   }
