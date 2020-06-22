@@ -17,6 +17,7 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.UserDataHolder;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
@@ -47,6 +48,7 @@ public interface RangeMarker extends UserDataHolder, Segment {
    * @return the start offset.
    */
   @Override
+  @Contract(pure = true)
   int getStartOffset();
 
   /**
@@ -55,6 +57,7 @@ public interface RangeMarker extends UserDataHolder, Segment {
    * @return the end offset.
    */
   @Override
+  @Contract(pure = true)
   int getEndOffset();
 
   /**
@@ -63,6 +66,7 @@ public interface RangeMarker extends UserDataHolder, Segment {
    *
    * @return true if the marker is valid, false if it has been invalidated.
    */
+  @Contract(pure = true)
   boolean isValid();
 
   /**
