@@ -44,9 +44,10 @@ public final class TerminalShellCommandHandlerHelper {
   private volatile String myWorkingDirectory;
   private volatile Boolean myHasRunningCommands;
   private PropertiesComponent myPropertiesComponent;
+  private static final NotificationGroup ourToolWindowGroup =
+    NotificationGroup.toolWindowGroup("Terminal", TerminalToolWindowFactory.TOOL_WINDOW_ID);
   private final SingletonNotificationManager mySingletonNotificationManager =
-    new SingletonNotificationManager(NotificationGroup.toolWindowGroup("Terminal", TerminalToolWindowFactory.TOOL_WINDOW_ID),
-                                     NotificationType.INFORMATION, null);
+    new SingletonNotificationManager(ourToolWindowGroup, NotificationType.INFORMATION, null);
 
   TerminalShellCommandHandlerHelper(@NotNull ShellTerminalWidget widget) {
     myWidget = widget;
