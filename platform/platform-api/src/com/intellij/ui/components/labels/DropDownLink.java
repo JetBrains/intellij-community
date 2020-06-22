@@ -53,7 +53,7 @@ public class DropDownLink<T> extends LinkLabel<Object> {
             linkLabel.setText(t.toString());
           }
 
-          if (itemChosenAction != null && !linkLabel.chosenItem.equals(t)) {
+          if (itemChosenAction != null && (!linkLabel.chosenItem.equals(t) || !updateLabel)) {
             itemChosenAction.consume(t);
           }
           linkLabel.chosenItem = t;
