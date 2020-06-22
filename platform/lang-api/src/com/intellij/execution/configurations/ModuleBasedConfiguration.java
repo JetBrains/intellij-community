@@ -236,7 +236,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   public boolean isDefaultModuleSet() {
     RunConfigurationModule configurationModule = getConfigurationModule();
     if (configurationModule == null || configurationModule.getModule() == null) {
-      return true;
+      return false;
     }
     Module[] modules = ModuleManager.getInstance(getProject()).getModules();
     return modules.length == 1 && configurationModule.getModule() == modules[0];
