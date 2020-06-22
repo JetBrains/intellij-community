@@ -214,7 +214,7 @@ IFS="$(printf '\n\t')"
   "-Didea.vendor.name=${PRODUCT_VENDOR}" \
   "-Didea.paths.selector=${PATHS_SELECTOR}" \
   "-Djb.vmOptionsFile=$VM_OPTIONS_FILE" \
-  "${IDE_PROPERTIES_PROPERTY}" \
+  ${IDE_PROPERTIES_PROPERTY} \
   __ide_jvm_args__ \
   com.intellij.idea.Main \
   "$@"
