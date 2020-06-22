@@ -16,7 +16,7 @@ public class ConditionCoveredByFurtherCondition {
             System.out.println("this should trigger a warning");
         }
 
-        if (<warning descr="Condition '((arg) != (null))' covered by subsequent condition '(arg) instanceof String'">((arg) != (null))</warning> && ((arg) instanceof String)) {
+        if (<warning descr="Condition '(arg) != (null)' covered by subsequent condition '(arg) instanceof String'">((arg) != (null))</warning> && ((arg) instanceof String)) {
           System.out.println("this should trigger a warning");
         }
         if (<warning descr="Condition 'arg != null' covered by subsequent condition 'arg instanceof String || arg instanceof Integer'">arg != null</warning> && (arg instanceof String || arg instanceof Integer)) {
@@ -84,11 +84,11 @@ public class ConditionCoveredByFurtherCondition {
     }
 
     void testRedundantBooleanCheck(Object obj, boolean b) {
-        if(<warning descr="Condition '(b && obj instanceof String)' covered by subsequent condition 'obj instanceof String'">(b && obj instanceof String)</warning> || (obj instanceof String)) {}
+        if(<warning descr="Condition 'b && obj instanceof String' covered by subsequent condition 'obj instanceof String'">(b && obj instanceof String)</warning> || (obj instanceof String)) {}
     }
 
     void testNullCheck(Object o1, Object o2) {
-        if(<warning descr="Condition '(o1 != null || o2 != null)' covered by subsequent condition 'o1 != o2'">(o1 != null || o2 != null)</warning> && o1 != o2) {}
+        if(<warning descr="Condition 'o1 != null || o2 != null' covered by subsequent condition 'o1 != o2'">(o1 != null || o2 != null)</warning> && o1 != o2) {}
     }
 
     void testAlwaysTrue(@NotNull Object obj, Object obj2) {
@@ -151,7 +151,7 @@ public class ConditionCoveredByFurtherCondition {
     }
     
     void testBooleanChain(boolean b1, boolean b2) {
-        if (<warning descr="Condition '(b1 || b2)' covered by subsequent condition 'b1 != b2'">(b1 || b2)</warning> && b1 != b2) {}
+        if (<warning descr="Condition 'b1 || b2' covered by subsequent condition 'b1 != b2'">(b1 || b2)</warning> && b1 != b2) {}
     }
 
     void testTwoInstanceOf(Object object) {

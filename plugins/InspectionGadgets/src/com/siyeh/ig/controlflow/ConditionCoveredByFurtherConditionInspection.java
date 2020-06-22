@@ -79,7 +79,9 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
         PsiExpression operand = operands.get(index);
         dependencies = minimizeDependencies(context, operand, and, dependencies);
         if (dependencies.isEmpty()) continue;
-        String operandText = PsiExpressionTrimRenderer.render(operand);
+        PsiExpression stripped = PsiUtil.skipParenthesizedExprDown(operand);
+        if (stripped == null) continue;
+        String operandText = PsiExpressionTrimRenderer.render(stripped);
         String description =
           InspectionGadgetsBundle.message("inspection.condition.covered.by.further.condition.descr",
                                           operandText, dependencies.size(), PsiExpressionTrimRenderer
