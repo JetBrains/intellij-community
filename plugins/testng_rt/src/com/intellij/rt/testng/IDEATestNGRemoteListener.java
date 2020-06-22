@@ -198,7 +198,7 @@ public class IDEATestNGRemoteListener {
           }
         }
       }
-      myPrintStream.println("\n##teamcity[testSuiteStarted name ='" + escapeName(currentClassName) +
+      myPrintStream.println("##teamcity[testSuiteStarted name ='" + escapeName(currentClassName) +
                             (provideLocation ? "' locationHint = '" + location : "") + "']");
       myCurrentSuites.add(currentClassName);
     }
@@ -216,7 +216,7 @@ public class IDEATestNGRemoteListener {
     final String methodName = result.getDisplayMethodName();
     final String location = className + "/" + result.getMethodName() + (invocationCount >= 0 ? "[" + invocationCount + "]" : "");
     myPrintStream.println(
-      "\n##teamcity[testStarted name='" + escapeName(getShortName(className) + "." + methodName + (paramString != null ? paramString : "")) +
+      "##teamcity[testStarted name='" + escapeName(getShortName(className) + "." + methodName + (paramString != null ? paramString : "")) +
       "' locationHint='java:test://" + escapeName(location) + (config ? "' config='true" : "") +
       "']");
   }
@@ -252,7 +252,6 @@ public class IDEATestNGRemoteListener {
     else {
       attrs.put("message", "");
     }
-    myPrintStream.println();
     myPrintStream.println(MapSerializerUtil.asString(MapSerializerUtil.TEST_FAILED, attrs));
     onTestFinished(result);
   }
@@ -262,13 +261,13 @@ public class IDEATestNGRemoteListener {
       onTestStart(result);
       mySkipped++;
     }
-    myPrintStream.println("\n##teamcity[testIgnored name='" + escapeName(getTestMethodNameWithParams(result)) + "']");
+    myPrintStream.println("##teamcity[testIgnored name='" + escapeName(getTestMethodNameWithParams(result)) + "']");
     onTestFinished(result);
   }
 
   public void onTestFinished(ExposedTestResult result) {
     final long duration = result.getDuration();
-    myPrintStream.println("\n##teamcity[testFinished name='" +
+    myPrintStream.println("##teamcity[testFinished name='" +
                           escapeName(getTestMethodNameWithParams(result)) +
                           (duration > 0 ? "' duration='" + duration : "") +
                           "']");
