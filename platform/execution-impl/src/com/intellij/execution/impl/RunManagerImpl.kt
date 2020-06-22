@@ -702,7 +702,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
           settingsImpl.handleRunnerRemoved(extension)
         }
       }
-    }, project)
+    }, this)
   }
 
   override fun noStateLoaded() {
