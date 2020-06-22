@@ -437,6 +437,8 @@
       <module fileurl="file://$PROJECT_DIR$/android/layoutlib/intellij.android.layoutlib.iml" filepath="$PROJECT_DIR$/android/layoutlib/intellij.android.layoutlib.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/layoutlib-loader/intellij.android.layoutlib-loader.iml" filepath="$PROJECT_DIR$/android/layoutlib-loader/intellij.android.layoutlib-loader.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/layoutlib-loader/intellij.android.layoutlib-loader.tests.iml" filepath="$PROJECT_DIR$/android/layoutlib-loader/intellij.android.layoutlib-loader.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/lint/intellij.android.lint.iml" filepath="$PROJECT_DIR$/android/lint/intellij.android.lint.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/lint/tests/intellij.android.lint.tests.iml" filepath="$PROJECT_DIR$/android/lint/tests/intellij.android.lint.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/mlkit/intellij.android.mlkit.iml" filepath="$PROJECT_DIR$/android/mlkit/intellij.android.mlkit.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/mlkit/intellij.android.mlkit.tests.iml" filepath="$PROJECT_DIR$/android/mlkit/intellij.android.mlkit.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/native-symbolizer/intellij.android.native-symbolizer.iml" filepath="$PROJECT_DIR$/android/native-symbolizer/intellij.android.native-symbolizer.iml" />
@@ -599,8 +601,6 @@
       <module fileurl="file://$PROJECT_DIR$/jvm/jvm-analysis-tests-api/intellij.jvm.analysis.tests.iml" filepath="$PROJECT_DIR$/jvm/jvm-analysis-tests-api/intellij.jvm.analysis.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/laf/macos/intellij.laf.macos.iml" filepath="$PROJECT_DIR$/plugins/laf/macos/intellij.laf.macos.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/laf/win10/intellij.laf.win10.iml" filepath="$PROJECT_DIR$/plugins/laf/win10/intellij.laf.win10.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/lint/intellij.lint.iml" filepath="$PROJECT_DIR$/android/lint/intellij.lint.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/lint/tests/intellij.lint.tests.iml" filepath="$PROJECT_DIR$/android/lint/tests/intellij.lint.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/markdown/intellij.markdown.iml" filepath="$PROJECT_DIR$/plugins/markdown/intellij.markdown.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/intellij.maven.iml" filepath="$PROJECT_DIR$/plugins/maven/intellij.maven.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/artifact-resolver/common/intellij.maven.artifactResolver.common.iml" filepath="$PROJECT_DIR$/plugins/maven/artifact-resolver/common/intellij.maven.artifactResolver.common.iml" />

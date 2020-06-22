@@ -309,7 +309,7 @@ class CommunityRepositoryModules {
       withModule("intellij.android.resources-base", "android.jar")
       withModule("intellij.android.android-layout-inspector", "android.jar")
       /* do not put into IJ android plugin: assistant, connection-assistant, whats-new-assistant */
-      withModule("intellij.lint", "lint-ide.jar")
+      withModule("intellij.android.lint", "lint-ide.jar")
       withModule("intellij.android.adt.ui", "adt-ui.jar")
       withModule("intellij.android.adt.ui.model", "adt-ui.jar")
       withModuleLibrary("precompiled-repository", "android.sdktools.repository", "")
