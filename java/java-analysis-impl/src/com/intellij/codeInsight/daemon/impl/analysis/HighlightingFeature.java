@@ -1,15 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.lang.jvm.JvmEnumField;
-import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
-import com.intellij.lang.jvm.annotation.JvmAnnotationAttributeValue;
-import com.intellij.lang.jvm.annotation.JvmAnnotationEnumFieldValue;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -107,19 +103,16 @@ public enum HighlightingFeature {
     if (annotation == null) return null;
     if (!annotation.hasQualifiedName(JDK_INTERNAL_PREVIEW_FEATURE)) return null;
 
-    final JvmAnnotationAttribute feature = annotation.findAttribute("feature");
+    final PsiNameValuePair feature = AnnotationUtil.getAttribute(annotation, "feature");
     if (feature == null) return null;
 
-    final JvmAnnotationAttributeValue attributeValue = feature.getAttributeValue();
-    if (attributeValue == null) return null;
+    final PsiReferenceExpression referenceExpression = tryCast(feature.getDetachedValue(), PsiReferenceExpression.class);
+    if (referenceExpression == null) return null;
 
-    final JvmAnnotationEnumFieldValue annotationEnumFieldValue = tryCast(attributeValue, JvmAnnotationEnumFieldValue.class);
-    if (annotationEnumFieldValue == null) return null;
+    final PsiEnumConstant enumConstant = tryCast(referenceExpression.resolve(), PsiEnumConstant.class);
+    if (enumConstant == null) return null;
 
-    final JvmEnumField field = annotationEnumFieldValue.getField();
-    if (field == null) return null;
-
-    return convertFromPreviewFeatureName(field.getName());
+    return convertFromPreviewFeatureName(enumConstant.getName());
   }
 
   @Nullable
