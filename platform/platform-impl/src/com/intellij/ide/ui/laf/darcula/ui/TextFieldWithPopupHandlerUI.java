@@ -577,7 +577,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
           font = UIManager.getFont(getPropertyPrefix() + ".font");
           component.setFont(!monospaced
                             ? !SystemInfo.isMacOSCatalina ? font : disableKerning(font)
-                            : new FontUIResource(MONOSPACED, font.getStyle(), font.getSize()));
+                            : new FontUIResource(Font.MONOSPACED, font.getStyle(), font.getSize()));
         }
       }
     }
