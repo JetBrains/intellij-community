@@ -122,7 +122,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
       override fun extensionRemoved(ep: BundledKeymapBean, pluginDescriptor: PluginDescriptor) {
         removeKeymap(ep.keymapName)
       }
-    }, ApplicationManager.getApplication())
+    }, null)
   }
 
   private fun fireKeymapAdded(keymap: Keymap) {

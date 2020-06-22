@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.Disposable;
@@ -22,14 +22,13 @@ import java.util.TreeSet;
 /**
  * @author peter
  */
-class ImplementationClassCache {
+final class ImplementationClassCache {
   private static final Comparator<Class> CLASS_COMPARATOR = (o1, o2) -> {
     if (o1.isAssignableFrom(o2)) return 1;
     if (o2.isAssignableFrom(o1)) return -1;
     if (o1.equals(o2)) return 0;
     throw new AssertionError("Incompatible implementation classes: " + o1 + " & " + o2);
   };
-
 
   private final MultiMap<String, DomImplementationClassEP> myImplementationClasses = new MultiMap<>();
   private final SofterCache<Class<?>, Class<?>> myCache = SofterCache.create(dom -> calcImplementationClass(dom));
@@ -49,12 +48,12 @@ class ImplementationClassCache {
           myImplementationClasses.remove(ep.interfaceName, ep);
           clearCache();
         }
-      }, true, app);
+      }, true, null);
     }
   }
 
   private Class<?> calcImplementationClass(Class<?> concreteInterface) {
-    final TreeSet<Class> set = new TreeSet<>(CLASS_COMPARATOR);
+    TreeSet<Class<?>> set = new TreeSet<>(CLASS_COMPARATOR);
     findImplementationClassDFS(concreteInterface, set);
     if (!set.isEmpty()) {
       return set.first();
@@ -63,7 +62,7 @@ class ImplementationClassCache {
     return implementation == null ? concreteInterface : implementation.value();
   }
 
-  private void findImplementationClassDFS(final Class concreteInterface, SortedSet<? super Class> results) {
+  private void findImplementationClassDFS(@NotNull Class<?> concreteInterface, SortedSet<? super Class<?>> results) {
     final Collection<DomImplementationClassEP> values = myImplementationClasses.get(concreteInterface.getName());
     for (DomImplementationClassEP value : values) {
       if (value.getInterfaceClass() == concreteInterface) {
@@ -79,7 +78,7 @@ class ImplementationClassCache {
   void registerImplementation(Class<?> domElementClass, Class<?> implementationClass, @Nullable Disposable parentDisposable) {
     final DomImplementationClassEP ep = new DomImplementationClassEP() {
       @Override
-      public Class getInterfaceClass() {
+      public Class<?> getInterfaceClass() {
         return domElementClass;
       }
 

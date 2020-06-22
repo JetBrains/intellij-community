@@ -18,7 +18,6 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.Interner;
-import com.intellij.util.containers.WeakInterner;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +32,7 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
   private static final Logger LOG = Logger.getInstance(IntentionManagerSettings.class);
 
   private static final class MetaDataKey extends Pair<String, String> {
-    private static final Interner<String> ourInterner = WeakInterner.createWeakInterner();
+    private static final Interner<String> ourInterner = Interner.createWeakInterner();
     private MetaDataKey(String @NotNull [] categoryNames, @NotNull final String familyName) {
       super(StringUtil.join(categoryNames, ":"), ourInterner.intern(familyName));
     }
@@ -49,7 +48,7 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
 
   public IntentionManagerSettings() {
-    IntentionManagerImpl.EP_INTENTION_ACTIONS.getPoint().addExtensionPointListener(new ExtensionPointListener<IntentionActionBean>() {
+    IntentionManagerImpl.EP_INTENTION_ACTIONS.addExtensionPointListener(new ExtensionPointListener<IntentionActionBean>() {
       @Override
       public void extensionAdded(@NotNull IntentionActionBean extension, @NotNull PluginDescriptor pluginDescriptor) {
         // on each plugin load/unload SearchableOptionsRegistrarImpl drops the cache, so, it will be recomputed later on demand - no need to pass processor here
@@ -70,7 +69,7 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
           topHitCache.invalidateCachedOptions(IntentionsOptionsTopHitProvider.class);
         }
       }
-    }, false, ApplicationManager.getApplication());
+    }, null);
   }
 
   private void registerMetaDataForEp(@NotNull IntentionActionBean extension, @Nullable SearchableOptionProcessor processor) {

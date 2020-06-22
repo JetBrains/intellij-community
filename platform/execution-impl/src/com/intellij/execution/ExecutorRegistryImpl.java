@@ -17,7 +17,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -62,7 +61,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       public void extensionRemoved(@NotNull Executor extension, @NotNull PluginDescriptor pluginDescriptor) {
         deinitExecutor(extension);
       }
-    }, ApplicationManager.getApplication());
+    }, null);
   }
 
   final static class ExecutorRegistryActionConfigurationTuner implements ActionConfigurationCustomizer {

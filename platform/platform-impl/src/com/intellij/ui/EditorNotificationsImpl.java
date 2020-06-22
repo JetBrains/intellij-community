@@ -99,7 +99,7 @@ public final class EditorNotificationsImpl extends EditorNotifications {
         public void extensionRemoved(@NotNull Provider extension, @NotNull PluginDescriptor pluginDescriptor) {
           updateNotifications(extension);
         }
-      }, false, project);
+      }, false, null);
   }
 
   @Override

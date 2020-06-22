@@ -203,7 +203,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       public void extensionRemoved(@NotNull FileBasedIndexExtension<?, ?> extension, @NotNull PluginDescriptor pluginDescriptor) {
         ID.unloadId(extension.getName());
       }
-    }, ApplicationManager.getApplication());
+    }, null);
 
     initComponent();
   }

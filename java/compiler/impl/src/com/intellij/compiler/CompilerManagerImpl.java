@@ -116,7 +116,7 @@ public class CompilerManagerImpl extends CompilerManager {
           removeCompiler(compiler);
         }
       }
-    }, true, project);
+    }, true, null);
 
     final File projectGeneratedSrcRoot = CompilerPaths.getGeneratedDataDirectory(project);
     projectGeneratedSrcRoot.mkdirs();

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -57,7 +57,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     myDependentBreakpointManager = new XDependentBreakpointManager(this);
     myLineBreakpointManager = new XLineBreakpointManager(project);
 
-    project.getMessageBus().connect().subscribe(XBreakpointListener.TOPIC, new XBreakpointListener() {
+    project.getMessageBus().connect(debuggerManager).subscribe(XBreakpointListener.TOPIC, new XBreakpointListener() {
       @SuppressWarnings("unchecked")
       @Override
       public void breakpointAdded(@NotNull XBreakpoint breakpoint) {
@@ -95,14 +95,14 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
         WriteAction.run(() -> {
           //noinspection unchecked
           for (Object b : getBreakpoints(type)) {
-            XBreakpoint bpt = (XBreakpoint)b;
-            doRemoveBreakpointImpl(bpt, isDefaultBreakpoint(bpt));
+            XBreakpoint<?> breakpoint = (XBreakpoint<?>)b;
+            doRemoveBreakpointImpl(breakpoint, isDefaultBreakpoint(breakpoint));
           }
           myBreakpointsDefaults.remove(type);
           myDefaultBreakpoints.remove(type);
         });
       }
-    }, project);
+    }, debuggerManager);
   }
 
   public void init() {
@@ -296,7 +296,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   }
 
   @Override
-  @SuppressWarnings({"unchecked"})
+  @SuppressWarnings("unchecked")
   @NotNull
   public <B extends XBreakpoint<?>> Collection<? extends B> getBreakpoints(@NotNull final XBreakpointType<B,?> type) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -639,7 +639,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     return myLastRemovedBreakpoint != null && myLastRemovedBreakpoint.isRestorable();
   }
 
-  private class RemovedBreakpointData {
+  private final class RemovedBreakpointData {
     private final XBreakpointBase myBreakpoint;
     private final XDependentBreakpointManager.DependenciesData myDependenciesData;
 

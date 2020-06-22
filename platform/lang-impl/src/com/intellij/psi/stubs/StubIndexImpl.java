@@ -81,7 +81,7 @@ public final class StubIndexImpl extends StubIndexEx {
       public void extensionRemoved(@NotNull StubIndexExtension<?, ?> extension, @NotNull PluginDescriptor pluginDescriptor) {
         ID.unloadId(extension.getKey());
       }
-    }, ApplicationManager.getApplication());
+    }, null);
   }
 
   static @Nullable StubIndexImpl getInstanceOrInvalidate() {

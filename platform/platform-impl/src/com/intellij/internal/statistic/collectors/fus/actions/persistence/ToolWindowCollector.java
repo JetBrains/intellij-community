@@ -12,7 +12,6 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhite
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -86,7 +85,7 @@ public final class ToolWindowCollector {
       public void extensionAdded(@NotNull ToolWindowAllowlistEP extension, @NotNull PluginDescriptor pluginDescriptor) {
         addToolwindowToWhitelist(extension);
       }
-    }, ApplicationManager.getApplication());
+    }, null);
   }
 
   private static void addToolwindowToWhitelist(ToolWindowAllowlistEP extension) {

@@ -37,7 +37,7 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
   private final Map<Language, PsiReferenceRegistrarImpl> myRegistrars = new ConcurrentHashMap<>();
 
   public ReferenceProvidersRegistryImpl() {
-    if (Extensions.getRootArea().hasExtensionPoint(PsiReferenceContributor.EP_NAME)) {
+    if (ApplicationManager.getApplication().getExtensionArea().hasExtensionPoint(PsiReferenceContributor.EP_NAME)) {
       PsiReferenceContributor.EP_NAME.addExtensionPointListener(new ExtensionPointListener<KeyedLazyInstance<PsiReferenceContributor>>() {
         @Override
         public void extensionAdded(@NotNull KeyedLazyInstance<PsiReferenceContributor> extension,
@@ -75,7 +75,7 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
                                      @NotNull PluginDescriptor pluginDescriptor) {
           Disposer.dispose(extension.getInstance());
         }
-      }, ApplicationManager.getApplication());
+      }, null);
     }
   }
 

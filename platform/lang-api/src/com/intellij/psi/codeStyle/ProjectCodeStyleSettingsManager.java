@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.ide.BrowserUtil;
@@ -23,13 +22,16 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 @State(
   name = "ProjectCodeStyleConfiguration",
   storages = @Storage(value = "codeStyles", stateSplitter = ProjectCodeStyleSettingsManager.StateSplitter.class)
 )
-public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
+public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
   private static final Logger LOG = Logger.getInstance(ProjectCodeStyleSettingsManager.class);
 
   private static final String MAIN_PROJECT_CODE_STYLE_NAME = "Project";
@@ -42,7 +44,7 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
   private static final NotificationGroup NOTIFICATION_GROUP =
     new NotificationGroup("Code style settings migration", NotificationDisplayType.STICKY_BALLOON, true, null, null, null, PluginId.getId("com.intellij"));
 
-  public ProjectCodeStyleSettingsManager(Project project) {
+  public ProjectCodeStyleSettingsManager(@NotNull Project project) {
     myProject = project;
     setMainProjectCodeStyle(null);
     registerExtensionPointListeners(project);

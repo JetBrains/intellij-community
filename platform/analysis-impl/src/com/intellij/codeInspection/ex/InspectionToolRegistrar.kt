@@ -77,7 +77,7 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
         unregisterInspectionOrProvider(inspection, factories)
         shortNames.remove(inspection.getShortName())
       }
-    }, app)
+    }, null)
   }
 
   private fun registerToolProviders(app: Application, factories: MutableMap<Any, MutableList<InspectionFactory>>) {
@@ -101,7 +101,7 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
       override fun extensionRemoved(provider: InspectionToolProvider, pluginDescriptor: PluginDescriptor) {
         unregisterInspectionOrProvider(provider, factories)
       }
-    }, app)
+    }, null)
   }
 
   private fun fireToolAdded(factory: InspectionFactory) {

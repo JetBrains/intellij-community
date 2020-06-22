@@ -90,7 +90,7 @@ public class TypePresentationServiceImpl extends TypePresentationService {
       public void extensionRemoved(@NotNull TypeIconEP extension, @NotNull PluginDescriptor pluginDescriptor) {
         myIcons.remove(extension.className);
       }
-    }, ApplicationManager.getApplication());
+    }, null);
 
     for (TypeNameEP ep : TypeNameEP.EP_NAME.getExtensionList()) {
       myNames.put(ep.className, ep.getTypeName());
@@ -105,7 +105,7 @@ public class TypePresentationServiceImpl extends TypePresentationService {
       public void extensionRemoved(@NotNull TypeNameEP extension, @NotNull PluginDescriptor pluginDescriptor) {
         myNames.remove(extension.className);
       }
-    }, ApplicationManager.getApplication());
+    }, null);
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override

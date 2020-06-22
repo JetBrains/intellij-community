@@ -14,7 +14,6 @@ import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -31,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfoById;
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getUnknownPlugin;
 
-public class NotificationCollector {
+public final class NotificationCollector {
   private static final Logger LOG = Logger.getInstance(NotificationCollector.class);
   private static final Map<String, PluginInfo> ourNotificationGroupsWhitelist = new ConcurrentHashMap<>();
   private static final Set<String> ourNotificationsWhitelist = new HashSet<>();
@@ -56,8 +55,8 @@ public class NotificationCollector {
       }
     };
     //noinspection deprecation
-    NotificationWhitelistEP.EP_NAME.addExtensionPointListener(extensionPointListener, ApplicationManager.getApplication());
-    NotificationAllowlistEP.EP_NAME.addExtensionPointListener(extensionPointListener, ApplicationManager.getApplication());
+    NotificationWhitelistEP.EP_NAME.addExtensionPointListener(extensionPointListener, null);
+    NotificationAllowlistEP.EP_NAME.addExtensionPointListener(extensionPointListener, null);
   }
 
   public void logBalloonShown(@Nullable Project project,

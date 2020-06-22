@@ -19,6 +19,7 @@ import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -73,7 +74,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 @State(name = "XDebuggerManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class XDebuggerManagerImpl extends XDebuggerManager implements PersistentStateComponent<XDebuggerState> {
+public final class XDebuggerManagerImpl extends XDebuggerManager implements PersistentStateComponent<XDebuggerState>, Disposable {
   public static final NotificationGroup NOTIFICATION_GROUP =
     NotificationGroup.toolWindowGroup("Debugger messages", ToolWindowId.DEBUG, false);
 
@@ -90,7 +91,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
   public XDebuggerManagerImpl(@NotNull Project project) {
     myProject = project;
 
-    MessageBusConnection messageBusConnection = project.getMessageBus().connect();
+    MessageBusConnection messageBusConnection = project.getMessageBus().connect(this);
 
     myBreakpointManager = new XBreakpointManagerImpl(project, this);
     myWatchesManager = new XDebuggerWatchesManager();
@@ -173,8 +174,12 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
 
     DebuggerEditorListener listener = new DebuggerEditorListener();
     EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
-    eventMulticaster.addEditorMouseMotionListener(listener, myProject);
-    eventMulticaster.addEditorMouseListener(listener, myProject);
+    eventMulticaster.addEditorMouseMotionListener(listener, this);
+    eventMulticaster.addEditorMouseListener(listener, this);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @Override

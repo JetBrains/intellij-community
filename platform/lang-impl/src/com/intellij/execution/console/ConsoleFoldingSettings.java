@@ -17,8 +17,8 @@ import java.util.*;
 /**
  * @author peter
  */
-@State(name="ConsoleFoldingSettings", storages=@Storage("consoleFolding.xml"))
-public class ConsoleFoldingSettings implements PersistentStateComponent<ConsoleFoldingSettings.MyBean> {
+@State(name = "ConsoleFoldingSettings", storages = @Storage("consoleFolding.xml"))
+public final class ConsoleFoldingSettings implements PersistentStateComponent<ConsoleFoldingSettings.MyBean> {
   private final List<String> myPositivePatterns = new ArrayList<>();
   private final List<String> myNegativePatterns = new ArrayList<>();
 
@@ -26,19 +26,17 @@ public class ConsoleFoldingSettings implements PersistentStateComponent<ConsoleF
     for (CustomizableConsoleFoldingBean regexp : CustomizableConsoleFoldingBean.EP_NAME.getExtensions()) {
       patternList(regexp.negate).add(regexp.substring);
     }
-    CustomizableConsoleFoldingBean.EP_NAME
-      .addExtensionPointListener(new ExtensionPointListener<CustomizableConsoleFoldingBean>() {
-                                   @Override
-                                   public void extensionAdded(@NotNull CustomizableConsoleFoldingBean extension, @NotNull PluginDescriptor pluginDescriptor) {
-                                     patternList(extension.negate).add(extension.substring);
-                                   }
+    CustomizableConsoleFoldingBean.EP_NAME.addExtensionPointListener(new ExtensionPointListener<CustomizableConsoleFoldingBean>() {
+      @Override
+      public void extensionAdded(@NotNull CustomizableConsoleFoldingBean extension, @NotNull PluginDescriptor pluginDescriptor) {
+        patternList(extension.negate).add(extension.substring);
+      }
 
-                                   @Override
-                                   public void extensionRemoved(@NotNull CustomizableConsoleFoldingBean extension, @NotNull PluginDescriptor pluginDescriptor) {
-                                     patternList(extension.negate).remove(extension.substring);
-                                   }
-                                 },
-                                 ApplicationManager.getApplication());
+      @Override
+      public void extensionRemoved(@NotNull CustomizableConsoleFoldingBean extension, @NotNull PluginDescriptor pluginDescriptor) {
+        patternList(extension.negate).remove(extension.substring);
+      }
+    }, null);
   }
 
   public static ConsoleFoldingSettings getSettings() {
