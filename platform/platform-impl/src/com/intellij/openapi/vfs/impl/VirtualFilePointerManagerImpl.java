@@ -333,9 +333,9 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     assert fs == fsFromFile : "fs=" + fs + "; file.fs=" + fsFromFile;
 
     FilePartNodeRoot root = getRoot(fs);
-    FilePartNode node = (file == null ? root
-      .findOrCreateByPath(fs instanceof ArchiveFileSystem && !path.contains(JarFileSystem.JAR_SEPARATOR) ? path + JarFileSystem.JAR_SEPARATOR : path, fs)
-                                      : root.findOrCreateByFile(file)).node;
+    FilePartNode node = (file == null ?
+                         root.findOrCreateByPath(fs instanceof ArchiveFileSystem && !path.contains(JarFileSystem.JAR_SEPARATOR) ? path + JarFileSystem.JAR_SEPARATOR : path, fs)
+                         : root.findOrCreateByFile(file)).node;
     assert fs == node.myFS : "fs=" + fs + "; myFS=" + node.myFS;
 
     VirtualFilePointerImpl pointer = node.getPointer(listener);
@@ -748,7 +748,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     //noinspection SynchronizeOnThis
     synchronized (this) {
       oldChildren = myLocalRoot.children;
-      myLocalRoot.children = new FilePartNode[0];
+      myLocalRoot.children = FilePartNode.EMPTY_ARRAY;
     }
     try {
       runnable.run();

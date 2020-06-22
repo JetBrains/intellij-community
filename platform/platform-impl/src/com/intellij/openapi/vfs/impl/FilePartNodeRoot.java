@@ -98,15 +98,20 @@ class FilePartNodeRoot extends FilePartNode {
                                  boolean createIfNotFound,
                                  @NotNull NewVirtualFileSystem fs) {
     if (childNameId <= 0 && childNameId != JAR_SEPARATOR_NAME_ID) throw new IllegalArgumentException("invalid argument childNameId: " + childNameId);
-    List<VirtualFile> parts = parent == null ? Collections.emptyList() : getHierarchy(parent, fs);
+    List<VirtualFile> hierarchy = parent == null ? Collections.emptyList() : getHierarchy(parent, fs);
     FilePartNode node = this;
-    for (int i = parts.size() - 1; i >= 0; i--) {
-      VirtualFile part = parts.get(i);
+    for (int i = hierarchy.size() - 1; i >= 0; i--) {
+      VirtualFile part = hierarchy.get(i);
       int nameId = getNameId(part);
-      node = node.findChildByNameId(part, nameId, createIfNotFound, (NewVirtualFileSystem)part.getFileSystem());
-      if (node == null) return null;
+      FilePartNode child = node.findChildByNameId(part, nameId, createIfNotFound, (NewVirtualFileSystem)part.getFileSystem());
+      if (child == null) return null;
+      if (child instanceof UrlPartNode) {
+        // by some strange accident there is UrlPartNode when the corresponding file is alive and kicking - replace with proper FPPN
+        child = child.replaceWithFPPN(part, node);
+      }
       // recursive pointers must be fired even for events deep under them
-      node.addRecursiveDirectoryPtrTo(toFirePointers);
+      child.addRecursiveDirectoryPtrTo(toFirePointers);
+      node = child;
     }
 
     FilePartNode child = node.findChildByNameId(file, childNameId, createIfNotFound, fs);

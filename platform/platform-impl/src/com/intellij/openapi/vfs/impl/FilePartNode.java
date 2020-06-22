@@ -32,7 +32,7 @@ import java.util.function.Consumer;
  * File pointer "a/b/x.txt" is stored in the tree with nodes a->b->x.txt
  */
 class FilePartNode {
-  private static final FilePartNode[] EMPTY_ARRAY = new FilePartNode[0];
+  public static final FilePartNode[] EMPTY_ARRAY = new FilePartNode[0];
   static final int JAR_SEPARATOR_NAME_ID = -2;
   private final int nameId; // name id of the VirtualFile corresponding to this node
   FilePartNode @NotNull [] children = EMPTY_ARRAY; // sorted by this.getName(). elements never updated inplace
@@ -43,9 +43,7 @@ class FilePartNode {
   volatile Object myFileOrUrl;
   final NewVirtualFileSystem myFS; // the file system of this particular component. E.g. for path "/x.jar!/foo.txt" the node "x.jar" fs is LocalFileSystem, the node "foo.txt" fs is JarFileSystem
 
-  FilePartNode(int nameId,
-               @NotNull Object fileOrUrl,
-               @NotNull NewVirtualFileSystem fs) {
+  FilePartNode(int nameId, @NotNull Object fileOrUrl, @NotNull NewVirtualFileSystem fs) {
     myFS = fs;
     assert nameId > 0 || nameId == JAR_SEPARATOR_NAME_ID : nameId + "; " + getClass();
     this.nameId = nameId;
@@ -210,7 +208,9 @@ class FilePartNode {
     for (int i = 0; i < children.length; i++) {
       FilePartNode child = children[i];
       // the parent can't be an url and the child a file
-      assert this instanceof FilePartNodeRoot || myFile != null || child.myFile() == null : "this: "+this+"; myFileOrUrl: "+myFileOrUrl+"; child: "+child+"; child.myFile: "+child.myFile()+"; parent: "+parent+"; urlFromRoot: "+urlFromRoot;
+      if (!(this instanceof FilePartNodeRoot)) {
+        assert !(myFile == null && child.myFile() != null) : "this: " + this + "; myFileOrUrl: " + myFileOrUrl + "; child: " + child + "; child.myFile: " + child.myFile() + "; parent: " + parent + "; urlFromRoot: " + urlFromRoot;
+      }
       String childName = child.getName().toString();
       boolean needSeparator = !urlFromRoot.isEmpty() && !urlFromRoot.endsWith("/") && !childName.equals(JarFileSystem.JAR_SEPARATOR);
       String childUrlFromRoot = needSeparator ? urlFromRoot + "/" + childName : urlFromRoot + childName;
@@ -220,8 +220,14 @@ class FilePartNode {
       }
       child.doCheckConsistency(myFile, childName, childUrlFromRoot);
       if (i != 0) {
-        assert !FileUtil.namesEqual(childName, prevChildName) : "child[" + i + "] = " + child + "; [-1] = " + children[i - 1];
+        assert StringUtil.compare(prevChildName, childName, !child.myFS.isCaseSensitive()) < 0: "child[" + i + "] = " + child + "; [-1] = " + children[i - 1];
       }
+      // fs is allowed to change in one direction only: local->jar
+      assert myFS instanceof LocalFileSystem && (child.myFS instanceof ArchiveFileSystem || child.myFS instanceof LocalFileSystem)
+        || myFS instanceof ArchiveFileSystem && child.myFS instanceof ArchiveFileSystem
+        : "this: "+this+"; fs="+myFS+"; child[" + i + "] = " + child + "; fs="+child.myFS;
+      // child of UrlPartNode can be only UrlPartNode
+      assert !(this instanceof UrlPartNode) || child instanceof UrlPartNode : "this: "+this+"; fs="+myFS+"; child[" + i + "] = " + child + "; fs="+child.myFS;;
       prevChildName = childName;
     }
     int[] leafNumber = new int[1];
@@ -348,7 +354,7 @@ class FilePartNode {
   }
 
   @NotNull
-  private FilePartNode replaceWithFPPN(@NotNull VirtualFile file, @NotNull FilePartNode parent) {
+  FilePartNode replaceWithFPPN(@NotNull VirtualFile file, @NotNull FilePartNode parent) {
     int nameId = getNameId(file);
     parent.children = ArrayUtil.remove(parent.children, this);
     FilePartNode newNode = parent.findChildByNameId(file, nameId, true, (NewVirtualFileSystem)file.getFileSystem());
