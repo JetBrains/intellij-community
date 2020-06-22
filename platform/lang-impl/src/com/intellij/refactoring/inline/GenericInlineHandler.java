@@ -7,12 +7,16 @@ import com.intellij.find.FindBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.lang.refactoring.InlineHandlers;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -23,6 +27,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,16 +49,17 @@ public final class GenericInlineHandler {
       return settings != null;
     }
 
+    Project project = element.getProject();
+
     final Collection<? extends PsiReference> allReferences;
 
     if (settings.isOnlyOneReferenceToInline()) {
       allReferences = Collections.singleton(invocationReference);
     }
     else {
-      final Ref<Collection<? extends PsiReference>> usagesRef = new Ref<>();
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> usagesRef.set(ReferencesSearch.search(element).findAll()),
-                                                                        FindBundle.message("find.usages.progress.title"), false, element.getProject());
-      allReferences = usagesRef.get();
+      allReferences = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        () -> ReferencesSearch.search(element).findAll(),
+        FindBundle.message("find.usages.progress.title"), true, project);
     }
 
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
@@ -63,7 +69,6 @@ public final class GenericInlineHandler {
       collectConflicts(reference, element, inliners, conflicts);
     }
 
-    final Project project = element.getProject();
     if (!BaseRefactoringProcessor.processConflicts(project, conflicts)) return true;
 
     HashSet<PsiElement> elements = new HashSet<>();
@@ -78,8 +83,9 @@ public final class GenericInlineHandler {
       return true;
     }
     String subj = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : "element";
+    String commandName = RefactoringBundle.message("inline.command", StringUtil.notNullize(subj, "<nameless>"));
     WriteCommandAction.runWriteCommandAction(
-      project, RefactoringBundle.message("inline.command", StringUtil.notNullize(subj, "<nameless>")), null, () -> {
+      project, commandName, null, () -> {
         final PsiReference[] references = sortDepthFirstRightLeftOrder(allReferences);
 
 
@@ -88,12 +94,22 @@ public final class GenericInlineHandler {
           usages[i] = new UsageInfo(references[i]);
         }
 
-        for (UsageInfo usage : usages) {
-          inlineReference(usage, element, inliners);
-        }
+        Consumer<ProgressIndicator> perform = indicator -> {
+          for (int i = 0; i < usages.length; i++) {
+            indicator.setFraction((double) i / usages.length);
+            inlineReference(usages[i], element, inliners);
+          }
 
-        if (!settings.isOnlyOneReferenceToInline()) {
-          languageSpecific.removeDefinition(element, settings);
+          if (!settings.isOnlyOneReferenceToInline()) {
+            languageSpecific.removeDefinition(element, settings);
+          }
+        };
+
+        if (Registry.is("run.refactorings.under.progress")) {
+          ((ApplicationImpl)ApplicationManager.getApplication())
+            .runWriteActionWithNonCancellableProgressInDispatchThread(commandName, project, null, perform);
+        } else {
+          perform.consume(new EmptyProgressIndicator());
         }
       });
     return true;
