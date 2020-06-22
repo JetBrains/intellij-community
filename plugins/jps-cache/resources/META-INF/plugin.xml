@@ -5,8 +5,15 @@
   <idea-version since-build="201.3803.71"/>
 
   <description><![CDATA[
-  Adds support for working with JPS portable caches
-]]></description>
+    <p>
+       This plugin provides an opportunity to download already precompiled data for the Intellij project to reduce time,
+       consumed by the compilation.<br/>For the correct work, the <b>JetBrains Internal Authentication</b> plugin should be enabled.
+       It will let you download data faster and without VPN.
+    </p>
+    <br/>
+    <br/>
+    <b>This plugin is for JetBrains internal use only.</b>
+  ]]></description>
 
   <depends>Git4Idea</depends>
   <depends>com.intellij.modules.java</depends>
