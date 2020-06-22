@@ -233,7 +233,10 @@ public final class UIUtil {
 
   @NotNull
   public static EditorTextField createEditorComponent(String text, String fileName, Project project) {
-    return new EditorTextField(text, project, getFileType(fileName));
+    final FileType fileType = getFileType(fileName);
+    final PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(fileName, fileType, text, -1, true);
+    final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    return new EditorTextField(document, project, fileType);
   }
 
   private static FileType getFileType(final String fileName) {
