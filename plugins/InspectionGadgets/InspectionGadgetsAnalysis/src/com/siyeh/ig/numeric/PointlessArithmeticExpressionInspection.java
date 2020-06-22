@@ -40,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -230,7 +231,8 @@ public class PointlessArithmeticExpressionInspection extends BaseInspection {
                isOne(expressions[1]);
       }
       if (type.equals(JavaTokenType.ASTERISK)) {
-        return isOne(expressions[0]) || isOne(expressions[1]);
+        return (isOne(expressions[0]) || isOne(expressions[1])) && 
+               Objects.requireNonNull(expressions[0].getType()).equals(expressions[1].getType());
       }
       return false;
     }

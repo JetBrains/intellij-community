@@ -173,4 +173,8 @@ class FloatingPoint {
     float res7 = x * 0.0f;
     float res8 = 0.0f / x;
   }
+  
+  void multiplyToCast(int x, int y) {
+    double xyz = (1.0 * x) / y;
+  }
 }
