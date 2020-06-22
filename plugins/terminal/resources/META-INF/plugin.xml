@@ -49,7 +49,7 @@
       <keyboard-shortcut first-keystroke="ESCAPE" keymap="$default"/>
     </action>
     <action id="Terminal.SmartCommandExecution" class="org.jetbrains.plugins.terminal.TerminalShellCommandAction">
-      <keyboard-shortcut first-keystroke="ctrl ENTER" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="control ENTER" keymap="$default"/>
     </action>
   </actions>
 
