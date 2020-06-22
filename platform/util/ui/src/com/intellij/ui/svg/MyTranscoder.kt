@@ -20,6 +20,7 @@ import java.awt.RenderingHints
 import java.awt.image.BufferedImage
 import java.io.IOException
 import java.io.StringReader
+import java.lang.Exception
 
 internal class MyTranscoder(private val scale: Double) : ImageTranscoder() {
   companion object {
@@ -89,10 +90,24 @@ internal class MyTranscoder(private val scale: Double) : ImageTranscoder() {
 
   override fun createUserAgent(): UserAgent {
     return object : SVGAbstractTranscoder.SVGAbstractTranscoderUserAgent() {
+      override fun displayMessage(message: String?) {
+        logger().debug(message)
+      }
+
+      override fun displayError(message: String?) {
+        logger().debug(message)
+      }
+
+      override fun displayError(e: Exception) {
+        logger().debug(e)
+      }
+
       override fun getBrokenLinkDocument(e: Element, url: String, message: String): SVGDocument {
-        Logger.getInstance(MyTranscoder::class.java).warn("$url $message")
+        logger().warn("$url $message")
         return createFallbackPlaceholder()
       }
+
+      private fun logger() = Logger.getInstance(MyTranscoder::class.java)
     }
   }
 
