@@ -66,7 +66,7 @@ public final class RestJcefHtmlPanel extends JCEFHtmlPanel implements RestPrevie
 
   static {
     try {
-      ourJSCodeToInject = Resources.toString(Resources.getResource("/js/script.js"), StandardCharsets.UTF_8);
+      ourJSCodeToInject = Resources.toString(RestJcefHtmlPanel.class.getResource("/js/script.js"), StandardCharsets.UTF_8);
     }
     catch (IOException e) {
       throw new RuntimeException("Failed to load script.js.", e);
@@ -141,7 +141,7 @@ public final class RestJcefHtmlPanel extends JCEFHtmlPanel implements RestPrevie
     if (cssCodeToInject != null) return cssCodeToInject;
 
     try {
-      cssCodeToInject = Resources.toString(Resources.getResource(style.getCss()), StandardCharsets.UTF_8);
+      cssCodeToInject = Resources.toString(RestJcefHtmlPanel.class.getResource(style.getCss()), StandardCharsets.UTF_8);
     }
     catch (IOException e) {
       throw new RuntimeException("Failed to load " + style.getCss() + ".", e);
