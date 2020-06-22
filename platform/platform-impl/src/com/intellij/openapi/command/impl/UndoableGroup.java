@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.diagnostic.Dumpable;
@@ -17,13 +17,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class UndoableGroup implements Dumpable {
+final class UndoableGroup implements Dumpable {
   private static final Logger LOG = Logger.getInstance(UndoableGroup.class);
   private static final int BULK_MODE_ACTION_THRESHOLD = 50;
 
@@ -160,7 +159,7 @@ class UndoableGroup implements Dumpable {
 
   private static void performActions(@NotNull Collection<? extends UndoableAction> actions, boolean isUndo, boolean useBulkMode)
     throws UnexpectedUndoException {
-    Set<DocumentEx> bulkDocuments = new THashSet<>();
+    Set<DocumentEx> bulkDocuments = new HashSet<>();
     try {
       for (UndoableAction action : actions) {
         if (useBulkMode) {
@@ -313,7 +312,7 @@ class UndoableGroup implements Dumpable {
 
   @NotNull
   public Collection<DocumentReference> getAffectedDocuments() {
-    Set<DocumentReference> result = new THashSet<>();
+    Set<DocumentReference> result = new HashSet<>();
     for (UndoableAction action : myActions) {
       DocumentReference[] refs = action.getAffectedDocuments();
       if (refs != null) Collections.addAll(result, refs);
