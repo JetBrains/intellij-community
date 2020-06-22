@@ -368,7 +368,11 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   public boolean isDefaultModuleSet() {
     if (super.isDefaultModuleSet()) return true;
     PsiClass mainClass = getMainClass();
-    return mainClass != null && ModuleUtilCore.findModuleForPsiElement(mainClass) == getConfigurationModule().getModule();
+    if (mainClass == null) {
+      return false;
+    }
+    Module module = ModuleUtilCore.findModuleForPsiElement(mainClass);
+    return module != null && module == getConfigurationModule().getModule();
   }
 
   public static class JavaApplicationCommandLineState<T extends ApplicationConfiguration> extends ApplicationCommandLineState<T> {
