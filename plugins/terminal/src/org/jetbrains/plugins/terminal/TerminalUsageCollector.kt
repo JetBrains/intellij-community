@@ -18,10 +18,14 @@ class TerminalUsageTriggerCollector {
     }
 
     @JvmStatic
-    fun triggerSmartCommandExecuted(project: Project, command: String) {
+    fun triggerCommandExecuted(project: Project) {
       FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, "terminal.command.executed")
+    }
+
+    @JvmStatic
+    fun triggerSmartCommandExecuted(project: Project, command: String) {
       FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, "terminal.smart.command.executed",
-                                                  FeatureUsageData().addData("smart.command", ParametersList.parse(command)[0]))
+                                                  FeatureUsageData().addData("command", ParametersList.parse(command)[0]))
     }
 
     @JvmStatic
