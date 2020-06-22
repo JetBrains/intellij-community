@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -56,7 +55,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   private final CompositeFilterWrapper myCompositeFilterWrapper;
   private JBTerminalWidgetListener myListener;
 
-  private final @NotNull JBTerminalWidgetDisposableWrapper myDisposableWrapper;
   private @Nullable VirtualFile myVirtualFile;
 
   public JBTerminalWidget(@NotNull Project project,
@@ -76,7 +74,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     myCompositeFilterWrapper = new CompositeFilterWrapper(project, console);
     addHyperlinkFilter(line -> runFilters(project, line));
     setName("terminal");
-    myDisposableWrapper = new JBTerminalWidgetDisposableWrapper(parent);
+    Disposer.register(parent, this);
   }
 
   @Nullable
@@ -280,7 +278,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   }
 
   public void moveDisposable(@NotNull Disposable newParent) {
-    Disposer.register(newParent, myDisposableWrapper);
+    Disposer.register(newParent, this);
   }
 
   public void setVirtualFile(@Nullable VirtualFile virtualFile) {
@@ -326,20 +324,5 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
       }
     }
     return null;
-  }
-
-  private final class JBTerminalWidgetDisposableWrapper implements Disposable {
-    private JBTerminalWidgetDisposableWrapper(@NotNull Disposable parent) {
-      Disposer.register(parent, this);
-    }
-
-    @Override
-    public void dispose() {
-      VirtualFile virtualFile = myVirtualFile;
-      if (virtualFile != null && virtualFile.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN) != null) {
-        return; // don't dispose terminal widget during file reopening
-      }
-      Disposer.dispose(JBTerminalWidget.this);
-    }
   }
 }
