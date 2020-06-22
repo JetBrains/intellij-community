@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.function.Function;
 
-class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
+public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
   private final TemplateDataElementType myTemplateDataElementType;
   private final List<TextRange> myOuterAndRemoveRanges;
 

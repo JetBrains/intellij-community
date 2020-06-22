@@ -26,7 +26,10 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.CharTable;
 import com.intellij.util.LocalTimeCounter;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.function.Function;
@@ -121,7 +124,8 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
    * Creates source code without template tokens. May add additional pieces of code.
    * Ranges of such additions should be added in rangeCollector using {@link RangeCollector#addRangeToRemove(TextRange)}
    * for later removal from the resulting tree.
-   * Consider overriding {@link #createTemplateText(CharSequence, Lexer)} instead.
+   *
+   * Consider overriding {@link #collectTemplateModifications(CharSequence, Lexer)} instead.
    *
    * @param sourceCode     source code with base and template languages
    * @param baseLexer      base language lexer
@@ -135,7 +139,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
       return oldCreateTemplateText(sourceCode, baseLexer, rangeCollector);
     }
 
-    TemplateDataModifications modifications = createTemplateText(sourceCode, baseLexer);
+    TemplateDataModifications modifications = collectTemplateModifications(sourceCode, baseLexer);
     return ((RangeCollectorImpl)rangeCollector).applyTemplateDataModifications(sourceCode, modifications);
   }
 
@@ -166,7 +170,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
         appendCurrentTemplateToken(result, sourceCode, baseLexer, rangeCollector);
       }
       else {
-        rangeCollector.addOuterRange(currentRange, false);
+        rangeCollector.addOuterRange(currentRange);
       }
       baseLexer.advance();
     }
@@ -180,7 +184,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
    * @param sourceCode     source code with base and template languages
    * @param baseLexer      base language lexer
    */
-  protected @NotNull TemplateDataModifications createTemplateText(@NotNull CharSequence sourceCode, @NotNull Lexer baseLexer) {
+  protected @NotNull TemplateDataModifications collectTemplateModifications(@NotNull CharSequence sourceCode, @NotNull Lexer baseLexer) {
     TemplateDataModifications modifications = new TemplateDataModifications();
     baseLexer.start(sourceCode);
     TextRange currentRange = TextRange.EMPTY_RANGE;
@@ -229,7 +233,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
    * may be included. Moreover, other tokens shouldn't be included if they can be a part of a non-insertion range like
    * <code><?$myVar?></code>.
    *
-   * Override this method when overriding {@link #createTemplateText(CharSequence, Lexer)} is not required.
+   * Override this method when overriding {@link #collectTemplateModifications(CharSequence, Lexer)} is not required.
    *
    * @see RangeCollector#addOuterRange(TextRange, boolean)
    */
@@ -267,11 +271,6 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     RangeCollectorImpl collector = chameleon.getUserData(RangeCollectorImpl.OUTER_ELEMENT_RANGES);
     return collector != null ? collector.applyRangeCollectorAndExpandChameleon(chameleon, language, parser)
                              : parser.apply(chameleon.getChars());
-  }
-
-  @TestOnly
-  public static RangeCollector newRangeCollector(@NotNull TemplateDataElementType elementType) {
-    return new RangeCollectorImpl(elementType);
   }
 
   protected static class TemplateFileType extends LanguageFileType {
