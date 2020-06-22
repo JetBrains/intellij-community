@@ -93,7 +93,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     Set<HighlightInfo> result;
     synchronized (injectedResult) {
       // sync here because all writes happened in another thread
-      result = injectedResult;
+      result = injectedResult.isEmpty() ? Collections.emptySet(): new THashSet<>(injectedResult);
     }
     final Set<HighlightInfo> gotHighlights = new THashSet<>(100);
     final List<HighlightInfo> injectionsOutside = new ArrayList<>(gotHighlights.size());
