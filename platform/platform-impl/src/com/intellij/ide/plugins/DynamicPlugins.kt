@@ -667,6 +667,8 @@ object DynamicPlugins {
     app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginLoaded(pluginDescriptor)
     app.runWriteAction {
       try {
+        addToLoadedPlugins(pluginDescriptor)
+
         loadPluginDescriptor(pluginDescriptor, pluginDescriptor, app)
 
         processOptionalDependenciesOnPlugin(pluginDescriptor.pluginId) { loadedDescriptorOfDependency, fullDescriptor ->
@@ -684,22 +686,6 @@ object DynamicPlugins {
           (CachedValuesManager.getManager(openProject) as CachedValuesManagerImpl).clearCachedValues()
         }
 
-        var foundExistingPlugin = false
-        val newPlugins = PluginManagerCore.getPlugins().map {
-          if (it.pluginId == pluginDescriptor.pluginId) {
-            foundExistingPlugin = true
-            pluginDescriptor
-          } else {
-            it
-          }
-        }
-
-        if (foundExistingPlugin) {
-          PluginManager.getInstance().setPlugins(newPlugins)
-        }
-        else {
-          PluginManager.getInstance().setPlugins(PluginManagerCore.getPlugins().asSequence().plus(pluginDescriptor).toList())
-        }
         val fuData = FeatureUsageData().addPluginInfo(getPluginInfoByDescriptor(pluginDescriptor))
         FUCounterUsageLogger.getInstance().logEvent("plugins.dynamic", "load", fuData)
         LOG.info("Plugin ${pluginDescriptor.pluginId} loaded without restart in ${System.currentTimeMillis() - loadStartTime} ms")
@@ -723,6 +709,26 @@ object DynamicPlugins {
       return implementationDetailsLoadedWithoutRestart
     }
     return true
+  }
+
+  private fun addToLoadedPlugins(pluginDescriptor: IdeaPluginDescriptorImpl) {
+    var foundExistingPlugin = false
+    val newPlugins = PluginManagerCore.getPlugins().map {
+      if (it.pluginId == pluginDescriptor.pluginId) {
+        foundExistingPlugin = true
+        pluginDescriptor
+      }
+      else {
+        it
+      }
+    }
+
+    if (foundExistingPlugin) {
+      PluginManager.getInstance().setPlugins(newPlugins)
+    }
+    else {
+      PluginManager.getInstance().setPlugins(PluginManagerCore.getPlugins().asSequence().plus(pluginDescriptor).toList())
+    }
   }
 
   private fun loadPluginDescriptor(baseDescriptor: IdeaPluginDescriptorImpl,
