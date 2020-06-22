@@ -439,7 +439,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       for (bean in supplier.get().getTasks(project)) {
         val factory = bean.getToolWindowFactory(pluginDescriptor) ?: continue
         if (factory.isApplicable(project)) {
-          list.add(beanToTask(bean, factory, pluginDescriptor))
+          list.add(beanToTask(bean, factory, bean.pluginDescriptor))
         }
       }
     }
