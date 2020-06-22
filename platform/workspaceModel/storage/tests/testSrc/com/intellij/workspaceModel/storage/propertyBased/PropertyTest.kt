@@ -140,7 +140,7 @@ private fun WorkspaceEntityStorageBuilderImpl.restoreFromBackup(backup: Workspac
   indexes.persistentIdIndex.clear()
   indexes.externalMappings.clear()
 
-  indexes.softLinks.putAll(backupBuilder.indexes.softLinks)
+  indexes.softLinks.copyFrom(backupBuilder.indexes.softLinks)
   indexes.virtualFileIndex.copyFrom(backupBuilder.indexes.virtualFileIndex)
   indexes.entitySourceIndex.copyFrom(backupBuilder.indexes.entitySourceIndex)
   indexes.persistentIdIndex.copyFrom(backupBuilder.indexes.persistentIdIndex)

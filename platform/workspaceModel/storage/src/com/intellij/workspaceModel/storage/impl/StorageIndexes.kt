@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.storage.impl
 
 import com.google.common.collect.HashBiMap
-import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
@@ -10,30 +9,31 @@ import com.intellij.workspaceModel.storage.impl.containers.copy
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalIndex
+import com.intellij.workspaceModel.storage.impl.indices.MultimapStorageIndex
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 
 internal open class StorageIndexes(
   // List of IDs of entities that use this particular persistent id
-  internal open val softLinks: BidirectionalMultiMap<PersistentEntityId<*>, EntityId>,
+  internal open val softLinks: MultimapStorageIndex<PersistentEntityId<*>>,
   internal open val virtualFileIndex: VirtualFileIndex,
   internal open val entitySourceIndex: EntityStorageInternalIndex<EntitySource>,
   internal open val persistentIdIndex: EntityStorageInternalIndex<PersistentEntityId<*>>,
   internal open val externalMappings: Map<String, ExternalEntityMappingImpl<*>>
 ) {
 
-  constructor(softLinks: BidirectionalMultiMap<PersistentEntityId<*>, EntityId>,
+  constructor(softLinks: MultimapStorageIndex<PersistentEntityId<*>>,
               virtualFileIndex: VirtualFileIndex,
               entitySourceIndex: EntityStorageInternalIndex<EntitySource>,
               persistentIdIndex: EntityStorageInternalIndex<PersistentEntityId<*>>
   ) : this(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex, emptyMap())
 
   companion object {
-    val EMPTY = StorageIndexes(BidirectionalMultiMap(), VirtualFileIndex(), EntityStorageInternalIndex(), EntityStorageInternalIndex(),
+    val EMPTY = StorageIndexes(MultimapStorageIndex(), VirtualFileIndex(), EntityStorageInternalIndex(), EntityStorageInternalIndex(),
                                HashMap())
   }
 
   fun toMutable(): MutableStorageIndexes {
-    val copiedSoftLinks = softLinks.copy()
+    val copiedSoftLinks = MultimapStorageIndex.MutableMultimapStorageIndex.from(softLinks)
     val copiedVirtualFileIndex = VirtualFileIndex.MutableVirtualFileIndex.from(virtualFileIndex)
     val copiedEntitySourceIndex = EntityStorageInternalIndex.MutableEntityStorageInternalIndex.from(entitySourceIndex)
     val copiedPersistentIdIndex = EntityStorageInternalIndex.MutableEntityStorageInternalIndex.from(persistentIdIndex)
@@ -67,15 +67,15 @@ internal open class StorageIndexes(
     assert(persistentIdIndexCopy.isEmpty()) { "Persistent id index has garbage: $persistentIdIndexCopy" }
 
     // Assert soft links
-    val softLinksCopy = softLinks.copy()
+    val softLinksCopy = softLinks.index.copy()
     storage.entitiesByType.entityFamilies.filterNotNull().forEach { family ->
       family.entities.asSequence().filterNotNull().forEach { data ->
         if (data is SoftLinkable) {
           val links = data.getLinks()
           for (link in links) {
-            val pids = softLinksCopy.getValues(link)
+            val pids = softLinksCopy.getKeys(link)
             assert(data.createPid() in pids) { "Entity $data isn't found in soft links" }
-            softLinksCopy.remove(link, data.createPid())
+            softLinksCopy.remove(data.createPid(), link)
           }
         }
       }
@@ -85,7 +85,7 @@ internal open class StorageIndexes(
 }
 
 internal class MutableStorageIndexes(
-  override val softLinks: BidirectionalMultiMap<PersistentEntityId<*>, EntityId>,
+  override val softLinks: MultimapStorageIndex.MutableMultimapStorageIndex<PersistentEntityId<*>>,
   override val virtualFileIndex: VirtualFileIndex.MutableVirtualFileIndex,
   override val entitySourceIndex: EntityStorageInternalIndex.MutableEntityStorageInternalIndex<EntitySource>,
   override val persistentIdIndex: EntityStorageInternalIndex.MutableEntityStorageInternalIndex<PersistentEntityId<*>>,
@@ -98,7 +98,7 @@ internal class MutableStorageIndexes(
     // Update soft links index
     if (entityData is SoftLinkable) {
       for (link in entityData.getLinks()) {
-        softLinks.put(link, pid)
+        softLinks.index(pid, link)
       }
     }
 
@@ -113,7 +113,7 @@ internal class MutableStorageIndexes(
     val pid = (softLinkable as WorkspaceEntityData<*>).createPid()
 
     for (link in softLinkable.getLinks()) {
-      softLinks.put(link, pid)
+      softLinks.index(pid, link)
     }
   }
 
@@ -121,7 +121,7 @@ internal class MutableStorageIndexes(
     val pid = (softLinkable as WorkspaceEntityData<*>).createPid()
 
     for (link in softLinkable.getLinks()) {
-      softLinks.remove(link, pid)
+      softLinks.remove(pid, link)
     }
   }
 
@@ -143,11 +143,11 @@ internal class MutableStorageIndexes(
   fun <T : WorkspaceEntity> simpleUpdateSoftReferences(copiedData: WorkspaceEntityData<T>) {
     val pid = copiedData.createPid()
     if (copiedData is SoftLinkable) {
-      val beforeSoftLinks = HashSet(this.softLinks.getKeys(pid))
+      val beforeSoftLinks = HashSet(this.softLinks.getEntriesById(pid))
       val afterSoftLinks = copiedData.getLinks()
       if (beforeSoftLinks != afterSoftLinks) {
-        beforeSoftLinks.forEach { this.softLinks.remove(it, pid) }
-        afterSoftLinks.forEach { this.softLinks.put(it, pid) }
+        beforeSoftLinks.forEach { this.softLinks.remove(pid, it) }
+        afterSoftLinks.forEach { this.softLinks.index(pid, it) }
       }
     }
   }
@@ -168,7 +168,7 @@ internal class MutableStorageIndexes(
   }
 
   fun toImmutable(): StorageIndexes {
-    val copiedLinks = this.softLinks.copy()
+    val copiedLinks = this.softLinks.toImmutable()
     val newVirtualFileIndex = virtualFileIndex.toImmutable()
     val newEntitySourceIndex = entitySourceIndex.toImmutable()
     val newPersistentIdIndex = persistentIdIndex.toImmutable()

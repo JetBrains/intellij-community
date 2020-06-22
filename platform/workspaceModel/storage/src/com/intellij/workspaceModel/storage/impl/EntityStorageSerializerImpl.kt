@@ -16,6 +16,7 @@ import com.intellij.workspaceModel.storage.impl.containers.ImmutablePositiveIntI
 import com.intellij.workspaceModel.storage.impl.containers.ImmutablePositiveIntIntMultiMap
 import com.intellij.workspaceModel.storage.impl.containers.LinkedBidirectionalMap
 import com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalIndex
+import com.intellij.workspaceModel.storage.impl.indices.MultimapStorageIndex
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import org.objenesis.instantiator.ObjectInstantiator
@@ -330,7 +331,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
       val refsTable = kryo.readClassAndObject(input) as RefsTable
 
       // Read indexes
-      val softLinks = kryo.readClassAndObject(input) as BidirectionalMultiMap<PersistentEntityId<*>, EntityId>
+      val softLinks = kryo.readClassAndObject(input) as MultimapStorageIndex<PersistentEntityId<*>>
       val virtualFileIndex = kryo.readClassAndObject(input) as VirtualFileIndex
       val entitySourceIndex = kryo.readClassAndObject(input) as EntityStorageInternalIndex<EntitySource>
       val persistentIdIndex = kryo.readClassAndObject(input) as EntityStorageInternalIndex<PersistentEntityId<*>>

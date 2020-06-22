@@ -203,7 +203,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
   }
 
   private fun updateComposedIds(beforePersistentId: PersistentEntityId<*>, newPersistentId: PersistentEntityId<*>) {
-    val idsWithSoftRef = HashSet(indexes.softLinks.getValues(beforePersistentId))
+    val idsWithSoftRef = HashSet(indexes.softLinks.getIdsByEntry(beforePersistentId))
     for (entityId in idsWithSoftRef) {
       val entity = this.entitiesByType.getEntityDataForModification(entityId)
       val editingBeforePersistentId = entity.persistentId(this)
