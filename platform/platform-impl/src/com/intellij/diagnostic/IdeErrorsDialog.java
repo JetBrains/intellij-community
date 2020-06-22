@@ -207,9 +207,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     JPanel panel = new JPanel(new GridBagLayout());
     panel.add(controls, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, NORTH, NONE, JBUI.emptyInsets(), 0, 0));
-    panel.add(myCountLabel, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, NORTH, HORIZONTAL, JBUI.insets(0, 10), 0, 2));
-    panel.add(myInfoLabel, new GridBagConstraints(2, 0, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
-    panel.add(myDetailsLabel, new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0, NORTHEAST, NONE, JBUI.emptyInsets(), 0, 0));
+    panel.add(myCountLabel, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, NORTH, HORIZONTAL, JBUI.insets(2, 10), 0, 2));
+    panel.add(myInfoLabel, new GridBagConstraints(2, 0, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.insets(2, 0), 0, 0));
+    panel.add(myDetailsLabel, new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0, NORTHEAST, NONE, JBUI.insets(2, 0), 0, 0));
     panel.add(myForeignPluginWarningLabel, new GridBagConstraints(1, 1, 4, 1, 1.0, 0.0, WEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
     return panel;
   }
