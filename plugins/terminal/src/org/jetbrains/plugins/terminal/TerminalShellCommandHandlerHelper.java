@@ -17,9 +17,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.terminal.TerminalShellCommandHandler;
 import com.intellij.util.Alarm;
-import com.jediterm.terminal.*;
+import com.jediterm.terminal.StyledTextConsumerAdapter;
+import com.jediterm.terminal.SubstringFinder;
+import com.jediterm.terminal.TextStyle;
+import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.CharBuffer;
-import com.jediterm.terminal.model.TerminalTextBuffer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,12 +31,10 @@ import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.function.Function;
 
 public final class TerminalShellCommandHandlerHelper {
   private static final Logger LOG = Logger.getInstance(TerminalShellCommandHandler.class);
   @NonNls private static final String TERMINAL_CUSTOM_COMMANDS_GOT_IT = "TERMINAL_CUSTOM_COMMANDS_GOT_IT";
-  @NonNls private static final String GOT_IT = "got_it";
   @NonNls private static final String FEATURE_ID = "terminal.shell.command.handling";
 
   private static Experiments ourExperiments;
@@ -84,7 +84,7 @@ public final class TerminalShellCommandHandlerHelper {
     String command = myWidget.getTypedShellCommand();
     SubstringFinder.FindResult result =
       TerminalShellCommandHandler.Companion.matches(project, getWorkingDirectory(), !hasRunningCommands(), command)
-      ? searchMatchedCommand(command, true) : null;
+      ? searchMatchedCommand(command) : null;
     myWidget.getTerminalPanel().setFindResult(result);
 
     //show notification
@@ -143,28 +143,33 @@ public final class TerminalShellCommandHandlerHelper {
     return hasRunningCommands;
   }
 
-  @Nullable
-  private SubstringFinder.FindResult searchMatchedCommand(@NotNull String pattern, boolean ignoreCase) {
+  private @Nullable SubstringFinder.FindResult searchMatchedCommand(@NotNull String pattern) {
     if (pattern.length() == 0) {
       return null;
     }
 
-    final SubstringFinder finder = new SubstringFinder(pattern, ignoreCase);
-    StyledTextConsumer consumer = new StyledTextConsumerAdapter() {
-      @Override
-      public void consume(int x, int y, @NotNull TextStyle style, @NotNull CharBuffer characters, int startRow) {
-        for (int i = 0; i < characters.length(); i++) {
-          finder.nextChar(x, y - startRow, characters, i);
-        }
+    return myWidget.processTerminalBuffer(textBuffer -> {
+      int cursorLine = myWidget.getLineNumberAtCursor();
+      if (cursorLine < 0 || cursorLine >= textBuffer.getHeight()) {
+        return null;
       }
-    };
-
-    myWidget.processTerminalBuffer((Function<TerminalTextBuffer, Void>)textBuffer -> {
-      textBuffer.processScreenLines(myWidget.getLineNumberAtCursor(), 1, consumer);
-      return null;
+      String command = myWidget.getTypedShellCommand();
+      String lineText = textBuffer.getLine(cursorLine).getText();
+      int commandStartInd = lineText.lastIndexOf(command);
+      SubstringFinder finder = new SubstringFinder(pattern, true);
+      if (commandStartInd >= 0) {
+        textBuffer.processScreenLines(cursorLine, 1, new StyledTextConsumerAdapter() {
+          @Override
+          public void consume(int x, int y, @NotNull TextStyle style, @NotNull CharBuffer characters, int startRow) {
+            int offset = Math.max(x, commandStartInd) - x;
+            for (int i = offset; i < characters.length(); i++) {
+              finder.nextChar(x, y - startRow, characters, i);
+            }
+          }
+        });
+      }
+      return finder.getResult();
     });
-
-    return finder.getResult();
   }
 
   public boolean processEnterKeyPressed(@NotNull String command, @NotNull KeyEvent keyPressed) {
