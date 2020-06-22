@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -65,6 +66,7 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
           return;
         }
         if (PsiUtil.findReturnStatements(body).length > 0) return;
+        if (PsiUtil.getLanguageLevel(ctor) != LanguageLevel.JDK_14_PREVIEW && assignedCount != components.length) return;
         holder.registerProblem(ctor.getParameterList(), JavaBundle.message("inspection.redundant.record.constructor.can.be.compact.message"),
                                ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ConvertToCompactConstructorFix());
       }
