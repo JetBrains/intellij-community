@@ -137,7 +137,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
                            .flowY(),
                          AC().size(":$maxWidth:$maxWidth").gap("push"))
 
-      add(header)
+      add(header, CC().growX())
       add(timeline, CC().growX().minWidth(""))
       add(errorPanel, CC().hideMode(2).alignX("center"))
       add(loadingIcon, CC().hideMode(2).alignX("center"))
