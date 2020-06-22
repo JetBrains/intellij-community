@@ -778,28 +778,31 @@ public final class Switcher extends AnAction implements DumbAware {
       }
 
       if (filesData.size() <= selectedFiles.size() || pinned) {
-        int maxFiles = Math.max(editors.size(), filesForInit.size());
-        int minIndex = pinned ? 0 : (filesForInit.size() - Math.min(toolWindowsCount, maxFiles));
-        for (int i = filesForInit.size() - 1; i >= minIndex; i--) {
-          if (pinned
-              && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE
-              && selectedFiles.contains(filesForInit.get(i)) ) {
-            continue;
-          }
+        if (!filesForInit.isEmpty()) {
+          int editorsFilesCount = (int) editors.stream().map(info -> info.first).distinct().count();
+          int maxFiles = Math.max(editorsFilesCount, filesForInit.size());
+          int minIndex = pinned ? 0 : (filesForInit.size() - Math.min(toolWindowsCount, maxFiles));
+          for (int i = filesForInit.size() - 1; i >= minIndex; i--) {
+            if (pinned
+                && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE
+                && selectedFiles.contains(filesForInit.get(i))) {
+              continue;
+            }
 
-          FileInfo info = new FileInfo(filesForInit.get(i), null, project);
-          boolean add = true;
-          if (pinned) {
-            for (FileInfo fileInfo : filesData) {
-              if (fileInfo.first.equals(info.first)) {
-                add = false;
-                break;
+            FileInfo info = new FileInfo(filesForInit.get(i), null, project);
+            boolean add = true;
+            if (pinned) {
+              for (FileInfo fileInfo : filesData) {
+                if (fileInfo.first.equals(info.first)) {
+                  add = false;
+                  break;
+                }
               }
             }
-          }
-          if (add) {
-            if (addedFiles.add(info.first)) {
-              filesData.add(info);
+            if (add) {
+              if (addedFiles.add(info.first)) {
+                filesData.add(info);
+              }
             }
           }
         }
