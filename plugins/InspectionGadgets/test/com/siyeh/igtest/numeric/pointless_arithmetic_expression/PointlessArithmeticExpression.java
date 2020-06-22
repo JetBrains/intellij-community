@@ -89,7 +89,7 @@ public class PointlessArithmeticExpression
     }
 
     double floatsOrDoubles() {
-        return 123.001 % 1.0;
+        return <warning descr="'123.001 % 1.0' can be replaced with '0.0'">123.001 % 1.0</warning>;
     }
 
     void more(int i) {
@@ -146,5 +146,31 @@ class SideEffects {
     int i = 1;
     int b = array[i++] - array[i++];
     System.out.println(rand.nextInt(1000) - rand.nextInt(1000));
+  }
+}
+class FloatingPoint {
+  // Zero processing can be tricky. See IDEA-20768 for details.
+  void test(double x) {
+    double res = <warning descr="'x - x' can be replaced with '0.0'">x - x</warning>;
+    double res1 = <warning descr="'x / x' can be replaced with '1.0'">x / x</warning>;
+    double res2 = <warning descr="'x % x' can be replaced with '0.0'">x % x</warning>;
+    double res3 = x + 0;
+    double res4 = x - 0;
+    double res5 = <warning descr="'x * 1.0' can be replaced with 'x'">x * 1.0</warning>;
+    double res6 = <warning descr="'x / 1.0' can be replaced with 'x'">x / 1.0</warning>;
+    double res7 = x * 0.0;
+    double res8 = 0.0 / x;
+  }
+
+  void test2(float x) {
+    float res = <warning descr="'x - x' can be replaced with '0.0f'">x - x</warning>;
+    float res1 = <warning descr="'x / x' can be replaced with '1.0f'">x / x</warning>;
+    float res2 = <warning descr="'x % x' can be replaced with '0.0f'">x % x</warning>;
+    float res3 = x + 0;
+    float res4 = x - 0;
+    float res5 = <warning descr="'x * 1.0f' can be replaced with 'x'">x * 1.0f</warning>;
+    float res6 = <warning descr="'x / 1.0f' can be replaced with 'x'">x / 1.0f</warning>;
+    float res7 = x * 0.0f;
+    float res8 = 0.0f / x;
   }
 }
