@@ -12,13 +12,12 @@ import git4idea.remote.GitHttpAuthDataProvider
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
+import org.jetbrains.plugins.github.authentication.GHAccountAuthData
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 
 private val LOG = logger<GHHttpAuthDataProvider>()
-
-class GHAccountAuthData(val account: GithubAccount, login: String, token: String) : AuthData(login, token)
 
 internal class GHHttpAuthDataProvider : GitHttpAuthDataProvider {
   override fun isSilent(): Boolean = true

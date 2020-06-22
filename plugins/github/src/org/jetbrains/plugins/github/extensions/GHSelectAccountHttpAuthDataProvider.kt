@@ -7,6 +7,7 @@ import git4idea.DialogManager
 import git4idea.i18n.GitBundle
 import git4idea.remote.InteractiveGitHttpAuthDataProvider
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.plugins.github.authentication.GHAccountAuthData
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.ui.GithubChooseAccountDialog
