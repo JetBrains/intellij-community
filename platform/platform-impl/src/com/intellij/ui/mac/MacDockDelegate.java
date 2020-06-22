@@ -29,7 +29,7 @@ public class MacDockDelegate implements SystemDock.Delegate {
   private static final SystemDock.Delegate instance = new MacDockDelegate();
 
   private static final PopupMenu dockMenu = new PopupMenu("DockMenu");
-  private static final Menu recentProjectsMenu = new Menu("Recent projects");
+  private static final Menu recentProjectsMenu = new Menu("Recent Projects");
 
   private MacDockDelegate() {}
 
