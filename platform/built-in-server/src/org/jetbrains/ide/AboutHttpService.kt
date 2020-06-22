@@ -66,7 +66,7 @@ internal class AboutHttpService : RestService() {
 private fun isTrustedOrigin(request: HttpRequest): Boolean {
   val origin = request.origin ?: return false
   @Suppress("SpellCheckingInspection")
-  return origin == "hyperskill.org"
+  return origin.matches("https?://([a-z0-9-]+\\.)*hyperskill.org$".toRegex())
 }
 
 fun writeApplicationInfoJson(out: OutputStream, urlDecoder: QueryStringDecoder?) {
