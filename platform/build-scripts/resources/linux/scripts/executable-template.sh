@@ -1,6 +1,10 @@
 #!/bin/sh
 # Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
+# ---------------------------------------------------------------------
+# __product_full__ startup script.
+# ---------------------------------------------------------------------
+
 message()
 {
   TITLE="Cannot start __product_full__"
