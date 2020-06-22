@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -118,8 +119,15 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   private fun getContentManagerListener(project: Project, toolWindow: ToolWindow) = object : ContentManagerListener {
-    override fun contentAdded(event: ContentManagerEvent) = updateState(project, toolWindow)
-    override fun contentRemoved(event: ContentManagerEvent) = updateState(project, toolWindow)
+    override fun contentAdded(event: ContentManagerEvent) = scheduleUpdate()
+    override fun contentRemoved(event: ContentManagerEvent) = scheduleUpdate()
+
+    private fun scheduleUpdate() {
+      invokeLater {
+        if (project.isDisposed) return@invokeLater
+        updateState(project, toolWindow)
+      }
+    }
   }
 
   private inner class ExtensionListener(private val toolWindow: ToolWindowEx) : ExtensionPointListener<ChangesViewContentEP> {
