@@ -15,22 +15,25 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
-import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlightingPassRegistrarEx {
   public static final ExtensionPointName<TextEditorHighlightingPassFactoryRegistrar> EP_NAME = new ExtensionPointName<>("com.intellij.highlightingPassFactory");
 
-  private final TIntObjectHashMap<PassConfig> myRegisteredPassFactories = new TIntObjectHashMap<>();
+  private final Int2ObjectOpenHashMap<PassConfig> myRegisteredPassFactories = new Int2ObjectOpenHashMap<>();
   private final List<DirtyScopeTrackingHighlightingPassFactory> myDirtyScopeTrackingFactories = new ArrayList<>();
   private final AtomicInteger nextAvailableId = new AtomicInteger();
   private boolean checkedForCycles;
@@ -83,7 +86,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     return runInspectionsAfterCompletionOfGeneralHighlightPass;
   }
 
-  private static class PassConfig {
+  private static final class PassConfig {
     private final TextEditorHighlightingPassFactory passFactory;
     private final int[] startingPredecessorIds;
     private final int[] completionPredecessorIds;
@@ -141,12 +144,14 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
                                             PsiUtilCore.getVirtualFile(psiFile);
     }
     List<TextEditorHighlightingPass> result = new ArrayList<>(myRegisteredPassFactories.size());
-    final TIntArrayList passesRefusedToCreate = new TIntArrayList();
+    IntArrayList passesRefusedToCreate = new IntArrayList();
     boolean isDumb = DumbService.getInstance(myProject).isDumb();
-    myRegisteredPassFactories.forEachKey(passId -> {
+    for (IntIterator iterator = myRegisteredPassFactories.keySet().iterator(); iterator.hasNext(); ) {
+      int passId = iterator.nextInt();
       if (ArrayUtil.find(passesToIgnore, passId) != -1) {
-        return true;
+        continue;
       }
+
       PassConfig passConfig = myRegisteredPassFactories.get(passId);
       TextEditorHighlightingPassFactory factory = passConfig.passFactory;
       TextEditorHighlightingPass pass = isDumb && !DumbService.isDumbAware(factory)
@@ -171,26 +176,24 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
         pass.setId(passId);
         result.add(pass);
       }
-      return true;
-    });
+    }
 
     DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
-    final FileStatusMap statusMap = daemonCodeAnalyzer.getFileStatusMap();
-    passesRefusedToCreate.forEach(passId -> {
-      statusMap.markFileUpToDate(document, passId);
-      return true;
-    });
-
+    FileStatusMap statusMap = daemonCodeAnalyzer.getFileStatusMap();
+    for (IntListIterator iterator = passesRefusedToCreate.iterator(); iterator.hasNext(); ) {
+      statusMap.markFileUpToDate(document, iterator.nextInt());
+    }
     return result;
   }
 
   @NotNull
   @Override
-  public List<TextEditorHighlightingPass> instantiateMainPasses(@NotNull final PsiFile psiFile,
-                                                                @NotNull final Document document,
-                                                                @NotNull final HighlightInfoProcessor highlightInfoProcessor) {
-    final THashSet<TextEditorHighlightingPass> ids = new THashSet<>();
-    myRegisteredPassFactories.forEachKey(passId -> {
+  public List<TextEditorHighlightingPass> instantiateMainPasses(@NotNull PsiFile psiFile,
+                                                                @NotNull Document document,
+                                                                @NotNull HighlightInfoProcessor highlightInfoProcessor) {
+    Set<TextEditorHighlightingPass> ids = new HashSet<>();
+    for (IntIterator iterator = myRegisteredPassFactories.keySet().iterator(); iterator.hasNext(); ) {
+      int passId = iterator.nextInt();
       PassConfig passConfig = myRegisteredPassFactories.get(passId);
       TextEditorHighlightingPassFactory factory = passConfig.passFactory;
       if (factory instanceof MainHighlightingPassFactory) {
@@ -200,15 +203,17 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
           pass.setId(passId);
         }
       }
-      return true;
-    });
+    }
     return new ArrayList<>(ids);
   }
 
   private void checkForCycles() {
     final TIntObjectHashMap<TIntHashSet> transitivePredecessors = new TIntObjectHashMap<>();
 
-    myRegisteredPassFactories.forEachEntry((passId, config) -> {
+    for (ObjectIterator<Int2ObjectMap.Entry<PassConfig>> iterator = myRegisteredPassFactories.int2ObjectEntrySet().fastIterator(); iterator.hasNext(); ) {
+      Int2ObjectMap.Entry<PassConfig> entry = iterator.next();
+      int passId = entry.getIntKey();
+      PassConfig config = entry.getValue();
       TIntHashSet allPredecessors = new TIntHashSet(config.completionPredecessorIds);
       allPredecessors.addAll(config.startingPredecessorIds);
       transitivePredecessors.put(passId, allPredecessors);
@@ -224,8 +229,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
         transitives.addAll(predecessor.startingPredecessorIds);
         return true;
       });
-      return true;
-    });
+    }
     transitivePredecessors.forEachKey(passId -> {
       if (transitivePredecessors.get(passId).contains(passId)) {
         throw new IllegalArgumentException("There is a cycle introduced involving pass " + myRegisteredPassFactories.get(passId).passFactory);

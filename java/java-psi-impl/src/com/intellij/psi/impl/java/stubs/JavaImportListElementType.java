@@ -14,9 +14,7 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
-public class JavaImportListElementType extends JavaStubElementType<PsiImportListStub, PsiImportList> {
+public final class JavaImportListElementType extends JavaStubElementType<PsiImportListStub, PsiImportList> {
   public JavaImportListElementType() {
     super("IMPORT_LIST");
   }
@@ -44,12 +42,12 @@ public class JavaImportListElementType extends JavaStubElementType<PsiImportList
   }
 
   @Override
-  public void serialize(@NotNull final PsiImportListStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull final PsiImportListStub stub, @NotNull final StubOutputStream dataStream) {
   }
 
   @NotNull
   @Override
-  public PsiImportListStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public PsiImportListStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) {
     return new PsiImportListStubImpl(parentStub);
   }
 

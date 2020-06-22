@@ -26,10 +26,10 @@ import java.util.List;
  *
  * @author yole
  */
-public class StubElementTypeHolderEP extends AbstractExtensionPointBean {
+public final class StubElementTypeHolderEP extends AbstractExtensionPointBean {
   private static final Logger LOG = Logger.getInstance(StubElementTypeHolderEP.class);
 
-  public static final ExtensionPointName<StubElementTypeHolderEP> EP_NAME = ExtensionPointName.create("com.intellij.stubElementTypeHolder");
+  public static final ExtensionPointName<StubElementTypeHolderEP> EP_NAME = new ExtensionPointName<>("com.intellij.stubElementTypeHolder");
 
   @Attribute("class")
   @RequiredElement
@@ -65,7 +65,8 @@ public class StubElementTypeHolderEP extends AbstractExtensionPointBean {
           result.add(new StubFieldAccessor(externalIdPrefix + field.getName(), field));
         }
         return result;
-      } else {
+      }
+      else {
         findExtensionClass(holderClass);
       }
     }

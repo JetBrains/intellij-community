@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -14,7 +14,7 @@ import java.util.BitSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
-class LazyStubList extends StubList {
+final class LazyStubList extends StubList {
   private final AtomicReferenceArray<StubBase<?>> myStubs;
   private final ObjectStubSerializer myRootSerializer;
   private int mySize;
@@ -104,7 +104,7 @@ class LazyStubList extends StubList {
 
 }
 
-class LazyStubData {
+final class LazyStubData {
   private final AbstractStringEnumerator myStorage;
   private final MostlyUShortIntList myParentsAndStarts;
   private final byte[] mySerializedStubs;

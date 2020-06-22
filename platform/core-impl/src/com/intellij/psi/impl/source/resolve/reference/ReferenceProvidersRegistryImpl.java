@@ -8,7 +8,6 @@ import com.intellij.lang.MetaLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Disposer;
@@ -20,14 +19,16 @@ import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TDoubleObjectHashMap;
+import it.unimi.dsi.fastutil.doubles.Double2ObjectMap;
+import it.unimi.dsi.fastutil.doubles.Double2ObjectMaps;
+import it.unimi.dsi.fastutil.doubles.Double2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
+public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
   private static final LanguageExtension<PsiReferenceContributor> CONTRIBUTOR_EXTENSION =
     new LanguageExtension<>(PsiReferenceContributor.EP_NAME);
   private static final LanguageExtension<PsiReferenceProviderBean> REFERENCE_PROVIDER_EXTENSION =
@@ -142,12 +143,13 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
                                                                   @NotNull PsiReferenceService.Hints hints) {
     List<ProviderBinding.ProviderInfo<ProcessingContext>> providers = getRegistrar(context.getLanguage()).getPairsByElement(context, hints);
 
-    TDoubleObjectHashMap<List<PsiReference[]>> allReferencesMap = mapNotEmptyReferencesFromProviders(context, providers);
-
-    if (allReferencesMap.isEmpty()) return PsiReference.EMPTY_ARRAY;
+    Double2ObjectMap<List<PsiReference[]>> allReferencesMap = mapNotEmptyReferencesFromProviders(context, providers);
+    if (allReferencesMap.isEmpty()) {
+      return PsiReference.EMPTY_ARRAY;
+    }
 
     final List<PsiReference> result = new SmartList<>();
-    double maxPriority = Math.max(PsiReferenceRegistrar.LOWER_PRIORITY, Arrays.stream(allReferencesMap.keys()).max().getAsDouble());
+    double maxPriority = Math.max(PsiReferenceRegistrar.LOWER_PRIORITY, Arrays.stream(allReferencesMap.keySet().toDoubleArray()).max().getAsDouble());
     List<PsiReference> maxPriorityRefs = collectReferences(allReferencesMap.get(maxPriority));
 
     ContainerUtil.addAllNotNull(result, maxPriorityRefs);
@@ -158,9 +160,9 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
 
   //  we create priorities map: "priority" ->  non-empty references from providers
   //  if provider returns EMPTY_ARRAY or array with "null" references then this provider isn't added in priorities map.
-  private static @NotNull TDoubleObjectHashMap<List<PsiReference[]>> mapNotEmptyReferencesFromProviders(@NotNull PsiElement context,
-                                                                                     @NotNull List<? extends ProviderBinding.ProviderInfo<ProcessingContext>> providers) {
-    TDoubleObjectHashMap<List<PsiReference[]>> map = new TDoubleObjectHashMap<>();
+  private static @NotNull Double2ObjectMap<List<PsiReference[]>> mapNotEmptyReferencesFromProviders(@NotNull PsiElement context,
+                                                                                                            @NotNull List<? extends ProviderBinding.ProviderInfo<ProcessingContext>> providers) {
+    Double2ObjectMap<List<PsiReference[]>> map = new Double2ObjectOpenHashMap<>();
     for (ProviderBinding.ProviderInfo<ProcessingContext> trinity : providers) {
       final PsiReference[] refs = getReferences(context, trinity);
       if ((ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal())
@@ -206,20 +208,19 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
     return PsiReference.EMPTY_ARRAY;
   }
 
-  private static @NotNull List<PsiReference> getLowerPriorityReferences(@NotNull TDoubleObjectHashMap<List<PsiReference[]>> allReferencesMap,
+  private static @NotNull List<PsiReference> getLowerPriorityReferences(@NotNull Double2ObjectMap<List<PsiReference[]>> allReferencesMap,
                                                                         double maxPriority,
                                                                         @NotNull List<? extends PsiReference> maxPriorityRefs) {
     List<PsiReference> result = new SmartList<>();
-    allReferencesMap.forEachEntry((priority, referenceArrays) -> {
-      if (maxPriority != priority) {
-        for (PsiReference[] references : referenceArrays) {
+    for (Double2ObjectMap.Entry<List<PsiReference[]>> entry : Double2ObjectMaps.fastIterable(allReferencesMap)) {
+      if (maxPriority != entry.getDoubleKey()) {
+        for (PsiReference[] references : entry.getValue()) {
           if (haveNotIntersectedTextRanges(maxPriorityRefs, references)) {
             ContainerUtil.addAllNotNull(result, references);
           }
         }
       }
-      return true;
-    });
+    }
     return result;
   }
 

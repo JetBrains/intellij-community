@@ -1,20 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
-import com.intellij.util.io.DataInputOutputUtil;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntIntHashMap;
+import com.intellij.openapi.util.io.DataInputOutputUtilRt;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 import java.util.function.IntUnaryOperator;
 
 @ApiStatus.Internal
-class IntEnumerator {
-  private final TIntIntHashMap myEnumerates;
-  private final TIntArrayList myIds;
+final class IntEnumerator {
+  private final Int2IntOpenHashMap myEnumerates;
+  private final IntArrayList myIds;
   private int myNext;
 
   IntEnumerator() {
@@ -22,8 +23,8 @@ class IntEnumerator {
   }
 
   private IntEnumerator(boolean forSavingStub) {
-    myEnumerates = forSavingStub ? new TIntIntHashMap(1) : null;
-    myIds = new TIntArrayList();
+    myEnumerates = forSavingStub ? new Int2IntOpenHashMap(1) : null;
+    myIds = new IntArrayList();
   }
 
   int enumerate(int number) {
@@ -38,41 +39,31 @@ class IntEnumerator {
   }
 
   int valueOf(int id) {
-    return myIds.get(id);
+    return myIds.getInt(id);
   }
 
-  void dump(DataOutputStream stream) throws IOException {
+  void dump(@NotNull DataOutput stream) throws IOException {
     dump(stream, IntUnaryOperator.identity());
   }
 
-  void dump(DataOutputStream stream, IntUnaryOperator idRemapping) throws IOException {
-    DataInputOutputUtil.writeINT(stream, myIds.size());
-    IOException[] exception = new IOException[1];
-    myIds.forEach(id -> {
-      try {
-        int remapped = idRemapping.applyAsInt(id);
-        if (remapped == 0) {
-          exception[0] = new IOException("remapping is not found for " + id);
-          return false;
-        }
-        DataInputOutputUtil.writeINT(stream, remapped);
+  void dump(@NotNull DataOutput stream, @NotNull IntUnaryOperator idRemapping) throws IOException {
+    DataInputOutputUtilRt.writeINT(stream, myIds.size());
+    int[] elements = myIds.elements();
+    for (int i = 0, n = myIds.size(); i < n; i++) {
+      int id = elements[i];
+      int remapped = idRemapping.applyAsInt(id);
+      if (remapped == 0) {
+        throw new IOException("remapping is not found for " + id);
       }
-      catch (IOException e) {
-        exception[0] = e;
-        return false;
-      }
-      return true;
-    });
-    if (exception[0] != null) {
-      throw exception[0];
+      DataInputOutputUtilRt.writeINT(stream, remapped);
     }
   }
 
-  static IntEnumerator read(DataInputStream stream) throws IOException {
-    int size = DataInputOutputUtil.readINT(stream);
+  static IntEnumerator read(@NotNull DataInput stream) throws IOException {
+    int size = DataInputOutputUtilRt.readINT(stream);
     IntEnumerator enumerator = new IntEnumerator(false);
     for (int i = 1; i < size + 1; i++) {
-      enumerator.myIds.add(DataInputOutputUtil.readINT(stream));
+      enumerator.myIds.add(DataInputOutputUtilRt.readINT(stream));
     }
     return enumerator;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.stubs;
 
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
@@ -28,8 +28,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 
-public class XIncludeStub extends ObjectStubBase<ElementStub> {
-
+public final class XIncludeStub extends ObjectStubBase<ElementStub> {
   private final String myHref;
   private final String myXpointer;
   private volatile CachedValue<DomElement> myCachedValue;
@@ -48,7 +47,7 @@ public class XIncludeStub extends ObjectStubBase<ElementStub> {
   }
 
   @Override
-  public ObjectStubSerializer<?, ?> getStubType() {
+  public ObjectStubSerializer<?, Stub> getStubType() {
     return DomElementTypeHolder.XIncludeStub;
   }
 

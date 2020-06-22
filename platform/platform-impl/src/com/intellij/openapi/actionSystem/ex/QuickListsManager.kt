@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.ex
 
 import com.intellij.configurationStore.LazySchemeProcessor
@@ -15,7 +15,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
-import gnu.trove.THashSet
 import java.util.function.Function
 
 class QuickListsManager {
@@ -66,7 +65,7 @@ class QuickListsManager {
 
   private fun registerActions(actionManager: ActionManager) {
     // to prevent exception if 2 or more targets have the same name
-    val registeredIds = THashSet<String>()
+    val registeredIds = HashSet<String>()
     for (scheme in mySchemeManager.allSchemes) {
       val actionId = scheme.actionId
       if (registeredIds.add(actionId)) {
@@ -90,7 +89,7 @@ class QuickListsManager {
   }
 }
 
-class InvokeQuickListAction(private val myQuickList: QuickList) : QuickSwitchSchemeAction() {
+private class InvokeQuickListAction(private val myQuickList: QuickList) : QuickSwitchSchemeAction() {
   init {
     myActionPlace = ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION
     templatePresentation.description = myQuickList.description

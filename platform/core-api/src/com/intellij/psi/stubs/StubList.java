@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiElement;
@@ -100,8 +100,8 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     myStubData.set(childrenCountIndex(parentId), childrenCount + 1);
   }
 
-  int getParentIndex(int childIndex) {
-    return ((StubBase)get(childIndex).getParentStub()).id;
+  private int getParentIndex(int childIndex) {
+    return ((StubBase<?>)get(childIndex).getParentStub()).id;
   }
 
   private enum ChildrenStorage { inPlainList, inJoinedList, inTempMap }
@@ -229,7 +229,8 @@ abstract class StubList extends AbstractList<StubBase<?>> {
       if (myCurrentParent >= 0) {
         if (childrenCount == myExpectedChildrenCount - 1) {
           myCurrentParent = -1;
-        } else if (parentId != myCurrentParent) {
+        }
+        else if (parentId != myCurrentParent) {
           myCurrentParent = -1;
           return switchChildrenToJoinedList(parentId, childrenCount, myExpectedChildrenCount - childrenCount);
         }
