@@ -178,19 +178,19 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
 
   @Override
   protected void setUserMap(@NotNull KeyFMap map) {
-    mySegment.setUserMap(myId, map);
+    getSegment().setUserMap(myId, map);
   }
 
   @NotNull
   @Override
   protected KeyFMap getUserMap() {
-    return mySegment.getUserMap(this, myId);
+    return getSegment().getUserMap(this, myId);
   }
 
   @Override
   protected boolean changeUserMap(@NotNull KeyFMap oldMap, @NotNull KeyFMap newMap) {
     VirtualDirectoryImpl.checkLeaks(newMap);
-    return mySegment.changeUserMap(myId, oldMap, UserDataInterner.internUserData(newMap));
+    return getSegment().changeUserMap(myId, oldMap, UserDataInterner.internUserData(newMap));
   }
 
   private void checkNotTooLarge(@Nullable Object requestor) throws FileTooBigException {

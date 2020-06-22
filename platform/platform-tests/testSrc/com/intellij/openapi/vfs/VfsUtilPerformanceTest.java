@@ -142,14 +142,14 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
           assertEquals(findRoot(vDir), findRoot(leafDir));
         }
       };
-      int time = 1500;
+      int time = 1000;
       PlatformTestUtil.startPerformanceTest("getParent before movement", time, checkPerformance).assertTiming();
       VirtualFile dir1 = vDir.createChildDirectory(this, "dir1");
       VirtualFile dir2 = vDir.createChildDirectory(this, "dir2");
       for (int i = 0; i < 13; i++) {  /*13 is max length with THashMap capacity of 17, we get plenty collisions then*/
         dir1.createChildData(this, "a" + i + ".txt").move(this, dir2);
       }
-      PlatformTestUtil.startPerformanceTest("getParent after movement", time, checkPerformance).reattemptUntilJitSettlesDown().assertTiming();
+      PlatformTestUtil.startPerformanceTest("getParent after movement", time, checkPerformance).assertTiming();
     });
   }
 

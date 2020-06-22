@@ -21,7 +21,7 @@ public class FsRoot extends VirtualDirectoryImpl {
       throw new IllegalArgumentException("path must be canonical but got: '" + pathBeforeSlash + "'");
     }
     myPathWithOneSlash = pathBeforeSlash + '/';
-    VfsData.initFile(id, mySegment, nameId, myData);
+    VfsData.initFile(id, getSegment(), nameId, myData);
   }
 
   @Override
