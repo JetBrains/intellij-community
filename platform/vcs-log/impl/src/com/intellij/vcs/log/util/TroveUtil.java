@@ -3,7 +3,6 @@ package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.IntIntFunction;
 import com.intellij.util.ThrowableConsumer;
 import gnu.trove.*;
 import it.unimi.dsi.fastutil.ints.IntIterator;
@@ -15,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.IntFunction;
+import java.util.function.IntUnaryOperator;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -200,10 +200,10 @@ public final class TroveUtil {
   }
 
   @NotNull
-  public static TIntHashSet map2IntSet(@NotNull TIntHashSet set, @NotNull IntIntFunction function) {
+  public static TIntHashSet map2IntSet(@NotNull TIntHashSet set, @NotNull IntUnaryOperator function) {
     TIntHashSet result = new TIntHashSet();
     set.forEach(it -> {
-      result.add(function.fun(it));
+      result.add(function.applyAsInt(it));
       return true;
     });
     return result;

@@ -19,7 +19,6 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.IntIntFunction;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.TripleFunction;
 import junit.framework.TestCase;
@@ -32,6 +31,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
+import java.util.function.IntUnaryOperator;
 
 public class BoundedScheduledExecutorTest extends TestCase {
   private static final Logger LOG = Logger.getInstance(BoundedScheduledExecutorTest.class);
@@ -146,7 +146,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
 
   static void doTestBoundedExecutor(String testName,
                                     BiFunction<ExecutorService, Integer, ? extends ExecutorService> executorCreator,
-                                    IntIntFunction numberOfFuturesComputer,
+                                    IntUnaryOperator numberOfFuturesComputer,
                                     TripleFunction<ExecutorService, Runnable, Integer, Future<?>> executorScheduler) throws Exception {
     ExecutorService backendExecutor = Executors.newCachedThreadPool(ConcurrencyUtil.newNamedThreadFactory(testName));
     for (int maxSimultaneousTasks = 1; maxSimultaneousTasks < 20; maxSimultaneousTasks++) {
@@ -158,7 +158,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
         new AtomicInteger(maxSimultaneousTasks); // to avoid deadlocks when trying to wait inside the pool thread
 
       try {
-        int N = numberOfFuturesComputer.fun(maxSimultaneousTasks);
+        int N = numberOfFuturesComputer.applyAsInt(maxSimultaneousTasks);
         Future[] futures = new Future[N];
         Random random = new Random();
         for (int i = 0; i < N; i++) {

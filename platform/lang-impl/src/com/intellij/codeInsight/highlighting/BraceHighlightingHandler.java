@@ -40,7 +40,6 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
-import com.intellij.util.IntIntFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -52,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.IntUnaryOperator;
 
 public class BraceHighlightingHandler {
   private static final Key<List<RangeHighlighter>> BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY = Key.create("BraceHighlighter.BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY");
@@ -374,7 +374,7 @@ public class BraceHighlightingHandler {
                                    @NotNull Alarm alarm,
                                    int leftBraceStart,
                                    int leftBraceEnd,
-                                   @Nullable IntIntFunction startComputation) {
+                                   @Nullable IntUnaryOperator startComputation) {
     Project project = editor.getProject();
     if (project == null) {
       return;
@@ -394,7 +394,7 @@ public class BraceHighlightingHandler {
         if (y >= viewRect.y) {
           return;
         }
-        TextRange range = new TextRange(startComputation == null ? leftBraceStart : startComputation.fun(leftBraceStart), leftBraceEnd);
+        TextRange range = new TextRange(startComputation == null ? leftBraceStart : startComputation.applyAsInt(leftBraceStart), leftBraceEnd);
         Document document = editor.getDocument();
         int line1 = document.getLineNumber(range.getStartOffset());
         int line2 = document.getLineNumber(range.getEndOffset());

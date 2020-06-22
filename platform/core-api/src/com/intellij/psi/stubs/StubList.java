@@ -3,12 +3,12 @@ package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IntIntFunction;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.IntUnaryOperator;
 
 /**
  * A storage for stub-related data, shared by all stubs in one file. More memory-efficient, than keeping the same data in stub objects themselves.
@@ -171,7 +171,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     int count = getChildrenCount(id);
     int start = getChildrenStart(id);
     switch (getChildrenStorage(start)) {
-      case inPlainList: return findChildStubByType(elementType, IntIntFunction.IDENTITY, id + 1, id + 1 + count);
+      case inPlainList: return findChildStubByType(elementType, IntUnaryOperator.identity(), id + 1, id + 1 + count);
       case inJoinedList: return findChildStubByType(elementType, myJoinedChildrenList, start, start + count);
       default: return findChildStubByType(elementType, Objects.requireNonNull(tempMap()).get(id), 0, count);
     }
@@ -179,10 +179,10 @@ abstract class StubList extends AbstractList<StubBase<?>> {
 
   @Nullable
   private <P extends PsiElement, S extends StubElement<P>> S findChildStubByType(IStubElementType<S, P> elementType,
-                                                                                 IntIntFunction idList,
+                                                                                 IntUnaryOperator idList,
                                                                                  int start, int end) {
     for (int i = start; i < end; ++i) {
-      int id = idList.fun(i);
+      int id = idList.applyAsInt(i);
       if (elementType.getIndex() == getStubTypeIndex(id)) {
         //noinspection unchecked
         return (S)get(id);

@@ -13,6 +13,7 @@ import java.lang.reflect.Proxy;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.IntUnaryOperator;
 
 /**
  * @author peter
@@ -194,12 +195,12 @@ public final class ObjectUtils {
    * @see java.util.Arrays#binarySearch(Object[], Object, Comparator)
    * @see java.util.Collections#binarySearch(List, Object, Comparator)
    */
-  public static int binarySearch(int fromIndex, int toIndex, @NotNull IntIntFunction indexComparator) {
+  public static int binarySearch(int fromIndex, int toIndex, IntUnaryOperator indexComparator) {
     int low = fromIndex;
     int high = toIndex - 1;
     while (low <= high) {
       int mid = (low + high) >>> 1;
-      int cmp = indexComparator.fun(mid);
+      int cmp = indexComparator.applyAsInt(mid);
       if (cmp < 0) low = mid + 1;
       else if (cmp > 0) high = mid - 1;
       else return mid;
