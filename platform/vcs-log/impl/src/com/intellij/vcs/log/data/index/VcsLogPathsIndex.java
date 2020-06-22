@@ -140,7 +140,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     }
   }
 
-  @Contract("null -> null; !null -> !null")
+  @Contract("null,_ -> null; !null,_ -> !null")
   @Nullable
   private static FilePath toFilePath(@Nullable LightFilePath lightFilePath, boolean isDirectory) {
     if (lightFilePath == null) return null;
@@ -270,7 +270,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     private static final TByteObjectHashMap<ChangeKind> KINDS = new TByteObjectHashMap<>();
 
     static {
-      for (ChangeKind kind : ChangeKind.values()) {
+      for (ChangeKind kind : values()) {
         KINDS.put(kind.id, kind);
       }
     }
