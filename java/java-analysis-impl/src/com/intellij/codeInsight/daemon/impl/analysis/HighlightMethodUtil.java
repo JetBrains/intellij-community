@@ -508,6 +508,12 @@ public class HighlightMethodUtil {
     }
 
     if (mismatchedExpressions.size() == list.getExpressions().length || mismatchedExpressions.isEmpty()) {
+      if (list.getTextRange().isEmpty()) {
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+          .range(ObjectUtils.notNull(list.getPrevSibling(), list))
+          .description(description)
+          .escapedToolTip(toolTip).create();
+      }
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).description(description).escapedToolTip(toolTip).navigationShift(1).create();
     }
     else {
