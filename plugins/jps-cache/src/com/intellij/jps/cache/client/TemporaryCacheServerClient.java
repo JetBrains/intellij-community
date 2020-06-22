@@ -47,8 +47,8 @@ public class TemporaryCacheServerClient implements JpsServerClient {
   private final String stringThree;
 
   private TemporaryCacheServerClient() {
-    byte[] decodedBytes = Base64.getDecoder().decode("aHR0cHM6Ly90ZW1wb3JhcnktZmlsZXMtY2FjaGUubGFicy5qYi5nZy9jYWNoZS8=");
-    stringThree = "https://d1lc5k9lerg6km.cloudfront.net";
+    byte[] decodedBytes = Base64.getDecoder().decode("aHR0cHM6Ly9kMWxjNWs5bGVyZzZrbS5jbG91ZGZyb250Lm5ldA==");
+    stringThree = new String(decodedBytes, CharsetToolkit.UTF8_CHARSET);
   }
 
   @NotNull
