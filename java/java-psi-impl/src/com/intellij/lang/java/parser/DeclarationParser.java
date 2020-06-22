@@ -416,9 +416,12 @@ public class DeclarationParser {
   }
 
   static boolean isRecordToken(PsiBuilder builder, IElementType tokenType) {
-    return tokenType == JavaTokenType.IDENTIFIER && PsiKeyword.RECORD.equals(builder.getTokenText()) &&
-           builder.lookAhead(1) == JavaTokenType.IDENTIFIER &&
-           getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_14_PREVIEW);
+    if (tokenType == JavaTokenType.IDENTIFIER && PsiKeyword.RECORD.equals(builder.getTokenText()) &&
+        builder.lookAhead(1) == JavaTokenType.IDENTIFIER) {
+      LanguageLevel level = getLanguageLevel(builder);
+      return level.isAtLeast(LanguageLevel.JDK_14_PREVIEW) && level.isPreview();
+    }
+    return false;
   }
 
   private static boolean isSealedToken(PsiBuilder builder, IElementType tokenType) {
