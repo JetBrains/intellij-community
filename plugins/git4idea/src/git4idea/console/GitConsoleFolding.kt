@@ -5,25 +5,27 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.vcs.console.VcsConsoleFolding
+import com.intellij.vcs.console.VcsConsoleFolding.Placeholder
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 class GitConsoleFolding : VcsConsoleFolding {
-  override fun getFoldingsForLine(project: Project, line: String): List<VcsConsoleFolding.Placeholder> {
+  override fun getFoldingsForLine(project: Project, line: String): List<Placeholder> {
     if (!isGitCommandLine(line)) return emptyList()
 
+    val result = mutableListOf<Placeholder>()
     val matcher: Matcher = CONFIG_OPTIONS_REGEX.matcher(line)
     while (matcher.find()) {
-      val start = matcher.start()
-      var end = matcher.end()
-      if (start < end && StringUtil.isWhiteSpace(line[end - 1])) end--
+      var start = matcher.start()
+      val end = matcher.end()
+      if (start < end && StringUtil.isWhiteSpace(line[start])) start++
 
       if (start < end) {
-        return listOf(VcsConsoleFolding.Placeholder("-c ...", TextRange(start, end)))
+        result.add(Placeholder("-c ...", TextRange(start, end)))
       }
     }
 
-    return emptyList()
+    return result
   }
 
   private fun isGitCommandLine(line: String): Boolean {
@@ -31,7 +33,7 @@ class GitConsoleFolding : VcsConsoleFolding {
   }
 
   companion object {
-    private val CONFIG_OPTIONS_REGEX: Pattern = Pattern.compile("(-c\\s[\\w.]+=(?:[\\w.]+|)\\s?)+")
+    private val CONFIG_OPTIONS_REGEX: Pattern = Pattern.compile("(\\s-c\\s[\\w.]+=[^ ]*)+")
     private val GIT_LINE_REGEX: Pattern = Pattern.compile("\\[.*] git ")
   }
 }
