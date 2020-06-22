@@ -14,8 +14,8 @@ import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Function
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.MultiMap
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -25,7 +25,7 @@ class ModulePointerManagerImpl(private val project: Project) : ModulePointerMana
   private val unresolved = MultiMap<String, ModulePointerImpl>()
   private val pointers = MultiMap<Module, ModulePointerImpl>()
   private val lock = ReentrantReadWriteLock()
-  private val oldToNewName = Object2ObjectOpenHashMap<String, String>()
+  private val oldToNewName = CollectionFactory.createMap<String, String>()
 
   init {
     project.messageBus.connect().subscribe(ProjectTopics.MODULES, object : ModuleListener {
@@ -42,7 +42,7 @@ class ModulePointerManagerImpl(private val project: Project) : ModulePointerMana
           moduleAppears(module)
         }
         val renamedOldToNew = modules.associateBy({ oldNameProvider.`fun`(it) }, { it.name })
-        for (entry in oldToNewName.object2ObjectEntrySet().fastIterator()) {
+        for (entry in oldToNewName.entries) {
           val newValue = renamedOldToNew.get(entry.value)
           if (newValue != null) {
             entry.setValue(newValue)

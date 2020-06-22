@@ -34,11 +34,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Functions;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -106,7 +106,7 @@ final class PassExecutorService implements Disposable {
     MultiMap<Document, FileEditor> documentToEditors = MultiMap.createSet();
     MultiMap<FileEditor, TextEditorHighlightingPass> documentBoundPasses = new MultiMap<>();
     MultiMap<FileEditor, EditorBoundHighlightingPass> editorBoundPasses = new MultiMap<>();
-    Map<FileEditor, Int2ObjectMap<TextEditorHighlightingPass>> id2Pass = new Object2ObjectOpenHashMap<>();
+    Map<FileEditor, Int2ObjectMap<TextEditorHighlightingPass>> id2Pass = CollectionFactory.createMap();
 
     List<ScheduledPass> freePasses = new ArrayList<>(documentToEditors.size() * 5);
     AtomicInteger threadsToStartCountdown = new AtomicInteger(0);
@@ -143,7 +143,7 @@ final class PassExecutorService implements Disposable {
 
     List<ScheduledPass> dependentPasses = new ArrayList<>(documentToEditors.size() * 10);
     // fileEditor-> (passId -> created pass)
-    Map<FileEditor, Int2ObjectMap<ScheduledPass>> toBeSubmitted = new Object2ObjectOpenHashMap<>(passesMap.size());
+    Map<FileEditor, Int2ObjectMap<ScheduledPass>> toBeSubmitted = CollectionFactory.createMap(passesMap.size());
 
     for (Map.Entry<Document, Collection<FileEditor>> entry : documentToEditors.entrySet()) {
       Collection<FileEditor> fileEditors = entry.getValue();

@@ -12,7 +12,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.SynchronizedClearableLazy
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import com.intellij.util.containers.CollectionFactory
 import org.snakeyaml.engine.v2.nodes.MappingNode
 import org.snakeyaml.engine.v2.nodes.ScalarNode
 
@@ -25,7 +25,7 @@ private class MyRunConfigurationTemplateProvider(private val project: Project) :
   private val map = SynchronizedClearableLazy<Map<ConfigurationFactory, FactoryEntry>> {
     val node = project.service<ConfigurationFileManager>().getConfigurationNode()
                ?: return@SynchronizedClearableLazy emptyMap()
-    val map = Object2ObjectOpenHashMap<ConfigurationFactory, FactoryEntry>()
+    val map = CollectionFactory.createMap<ConfigurationFactory, FactoryEntry>()
     readRunConfigurations(node, isTemplatesOnly = true) { factory, state ->
       map.put(factory, FactoryEntry(state))
     }

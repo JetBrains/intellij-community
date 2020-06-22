@@ -3,13 +3,13 @@ package org.jetbrains.io
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.PathUtilRt
+import com.intellij.util.containers.CollectionFactory
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.DefaultFileRegion
 import io.netty.handler.codec.http.*
 import io.netty.handler.ssl.SslHandler
 import io.netty.handler.stream.ChunkedNioFile
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -26,7 +26,7 @@ fun flushChunkedResponse(channel: Channel, isKeepAlive: Boolean) {
 }
 
 private val fileExtToMimeType by lazy {
-  val map = Object2ObjectOpenHashMap<String, String>(1100)
+  val map = CollectionFactory.createMap<String, String>(1100)
   FileResponses.javaClass.getResourceAsStream("/mime-types.csv").bufferedReader().useLines {
     for (line in it) {
       if (line.isBlank()) {

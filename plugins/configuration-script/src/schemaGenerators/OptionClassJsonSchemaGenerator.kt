@@ -8,7 +8,7 @@ import com.intellij.serialization.stateProperties.CollectionStoredProperty
 import com.intellij.serialization.stateProperties.EnumStoredProperty
 import com.intellij.serialization.stateProperties.MapStoredProperty
 import com.intellij.util.ReflectionUtil
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.io.JsonObjectBuilder
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberProperties
@@ -65,7 +65,7 @@ internal fun buildJsonSchema(state: BaseState,
   for (property in memberProperties) {
     val annotation = property.findAnnotation<Property>() ?: continue
     if (propertyToAnnotation == null) {
-      propertyToAnnotation = Object2ObjectOpenHashMap()
+      propertyToAnnotation = CollectionFactory.createMap()
     }
     propertyToAnnotation.put(property.name, annotation)
   }

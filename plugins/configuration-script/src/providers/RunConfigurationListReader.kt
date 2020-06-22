@@ -11,7 +11,7 @@ import com.intellij.execution.configurations.RunConfigurationOptions
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.util.ReflectionUtil
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import com.intellij.util.containers.CollectionFactory
 import org.snakeyaml.engine.v2.nodes.MappingNode
 import org.snakeyaml.engine.v2.nodes.Node
 import org.snakeyaml.engine.v2.nodes.ScalarNode
@@ -37,7 +37,7 @@ internal class RunConfigurationListReader(private val processor: (factory: Confi
 
       // compute keyToType only if need
       if (keyToType == null) {
-        keyToType = Object2ObjectOpenHashMap<String, ConfigurationType>()
+        keyToType = CollectionFactory.createMap<String, ConfigurationType>()
         processConfigurationTypes { configurationType, propertyName, _ ->
           keyToType.put(propertyName.toString(), configurationType)
         }

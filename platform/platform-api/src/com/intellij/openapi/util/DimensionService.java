@@ -12,8 +12,11 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.ui.JBUI;
-import it.unimi.dsi.fastutil.objects.*;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Map;
 
 /**
  * This class represents map between strings and rectangles. It's intended to store
@@ -33,8 +37,8 @@ import java.awt.*;
 public final class DimensionService extends SimpleModificationTracker implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(DimensionService.class);
 
-  private final Object2ObjectMap<String, Point> myKeyToLocation = new Object2ObjectLinkedOpenHashMap<>();
-  private final Object2ObjectMap<String, Dimension> myKeToSize = new Object2ObjectLinkedOpenHashMap<>();
+  private final Map<String, Point> myKeyToLocation = CollectionFactory.createLinkedMap();
+  private final Map<String, Dimension> myKeToSize = CollectionFactory.createLinkedMap();
   private final Object2IntMap<String> myKeyToExtendedState = new Object2IntOpenHashMap<>();
   @NonNls private static final String EXTENDED_STATE = "extendedState";
   @NonNls private static final String KEY = "key";
@@ -165,7 +169,7 @@ public final class DimensionService extends SimpleModificationTracker implements
   public Element getState() {
     Element element = new Element("state");
     // Save locations
-    for (Object2ObjectMap.Entry<String, Point> entry : Object2ObjectMaps.fastIterable(myKeyToLocation)) {
+    for (Map.Entry<String, Point> entry : myKeyToLocation.entrySet()) {
       Point point = entry.getValue();
       LOG.assertTrue(point != null);
       Element e = new Element(ELEMENT_LOCATION);
@@ -176,7 +180,7 @@ public final class DimensionService extends SimpleModificationTracker implements
     }
 
     // Save sizes
-    for (Object2ObjectMap.Entry<String, Dimension> entry : Object2ObjectMaps.fastIterable(myKeToSize)) {
+    for (Map.Entry<String, Dimension> entry : myKeToSize.entrySet()) {
       Dimension size = entry.getValue();
       LOG.assertTrue(size != null);
       Element e = new Element(ELEMENT_SIZE);

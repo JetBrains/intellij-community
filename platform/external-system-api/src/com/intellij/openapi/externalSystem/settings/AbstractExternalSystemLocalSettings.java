@@ -12,8 +12,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -188,10 +188,10 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
 
   public static class State {
     public final List<ExternalTaskExecutionInfo> recentTasks = new SmartList<>();
-    public Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> availableProjects = new Object2ObjectOpenHashMap<>();
-    public Map<String/* linked project path */, Long/* last config modification stamp */> modificationStamps = new Object2ObjectOpenHashMap<>();
-    public Map<String/* linked project path */, ExternalProjectBuildClasspathPojo> projectBuildClasspath = new Object2ObjectOpenHashMap<>();
-    public Map<String/* linked project path */, SyncType> projectSyncType = new Object2ObjectOpenHashMap<>();
+    public Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> availableProjects = CollectionFactory.createMap();
+    public Map<String/* linked project path */, Long/* last config modification stamp */> modificationStamps = CollectionFactory.createMap();
+    public Map<String/* linked project path */, ExternalProjectBuildClasspathPojo> projectBuildClasspath = CollectionFactory.createMap();
+    public Map<String/* linked project path */, SyncType> projectSyncType = CollectionFactory.createMap();
   }
 
   public enum SyncType {

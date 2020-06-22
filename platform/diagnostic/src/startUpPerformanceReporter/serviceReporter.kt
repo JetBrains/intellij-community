@@ -4,16 +4,16 @@ package com.intellij.diagnostic.startUpPerformanceReporter
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.ThreadNameManager
+import com.intellij.util.containers.CollectionFactory
 import it.unimi.dsi.fastutil.objects.Object2LongMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 
 // events must be already sorted by time
 internal fun computeOwnTime(allEvents: List<ActivityImpl>, threadNameManager: ThreadNameManager): Object2LongMap<ActivityImpl> {
   val ownDurations = Object2LongOpenHashMap<ActivityImpl>()
   ownDurations.defaultReturnValue(-1)
 
-  val threadToList = Object2ObjectOpenHashMap<String, MutableList<ActivityImpl>>()
+  val threadToList = CollectionFactory.createMap<String, MutableList<ActivityImpl>>()
   for (event in allEvents) {
     threadToList.getOrPut(threadNameManager.getThreadName(event)) { mutableListOf() }.add(event)
   }

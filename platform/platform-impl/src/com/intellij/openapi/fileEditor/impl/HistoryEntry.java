@@ -16,15 +16,14 @@ import com.intellij.openapi.vfs.impl.LightFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.SmartList;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import com.intellij.util.containers.CollectionFactory;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * `Heavy` entries should be disposed with {@link #destroy()} to prevent leak of VirtualFilePointer
@@ -44,7 +43,7 @@ public final class HistoryEntry {
    * can be null when read from XML
    */
   @Nullable private FileEditorProvider mySelectedProvider;
-  @NotNull private final Object2ObjectMap<FileEditorProvider, FileEditorState> myProviderToState = new Object2ObjectOpenHashMap<>();
+  @NotNull private final Map<FileEditorProvider, FileEditorState> myProviderToState = CollectionFactory.createMap();
 
   @Nullable private final Disposable myDisposable;
 
@@ -160,7 +159,7 @@ public final class HistoryEntry {
     element.addContent(e);
     e.setAttribute(FILE_ATTR, myFilePointer.getUrl());
 
-    for (Object2ObjectMap.Entry<FileEditorProvider, FileEditorState> entry : Object2ObjectMaps.fastIterable(myProviderToState)) {
+    for (Map.Entry<FileEditorProvider, FileEditorState> entry : myProviderToState.entrySet()) {
       Element providerElement = new Element(PROVIDER_ELEMENT);
       FileEditorProvider provider = entry.getKey();
       if (provider.equals(mySelectedProvider)) {

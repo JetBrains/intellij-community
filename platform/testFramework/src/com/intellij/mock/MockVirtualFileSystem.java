@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.testFramework.LightVirtualFile;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,7 +83,7 @@ public final class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
       MyVirtualFile file = findChild(name);
       if (file == null) {
         if (myChildren == null) {
-          myChildren = new Object2ObjectOpenHashMap<>();
+          myChildren = CollectionFactory.createMap();
         }
         file = new MyVirtualFile(name, this);
         myChildren.put(name, file);

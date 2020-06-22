@@ -9,8 +9,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.CollectionFactory;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +34,7 @@ public final class FileTypeAssocTable<T> {
     myExactFileNameMappings.putAll(exactFileNameMappings);
     myExactFileNameAnyCaseMappings = CollectionFactory.createCharSequenceMap(false, Math.max(10, exactFileNameAnyCaseMappings.size()), 0.5f);
     myExactFileNameAnyCaseMappings.putAll(exactFileNameAnyCaseMappings);
-    myHashBangMap = new Object2ObjectOpenHashMap<>(Math.max(10, hashBangMap.size()), 0.5f);
+    myHashBangMap = CollectionFactory.createMap(Math.max(10, hashBangMap.size()), 0.5f);
     myHashBangMap.putAll(hashBangMap);
     myMatchingMappings = new ArrayList<>(matchingMappings);
   }
@@ -276,7 +274,8 @@ public final class FileTypeAssocTable<T> {
     return result;
   }
 
-  @NotNull Map<String, T> getAllHashBangPatterns() {
-    return Object2ObjectMaps.unmodifiable(new Object2ObjectOpenHashMap<>(myHashBangMap));
+  @NotNull
+  Map<String, T> getInternalRawHashBangPatterns() {
+    return CollectionFactory.createMap(myHashBangMap);
   }
 }

@@ -648,7 +648,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   // check if there is a conflict between new hasbang and exising ones
   private HashBangConflict checkHashBangConflict(@NotNull String hashbang) {
     HashBangConflict conflict = new HashBangConflict();
-    for (Map.Entry<String, FileType> entry : myTempPatternsTable.getAllHashBangPatterns().entrySet()) {
+    for (Map.Entry<String, FileType> entry : myTempPatternsTable.getInternalRawHashBangPatterns().entrySet()) {
       String existingHashBang = entry.getKey();
       if (hashbang.contains(existingHashBang) || existingHashBang.contains(hashbang)) {
         conflict.fileType = entry.getValue();

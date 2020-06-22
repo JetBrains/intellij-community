@@ -158,7 +158,7 @@ public final class CollectionFactory {
    */
   public static @NotNull <V> Map<String, V> createFilePathLinkedMap() {
     if (SystemInfoRt.isFileSystemCaseSensitive) {
-      return new Object2ObjectLinkedOpenHashMap<>();
+      return createLinkedMap();
     }
     else {
       return new Object2ObjectLinkedOpenCustomHashMap<>(FastUtilCaseInsensitiveStringHashingStrategy.INSTANCE);
@@ -206,6 +206,57 @@ public final class CollectionFactory {
     else {
       return new ObjectOpenCustomHashSet<>(paths, FastUtilCaseInsensitiveStringHashingStrategy.INSTANCE);
     }
+  }
+
+  /**
+   * @return Map implementation with slightly faster access and a bit smaller memory footprint than {@link HashMap}
+   * and with predictable iteration order.
+   * Null keys and values are permitted,
+   * @see LinkedHashMap
+   */
+  @Contract(value = "-> new", pure = true)
+  public static <K, V> @NotNull Map<K, V> createLinkedMap() {
+    return new Object2ObjectLinkedOpenHashMap<>();
+  }
+
+  /**
+   * @return Map implementation with slightly faster access and a bit smaller memory footprint than {@link HashMap}
+   * Null keys and values are permitted
+   */
+  @Contract(value = "-> new", pure = true)
+  public static <K, V> @NotNull Map<K, V> createMap() {
+    //noinspection SSBasedInspection
+    return new Object2ObjectOpenHashMap<>();
+  }
+
+  /**
+   * @return Map implementation with slightly faster access and a bit smaller memory footprint than {@link HashMap}
+   * Null keys and values are permitted
+   */
+  @Contract(value = "_ -> new", pure = true)
+  public static <K, V> @NotNull Map<K, V> createMap(int expected) {
+    //noinspection SSBasedInspection
+    return new Object2ObjectOpenHashMap<>(expected);
+  }
+
+  /**
+   * @return Map implementation with slightly faster access and a bit smaller memory footprint than {@link HashMap}
+   * Null keys and values are permitted
+   */
+  @Contract(value = "_ -> new", pure = true)
+  public static <K, V> @NotNull Map<K, V> createMap(@NotNull Map<? extends K, ? extends V> map) {
+    //noinspection SSBasedInspection
+    return new Object2ObjectOpenHashMap<>(map);
+  }
+
+  /**
+   * @return Map implementation with slightly faster access and a bit smaller memory footprint than {@link HashMap}
+   * Null keys and values are permitted
+   */
+  @Contract(value = "_,_ -> new", pure = true)
+  public static <K, V> @NotNull Map<K, V> createMap(int expected, float loadFactor) {
+    //noinspection SSBasedInspection
+    return new Object2ObjectOpenHashMap<>(expected, loadFactor);
   }
 }
 

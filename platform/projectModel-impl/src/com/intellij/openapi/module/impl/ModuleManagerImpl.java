@@ -37,12 +37,12 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.graph.*;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrays;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -196,7 +196,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     Module[] existingModules = model.getModules();
     ModuleGroupInterner groupInterner = new ModuleGroupInterner();
 
-    Map<String, ModulePath> modulePathMap = new Object2ObjectOpenHashMap<>(myModulePathsToLoad.size());
+    Map<String, ModulePath> modulePathMap = CollectionFactory.createMap(myModulePathsToLoad.size());
     for (ModulePath modulePath : myModulePathsToLoad) {
       modulePathMap.put(modulePath.getPath(), modulePath);
     }
@@ -337,7 +337,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
 
     Application app = ApplicationManager.getApplication();
     if (app.isInternal() || app.isEAP() || ApplicationInfo.getInstance().getBuild().isSnapshot()) {
-      Map<String, Module> track = new Object2ObjectOpenHashMap<>();
+      Map<String, Module> track = CollectionFactory.createMap();
       for (Module module : moduleModel.getModules()) {
         for (String url : ModuleRootManager.getInstance(module).getContentRootUrls()) {
           Module oldModule = track.put(url, module);
@@ -713,7 +713,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       myModules.putAll(that.myModules);
       final Map<Module, String[]> groupPath = that.myModuleGroupPath;
       if (groupPath != null){
-        myModuleGroupPath = new Object2ObjectOpenHashMap<>();
+        myModuleGroupPath = CollectionFactory.createMap();
         myModuleGroupPath.putAll(that.myModuleGroupPath);
       }
       myIsWritable = true;
@@ -987,7 +987,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     @Override
     public void setModuleGroupPath(@NotNull Module module, String @Nullable("null means remove") [] groupPath) {
       if (myModuleGroupPath == null) {
-        myModuleGroupPath = new Object2ObjectOpenHashMap<>();
+        myModuleGroupPath = CollectionFactory.createMap();
       }
       if (groupPath == null) {
         myModuleGroupPath.remove(module);

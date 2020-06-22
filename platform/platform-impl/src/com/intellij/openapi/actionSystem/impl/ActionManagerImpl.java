@@ -55,13 +55,13 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -133,10 +133,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private static final int UPDATE_DELAY_AFTER_TYPING = 500;
 
   private final Object myLock = new Object();
-  private final Map<String, AnAction> myId2Action = new Object2ObjectOpenHashMap<>();
+  private final Map<String, AnAction> myId2Action = CollectionFactory.createMap();
   private final MultiMap<PluginId, String> myPlugin2Id = new MultiMap<>();
   private final Object2IntMap<String> myId2Index = new Object2IntOpenHashMap<>();
-  private final Map<Object, String> myAction2Id = new Object2ObjectOpenHashMap<>();
+  private final Map<Object, String> myAction2Id = CollectionFactory.createMap();
   private final MultiMap<String, String> myId2GroupId = new MultiMap<>();
   private final List<String> myNotRegisteredInternalActionIds = new ArrayList<>();
   private final List<AnActionListener> myActionListeners = ContainerUtil.createLockFreeCopyOnWriteList();

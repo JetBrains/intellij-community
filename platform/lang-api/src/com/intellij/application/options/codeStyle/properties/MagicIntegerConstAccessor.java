@@ -1,19 +1,20 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.properties;
 
+import com.intellij.util.containers.CollectionFactory;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class MagicIntegerConstAccessor extends ExternalStringAccessor<Integer> implements CodeStyleChoiceList {
   private final Int2ObjectOpenHashMap<String> myValueMap = new Int2ObjectOpenHashMap<>();
-  private final Object2ObjectOpenHashMap<String, IntArrayList> myValueToKeysMap = new Object2ObjectOpenHashMap<>();
+  private final Map<String, IntArrayList> myValueToKeysMap = CollectionFactory.createMap();
 
   public MagicIntegerConstAccessor(@NotNull Object object,
                                    @NotNull Field field,

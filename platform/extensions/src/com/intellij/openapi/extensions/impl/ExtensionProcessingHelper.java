@@ -3,7 +3,7 @@ package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -159,7 +159,7 @@ public final class ExtensionProcessingHelper {
                                                                      @NotNull Function<@NotNull T, @Nullable V> valueMapper,
                                                                      @NotNull ExtensionPoint<T> point) {
     List<T> extensions = point.getExtensionList();
-    Map<K, V> cache = new Object2ObjectOpenHashMap<>(extensions.size());
+    Map<K, V> cache = CollectionFactory.createMap(extensions.size());
     for (T extension : extensions) {
       K key = keyMapper.apply(extension);
       if (key == null) {

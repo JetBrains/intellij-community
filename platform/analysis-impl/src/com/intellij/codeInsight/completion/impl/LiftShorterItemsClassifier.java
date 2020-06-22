@@ -6,11 +6,7 @@ import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FilteringIterator;
-import com.intellij.util.containers.FlatteningIterator;
-import com.intellij.util.containers.MultiMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import com.intellij.util.containers.*;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -201,7 +197,7 @@ public final class LiftShorterItemsClassifier extends Classifier<LookupElement> 
   }
 
   private static @NotNull <K, V> MultiMap<K, V> createMultiMap(boolean identityKeys) {
-    return new MultiMap<K, V>(identityKeys ? new Reference2ObjectOpenHashMap<>() : new Object2ObjectOpenHashMap<>()) {
+    return new MultiMap<K, V>(identityKeys ? new Reference2ObjectOpenHashMap<>() : CollectionFactory.createMap()) {
       @Override
       public boolean remove(K key, V value) {
         List<V> elements = (List<V>)get(key);

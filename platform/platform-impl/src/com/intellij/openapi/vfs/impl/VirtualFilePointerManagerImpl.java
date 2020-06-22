@@ -33,10 +33,10 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2IntMap;
 import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
@@ -222,7 +222,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     return getOrCreate((VirtualFileSystemEntry)file, path, url, recursive, parentDisposable, listener, (NewVirtualFileSystem)fileSystem);
   }
 
-  private final Map<String, IdentityVirtualFilePointer> myUrlToIdentity = new Object2ObjectOpenHashMap<>(); // guarded by this
+  private final Map<String, IdentityVirtualFilePointer> myUrlToIdentity = CollectionFactory.createMap(); // guarded by this
 
   @NotNull
   private synchronized IdentityVirtualFilePointer getOrCreateIdentity(@NotNull String url,

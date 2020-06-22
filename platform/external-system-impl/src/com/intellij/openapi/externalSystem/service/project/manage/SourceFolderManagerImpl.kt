@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.MultiMap
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -38,7 +37,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   private var isDisposed = false
   private val mutex = Any()
   private var sourceFolders = PathPrefixTreeMap<SourceFolderModel>()
-  private var sourceFoldersByModule = Object2ObjectOpenHashMap<String, ModuleModel>()
+  private var sourceFoldersByModule = CollectionFactory.createMap<String, ModuleModel>()
 
   override fun addSourceFolder(module: Module, url: String, type: JpsModuleSourceRootType<*>) {
     synchronized(mutex) {
@@ -205,7 +204,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
         return
       }
       sourceFolders = PathPrefixTreeMap()
-      sourceFoldersByModule = Object2ObjectOpenHashMap()
+      sourceFoldersByModule = CollectionFactory.createMap()
 
       val moduleManager = ModuleManager.getInstance(project)
 

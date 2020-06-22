@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.ex;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.*;
@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 
 public class JpsElementContainerImpl extends JpsElementContainerEx implements JpsElementContainer {
   private final Object myDataLock = new Object();
-  private final Map<JpsElementChildRole<?>, JpsElement> myElements = new Object2ObjectOpenHashMap<>(1);
+  private final Map<JpsElementChildRole<?>, JpsElement> myElements = CollectionFactory.createMap(1);
   private final @NotNull JpsCompositeElementBase<?> myParent;
 
   public JpsElementContainerImpl(@NotNull JpsCompositeElementBase<?> parent) {

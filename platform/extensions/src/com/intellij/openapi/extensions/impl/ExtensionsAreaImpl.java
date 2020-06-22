@@ -8,7 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ThreeState;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import com.intellij.util.containers.CollectionFactory;
 import org.jdom.Element;
 import org.jdom.Namespace;
 import org.jetbrains.annotations.*;
@@ -26,7 +26,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   private final ComponentManager componentManager;
   private final Map<String, ExtensionPointImpl<?>> extensionPoints = new ConcurrentHashMap<>();
-  private final Map<String,Throwable> epTraces = DEBUG_REGISTRATION ? new Object2ObjectOpenHashMap<>() : null;
+  private final Map<String,Throwable> epTraces = DEBUG_REGISTRATION ? CollectionFactory.createMap() : null;
 
   public ExtensionsAreaImpl(@NotNull ComponentManager componentManager) {
     this.componentManager = componentManager;

@@ -1051,6 +1051,14 @@
         <constraint name="str" nameOfExprType="java\.lang\.String" within="" contains="" />
         <constraint name="range" nameOfExprType="com\.intellij\.openapi\.util\.TextRange" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="Over-dependence on Object2ObjectOpenHashMap from fastutil" order="1" text="new Object2ObjectLinkedOpenHashMap&lt;&gt;($a$)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.util.containers.CollectionFactory.createLinkedMap($a$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="a" minCount="0" maxCount="2147483647" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Over-dependence on Object2ObjectOpenHashMap from fastutil" description="Factory method CollectionFactory.createMap() should be used to reduce dependence on concrete map implementation from third-party library " problemDescriptor="Should use factory method instead of direct ctr call" text="new Object2ObjectOpenHashMap&lt;&gt;($a$)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.util.containers.CollectionFactory.createMap($a$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="a" minCount="0" maxCount="2147483647" within="" contains="" />
+      </replaceConfiguration>
     </inspection_tool>
     <inspection_tool class="SafeVarargsDetector" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SeamAnnotationIncorrectSignatureInspection" enabled="false" level="ERROR" enabled_by_default="false" />

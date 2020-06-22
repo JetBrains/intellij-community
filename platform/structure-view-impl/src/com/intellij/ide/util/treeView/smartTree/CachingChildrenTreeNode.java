@@ -8,8 +8,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.JBIterable;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -190,7 +190,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
 
   @NotNull
   private Map<Group, GroupWrapper> createGroupNodes(@NotNull Collection<? extends Group> groups) {
-    Map<Group, GroupWrapper> result = new Object2ObjectOpenHashMap<>(groups.size());
+    Map<Group, GroupWrapper> result = CollectionFactory.createMap(groups.size());
     for (Group group : groups) {
       result.put(group, createGroupWrapper(getProject(), group, myTreeModel));
     }

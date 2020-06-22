@@ -3,7 +3,7 @@ package org.jetbrains.debugger.sourcemap
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Url
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import com.intellij.util.containers.CollectionFactory
 
 class NestedSourceMap(private val childMap: SourceMap, private val parentMap: SourceMap) : SourceMap {
   override val sourceResolver: SourceResolver
@@ -14,7 +14,7 @@ class NestedSourceMap(private val childMap: SourceMap, private val parentMap: So
 
   private val sourceIndexToSourceMappings = arrayOfNulls<Mappings>(parentMap.sources.size)
 
-  private val childMappingToTransformed = Object2ObjectOpenHashMap<MappingEntry, MappingEntry>()
+  private val childMappingToTransformed = CollectionFactory.createMap<MappingEntry, MappingEntry>()
 
   override val outFile: String?
     get() = childMap.outFile

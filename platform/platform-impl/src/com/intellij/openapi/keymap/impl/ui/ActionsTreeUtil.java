@@ -24,8 +24,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +52,7 @@ public final class ActionsTreeUtil {
 
   public static @NotNull Map<String, String> createPluginActionsMap() {
     Set<PluginId> visited = new HashSet<>();
-    Map<String, String> result = new Object2ObjectOpenHashMap<>();
+    Map<String, String> result = CollectionFactory.createMap();
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
       PluginId id = descriptor.getPluginId();

@@ -3,7 +3,7 @@ package com.intellij.application.options.codeStyle.properties;
 
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +29,7 @@ public abstract class AbstractCodeStylePropertyMapper {
   }
 
   private Map<String, CodeStylePropertyAccessor<?>> createMap() {
-    Object2ObjectOpenHashMap<String, CodeStylePropertyAccessor<?>> accessorMap = new Object2ObjectOpenHashMap<>();
+    Map<String, CodeStylePropertyAccessor<?>> accessorMap = CollectionFactory.createMap();
     for (CodeStyleObjectDescriptor descriptor : getSupportedFields()) {
       addAccessorsFor(accessorMap, descriptor.getCodeStyleObject(), descriptor.getSupportedFields());
     }
