@@ -359,12 +359,12 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
             return autoImportAwareCondition == null || autoImportAwareCondition.get()
           }
         }
-        val projectAware = ProjectAwareWrapper(ProjectAware(myProject, projectId, autoImportAware))
         loadState(state)
         initialize()
         val file = findOrCreateVirtualFile(fileRelativePath)
         content?.let { file.replaceContent(it) }
         Disposer.newDisposable().use {
+          val projectAware = ProjectAwareWrapper(ProjectAware(myProject, projectId, autoImportAware), it)
           register(projectAware, parentDisposable = it)
           DummyExternalSystemTestBench(projectAware).test(file)
           getState()

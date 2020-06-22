@@ -56,19 +56,19 @@ class AutoImportTest : AutoImportTestCase() {
   fun `test modification tracking disabled by ES plugin`() {
     val autoImportAwareCondition = Ref.create(true)
     testWithDummyExternalSystem("settings.groovy", autoImportAwareCondition = autoImportAwareCondition) { settingsFile ->
-      assertState(refresh = 1, beforeRefresh = 2, afterRefresh = 2, event = "register project without cache")
+      assertState(refresh = 1, beforeRefresh = 1, afterRefresh = 1, event = "register project without cache")
       settingsFile.appendString("println 'hello'")
-      assertState(refresh = 1, beforeRefresh = 2, afterRefresh = 2, event = "modification")
+      assertState(refresh = 1, beforeRefresh = 1, afterRefresh = 1, event = "modification")
       refreshProject()
-      assertState(refresh = 2, beforeRefresh = 4, afterRefresh = 4, event = "project refresh")
+      assertState(refresh = 2, beforeRefresh = 2, afterRefresh = 2, event = "project refresh")
       settingsFile.replaceString("hello", "hi")
-      assertState(refresh = 2, beforeRefresh = 4, afterRefresh = 4, event = "modification")
+      assertState(refresh = 2, beforeRefresh = 2, afterRefresh = 2, event = "modification")
       autoImportAwareCondition.set(false)
       refreshProject()
-      assertState(refresh = 3, beforeRefresh = 4, afterRefresh = 4, event = "modification")
+      assertState(refresh = 3, beforeRefresh = 2, afterRefresh = 2, event = "import with inapplicable autoImportAware")
       autoImportAwareCondition.set(true)
       refreshProject()
-      assertState(refresh = 4, beforeRefresh = 6, afterRefresh = 6, event = "empty project refresh")
+      assertState(refresh = 4, beforeRefresh = 3, afterRefresh = 3, event = "empty project refresh")
     }
   }
 
