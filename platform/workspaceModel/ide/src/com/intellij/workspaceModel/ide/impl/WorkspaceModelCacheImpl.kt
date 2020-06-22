@@ -15,12 +15,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.pooledThreadSingleAlarm
+import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.AtomicMoveNotSupportedException
@@ -72,7 +72,7 @@ internal class WorkspaceModelCacheImpl(private val project: Project, parentDispo
 
   override fun dispose() = Unit
 
-  fun loadCache(): WorkspaceEntityStorageBuilder? {
+  fun loadCache(): WorkspaceEntityStorage? {
     try {
       if (!cacheFile.exists()) return null
 
