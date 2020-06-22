@@ -1092,8 +1092,20 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
     if (!myHolder.hasErrorResults()) visitExpression(expression);
 
-    if (!myHolder.hasErrorResults())
-      myHolder.add(HighlightUtil.checkPreviewFeatureElement(expression, expression.resolveMethod(), myLanguageLevel));
+    if (!myHolder.hasErrorResults()) {
+      final PsiModifierListOwner owner = getTargetOfNewExpression(expression);
+      myHolder.add(HighlightUtil.checkPreviewFeatureElement(expression, owner, myLanguageLevel));
+    }
+  }
+
+  @Nullable
+  private static PsiModifierListOwner getTargetOfNewExpression(@NotNull final PsiNewExpression expression) {
+    final PsiMethod method = expression.resolveMethod();
+    if (method != null) return method;
+
+    final PsiJavaCodeReferenceElement reference = expression.getClassOrAnonymousClassReference();
+    if (reference == null) return null;
+    return ObjectUtils.tryCast(reference.resolve(), PsiModifierListOwner.class);
   }
 
   @Override
