@@ -92,10 +92,14 @@ public class SuspiciousCollectionsMethodCallsInspection extends AbstractBaseJava
     final String plainMessage = SuspiciousMethodCallUtil
       .getSuspiciousMethodCallMessage(methodCall, arg, argType, exactType || reportConvertibleMethodCalls, patternMethods, i);
     if (plainMessage != null && !exactType) {
-      TypeConstraint constraint = TypeConstraint.fromDfType(CommonDataflow.getDfType(arg));
-      PsiType type = constraint.getPsiType(methodCall.getProject());
-      if (type != null && SuspiciousMethodCallUtil.getSuspiciousMethodCallMessage(methodCall, arg, type, reportConvertibleMethodCalls, patternMethods, i) == null) {
-        return null;
+      String methodName = methodCall.getMethodExpression().getReferenceName();
+      if (!"removeAll".equals(methodName) && !"retainAll".equals(methodName)) {
+        // DFA works on raw types, so anyway we cannot narrow the argument type
+        TypeConstraint constraint = TypeConstraint.fromDfType(CommonDataflow.getDfType(arg));
+        PsiType type = constraint.getPsiType(methodCall.getProject());
+        if (type != null && SuspiciousMethodCallUtil.getSuspiciousMethodCallMessage(methodCall, arg, type, reportConvertibleMethodCalls, patternMethods, i) == null) {
+          return null;
+        }
       }
     }
 
