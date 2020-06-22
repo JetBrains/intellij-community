@@ -386,5 +386,6 @@
     <extensionPoint name="iconDescriptionBundle" beanClass="com.intellij.ui.IconDescriptionBundleEP" dynamic="true"/>
 
     <extensionPoint name="utf8BomOptionProvider" interface="com.intellij.openapi.vfs.encoding.Utf8BomOptionProvider" dynamic="true"/>
+    <extensionPoint name="iw.actionProvider" interface="com.intellij.openapi.editor.markup.InspectionWidgetActionProvider" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
