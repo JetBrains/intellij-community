@@ -70,7 +70,7 @@ public class ShShellcheckInspection extends LocalInspectionTool implements Exter
   }
 
   @NotNull
-  Set<String> getDisabledInspections() {
+  public Set<String> getDisabledInspections() {
     return new HashSet<>(myDisabledInspections);
   }
 
@@ -88,7 +88,7 @@ public class ShShellcheckInspection extends LocalInspectionTool implements Exter
   }
 
   @NotNull
-  static ShShellcheckInspection findShShellcheckInspection(@NotNull PsiElement element) {
+  public static ShShellcheckInspection findShShellcheckInspection(@NotNull PsiElement element) {
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
     ShShellcheckInspection tool = (ShShellcheckInspection)profile.getUnwrappedTool(SHORT_NAME, element);
     return tool == null ? new ShShellcheckInspection() : tool;
