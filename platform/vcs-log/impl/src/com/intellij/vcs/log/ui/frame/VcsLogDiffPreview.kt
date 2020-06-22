@@ -3,6 +3,7 @@ package com.intellij.vcs.log.ui.frame
 
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
@@ -15,6 +16,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.util.ui.JBUI
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.impl.CommonUiProperties
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
@@ -24,6 +26,7 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
+import kotlin.math.roundToInt
 
 private fun toggleDiffPreviewOnPropertyChange(uiProperties: VcsLogUiProperties,
                                               parent: Disposable,
@@ -75,6 +78,12 @@ abstract class FrameDiffPreview<D : DiffRequestProcessor>(protected val previewD
 
   private fun showDiffPreview(state: Boolean) {
     previewDiffSplitter.secondComponent = if (state) previewDiff.component else null
+    previewDiffSplitter.secondComponent?.let {
+      val defaultMinimumSize = it.minimumSize
+      val actionButtonSize = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE
+      it.minimumSize = JBUI.size(defaultMinimumSize.width.coerceAtMost((actionButtonSize.width * 1.5f).roundToInt()),
+                                 defaultMinimumSize.height.coerceAtMost((actionButtonSize.height * 1.5f).roundToInt()))
+    }
     updatePreview(state)
   }
 
