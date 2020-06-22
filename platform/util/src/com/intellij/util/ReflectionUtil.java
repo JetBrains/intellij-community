@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.containers.Predicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -122,7 +123,7 @@ public final class ReflectionUtil {
   @NotNull
   public static List<Field> collectFields(@NotNull Class<?> clazz) {
     List<Field> result = new ArrayList<>();
-    for (Class<?> c : JBIterableClassTraverser.classTraverser(clazz)) {
+    for (Class<?> c : ReflectionStartupUtil.classTraverser(clazz)) {
       ContainerUtil.addAll(result, c.getDeclaredFields());
     }
     return result;
@@ -693,5 +694,10 @@ public final class ReflectionUtil {
 
   public static boolean isAssignable(@NotNull Class<?> ancestor, @NotNull Class<?> descendant) {
     return ancestor == descendant || ancestor.isAssignableFrom(descendant);
+  }
+
+  @NotNull
+  public static JBTreeTraverser<Class<?>> classTraverser(@Nullable Class<?> root) {
+    return ReflectionStartupUtil.classTraverser(root);
   }
 }

@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Do not use in ReflectionUtil and any such low-level and early (start-up) code.
  */
-public final class JBIterableClassTraverser {
+public final class ReflectionStartupUtil {
   @NotNull
   public static JBTreeTraverser<Class<?>> classTraverser(@Nullable Class<?> root) {
     return CLASS_TRAVERSER.unique().withRoot(root);
