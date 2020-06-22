@@ -21,7 +21,7 @@
                     headlessImplementation="com.intellij.openapi.wm.impl.ToolWindowHeadlessManagerImpl" preload="notHeadless"/>
   </extensions>
   <extensionPoints>
-    <!-- only bundled plugin can define startupActivity -->
+    <!-- only bundled plugin can define extension -->
     <extensionPoint name="registerToolWindowTaskProvider" interface="com.intellij.openapi.wm.impl.RegisterToolWindowTaskProvider"/>
   </extensionPoints>
 </idea-plugin>
