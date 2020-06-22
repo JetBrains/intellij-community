@@ -203,18 +203,6 @@
             <arg value="apply"/>
             <arg value="${patchFile3}"/>
         </exec>
-
-        <property name="patchFile_IDEA-242037"
-                  value="${basedir}/patches/IDEA-242037.patch"/>
-        <exec executable="git" dir="${community.folder}" failonerror="true">
-            <arg value="apply"/>
-            <arg value="--check"/>
-            <arg value="${patchFile_IDEA-242037}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
-            <arg value="${patchFile_IDEA-242037}"/>
-        </exec>
     </target>
 
     <!-- ===================================================== -->
