@@ -96,8 +96,6 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
       return;
     }
     IdeEventQueue.getInstance().setEventCount(eventCount);
-    final Editor editor = e.getData(CommonDataKeys.EDITOR);
-    final PsiElement[] elements = getPsiElementArray(dataContext);
 
     RefactoringActionHandler handler;
     try {
@@ -106,12 +104,24 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
     catch (ProcessCanceledException ignored) {
       return;
     }
+    IdeEventQueue.getInstance().setEventCount(eventCount);
+
+    performRefactoringAction(project, dataContext, handler);
+  }
+
+  @ApiStatus.Internal
+  public static void performRefactoringAction(@NotNull Project project,
+                                              @NotNull DataContext dataContext,
+                                              @Nullable RefactoringActionHandler handler) {
+    final Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
+
     if (handler == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.symbol.to.refactor"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, RefactoringBundle.getCannotRefactorMessage(null), null);
       return;
     }
 
+    final PsiElement[] elements = getPsiElementArray(dataContext);
     InplaceRefactoring activeInplaceRenamer = InplaceRefactoring.getActiveInplaceRenamer(editor);
     if (!InplaceRefactoring.canStartAnotherRefactoring(editor, project, handler, elements) && activeInplaceRenamer != null) {
       InplaceRefactoring.unableToStartWarning(project, editor);
@@ -127,8 +137,6 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
         CommandProcessor.getInstance().executeCommand(editor.getProject(), command, ApplicationBundle.message("title.code.completion"), group, UndoConfirmationPolicy.DEFAULT, doc);
       }
     }
-
-    IdeEventQueue.getInstance().setEventCount(eventCount);
 
     final PsiFile file = editor != null ? PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) : null;
     final Language language = file != null
