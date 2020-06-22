@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
@@ -20,8 +6,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,6 +15,26 @@ import org.jetbrains.annotations.NotNull;
  * @author Bas Leijdekkers
  */
 public class EqualsWithItselfInspection extends BaseInspection {
+
+  private static final CallMatcher TWO_ARGUMENT_COMPARISON = CallMatcher.anyOf(
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OBJECTS, "equals", "deepEquals"),
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COMPARATOR, "compare"),
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_ARRAYS, "equals", "deepEquals"),
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_INTEGER, "compare", "compareUnsigned"),
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "compare", "compareUnsigned"),
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_SHORT, "compare", "compareUnsigned"),
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_BYTE, "compare", "compareUnsigned"),
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_BOOLEAN, "compare", "compareUnsigned"),
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_CHARACTER, "compare"),
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_FLOAT, "compare"),
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_DOUBLE, "compare")
+  );
+
+  private static final CallMatcher ONE_ARGUMENT_COMPARISON = CallMatcher.anyOf(
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "equals"),
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "equalsIgnoreCase", "compareToIgnoreCase"),
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_COMPARABLE, "compareTo")
+  );
 
   @NotNull
   @Override
@@ -53,24 +59,31 @@ public class EqualsWithItselfInspection extends BaseInspection {
   }
 
   public static boolean isEqualsWithItself(PsiMethodCallExpression expression) {
-    if (!MethodCallUtils.isEqualsCall(expression) &&
-        !MethodCallUtils.isEqualsIgnoreCaseCall(expression) &&
-        !MethodCallUtils.isCompareToCall(expression) &&
-        !MethodCallUtils.isCompareToIgnoreCaseCall(expression)) {
-      return false;
-    }
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     final PsiExpressionList argumentList = expression.getArgumentList();
-    final PsiExpression[] arguments = argumentList.getExpressions();
-    if (arguments.length != 1) {
-      return false;
+    final int count = argumentList.getExpressionCount();
+    if (count == 1) {
+      if (ONE_ARGUMENT_COMPARISON.test(expression)) {
+        final PsiExpression[] arguments = argumentList.getExpressions();
+        final PsiExpression argument = PsiUtil.skipParenthesizedExprDown(arguments[0]);
+        final PsiExpression qualifier = methodExpression.getQualifierExpression();
+        if (qualifier != null) {
+          return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(qualifier, argument) &&
+                 !SideEffectChecker.mayHaveSideEffects(qualifier);
+        }
+        return argument instanceof PsiThisExpression;
+      }
     }
-    final PsiExpression argument = PsiUtil.skipParenthesizedExprDown(arguments[0]);
-    final PsiExpression qualifier = methodExpression.getQualifierExpression();
-    if (qualifier != null) {
-      return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(qualifier, argument) &&
-             !SideEffectChecker.mayHaveSideEffects(qualifier);
+    else if (count == 2) {
+      if (TWO_ARGUMENT_COMPARISON.test(expression)) {
+        final PsiExpression[] arguments = argumentList.getExpressions();
+        final PsiExpression firstArgument = PsiUtil.skipParenthesizedExprDown(arguments[0]);
+        final PsiExpression secondArgument = PsiUtil.skipParenthesizedExprDown(arguments[1]);
+        return firstArgument != null &&
+               EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(firstArgument, secondArgument) &&
+               !SideEffectChecker.mayHaveSideEffects(firstArgument);
+      }
     }
-    return argument instanceof PsiThisExpression;
+    return false;
   }
 }
