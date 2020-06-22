@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.conversion.ConversionListener;
 import com.intellij.conversion.ConversionService;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.diff.tools.util.text.LineOffsetsUtil;
 import com.intellij.diff.util.Range;
 import com.intellij.icons.AllIcons;
@@ -32,6 +33,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
@@ -58,6 +60,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Predicate;
@@ -182,7 +185,8 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     };
   }
 
-  private void run(@NotNull Path projectPath, @NotNull Disposable parentDisposable) throws IOException, JDOMException {
+  private void run(@NotNull Path projectPath, @NotNull Disposable parentDisposable)
+    throws IOException, JDOMException, InterruptedException, ExecutionException {
     VirtualFile vfsProject = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(projectPath.toString()));
     if (vfsProject == null) {
       reportError(InspectionsBundle.message("inspection.application.file.cannot.be.found", projectPath));
@@ -208,7 +212,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       gracefulExit();
       return;
     }
-    waitPostStartupActivitiesPassed(project);
+    waitAllStartupActivitiesPassed(project);
 
     MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> isMappingLoaded.setResult(null));
@@ -281,14 +285,19 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     }
   }
 
-  @SuppressWarnings("BusyWait")
-  private static void waitPostStartupActivitiesPassed(@NotNull Project project) {
-    while (!StartupManagerEx.getInstanceEx(project).postStartupActivityPassed()) {
-      try {
-        LOG.info("Post startup activities still running. Sleep for 10 seconds.");
-        Thread.sleep(10000);
-      }
-      catch (InterruptedException ignored) {}
+  private static void waitAllStartupActivitiesPassed(@NotNull Project project) throws InterruptedException, ExecutionException {
+    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
+    LOG.info("Waiting for startup activities");
+    int timeout = Registry.intValue("batch.inspections.startup.activities.timeout", 180);
+    try {
+      StartupManagerEx.getInstanceEx(project).getAllActivitiesPassedFuture().get(timeout, TimeUnit.MINUTES);
+      LOG.info("Startup activities finished");
+    }
+    catch (TimeoutException e) {
+      String threads = ThreadDumper.dumpThreadsToString();
+      throw new RuntimeException(String.format("Cannot process startup activities in %s minutes. ", timeout) +
+                                 "You can try to increase batch.inspections.startup.activities.timeout registry value. " +
+                                 "Thread dumps\n: " + threads, e);
     }
   }
 
@@ -341,7 +350,11 @@ public final class InspectionApplication implements CommandLineInspectionProgres
         configurator.configureProject(project, context);
       }
     }
-   ApplicationManager.getApplication().invokeAndWait(()->{}, ModalityState.any());
+    waitForInvokeLaterActivities();
+  }
+
+  private static void waitForInvokeLaterActivities() {
+    ApplicationManager.getApplication().invokeAndWait(() -> { }, ModalityState.any());
   }
 
   private void runAnalysis(Project project,
