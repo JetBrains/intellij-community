@@ -133,6 +133,7 @@ public class HardcodedContracts {
               (call, paramCount) -> equalsContracts(call))
     .register(anyOf(
       staticCall(JAVA_UTIL_OBJECTS, "equals").parameterCount(2),
+      staticCall(JAVA_UTIL_ARRAYS, "equals", "deepEquals").parameterCount(2),
       staticCall("com.google.common.base.Objects", "equal").parameterCount(2)),
               ContractProvider.of(
                 singleConditionContract(ContractValue.argument(0), RelationType.EQ, ContractValue.argument(1),
