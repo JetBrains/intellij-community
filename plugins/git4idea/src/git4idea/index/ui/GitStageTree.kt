@@ -11,13 +11,17 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.ActiveIcon
 import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.UnversionedViewDialog
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.ClickListener
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.components.JBLabel
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.FontUtil
 import com.intellij.util.OpenSourceUtil
@@ -31,17 +35,33 @@ import git4idea.index.ui.NodeKind.Companion.sortOrder
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
+import java.awt.event.MouseEvent
+import java.awt.event.MouseMotionListener
 import java.util.stream.Stream
+import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreePath
 import kotlin.streams.toList
 
 val GIT_FILE_STATUS_NODES_STREAM = DataKey.create<Stream<GitFileStatusNode>>("GitFileStatusNodesStream")
 
 abstract class GitStageTree(project: Project, parentDisposable: Disposable) : ChangesTree(project, false, true) {
+  private var hoverNode: ChangesBrowserNode<*>? = null
+    set(value) {
+      if (field != value) {
+        field = value
+        repaint()
+      }
+    }
   protected abstract val state: GitStageTracker.State
+  protected abstract val operations: List<StagingAreaOperation>
 
   init {
+    setCellRenderer(GitStageTreeRenderer(ChangesBrowserNodeRenderer(myProject, { isShowFlatten }, true)))
+    addMouseMotionListener(MyMouseMotionListener())
+    MyClickListener().installOn(this)
+
     doubleClickHandler = Processor { e ->
       if (EditSourceOnDoubleClickHandler.isToggleEvent(this, e)) return@Processor false
 
@@ -55,6 +75,16 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
   abstract fun performStageOperation(nodes: List<GitFileStatusNode>, operation: StagingAreaOperation)
 
   abstract fun getDndOperation(targetKind: NodeKind): StagingAreaOperation?
+
+  override fun getComponentWidth(path: TreePath): Int {
+    val node = path.lastPathComponent as? ChangesBrowserNode<*> ?: return 0
+    return getFirstMatchingOperation(node)?.icon?.iconWidth ?: 0
+  }
+
+  internal fun getFirstMatchingOperation(node: ChangesBrowserNode<*>): StagingAreaOperation? {
+    val statusNode = node.userObject as? GitFileStatusNode ?: return null
+    return operations.find { it.matches(statusNode) }
+  }
 
   fun update() {
     val state = TreeState.createOn(this, root)
@@ -211,6 +241,40 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
     override fun getTextPresentation(): String = GitBundle.message(NodeKind.UNTRACKED.key)
     override fun compareUserObjects(o2: NodeKind?): Int {
       return Comparing.compare(sortOrder[NodeKind.UNTRACKED], sortOrder[o2])
+    }
+  }
+
+  private class GitStageTreeRenderer(textRenderer: ChangesBrowserNodeRenderer) :
+    ChangesTreeCellRenderer<JBLabel>(textRenderer, JBLabel()) {
+
+    override fun JBLabel.prepare(tree: ChangesTree, node: ChangesBrowserNode<*>) {
+      val baseIcon = (tree as? GitStageTree)?.getFirstMatchingOperation(node)?.icon
+      isVisible = baseIcon != null
+      icon = baseIcon?.let { it -> activeIcon(it, tree).apply { setActive(tree.hoverNode == node) } }
+    }
+
+    private fun activeIcon(icon: Icon, component: JComponent) = ActiveIcon(icon, IconLoader.getDisabledIcon(icon, component))
+  }
+
+  private inner class MyMouseMotionListener : MouseMotionListener {
+
+    override fun mouseMoved(e: MouseEvent?) {
+      if (e == null) return
+      val path = getPathIfInsideComponent(e.point)
+      hoverNode = path?.lastPathComponent as? ChangesBrowserNode<*>
+    }
+
+    override fun mouseDragged(e: MouseEvent?) = Unit
+  }
+
+  private inner class MyClickListener : ClickListener() {
+    override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
+      val path: TreePath = getPathIfInsideComponent(event.point) ?: return false
+      val node = path.lastPathComponent as? ChangesBrowserNode<*> ?: return false
+      getFirstMatchingOperation(node)?.let {
+        performStageOperation(listOf(node.userObject as GitFileStatusNode), it)
+      }
+      return false
     }
   }
 

@@ -35,10 +35,7 @@ import git4idea.i18n.GitBundle
 import git4idea.index.CommitListener
 import git4idea.index.GitStageTracker
 import git4idea.index.GitStageTrackerListener
-import git4idea.index.actions.GitAddOperation
-import git4idea.index.actions.GitResetOperation
-import git4idea.index.actions.StagingAreaOperation
-import git4idea.index.actions.performStageOperation
+import git4idea.index.actions.*
 import git4idea.repo.GitRepository
 import git4idea.status.GitChangeProvider
 import org.jetbrains.annotations.CalledInAwt
@@ -158,6 +155,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
   private inner class MyChangesTree(project: Project) : GitStageTree(project, this) {
     override val state
       get() = this@GitStagePanel.state
+    override val operations: List<StagingAreaOperation> = listOf(GitAddOperation, GitResetOperation)
 
     override fun performStageOperation(nodes: List<GitFileStatusNode>, operation: StagingAreaOperation) {
       performStageOperation(project, nodes, operation)
