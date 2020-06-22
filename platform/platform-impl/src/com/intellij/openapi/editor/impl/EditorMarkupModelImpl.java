@@ -31,6 +31,8 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
@@ -172,8 +174,10 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       }
     };
 
-    AnAction statusAction = new StatusAction();
-    ActionGroup actions = new DefaultActionGroup(statusAction, navigateGroup);
+    StatusAction statusAction = new StatusAction();
+    DefaultActionGroup actions = new DefaultActionGroup(statusAction, navigateGroup);
+    fillEPActions(actions);
+
     ActionButtonLook editorButtonLook = new EditorToolbarButtonLook();
     statusToolbar = new ActionToolbarImpl(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, actions, true) {
       @Override
@@ -387,6 +391,40 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       statusToolbar.getComponent().setVisible(false);
       smallIconLabel.setVisible(false);
     }
+  }
+
+  private void fillEPActions(DefaultActionGroup actions) {
+    InspectionWidgetActionProvider.EP_NAME.getExtensionList().
+      forEach(p -> {
+        Separator separator = p.getSeparator();
+        if (separator != null) {
+          actions.add(separator, Constraints.FIRST);
+        }
+
+        actions.add(p.getAction(myEditor), Constraints.FIRST);
+      });
+
+    InspectionWidgetActionProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<InspectionWidgetActionProvider>() {
+      @Override
+      public void extensionAdded(@NotNull InspectionWidgetActionProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        Separator separator = extension.getSeparator();
+        if (separator != null) {
+          actions.add(separator, Constraints.FIRST);
+        }
+
+        actions.add(extension.getAction(myEditor), Constraints.FIRST);
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull InspectionWidgetActionProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        actions.remove(extension.getAction(myEditor));
+
+        Separator separator = extension.getSeparator();
+        if (separator != null) {
+          actions.remove(separator);
+        }
+      }
+    }, resourcesDisposable);
   }
 
   private AnAction createAction(@NotNull String id, @NotNull Icon icon) {
@@ -1732,50 +1770,47 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   private static class StatusComponentLayout implements LayoutManager {
-    private JComponent statusComponent;
-    private final List<JComponent> actionButtons = new ArrayList<>();
+    private final List<Pair<Component, String>> actionButtons = new ArrayList<>();
 
     @Override
     public void addLayoutComponent(String s, Component component) {
-      JComponent jc = (JComponent)component;
-      if (ActionToolbar.CUSTOM_COMPONENT_CONSTRAINT.equals(s) && jc instanceof StatusButton) {
-        statusComponent = jc;
-      }
-      else if (ActionToolbar.ACTION_BUTTON_CONSTRAINT.equals(s) && jc instanceof ActionButton) {
-        actionButtons.add(jc);
-      }
+      actionButtons.add(Pair.pair(component, s));
     }
 
     @Override
     public void removeLayoutComponent(Component component) {
-      JComponent jc = (JComponent)component;
-      if (jc instanceof StatusButton) {
-        statusComponent = null;
-      }
-      else if (jc instanceof ActionButton) {
-        actionButtons.remove(jc);
+      for (int i = 0; i < actionButtons.size(); i++) {
+        if (Comparing.equal(component, actionButtons.get(i).first)) {
+          actionButtons.remove(i);
+          break;
+        }
       }
     }
 
     @Override
     public Dimension preferredLayoutSize(Container container) {
-      Dimension size = statusComponent != null && statusComponent.isVisible() ? statusComponent.getPreferredSize() : JBUI.emptySize();
+      Dimension size = JBUI.emptySize();
 
-      for (JComponent jc : actionButtons) {
-        if (jc.isVisible()) {
-          Dimension prefSize = jc.getPreferredSize();
+      for (Pair<Component, String> c : actionButtons) {
+        if (c.first.isVisible()) {
+          Dimension prefSize = c.first.getPreferredSize();
           size.height = Math.max(size.height, prefSize.height);
         }
       }
 
-      for (JComponent jc : actionButtons) {
-        if (jc.isVisible()) {
-          Dimension prefSize = jc.getPreferredSize();
-          Insets i = jc.getInsets();
+      for (Pair<Component, String> c : actionButtons) {
+        if (c.first.isVisible()) {
+          Dimension prefSize = c.first.getPreferredSize();
+          Insets i = ((JComponent)c.first).getInsets();
           JBInsets.removeFrom(prefSize, i);
 
-          int maxBareHeight = size.height - i.top - i.bottom;
-          size.width += Math.max(prefSize.width, maxBareHeight) + i.left + i.right;
+          if (ActionToolbar.SEPARATOR_CONSTRAINT.equals(c.second)) {
+            size.width += prefSize.width + i.left + i.right;
+          }
+          else {
+            int maxBareHeight = size.height - i.top - i.bottom;
+            size.width += Math.max(prefSize.width, maxBareHeight) + i.left + i.right;
+          }
         }
       }
 
@@ -1799,23 +1834,30 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         JBInsets.removeFrom(prefSize, i);
         int offset = i.left;
 
-        if (statusComponent != null && statusComponent.isVisible()) {
-          Dimension size = statusComponent.getPreferredSize();
-          statusComponent.setBounds(offset, i.top, size.width, prefSize.height);
-          offset += size.width;
-        }
+        for (Pair<Component, String> c : actionButtons) {
+          if (c.first.isVisible()) {
+            Dimension cPrefSize = c.first.getPreferredSize();
 
-        for (JComponent jc : actionButtons) {
-          if (jc.isVisible()) {
-            Dimension jcPrefSize = jc.getPreferredSize();
-            Insets jcInsets = jc.getInsets();
-            JBInsets.removeFrom(jcPrefSize, jcInsets);
+            if (c.first instanceof StatusButton) {
+              c.first.setBounds(offset, i.top, cPrefSize.width, prefSize.height);
+              offset += cPrefSize.width;
+            }
+            else {
+              Insets jcInsets = ((JComponent)c.first).getInsets();
+              JBInsets.removeFrom(cPrefSize, jcInsets);
 
-            int maxBareHeight = prefSize.height - jcInsets.top - jcInsets.bottom;
-            int width = Math.max(jcPrefSize.width, maxBareHeight) + jcInsets.left + jcInsets.right;
+              if (ActionToolbar.SEPARATOR_CONSTRAINT.equals(c.second)) {
+                c.first.setBounds(offset, i.top, cPrefSize.width, prefSize.height);
+                offset += cPrefSize.width;
+              }
+              else {
+                int maxBareHeight = prefSize.height - jcInsets.top - jcInsets.bottom;
+                int width = Math.max(cPrefSize.width, maxBareHeight) + jcInsets.left + jcInsets.right;
 
-            jc.setBounds(offset, i.top, width, prefSize.height);
-            offset += width;
+                c.first.setBounds(offset, i.top, width, prefSize.height);
+                offset += width;
+              }
+            }
           }
         }
       }
