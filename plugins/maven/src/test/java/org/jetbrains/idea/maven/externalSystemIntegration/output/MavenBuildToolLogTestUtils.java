@@ -321,7 +321,6 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
 
     @Override
     public void describeTo(@NotNull Description description) {
-      //description.appendText("Expected FileMessageEventImpl \"" + myMessage + "\" at " + myFileName + ":" + myLine + ":" + myColumn);
       description.appendText("Expected \n" + new FileMessageEventImpl("EXECUTE_TASK:0", ERROR, "Error", myMessage, myMessage,
                                                                       new FilePosition(new File(myFileName), myLine,myColumn)));
     }
