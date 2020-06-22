@@ -15,6 +15,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Test
 import org.junit.runners.Parameterized
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 
 class GradleTasksExecutionTest : GradleImportingTestCase() {
 
@@ -67,7 +68,7 @@ class GradleTasksExecutionTest : GradleImportingTestCase() {
                                      future.complete(taskErrOutput.toString())
                                    }
                                  }, ProgressExecutionMode.IN_BACKGROUND_ASYNC)
-      return future.get()
+      return future.get(10, TimeUnit.SECONDS)
     }
     finally {
       notificationManager.removeNotificationListener(stdErrListener)
