@@ -65,37 +65,40 @@ public class AssertWithoutMessageInspection extends BaseInspection {
 
   @Override
   protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
-    return new InspectionGadgetsFix() {
-      @Override
-      protected void doFix(Project project, ProblemDescriptor descriptor) {
-        Object firstArg = infos[0];
-        if (!(firstArg instanceof Boolean)) return;
-        boolean messageIsOnFirstPosition = (boolean)firstArg;
+    return new AssertWithoutMessageFix((boolean)infos[0]);
+  }
 
-        PsiMethodCallExpression methodCallExpr = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
-        if (methodCallExpr == null) return;
+  private static class AssertWithoutMessageFix extends InspectionGadgetsFix {
+    private final boolean myMessageIsOnFirstPosition;
 
-        PsiExpression newMessageExpr = JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText("\"\"", methodCallExpr);
-        PsiExpressionList methodArgs = methodCallExpr.getArgumentList();
-        PsiElement createdMessageExpr;
-        if (messageIsOnFirstPosition) {
-          PsiExpression[] methodArgExprs = methodArgs.getExpressions();
-          PsiExpression firstMethodArgExpr = methodArgExprs.length > 0 ? methodArgExprs[0] : null;
-          createdMessageExpr = methodArgs.addBefore(newMessageExpr, firstMethodArgExpr);
-        }
-        else {
-          createdMessageExpr = methodArgs.add(newMessageExpr);
-        }
+    private AssertWithoutMessageFix(boolean messageIsOnFirstPosition) {myMessageIsOnFirstPosition = messageIsOnFirstPosition;}
+    
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
 
-        Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-        if (editor == null) return;
-        editor.getCaretModel().moveToOffset(createdMessageExpr.getTextOffset() + 1);
+      PsiMethodCallExpression methodCallExpr = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
+      if (methodCallExpr == null) return;
+
+      PsiExpression newMessageExpr = JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText("\"\"", methodCallExpr);
+      PsiExpressionList methodArgs = methodCallExpr.getArgumentList();
+      PsiElement createdMessageExpr;
+      if (myMessageIsOnFirstPosition) {
+        PsiExpression[] methodArgExprs = methodArgs.getExpressions();
+        PsiExpression firstMethodArgExpr = methodArgExprs.length > 0 ? methodArgExprs[0] : null;
+        createdMessageExpr = methodArgs.addBefore(newMessageExpr, firstMethodArgExpr);
+      }
+      else {
+        createdMessageExpr = methodArgs.add(newMessageExpr);
       }
 
-      @Override
-      public @IntentionFamilyName @NotNull String getFamilyName() {
-        return InspectionGadgetsBundle.message("assert.without.message.quick.fix.family.name");
-      }
-    };
+      Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+      if (editor == null) return;
+      editor.getCaretModel().moveToOffset(createdMessageExpr.getTextOffset() + 1);
+    }
+
+    @Override
+    public @IntentionFamilyName @NotNull String getFamilyName() {
+      return InspectionGadgetsBundle.message("assert.without.message.quick.fix.family.name");
+    }
   }
 }
