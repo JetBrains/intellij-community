@@ -19,7 +19,10 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.intellij.lang.annotations.Language
-import org.jetbrains.plugins.github.api.data.*
+import org.jetbrains.plugins.github.api.data.GHActor
+import org.jetbrains.plugins.github.api.data.GHGitActor
+import org.jetbrains.plugins.github.api.data.GHIssueComment
+import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestCommitShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
@@ -92,7 +95,8 @@ class GHPRTimelineItemComponentFactory(private val detailsDataProvider: GHPRDeta
       val panelHandle = GHEditableHtmlPaneHandle(textPane,
                                                  { detailsDataProvider.getDescriptionMarkdownBody(EmptyProgressIndicator()) },
                                                  { newText ->
-                                                   detailsDataProvider.updateDetails(EmptyProgressIndicator(), newText).successOnEdt {
+                                                   detailsDataProvider.updateDetails(EmptyProgressIndicator(),
+                                                                                     description = newText).successOnEdt {
                                                      textPane.setBody(it.bodyHTML)
                                                    }
                                                  })
