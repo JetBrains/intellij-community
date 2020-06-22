@@ -96,6 +96,10 @@ public class SerializationUtils {
     return MethodUtils.methodMatches(method, null, PsiType.VOID, "writeObject", type);
   }
 
+  public static boolean isReadObjectNoData(@NotNull PsiMethod method) {
+    return MethodUtils.methodMatches(method, null, PsiType.VOID, "readObjectNoData");
+  }
+
   public static boolean isReadResolve(@NotNull PsiMethod method) {
     return MethodUtils.simpleMethodMatches(method, null, CommonClassNames.JAVA_LANG_OBJECT, "readResolve");
   }
