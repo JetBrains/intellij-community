@@ -45,7 +45,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 public final class PerformanceWatcher implements Disposable {
   private static final Logger LOG = Logger.getInstance(PerformanceWatcher.class);
@@ -78,11 +77,11 @@ public final class PerformanceWatcher implements Disposable {
     if (!shouldWatch()) return;
 
     AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
-    service.setNewThreadListener(new Consumer<Thread>() {
+    service.setNewThreadListener(new BiConsumer<Thread, Runnable>() {
       private final int ourReasonableThreadPoolSize = RegistryManager.getInstance().intValue("core.pooled.threads");
 
       @Override
-      public void accept(Thread thread) {
+      public void accept(Thread thread, Runnable runnable) {
         if (service.getBackendPoolExecutorSize() > ourReasonableThreadPoolSize
             && ApplicationInfoImpl.getShadowInstance().isEAP()) {
           File file = dumpThreads("newPooledThread/", true);

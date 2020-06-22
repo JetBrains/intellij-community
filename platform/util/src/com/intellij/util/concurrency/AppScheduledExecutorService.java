@@ -1,23 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
-import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.LowMemoryWatcherManager;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.*;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 /**
  * A ThreadPoolExecutor which also implements {@link ScheduledExecutorService} by awaiting scheduled tasks in a separate thread
@@ -31,7 +26,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
   private final MyThreadFactory myCountingThreadFactory;
 
   private static class Holder {
-    private static final AppScheduledExecutorService INSTANCE = new AppScheduledExecutorService("Global instance");
+    private static final AppScheduledExecutorService INSTANCE = new AppScheduledExecutorService("Global instance", 1, TimeUnit.MINUTES);
   }
 
   @NotNull
@@ -40,7 +35,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
   }
 
   private static class MyThreadFactory extends CountingThreadFactory {
-    private Consumer<? super Thread> newThreadListener;
+    private BiConsumer<? super Thread, ? super Runnable> newThreadListener;
     private final ThreadFactory myThreadFactory = Executors.privilegedThreadFactory();
 
     @NotNull
@@ -51,27 +46,27 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
 
       thread.setPriority(Thread.NORM_PRIORITY - 1);
 
-      Consumer<? super Thread> listener = newThreadListener;
+      BiConsumer<? super Thread, ? super Runnable> listener = newThreadListener;
       if (listener != null) {
-        listener.accept(thread);
+        listener.accept(thread, r);
       }
       return thread;
     }
 
-    void setNewThreadListener(@NotNull Consumer<? super Thread> threadListener) {
+    void setNewThreadListener(@NotNull BiConsumer<? super Thread, ? super Runnable> threadListener) {
       if (newThreadListener != null) throw new IllegalStateException("Listener was already set: " + newThreadListener);
       newThreadListener = threadListener;
     }
   }
 
-  AppScheduledExecutorService(@NotNull final String name) {
-    super(new BackendThreadPoolExecutor(new MyThreadFactory()), new AppDelayQueue());
+  AppScheduledExecutorService(@NotNull String name, long keepAliveTime, @NotNull TimeUnit unit) {
+    super(new BackendThreadPoolExecutor(new MyThreadFactory(), keepAliveTime, unit), new AppDelayQueue());
     myName = name;
     myCountingThreadFactory = (MyThreadFactory)((BackendThreadPoolExecutor)backendExecutorService).getThreadFactory();
     myLowMemoryWatcherManager = new LowMemoryWatcherManager(this);
   }
 
-  public void setNewThreadListener(@NotNull Consumer<? super Thread> threadListener) {
+  public void setNewThreadListener(@NotNull BiConsumer<? super Thread, ? super Runnable> threadListener) {
     myCountingThreadFactory.setNewThreadListener(threadListener);
   }
 
@@ -130,8 +125,10 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
   }
 
   static class BackendThreadPoolExecutor extends ThreadPoolExecutor {
-    BackendThreadPoolExecutor(@NotNull ThreadFactory factory) {
-      super(1, Integer.MAX_VALUE, 1, TimeUnit.MINUTES, new SynchronousQueue<>(), factory);
+    BackendThreadPoolExecutor(@NotNull ThreadFactory factory,
+                              long keepAliveTime,
+                              @NotNull TimeUnit unit) {
+      super(1, Integer.MAX_VALUE, keepAliveTime, unit, new SynchronousQueue<>(), factory);
     }
 
     @Override
@@ -201,41 +198,9 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     return delayQueue.getThread();
   }
 
-
   @TestOnly
-  void awaitQuiescence(long timeout, @NotNull TimeUnit unit) {
-    BackendThreadPoolExecutor executor = (BackendThreadPoolExecutor)backendExecutorService;
-    executor.getKeepAliveTime(TimeUnit.NANOSECONDS);
-    executor.superSetKeepAliveTime(1, TimeUnit.NANOSECONDS); // no need for zombies in tests
-    executor.superSetCorePoolSize(0); // interrupt idle workers
-    ReentrantLock mainLock = ReflectionUtil.getField(executor.getClass(), executor, ReentrantLock.class, "mainLock");
-    mainLock.lock();
-    Set workers;
-    try {
-      Set workersField = ReflectionUtil.getField(executor.getClass(), executor, HashSet.class, "workers");
-      workers = new HashSet(workersField); // to be able to iterate thread-safely outside the lock
-    }
-    finally {
-      mainLock.unlock();
-    }
-    executor.superSetKeepAliveTime(1, TimeUnit.SECONDS);
-
-    for (Object worker : workers) {
-      Thread thread = ReflectionUtil.getField(worker.getClass(), worker, Thread.class, "thread");
-      try {
-        thread.join(unit.toMillis(timeout));
-      }
-      catch (InterruptedException e) {
-        String trace = "Thread leaked: " + thread + "; " + thread.getState() + " (" + thread.isAlive() + ")\n--- its stacktrace:\n";
-        for (final StackTraceElement stackTraceElement : thread.getStackTrace()) {
-          trace += " at " + stackTraceElement + "\n";
-        }
-        trace += "---\n";
-        System.err.println("Executor " + executor + " is still active after " + unit.toSeconds(timeout) + " seconds://///\n" +
-                           "Thread " + thread + " dump:\n" + trace +
-                           "all thread dump:\n" + ThreadDumper.dumpThreadsToString() + "\n/////");
-        break;
-      }
-    }
+  void waitForLowMemoryWatcherManagerInit(int timeout, @NotNull TimeUnit unit)
+    throws InterruptedException, ExecutionException, TimeoutException {
+    myLowMemoryWatcherManager.waitForInitComplete(timeout, unit);
   }
 }

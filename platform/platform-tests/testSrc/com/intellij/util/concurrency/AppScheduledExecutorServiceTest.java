@@ -19,6 +19,7 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
@@ -60,9 +61,9 @@ public class AppScheduledExecutorServiceTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    service = new AppScheduledExecutorService(getName());
-    // LowMemoryManager submits something immediately
-    service.awaitQuiescence(1, TimeUnit.MINUTES);
+    service = new AppScheduledExecutorService(getName(), 1, TimeUnit.HOURS);
+    // LowMemoryWatcherManager submits something immediately
+    service.waitForLowMemoryWatcherManagerInit(1, TimeUnit.MINUTES);
   }
 
   @Override
@@ -178,6 +179,11 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     ((ThreadPoolExecutor)service.backendExecutorService).prestartCoreThread();
     assertEquals(1, service.getBackendPoolExecutorSize());
 
+    service.setNewThreadListener((thread, runnable) -> {
+      Runnable firstTask = ReflectionUtil.getField(runnable.getClass(), runnable, Runnable.class, "firstTask");
+      System.err.println("Unexpected new thread created: " + thread + "; for first task "+firstTask+"; thread dump:\n" + ThreadDumper.dumpThreadsToString());
+    });
+
     long submitted = System.currentTimeMillis();
     AtomicBoolean agentOverloaded = new AtomicBoolean();
     int delay = 1000;
@@ -185,21 +191,45 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     AtomicLong f1Start = new AtomicLong();
     AtomicLong f2Start = new AtomicLong();
     AtomicLong f3Start = new AtomicLong();
-    ScheduledFuture<?> f1 = service.schedule(() -> {
-      f1Start.set(System.currentTimeMillis());
-      if (!log.isEmpty()) agentOverloaded.set(true);
-      log.add(new LogInfo(1));
+    ScheduledFuture<?> f1 = service.schedule(new Runnable() {
+      @Override
+      public void run() {
+        f1Start.set(System.currentTimeMillis());
+        if (!log.isEmpty()) agentOverloaded.set(true);
+        log.add(new LogInfo(1));
+      }
+
+      @Override
+      public String toString() {
+        return "f1";
+      }
     }, delay, TimeUnit.MILLISECONDS);
-    ScheduledFuture<?> f2 = service.schedule(() -> {
-      f2Start.set(System.currentTimeMillis());
-      if (!f1.isDone()) agentOverloaded.set(true);
-      log.add(new LogInfo(2));
+    ScheduledFuture<?> f2 = service.schedule(new Runnable() {
+      @Override
+      public void run() {
+        f2Start.set(System.currentTimeMillis());
+        if (!f1.isDone()) agentOverloaded.set(true);
+        log.add(new LogInfo(2));
+      }
+
+      @Override
+      public String toString() {
+        return "f2";
+      }
     }, delay + delay, TimeUnit.MILLISECONDS);
-    ScheduledFuture<?> f3 = service.schedule(() -> {
-      f3Start.set(System.currentTimeMillis());
-      if (!f1.isDone()) agentOverloaded.set(true);
-      if (!f2.isDone()) agentOverloaded.set(true);
-      log.add(new LogInfo(3));
+    ScheduledFuture<?> f3 = service.schedule(new Runnable() {
+      @Override
+      public void run() {
+        f3Start.set(System.currentTimeMillis());
+        if (!f1.isDone()) agentOverloaded.set(true);
+        if (!f2.isDone()) agentOverloaded.set(true);
+        log.add(new LogInfo(3));
+      }
+
+      @Override
+      public String toString() {
+        return "f3";
+      }
     }, delay + delay + delay, TimeUnit.MILLISECONDS);
 
     assertEquals(1, service.getBackendPoolExecutorSize());
@@ -214,7 +244,9 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     waitFor(f1::isDone);
     waitFor(f2::isDone);
     waitFor(f3::isDone);
-    if (f2Start.get() - f1Start.get() < delay/2 || f3Start.get() - f2Start.get() < delay/2) agentOverloaded.set(true);
+    if (f2Start.get() - f1Start.get() < delay/2 || f3Start.get() - f2Start.get() < delay/2) {
+      agentOverloaded.set(true);
+    }
     if (agentOverloaded.get()) {
       System.err.println("This agent is seriously thrashing. I give up.");
       return; // no no no no. something terribly wrong is happening right now. This agent is so crazily overloaded it makes no sense to test any further.
@@ -257,7 +289,7 @@ public class AppScheduledExecutorServiceTest extends TestCase {
   }
 
   public void testAwaitTerminationMakesSureTasksTransferredToBackendExecutorAreFinished() throws InterruptedException {
-    final AppScheduledExecutorService service = new AppScheduledExecutorService(getName());
+    final AppScheduledExecutorService service = new AppScheduledExecutorService(getName(), 1, TimeUnit.HOURS);
     final List<LogInfo> log = Collections.synchronizedList(new ArrayList<>());
 
     int N = 20;
@@ -290,7 +322,7 @@ public class AppScheduledExecutorServiceTest extends TestCase {
 
   private static void waitFor(@NotNull BooleanSupplier runnable) throws RuntimeException {
     long start = System.currentTimeMillis();
-    while (System.currentTimeMillis() < start + 60000) {
+    while (System.currentTimeMillis() < start + 60_000) {
       if (runnable.getAsBoolean()) return;
       TimeoutUtil.sleep(1);
     }
