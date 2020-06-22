@@ -89,7 +89,7 @@ public class PointlessArithmeticExpression
     }
 
     double floatsOrDoubles() {
-        return <warning descr="'123.001 % 1.0' can be replaced with '0.0'">123.001 % 1.0</warning>;
+        return 123.001 % 1.0;
     }
 
     void more(int i) {
@@ -160,6 +160,7 @@ class FloatingPoint {
     double res6 = <warning descr="'x / 1.0' can be replaced with 'x'">x / 1.0</warning>;
     double res7 = x * 0.0;
     double res8 = 0.0 / x;
+    double res9 = x % 1.0;
   }
 
   void test2(float x) {
