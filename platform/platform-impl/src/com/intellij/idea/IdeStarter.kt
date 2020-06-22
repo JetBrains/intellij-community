@@ -25,7 +25,6 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.SystemDock
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
@@ -38,8 +37,6 @@ import com.intellij.util.ui.accessibility.ScreenReader
 import java.awt.EventQueue
 import java.beans.PropertyChangeListener
 import java.io.File
-import java.io.IOException
-import java.util.*
 import javax.swing.JOptionPane
 
 open class IdeStarter : ApplicationStarter {
@@ -273,10 +270,10 @@ private fun reportPluginError() {
       }
 
       if (PluginManagerCore.ourPluginsToDisable != null && PluginManagerCore.DISABLE == description) {
-        DisabledPluginsState.enablePluginsById(PluginManagerCore.ourPluginsToDisable, false);
+        DisabledPluginsState.enablePluginsById(PluginManagerCore.ourPluginsToDisable, false)
       }
       else if (PluginManagerCore.ourPluginsToEnable != null && PluginManagerCore.ENABLE == description) {
-        DisabledPluginsState.enablePluginsById(PluginManagerCore.ourPluginsToEnable, true);
+        DisabledPluginsState.enablePluginsById(PluginManagerCore.ourPluginsToEnable, true)
         PluginManagerMain.notifyPluginsUpdated(null)
       }
 
