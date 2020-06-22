@@ -6,6 +6,7 @@ import com.intellij.util.AuthData
 import git4idea.remote.InteractiveGitHttpAuthDataProvider
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.GithubServerPath
+import org.jetbrains.plugins.github.authentication.GHAccountAuthData
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.util.GithubUtil

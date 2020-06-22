@@ -25,6 +25,8 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
+import org.jetbrains.plugins.github.authentication.GHLoginRequest
+import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
@@ -117,15 +119,15 @@ internal class GHAccountsPanel(
   }
 
   private fun editAccount(decorator: GithubAccountDecorator) {
-    val dialog = GithubLoginDialog(executorFactory, project, this).apply {
-      withServer(decorator.account.server.toString(), false)
-      withLogin(decorator.account.name, true)
-    }
-    if (dialog.showAndGet()) {
-      decorator.account.name = dialog.login
-      newTokensMap[decorator.account] = dialog.token
-      loadAccountDetails(decorator)
-    }
+    val authData = GithubAuthenticationManager.getInstance().login(
+      project, this,
+      GHLoginRequest(server = decorator.account.server, login = decorator.account.name)
+    )
+    if (authData == null) return
+
+    decorator.account.name = authData.login
+    newTokensMap[decorator.account] = authData.token
+    loadAccountDetails(decorator)
   }
 
   fun addAccount(server: GithubServerPath, login: String, token: String) {
