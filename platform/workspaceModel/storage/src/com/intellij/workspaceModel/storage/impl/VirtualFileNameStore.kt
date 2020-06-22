@@ -7,7 +7,7 @@ import org.jetbrains.annotations.TestOnly
 
 internal class VirtualFileNameStore {
   private val generator = IntIdGenerator()
-  private val name2IdStore = CollectionFactory.createMap<String, IdPerCount>()
+  private val name2IdStore = CollectionFactory.createSmallMemoryFootprintMap<String, IdPerCount>()
   private val id2NameStore = Int2ObjectOpenHashMap<String>()
 
   fun generateIdForName(name: String): Int {

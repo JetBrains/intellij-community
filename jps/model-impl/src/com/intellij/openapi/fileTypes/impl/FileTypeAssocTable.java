@@ -34,7 +34,7 @@ public final class FileTypeAssocTable<T> {
     myExactFileNameMappings.putAll(exactFileNameMappings);
     myExactFileNameAnyCaseMappings = CollectionFactory.createCharSequenceMap(false, Math.max(10, exactFileNameAnyCaseMappings.size()), 0.5f);
     myExactFileNameAnyCaseMappings.putAll(exactFileNameAnyCaseMappings);
-    myHashBangMap = CollectionFactory.createMap(Math.max(10, hashBangMap.size()), 0.5f);
+    myHashBangMap = CollectionFactory.createSmallMemoryFootprintMap(Math.max(10, hashBangMap.size()), 0.5f);
     myHashBangMap.putAll(hashBangMap);
     myMatchingMappings = new ArrayList<>(matchingMappings);
   }
@@ -276,6 +276,6 @@ public final class FileTypeAssocTable<T> {
 
   @NotNull
   Map<String, T> getInternalRawHashBangPatterns() {
-    return CollectionFactory.createMap(myHashBangMap);
+    return CollectionFactory.createSmallMemoryFootprintMap(myHashBangMap);
   }
 }

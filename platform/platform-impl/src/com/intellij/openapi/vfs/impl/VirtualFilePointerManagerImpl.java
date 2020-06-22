@@ -222,7 +222,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     return getOrCreate((VirtualFileSystemEntry)file, path, url, recursive, parentDisposable, listener, (NewVirtualFileSystem)fileSystem);
   }
 
-  private final Map<String, IdentityVirtualFilePointer> myUrlToIdentity = CollectionFactory.createMap(); // guarded by this
+  private final Map<String, IdentityVirtualFilePointer> myUrlToIdentity = CollectionFactory.createSmallMemoryFootprintMap(); // guarded by this
 
   @NotNull
   private synchronized IdentityVirtualFilePointer getOrCreateIdentity(@NotNull String url,

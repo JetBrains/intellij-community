@@ -45,8 +45,8 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
 
   init {
     val app = ApplicationManager.getApplication()
-    val result = CollectionFactory.createMap<Any, MutableList<InspectionFactory>>()
-    val shortNames = CollectionFactory.createMap<String, InspectionEP>()
+    val result = CollectionFactory.createSmallMemoryFootprintMap<Any, MutableList<InspectionFactory>>()
+    val shortNames = CollectionFactory.createSmallMemoryFootprintMap<String, InspectionEP>()
     registerToolProviders(app, result)
     registerInspections(result, app, shortNames, LocalInspectionEP.LOCAL_INSPECTION)
     registerInspections(result, app, shortNames, InspectionEP.GLOBAL_INSPECTION)

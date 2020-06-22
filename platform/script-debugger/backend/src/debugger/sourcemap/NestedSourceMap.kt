@@ -14,7 +14,7 @@ class NestedSourceMap(private val childMap: SourceMap, private val parentMap: So
 
   private val sourceIndexToSourceMappings = arrayOfNulls<Mappings>(parentMap.sources.size)
 
-  private val childMappingToTransformed = CollectionFactory.createMap<MappingEntry, MappingEntry>()
+  private val childMappingToTransformed = CollectionFactory.createSmallMemoryFootprintMap<MappingEntry, MappingEntry>()
 
   override val outFile: String?
     get() = childMap.outFile

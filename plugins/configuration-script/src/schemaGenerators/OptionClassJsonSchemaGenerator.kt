@@ -65,7 +65,7 @@ internal fun buildJsonSchema(state: BaseState,
   for (property in memberProperties) {
     val annotation = property.findAnnotation<Property>() ?: continue
     if (propertyToAnnotation == null) {
-      propertyToAnnotation = CollectionFactory.createMap()
+      propertyToAnnotation = CollectionFactory.createSmallMemoryFootprintMap()
     }
     propertyToAnnotation.put(property.name, annotation)
   }

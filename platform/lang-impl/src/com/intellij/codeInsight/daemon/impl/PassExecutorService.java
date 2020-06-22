@@ -106,7 +106,7 @@ final class PassExecutorService implements Disposable {
     MultiMap<Document, FileEditor> documentToEditors = MultiMap.createSet();
     MultiMap<FileEditor, TextEditorHighlightingPass> documentBoundPasses = new MultiMap<>();
     MultiMap<FileEditor, EditorBoundHighlightingPass> editorBoundPasses = new MultiMap<>();
-    Map<FileEditor, Int2ObjectMap<TextEditorHighlightingPass>> id2Pass = CollectionFactory.createMap();
+    Map<FileEditor, Int2ObjectMap<TextEditorHighlightingPass>> id2Pass = CollectionFactory.createSmallMemoryFootprintMap();
 
     List<ScheduledPass> freePasses = new ArrayList<>(documentToEditors.size() * 5);
     AtomicInteger threadsToStartCountdown = new AtomicInteger(0);
@@ -143,7 +143,7 @@ final class PassExecutorService implements Disposable {
 
     List<ScheduledPass> dependentPasses = new ArrayList<>(documentToEditors.size() * 10);
     // fileEditor-> (passId -> created pass)
-    Map<FileEditor, Int2ObjectMap<ScheduledPass>> toBeSubmitted = CollectionFactory.createMap(passesMap.size());
+    Map<FileEditor, Int2ObjectMap<ScheduledPass>> toBeSubmitted = CollectionFactory.createSmallMemoryFootprintMap(passesMap.size());
 
     for (Map.Entry<Document, Collection<FileEditor>> entry : documentToEditors.entrySet()) {
       Collection<FileEditor> fileEditors = entry.getValue();

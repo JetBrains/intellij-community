@@ -197,7 +197,7 @@ public final class LiftShorterItemsClassifier extends Classifier<LookupElement> 
   }
 
   private static @NotNull <K, V> MultiMap<K, V> createMultiMap(boolean identityKeys) {
-    return new MultiMap<K, V>(identityKeys ? new Reference2ObjectOpenHashMap<>() : CollectionFactory.createMap()) {
+    return new MultiMap<K, V>(identityKeys ? new Reference2ObjectOpenHashMap<>() : CollectionFactory.createSmallMemoryFootprintMap()) {
       @Override
       public boolean remove(K key, V value) {
         List<V> elements = (List<V>)get(key);

@@ -25,7 +25,7 @@ class ModulePointerManagerImpl(private val project: Project) : ModulePointerMana
   private val unresolved = MultiMap<String, ModulePointerImpl>()
   private val pointers = MultiMap<Module, ModulePointerImpl>()
   private val lock = ReentrantReadWriteLock()
-  private val oldToNewName = CollectionFactory.createMap<String, String>()
+  private val oldToNewName = CollectionFactory.createSmallMemoryFootprintMap<String, String>()
 
   init {
     project.messageBus.connect().subscribe(ProjectTopics.MODULES, object : ModuleListener {

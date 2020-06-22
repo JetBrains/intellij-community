@@ -188,10 +188,10 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
 
   public static class State {
     public final List<ExternalTaskExecutionInfo> recentTasks = new SmartList<>();
-    public Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> availableProjects = CollectionFactory.createMap();
-    public Map<String/* linked project path */, Long/* last config modification stamp */> modificationStamps = CollectionFactory.createMap();
-    public Map<String/* linked project path */, ExternalProjectBuildClasspathPojo> projectBuildClasspath = CollectionFactory.createMap();
-    public Map<String/* linked project path */, SyncType> projectSyncType = CollectionFactory.createMap();
+    public Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> availableProjects = CollectionFactory.createSmallMemoryFootprintMap();
+    public Map<String/* linked project path */, Long/* last config modification stamp */> modificationStamps = CollectionFactory.createSmallMemoryFootprintMap();
+    public Map<String/* linked project path */, ExternalProjectBuildClasspathPojo> projectBuildClasspath = CollectionFactory.createSmallMemoryFootprintMap();
+    public Map<String/* linked project path */, SyncType> projectSyncType = CollectionFactory.createSmallMemoryFootprintMap();
   }
 
   public enum SyncType {

@@ -83,7 +83,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private final IgnoredFileCache myIgnoredFileCache = new IgnoredFileCache(myIgnoredPatterns);
 
   private final FileTypeAssocTable<FileType> myInitialAssociations = new FileTypeAssocTable<>();
-  private final Map<FileNameMatcher, String> myUnresolvedMappings = CollectionFactory.createMap();
+  private final Map<FileNameMatcher, String> myUnresolvedMappings = CollectionFactory.createSmallMemoryFootprintMap();
   private final RemovedMappingTracker myRemovedMappingTracker = new RemovedMappingTracker();
 
   private final Map<String, FileTypeBean> myPendingFileTypes = new LinkedHashMap<>();
@@ -964,7 +964,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private @NotNull Map<String, FileType> readHashBangs(@NotNull Element e) {
     List<Element> children = e.getChildren("hashBang");
-    Map<String, FileType> result = CollectionFactory.createMap(children.size());
+    Map<String, FileType> result = CollectionFactory.createSmallMemoryFootprintMap(children.size());
     for (Element hashBangTag : children) {
       String typeName = hashBangTag.getAttributeValue("type");
       String hashBangPattern = hashBangTag.getAttributeValue("value");

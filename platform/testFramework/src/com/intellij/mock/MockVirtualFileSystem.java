@@ -83,7 +83,7 @@ public final class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
       MyVirtualFile file = findChild(name);
       if (file == null) {
         if (myChildren == null) {
-          myChildren = CollectionFactory.createMap();
+          myChildren = CollectionFactory.createSmallMemoryFootprintMap();
         }
         file = new MyVirtualFile(name, this);
         myChildren.put(name, file);

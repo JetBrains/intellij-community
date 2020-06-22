@@ -63,8 +63,8 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
     private fun doLogStats(projectName: String): StartUpPerformanceReporterValues? {
       val items = mutableListOf<ActivityImpl>()
       val instantEvents = mutableListOf<ActivityImpl>()
-      val activities = CollectionFactory.createMap<String, MutableList<ActivityImpl>>()
-      val serviceActivities = CollectionFactory.createMap<String, MutableList<ActivityImpl>>()
+      val activities = CollectionFactory.createSmallMemoryFootprintMap<String, MutableList<ActivityImpl>>()
+      val serviceActivities = CollectionFactory.createSmallMemoryFootprintMap<String, MutableList<ActivityImpl>>()
       val services = mutableListOf<ActivityImpl>()
 
       val threadNameManager = IdeThreadNameManager()
@@ -236,7 +236,7 @@ private class StartUpPerformanceReporterValues(val pluginCostMap: MutableMap<Str
 private fun computePluginCostMap(): MutableMap<String, Object2LongMap<String>> {
   var result: MutableMap<String, Object2LongMap<String>>
   synchronized(StartUpMeasurer.pluginCostMap) {
-    result = CollectionFactory.createMap(StartUpMeasurer.pluginCostMap)
+    result = CollectionFactory.createSmallMemoryFootprintMap(StartUpMeasurer.pluginCostMap)
     StartUpMeasurer.pluginCostMap.clear()
   }
 

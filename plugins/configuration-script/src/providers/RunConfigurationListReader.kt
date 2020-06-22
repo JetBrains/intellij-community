@@ -37,7 +37,7 @@ internal class RunConfigurationListReader(private val processor: (factory: Confi
 
       // compute keyToType only if need
       if (keyToType == null) {
-        keyToType = CollectionFactory.createMap<String, ConfigurationType>()
+        keyToType = CollectionFactory.createSmallMemoryFootprintMap<String, ConfigurationType>()
         processConfigurationTypes { configurationType, propertyName, _ ->
           keyToType.put(propertyName.toString(), configurationType)
         }

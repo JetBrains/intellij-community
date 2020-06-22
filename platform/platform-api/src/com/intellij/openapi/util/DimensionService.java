@@ -37,8 +37,8 @@ import java.util.Map;
 public final class DimensionService extends SimpleModificationTracker implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(DimensionService.class);
 
-  private final Map<String, Point> myKeyToLocation = CollectionFactory.createLinkedMap();
-  private final Map<String, Dimension> myKeToSize = CollectionFactory.createLinkedMap();
+  private final Map<String, Point> myKeyToLocation = CollectionFactory.createSmallMemoryFootprintLinkedMap();
+  private final Map<String, Dimension> myKeToSize = CollectionFactory.createSmallMemoryFootprintLinkedMap();
   private final Object2IntMap<String> myKeyToExtendedState = new Object2IntOpenHashMap<>();
   @NonNls private static final String EXTENDED_STATE = "extendedState";
   @NonNls private static final String KEY = "key";

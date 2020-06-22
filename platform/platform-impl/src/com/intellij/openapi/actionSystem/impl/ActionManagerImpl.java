@@ -133,10 +133,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private static final int UPDATE_DELAY_AFTER_TYPING = 500;
 
   private final Object myLock = new Object();
-  private final Map<String, AnAction> myId2Action = CollectionFactory.createMap();
+  private final Map<String, AnAction> myId2Action = CollectionFactory.createSmallMemoryFootprintMap();
   private final MultiMap<PluginId, String> myPlugin2Id = new MultiMap<>();
   private final Object2IntMap<String> myId2Index = new Object2IntOpenHashMap<>();
-  private final Map<Object, String> myAction2Id = CollectionFactory.createMap();
+  private final Map<Object, String> myAction2Id = CollectionFactory.createSmallMemoryFootprintMap();
   private final MultiMap<String, String> myId2GroupId = new MultiMap<>();
   private final List<String> myNotRegisteredInternalActionIds = new ArrayList<>();
   private final List<AnActionListener> myActionListeners = ContainerUtil.createLockFreeCopyOnWriteList();

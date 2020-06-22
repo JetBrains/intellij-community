@@ -158,7 +158,7 @@ public final class CollectionFactory {
    */
   public static @NotNull <V> Map<String, V> createFilePathLinkedMap() {
     if (SystemInfoRt.isFileSystemCaseSensitive) {
-      return createLinkedMap();
+      return createSmallMemoryFootprintLinkedMap();
     }
     else {
       return new Object2ObjectLinkedOpenCustomHashMap<>(FastUtilCaseInsensitiveStringHashingStrategy.INSTANCE);
@@ -209,52 +209,57 @@ public final class CollectionFactory {
   }
 
   /**
-   * @return Map implementation with slightly faster access and a bit smaller memory footprint than {@link HashMap}
-   * and with predictable iteration order.
-   * Null keys and values are permitted,
+   * @return Map implementation with slightly faster access for very big maps (>100K keys) and a bit smaller memory footprint than {@link LinkedHashMap} and with predictable iteration order.
+   * Null keys and values are permitted.
+   * Use sparingly only when performance considerations are utterly important; in all other cases please prefer {@link LinkedHashMap}.
    * @see LinkedHashMap
    */
   @Contract(value = "-> new", pure = true)
-  public static <K, V> @NotNull Map<K, V> createLinkedMap() {
+  public static <K, V> @NotNull Map<K, V> createSmallMemoryFootprintLinkedMap() {
+    //noinspection SSBasedInspection
     return new Object2ObjectLinkedOpenHashMap<>();
   }
 
   /**
-   * @return Map implementation with slightly faster access and a bit smaller memory footprint than {@link HashMap}
-   * Null keys and values are permitted
+   * @return Map implementation with slightly faster access for very big maps (>100K keys) and a bit smaller memory footprint than {@link HashMap}.
+   * Null keys and values are permitted.
+   * Use sparingly only when performance considerations are utterly important; in all other cases please prefer {@link HashMap}.
    */
   @Contract(value = "-> new", pure = true)
-  public static <K, V> @NotNull Map<K, V> createMap() {
+  public static <K, V> @NotNull Map<K, V> createSmallMemoryFootprintMap() {
     //noinspection SSBasedInspection
     return new Object2ObjectOpenHashMap<>();
   }
 
   /**
-   * @return Map implementation with slightly faster access and a bit smaller memory footprint than {@link HashMap}
-   * Null keys and values are permitted
+   * @return Map implementation with slightly faster access for very big maps (>100K keys) and a bit smaller memory footprint than {@link HashMap}.
+   * Null keys and values are permitted.
+   * Use sparingly only when performance considerations are utterly important; in all other cases please prefer {@link HashMap}.
    */
   @Contract(value = "_ -> new", pure = true)
-  public static <K, V> @NotNull Map<K, V> createMap(int expected) {
+  public static <K, V> @NotNull Map<K, V> createSmallMemoryFootprintMap(int expected) {
     //noinspection SSBasedInspection
     return new Object2ObjectOpenHashMap<>(expected);
   }
 
   /**
-   * @return Map implementation with slightly faster access and a bit smaller memory footprint than {@link HashMap}
-   * Null keys and values are permitted
+   * @return Map implementation with slightly faster access for very big maps (>100K keys) and a bit smaller memory footprint than {@link HashMap}.
+   * Null keys and values are permitted.
+   * Use sparingly only when performance considerations are utterly important; in all other cases please prefer {@link HashMap}.
    */
   @Contract(value = "_ -> new", pure = true)
-  public static <K, V> @NotNull Map<K, V> createMap(@NotNull Map<? extends K, ? extends V> map) {
+  public static <K, V> @NotNull Map<K, V> createSmallMemoryFootprintMap(@NotNull Map<? extends K, ? extends V> map) {
     //noinspection SSBasedInspection
     return new Object2ObjectOpenHashMap<>(map);
   }
 
   /**
-   * @return Map implementation with slightly faster access and a bit smaller memory footprint than {@link HashMap}
-   * Null keys and values are permitted
+   * @return Map implementation with slightly faster access for very big maps (>100K keys) and a bit smaller memory footprint than {@link HashMap}.
+   * Null keys and values are permitted.
+   * Use sparingly only when performance considerations are utterly important; in all other cases please prefer {@link HashMap}.
    */
   @Contract(value = "_,_ -> new", pure = true)
-  public static <K, V> @NotNull Map<K, V> createMap(int expected, float loadFactor) {
+  public static <K, V> @NotNull Map<K, V> createSmallMemoryFootprintMap(int expected, float loadFactor) {
     //noinspection SSBasedInspection
     return new Object2ObjectOpenHashMap<>(expected, loadFactor);
   }

@@ -159,7 +159,7 @@ public final class ExtensionProcessingHelper {
                                                                      @NotNull Function<@NotNull T, @Nullable V> valueMapper,
                                                                      @NotNull ExtensionPoint<T> point) {
     List<T> extensions = point.getExtensionList();
-    Map<K, V> cache = CollectionFactory.createMap(extensions.size());
+    Map<K, V> cache = CollectionFactory.createSmallMemoryFootprintMap(extensions.size());
     for (T extension : extensions) {
       K key = keyMapper.apply(extension);
       if (key == null) {

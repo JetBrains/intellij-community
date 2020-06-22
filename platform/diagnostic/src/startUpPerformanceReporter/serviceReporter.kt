@@ -13,7 +13,7 @@ internal fun computeOwnTime(allEvents: List<ActivityImpl>, threadNameManager: Th
   val ownDurations = Object2LongOpenHashMap<ActivityImpl>()
   ownDurations.defaultReturnValue(-1)
 
-  val threadToList = CollectionFactory.createMap<String, MutableList<ActivityImpl>>()
+  val threadToList = CollectionFactory.createSmallMemoryFootprintMap<String, MutableList<ActivityImpl>>()
   for (event in allEvents) {
     threadToList.getOrPut(threadNameManager.getThreadName(event)) { mutableListOf() }.add(event)
   }

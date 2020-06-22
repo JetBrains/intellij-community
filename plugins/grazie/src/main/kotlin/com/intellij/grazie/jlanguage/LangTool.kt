@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 object LangTool : GrazieStateLifecycle {
   private val langs: MutableMap<Lang, JLanguageTool> = ConcurrentHashMap()
-  private val rulesToLanguages = CollectionFactory.createMap<String, MutableSet<Lang>>()
+  private val rulesToLanguages = CollectionFactory.createSmallMemoryFootprintMap<String, MutableSet<Lang>>()
 
   init {
     JLanguageTool.dataBroker = GrazieDynamicDataBroker

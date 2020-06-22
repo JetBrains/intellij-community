@@ -15,7 +15,7 @@ import java.util.Map;
 public final class PluginId implements Comparable<PluginId> {
   public static final PluginId[] EMPTY_ARRAY = new PluginId[0];
 
-  private static final Map<String, PluginId> ourRegisteredIds = CollectionFactory.createMap();
+  private static final Map<String, PluginId> ourRegisteredIds = CollectionFactory.createSmallMemoryFootprintMap();
 
   public static synchronized @NotNull PluginId getId(@NotNull String idString) {
     return ourRegisteredIds.computeIfAbsent(idString, PluginId::new);
@@ -36,7 +36,7 @@ public final class PluginId implements Comparable<PluginId> {
    */
   @Deprecated
   public static synchronized @NotNull Map<String, PluginId> getRegisteredIds() {
-    return CollectionFactory.createMap(ourRegisteredIds);
+    return CollectionFactory.createSmallMemoryFootprintMap(ourRegisteredIds);
   }
 
   public static synchronized @NotNull Collection<PluginId> getRegisteredIdList() {

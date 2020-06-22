@@ -26,7 +26,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   private final ComponentManager componentManager;
   private final Map<String, ExtensionPointImpl<?>> extensionPoints = new ConcurrentHashMap<>();
-  private final Map<String,Throwable> epTraces = DEBUG_REGISTRATION ? CollectionFactory.createMap() : null;
+  private final Map<String,Throwable> epTraces = DEBUG_REGISTRATION ? CollectionFactory.createSmallMemoryFootprintMap() : null;
 
   public ExtensionsAreaImpl(@NotNull ComponentManager componentManager) {
     this.componentManager = componentManager;

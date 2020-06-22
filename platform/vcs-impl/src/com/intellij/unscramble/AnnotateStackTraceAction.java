@@ -98,7 +98,7 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        Map<VirtualFile, IntArrayList> files2lines = CollectionFactory.createMap();
+        Map<VirtualFile, IntArrayList> files2lines = CollectionFactory.createSmallMemoryFootprintMap();
         Int2ObjectMap<LastRevision> revisions = new Int2ObjectOpenHashMap<>();
 
         ApplicationManager.getApplication().runReadAction(() -> {

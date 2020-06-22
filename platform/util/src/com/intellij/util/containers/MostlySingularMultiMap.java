@@ -21,7 +21,7 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
   protected final Map<K, Object> myMap;
 
   public MostlySingularMultiMap() {
-    myMap = CollectionFactory.createMap();
+    myMap = CollectionFactory.createSmallMemoryFootprintMap();
   }
 
   public MostlySingularMultiMap(@NotNull Map<K, Object> map) {

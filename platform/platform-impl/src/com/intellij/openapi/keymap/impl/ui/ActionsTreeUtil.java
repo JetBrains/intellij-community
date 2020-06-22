@@ -52,7 +52,7 @@ public final class ActionsTreeUtil {
 
   public static @NotNull Map<String, String> createPluginActionsMap() {
     Set<PluginId> visited = new HashSet<>();
-    Map<String, String> result = CollectionFactory.createMap();
+    Map<String, String> result = CollectionFactory.createSmallMemoryFootprintMap();
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
       PluginId id = descriptor.getPluginId();

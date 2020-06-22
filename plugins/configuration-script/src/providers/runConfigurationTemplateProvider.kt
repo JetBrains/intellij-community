@@ -25,7 +25,7 @@ private class MyRunConfigurationTemplateProvider(private val project: Project) :
   private val map = SynchronizedClearableLazy<Map<ConfigurationFactory, FactoryEntry>> {
     val node = project.service<ConfigurationFileManager>().getConfigurationNode()
                ?: return@SynchronizedClearableLazy emptyMap()
-    val map = CollectionFactory.createMap<ConfigurationFactory, FactoryEntry>()
+    val map = CollectionFactory.createSmallMemoryFootprintMap<ConfigurationFactory, FactoryEntry>()
     readRunConfigurations(node, isTemplatesOnly = true) { factory, state ->
       map.put(factory, FactoryEntry(state))
     }

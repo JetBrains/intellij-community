@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 
 public class JpsElementContainerImpl extends JpsElementContainerEx implements JpsElementContainer {
   private final Object myDataLock = new Object();
-  private final Map<JpsElementChildRole<?>, JpsElement> myElements = CollectionFactory.createMap(1);
+  private final Map<JpsElementChildRole<?>, JpsElement> myElements = CollectionFactory.createSmallMemoryFootprintMap(1);
   private final @NotNull JpsCompositeElementBase<?> myParent;
 
   public JpsElementContainerImpl(@NotNull JpsCompositeElementBase<?> parent) {

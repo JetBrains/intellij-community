@@ -14,7 +14,7 @@ import java.util.Map;
 
 public class MagicIntegerConstAccessor extends ExternalStringAccessor<Integer> implements CodeStyleChoiceList {
   private final Int2ObjectOpenHashMap<String> myValueMap = new Int2ObjectOpenHashMap<>();
-  private final Map<String, IntArrayList> myValueToKeysMap = CollectionFactory.createMap();
+  private final Map<String, IntArrayList> myValueToKeysMap = CollectionFactory.createSmallMemoryFootprintMap();
 
   public MagicIntegerConstAccessor(@NotNull Object object,
                                    @NotNull Field field,

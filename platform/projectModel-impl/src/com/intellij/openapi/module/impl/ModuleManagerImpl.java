@@ -196,7 +196,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     Module[] existingModules = model.getModules();
     ModuleGroupInterner groupInterner = new ModuleGroupInterner();
 
-    Map<String, ModulePath> modulePathMap = CollectionFactory.createMap(myModulePathsToLoad.size());
+    Map<String, ModulePath> modulePathMap = CollectionFactory.createSmallMemoryFootprintMap(myModulePathsToLoad.size());
     for (ModulePath modulePath : myModulePathsToLoad) {
       modulePathMap.put(modulePath.getPath(), modulePath);
     }
@@ -337,7 +337,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
 
     Application app = ApplicationManager.getApplication();
     if (app.isInternal() || app.isEAP() || ApplicationInfo.getInstance().getBuild().isSnapshot()) {
-      Map<String, Module> track = CollectionFactory.createMap();
+      Map<String, Module> track = CollectionFactory.createSmallMemoryFootprintMap();
       for (Module module : moduleModel.getModules()) {
         for (String url : ModuleRootManager.getInstance(module).getContentRootUrls()) {
           Module oldModule = track.put(url, module);
@@ -713,7 +713,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
       myModules.putAll(that.myModules);
       final Map<Module, String[]> groupPath = that.myModuleGroupPath;
       if (groupPath != null){
-        myModuleGroupPath = CollectionFactory.createMap();
+        myModuleGroupPath = CollectionFactory.createSmallMemoryFootprintMap();
         myModuleGroupPath.putAll(that.myModuleGroupPath);
       }
       myIsWritable = true;
@@ -987,7 +987,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     @Override
     public void setModuleGroupPath(@NotNull Module module, String @Nullable("null means remove") [] groupPath) {
       if (myModuleGroupPath == null) {
-        myModuleGroupPath = CollectionFactory.createMap();
+        myModuleGroupPath = CollectionFactory.createSmallMemoryFootprintMap();
       }
       if (groupPath == null) {
         myModuleGroupPath.remove(module);

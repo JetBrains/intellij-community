@@ -15,7 +15,7 @@ import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.io.JsonObjectBuilder
 
 internal class ComponentStateJsonSchemaGenerator : SchemaGenerator {
-  private val pathToStateClass: MutableMap<String, Class<out BaseState>> = CollectionFactory.createMap()
+  private val pathToStateClass: MutableMap<String, Class<out BaseState>> = CollectionFactory.createSmallMemoryFootprintMap()
 
   private val objectSchemaGenerator = OptionClassJsonSchemaGenerator("classDefinitions")
 
@@ -39,7 +39,7 @@ internal class ComponentStateJsonSchemaGenerator : SchemaGenerator {
       return
     }
 
-    val pathToJsonObjectBuilder: MutableMap<String, JsonObjectBuilder> = CollectionFactory.createMap()
+    val pathToJsonObjectBuilder: MutableMap<String, JsonObjectBuilder> = CollectionFactory.createSmallMemoryFootprintMap()
     for (path in pathToStateClass.keys.sorted()) {
       val keys = path.split(".")
       val jsonObjectBuilder: JsonObjectBuilder

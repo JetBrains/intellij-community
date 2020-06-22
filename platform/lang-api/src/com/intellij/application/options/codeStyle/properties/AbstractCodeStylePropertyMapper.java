@@ -29,7 +29,7 @@ public abstract class AbstractCodeStylePropertyMapper {
   }
 
   private Map<String, CodeStylePropertyAccessor<?>> createMap() {
-    Map<String, CodeStylePropertyAccessor<?>> accessorMap = CollectionFactory.createMap();
+    Map<String, CodeStylePropertyAccessor<?>> accessorMap = CollectionFactory.createSmallMemoryFootprintMap();
     for (CodeStyleObjectDescriptor descriptor : getSupportedFields()) {
       addAccessorsFor(accessorMap, descriptor.getCodeStyleObject(), descriptor.getSupportedFields());
     }

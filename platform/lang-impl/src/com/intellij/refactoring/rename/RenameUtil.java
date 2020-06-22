@@ -290,7 +290,7 @@ public final class RenameUtil {
 
   public static void renameNonCodeUsages(@NotNull Project project, NonCodeUsageInfo @NotNull [] usages) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    Map<Document, Int2ObjectOpenHashMap<UsageOffset>> docsToOffsetsMap = CollectionFactory.createMap();
+    Map<Document, Int2ObjectOpenHashMap<UsageOffset>> docsToOffsetsMap = CollectionFactory.createSmallMemoryFootprintMap();
     final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     for (NonCodeUsageInfo usage : usages) {
       PsiElement element = usage.getElement();

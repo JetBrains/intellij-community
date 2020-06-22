@@ -190,7 +190,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
 
   @NotNull
   private Map<Group, GroupWrapper> createGroupNodes(@NotNull Collection<? extends Group> groups) {
-    Map<Group, GroupWrapper> result = CollectionFactory.createMap(groups.size());
+    Map<Group, GroupWrapper> result = CollectionFactory.createSmallMemoryFootprintMap(groups.size());
     for (Group group : groups) {
       result.put(group, createGroupWrapper(getProject(), group, myTreeModel));
     }

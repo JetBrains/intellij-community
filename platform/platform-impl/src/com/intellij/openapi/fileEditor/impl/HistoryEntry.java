@@ -43,7 +43,7 @@ public final class HistoryEntry {
    * can be null when read from XML
    */
   @Nullable private FileEditorProvider mySelectedProvider;
-  @NotNull private final Map<FileEditorProvider, FileEditorState> myProviderToState = CollectionFactory.createMap();
+  @NotNull private final Map<FileEditorProvider, FileEditorState> myProviderToState = CollectionFactory.createSmallMemoryFootprintMap();
 
   @Nullable private final Disposable myDisposable;
 

@@ -37,7 +37,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   private var isDisposed = false
   private val mutex = Any()
   private var sourceFolders = PathPrefixTreeMap<SourceFolderModel>()
-  private var sourceFoldersByModule = CollectionFactory.createMap<String, ModuleModel>()
+  private var sourceFoldersByModule = CollectionFactory.createSmallMemoryFootprintMap<String, ModuleModel>()
 
   override fun addSourceFolder(module: Module, url: String, type: JpsModuleSourceRootType<*>) {
     synchronized(mutex) {
@@ -204,7 +204,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
         return
       }
       sourceFolders = PathPrefixTreeMap()
-      sourceFoldersByModule = CollectionFactory.createMap()
+      sourceFoldersByModule = CollectionFactory.createSmallMemoryFootprintMap()
 
       val moduleManager = ModuleManager.getInstance(project)
 

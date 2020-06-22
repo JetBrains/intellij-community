@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 public final class IndentsModelImpl implements IndentsModel {
-  private final Map<IntPair, IndentGuideDescriptor> myIndentsByLines = CollectionFactory.createMap();
+  private final Map<IntPair, IndentGuideDescriptor> myIndentsByLines = CollectionFactory.createSmallMemoryFootprintMap();
   private List<IndentGuideDescriptor> myIndents = new ArrayList<>();
   @NotNull private final EditorImpl myEditor;
 

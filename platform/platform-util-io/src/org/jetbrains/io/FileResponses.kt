@@ -26,7 +26,7 @@ fun flushChunkedResponse(channel: Channel, isKeepAlive: Boolean) {
 }
 
 private val fileExtToMimeType by lazy {
-  val map = CollectionFactory.createMap<String, String>(1100)
+  val map = CollectionFactory.createSmallMemoryFootprintMap<String, String>(1100)
   FileResponses.javaClass.getResourceAsStream("/mime-types.csv").bufferedReader().useLines {
     for (line in it) {
       if (line.isBlank()) {
