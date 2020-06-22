@@ -22,7 +22,8 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class RedundantRecordConstructorInspectionTest extends LightQuickFixParameterizedTestCase {
+// Remove this test when support of 14-preview is dropped
+public class RedundantRecordConstructorInspection14Test extends LightQuickFixParameterizedTestCase {
 
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
@@ -31,11 +32,11 @@ public class RedundantRecordConstructorInspectionTest extends LightQuickFixParam
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_15;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_14;
   }
 
   @Override
   protected String getBasePath() {
-    return "/inspection/redundantRecordConstructor/";
+    return "/inspection/redundantRecordConstructor/java14";
   }
 }

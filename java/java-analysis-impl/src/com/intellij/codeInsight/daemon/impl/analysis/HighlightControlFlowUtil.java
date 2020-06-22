@@ -240,12 +240,14 @@ public class HighlightControlFlowUtil {
     if (identifier == null) return null;
     PsiMethod canonicalConstructor = JavaPsiRecordUtil.findCanonicalConstructor(aClass);
     if (canonicalConstructor == null || canonicalConstructor instanceof LightRecordCanonicalConstructor) return null;
+    boolean isCompact = JavaPsiRecordUtil.isCompactConstructor(canonicalConstructor);
+    if (isCompact && PsiUtil.getLanguageLevel(aClass) != LanguageLevel.JDK_14_PREVIEW) return null;
     PsiCodeBlock body = canonicalConstructor.getBody();
     if (body == null) return null;
     PsiField field = JavaPsiRecordUtil.getFieldForComponent(component);
     if (field == null) return null;
     if (variableDefinitelyAssignedIn(field, body)) return null;
-    if (JavaPsiRecordUtil.isCompactConstructor(canonicalConstructor) && variableDefinitelyNotAssignedIn(field, body)) return null;
+    if (isCompact && variableDefinitelyNotAssignedIn(field, body)) return null;
     String description = JavaErrorBundle.message("record.component.not.initialized", field.getName());
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(description).create();
   }
@@ -646,7 +648,11 @@ public class HighlightControlFlowUtil {
       PsiField field = (PsiField)variable;
       if (innerClass != null && !containingFile.getManager().areElementsEquivalent(innerClass, field.getContainingClass())) return false;
       final PsiMember enclosingCtrOrInitializer = PsiUtil.findEnclosingConstructorOrInitializer(expression);
-      return enclosingCtrOrInitializer != null && isSameField(enclosingCtrOrInitializer, field, reference, containingFile);
+      return enclosingCtrOrInitializer != null &&
+             !(enclosingCtrOrInitializer instanceof PsiMethod &&
+               JavaPsiRecordUtil.isCompactConstructor((PsiMethod)enclosingCtrOrInitializer) &&
+               PsiUtil.getLanguageLevel(enclosingCtrOrInitializer) != LanguageLevel.JDK_14_PREVIEW) &&
+             isSameField(enclosingCtrOrInitializer, field, reference, containingFile);
     }
     if (variable instanceof PsiLocalVariable) {
       boolean isAccessedFromOtherClass = innerClass != null;
