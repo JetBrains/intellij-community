@@ -18,7 +18,6 @@
 
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.externalSystem</depends>
-  <depends optional="true" config-file="gradle-properties-integration.xml">com.intellij.properties</depends>
 
   <resource-bundle>messages.GradleBundle</resource-bundle>
 
