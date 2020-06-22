@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsNotifier
 import git4idea.branch.GitBranchUiHandlerImpl
 import git4idea.branch.GitBranchUtil
@@ -40,6 +41,39 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
     val dataProvider = e.getRequiredData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
 
     val pullRequestNumber = dataProvider.id.number
+    checkoutOrCreateNew(project, repository, pullRequestNumber, dataProvider)
+  }
+
+  private fun checkoutOrCreateNew(project: Project, repository: GitRepository, pullRequestNumber: Long, dataProvider: GHPRDataProvider) {
+    val httpForkUrl = dataProvider.httpForkUrl
+    val sshForkUrl = dataProvider.sshForkUrl
+    val possibleBranchName = dataProvider.detailsData.loadedDetails?.headRefName
+    val existingRemote = GithubGitHelper.getInstance().findRemote(repository, httpForkUrl, sshForkUrl)
+    if (existingRemote != null) {
+      val localBranch = GithubGitHelper.getInstance().findLocalBranch(repository, existingRemote, dataProvider.isFork, possibleBranchName)
+      if (localBranch != null) {
+        checkoutBranch(project, repository, localBranch, dataProvider)
+        return
+      }
+    }
+    checkoutNewBranch(project, repository, pullRequestNumber, dataProvider)
+  }
+
+  private fun checkoutBranch(project: Project, repository: GitRepository, localBranch: String, dataProvider: GHPRDataProvider) {
+    object : Task.Backgroundable(project, GithubBundle.message("pull.request.branch.checkout.task.title"), true) {
+      private val git = Git.getInstance()
+
+      override fun run(indicator: ProgressIndicator) {
+        ProgressIndicatorUtils.awaitWithCheckCanceled(dataProvider.changesData.fetchHeadBranch(), indicator)
+
+        indicator.text = GithubBundle.message("pull.request.branch.checkout.task.indicator")
+        GitBranchWorker(project, git, GitBranchUiHandlerImpl(project, git, indicator))
+          .checkout(localBranch, false, listOf(repository))
+      }
+    }.queue()
+  }
+
+  private fun checkoutNewBranch(project: Project, repository: GitRepository, pullRequestNumber: Long, dataProvider: GHPRDataProvider) {
     val options = GitBranchUtil.getNewBranchNameFromUser(project, listOf(repository),
                                                          GithubBundle.message("pull.request.branch.checkout.create.dialog.title",
                                                                               pullRequestNumber),
@@ -60,6 +94,7 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
           if (options.setTracking) {
             trySetTrackingUpstreamBranch(git, repository, dataProvider, options.name, ghPullRequest)
           }
+          repository.update()
         }
       }.queue()
     }
@@ -78,6 +113,7 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
           if (options.setTracking) {
             trySetTrackingUpstreamBranch(git, repository, dataProvider, options.name, ghPullRequest)
           }
+          repository.update()
         }
       }.queue()
     }
@@ -153,6 +189,7 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
       remotes.find { it.name == remoteName }
     }
 
+  private val GHPRDataProvider.isFork get() = detailsData.loadedDetails?.headRepository?.isFork ?: false
   private val GHPRDataProvider.httpForkUrl get() = detailsData.loadedDetails?.headRepository?.url
   private val GHPRDataProvider.sshForkUrl get() = detailsData.loadedDetails?.headRepository?.sshUrl
 }
