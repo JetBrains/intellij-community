@@ -364,7 +364,9 @@ internal class WorkspaceEntityStorageBuilderImpl(
             val children = this.refs.getChildrenRefsOfParentBy(pid)
 
             updatePersistentIdIndexes(clonedEntity.createEntity(this), persistentIdBefore, clonedEntity)
-            replaceWith.indexes.virtualFileIndex.getVirtualFiles(oldPid)?.forEach { this.indexes.virtualFileIndex.index(pid, listOf(it)) }
+            replaceWith.indexes.virtualFileIndex.getVirtualFilesPerProperty(oldPid)?.forEach {
+              this.indexes.virtualFileIndex.index(pid, it.second, listOf(it.first))
+            }
             replaceWith.indexes.entitySourceIndex.getEntryById(oldPid)?.also { this.indexes.entitySourceIndex.index(pid, it) }
 
             updateChangeLog { it.add(ChangeEntry.ReplaceEntity(clonedEntity, emptyList(), emptyList(), emptyMap())) }
@@ -379,7 +381,9 @@ internal class WorkspaceEntityStorageBuilderImpl(
           val newPid = newEntity.createPid()
           replaceMap[newPid] = oldPid
 
-          replaceWith.indexes.virtualFileIndex.getVirtualFiles(oldPid)?.forEach { this.indexes.virtualFileIndex.index(newPid, listOf(it)) }
+          replaceWith.indexes.virtualFileIndex.getVirtualFilesPerProperty(oldPid)?.forEach {
+            this.indexes.virtualFileIndex.index(newPid, it.second, listOf(it.first))
+          }
           replaceWith.indexes.entitySourceIndex.getEntryById(oldPid)?.also { this.indexes.entitySourceIndex.index(newPid, it) }
           replaceWith.indexes.persistentIdIndex.getEntryById(oldPid)?.also { this.indexes.persistentIdIndex.index(newPid, it) }
           if (newEntity is SoftLinkable) indexes.updateSoftLinksIndex(newEntity)

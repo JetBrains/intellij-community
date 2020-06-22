@@ -15,25 +15,32 @@ import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 
 open class VirtualFileIndex private constructor(
-  internal open val index: BidirectionalMultiMap<VirtualFileUrl, EntityId>
+  internal open val index: BidirectionalMultiMap<Pair<VirtualFileUrl, String>, EntityId>
 ) {
-  constructor() : this(BidirectionalMultiMap<VirtualFileUrl, EntityId>())
+  constructor() : this(BidirectionalMultiMap<Pair<VirtualFileUrl, String>, EntityId>())
 
   internal fun getVirtualFiles(id: EntityId): Set<VirtualFileUrl>? =
+    index.getKeys(id).asSequence().map { it.first }.toSet()
+
+  internal fun getVirtualFilesPerProperty(id: EntityId): Set<Pair<VirtualFileUrl, String>>? =
     index.getKeys(id)
 
   class MutableVirtualFileIndex private constructor(
     // Do not write to [index] directly! Create a method in this index and call [startWrite] before write.
-    override var index: BidirectionalMultiMap<VirtualFileUrl, EntityId>
+    override var index: BidirectionalMultiMap<Pair<VirtualFileUrl, String>, EntityId>
   ) : VirtualFileIndex(index) {
 
     private var freezed = true
 
-    internal fun index(id: EntityId, virtualFileUrls: List<VirtualFileUrl>? = null) {
+    internal fun index(id: EntityId, propertyName: String? = null, virtualFileUrls: List<VirtualFileUrl>? = null) {
       startWrite()
-      index.removeValue(id)
+      if (propertyName == null) {
+        index.removeValue(id)
+        return
+      }
+      index.getKeys(id).forEach { if (it.second == propertyName) index.remove(it, id) }
       if (virtualFileUrls == null) return
-      virtualFileUrls.forEach { index.put(it, id) }
+      virtualFileUrls.forEach { index.put(it to propertyName, id) }
     }
 
     @TestOnly
@@ -54,7 +61,7 @@ open class VirtualFileIndex private constructor(
       index = copyIndex()
     }
 
-    private fun copyIndex(): BidirectionalMultiMap<VirtualFileUrl, EntityId> = index.copy()
+    private fun copyIndex(): BidirectionalMultiMap<Pair<VirtualFileUrl, String>, EntityId> = index.copy()
 
     fun toImmutable(): VirtualFileIndex {
       freezed = true
@@ -81,7 +88,7 @@ class VirtualFileUrlProperty<T : ModifiableWorkspaceEntityBase<out WorkspaceEnti
     val field = thisRef.original.javaClass.getDeclaredField(property.name)
     field.isAccessible = true
     field.set(thisRef.original, value)
-    thisRef.diff.indexes.virtualFileIndex.index(thisRef.id, listOf(value))
+    thisRef.diff.indexes.virtualFileIndex.index(thisRef.id, property.name, listOf(value))
   }
 }
 
@@ -99,7 +106,7 @@ class VirtualFileUrlNullableProperty<T : ModifiableWorkspaceEntityBase<out Works
     val field = thisRef.original.javaClass.getDeclaredField(property.name)
     field.isAccessible = true
     field.set(thisRef.original, value)
-    thisRef.diff.indexes.virtualFileIndex.index(thisRef.id, value?.let { listOf(value) })
+    thisRef.diff.indexes.virtualFileIndex.index(thisRef.id, property.name, value?.let { listOf(value) })
   }
 }
 
@@ -117,6 +124,6 @@ class VirtualFileUrlListProperty<T : ModifiableWorkspaceEntityBase<out Workspace
     val field = thisRef.original.javaClass.getDeclaredField(property.name)
     field.isAccessible = true
     field.set(thisRef.original, value)
-    thisRef.diff.indexes.virtualFileIndex.index(thisRef.id, value)
+    thisRef.diff.indexes.virtualFileIndex.index(thisRef.id, property.name, value)
   }
 }

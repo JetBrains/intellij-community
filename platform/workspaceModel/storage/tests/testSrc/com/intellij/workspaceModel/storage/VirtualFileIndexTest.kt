@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.idea.Bombed
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.entities.*
@@ -12,7 +11,6 @@ import com.intellij.workspaceModel.storage.entities.addVFUEntity
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
-import java.util.*
 
 class VirtualFileIndexTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
@@ -58,7 +56,6 @@ class VirtualFileIndexTest {
   }
 
   @Test
-  @Bombed(year = 2020, month = Calendar.JUNE, day = 20, user = "Mikhail Mazurkevich")
   fun `add entity with two properties`() {
     val fileUrl = "/user/opt/app/a.txt"
     val secondUrl = "/user/opt/app/b.txt"

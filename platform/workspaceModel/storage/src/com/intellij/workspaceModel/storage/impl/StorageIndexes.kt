@@ -126,7 +126,9 @@ internal class MutableStorageIndexes(
   }
 
   fun updateIndices(oldEntityId: EntityId, newEntityId: EntityId, builder: AbstractEntityStorage) {
-    builder.indexes.virtualFileIndex.getVirtualFiles(oldEntityId)?.forEach { virtualFileIndex.index(newEntityId, listOf(it)) }
+    builder.indexes.virtualFileIndex.getVirtualFilesPerProperty(oldEntityId)?.forEach {
+      virtualFileIndex.index(newEntityId, it.second, listOf(it.first))
+    }
     builder.indexes.entitySourceIndex.getEntryById(oldEntityId)?.also { entitySourceIndex.index(newEntityId, it) }
     builder.indexes.persistentIdIndex.getEntryById(oldEntityId)?.also { persistentIdIndex.index(newEntityId, it) }
   }
