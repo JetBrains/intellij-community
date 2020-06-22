@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.templateLanguages;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,5 +28,12 @@ public class TemplateDataModifications {
 
   public void addRangeToRemove(int startOffset, @NotNull CharSequence textToInsert) {
     myOuterAndRemoveRanges.add(new RangeCollectorImpl.RangeToRemove(startOffset, textToInsert));
+  }
+
+  @TestOnly
+  public @NotNull Pair<CharSequence, TemplateDataElementType.RangeCollector> applyToText(@NotNull CharSequence text,
+                                                                                         @NotNull TemplateDataElementType anyType) {
+    RangeCollectorImpl collector = new RangeCollectorImpl(anyType);
+    return Pair.create(collector.applyTemplateDataModifications(text, this), collector);
   }
 }
