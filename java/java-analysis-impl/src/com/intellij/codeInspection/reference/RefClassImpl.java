@@ -150,8 +150,9 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     if (inheritsFrom(psiClass, refManager.getAndroidActivity())
       || inheritsFrom(psiClass, refManager.getAndroidService())
       || inheritsFrom(psiClass, refManager.getAndroidView())
-      || inheritsFrom(psiClass, refManager.getAndroidFragment(false))
-      || inheritsFrom(psiClass, refManager.getAndroidFragment(true))
+      || inheritsFrom(psiClass, refManager.getAndroidFragment(false, false))  // Android Studio: b/141019879
+      || inheritsFrom(psiClass, refManager.getAndroidFragment(false, true))  // Android Studio: b/141019879
+      || inheritsFrom(psiClass, refManager.getAndroidFragment(true, false))  // Android Studio: b/141019879
       || inheritsFrom(psiClass, refManager.getAndroidReceiver())
       || inheritsFrom(psiClass, refManager.getAndroidContentProvider())
       || inheritsFrom(psiClass, refManager.getAndroidParcelable())

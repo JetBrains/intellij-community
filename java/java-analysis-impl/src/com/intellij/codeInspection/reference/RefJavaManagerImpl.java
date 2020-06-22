@@ -60,6 +60,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
   private final PsiClass myAndroidService;
   private final PsiClass myAndroidBackupAgent;
   private final PsiClass myAndroidFragment;
+  private final PsiClass myAndroidxFragment;  // Android Studio: b/141019879
   private final PsiClass myAndroidV4Fragment;
   private final PsiClass myAndroidContentProvider;
   private final PsiClass myAndroidReceiver;
@@ -90,6 +91,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
     myAndroidActivity = psiFacade.findClass("android.app.Activity", scope);
     myAndroidService = psiFacade.findClass("android.app.Service", scope);
     myAndroidFragment = psiFacade.findClass("android.app.Fragment", scope);
+    myAndroidxFragment = psiFacade.findClass("androidx.fragment.app.Fragment", scope);  // Android Studio: b/141019879
     myAndroidV4Fragment = psiFacade.findClass("android.support.v4.app.Fragment", scope);
     myAndroidContentProvider = psiFacade.findClass("android.content.ContentProvider", scope);
     myAndroidReceiver = psiFacade.findClass("android.content.BroadcastReceiver", scope);
@@ -242,8 +244,8 @@ public class RefJavaManagerImpl extends RefJavaManager {
   }
 
   @Override
-  public PsiClass getAndroidFragment(boolean support) {
-    return support ? myAndroidV4Fragment : myAndroidFragment;
+  public PsiClass getAndroidFragment(boolean support, boolean androidx) {  // Android Studio: b/141019879
+    return support ? androidx ? myAndroidxFragment : myAndroidV4Fragment : myAndroidFragment;  // Android Studio: b/141019879
   }
 
   @Override

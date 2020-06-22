@@ -76,7 +76,7 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
   public abstract PsiClass getAndroidBackupAgent();
   public abstract PsiClass getAndroidContentProvider();
   public abstract PsiClass getAndroidReceiver();
-  public abstract PsiClass getAndroidFragment(boolean support);
+  public abstract PsiClass getAndroidFragment(boolean support, boolean androidx);  // Android Studio: b/141019879
   public abstract PsiClass getAndroidActionProvider();
   public abstract PsiClass getAndroidParcelable();
 

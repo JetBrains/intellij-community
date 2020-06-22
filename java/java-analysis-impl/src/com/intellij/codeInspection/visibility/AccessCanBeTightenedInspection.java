@@ -127,6 +127,16 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
           cls = (PsiClass) member;
         }
         while (cls != null) {
+          // Android Studio: b/141019879
+          PsiReferenceList implementsList = cls.getImplementsList();
+          if (implementsList != null) {
+            for (PsiJavaCodeReferenceElement impl : implementsList.getReferenceElements()) {
+              if ("Parcelable".equals(impl.getReferenceName())
+                  && impl.getQualifiedName().equals("android.os.Parcelable")) {
+                return;
+              }
+            }
+          }
           String name = cls.getQualifiedName();
           if (name != null) {
             // Unfortunately there isn't an authoritative list somewhere; this lists
@@ -135,11 +145,12 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
             if ("android.content.Context".equals(name) ||
                 "android.app.Fragment".equals(name) ||
                 "android.support.v4.app.Fragment".equals(name) ||
+                "androidx.fragment.app.Fragment".equals(name) ||  // Android Studio: b/141019879
                 "android.view.View".equals(name) ||
                 "android.content.ContentProvider".equals(name) ||
                 "android.content.BroadcastReceiver".equals(name) ||
                 "android.view.ActionProvider".equals(name) ||
-                "android.os.Parcelable".equals(name)) {
+                "android.app.backup.BackupAgent".equals(name)) {  // Android Studio: b/141019879
               return;
             }
           }
