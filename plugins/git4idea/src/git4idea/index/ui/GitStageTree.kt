@@ -23,7 +23,6 @@ import git4idea.index.GitFileStatus
 import git4idea.index.GitStageTracker
 import git4idea.index.isRenamed
 import git4idea.index.ui.NodeKind.Companion.sortOrder
-import git4idea.index.vfs.GitIndexVirtualFile
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
@@ -171,11 +170,14 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
         renderer.append(VcsBundle.message("changes.nodetitle.merge.conflicts.resolve.link.label"),
                         SimpleTextAttributes.LINK_BOLD_ATTRIBUTES,
                         Runnable {
-                          val conflictedFiles = getObjectsUnderStream(GitFileStatusNode::class.java).map { it.filePath.virtualFile }.filter { it != null }.toList()
+                          val conflictedFiles = getObjectsUnderStream(GitFileStatusNode::class.java).map {
+                            it.filePath.virtualFile
+                          }.filter { it != null }.toList()
                           AbstractVcsHelper.getInstance(project).showMergeDialog(conflictedFiles)
                         })
         appendCount(renderer)
-      } else {
+      }
+      else {
         super.render(renderer, selected, expanded, hasFocus)
       }
     }
@@ -243,5 +245,3 @@ data class GitFileStatusNode(val root: VirtualFile, val status: GitFileStatus, v
     return "GitFileStatusNode.Saved(root=$root, status=$fileStatus, kind=$kind)"
   }
 }
-
-private fun VirtualFile.kind() = if (this is GitIndexVirtualFile) NodeKind.STAGED else NodeKind.UNSTAGED
