@@ -200,6 +200,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     JPanel controls = new JPanel(new BorderLayout());
     controls.add(actionToolbar("IdeErrorsBack", new BackAction()), BorderLayout.WEST);
     controls.add(actionToolbar("IdeErrorsForward", new ForwardAction()), BorderLayout.EAST);
+    Dimension controlsDimension = new Dimension(100, 46);
+    controls.setMaximumSize(controlsDimension);
+    controls.setPreferredSize(controlsDimension);
+    controls.setMinimumSize(controlsDimension);
 
     JPanel panel = new JPanel(new GridBagLayout());
     panel.add(controls, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, NORTH, NONE, JBUI.emptyInsets(), 0, 0));
