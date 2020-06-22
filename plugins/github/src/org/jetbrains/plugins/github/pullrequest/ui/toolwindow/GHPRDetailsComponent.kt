@@ -15,6 +15,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRBranchesModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDirectionPanel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanelFactory
@@ -25,9 +26,10 @@ import javax.swing.JPanel
 internal object GHPRDetailsComponent {
 
   fun create(detailsModel: GHPRDetailsModel,
+             branchesModel: GHPRBranchesModel,
              avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory): JComponent {
 
-    val metaPanel = createPanel(detailsModel, avatarIconsProviderFactory).apply {
+    val metaPanel = createPanel(detailsModel, branchesModel, avatarIconsProviderFactory).apply {
       border = JBUI.Borders.empty(8)
     }
 
@@ -46,26 +48,32 @@ internal object GHPRDetailsComponent {
     }
   }
 
-  private fun createPanel(model: GHPRDetailsModel, avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory): JComponent {
+  private fun createPanel(detailsModel: GHPRDetailsModel,
+                          branchesModel: GHPRBranchesModel,
+                          avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory): JComponent {
     val panel = JPanel(VerticalLayout(UI.scale(8))).apply {
       isOpaque = false
     }
     val directionPanel = GHPRDirectionPanel()
-    val metadataPanel = GHPRMetadataPanelFactory(model, avatarIconsProviderFactory).create()
+    val metadataPanel = GHPRMetadataPanelFactory(detailsModel, avatarIconsProviderFactory).create()
     val timelineLink = LinkLabel<Any>(GithubBundle.message("pull.request.view.conversations.action"), null) { label, _ ->
       val action = ActionManager.getInstance().getAction("Github.PullRequest.Timeline.Show") ?: return@LinkLabel
       ActionUtil.invokeAction(action, label, ActionPlaces.UNKNOWN, null, null)
     }
 
     with(panel) {
-      add(GHPRTitleComponent.create(model))
+      add(GHPRTitleComponent.create(detailsModel))
       add(directionPanel)
       add(metadataPanel, VerticalLayout.FILL_HORIZONTAL)
       add(timelineLink)
     }
 
-    model.addAndInvokeDetailsChangedListener {
-      directionPanel.direction = model.headBranch to model.baseBranch
+    detailsModel.addAndInvokeDetailsChangedListener {
+      directionPanel.direction = branchesModel.headBranch to branchesModel.baseBranch
+    }
+
+    branchesModel.addAndInvokeChangeListener {
+      directionPanel.updateBranchActionsToolbar(branchesModel)
     }
 
     return panel

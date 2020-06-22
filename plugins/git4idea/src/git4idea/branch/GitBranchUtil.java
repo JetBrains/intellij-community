@@ -22,6 +22,7 @@ import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
+import git4idea.ui.branch.GitBranchActionsUtilKt;
 import git4idea.ui.branch.GitMultiRootBranchConfig;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -382,5 +383,11 @@ public final class GitBranchUtil {
    */
   public static boolean equalBranches(@Nullable @NonNls String branchA, @Nullable @NonNls String branchB) {
     return StringUtilRt.equal(branchA, branchB, SystemInfo.isFileSystemCaseSensitive);
+  }
+
+  public static void updateBranches(@NotNull Project project,
+                                    @NotNull List<? extends GitRepository> repositories,
+                                    @NotNull List<String> localBranchNames) {
+    GitBranchActionsUtilKt.updateBranches(project, repositories, localBranchNames);
   }
 }

@@ -44,6 +44,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelper
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelperImpl
+import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRBranchesModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRCommitsBrowserComponent.COMMITS_LIST_KEY
 import org.jetbrains.plugins.github.ui.HtmlInfoPanel
@@ -65,7 +66,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                         private val dataContext: GHPRDataContext,
                                         private val viewController: GHPRToolWindowTabComponentController,
                                         pullRequest: GHPRIdentifier,
-                                        disposable: Disposable) {
+                                        private val disposable: Disposable) {
   private val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, disposable)
 
   private val diffHelper = GHPRChangesDiffHelperImpl(project, dataProvider,
@@ -246,7 +247,12 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                               dataContext.securityService,
                                               dataContext.repositoryDataService,
                                               dataProvider.detailsData)
-      GHPRDetailsComponent.create(detailsModel, dataContext.avatarIconsProviderFactory)
+
+      val branchesModel = GHPRBranchesModelImpl(model,
+                                                dataProvider.detailsData,
+                                                dataContext.gitRemoteCoordinates.repository,
+                                                disposable)
+      GHPRDetailsComponent.create(detailsModel, branchesModel, dataContext.avatarIconsProviderFactory)
     }.also {
       reloadDetailsAction.registerCustomShortcutSet(it, uiDisposable)
     }
