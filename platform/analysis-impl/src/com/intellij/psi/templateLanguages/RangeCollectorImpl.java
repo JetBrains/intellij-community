@@ -394,6 +394,23 @@ class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
     CharSequence chars = chameleon.getChars();
     if (myOuterAndRemoveRanges.isEmpty()) return parser.apply(chars);
 
+    StringBuilder stringBuilder = applyOuterAndRemoveRanges(chars);
+
+    OuterLanguageRangePatcher outerLanguageRangePatcher = OuterLanguageRangePatcher.EXTENSION.forLanguage(language);
+    if (outerLanguageRangePatcher != null) {
+      insertDummyStringIntoInsertionRanges(outerLanguageRangePatcher, chars, stringBuilder);
+    }
+
+    ASTNode root = parser.apply(stringBuilder.toString());
+    DebugUtil.performPsiModification("lazy parseable outer elements insertion", () -> {
+      insertOuterElementsAndRemoveRanges((TreeElement)root, chars, SharedImplUtil.findCharTableByTree(chameleon), language);
+    });
+
+    return root;
+  }
+
+  @NotNull
+  private StringBuilder applyOuterAndRemoveRanges(CharSequence chars) {
     StringBuilder stringBuilder = new StringBuilder(chars);
     int shift = 0;
     for (TextRange outerElementRange : myOuterAndRemoveRanges) {
@@ -410,18 +427,7 @@ class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
         shift -= outerElementRange.getLength();
       }
     }
-
-    OuterLanguageRangePatcher outerLanguageRangePatcher = OuterLanguageRangePatcher.EXTENSION.forLanguage(language);
-    if (outerLanguageRangePatcher != null) {
-      insertDummyStringIntoInsertionRanges(outerLanguageRangePatcher, chars, stringBuilder);
-    }
-
-    ASTNode root = parser.apply(stringBuilder.toString());
-    DebugUtil.performPsiModification("lazy parseable outer elements insertion", () -> {
-      insertOuterElementsAndRemoveRanges((TreeElement)root, chars, SharedImplUtil.findCharTableByTree(chameleon), language);
-    });
-
-    return root;
+    return stringBuilder;
   }
 
   /**
@@ -441,19 +447,39 @@ class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
     return newLeaf;
   }
 
+  @NotNull CharSequence applyTemplateDataModifications(@NotNull CharSequence sourceCode, @NotNull TemplateDataModifications modifications) {
+    assert myOuterAndRemoveRanges.isEmpty();
+    List<TextRange> ranges = modifications.myOuterAndRemoveRanges;
+    if (ranges.isEmpty()) return sourceCode;
+    for (TextRange range : ranges) {
+      if (range instanceof RangeToRemove) {
+        if (range.isEmpty()) continue;
+        assertRangeOrder(range);
+        CharSequence textToRemove = ((RangeToRemove)range).myTextToRemove;
+        assert textToRemove != null;
+        myOuterAndRemoveRanges.add(new RangeToRemove(range.getStartOffset(), textToRemove));
+      }
+      else {
+        addOuterRange(range, range instanceof InsertionRange);
+      }
+    }
 
-  private final static class RangeToRemove extends TextRange {
+    return applyOuterAndRemoveRanges(sourceCode);
+  }
+
+
+  final static class RangeToRemove extends TextRange {
     /**
      * We need this text to propagate dummy strings through lazy parseables. If this text is null, dummy identifier won't be propagated.
      */
     public final @Nullable CharSequence myTextToRemove;
 
-    private RangeToRemove(int startOffset, @NotNull CharSequence text) {
+    RangeToRemove(int startOffset, @NotNull CharSequence text) {
       super(startOffset, startOffset + text.length());
       myTextToRemove = text;
     }
 
-    private RangeToRemove(int startOffset, int endOffset) {
+    RangeToRemove(int startOffset, int endOffset) {
       super(startOffset, endOffset);
       myTextToRemove = null;
     }
@@ -472,9 +498,9 @@ class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
     }
   }
 
-  private static final class InsertionRange extends TextRange {
+  static final class InsertionRange extends TextRange {
 
-    private InsertionRange(int startOffset, int endOffset) {
+    InsertionRange(int startOffset, int endOffset) {
       super(startOffset, endOffset);
     }
 

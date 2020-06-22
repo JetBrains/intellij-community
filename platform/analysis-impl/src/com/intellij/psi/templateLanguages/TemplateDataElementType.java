@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.ILazyParseableElementTypeBase;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.CharTable;
 import com.intellij.util.LocalTimeCounter;
@@ -118,7 +119,9 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
 
   /**
    * Creates source code without template tokens. May add additional pieces of code.
-   * Ranges of such additions should be added in rangeCollector using {@link RangeCollector#addRangeToRemove(TextRange)}for later removal from the resulting tree
+   * Ranges of such additions should be added in rangeCollector using {@link RangeCollector#addRangeToRemove(TextRange)}
+   * for later removal from the resulting tree.
+   * Consider overriding {@link #createTemplateText(CharSequence, Lexer)} instead.
    *
    * @param sourceCode     source code with base and template languages
    * @param baseLexer      base language lexer
@@ -128,6 +131,27 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   protected CharSequence createTemplateText(@NotNull CharSequence sourceCode,
                                             @NotNull Lexer baseLexer,
                                             @NotNull TemplateDataElementType.RangeCollector rangeCollector) {
+    if (requiresOldCreateTemplateText()) {
+      return oldCreateTemplateText(sourceCode, baseLexer, rangeCollector);
+    }
+
+    TemplateDataModifications modifications = createTemplateText(sourceCode, baseLexer);
+    return ((RangeCollectorImpl)rangeCollector).applyTemplateDataModifications(sourceCode, modifications);
+  }
+
+  private boolean requiresOldCreateTemplateText() {
+    try {
+      getClass().getDeclaredMethod("appendCurrentTemplateToken", StringBuilder.class, CharSequence.class, Lexer.class, RangeCollector.class);
+    }
+    catch (NoSuchMethodException e) {
+      return false;
+    }
+    return true;
+  }
+
+  private CharSequence oldCreateTemplateText(@NotNull CharSequence sourceCode,
+                                             @NotNull Lexer baseLexer,
+                                             @NotNull RangeCollector rangeCollector) {
     StringBuilder result = new StringBuilder(sourceCode.length());
     baseLexer.start(sourceCode);
 
@@ -150,16 +174,67 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     return result;
   }
 
+  /**
+   * Collects changes to apply to template source code for later parsing by underlying language.
+   *
+   * @param sourceCode     source code with base and template languages
+   * @param baseLexer      base language lexer
+   */
+  protected @NotNull TemplateDataModifications createTemplateText(@NotNull CharSequence sourceCode, @NotNull Lexer baseLexer) {
+    TemplateDataModifications modifications = new TemplateDataModifications();
+    baseLexer.start(sourceCode);
+    TextRange currentRange = TextRange.EMPTY_RANGE;
+    while (baseLexer.getTokenType() != null) {
+      TextRange newRange = TextRange.create(baseLexer.getTokenStart(), baseLexer.getTokenEnd());
+      assert currentRange.getEndOffset() == newRange.getStartOffset() :
+        "Inconsistent tokens stream from " + baseLexer +
+        ": " + getRangeDump(currentRange, sourceCode) + " followed by " + getRangeDump(newRange, sourceCode);
+      currentRange = newRange;
+      if (baseLexer.getTokenType() == myTemplateElementType) {
+        appendCurrentTemplateToken(baseLexer, modifications);
+      }
+      else {
+        modifications.addOuterRange(currentRange, getTemplateDataInsertionTokens().contains(baseLexer.getTokenType()));
+      }
+      baseLexer.advance();
+    }
+
+    return modifications;
+  }
+
+
   @NotNull
   private static String getRangeDump(@NotNull TextRange range, @NotNull CharSequence sequence) {
     return "'" + StringUtil.escapeLineBreak(range.subSequence(sequence).toString()) + "' " + range;
   }
 
+  /**
+   * @deprecated Override {@link #appendCurrentTemplateToken(Lexer, TemplateDataModifications)} instead.
+   */
+  @Deprecated
   protected void appendCurrentTemplateToken(@NotNull StringBuilder result,
                                             @NotNull CharSequence buf,
                                             @NotNull Lexer lexer,
                                             @NotNull TemplateDataElementType.RangeCollector collector) {
     result.append(buf, lexer.getTokenStart(), lexer.getTokenEnd());
+  }
+
+  protected void appendCurrentTemplateToken(@NotNull Lexer lexer, @NotNull TemplateDataModifications modifications) {
+  }
+
+  /**
+   * Returns token types of template elements which are expected to insert some strings into resulting file.
+   * It's fine to include only starting token of the whole insertion range. For example, if
+   * <code><?=$myVar?></code> has three tokens <code><?=</code>, <code>$myVar</code> and <code>?></code>, only type of <code><?=</code>
+   * may be included. Moreover, other tokens shouldn't be included if they can be a part of a non-insertion range like
+   * <code><?$myVar?></code>.
+   *
+   * Override this method when overriding {@link #createTemplateText(CharSequence, Lexer)} is not required.
+   *
+   * @see RangeCollector#addOuterRange(TextRange, boolean)
+   */
+  protected @NotNull TokenSet getTemplateDataInsertionTokens() {
+    return TokenSet.EMPTY;
   }
 
   protected OuterLanguageElementImpl createOuterLanguageElement(@NotNull CharSequence internedTokenText,
