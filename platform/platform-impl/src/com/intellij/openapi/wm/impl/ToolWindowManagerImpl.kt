@@ -387,7 +387,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           return@processDescriptors
         }
 
-        val factory = bean.getToolWindowFactory(pluginDescriptor)
+        val factory = bean.getToolWindowFactory(pluginDescriptor) ?: return@processDescriptors
         if (!factory.isApplicable(project)) {
           return@processDescriptors
         }
@@ -437,7 +437,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       }
 
       for (bean in supplier.get().getTasks(project)) {
-        val factory = bean.getToolWindowFactory(pluginDescriptor)
+        val factory = bean.getToolWindowFactory(pluginDescriptor) ?: continue
         if (factory.isApplicable(project)) {
           list.add(beanToTask(bean, factory, pluginDescriptor))
         }
@@ -518,7 +518,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       return
     }
 
-    val factory = bean.getToolWindowFactory(bean.pluginDescriptor)
+    val factory = bean.getToolWindowFactory(bean.pluginDescriptor) ?: return
     if (!factory.isApplicable(project)) {
       return
     }
