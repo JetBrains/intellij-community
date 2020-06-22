@@ -38,7 +38,7 @@ open class VirtualFileIndex private constructor(
         index.removeValue(id)
         return
       }
-      index.getKeys(id).forEach { if (it.second == propertyName) index.remove(it, id) }
+      index.getKeys(id).filter { it.second == propertyName }.forEach { index.remove(it, id) }
       if (virtualFileUrls == null) return
       virtualFileUrls.forEach { index.put(it to propertyName, id) }
     }
