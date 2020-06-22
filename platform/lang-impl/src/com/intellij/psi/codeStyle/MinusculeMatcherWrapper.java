@@ -14,6 +14,26 @@ public abstract class MinusculeMatcherWrapper extends MinusculeMatcher {
   }
 
   @Override
+  public boolean matches(@NotNull String name) {
+    return myDelegate.matches(name);
+  }
+
+  @Override
+  public int matchingDegree(@NotNull String name, boolean valueStartCaseMatch) {
+    return myDelegate.matchingDegree(name, valueStartCaseMatch);
+  }
+
+  @Override
+  public int matchingDegree(@NotNull String name) {
+    return myDelegate.matchingDegree(name);
+  }
+
+  @Override
+  public boolean isStartMatch(@NotNull String name) {
+    return myDelegate.isStartMatch(name);
+  }
+
+  @Override
   @NotNull
   public String getPattern() {
     return myDelegate.getPattern();
