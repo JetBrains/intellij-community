@@ -2,6 +2,7 @@
 package com.intellij.notification.impl;
 
 import com.intellij.codeInsight.hint.TooltipController;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
@@ -79,29 +80,15 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   public static final Color BORDER_COLOR = JBColor.namedColor("Notification.borderColor", new JBColor(Gray._178.withAlpha(205), new Color(86, 90, 92, 205)));
 
   private final List<Notification> myEarlyNotifications = new ArrayList<>();
-  private boolean myUiReady = false;
 
   public NotificationsManagerImpl() {
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosed(@NotNull Project project) {
         for (Notification notification : getNotificationsOfType(Notification.class, project)) {
           notification.hideBalloon();
         }
         TooltipController.getInstance().resetCurrent();
-      }
-    });
-    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
-      @Override
-      public void appStarting(@Nullable Project projectFromCommandLine) {
-        GuiUtils.invokeLaterIfNeeded(() -> {
-          myUiReady = true;
-          if (!myEarlyNotifications.isEmpty()) {
-            myEarlyNotifications.forEach(notification -> showNotification(notification, null));
-            myEarlyNotifications.clear();
-          }
-        }, ModalityState.any(), ApplicationManager.getApplication().getDisposed());
       }
     });
   }
@@ -159,10 +146,36 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   }
 
   @CalledInAwt
+  private void dispatchEarlyNotifications() {
+    List<Notification> copy = new ArrayList<>(myEarlyNotifications);
+    myEarlyNotifications.clear();
+    copy.forEach(early -> showNotification(early, null));
+  }
+
+  @CalledInAwt
   private void showNotification(Notification notification, @Nullable Project project) {
-    if (!myUiReady) {
+    if (!LoadingState.APP_STARTED.isOccurred()) {
       myEarlyNotifications.add(notification);
+
+      if (myEarlyNotifications.size() == 1) {
+        MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+        connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+          @Override
+          public void appStarted() {
+            assert LoadingState.APP_STARTED.isOccurred();
+            GuiUtils.invokeLaterIfNeeded(() -> dispatchEarlyNotifications(), ModalityState.any(), ApplicationManager.getApplication().getDisposed());
+            connection.disconnect();
+          }
+        });
+      }
+
       return;
+    }
+
+    if (!myEarlyNotifications.isEmpty()) {
+      // may happen if the "appStarted" event is fired after an early notification is collected but before a listener is subscribed
+      ApplicationManager.getApplication().invokeLater(
+        () -> dispatchEarlyNotifications(), ModalityState.any(), ApplicationManager.getApplication().getDisposed());
     }
 
     String groupId = notification.getGroupId();

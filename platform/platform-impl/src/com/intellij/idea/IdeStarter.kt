@@ -94,13 +94,13 @@ open class IdeStarter : ApplicationStarter {
       System.setProperty("jbre.popupwindow.settype", "true")
     }
 
+    val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
     val isStandaloneLightEdit = PlatformUtils.getPlatformPrefix() == "LightEdit"
     val needToOpenProject: Boolean
     if (isStandaloneLightEdit) {
       needToOpenProject = true
     }
     else {
-      val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
       frameInitActivity.runChild("app frame created callback") {
         lifecyclePublisher.appFrameCreated(args)
       }
@@ -128,7 +128,7 @@ open class IdeStarter : ApplicationStarter {
       else -> null
     }
 
-    app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).appStarting(project)
+    lifecyclePublisher.appStarting(project)
 
     if (needToOpenProject && project == null && !JetBrainsProtocolHandler.appStartedWithCommand()) {
       val recentProjectManager = RecentProjectsManager.getInstance()
@@ -157,6 +157,7 @@ open class IdeStarter : ApplicationStarter {
     }
 
     StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_STARTED)
+    lifecyclePublisher.appStarted()
 
     if (PluginManagerCore.isRunningFromSources() && !app.isHeadlessEnvironment) {
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())

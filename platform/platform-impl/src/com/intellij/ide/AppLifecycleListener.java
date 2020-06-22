@@ -40,6 +40,12 @@ public interface AppLifecycleListener {
   default void appStarting(@Nullable Project projectFromCommandLine) { }
 
   /**
+   * Called after all application startup tasks, including opening projects, are processed (i.e. either completed or running in background).
+   */
+  @ApiStatus.Internal
+  default void appStarted() { }
+
+  /**
    * Called when a project frame is closed.
    */
   default void projectFrameClosed() { }
