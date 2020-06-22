@@ -17,6 +17,7 @@ import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
@@ -363,6 +364,13 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   public void setSwingInspectorEnabled(boolean value) {
     getOptions().setSwingInspectorEnabled(value);
+  }
+
+  @Override
+  public boolean isDefaultModuleSet() {
+    if (super.isDefaultModuleSet()) return true;
+    PsiClass mainClass = getMainClass();
+    return mainClass != null && ModuleUtilCore.findModuleForPsiElement(mainClass) == getConfigurationModule().getModule();
   }
 
   public static class JavaApplicationCommandLineState<T extends ApplicationConfiguration> extends ApplicationCommandLineState<T> {
