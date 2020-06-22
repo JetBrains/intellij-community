@@ -1396,7 +1396,7 @@
                      implementationClass="com.siyeh.ig.junit.IgnoredJUnitTestInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="JUnit3StyleTestMethodInJUnit4Class" bundle="messages.InspectionGadgetsBundle"
                      key="junit3.style.test.method.in.junit4.class.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.JUnit3StyleTestMethodInJUnit4ClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="JUnit4AnnotatedMethodInJUnit3TestCase" bundle="messages.InspectionGadgetsBundle"
                      key="junit4.test.method.in.class.extending.junit3.testcase.display.name" groupBundle="messages.InspectionsBundle"
