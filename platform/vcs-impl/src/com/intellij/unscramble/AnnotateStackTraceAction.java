@@ -36,6 +36,7 @@ import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -64,7 +65,7 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    ConsoleViewImpl consoleView = (ConsoleViewImpl)e.getData(LangDataKeys.CONSOLE_VIEW);
+    ConsoleViewImpl consoleView = ObjectUtils.tryCast(e.getData(LangDataKeys.CONSOLE_VIEW), ConsoleViewImpl.class);
     boolean isShown = consoleView != null && consoleView.getEditor().getGutter().isAnnotationsShown();
     e.getPresentation().setEnabled(consoleView != null && !isShown && !myIsLoading);
   }
