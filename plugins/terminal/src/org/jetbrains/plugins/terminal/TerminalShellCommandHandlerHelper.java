@@ -85,7 +85,7 @@ public final class TerminalShellCommandHandlerHelper {
     }
 
     //highlight matched command
-    String command = myWidget.getTypedShellCommand();
+    String command = myWidget.getTypedShellCommand().trim();
     SubstringFinder.FindResult result =
       TerminalShellCommandHandler.Companion.matches(project, getWorkingDirectory(), !hasRunningCommands(), command)
       ? searchMatchedCommand(command) : null;
@@ -156,21 +156,25 @@ public final class TerminalShellCommandHandlerHelper {
       if (cursorLine < 0 || cursorLine >= textBuffer.getHeight()) {
         return null;
       }
-      String command = myWidget.getTypedShellCommand();
       String lineText = textBuffer.getLine(cursorLine).getText();
-      int commandStartInd = lineText.lastIndexOf(command);
-      SubstringFinder finder = new SubstringFinder(pattern, true);
-      if (commandStartInd >= 0) {
-        textBuffer.processScreenLines(cursorLine, 1, new StyledTextConsumerAdapter() {
-          @Override
-          public void consume(int x, int y, @NotNull TextStyle style, @NotNull CharBuffer characters, int startRow) {
-            int offset = Math.max(x, commandStartInd) - x;
-            for (int i = offset; i < characters.length(); i++) {
-              finder.nextChar(x, y - startRow, characters, i);
-            }
-          }
-        });
+      int patternStartInd = lineText.lastIndexOf(pattern);
+      if (patternStartInd < 0) {
+        return null;
       }
+      SubstringFinder finder = new SubstringFinder(pattern, true) {
+        @Override
+        public boolean accept(@NotNull FindResult.FindItem item) {
+          return item.getStart().x >= patternStartInd;
+        }
+      };
+      textBuffer.processScreenLines(cursorLine, 1, new StyledTextConsumerAdapter() {
+        @Override
+        public void consume(int x, int y, @NotNull TextStyle style, @NotNull CharBuffer characters, int startRow) {
+          for (int i = 0; i < characters.length(); i++) {
+            finder.nextChar(x, y - startRow, characters, i);
+          }
+        }
+      });
       return finder.getResult();
     });
   }
