@@ -127,7 +127,7 @@ final class UpdateCheckerComponent {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
           String title = IdeBundle.message("update.whats.new.file.name", ApplicationInfo.getInstance().getFullVersion());
-          HTMLEditorProvider.Companion.openEditor(project, title, null, updateHtmlMessage);
+          HTMLEditorProvider.Companion.openEditor(project, title, null, updateHtmlMessage, () -> updateHtmlMessage);
           IdeUpdateUsageTriggerCollector.trigger("update.whats.new");
           notification.expire();
         }
