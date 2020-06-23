@@ -201,14 +201,15 @@ public class AddImportHelper {
    */
   @Nullable
   public static PsiElement getFileInsertPosition(final PsiFile file) {
-    return getInsertPosition(file, null, null);
+    return getInsertPosition(file, null, null, null);
   }
 
   @Nullable
   private static PsiElement getInsertPosition(@NotNull PsiElement insertParent,
+                                              @Nullable PsiElement anchor,
                                               @Nullable PyImportStatementBase newImport,
                                               @Nullable ImportPriority priority) {
-    PsiElement feeler = insertParent.getFirstChild();
+    PsiElement feeler = ImportLocationHelper.getInstance().getSearchStartPosition(anchor, insertParent);
     if (feeler == null) return null;
     // skip initial comments and whitespace and try to get just below the last import stmt
     boolean skippedOverStatements = false;
@@ -429,7 +430,7 @@ public class AddImportHelper {
         insertParent.addAfter(importNodeToInsert, anchor);
       }
       else {
-        insertParent.addBefore(importNodeToInsert, getInsertPosition(insertParent, importNodeToInsert, priority));
+        insertParent.addBefore(importNodeToInsert, getInsertPosition(insertParent, anchor, importNodeToInsert, priority));
       }
     }
     catch (IncorrectOperationException e) {
@@ -498,7 +499,7 @@ public class AddImportHelper {
       }
 
       if (insideDoctest) {
-        final PsiElement element = insertParent.addBefore(newImport, getInsertPosition(insertParent, newImport, priority));
+        final PsiElement element = insertParent.addBefore(newImport, getInsertPosition(insertParent, anchor, newImport, priority));
         PsiElement whitespace = element.getNextSibling();
         if (!(whitespace instanceof PsiWhiteSpace)) {
           whitespace = PsiParserFacade.SERVICE.getInstance(file.getProject()).createWhiteSpaceFromText("  >>> ");
@@ -509,7 +510,7 @@ public class AddImportHelper {
         insertParent.addAfter(newImport, anchor);
       }
       else {
-        insertParent.addBefore(newImport, getInsertPosition(insertParent, newImport, priority));
+        insertParent.addBefore(newImport, getInsertPosition(insertParent, anchor, newImport, priority));
       }
     }
     catch (IncorrectOperationException e) {

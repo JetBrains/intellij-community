@@ -143,7 +143,7 @@ public class ImportFromExistingAction implements QuestionAction {
           AddImportHelper.addLocalImportStatement(myTarget, nameToImport);
         }
         else {
-          AddImportHelper.addImportStatement(file, nameToImport, item.getAsName(), priority, null);
+          AddImportHelper.addImportStatement(file, nameToImport, item.getAsName(), priority, myTarget);
         }
         myTarget.replace(gen.createExpressionFromText(LanguageLevel.forElement(myTarget), qualifiedName + "." + myName));
       }
@@ -153,7 +153,7 @@ public class ImportFromExistingAction implements QuestionAction {
         }
         else {
           // "Update" scenario takes place inside injected fragments, for normal AST addToExistingImport() will be used instead
-          AddImportHelper.addOrUpdateFromImportStatement(file, qualifiedName, myName, item.getAsName(), priority, null);
+          AddImportHelper.addOrUpdateFromImportStatement(file, qualifiedName, myName, item.getAsName(), priority, myTarget);
         }
       }
     }

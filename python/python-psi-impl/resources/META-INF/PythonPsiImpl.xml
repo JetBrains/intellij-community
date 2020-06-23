@@ -56,6 +56,9 @@
     <moduleService serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings$ModuleService"/>
     <applicationService serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings$AppService"/>
 
+    <applicationService serviceInterface="com.jetbrains.python.codeInsight.imports.ImportLocationHelper"
+                        serviceImplementation="com.jetbrains.python.codeInsight.imports.PyImportLocationHelper"/>
+
     <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PyStdReferenceContributor" language="Python"/>
     <psi.referenceContributor implementation="com.jetbrains.python.documentation.docstrings.DocStringReferenceContributor"
                               language="Python"/>
