@@ -17,7 +17,6 @@ package com.intellij.util.concurrency;
 
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.diagnostic.LogUtil;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.TimeoutUtil;
@@ -171,10 +170,7 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     }
   }
 
-  public void testDelayedTasksReusePooledThreadIfExecuteAtDifferentTimes() throws Exception {
-    // pre-start one thread
-    Future<?> future = service.submit(EmptyRunnable.getInstance());
-    future.get();
+  public void testDelayedTasksReusePooledThreadIfExecuteAtDifferentTimes() {
     service.setBackendPoolCorePoolSize(1);
     ((ThreadPoolExecutor)service.backendExecutorService).prestartCoreThread();
     assertEquals(1, service.getBackendPoolExecutorSize());
@@ -182,6 +178,7 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     service.setNewThreadListener((thread, runnable) -> {
       Runnable firstTask = ReflectionUtil.getField(runnable.getClass(), runnable, Runnable.class, "firstTask");
       System.err.println("Unexpected new thread created: " + thread + "; for first task "+firstTask+"; thread dump:\n" + ThreadDumper.dumpThreadsToString());
+      fail();
     });
 
     long submitted = System.currentTimeMillis();
