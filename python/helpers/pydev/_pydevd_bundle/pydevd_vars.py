@@ -25,7 +25,7 @@ from _pydev_imps._pydev_saved_modules import threading
 import traceback
 from _pydevd_bundle import pydevd_save_locals
 from _pydev_bundle.pydev_imports import Exec, execfile
-from _pydevd_bundle.pydevd_utils import to_string, VariableWithOffset
+from _pydevd_bundle.pydevd_utils import VariableWithOffset
 
 SENTINEL_VALUE = []
 DEFAULT_DF_FORMAT = "s"
@@ -693,7 +693,7 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
 def array_data_to_xml(rows, cols, get_row, format):
     xml = "<arraydata rows=\"%s\" cols=\"%s\"/>\n" % (rows, cols)
     for row in range(rows):
-        xml += "<row index=\"%s\"/>\n" % to_string(row)
+        xml += "<row index=\"%s\"/>\n" % row
         for value in get_row(row):
             xml += var_to_xml(value, '', format=format)
     return xml
