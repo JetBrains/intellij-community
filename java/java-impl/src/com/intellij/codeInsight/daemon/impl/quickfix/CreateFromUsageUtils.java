@@ -436,7 +436,7 @@ public class CreateFromUsageUtils {
             targetClass = (PsiClass)sourceFile.add(aClass);
           }
 
-          if (superClassName != null &&
+          if (StringUtil.isNotEmpty(superClassName)  &&
               (classKind != CreateClassKind.ENUM || !superClassName.equals(CommonClassNames.JAVA_LANG_ENUM)) &&
               (classKind != CreateClassKind.RECORD || !superClassName.equals(CommonClassNames.JAVA_LANG_RECORD))) {
             setupSuperClassReference(targetClass, superClassName);
