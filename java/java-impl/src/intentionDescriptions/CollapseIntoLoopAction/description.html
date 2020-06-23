@@ -1,8 +1,7 @@
 <html>
 <body>
-This intention collapses the selected statements into the loop when possible.
-Note that the extracted list elements are evaluated now at loop beginning,
-so in rare cases, the intention may change the code semantics, if the extracted 
-expression result depends on this.  
+Collapses the selected statements into a loop when possible.
+Note that the extracted elements are evaluated when the loop is initialized. 
+If your code depends on the evaluation order, the quick fix may affect its semantics.
 </body>
 </html>
