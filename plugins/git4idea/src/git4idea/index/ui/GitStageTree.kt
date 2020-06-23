@@ -2,7 +2,11 @@
 package git4idea.index.ui
 
 import com.intellij.ide.DataManager
+import com.intellij.ide.dnd.DnDActionInfo
+import com.intellij.ide.dnd.DnDDragStartBean
+import com.intellij.ide.dnd.DnDEvent
 import com.intellij.ide.util.treeView.TreeState
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -21,18 +25,20 @@ import com.intellij.util.Processor
 import git4idea.i18n.GitBundle
 import git4idea.index.GitFileStatus
 import git4idea.index.GitStageTracker
+import git4idea.index.actions.StagingAreaOperation
 import git4idea.index.isRenamed
 import git4idea.index.ui.NodeKind.Companion.sortOrder
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 import java.util.stream.Stream
+import javax.swing.JComponent
 import javax.swing.tree.DefaultTreeModel
 import kotlin.streams.toList
 
 val GIT_FILE_STATUS_NODES_STREAM = DataKey.create<Stream<GitFileStatusNode>>("GitFileStatusNodesStream")
 
-abstract class GitStageTree(project: Project) : ChangesTree(project, false, true) {
+abstract class GitStageTree(project: Project, parentDisposable: Disposable) : ChangesTree(project, false, true) {
   protected abstract val state: GitStageTracker.State
 
   init {
@@ -42,7 +48,13 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
       OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(this), true)
       true
     }
+
+    MyDnDSupport().install(parentDisposable)
   }
+
+  abstract fun performStageOperation(nodes: List<GitFileStatusNode>, operation: StagingAreaOperation)
+
+  abstract fun getDndOperation(targetKind: NodeKind): StagingAreaOperation?
 
   fun update() {
     val state = TreeState.createOn(this, root)
@@ -200,6 +212,54 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
     override fun compareUserObjects(o2: NodeKind?): Int {
       return Comparing.compare(sortOrder[NodeKind.UNTRACKED], sortOrder[o2])
     }
+  }
+
+  private inner class MyDnDSupport : ChangesTreeDnDSupport(this@GitStageTree) {
+    override fun createDragStartBean(info: DnDActionInfo): DnDDragStartBean? {
+      if (info.isMove) {
+        val selection = selectedStatusNodes().toList()
+        if (selection.isNotEmpty()) {
+          return DnDDragStartBean(MyDragBean(this@GitStageTree, selection))
+        }
+      }
+      return null
+    }
+
+    override fun canHandleDropEvent(aEvent: DnDEvent, dropNode: ChangesBrowserNode<*>): Boolean {
+      val dragBean = aEvent.attachedObject
+      if (dragBean is MyDragBean) {
+        if (dragBean.sourceComponent === this@GitStageTree && canAcceptDrop(dropNode, dragBean)) {
+          dragBean.targetNode = dropNode
+          return true
+        }
+      }
+      return false
+    }
+
+    override fun drop(aEvent: DnDEvent) {
+      val dragBean = aEvent.attachedObject
+      if (dragBean is MyDragBean) {
+        val changesBrowserNode = dragBean.targetNode
+        changesBrowserNode?.let { acceptDrop(it, dragBean) }
+      }
+    }
+
+    private fun canAcceptDrop(node: ChangesBrowserNode<*>, bean: MyDragBean): Boolean {
+      val targetKind: NodeKind = node.userObject as? NodeKind ?: return false
+      val operation = getDndOperation(targetKind) ?: return false
+      return bean.nodes.all(operation::matches)
+    }
+
+    private fun acceptDrop(node: ChangesBrowserNode<*>, bean: MyDragBean) {
+      val targetKind: NodeKind = node.userObject as? NodeKind ?: return
+      val operation = getDndOperation(targetKind) ?: return
+      performStageOperation(bean.nodes, operation)
+    }
+  }
+
+  private class MyDragBean(val tree: ChangesTree, val nodes: List<GitFileStatusNode>) {
+    var targetNode: ChangesBrowserNode<*>? = null
+    val sourceComponent: JComponent get() = tree
   }
 }
 

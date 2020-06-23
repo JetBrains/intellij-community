@@ -37,14 +37,13 @@ import git4idea.index.GitStageTracker
 import git4idea.index.GitStageTrackerListener
 import git4idea.index.actions.GitAddOperation
 import git4idea.index.actions.GitResetOperation
+import git4idea.index.actions.StagingAreaOperation
 import git4idea.index.actions.performStageOperation
 import git4idea.repo.GitRepository
 import git4idea.status.GitChangeProvider
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.BorderLayout
-import javax.swing.JComponent
 import javax.swing.JPanel
-import kotlin.streams.toList
 
 val GIT_STAGE_TRACKER = DataKey.create<GitStageTracker>("GitStageTracker")
 
@@ -106,8 +105,6 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
     Disposer.register(disposableParent, this)
 
     runInEdtAsync(this, { tree.rebuildTree() })
-
-    MyDnDSupport().install(this)
   }
 
   private fun performCommit(amend: Boolean) {
@@ -158,9 +155,21 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
   override fun dispose() {
   }
 
-  private inner class MyChangesTree(project: Project) : GitStageTree(project) {
+  private inner class MyChangesTree(project: Project) : GitStageTree(project, this) {
     override val state
       get() = this@GitStagePanel.state
+
+    override fun performStageOperation(nodes: List<GitFileStatusNode>, operation: StagingAreaOperation) {
+      performStageOperation(project, nodes, operation)
+    }
+
+    override fun getDndOperation(targetKind: NodeKind): StagingAreaOperation? {
+      return when (targetKind) {
+        NodeKind.STAGED -> GitAddOperation
+        NodeKind.UNSTAGED -> GitResetOperation
+        else -> null
+      }
+    }
   }
 
   private inner class MyGitCommitPanel : GitCommitPanel(project, this) {
@@ -197,61 +206,6 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
     }
 
     override fun repositoryUpdated(repository: GitRepository) = Unit
-  }
-
-  private inner class MyDnDSupport : ChangesTreeDnDSupport(tree) {
-    override fun createDragStartBean(info: DnDActionInfo): DnDDragStartBean? {
-      if (info.isMove) {
-        val selection = tree.selectedStatusNodes().toList()
-        if (selection.isNotEmpty()) {
-          return DnDDragStartBean(MyDragBean(tree, selection))
-        }
-      }
-      return null
-    }
-
-    override fun canHandleDropEvent(aEvent: DnDEvent, dropNode: ChangesBrowserNode<*>): Boolean {
-      val dragBean = aEvent.attachedObject
-      if (dragBean is MyDragBean) {
-        if (dragBean.sourceComponent === tree && canAcceptDrop(dropNode, dragBean)) {
-          dragBean.targetNode = dropNode
-          return true
-        }
-      }
-      return false
-    }
-
-    override fun drop(aEvent: DnDEvent) {
-      val dragBean = aEvent.attachedObject
-      if (dragBean is MyDragBean) {
-        val changesBrowserNode = dragBean.targetNode
-        changesBrowserNode?.let { acceptDrop(it, dragBean) }
-      }
-    }
-
-    private fun canAcceptDrop(node: ChangesBrowserNode<*>, bean: MyDragBean): Boolean {
-      val targetKind: NodeKind = node.userObject as? NodeKind ?: return false
-      return when (targetKind) {
-        NodeKind.STAGED -> bean.nodes.all(GitAddOperation::matches)
-        NodeKind.UNSTAGED -> bean.nodes.all(GitResetOperation::matches)
-        else -> false
-      }
-    }
-
-    private fun acceptDrop(node: ChangesBrowserNode<*>, bean: MyDragBean) {
-      val targetKind: NodeKind = node.userObject as? NodeKind ?: return
-      if (targetKind == NodeKind.STAGED) {
-        performStageOperation(project, bean.nodes, GitAddOperation)
-      }
-      else if (targetKind == NodeKind.UNSTAGED) {
-        performStageOperation(project, bean.nodes, GitResetOperation)
-      }
-    }
-  }
-
-  private class MyDragBean(val tree: ChangesTree, val nodes: List<GitFileStatusNode>) {
-    var targetNode: ChangesBrowserNode<*>? = null
-    val sourceComponent: JComponent get() = tree
   }
 
   private inner class MyCommitListener(private val commitMessage: String) : CommitListener {
