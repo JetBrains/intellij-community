@@ -6,7 +6,13 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Used to track bounds of build system's life cycle
+ * And used to find and link build system project into Idea project
+ */
+@ApiStatus.Experimental
 interface ExternalSystemUnlinkedProjectAware {
 
   val systemId: ProjectSystemId
