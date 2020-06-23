@@ -3,12 +3,11 @@ package org.jetbrains.plugins.github.authentication
 
 import com.intellij.openapi.project.Project
 import git4idea.DialogManager
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager.Companion.createAccount
 import org.jetbrains.plugins.github.authentication.ui.BaseLoginDialog
+import org.jetbrains.plugins.github.authentication.ui.GHPasswordTokenLoginDialog
 import org.jetbrains.plugins.github.authentication.ui.GHTokenLoginDialog
-import org.jetbrains.plugins.github.authentication.ui.GithubLoginDialog
 import org.jetbrains.plugins.github.authentication.ui.UniqueLoginPredicate
 import java.awt.Component
 
@@ -28,7 +27,7 @@ internal class GHLoginRequest(
 )
 
 internal fun GHLoginRequest.loginWithPasswordOrToken(project: Project?, parentComponent: Component?): GHAccountAuthData? {
-  val dialog = GithubLoginDialog(GithubApiRequestExecutor.Factory.getInstance(), project, parentComponent, isLoginUniqueChecker, text)
+  val dialog = GHPasswordTokenLoginDialog(project, parentComponent, isLoginUniqueChecker, text)
   configure(dialog)
   password?.let { dialog.setPassword(it) }
 

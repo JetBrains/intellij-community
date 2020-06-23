@@ -13,6 +13,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.getRegularPanelInsets
 import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.Nls.Capitalization.Sentence
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import java.awt.Component
@@ -20,13 +21,12 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JTextArea
 
-internal class GithubLoginDialog @JvmOverloads constructor(
-  executorFactory: GithubApiRequestExecutor.Factory,
+internal class GHPasswordTokenLoginDialog(
   project: Project?,
-  parent: Component? = null,
-  isAccountUnique: UniqueLoginPredicate = { _, _ -> true },
-  @Nls(capitalization = Nls.Capitalization.Sentence) private val message: String? = null
-) : BaseLoginDialog(project, parent, executorFactory, isAccountUnique) {
+  parent: Component?,
+  isAccountUnique: UniqueLoginPredicate,
+  @Nls(capitalization = Sentence) private val message: String?
+) : BaseLoginDialog(project, parent, GithubApiRequestExecutor.Factory.getInstance(), isAccountUnique) {
 
   private val switchLoginUiLink = loginPanel.createSwitchUiLink()
 
@@ -46,8 +46,8 @@ internal class GithubLoginDialog @JvmOverloads constructor(
     switchLoginUiLink.isEnabled = true
   }
 
-  override fun createNorthPanel(): JComponent? {
-    return message?.let {
+  override fun createNorthPanel(): JComponent? =
+    message?.let {
       JTextArea().apply {
         font = UIUtil.getLabelFont()
         text = it
@@ -58,7 +58,6 @@ internal class GithubLoginDialog @JvmOverloads constructor(
         margin = JBUI.emptyInsets()
       }
     }
-  }
 
   override fun createSouthAdditionalPanel(): JPanel = createSignUpLink()
 
