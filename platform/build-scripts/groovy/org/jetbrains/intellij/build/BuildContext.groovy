@@ -18,6 +18,7 @@ package org.jetbrains.intellij.build
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.BundledJreManager
+import org.jetbrains.intellij.build.impl.DependenciesProperties
 import org.jetbrains.jps.model.module.JpsModule
 
 @CompileStatic
@@ -29,6 +30,7 @@ abstract class BuildContext implements CompilationContext {
   MacDistributionCustomizer macDistributionCustomizer
   ProprietaryBuildTools proprietaryBuildTools
   BundledJreManager bundledJreManager
+  DependenciesProperties dependenciesProperties = new DependenciesProperties(this)
 
   /**
    * Build number without product code (e.g. '162.500.10')

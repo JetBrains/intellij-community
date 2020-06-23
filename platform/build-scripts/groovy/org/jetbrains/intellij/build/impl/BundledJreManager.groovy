@@ -24,19 +24,7 @@ class BundledJreManager {
   private final Map<File, String> jbrArchiveInspectionCache = new ConcurrentHashMap<>()
 
   @Lazy private String jreBuild = {
-    String build = buildContext.options.bundledJreBuild
-    if (build == null) {
-      buildContext.gradle.run('Preparing dependencies file', 'dependenciesFile')
-      new File(dependenciesDir(), 'build/dependencies.properties').newInputStream().withStream {
-        Properties properties = new Properties()
-        properties.load(it)
-        build = properties.get("jdkBuild")
-      }
-    }
-    if (build == null) {
-      buildContext.messages.error("`jdkBuild` not defined in `${dependenciesDir()}/gradle.properties`")
-    }
-    build
+    buildContext.options.bundledJreBuild ?: buildContext.dependenciesProperties.property('jdkBuild')
   }()
 
   BundledJreManager(BuildContext buildContext) {

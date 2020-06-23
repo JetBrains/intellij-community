@@ -490,11 +490,9 @@ idea.fatal.error.notification=disabled
 
 
   private def copyDependenciesFile() {
-    if (buildContext.gradle.forceRun('Preparing dependencies file', 'dependenciesFile')) {
-      def outputFile = "$buildContext.paths.artifacts/dependencies.txt"
-      buildContext.ant.copy(file: "$buildContext.paths.communityHome/build/dependencies/build/dependencies.properties", tofile: outputFile)
-      buildContext.notifyArtifactBuilt(outputFile)
-    }
+    def outputFile = "$buildContext.paths.artifacts/dependencies.txt"
+    buildContext.ant.copy(file: buildContext.dependenciesProperties.file.absolutePath, tofile: outputFile)
+    buildContext.notifyArtifactBuilt(outputFile)
   }
 
   private void scramble() {
