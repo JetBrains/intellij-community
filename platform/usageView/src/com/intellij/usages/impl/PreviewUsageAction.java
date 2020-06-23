@@ -17,13 +17,13 @@ class PreviewUsageAction extends RuleAction {
   }
 
   @Override
-  protected boolean getOptionValue(AnActionEvent e) {
+  protected boolean getOptionValue(@NotNull AnActionEvent e) {
     UsageViewImpl impl = getUsageViewImpl(e);
     return impl != null ? impl.isPreviewUsages() : false;
   }
 
   @Override
-  protected void setOptionValue(AnActionEvent e, boolean value) {
+  protected void setOptionValue(@NotNull AnActionEvent e, boolean value) {
     UsageViewImpl usageViewImpl = getUsageViewImpl(e);
     if (usageViewImpl != null) usageViewImpl.setPreviewUsages(value);
   }

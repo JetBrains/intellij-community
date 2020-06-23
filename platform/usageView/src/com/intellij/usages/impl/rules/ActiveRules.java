@@ -79,8 +79,9 @@ public final class ActiveRules {
     for (FileStructureGroupRuleProvider ruleProvider : FileStructureGroupRuleProvider.EP_NAME.getExtensionList()) {
       UsageGroupingRule rule = ruleProvider.getUsageGroupingRule(project, usageViewSettings);
       if (rule == null) continue;
-      if (!(rule instanceof UsageGroupingRuleEx))
+      if (!(rule instanceof UsageGroupingRuleEx)) {
         rule = new FileStructureGroupingRuleExWrapper(rule);
+      }
       rules.add(rule);
     }
 
@@ -92,7 +93,7 @@ public final class ActiveRules {
   private static class FileStructureGroupingRuleExWrapper implements UsageGroupingRuleEx {
     private final UsageGroupingRule myGroupingRule;
 
-    private FileStructureGroupingRuleExWrapper(UsageGroupingRule rule) {
+    private FileStructureGroupingRuleExWrapper(@NotNull UsageGroupingRule rule) {
       myGroupingRule = rule;
     }
 

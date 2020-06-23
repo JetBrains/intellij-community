@@ -52,12 +52,12 @@ final class ShowImportsAction extends RuleAction {
   }
 
   @Override
-  protected boolean getOptionValue(AnActionEvent e) {
+  protected boolean getOptionValue(@NotNull AnActionEvent e) {
     return ImportFilteringUsageViewSetting.getInstance().SHOW_IMPORTS;
   }
 
   @Override
-  protected void setOptionValue(AnActionEvent e, boolean value) {
+  protected void setOptionValue(@NotNull AnActionEvent e, boolean value) {
     ImportFilteringUsageViewSetting.getInstance().SHOW_IMPORTS = value;
   }
 }

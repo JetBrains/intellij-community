@@ -1102,12 +1102,12 @@ public class UsageViewImpl implements UsageViewEx {
     }
 
     @Override
-    protected boolean getOptionValue(AnActionEvent e) {
+    protected boolean getOptionValue(@NotNull AnActionEvent e) {
       return getUsageViewSettings(e).isFilterDuplicatedLine();
     }
 
     @Override
-    protected void setOptionValue(AnActionEvent e, boolean value) {
+    protected void setOptionValue(@NotNull AnActionEvent e, boolean value) {
       getUsageViewSettings(e).setFilterDuplicatedLine(value);
     }
   }
