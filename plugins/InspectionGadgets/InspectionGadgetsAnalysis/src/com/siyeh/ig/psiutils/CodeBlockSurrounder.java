@@ -462,7 +462,7 @@ public abstract class CodeBlockSurrounder {
         }
         copyFinally.delete();
       }
-      PsiElement codeBlock = tryBlock.replace(JavaPsiFacade.getElementFactory(myStatement.getProject()).createCodeBlock());
+      PsiElement codeBlock = tryBlock.replace(factory.createCodeBlock());
       return (PsiStatement)codeBlock.add(copy);
     }
   }
