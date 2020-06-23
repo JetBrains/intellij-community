@@ -75,7 +75,8 @@ class StreamConversion {
       .completeFinalReference(qualifier, asStream, TrueFilter.INSTANCE,
                               PsiType.getJavaLangObject(qualifier.getManager(), qualifier.getResolveScope()),
                               parameters);
-    return ContainerUtil.map(streamSuggestions, e -> new StreamMethodInvocation(e, beforeInsertion));
+    return ContainerUtil.mapNotNull(streamSuggestions, e ->
+      ChainedCallCompletion.OBJECT_METHOD_PATTERN.accepts(e.getObject()) ? null : new StreamMethodInvocation(e, beforeInsertion));
   }
 
   private static void wrapQualifiedIntoMethodCall(@NotNull InsertionContext context, @NotNull String methodQualifiedName) {
