@@ -187,7 +187,7 @@ public class LocalTargetEnvironment extends TargetEnvironment {
       }
       else {
         // myLocalRoot used there intentionally, because it could contain a relative path that some test expects to get.
-        return FileUtil.toCanonicalPath(FileUtil.join(myLocalRoot.toString(), relativePath));
+        return FileUtil.toCanonicalPath(FileUtil.join(myLocalRoot.toString(), relativePath)).replace('/', File.separatorChar);
       }
     }
 
