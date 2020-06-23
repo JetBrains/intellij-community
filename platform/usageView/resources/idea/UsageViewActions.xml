@@ -1,4 +1,7 @@
 <idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <actionPromoter implementation="com.intellij.usages.impl.UsageViewActionPromoter" />
+  </extensions>
   <actions>
     <action class="com.intellij.usages.impl.actions.GroupByModuleTypeAction" id="UsageGrouping.Module"/>
     <action class="com.intellij.usages.impl.actions.GroupByScopeAction" id="UsageGrouping.Scope"/>

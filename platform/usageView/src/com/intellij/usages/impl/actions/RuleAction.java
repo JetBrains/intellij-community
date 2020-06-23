@@ -39,6 +39,13 @@ public abstract class RuleAction extends ToggleAction implements DumbAware {
   }
 
   @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+
+    e.getPresentation().setEnabled(getUsageViewImpl(e) != null);
+  }
+
+  @Override
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
     setOptionValue(e, state);
 
