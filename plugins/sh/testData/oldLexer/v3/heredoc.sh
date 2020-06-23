@@ -75,15 +75,18 @@ $test
 EOF
 {
 cat <<EOF
-$(test)
+$(echo)
 EOF
 }
-if test
+if test; then
 cat <<EOF
 EOF
 test
 fi
-cat <<X <<
+cat <<X
+X
+cat <<X2
+X2
 cat <<$
 $
 cat <<$_X
@@ -98,18 +101,22 @@ cat <<- EOF
 	EOF
 cat <<EOF
 	EOF
+EOF
 {
 <<EOF <<EOF2
 EOF
-$(a)
+$(echo a)
 EOF2
+}
 {
 <<EOF <<EOF2
 EOF
 $((a))
 EOF2
+}
 {
 <<EOF <<EOF2
 EOF
 $[a]
 EOF2
+}

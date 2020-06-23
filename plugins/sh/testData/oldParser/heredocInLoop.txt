@@ -23,11 +23,12 @@ SHELL_SCRIPT
                 PsiElement(word)('echo')
             PsiWhiteSpace(' ')
             SIMPLE_COMMAND_ELEMENT
-              HEREDOC
+              REDIRECTION
                 PsiElement(HEREDOC_MARKER_TAG)('<<')
                 PsiElement(HEREDOC_MARKER_START)('EOF')
-                PsiElement(\n)('\n')
-                PsiElement(HEREDOC_CONTENT)('  heredoccontent\n')
-                PsiElement(HEREDOC_MARKER_END)('EOF')
+          PsiElement(\n)('\n')
+          HEREDOC
+            PsiElement(HEREDOC_CONTENT)('  heredoccontent\n')
+            PsiElement(HEREDOC_MARKER_END)('EOF')
           PsiElement(\n)('\n')
         PsiElement(done)('done')

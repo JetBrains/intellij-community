@@ -136,7 +136,7 @@ private simple_list ::= (commands_list newlines)*
 commands_list ::= pipeline_command (
                      ('&&' | '||') newlines? pipeline_command
                    | ('|' | '|&' | '&'| ';') pipeline_command?
-                 )*
+                 )* heredocs?
 
 pipeline_command ::=  '!'? command
                     | '!'? eval_command
@@ -150,11 +150,11 @@ test_command ::= test simple_command_element*
 private pipeline_recover ::= !(case|if|while|until|select|'{'|function|'$'|'&&'|';'|';;'|'||'|'&'|'!'|'['|'[['|'('|')'|'|'|'|&'|'\n'|'(('|
                                var | word|EXPR_CONDITIONAL_LEFT|ARITH_SQUARE_LEFT | CLOSE_BACKQUOTE | do | done | '}')
 
-command ::= shell_command [heredoc | redirection+]
+command ::= shell_command redirection*
           | include_command
           | simple_command
 
-redirection ::= redirection_inner | '&>' w | number redirection_inner | process_substitution
+redirection ::= redirection_inner | '&>' w | number redirection_inner | process_substitution | HEREDOC_MARKER_TAG HEREDOC_MARKER_START
 private redirection_inner ::= ('<&' | '>&') (number | '-')
                             | ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') redirection_target
 private redirection_target ::= process_substitution | <<parseUntilSpace w>> {name="redirection target"}
@@ -213,7 +213,7 @@ then_clause ::= then compound_list
 compound_list ::= newlines pipeline_command_list end_of_list newlines {pin(".*")=2 recoverWhile=compound_list_recover}
 private compound_list_recover ::= !(elif | else | then | fi)
 
-private pipeline_command_list ::= pipeline_command (pipeline_command_list_separator pipeline_command)* {
+private pipeline_command_list ::= pipeline_command heredocs? (pipeline_command_list_separator pipeline_command)* {
   pin=1
 } // todo with pin
 private pipeline_command_list_separator ::= ('&&'|  '||' |  '&' |  ';' | '|' | '\n') newlines
@@ -259,16 +259,13 @@ private simple_command_element_inner ::=  literal assignment_command?
                                         | not_lvalue
                                         | redirection
                                         | composed_var
-                                        | heredoc
                                         | conditional_command
                                         | command_substitution_command
                                         | arithmetic_expansion
                                         | old_arithmetic_expansion {pin(".*")=1}
 
-heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START [commands_list heredoc_pipeline_separator? | heredoc_pipeline_separator commands_list?] newlines
-            HEREDOC_CONTENT*
-            (HEREDOC_MARKER_END | <<eof>>)
-private heredoc_pipeline_separator ::= ('&&' | '||' | '&' | '|' | '|&' | ';')
+private heredocs ::= (newlines heredoc)+
+heredoc ::= (HEREDOC_CONTENT | vars)* HEREDOC_MARKER_END
 
 private vars ::= variable | composed_var | command_substitution_command | old_arithmetic_expansion
 private composed_var ::= '$' &('(' | '((' | '{') composed_var_inner {pin=2}

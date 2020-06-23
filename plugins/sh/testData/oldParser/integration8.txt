@@ -30,6 +30,6 @@ SHELL_SCRIPT
       PsiWhiteSpace(' ')
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
-        PsiErrorElement:<parameter expansion> expected
+        PsiErrorElement:$, <parameter expansion>, ARITH_SQUARE_LEFT, HEREDOC_CONTENT, HEREDOC_MARKER_END, OPEN_BACKQUOTE, var or '}' expected
           <empty list>
   PsiComment(Comment)('#a} #this is an invalid syntax in bash')

@@ -101,5 +101,5 @@ SHELL_SCRIPT
   COMMANDS_LIST
     COMMAND_SUBSTITUTION_COMMAND
       PsiElement(OPEN_BACKQUOTE)('`')
-      PsiErrorElement:<list> or CLOSE_BACKQUOTE expected
+      PsiErrorElement:$, <list>, ARITH_SQUARE_LEFT, CLOSE_BACKQUOTE, HEREDOC_CONTENT, HEREDOC_MARKER_END, OPEN_BACKQUOTE or var expected
         <empty list>

@@ -25,11 +25,12 @@ SHELL_SCRIPT
                 PsiElement(word)('cat')
             PsiWhiteSpace(' ')
             SIMPLE_COMMAND_ELEMENT
-              HEREDOC
+              REDIRECTION
                 PsiElement(HEREDOC_MARKER_TAG)('<<')
                 PsiElement(HEREDOC_MARKER_START)('XX')
-                PsiElement(\n)('\n')
-                PsiElement(HEREDOC_MARKER_END)('XX')
+          PsiElement(\n)('\n')
+          HEREDOC
+            PsiElement(HEREDOC_MARKER_END)('XX')
           PsiElement(\n)('\n')
           GENERIC_COMMAND_DIRECTIVE
             LITERAL

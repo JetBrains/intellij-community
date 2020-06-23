@@ -10,9 +10,6 @@ public interface ShCommand extends ShCompositeElement {
   @Nullable
   ShCommand getCommand();
 
-  @Nullable
-  ShHeredoc getHeredoc();
-
   @NotNull
   List<ShRedirection> getRedirectionList();
 

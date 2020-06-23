@@ -1,0 +1,283 @@
+SHELL_SCRIPT
+  PsiComment(shebang)('#!/bin/sh')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    ASSIGNMENT_COMMAND
+      LITERAL
+        PsiElement(word)('WHO')
+      PsiElement(=)('=')
+      LITERAL
+        PsiElement(word)('world')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  PsiComment(Comment)('# types of quoting')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('cat')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PsiElement(HEREDOC_MARKER_TAG)('<<')
+          PsiWhiteSpace(' ')
+          PsiElement(HEREDOC_MARKER_START)('EOF')
+    PsiElement(\n)('\n')
+    HEREDOC
+      PsiElement(HEREDOC_CONTENT)('hello ')
+      VARIABLE
+        PsiElement(var)('$WHO')
+      PsiElement(HEREDOC_CONTENT)('\nhello ')
+      PsiElement($)('$')
+      SHELL_PARAMETER_EXPANSION
+        PsiElement({)('{')
+        PsiElement(word)('WHO')
+        PsiElement(})('}')
+      PsiElement(HEREDOC_CONTENT)('\nhello ')
+      COMMAND_SUBSTITUTION_COMMAND
+        PsiElement(OPEN_BACKQUOTE)('`')
+        COMPOUND_LIST
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('echo')
+            PsiWhiteSpace(' ')
+            VARIABLE
+              PsiElement(var)('$WHO')
+        PsiElement(CLOSE_BACKQUOTE)('`')
+      PsiElement(HEREDOC_CONTENT)('\nhello ')
+      PsiElement($)('$')
+      SUBSHELL_COMMAND
+        PsiElement(()('(')
+        COMPOUND_LIST
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('echo')
+            PsiWhiteSpace(' ')
+            VARIABLE
+              PsiElement(var)('$WHO')
+        PsiElement())(')')
+      PsiElement(HEREDOC_CONTENT)('\n')
+      PsiElement(HEREDOC_MARKER_END)('EOF')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('cat')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PsiElement(HEREDOC_MARKER_TAG)('<<')
+          PsiWhiteSpace(' ')
+          PsiElement(HEREDOC_MARKER_START)('"EOF"')
+    PsiElement(\n)('\n')
+    HEREDOC
+      PsiElement(HEREDOC_CONTENT)('hello $WHO\nhello ${WHO}\nhello `echo $WHO`\nhello $(echo $WHO)\n')
+      PsiElement(HEREDOC_MARKER_END)('EOF')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('cat')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PsiElement(HEREDOC_MARKER_TAG)('<<')
+          PsiWhiteSpace(' ')
+          PsiElement(HEREDOC_MARKER_START)(''EOF'')
+    PsiElement(\n)('\n')
+    HEREDOC
+      PsiElement(HEREDOC_CONTENT)('hello $WHO\nhello ${WHO}\nhello `echo $WHO`\nhello $(echo $WHO)\n')
+      PsiElement(HEREDOC_MARKER_END)('EOF')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  PsiComment(Comment)('# types of quoting, with <<-')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('cat')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PsiElement(HEREDOC_MARKER_TAG)('<<-')
+          PsiElement(HEREDOC_MARKER_START)('EOF')
+    PsiElement(\n)('\n')
+    HEREDOC
+      PsiElement(HEREDOC_CONTENT)('hello ')
+      VARIABLE
+        PsiElement(var)('$WHO')
+      PsiElement(HEREDOC_CONTENT)('\nhello ')
+      PsiElement($)('$')
+      SHELL_PARAMETER_EXPANSION
+        PsiElement({)('{')
+        PsiElement(word)('WHO')
+        PsiElement(})('}')
+      PsiElement(HEREDOC_CONTENT)('\nhello ')
+      COMMAND_SUBSTITUTION_COMMAND
+        PsiElement(OPEN_BACKQUOTE)('`')
+        COMPOUND_LIST
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('echo')
+            PsiWhiteSpace(' ')
+            VARIABLE
+              PsiElement(var)('$WHO')
+        PsiElement(CLOSE_BACKQUOTE)('`')
+      PsiElement(HEREDOC_CONTENT)('\nhello ')
+      PsiElement($)('$')
+      SUBSHELL_COMMAND
+        PsiElement(()('(')
+        COMPOUND_LIST
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('echo')
+            PsiWhiteSpace(' ')
+            VARIABLE
+              PsiElement(var)('$WHO')
+        PsiElement())(')')
+      PsiElement(HEREDOC_CONTENT)('\n')
+      PsiElement(HEREDOC_MARKER_END)('EOF')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('cat')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PsiElement(HEREDOC_MARKER_TAG)('<<-')
+          PsiElement(HEREDOC_MARKER_START)('"EOF"')
+    PsiElement(\n)('\n')
+    HEREDOC
+      PsiElement(HEREDOC_CONTENT)('hello $WHO\nhello ${WHO}\nhello `echo $WHO`\nhello $(echo $WHO)\n')
+      PsiElement(HEREDOC_MARKER_END)('EOF')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('cat')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PsiElement(HEREDOC_MARKER_TAG)('<<-')
+          PsiElement(HEREDOC_MARKER_START)(''EOF'')
+    PsiElement(\n)('\n')
+    HEREDOC
+      PsiElement(HEREDOC_CONTENT)('hello $WHO\nhello ${WHO}\nhello `echo $WHO`\nhello $(echo $WHO)\n')
+      PsiElement(HEREDOC_MARKER_END)('EOF')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  PsiComment(Comment)('# multiple heredocs')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('cat')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PsiElement(HEREDOC_MARKER_TAG)('<<')
+          PsiWhiteSpace(' ')
+          PsiElement(HEREDOC_MARKER_START)('EOF1')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PsiElement(HEREDOC_MARKER_TAG)('<<-')
+          PsiElement(HEREDOC_MARKER_START)('EOF2')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PsiElement(HEREDOC_MARKER_TAG)('<<-')
+          PsiElement(HEREDOC_MARKER_START)(''EOF3'')
+    PsiElement(\n)('\n')
+    HEREDOC
+      PsiElement(HEREDOC_CONTENT)('not shown\n')
+      PsiElement(HEREDOC_MARKER_END)('EOF1')
+    PsiElement(\n)('\n')
+    HEREDOC
+      PsiElement(HEREDOC_CONTENT)('not shown\n')
+      PsiElement(HEREDOC_MARKER_END)('EOF2')
+    PsiElement(\n)('\n')
+    HEREDOC
+      PsiElement(HEREDOC_CONTENT)('shown without var replacement $WHO\n')
+      PsiElement(HEREDOC_MARKER_END)('EOF3')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  PsiComment(Comment)('# complex heredocs')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    COMMAND
+      WHILE_COMMAND
+        PsiElement(while)('while')
+        PsiWhiteSpace(' ')
+        COMPOUND_LIST
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('read')
+            PsiWhiteSpace(' ')
+            LITERAL
+              PsiElement(word)('myLine')
+          PsiElement(;)(';')
+        PsiWhiteSpace(' ')
+        DO_BLOCK
+          PsiElement(do)('do')
+          COMPOUND_LIST
+            PsiElement(\n)('\n')
+            PsiWhiteSpace('  ')
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              VARIABLE
+                PsiElement(var)('$myLine')
+            PsiElement(\n)('\n')
+          PsiElement(done)('done')
+      PsiWhiteSpace(' ')
+      REDIRECTION
+        PsiElement(HEREDOC_MARKER_TAG)('<<')
+        PsiWhiteSpace(' ')
+        PsiElement(HEREDOC_MARKER_START)(''EOF'')
+    PsiWhiteSpace(' ')
+    PsiElement(&&)('&&')
+    PsiWhiteSpace(' ')
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('cat')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('-')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PsiElement(HEREDOC_MARKER_TAG)('<<')
+          PsiWhiteSpace(' ')
+          PsiElement(HEREDOC_MARKER_START)('EOF2')
+    PsiElement(\n)('\n')
+    HEREDOC
+      PsiElement(HEREDOC_CONTENT)('  line 1\n  line 2\n  line 3\n')
+      PsiElement(HEREDOC_MARKER_END)('EOF')
+    PsiElement(\n)('\n')
+    HEREDOC
+      PsiElement(HEREDOC_CONTENT)('  Hello ')
+      VARIABLE
+        PsiElement(var)('$WHO')
+      PsiElement(HEREDOC_CONTENT)('\n  cat line 1\n  cat line 2\n')
+      PsiElement(HEREDOC_MARKER_END)('EOF2')

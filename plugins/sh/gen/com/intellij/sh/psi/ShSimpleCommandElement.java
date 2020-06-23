@@ -17,9 +17,6 @@ public interface ShSimpleCommandElement extends ShCompositeElement {
   ShCommand getCommand();
 
   @Nullable
-  ShHeredoc getHeredoc();
-
-  @Nullable
   ShLiteral getLiteral();
 
   @Nullable

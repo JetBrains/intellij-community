@@ -2,6 +2,7 @@ package com.intellij.sh.lexer;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.IntStack;
+import com.intellij.util.containers.Queue;
 import com.intellij.lexer.FlexLexer;
 import static com.intellij.sh.lexer.ShTokenTypes.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,8 +28,9 @@ import com.intellij.openapi.util.text.StringUtil;
   private boolean isArithmeticExpansion;
   private boolean isBackquoteOpen;
   private boolean isQuoteOpen;
-  private String heredocMarker;
+  private Queue<String> heredocMarkers = new Queue<>(2);
   private boolean heredocWithWhiteSpaceIgnore;
+  private boolean heredocWithVars;
   private int regexStart = -1;
   private int regexGroups = 0;
   private int herestringStartPosition = -1;
@@ -68,7 +70,8 @@ import com.intellij.openapi.util.text.StringUtil;
     stateStack.clear();
     parenStack.clear();
     heredocWithWhiteSpaceIgnore = false;
-    heredocMarker = null;
+    heredocWithVars = false;
+    heredocMarkers.clear();
     isArithmeticExpansion = false;
     isQuoteOpen = false;
     isBackquoteOpen = false;
@@ -81,6 +84,7 @@ import com.intellij.openapi.util.text.StringUtil;
 /***** Custom user code *****/
 
 InputCharacter           = [^\r\n]
+InputCharacterNoVars     = [^\r\n\\$`(] | {EscapedChar}
 LineTerminator           = \r\n | \r | \n
 LineContinuation         = "\\" {LineTerminator}
 WhiteSpace               = [ \t\f] {LineContinuation}*
@@ -157,6 +161,7 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedAnyChar}
 %state HERE_DOC_END_MARKER
 %state HERE_DOC_PIPELINE
 %state HERE_DOC_BODY
+%state HERE_DOC_BODY_VARS
 
 %state PARAMETER_EXPANSION
 %state PARAMETER_EXPANSION_EXPR
@@ -332,10 +337,11 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedAnyChar}
 }
 
 <HERE_DOC_START_MARKER> {
-  {HeredocMarkerInQuotes}         { if ((yycharat(yylength()-1) == '\'' || yycharat(yylength()-1) == '"') && yylength() > 2)
-                                      heredocMarker = yytext().subSequence(1, yylength()-1).toString();
-                                    else heredocMarker = yytext().toString();
-                                    heredocMarker = heredocMarker.replaceAll("(\\\\)(.)", "$2");
+  {HeredocMarkerInQuotes}         { String heredocMarker;
+                                    if ((yycharat(yylength()-1) == '\'' || yycharat(yylength()-1) == '"') && yylength() > 2)
+                                         { heredocWithVars = false; heredocMarker = yytext().subSequence(1, yylength()-1).toString(); }
+                                    else { heredocWithVars = true;  heredocMarker = yytext().toString(); }
+                                    heredocMarkers.addLast(heredocMarker.replaceAll("(\\\\)(.)", "$2"));
                                     yybegin(HERE_DOC_PIPELINE);
                                     return HEREDOC_MARKER_START; }
   {WhiteSpace}+                   { return WHITESPACE; }
@@ -347,13 +353,27 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedAnyChar}
 }
 
 <HERE_DOC_END_MARKER> {
-  {WhiteSpace}+                   { if (!heredocWithWhiteSpaceIgnore) yybegin(HERE_DOC_BODY); return HEREDOC_CONTENT; }
-  {HeredocMarker}+                { if (yytext().toString().equals(heredocMarker))
-                                  { heredocMarker = null; heredocWithWhiteSpaceIgnore = false; popState(); return HEREDOC_MARKER_END; }
-                                    else { yypushback(yylength()); yybegin(HERE_DOC_BODY); } }
-  [^]                             { yypushback(yylength()); yybegin(HERE_DOC_BODY); }
+  {WhiteSpace}+                   { if (!heredocWithWhiteSpaceIgnore) yybegin(heredocWithVars ? HERE_DOC_BODY_VARS : HERE_DOC_BODY); return HEREDOC_CONTENT; }
+  {HeredocMarker}+                { if (!heredocMarkers.isEmpty() && yytext().toString().equals(heredocMarkers.peekFirst()))
+                                  { heredocMarkers.pullFirst(); heredocWithWhiteSpaceIgnore = false; popState(); return HEREDOC_MARKER_END; }
+                                    else { yypushback(yylength()); yybegin(heredocWithVars ? HERE_DOC_BODY_VARS : HERE_DOC_BODY); } }
+  [^]                             { yypushback(yylength()); yybegin(heredocWithVars ? HERE_DOC_BODY_VARS : HERE_DOC_BODY); }
 }
 
+<HERE_DOC_BODY_VARS> {
+    "$(("                         { isArithmeticExpansion = true; yypushback(2); return DOLLAR; }
+    "(("                          { if (isArithmeticExpansion) { pushState(ARITHMETIC_EXPRESSION);
+                                        pushParentheses(DOUBLE_PARENTHESES); isArithmeticExpansion = false; return LEFT_DOUBLE_PAREN; }
+                                    else return HEREDOC_CONTENT; }
+    "$("                          { pushState(PARENTHESES_COMMAND_SUBSTITUTION); yypushback(1); return DOLLAR; }
+    "${"                          { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
+    "$["                          { pushState(OLD_ARITHMETIC_EXPRESSION); return ARITH_SQUARE_LEFT; }
+    "`"                           { pushState(BACKQUOTE_COMMAND_SUBSTITUTION); isBackquoteOpen = true; return OPEN_BACKQUOTE; }
+    {Variable}                    { return VAR; }
+    {InputCharacterNoVars}+       { return HEREDOC_CONTENT; }
+    {LineTerminator}              { yybegin(HERE_DOC_END_MARKER); return HEREDOC_CONTENT; }
+    {InputCharacter}              { return HEREDOC_CONTENT; }
+}
 <HERE_DOC_BODY> {
     {InputCharacter}+             { return HEREDOC_CONTENT; }
     {LineTerminator}              { yybegin(HERE_DOC_END_MARKER); return HEREDOC_CONTENT; }
@@ -440,12 +460,8 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedAnyChar}
     "<("                          { return INPUT_PROCESS_SUBSTITUTION; }
 
     "<<<"                         { herestringStartPosition = getTokenEnd(); pushState(HERE_STRING); return REDIRECT_HERE_STRING; }
-    "<<-"                         { if (yystate() != HERE_DOC_PIPELINE)
-                                    { pushState(HERE_DOC_START_MARKER); heredocWithWhiteSpaceIgnore = true; return HEREDOC_MARKER_TAG; }
-                                    else return SHIFT_LEFT; }
-    "<<"                          { if (yystate() != HERE_DOC_PIPELINE)
-                                    { pushState(HERE_DOC_START_MARKER); return HEREDOC_MARKER_TAG; }
-                                    else return SHIFT_LEFT; }
+    "<<-"                         { pushState(HERE_DOC_START_MARKER); heredocWithWhiteSpaceIgnore = true; return HEREDOC_MARKER_TAG; }
+    "<<"                          { pushState(HERE_DOC_START_MARKER); return HEREDOC_MARKER_TAG; }
     ">>"                          { return SHIFT_RIGHT; }
     ">"                           { return GT; }
     "<"                           { return LT; }

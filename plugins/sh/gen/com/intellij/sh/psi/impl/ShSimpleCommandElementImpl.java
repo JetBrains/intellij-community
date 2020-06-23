@@ -45,12 +45,6 @@ public class ShSimpleCommandElementImpl extends ShCompositeElementImpl implement
 
   @Override
   @Nullable
-  public ShHeredoc getHeredoc() {
-    return findChildByClass(ShHeredoc.class);
-  }
-
-  @Override
-  @Nullable
   public ShLiteral getLiteral() {
     return findChildByClass(ShLiteral.class);
   }

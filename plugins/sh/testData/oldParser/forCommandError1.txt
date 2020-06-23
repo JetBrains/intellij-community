@@ -19,7 +19,7 @@ SHELL_SCRIPT
             PsiWhiteSpace(' ')
             LITERAL
               PsiElement(word)('a')
-          PsiErrorElement:'&', '&&', ';', '\n', '|' or '||' expected, got '}'
+          PsiErrorElement:'&', '&&', ';', <heredoc>, '\n', '|' or '||' expected, got '}'
             <empty list>
         PsiWhiteSpace(' ')
         PsiElement(})('}')

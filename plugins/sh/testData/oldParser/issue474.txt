@@ -6,12 +6,13 @@ SHELL_SCRIPT
           PsiElement(word)('cat')
       PsiWhiteSpace(' ')
       SIMPLE_COMMAND_ELEMENT
-        HEREDOC
+        REDIRECTION
           PsiElement(HEREDOC_MARKER_TAG)('<<')
           PsiElement(HEREDOC_MARKER_START)('EOF')
-          PsiElement(\n)('\n')
-          PsiElement(HEREDOC_CONTENT)('This block has no syntax error.\n')
-          PsiElement(HEREDOC_MARKER_END)('EOF')
+    PsiElement(\n)('\n')
+    HEREDOC
+      PsiElement(HEREDOC_CONTENT)('This block has no syntax error.\n')
+      PsiElement(HEREDOC_MARKER_END)('EOF')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -21,10 +22,11 @@ SHELL_SCRIPT
           PsiElement(word)('cat')
       PsiWhiteSpace(' ')
       SIMPLE_COMMAND_ELEMENT
-        HEREDOC
+        REDIRECTION
           PsiElement(HEREDOC_MARKER_TAG)('<<')
           PsiElement(HEREDOC_MARKER_START)('EOF')
-          PsiElement(;)(';')
-          PsiElement(\n)('\n')
-          PsiElement(HEREDOC_CONTENT)('This block also should have no syntax error.\nBut causes an error at the beginning of the line of "This block also..."\n')
-          PsiElement(HEREDOC_MARKER_END)('EOF')
+    PsiElement(;)(';')
+    PsiElement(\n)('\n')
+    HEREDOC
+      PsiElement(HEREDOC_CONTENT)('This block also should have no syntax error.\nBut causes an error at the beginning of the line of "This block also..."\n')
+      PsiElement(HEREDOC_MARKER_END)('EOF')

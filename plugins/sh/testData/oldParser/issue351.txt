@@ -7,10 +7,11 @@ SHELL_SCRIPT
     PsiElement(&)('&')
     PsiWhiteSpace(' ')
     GENERIC_COMMAND_DIRECTIVE
-      HEREDOC
+      REDIRECTION
         PsiElement(HEREDOC_MARKER_TAG)('<<')
         PsiWhiteSpace(' ')
         PsiElement(HEREDOC_MARKER_START)('EOF')
-        PsiElement(\n)('\n')
-        PsiElement(HEREDOC_CONTENT)(' content\n')
-        PsiElement(HEREDOC_MARKER_END)('EOF')
+    PsiElement(\n)('\n')
+    HEREDOC
+      PsiElement(HEREDOC_CONTENT)(' content\n')
+      PsiElement(HEREDOC_MARKER_END)('EOF')

@@ -10,20 +10,20 @@ SHELL_SCRIPT
           PsiElement(word)('cat')
       PsiWhiteSpace(' ')
       SIMPLE_COMMAND_ELEMENT
-        HEREDOC
+        REDIRECTION
           PsiElement(HEREDOC_MARKER_TAG)('<<-')
           PsiWhiteSpace(' ')
           PsiElement(HEREDOC_MARKER_START)('EOF')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PsiElement(>)('>')
           PsiWhiteSpace(' ')
-          COMMANDS_LIST
-            GENERIC_COMMAND_DIRECTIVE
-              REDIRECTION
-                PsiElement(>)('>')
-                PsiWhiteSpace(' ')
-                PsiElement(word)('aa.ppp')
-          PsiElement(\n)('\n')
-          PsiElement(HEREDOC_CONTENT)('    The leading tab is ignored.\n    ')
-          PsiElement(HEREDOC_MARKER_END)('EOF')
+          PsiElement(word)('aa.ppp')
+    PsiElement(\n)('\n')
+    HEREDOC
+      PsiElement(HEREDOC_CONTENT)('    The leading tab is ignored.\n    ')
+      PsiElement(HEREDOC_MARKER_END)('EOF')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   PsiComment(Comment)('# heredoc till the end of file')

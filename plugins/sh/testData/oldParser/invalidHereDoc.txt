@@ -23,10 +23,10 @@ SHELL_SCRIPT
                 PsiElement(word)('echo')
             PsiWhiteSpace(' ')
             SIMPLE_COMMAND_ELEMENT
-              HEREDOC
+              REDIRECTION
                 PsiElement(HEREDOC_MARKER_TAG)('<<')
                 PsiElement(HEREDOC_MARKER_START)('EOF')
-                PsiElement(\n)('\n')
-                PsiElement(HEREDOC_CONTENT)('  heredoccontent\n      EOF\ndone')
-          PsiErrorElement:'&', '&&', ';', '\n', '|' or '||' expected
+          PsiElement(\n)('\n')
+          PsiElement(HEREDOC_CONTENT)('  heredoccontent\n      EOF\ndone')
+          PsiErrorElement:unmatched input
             <empty list>

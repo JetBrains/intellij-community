@@ -32,12 +32,6 @@ public class ShCommandImpl extends ShCompositeElementImpl implements ShCommand {
   }
 
   @Override
-  @Nullable
-  public ShHeredoc getHeredoc() {
-    return findChildByClass(ShHeredoc.class);
-  }
-
-  @Override
   @NotNull
   public List<ShRedirection> getRedirectionList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, ShRedirection.class);

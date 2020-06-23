@@ -7,34 +7,19 @@ import com.intellij.psi.PsiElement;
 
 public interface ShHeredoc extends ShCompositeElement {
 
-  @Nullable
-  ShCommandsList getCommandsList();
+  @NotNull
+  List<ShArithmeticExpansion> getArithmeticExpansionList();
 
-  @Nullable
-  PsiElement getAmp();
+  @NotNull
+  List<ShCommand> getCommandList();
 
-  @Nullable
-  PsiElement getAndAnd();
+  @NotNull
+  List<ShShellParameterExpansion> getShellParameterExpansionList();
 
-  @Nullable
+  @NotNull
+  List<ShVariable> getVariableList();
+
+  @NotNull
   PsiElement getHeredocMarkerEnd();
-
-  @NotNull
-  PsiElement getHeredocMarkerStart();
-
-  @NotNull
-  PsiElement getHeredocMarkerTag();
-
-  @Nullable
-  PsiElement getOrOr();
-
-  @Nullable
-  PsiElement getPipe();
-
-  @Nullable
-  PsiElement getPipeAmp();
-
-  @Nullable
-  PsiElement getSemi();
 
 }

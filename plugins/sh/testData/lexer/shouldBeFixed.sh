@@ -22,3 +22,8 @@ EOF
 $(${)                     #issue398
 
 [[ (a =~ "b") ]]          #issue412
+
+<<EOF3 <<EOF4
+EOF3
+${
+EOF4

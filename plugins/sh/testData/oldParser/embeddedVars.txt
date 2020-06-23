@@ -6,13 +6,16 @@ SHELL_SCRIPT
           PsiElement(word)('a')
       PsiWhiteSpace(' ')
       SIMPLE_COMMAND_ELEMENT
-        HEREDOC
+        REDIRECTION
           PsiElement(HEREDOC_MARKER_TAG)('<<')
           PsiWhiteSpace(' ')
           PsiElement(HEREDOC_MARKER_START)('END')
-          PsiElement(\n)('\n')
-          PsiElement(HEREDOC_CONTENT)('$a\n')
-          PsiElement(HEREDOC_MARKER_END)('END')
+    PsiElement(\n)('\n')
+    HEREDOC
+      VARIABLE
+        PsiElement(var)('$a')
+      PsiElement(HEREDOC_CONTENT)('\n')
+      PsiElement(HEREDOC_MARKER_END)('END')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     SIMPLE_COMMAND
@@ -21,10 +24,16 @@ SHELL_SCRIPT
           PsiElement(word)('a')
       PsiWhiteSpace(' ')
       SIMPLE_COMMAND_ELEMENT
-        HEREDOC
+        REDIRECTION
           PsiElement(HEREDOC_MARKER_TAG)('<<')
           PsiWhiteSpace(' ')
           PsiElement(HEREDOC_MARKER_START)('END')
-          PsiElement(\n)('\n')
-          PsiElement(HEREDOC_CONTENT)('${a}\n')
-          PsiElement(HEREDOC_MARKER_END)('END')
+    PsiElement(\n)('\n')
+    HEREDOC
+      PsiElement($)('$')
+      SHELL_PARAMETER_EXPANSION
+        PsiElement({)('{')
+        PsiElement(word)('a')
+        PsiElement(})('}')
+      PsiElement(HEREDOC_CONTENT)('\n')
+      PsiElement(HEREDOC_MARKER_END)('END')

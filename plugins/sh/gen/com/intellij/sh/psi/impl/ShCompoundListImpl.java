@@ -31,4 +31,10 @@ public class ShCompoundListImpl extends ShCompositeElementImpl implements ShComp
     return PsiTreeUtil.getChildrenOfTypeAsList(this, ShCommand.class);
   }
 
+  @Override
+  @NotNull
+  public List<ShHeredoc> getHeredocList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, ShHeredoc.class);
+  }
+
 }

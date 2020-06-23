@@ -26,63 +26,33 @@ public class ShHeredocImpl extends ShCompositeElementImpl implements ShHeredoc {
   }
 
   @Override
-  @Nullable
-  public ShCommandsList getCommandsList() {
-    return findChildByClass(ShCommandsList.class);
+  @NotNull
+  public List<ShArithmeticExpansion> getArithmeticExpansionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, ShArithmeticExpansion.class);
   }
 
   @Override
-  @Nullable
-  public PsiElement getAmp() {
-    return findChildByType(AMP);
+  @NotNull
+  public List<ShCommand> getCommandList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, ShCommand.class);
   }
 
   @Override
-  @Nullable
-  public PsiElement getAndAnd() {
-    return findChildByType(AND_AND);
+  @NotNull
+  public List<ShShellParameterExpansion> getShellParameterExpansionList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, ShShellParameterExpansion.class);
   }
 
   @Override
-  @Nullable
+  @NotNull
+  public List<ShVariable> getVariableList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, ShVariable.class);
+  }
+
+  @Override
+  @NotNull
   public PsiElement getHeredocMarkerEnd() {
-    return findChildByType(HEREDOC_MARKER_END);
-  }
-
-  @Override
-  @NotNull
-  public PsiElement getHeredocMarkerStart() {
-    return findNotNullChildByType(HEREDOC_MARKER_START);
-  }
-
-  @Override
-  @NotNull
-  public PsiElement getHeredocMarkerTag() {
-    return findNotNullChildByType(HEREDOC_MARKER_TAG);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getOrOr() {
-    return findChildByType(OR_OR);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getPipe() {
-    return findChildByType(PIPE);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getPipeAmp() {
-    return findChildByType(PIPE_AMP);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getSemi() {
-    return findChildByType(SEMI);
+    return findNotNullChildByType(HEREDOC_MARKER_END);
   }
 
 }

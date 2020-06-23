@@ -26,6 +26,7 @@ public class ShParserTest extends ParsingTestCase {
   public void testSelect()        { doTest(true); }
   public void testExpr()          { doTest(true); }
   public void testHeredoc()       { doTest(true); }
+  public void testHeredoc2()      { doTest(true); }
   public void testHereEof()       { doTest(true); }
   public void testIf()            { doTest(true); }
   public void testConditional()   { doTest(true); }

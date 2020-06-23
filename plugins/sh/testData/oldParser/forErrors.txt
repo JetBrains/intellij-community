@@ -23,5 +23,5 @@ SHELL_SCRIPT
             PsiWhiteSpace(' ')
             SIMPLE_COMMAND_ELEMENT
               PsiElement(word)('done')
-          PsiErrorElement:'&', '&&', ';', '\n', '|' or '||' expected
+          PsiErrorElement:'&', '&&', ';', <heredoc>, '\n', '|' or '||' expected
             <empty list>

@@ -8,4 +8,5 @@ X
 x << X << Y
   $abc
 X
+  $abc
 Y

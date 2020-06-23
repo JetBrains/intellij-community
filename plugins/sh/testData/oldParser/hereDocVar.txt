@@ -6,13 +6,17 @@ SHELL_SCRIPT
           PsiElement(word)('x')
       PsiWhiteSpace(' ')
       SIMPLE_COMMAND_ELEMENT
-        HEREDOC
+        REDIRECTION
           PsiElement(HEREDOC_MARKER_TAG)('<<')
           PsiWhiteSpace(' ')
           PsiElement(HEREDOC_MARKER_START)('X')
-          PsiElement(\n)('\n')
-          PsiElement(HEREDOC_CONTENT)('  abc\n  $abc\n')
-          PsiElement(HEREDOC_MARKER_END)('X')
+    PsiElement(\n)('\n')
+    HEREDOC
+      PsiElement(HEREDOC_CONTENT)('  abc\n  ')
+      VARIABLE
+        PsiElement(var)('$abc')
+      PsiElement(HEREDOC_CONTENT)('\n')
+      PsiElement(HEREDOC_MARKER_END)('X')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     SIMPLE_COMMAND
@@ -21,13 +25,17 @@ SHELL_SCRIPT
           PsiElement(word)('x')
       PsiWhiteSpace(' ')
       SIMPLE_COMMAND_ELEMENT
-        HEREDOC
+        REDIRECTION
           PsiElement(HEREDOC_MARKER_TAG)('<<')
           PsiWhiteSpace(' ')
           PsiElement(HEREDOC_MARKER_START)('X')
-          PsiElement(\n)('\n')
-          PsiElement(HEREDOC_CONTENT)('  $abc\n')
-          PsiElement(HEREDOC_MARKER_END)('X')
+    PsiElement(\n)('\n')
+    HEREDOC
+      PsiElement(HEREDOC_CONTENT)('  ')
+      VARIABLE
+        PsiElement(var)('$abc')
+      PsiElement(HEREDOC_CONTENT)('\n')
+      PsiElement(HEREDOC_MARKER_END)('X')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     SIMPLE_COMMAND
@@ -36,22 +44,27 @@ SHELL_SCRIPT
           PsiElement(word)('x')
       PsiWhiteSpace(' ')
       SIMPLE_COMMAND_ELEMENT
-        HEREDOC
+        REDIRECTION
           PsiElement(HEREDOC_MARKER_TAG)('<<')
           PsiWhiteSpace(' ')
           PsiElement(HEREDOC_MARKER_START)('X')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PsiElement(HEREDOC_MARKER_TAG)('<<')
           PsiWhiteSpace(' ')
-          COMMANDS_LIST
-            GENERIC_COMMAND_DIRECTIVE
-              REDIRECTION
-                PsiElement(<<)('<<')
-                PsiWhiteSpace(' ')
-                PsiElement(word)('Y')
-          PsiElement(\n)('\n')
-          PsiElement(HEREDOC_CONTENT)('  $abc\n')
-          PsiElement(HEREDOC_MARKER_END)('X')
-  PsiElement(\n)('\n')
-  COMMANDS_LIST
-    GENERIC_COMMAND_DIRECTIVE
-      LITERAL
-        PsiElement(word)('Y')
+          PsiElement(HEREDOC_MARKER_START)('Y')
+    PsiElement(\n)('\n')
+    HEREDOC
+      PsiElement(HEREDOC_CONTENT)('  ')
+      VARIABLE
+        PsiElement(var)('$abc')
+      PsiElement(HEREDOC_CONTENT)('\n')
+      PsiElement(HEREDOC_MARKER_END)('X')
+    PsiElement(\n)('\n')
+    HEREDOC
+      PsiElement(HEREDOC_CONTENT)('  ')
+      VARIABLE
+        PsiElement(var)('$abc')
+      PsiElement(HEREDOC_CONTENT)('\n')
+      PsiElement(HEREDOC_MARKER_END)('Y')

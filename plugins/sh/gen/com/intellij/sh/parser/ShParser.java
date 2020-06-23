@@ -584,7 +584,7 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // shell_command [heredoc | redirection+]
+  // shell_command redirection*
   //           | include_command
   //           | simple_command
   public static boolean command(PsiBuilder b, int l) {
@@ -598,7 +598,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // shell_command [heredoc | redirection+]
+  // shell_command redirection*
   private static boolean command_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "command_0")) return false;
     boolean r;
@@ -609,37 +609,15 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // [heredoc | redirection+]
+  // redirection*
   private static boolean command_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "command_0_1")) return false;
-    command_0_1_0(b, l + 1);
-    return true;
-  }
-
-  // heredoc | redirection+
-  private static boolean command_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "command_0_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = heredoc(b, l + 1);
-    if (!r) r = command_0_1_0_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // redirection+
-  private static boolean command_0_1_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "command_0_1_0_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = redirection(b, l + 1);
-    while (r) {
+    while (true) {
       int c = current_position_(b);
       if (!redirection(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "command_0_1_0_1", c)) break;
+      if (!empty_element_parsed_guard_(b, "command_0_1", c)) break;
     }
-    exit_section_(b, m, null, r);
-    return r;
+    return true;
   }
 
   /* ********************************************************** */
@@ -678,14 +656,15 @@ public class ShParser implements PsiParser, LightPsiParser {
   // pipeline_command (
   //                      ('&&' | '||') newlines? pipeline_command
   //                    | ('|' | '|&' | '&'| ';') pipeline_command?
-  //                  )*
+  //                  )* heredocs?
   public static boolean commands_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "commands_list")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, COMMANDS_LIST, "<commands list>");
     r = pipeline_command(b, l + 1);
     p = r; // pin = 1
-    r = r && commands_list_1(b, l + 1);
+    r = r && report_error_(b, commands_list_1(b, l + 1));
+    r = p && commands_list_2(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
@@ -772,6 +751,13 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean commands_list_1_0_1_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "commands_list_1_0_1_1")) return false;
     pipeline_command(b, l + 1);
+    return true;
+  }
+
+  // heredocs?
+  private static boolean commands_list_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "commands_list_2")) return false;
+    heredocs(b, l + 1);
     return true;
   }
 
@@ -1234,110 +1220,61 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // HEREDOC_MARKER_TAG HEREDOC_MARKER_START [commands_list heredoc_pipeline_separator? | heredoc_pipeline_separator commands_list?] newlines
-  //             HEREDOC_CONTENT*
-  //             (HEREDOC_MARKER_END | <<eof>>)
+  // (HEREDOC_CONTENT | vars)* HEREDOC_MARKER_END
   public static boolean heredoc(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "heredoc")) return false;
-    if (!nextTokenIs(b, HEREDOC_MARKER_TAG)) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, HEREDOC_MARKER_TAG, HEREDOC_MARKER_START);
-    r = r && heredoc_2(b, l + 1);
-    r = r && newlines(b, l + 1);
-    r = r && heredoc_4(b, l + 1);
-    r = r && heredoc_5(b, l + 1);
-    exit_section_(b, m, HEREDOC, r);
+    Marker m = enter_section_(b, l, _NONE_, HEREDOC, "<heredoc>");
+    r = heredoc_0(b, l + 1);
+    r = r && consumeToken(b, HEREDOC_MARKER_END);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // [commands_list heredoc_pipeline_separator? | heredoc_pipeline_separator commands_list?]
-  private static boolean heredoc_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "heredoc_2")) return false;
-    heredoc_2_0(b, l + 1);
-    return true;
-  }
-
-  // commands_list heredoc_pipeline_separator? | heredoc_pipeline_separator commands_list?
-  private static boolean heredoc_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "heredoc_2_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = heredoc_2_0_0(b, l + 1);
-    if (!r) r = heredoc_2_0_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // commands_list heredoc_pipeline_separator?
-  private static boolean heredoc_2_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "heredoc_2_0_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = commands_list(b, l + 1);
-    r = r && heredoc_2_0_0_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // heredoc_pipeline_separator?
-  private static boolean heredoc_2_0_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "heredoc_2_0_0_1")) return false;
-    heredoc_pipeline_separator(b, l + 1);
-    return true;
-  }
-
-  // heredoc_pipeline_separator commands_list?
-  private static boolean heredoc_2_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "heredoc_2_0_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = heredoc_pipeline_separator(b, l + 1);
-    r = r && heredoc_2_0_1_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // commands_list?
-  private static boolean heredoc_2_0_1_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "heredoc_2_0_1_1")) return false;
-    commands_list(b, l + 1);
-    return true;
-  }
-
-  // HEREDOC_CONTENT*
-  private static boolean heredoc_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "heredoc_4")) return false;
+  // (HEREDOC_CONTENT | vars)*
+  private static boolean heredoc_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "heredoc_0")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!consumeToken(b, HEREDOC_CONTENT)) break;
-      if (!empty_element_parsed_guard_(b, "heredoc_4", c)) break;
+      if (!heredoc_0_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "heredoc_0", c)) break;
     }
     return true;
   }
 
-  // HEREDOC_MARKER_END | <<eof>>
-  private static boolean heredoc_5(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "heredoc_5")) return false;
+  // HEREDOC_CONTENT | vars
+  private static boolean heredoc_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "heredoc_0_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, HEREDOC_MARKER_END);
-    if (!r) r = eof(b, l + 1);
-    exit_section_(b, m, null, r);
+    r = consumeToken(b, HEREDOC_CONTENT);
+    if (!r) r = vars(b, l + 1);
     return r;
   }
 
   /* ********************************************************** */
-  // '&&' | '||' | '&' | '|' | '|&' | ';'
-  static boolean heredoc_pipeline_separator(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "heredoc_pipeline_separator")) return false;
+  // (newlines heredoc)+
+  static boolean heredocs(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "heredocs")) return false;
     boolean r;
-    r = consumeToken(b, AND_AND);
-    if (!r) r = consumeToken(b, OR_OR);
-    if (!r) r = consumeToken(b, AMP);
-    if (!r) r = consumeToken(b, PIPE);
-    if (!r) r = consumeToken(b, PIPE_AMP);
-    if (!r) r = consumeToken(b, SEMI);
+    Marker m = enter_section_(b);
+    r = heredocs_0(b, l + 1);
+    while (r) {
+      int c = current_position_(b);
+      if (!heredocs_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "heredocs", c)) break;
+    }
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // newlines heredoc
+  private static boolean heredocs_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "heredocs_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = newlines(b, l + 1);
+    r = r && heredoc(b, l + 1);
+    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -1860,32 +1797,40 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // pipeline_command (pipeline_command_list_separator pipeline_command)*
+  // pipeline_command heredocs? (pipeline_command_list_separator pipeline_command)*
   static boolean pipeline_command_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pipeline_command_list")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
     r = pipeline_command(b, l + 1);
     p = r; // pin = 1
-    r = r && pipeline_command_list_1(b, l + 1);
+    r = r && report_error_(b, pipeline_command_list_1(b, l + 1));
+    r = p && pipeline_command_list_2(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
-  // (pipeline_command_list_separator pipeline_command)*
+  // heredocs?
   private static boolean pipeline_command_list_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pipeline_command_list_1")) return false;
+    heredocs(b, l + 1);
+    return true;
+  }
+
+  // (pipeline_command_list_separator pipeline_command)*
+  private static boolean pipeline_command_list_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pipeline_command_list_2")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!pipeline_command_list_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "pipeline_command_list_1", c)) break;
+      if (!pipeline_command_list_2_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "pipeline_command_list_2", c)) break;
     }
     return true;
   }
 
   // pipeline_command_list_separator pipeline_command
-  private static boolean pipeline_command_list_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pipeline_command_list_1_0")) return false;
+  private static boolean pipeline_command_list_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pipeline_command_list_2_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = pipeline_command_list_separator(b, l + 1);
@@ -1994,7 +1939,7 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // redirection_inner | '&>' w | number redirection_inner | process_substitution
+  // redirection_inner | '&>' w | number redirection_inner | process_substitution | HEREDOC_MARKER_TAG HEREDOC_MARKER_START
   public static boolean redirection(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection")) return false;
     boolean r;
@@ -2003,6 +1948,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     if (!r) r = redirection_1(b, l + 1);
     if (!r) r = redirection_2(b, l + 1);
     if (!r) r = process_substitution(b, l + 1);
+    if (!r) r = parseTokens(b, 0, HEREDOC_MARKER_TAG, HEREDOC_MARKER_START);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -2285,7 +2231,6 @@ public class ShParser implements PsiParser, LightPsiParser {
   //                                         | not_lvalue
   //                                         | redirection
   //                                         | composed_var
-  //                                         | heredoc
   //                                         | conditional_command
   //                                         | command_substitution_command
   //                                         | arithmetic_expansion
@@ -2298,7 +2243,6 @@ public class ShParser implements PsiParser, LightPsiParser {
     if (!r) r = not_lvalue(b, l + 1);
     if (!r) r = redirection(b, l + 1);
     if (!r) r = composed_var(b, l + 1);
-    if (!r) r = heredoc(b, l + 1);
     if (!r) r = conditional_command(b, l + 1);
     if (!r) r = command_substitution_command(b, l + 1);
     if (!r) r = arithmetic_expansion(b, l + 1);

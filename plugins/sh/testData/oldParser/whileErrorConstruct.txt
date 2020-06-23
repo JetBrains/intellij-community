@@ -25,7 +25,7 @@ SHELL_SCRIPT
                 PsiElement(;)(';')
               PsiWhiteSpace(' ')
               PsiElement(done)('done')
-          PsiErrorElement:'&', '&&', ';', '\n', '|' or '||' expected, got '}'
+          PsiErrorElement:'&', '&&', ';', <heredoc>, '\n', '|' or '||' expected, got '}'
             <empty list>
         PsiWhiteSpace(' ')
         PsiElement(})('}')
@@ -88,7 +88,7 @@ SHELL_SCRIPT
                 PsiElement(;)(';')
               PsiWhiteSpace(' ')
               PsiElement(done)('done')
-          PsiErrorElement:'&', '&&', ';', '\n', '|' or '||' expected, got '}'
+          PsiErrorElement:'&', '&&', ';', <heredoc>, '\n', '|' or '||' expected, got '}'
             <empty list>
         PsiWhiteSpace(' ')
         PsiElement(})('}')

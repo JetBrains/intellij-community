@@ -6,10 +6,11 @@ SHELL_SCRIPT
           PsiElement(word)('x')
       PsiWhiteSpace(' ')
       SIMPLE_COMMAND_ELEMENT
-        HEREDOC
+        REDIRECTION
           PsiElement(HEREDOC_MARKER_TAG)('<<')
           PsiWhiteSpace(' ')
           PsiElement(HEREDOC_MARKER_START)('!')
-          PsiElement(\n)('\n')
-          PsiElement(HEREDOC_CONTENT)('  Text\n')
-          PsiElement(HEREDOC_MARKER_END)('!')
+    PsiElement(\n)('\n')
+    HEREDOC
+      PsiElement(HEREDOC_CONTENT)('  Text\n')
+      PsiElement(HEREDOC_MARKER_END)('!')

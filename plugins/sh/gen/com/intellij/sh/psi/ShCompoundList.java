@@ -10,4 +10,7 @@ public interface ShCompoundList extends ShCompositeElement {
   @NotNull
   List<ShCommand> getCommandList();
 
+  @NotNull
+  List<ShHeredoc> getHeredocList();
+
 }

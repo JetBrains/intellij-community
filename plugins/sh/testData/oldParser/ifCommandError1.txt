@@ -53,7 +53,7 @@ SHELL_SCRIPT
               PsiElement(word)('c')
           PsiElement(;)(';')
       PsiWhiteSpace(' ')
-      PsiErrorElement:<redirection>, HEREDOC_MARKER_TAG or fi expected, got 'elif'
+      PsiErrorElement:<redirection> or fi expected, got 'elif'
         PsiElement(elif)('elif')
   PsiWhiteSpace(' ')
   COMMANDS_LIST

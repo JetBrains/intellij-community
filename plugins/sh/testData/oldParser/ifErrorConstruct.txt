@@ -33,5 +33,5 @@ SHELL_SCRIPT
               PsiElement(OPEN_QUOTE)('"')
               PsiElement(STRING_CONTENT)('abc')
               PsiElement(CLOSE_QUOTE)('"')
-          PsiErrorElement:'&', '&&', ';', '\n', '|' or '||' expected
+          PsiErrorElement:'&', '&&', ';', <heredoc>, '\n', '|' or '||' expected
             <empty list>
