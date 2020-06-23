@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
@@ -91,12 +92,14 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     myOutputLabel = new JLabel(JavaUiBundle.message("module.paths.output.label"));
     outputPathsPanel.add(myOutputLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
                                                                GridBagConstraints.NONE, JBUI.insets(6, 12, 0, 4), 0, 0));
+    myOutputLabel.setLabelFor(myOutputPathPanel.getTextField());
     outputPathsPanel.add(myOutputPathPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST,
                                                                    GridBagConstraints.HORIZONTAL, JBUI.insets(6, 4, 0, 0), 0, 0));
 
     myTestOutputLabel = new JLabel(JavaUiBundle.message("module.paths.test.output.label"));
     outputPathsPanel.add(myTestOutputLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
                                                                    GridBagConstraints.NONE, JBUI.insets(6, 16, 0, 4), 0, 0));
+    myTestOutputLabel.setLabelFor(myTestsOutputPathPanel.getTextField());
     outputPathsPanel.add(myTestsOutputPathPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0,
                                                                         GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
                                                                         JBUI.insets(6, 4, 0, 0), 0, 0));
