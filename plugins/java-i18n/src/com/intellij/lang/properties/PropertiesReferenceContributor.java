@@ -113,6 +113,11 @@ public class PropertiesReferenceContributor extends PsiReferenceContributor{
 
     registrar.registerReferenceProvider(PsiJavaPatterns.psiElement(PropertyValueImpl.class), new PsiReferenceProvider() {
       @Override
+      public boolean acceptsTarget(@NotNull PsiElement target) {
+        return target instanceof PsiClass;
+      }
+
+      @Override
       public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
         String text = element.getText();
         String[] words = text.split("\\s");
