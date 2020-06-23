@@ -271,6 +271,9 @@ internal class WorkspaceEntityStorageBuilderImpl(
    *  - Restore entities between matched and unmatched entities. At this point the full action may fail (e.g. if an entity in [replaceWith]
    *        has a reference to an entity that doesn't exist in current builder.
    *  - Restore references between matched entities.
+   *
+   *
+   *  TODO  Spacial cases: when source filter returns true for all entity sources.
    */
   override fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: WorkspaceEntityStorage) {
     replaceWith as AbstractEntityStorage
