@@ -19,6 +19,7 @@ class DependenciesProperties {
 
   @Lazy
   File file = {
+    if (properties.isEmpty()) throw new IllegalStateException('Dependencies properties are empty')
     new File(directory, 'build/dependencies.properties')
   }()
 
