@@ -35,6 +35,9 @@ interface IComponentStore {
   @TestOnly
   fun saveComponent(component: PersistentStateComponent<*>)
 
+  @TestOnly
+  fun removeComponent(name: String)
+
   @JvmDefault
   fun release() {}
 }
