@@ -3,7 +3,7 @@ package com.intellij.uiDesigner.binding;
 
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.lang.properties.references.PropertyReferenceBase;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -49,6 +49,15 @@ public class FormReferenceProvider extends PsiReferenceProvider {
   }
 
   private static final Key<CachedValue<CachedFormData>> CACHED_DATA = Key.create("Cached form reference");
+
+  @Override
+  public boolean acceptsTarget(@NotNull PsiElement target) {
+    return target instanceof PsiClass ||
+           target instanceof PsiPackage ||
+           target instanceof PsiField ||
+           target instanceof PsiFile ||
+           PropertyReferenceBase.isPropertyPsi(target);
+  }
 
   @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
@@ -143,8 +152,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
       classReference = referencesByString[referencesByString.length - 1];
     }
 
-    final PsiReference finalClassReference = classReference;
-    ApplicationManager.getApplication().runReadAction(() -> processReferences(rootTag, finalClassReference, file, processor));
+    processReferences(rootTag, classReference, file, processor);
   }
 
   private static TextRange getValueRange(final XmlAttribute classToBind) {
