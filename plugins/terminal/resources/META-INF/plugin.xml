@@ -48,8 +48,11 @@
     <action id="Terminal.SwitchFocusToEditor" class="org.jetbrains.plugins.terminal.action.TerminalSwitchFocusToEditorAction">
       <keyboard-shortcut first-keystroke="ESCAPE" keymap="$default"/>
     </action>
-    <action id="Terminal.SmartCommandExecution" class="org.jetbrains.plugins.terminal.TerminalShellCommandAction">
+    <action id="Terminal.SmartCommandExecution.Run" class="com.intellij.terminal.TerminalRunSmartCommandAction">
       <keyboard-shortcut first-keystroke="control ENTER" keymap="$default"/>
+    </action>
+    <action id="Terminal.SmartCommandExecution.Debug" class="com.intellij.terminal.TerminalDebugSmartCommandAction">
+      <keyboard-shortcut first-keystroke="control shift ENTER" keymap="$default"/>
     </action>
   </actions>
 

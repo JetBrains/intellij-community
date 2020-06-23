@@ -7,6 +7,7 @@ import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.terminal.TerminalExecutorAction
 import com.intellij.terminal.TerminalShellCommandHandler
 import java.io.File
 
@@ -14,7 +15,7 @@ class OpenFileShellCommandHandler : TerminalShellCommandHandler {
   override fun matches(project: Project, workingDirectory: String?, localSession: Boolean, command: String) =
     handleCommand(command, localSession, workingDirectory) { file -> checkRegisteredFileType(file) }
 
-  override fun execute(project: Project, workingDirectory: String?, localSession: Boolean, command: String) =
+  override fun execute(project: Project, workingDirectory: String?, localSession: Boolean, command: String, executorAction: TerminalExecutorAction) =
     handleCommand(command, localSession, workingDirectory) { file -> openFileEditor(project, file) }
 
   private fun checkRegisteredFileType(file: VirtualFile?) =
