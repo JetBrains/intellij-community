@@ -76,6 +76,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   private static final String[] FORK_MODE_ALL =
     {JUnitConfiguration.FORK_NONE, JUnitConfiguration.FORK_METHOD, JUnitConfiguration.FORK_KLASS};
   private static final String[] FORK_MODE = {JUnitConfiguration.FORK_NONE, JUnitConfiguration.FORK_METHOD};
+  private static final String[] FORK_MODE_NONE = {JUnitConfiguration.FORK_NONE};
   private final ConfigurationModuleSelector myModuleSelector;
   private final LabeledComponent[] myTestLocations = new LabeledComponent[6];
   private final JUnitConfigurationModel myModel;
@@ -98,7 +99,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   private final TextFieldWithBrowseButton myPatternTextField;
   private JrePathEditor myJrePathEditor;
   private LabeledComponent<ShortenCommandLineModeCombo> myShortenClasspathModeCombo;
-  private JComboBox myForkCb;
+  private JComboBox<String> myForkCb;
   private JBLabel myTestLabel;
   private JComboBox<Integer> myTypeChooser;
   private JBLabel mySearchForTestsLabel;
@@ -222,8 +223,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myTypeChooser.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final Object selectedItem = myTypeChooser.getSelectedItem();
-        myModel.setType((Integer)selectedItem);
+        myModel.setType((Integer)Objects.requireNonNull(myTypeChooser.getSelectedItem()));
         changePanel();
       }
     }
@@ -232,7 +232,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myRepeatCb.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        if ((Integer) myTypeChooser.getSelectedItem() == JUnitConfigurationModel.CLASS) {
+        int item = (Integer)Objects.requireNonNull(myTypeChooser.getSelectedItem());
+        if (item == JUnitConfigurationModel.CLASS || item == JUnitConfigurationModel.METHOD) {
           myForkCb.setModel(getForkModelBasedOnRepeat());
         }
       }
@@ -396,147 +397,58 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   }
 
   private void changePanel () {
+    final Integer selectedType = (Integer)myTypeChooser.getSelectedItem();
+    if (selectedType == null) return;
+    myPackagePanel.setVisible(selectedType == JUnitConfigurationModel.ALL_IN_PACKAGE);
+    myScopesPanel.setVisible(selectedType == JUnitConfigurationModel.PATTERN ||
+                             selectedType == JUnitConfigurationModel.ALL_IN_PACKAGE ||
+                             selectedType == JUnitConfigurationModel.TAGS ||
+                             selectedType == JUnitConfigurationModel.CATEGORY);
+    myPattern.setVisible(selectedType == JUnitConfigurationModel.PATTERN);
+    myDir.setVisible(selectedType == JUnitConfigurationModel.DIR);
+    myClass.setVisible(selectedType == JUnitConfigurationModel.CLASS ||
+                       selectedType == JUnitConfigurationModel.METHOD || 
+                       selectedType == JUnitConfigurationModel.BY_SOURCE_POSITION);
+    myMethod.setVisible(selectedType == JUnitConfigurationModel.PATTERN ||
+                        selectedType == JUnitConfigurationModel.METHOD ||
+                        selectedType == JUnitConfigurationModel.BY_SOURCE_POSITION);
+    myCategory.setVisible(selectedType == JUnitConfigurationModel.CATEGORY);
+    myUniqueIdField.setVisible(selectedType == JUnitConfigurationModel.UNIQUE_ID);
+    myTagsField.setVisible(selectedType == JUnitConfigurationModel.TAGS);
+    myChangeListLabeledComponent.setVisible(selectedType == JUnitConfigurationModel.BY_SOURCE_CHANGES);
+
+    //set fork model
     String selectedItem = (String)myForkCb.getSelectedItem();
     if (selectedItem == null) {
       selectedItem = JUnitConfiguration.FORK_NONE;
     }
-    final Integer selectedType = (Integer)myTypeChooser.getSelectedItem();
-    if (selectedType == JUnitConfigurationModel.ALL_IN_PACKAGE) {
-      myPackagePanel.setVisible(true);
-      myScopesPanel.setVisible(true);
-      myPattern.setVisible(false);
-      myClass.setVisible(false);
-      myCategory.setVisible(false);
-      myUniqueIdField.setVisible(false);
-      myTagsField.setVisible(false);
-      myMethod.setVisible(false);
-      myDir.setVisible(false);
-      myChangeListLabeledComponent.setVisible(false);
-      myForkCb.setEnabled(true);
-      myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE_ALL));
-      myForkCb.setSelectedItem(selectedItem);
-    } else if (selectedType == JUnitConfigurationModel.DIR) {
-      myPackagePanel.setVisible(false);
-      myScopesPanel.setVisible(false);
-      myDir.setVisible(true);
-      myPattern.setVisible(false);
-      myClass.setVisible(false);
-      myCategory.setVisible(false);
-      myUniqueIdField.setVisible(false);
-      myTagsField.setVisible(false);
-      myChangeListLabeledComponent.setVisible(false);
-      myMethod.setVisible(false);
-      myForkCb.setEnabled(true);
-      myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE_ALL));
-      myForkCb.setSelectedItem(selectedItem);
+    else if (selectedType == JUnitConfigurationModel.CLASS && selectedItem == JUnitConfiguration.FORK_KLASS) {
+      selectedItem = JUnitConfiguration.FORK_METHOD;
     }
-    else if (selectedType == JUnitConfigurationModel.CLASS) {
-      myPackagePanel.setVisible(false);
-      myScopesPanel.setVisible(false);
-      myPattern.setVisible(false);
-      myDir.setVisible(false);
-      myClass.setVisible(true);
-      myCategory.setVisible(false);
-      myUniqueIdField.setVisible(false);
-      myTagsField.setVisible(false);
-      myChangeListLabeledComponent.setVisible(false);
-      myMethod.setVisible(false);
-      myForkCb.setEnabled(true);
+    if (selectedType == JUnitConfigurationModel.CLASS || 
+        selectedType == JUnitConfigurationModel.METHOD || 
+        selectedType == JUnitConfigurationModel.BY_SOURCE_POSITION) {
       myForkCb.setModel(getForkModelBasedOnRepeat());
-      myForkCb.setSelectedItem(selectedItem != JUnitConfiguration.FORK_KLASS ? selectedItem : JUnitConfiguration.FORK_METHOD);
-    }
-    else if (selectedType == JUnitConfigurationModel.METHOD || selectedType == JUnitConfigurationModel.BY_SOURCE_POSITION){
-      myPackagePanel.setVisible(false);
-      myScopesPanel.setVisible(false);
-      myPattern.setVisible(false);
-      myDir.setVisible(false);
-      myClass.setVisible(true);
-      myCategory.setVisible(false);
-      myUniqueIdField.setVisible(false);
-      myTagsField.setVisible(false);
-      myMethod.setVisible(true);
-      myChangeListLabeledComponent.setVisible(false);
-      myForkCb.setEnabled(false);
-      myForkCb.setSelectedItem(JUnitConfiguration.FORK_NONE);
-    } else if (selectedType == JUnitConfigurationModel.CATEGORY) {
-      myPackagePanel.setVisible(false);
-      myScopesPanel.setVisible(true);
-      myDir.setVisible(false);
-      myPattern.setVisible(false);
-      myClass.setVisible(false);
-      myCategory.setVisible(true);
-      myUniqueIdField.setVisible(false);
-      myTagsField.setVisible(false);
-      myMethod.setVisible(false);
-      myChangeListLabeledComponent.setVisible(false);
-      myForkCb.setEnabled(true);
-      myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE_ALL));
-      myForkCb.setSelectedItem(selectedItem);
-    }
-    else if (selectedType == JUnitConfigurationModel.BY_SOURCE_CHANGES) {
-      myPackagePanel.setVisible(false);
-      myScopesPanel.setVisible(false);
-      myDir.setVisible(false);
-      myPattern.setVisible(false);
-      myClass.setVisible(false);
-      myCategory.setVisible(false);
-      myUniqueIdField.setVisible(false);
-      myTagsField.setVisible(false);
-      myMethod.setVisible(false);
-      myChangeListLabeledComponent.setVisible(true);
-      myForkCb.setEnabled(true);
-      myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE_ALL));
-      myForkCb.setSelectedItem(selectedItem);
-    }
-    else if (selectedType == JUnitConfigurationModel.UNIQUE_ID) {
-      myPackagePanel.setVisible(false);
-      myScopesPanel.setVisible(false);
-      myDir.setVisible(false);
-      myPattern.setVisible(false);
-      myClass.setVisible(false);
-      myCategory.setVisible(false);
-      myUniqueIdField.setVisible(true);
-      myTagsField.setVisible(false);
-      myMethod.setVisible(false);
-      myChangeListLabeledComponent.setVisible(false);
-      myForkCb.setEnabled(true);
-      myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE_ALL));
-      myForkCb.setSelectedItem(selectedItem);
-    }
-    else if (selectedType == JUnitConfigurationModel.TAGS) {
-      myPackagePanel.setVisible(false);
-      myScopesPanel.setVisible(true);
-      myDir.setVisible(false);
-      myPattern.setVisible(false);
-      myClass.setVisible(false);
-      myCategory.setVisible(false);
-      myUniqueIdField.setVisible(false);
-      myTagsField.setVisible(true);
-      myMethod.setVisible(false);
-      myChangeListLabeledComponent.setVisible(false);
-      myForkCb.setEnabled(true);
-      myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE_ALL));
-      myForkCb.setSelectedItem(selectedItem);
     }
     else {
-      myPackagePanel.setVisible(false);
-      myScopesPanel.setVisible(true);
-      myPattern.setVisible(true);
-      myDir.setVisible(false);
-      myClass.setVisible(false);
-      myCategory.setVisible(false);
-      myUniqueIdField.setVisible(false);
-      myTagsField.setVisible(false);
-      myMethod.setVisible(true);
-      myChangeListLabeledComponent.setVisible(false);
-      myForkCb.setEnabled(true);
-      myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE_ALL));
-      myForkCb.setSelectedItem(selectedItem);
+      myForkCb.setModel(new DefaultComboBoxModel<>(FORK_MODE_ALL));
     }
+    myForkCb.setSelectedItem(selectedItem);
   }
 
-  private DefaultComboBoxModel getForkModelBasedOnRepeat() {
-    return new DefaultComboBoxModel(RepeatCount.ONCE.equals(myRepeatCb.getSelectedItem()) ? FORK_MODE : FORK_MODE_ALL);
+  private DefaultComboBoxModel<String> getForkModelBasedOnRepeat() {
+    int selectedType = (Integer)Objects.requireNonNull(myTypeChooser.getSelectedItem());
+    boolean isMethod = selectedType == JUnitConfigurationModel.METHOD || 
+                       selectedType == JUnitConfigurationModel.BY_SOURCE_POSITION;
+    boolean once = RepeatCount.ONCE.equals(myRepeatCb.getSelectedItem());
+    String[] model = FORK_MODE;
+    if (once && isMethod) {
+      model = FORK_MODE_NONE;
+    }
+    else if (!once && !isMethod) {
+      model = FORK_MODE_ALL;
+    }
+    return new DefaultComboBoxModel<>(model);
   }
 
   public ModuleDescriptionsComboBox getModulesComponent() {
@@ -664,7 +576,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   }
 
   private void onScopeChanged() {
-    final Integer selectedItem = (Integer)myTypeChooser.getSelectedItem();
+    final int selectedItem = (Integer)Objects.requireNonNull(myTypeChooser.getSelectedItem());
     final boolean allInPackageAllInProject = (selectedItem == JUnitConfigurationModel.ALL_IN_PACKAGE ||
                                               selectedItem == JUnitConfigurationModel.PATTERN ||
                                               selectedItem == JUnitConfigurationModel.CATEGORY ||
