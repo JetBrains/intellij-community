@@ -586,4 +586,31 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
       "    }\n" +
       "}");
   }
+
+  public void testIdea235221() {
+    doTextTest(
+      "java",
+
+      "package test;\n" +
+      "\n" +
+      "public class Crush {\n" +
+      "    void crush() {\n" +
+      "        assertThat()\n" +
+      "                /* Then */\n" +
+      "        .isNotNull()<caret>\n" +
+      "    }\n" +
+      "}",
+
+      "package test;\n" +
+      "\n" +
+      "public class Crush {\n" +
+      "    void crush() {\n" +
+      "        assertThat()\n" +
+      "                /* Then */\n" +
+      "        .isNotNull()\n" +
+      "                <caret>\n" +
+      "    }\n" +
+      "}"
+    );
+  }
 }
