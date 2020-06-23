@@ -27,8 +27,6 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.ui.GithubLoginPanel
-import org.jetbrains.plugins.github.authentication.ui.setPasswordUi
-import org.jetbrains.plugins.github.authentication.ui.setTokenUi
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.util.completionOnEdt
 import org.jetbrains.plugins.github.util.errorOnEdt
@@ -63,8 +61,8 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
     buildLayout()
 
     if (account != null) {
-      loginPanel.setCredentials(account.name, null, false)
       loginPanel.setServer(account.server.toUrl(), false)
+      loginPanel.setLogin(account.name, false)
     }
 
     loginButton.addActionListener { login() }

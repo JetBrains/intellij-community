@@ -119,7 +119,7 @@ internal class GHAccountsPanel(
   private fun editAccount(decorator: GithubAccountDecorator) {
     val dialog = GithubLoginDialog(executorFactory, project, this).apply {
       withServer(decorator.account.server.toString(), false)
-      withCredentials(decorator.account.name)
+      withLogin(decorator.account.name, true)
     }
     if (dialog.showAndGet()) {
       decorator.account.name = dialog.login

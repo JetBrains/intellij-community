@@ -24,9 +24,6 @@ import javax.swing.JTextField
 
 internal typealias UniqueLoginPredicate = (login: String, server: GithubServerPath) -> Boolean
 
-internal fun GithubLoginPanel.setTokenUi() = setToken(null)
-internal fun GithubLoginPanel.setPasswordUi() = setCredentials(null, null, true)
-
 internal class GithubLoginPanel(
   executorFactory: GithubApiRequestExecutor.Factory,
   isAccountUnique: UniqueLoginPredicate
@@ -122,23 +119,19 @@ internal class GithubLoginPanel(
     serverTextField.isEditable = editable
   }
 
-  fun setCredentials(login: String?, password: String?, editableLogin: Boolean) {
-    if (login != null) {
-      passwordUi.setLogin(login, editableLogin)
-      tokenUi.setFixedLogin(if (editableLogin) null else login)
-    }
-    if (password != null) passwordUi.setPassword(password)
-    applyUi(passwordUi)
+  fun setLogin(login: String?, editable: Boolean) {
+    passwordUi.setLogin(login.orEmpty(), editable)
+    tokenUi.setFixedLogin(if (editable) null else login)
   }
 
-  fun setToken(token: String?) {
-    if (token != null) tokenUi.setToken(token)
-    applyUi(tokenUi)
-  }
+  fun setPassword(password: String?) = passwordUi.setPassword(password.orEmpty())
+  fun setToken(token: String?) = tokenUi.setToken(token.orEmpty())
 
   fun setError(exception: Throwable) {
     tokenAcquisitionError = currentUi.handleAcquireError(exception)
   }
 
   fun setOAuthUi() = applyUi(oauthUi)
+  fun setPasswordUi() = applyUi(passwordUi)
+  fun setTokenUi() = applyUi(tokenUi)
 }
