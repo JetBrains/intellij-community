@@ -6,6 +6,8 @@ import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.impl.DummyProject
+import com.intellij.openapi.command.impl.UndoManagerImpl
+import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
@@ -114,7 +116,13 @@ internal class TestProjectManager : ProjectManagerExImpl() {
         }
       }
     }
-    return super.closeProject(project, saveProject, dispose, checkCanClose)
+    val result = super.closeProject(project, saveProject, dispose, checkCanClose)
+    val undoManager = UndoManager.getGlobalInstance() as UndoManagerImpl
+    // test may use WrapInCommand (it is ok - in this case HeavyPlatformTestCase will call dropHistoryInTests)
+    if (!undoManager.isInsideCommand) {
+      undoManager.dropHistoryInTests()
+    }
+    return result
   }
 
   /**
