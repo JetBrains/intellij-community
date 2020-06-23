@@ -17,15 +17,6 @@ import java.lang.ref.WeakReference;
 public abstract class WeakReferenceDisposable<T> extends WeakReference<T> implements Disposable {
   private static final ReferenceQueue<Object> ourRefQueue = new ReferenceQueue<>();
 
-  public static <E> WeakReferenceDisposable<E> create(E referent, Consumer<? super E> disposer) {
-    return new WeakReferenceDisposable<E>(referent) {
-      @Override
-      protected void disposeReferent(@NotNull E referent) {
-        disposer.consume(referent);
-      }
-    };
-  }
-
   public WeakReferenceDisposable(@NotNull T referent) {
     super(referent, ourRefQueue);
     reapCollectedRefs();
