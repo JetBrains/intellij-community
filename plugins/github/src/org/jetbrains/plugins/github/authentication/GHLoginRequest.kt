@@ -6,7 +6,10 @@ import git4idea.DialogManager
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager.Companion.createAccount
+import org.jetbrains.plugins.github.authentication.ui.BaseLoginDialog
+import org.jetbrains.plugins.github.authentication.ui.GHTokenLoginDialog
 import org.jetbrains.plugins.github.authentication.ui.GithubLoginDialog
+import org.jetbrains.plugins.github.authentication.ui.UniqueLoginPredicate
 import java.awt.Component
 
 internal class GHLoginRequest(
@@ -25,22 +28,32 @@ internal class GHLoginRequest(
 )
 
 internal fun GHLoginRequest.loginWithPasswordOrToken(project: Project?, parentComponent: Component?): GHAccountAuthData? {
-  val dialog = GithubLoginDialog(
-    GithubApiRequestExecutor.Factory.getInstance(),
-    project,
-    parentComponent,
-    { login, server -> !isCheckLoginUnique || GithubAuthenticationManager.getInstance().isAccountUnique(login, server) },
-    message = text
-  )
+  val dialog = GithubLoginDialog(GithubApiRequestExecutor.Factory.getInstance(), project, parentComponent, isLoginUniqueChecker, text)
+  configure(dialog)
+  password?.let { dialog.setPassword(it) }
 
-  error?.let { dialog.withError(it) }
-  server?.let { dialog.withServer(it.toString(), isServerEditable) }
-  login?.let { dialog.withLogin(it, isLoginEditable) }
-  password?.let { dialog.withPassword(it) }
-  token?.let { dialog.withToken(it) }
+  return dialog.getAuthData()
+}
 
-  DialogManager.show(dialog)
-  if (!dialog.isOK) return null
+internal fun GHLoginRequest.loginWithToken(project: Project?, parentComponent: Component?): GHAccountAuthData? {
+  val dialog = GHTokenLoginDialog(project, parentComponent, isLoginUniqueChecker)
+  configure(dialog)
 
-  return GHAccountAuthData(createAccount(dialog.login, dialog.server), dialog.login, dialog.token)
+  return dialog.getAuthData()
+}
+
+private val GHLoginRequest.isLoginUniqueChecker: UniqueLoginPredicate
+  get() = { login, server -> !isCheckLoginUnique || GithubAuthenticationManager.getInstance().isAccountUnique(login, server) }
+
+private fun GHLoginRequest.configure(dialog: BaseLoginDialog) {
+  error?.let { dialog.setError(it) }
+  server?.let { dialog.setServer(it.toString(), isServerEditable) }
+  login?.let { dialog.setLogin(it, isLoginEditable) }
+  token?.let { dialog.setToken(it) }
+}
+
+private fun BaseLoginDialog.getAuthData(): GHAccountAuthData? {
+  DialogManager.show(this)
+
+  return if (isOK) GHAccountAuthData(createAccount(login, server), login, token) else null
 }
