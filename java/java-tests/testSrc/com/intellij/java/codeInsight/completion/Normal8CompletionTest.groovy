@@ -464,6 +464,7 @@ class Test88 {
   void testStreamMethodsOnArray() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'length', 'clone'
+    assert !myFixture.lookupElements.find { LookupElementPresentation.renderElement(it).itemText.contains('stream().toString') }
 
     myFixture.type('ma')
     myFixture.assertPreferredCompletionItems 0, 'map', 'mapToDouble'
