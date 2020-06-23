@@ -27,9 +27,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
@@ -88,19 +86,29 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
                               final HashSet<? extends ParameterInfoImpl> removedParams,
                               final HashSet<? extends ParameterInfoImpl> changedParams) {
     final String targetMethodName = myTargetMethod.getName();
-    if (myTargetMethod.getContainingClass().findMethodsByName(targetMethodName, true).length == 1) {
+    PsiClass aClass = myTargetMethod.getContainingClass();
+    if (aClass != null && aClass.findMethodsByName(targetMethodName, true).length == 1) {
+      JavaElementKind parameter = JavaElementKind.PARAMETER;
+      JavaElementKind method = JavaElementKind.fromElement(myTargetMethod);
+      if (JavaPsiRecordUtil.findCanonicalConstructor(aClass) == myTargetMethod) {
+        parameter = JavaElementKind.RECORD_COMPONENT;
+        method = JavaElementKind.RECORD;
+      }
       if (newParams.size() == 1) {
         final ParameterInfoImpl p = newParams.iterator().next();
         return QuickFixBundle
-          .message("add.parameter.from.usage.text", p.getTypeText(), ArrayUtil.find(myNewParametersInfo, p) + 1, targetMethodName);
+          .message("add.parameter.from.usage.text", p.getTypeText(), ArrayUtil.find(myNewParametersInfo, p) + 1, 
+                   parameter.object(), method.object(), targetMethodName);
       }
       if (removedParams.size() == 1) {
         final ParameterInfoImpl p = removedParams.iterator().next();
-        return QuickFixBundle.message("remove.parameter.from.usage.text", p.getOldIndex() + 1, targetMethodName);
+        return QuickFixBundle.message("remove.parameter.from.usage.text", p.getOldIndex() + 1, 
+                                      parameter.object(), method.object(), targetMethodName);
       }
       if (changedParams.size() == 1) {
         final ParameterInfoImpl p = changedParams.iterator().next();
-        return QuickFixBundle.message("change.parameter.from.usage.text", p.getOldIndex() + 1, targetMethodName,
+        return QuickFixBundle.message("change.parameter.from.usage.text", p.getOldIndex() + 1,
+                                      parameter.object(), method.object(), targetMethodName,
                                       Objects.requireNonNull(myTargetMethod.getParameterList().getParameter(p.getOldIndex())).getType().getPresentableText(),
                                       p.getTypeText());
       }

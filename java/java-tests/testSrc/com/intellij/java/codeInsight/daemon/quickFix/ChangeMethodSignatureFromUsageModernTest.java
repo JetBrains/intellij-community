@@ -18,15 +18,15 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.pom.java.LanguageLevel;
 
-public class ChangeMethodSignatureFromUsage8Test extends LightQuickFixParameterizedTestCase {
+public class ChangeMethodSignatureFromUsageModernTest extends LightQuickFixParameterizedTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/changeMethodSignatureFromUsage8";
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/changeMethodSignatureFromUsageModern";
   }
 
   @Override
   protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_1_8;
+    return LanguageLevel.JDK_15_PREVIEW;
   }
 }
