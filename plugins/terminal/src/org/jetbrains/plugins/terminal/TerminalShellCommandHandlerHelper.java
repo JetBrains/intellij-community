@@ -14,6 +14,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.terminal.TerminalDebugSmartCommandAction;
+import com.intellij.terminal.TerminalExecutorAction;
+import com.intellij.terminal.TerminalRunSmartCommandAction;
 import com.intellij.terminal.TerminalShellCommandHandler;
 import com.intellij.util.Alarm;
 import com.jediterm.terminal.StyledTextConsumerAdapter;
@@ -31,6 +34,7 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Objects;
 
 public final class TerminalShellCommandHandlerHelper {
   private static final Logger LOG = Logger.getInstance(TerminalShellCommandHandler.class);
@@ -94,13 +98,10 @@ public final class TerminalShellCommandHandlerHelper {
     }
 
     if (result != null) {
-      AnAction action = ActionManager.getInstance().getAction("Terminal.SmartCommandExecution");
-      if (action == null) {
-        LOG.error("Terminal Smart Execution action isn't registered");
-        return;
-      }
       String title = TerminalBundle.message("smart_command_execution.notification.title");
-      String content = TerminalBundle.message("smart_command_execution.notification.text", KeymapUtil.getFirstKeyboardShortcutText(action), GOT_IT);
+      String content = TerminalBundle.message("smart_command_execution.notification.text",
+                                              KeymapUtil.getFirstKeyboardShortcutText(getRunAction()),
+                                              KeymapUtil.getFirstKeyboardShortcutText(getDebugAction()), GOT_IT);
       NotificationListener.Adapter listener = new NotificationListener.Adapter() {
         @Override
         protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
@@ -185,7 +186,8 @@ public final class TerminalShellCommandHandlerHelper {
     }
     myAlarm.cancelAllRequests();
 
-    if (!matchSmartCommandAction(keyPressed)) {
+    TerminalExecutorAction matchedExecutorAction = matchedExecutorAction(keyPressed);
+    if (matchedExecutorAction == null) {
       onShellCommandExecuted();
       return false;
     }
@@ -200,7 +202,7 @@ public final class TerminalShellCommandHandlerHelper {
 
     TerminalUsageTriggerCollector.Companion.triggerSmartCommandExecuted(project, command);
     TerminalShellCommandHandler.Companion.executeShellCommandHandler(myWidget.getProject(), getWorkingDirectory(),
-                                                                     !hasRunningCommands(), command);
+                                                                     !hasRunningCommands(), command, matchedExecutorAction);
     clearTypedCommand(command);
     return true;
   }
@@ -222,10 +224,36 @@ public final class TerminalShellCommandHandlerHelper {
     }
   }
 
-  static boolean matchSmartCommandAction(@NotNull KeyEvent e) {
+  static TerminalExecutorAction matchedExecutorAction(@NotNull KeyEvent e) {
+    TerminalExecutorAction action = matchedRunAction(e);
+    return action != null ? action : matchedDebugAction(e);
+  }
+
+  private static TerminalExecutorAction matchedRunAction(@NotNull KeyEvent e) {
     final KeyboardShortcut eventShortcut = new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent(e), null);
-    AnAction action = ActionManager.getInstance().getAction("Terminal.SmartCommandExecution");
-    return action != null &&
-           Arrays.stream(action.getShortcutSet().getShortcuts()).anyMatch(sc -> sc.isKeyboard() && sc.startsWith(eventShortcut));
+    AnAction action = getRunAction();
+    return action instanceof TerminalRunSmartCommandAction
+           && Arrays.stream(action.getShortcutSet().getShortcuts()).anyMatch(sc -> sc.isKeyboard() && sc.startsWith(eventShortcut))
+           ? ((TerminalRunSmartCommandAction)action)
+           : null;
+  }
+
+  private static TerminalExecutorAction matchedDebugAction(@NotNull KeyEvent e) {
+    final KeyboardShortcut eventShortcut = new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent(e), null);
+    AnAction action = getDebugAction();
+    return action instanceof TerminalDebugSmartCommandAction
+           && Arrays.stream(action.getShortcutSet().getShortcuts()).anyMatch(sc -> sc.isKeyboard() && sc.startsWith(eventShortcut))
+           ? ((TerminalDebugSmartCommandAction)action)
+           : null;
+  }
+
+  @NotNull
+  private static AnAction getRunAction() {
+    return Objects.requireNonNull(ActionManager.getInstance().getAction("Terminal.SmartCommandExecution.Run"));
+  }
+
+  @NotNull
+  private static AnAction getDebugAction() {
+    return Objects.requireNonNull(ActionManager.getInstance().getAction("Terminal.SmartCommandExecution.Debug"));
   }
 }

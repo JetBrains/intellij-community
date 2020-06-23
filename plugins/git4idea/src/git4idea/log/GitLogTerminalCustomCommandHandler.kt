@@ -4,6 +4,7 @@ package git4idea.log
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.terminal.TerminalExecutorAction
 import com.intellij.terminal.TerminalShellCommandHandler
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.vcs.log.VcsLogBranchFilter
@@ -20,7 +21,7 @@ class GitLogTerminalCustomCommandHandler : TerminalShellCommandHandler {
   override fun matches(project: Project, workingDirectory: String?, localSession: Boolean, command: String): Boolean =
     parse(project, workingDirectory, command) != null
 
-  override fun execute(project: Project, workingDirectory: String?, localSession: Boolean, command: String): Boolean {
+  override fun execute(project: Project, workingDirectory: String?, localSession: Boolean, command: String, executorAction: TerminalExecutorAction): Boolean {
     if (workingDirectory == null) {
       LOG.warn("Cannot open git log for unknown root.")
       return false
