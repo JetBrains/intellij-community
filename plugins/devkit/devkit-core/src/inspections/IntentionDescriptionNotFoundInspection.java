@@ -1,10 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiClass;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.inspections.quickfix.CreateHtmlDescriptionFix;
 import org.jetbrains.idea.devkit.util.ExtensionCandidate;
 import org.jetbrains.idea.devkit.util.ExtensionLocatorKt;
 
@@ -17,11 +15,6 @@ public class IntentionDescriptionNotFoundInspection extends DescriptionNotFoundI
 
   public IntentionDescriptionNotFoundInspection() {
     super(DescriptionType.INTENTION);
-  }
-
-  @Override
-  protected CreateHtmlDescriptionFix getFix(Module module, String descriptionDir) {
-    return new CreateHtmlDescriptionFix(descriptionDir, module, DescriptionType.INTENTION);
   }
 
   @Override
