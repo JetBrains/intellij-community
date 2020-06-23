@@ -2,13 +2,11 @@
 package com.intellij.core;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.mock.MockDumbService;
-import com.intellij.mock.MockFileIndexFacade;
-import com.intellij.mock.MockProject;
-import com.intellij.mock.MockResolveScopeManager;
+import com.intellij.mock.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbUtil;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
@@ -65,6 +63,7 @@ public class CoreProjectEnvironment {
     myProject.registerService(PsiDirectoryFactory.class, new PsiDirectoryFactoryImpl(myProject));
     myProject.registerService(ProjectScopeBuilder.class, createProjectScopeBuilder());
     myProject.registerService(DumbService.class, new MockDumbService(myProject));
+    myProject.registerService(DumbUtil.class, new MockDumbUtil());
     myProject.registerService(CoreEncodingProjectManager.class, CoreEncodingProjectManager.class);
     myProject.registerService(InjectedLanguageManager.class, new CoreInjectedLanguageManager());
   }
