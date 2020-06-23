@@ -54,8 +54,8 @@ final class DaltonizationFilter extends WeightFilter {
     // Shift colors towards visible spectrum (apply error modifications)
     // and add compensation to original values
     double dstR = fix(srcR + (0.0 * R) + (0.0 * G) + (0.0 * B));
-    double dstG = fix(srcG + (0.7 * R) + (1.0 * G) + (0.0 * B));
-    double dstB = fix(srcB + (0.7 * R) + (0.0 * G) + (1.0 * B));
+    double dstG = fix(srcG + (0.7 * R) + (      G) + (0.0 * B));
+    double dstB = fix(srcB + (0.7 * R) + (0.0 * G) + (      B));
     return toRGB(srcR, srcG, srcB, dstR, dstG, dstB);
   }
 }
