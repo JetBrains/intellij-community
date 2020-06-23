@@ -9,7 +9,7 @@ import git4idea.i18n.GitBundle
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.isOAuthEnabled
-import org.jetbrains.plugins.github.authentication.ui.GithubLoginDialog.Companion.createSignUpLink
+import org.jetbrains.plugins.github.authentication.ui.GHPasswordTokenLoginDialog.Companion.createSignUpLink
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import java.awt.Component
 import javax.swing.Action
