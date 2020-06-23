@@ -435,6 +435,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon LayoutEditorPreview = load("/general/layoutEditorPreview.svg");
     /** 16x16 */ public static final @NotNull Icon LayoutPreviewOnly = load("/general/layoutPreviewOnly.svg");
     /** 14x14 */ public static final @NotNull Icon LinkDropTriangle = load("/general/linkDropTriangle.svg");
+    /** 16x16 */ public static final @NotNull Icon LocalizationSettings = load("/general/localizationSettings.svg");
     /** 16x16 */ public static final @NotNull Icon Locate = load("/general/locate.svg");
     /** 13x13 */ public static final @NotNull Icon Modified = load("/general/modified.svg");
     /** 13x13 */ public static final @NotNull Icon ModifiedSelected = load("/general/modifiedSelected.svg");
@@ -851,7 +852,6 @@ public class AllIcons {
   public final static class Plugins {
     /** 16x16 */ public static final @NotNull Icon Disabled = load("/plugins/disabled.svg");
     /** 12x12 */ public static final @NotNull Icon Downloads = load("/plugins/downloads.svg");
-    /** 16x16 */ public static final @NotNull Icon Hieroglyph = load("/plugins/hieroglyph.svg");
     /** 15x15 */ public static final @NotNull Icon ModifierInvalid = load("/plugins/modifierInvalid.svg");
     /** 14x14 */ public static final @NotNull Icon ModifierJBLogo = load("/plugins/modifierJBLogo.svg");
     /** 40x40 */ public static final @NotNull Icon PluginLogo = load("/plugins/pluginLogo.svg");
