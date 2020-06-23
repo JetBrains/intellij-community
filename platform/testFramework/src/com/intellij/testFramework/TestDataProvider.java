@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.ide.DataManager;
@@ -51,7 +51,7 @@ public class TestDataProvider implements DataProvider, DataContext {
   public Object getData(@NotNull @NonNls String dataId) {
     if (myProject.isDisposed()) {
       throw new RuntimeException("TestDataProvider is already disposed for " + myProject + "\n" +
-                                 "If you closed a project in test, please reset IdeaTestApplication.setDataProvider.");
+                                 "If you closed a project in test, please reset TestApplicationManager.setDataProvider.");
     }
 
     if (CommonDataKeys.PROJECT.is(dataId)) {

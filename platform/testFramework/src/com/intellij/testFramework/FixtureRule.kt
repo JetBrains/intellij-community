@@ -29,7 +29,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.project.TestProjectManager
 import com.intellij.project.stateStore
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.io.sanitizeFileName
 import kotlinx.coroutines.runBlocking
@@ -73,6 +72,21 @@ open class ApplicationRule : TestRule {
 }
 
 /**
+ * Rule should be used only and only if you open projects in a custom way in test cases and cannot use [ProjectRule].
+ */
+class ProjectTrackingRule : TestRule {
+  override fun apply(base: Statement, description: Description): Statement? {
+    return object : Statement() {
+      override fun evaluate() {
+        (ProjectManager.getInstance() as TestProjectManager).startTracking().use {
+          base.evaluate()
+        }
+      }
+    }
+  }
+}
+
+/**
  * Encouraged using as a ClassRule to avoid project creating for each test.
  * Project created on request, so, could be used as a bare (only application).
  */
@@ -80,24 +94,6 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = true, private 
   companion object {
     @JvmStatic
     fun withoutRunningStartUpActivities() = ProjectRule(runPostStartUpActivities = false)
-
-    @JvmStatic
-    fun checkThatNoOpenProjects() {
-      val projectManager = ProjectManagerEx.getInstanceExIfCreated() ?: return
-      val openProjects = projectManager.openProjects
-      if (openProjects.isEmpty()) {
-        return
-      }
-
-      val tasks = mutableListOf<ThrowableRunnable<Throwable>>()
-      val errors = mutableListOf<IllegalStateException>()
-      for (project in openProjects) {
-        errors.add(IllegalStateException("Project is not disposed: $project;\ncreated in: ${TestProjectManager.getCreationPlace(project)}"))
-        tasks.add(ThrowableRunnable { projectManager.forceCloseProject(project) })
-      }
-      RunAll(tasks).run(errors)
-    }
-
 
     /**
      * Think twice before use. And then do not use. To support old code.

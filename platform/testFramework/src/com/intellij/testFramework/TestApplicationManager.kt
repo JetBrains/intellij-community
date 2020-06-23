@@ -50,7 +50,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.testFramework.ProjectRule.Companion.checkThatNoOpenProjects
 import com.intellij.ui.UiInterceptors
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -230,13 +229,13 @@ fun tearDownProjectAndApp(project: Project) {
   l.catchAndStoreExceptions { waitForProjectLeakingThreads(project) }
   l.catchAndStoreExceptions { LegacyBridgeTestFrameworkUtils.dropCachesOnTeardown(project) }
 
+  // reset data provider before disposing project to ensure that disposed project is not accessed
+  l.catchAndStoreExceptions { TestApplicationManager.getInstanceIfCreated()?.setDataProvider(null) }
   l.catchAndStoreExceptions {
     ProjectManagerEx.getInstanceEx().forceCloseProject(project)
-    checkThatNoOpenProjects()
   }
   l.catchAndStoreExceptions { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() }
 
-  l.catchAndStoreExceptions { TestApplicationManager.getInstanceIfCreated()?.setDataProvider(null) }
   l.catchAndStoreExceptions { UiInterceptors.clear() }
   l.catchAndStoreExceptions { CompletionProgressIndicator.cleanupForNextTest() }
   l.catchAndStoreExceptions {

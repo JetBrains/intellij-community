@@ -17,7 +17,6 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.ui.RowsDnDSupport
 import com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*
 import com.intellij.ui.treeStructure.Tree
-import org.jdom.Element
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -43,13 +42,6 @@ internal class RunConfigurableTest {
     @ClassRule
     val projectRule = ProjectRule(runPostStartUpActivities = false)
 
-    private fun createRunManager(element: Element): RunManagerImpl {
-      val runManager = RunManagerImpl(projectRule.project)
-      runManager.initializeConfigurationTypes(listOf(ApplicationConfigurationType.getInstance(), JUnitConfigurationType.getInstance()))
-      runManager.loadState(element)
-      return runManager
-    }
-
     private class MockRunConfigurable(override val runManager: RunManagerImpl) : ProjectRunConfigurationConfigurable(projectRule.project) {
       init {
         createComponent()
@@ -66,8 +58,12 @@ internal class RunConfigurableTest {
   val disposableRule = DisposableRule()
 
   private val configurable by lazy {
-    val result = MockRunConfigurable(createRunManager(JDOMUtil.load(RunConfigurableTest::class.java.getResourceAsStream("folders.xml"))))
-    Disposer.register(disposableRule.disposable, result)
+    val runManager = RunManagerImpl(projectRule.project)
+    runManager.initializeConfigurationTypes(listOf(ApplicationConfigurationType.getInstance(), JUnitConfigurationType.getInstance()))
+    runManager.loadState(JDOMUtil.load(RunConfigurableTest::class.java.getResourceAsStream("folders.xml")))
+    val result = MockRunConfigurable(runManager)
+    Disposer.register(projectRule.project, runManager)
+    Disposer.register(runManager, result)
     result
   }
 

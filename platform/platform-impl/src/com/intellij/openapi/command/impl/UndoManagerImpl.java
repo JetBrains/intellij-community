@@ -33,6 +33,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBus;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -146,7 +147,8 @@ public class UndoManagerImpl extends UndoManager {
     return Comparing.equal(myProject, myCurrentActionProject) || myProject == null && myCurrentActionProject.isDefault();
   }
 
-  private boolean isInsideCommand() {
+  @ApiStatus.Internal
+  public boolean isInsideCommand() {
     return myCommandLevel > 0;
   }
 
