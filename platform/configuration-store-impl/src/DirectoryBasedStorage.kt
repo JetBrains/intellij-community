@@ -11,9 +11,9 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.LineSeparator
 import com.intellij.util.SmartList
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.isEmpty
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
@@ -121,7 +121,7 @@ open class DirectoryBasedStorage(private val dir: Path,
         return
       }
 
-      val existingFiles = ObjectOpenHashSet<String>(stateAndFileNameList.size)
+      val existingFiles = CollectionFactory.createSmallMemoryFootprintSet<String>(stateAndFileNameList.size)
       for (pair in stateAndFileNameList) {
         doSetState(pair.second, pair.first)
         existingFiles.add(pair.second)

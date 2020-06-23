@@ -11,11 +11,11 @@ import com.intellij.serviceContainer.processAllImplementationClasses
 import com.intellij.serviceContainer.processComponentInstancesOfType
 import com.intellij.util.LineSeparator
 import com.intellij.util.SmartList
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.exists
 import com.intellij.util.io.outputStream
 import com.intellij.util.isEmpty
 import com.intellij.util.write
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import java.nio.file.Path
@@ -109,7 +109,7 @@ internal fun moveComponentConfiguration(defaultProject: Project,
         // ignore - this data should be not copied
         ignoredComponentNames.add(stateAnnotation.name)
       }
-      else -> storageNameToComponentNames.getOrPut(storagePathResolver(storagePath)) { ObjectOpenHashSet() }.add(stateAnnotation.name)
+      else -> storageNameToComponentNames.getOrPut(storagePathResolver(storagePath)) { CollectionFactory.createSmallMemoryFootprintSet() }.add(stateAnnotation.name)
     }
   }
 

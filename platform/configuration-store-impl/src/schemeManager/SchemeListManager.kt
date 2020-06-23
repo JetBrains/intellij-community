@@ -3,10 +3,10 @@ package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.LOG
 import com.intellij.openapi.options.ExternalizableScheme
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.filterSmart
 import com.intellij.util.text.UniqueNameGenerator
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Predicate
@@ -114,7 +114,7 @@ internal class SchemeListManager<T : Any>(private val schemeManager: SchemeManag
   }
 
   private fun collectExistingNames(schemes: Collection<T>): Collection<String> {
-    val result = ObjectOpenHashSet<String>(schemes.size)
+    val result = CollectionFactory.createSmallMemoryFootprintSet<String>(schemes.size)
     schemes.mapTo(result) { schemeManager.processor.getSchemeKey(it) }
     return result
   }

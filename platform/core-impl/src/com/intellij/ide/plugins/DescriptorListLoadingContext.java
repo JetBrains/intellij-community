@@ -7,7 +7,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import com.intellij.util.containers.Interner;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jdom.*;
 import org.jetbrains.annotations.NotNull;
@@ -174,32 +174,34 @@ final class DescriptorListLoadingContext implements AutoCloseable {
 final class PluginXmlFactory extends SafeJdomFactory.BaseSafeJdomFactory {
   // doesn't make sense to intern class name since it is unique
   // ouch, do we really cannot agree how to name implementation class attribute?
-  private static final List<String> CLASS_NAME_LIST = Arrays.asList(
+  private static final Set<String> CLASS_NAMES = new ReferenceOpenHashSet<>(Arrays.asList(
     "implementation-class", "implementation",
     "serviceImplementation", "class", "className", "beanClass",
     "serviceInterface", "interface", "interfaceClass", "instance",
-    "qualifiedName");
-
-  private static final Set<String> CLASS_NAMES = new ReferenceOpenHashSet<>(CLASS_NAME_LIST);
+    "qualifiedName"));
   private static final List<String> EXTRA_STRINGS = Arrays.asList("id",
                                                                   PluginManagerCore.VENDOR_JETBRAINS,
                                                                   XmlReader.APPLICATION_SERVICE,
                                                                   XmlReader.PROJECT_SERVICE,
                                                                   XmlReader.MODULE_SERVICE);
 
-  private final ObjectOpenHashSet<String> strings = new ObjectOpenHashSet<>(CLASS_NAMES.size() + EXTRA_STRINGS.size());
+  private final Interner<String> strings = Interner.createStringInterner();
 
   final DateFormat releaseDateFormat = new SimpleDateFormat("yyyyMMdd", Locale.US);
   final List<String> visitedFiles = new ArrayList<>(3);
 
   PluginXmlFactory() {
-    strings.addAll(CLASS_NAMES);
-    strings.addAll(EXTRA_STRINGS);
+    for (String name : CLASS_NAMES) {
+      strings.intern(name);
+    }
+    for (String name : EXTRA_STRINGS) {
+      strings.intern(name);
+    }
   }
 
   @NotNull String intern(@NotNull String string) {
     // doesn't make any sense to intern long texts (JdomInternFactory doesn't intern CDATA, but plugin description can be simply Text)
-    return string.length() < 64 ? strings.addOrGet(string) : string;
+    return string.length() < 64 ? strings.intern(string) : string;
   }
 
   @Override

@@ -10,10 +10,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +35,7 @@ public final class StatisticsWeigher extends CompletionWeigher {
   public static class LookupStatisticsWeigher extends Classifier<LookupElement> {
     private final CompletionLocation myLocation;
     private final Map<LookupElement, StatisticsComparable> myWeights = new IdentityHashMap<>();
-    private final Set<String> myStringsWithWeights = new ObjectOpenHashSet<>();
+    private final Set<String> myStringsWithWeights = CollectionFactory.createSmallMemoryFootprintSet();
     private final Set<LookupElement> myNoStats = new ReferenceOpenHashSet<>();
 
     public LookupStatisticsWeigher(CompletionLocation location, Classifier<LookupElement> next) {

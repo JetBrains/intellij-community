@@ -6,7 +6,6 @@ import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.jlanguage.broker.GrazieDynamicClassBroker
 import com.intellij.grazie.jlanguage.broker.GrazieDynamicDataBroker
 import com.intellij.util.containers.CollectionFactory
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.languagetool.JLanguageTool
 import org.languagetool.rules.UppercaseMatchFilter
 import java.util.concurrent.ConcurrentHashMap
@@ -34,7 +33,7 @@ object LangTool : GrazieStateLifecycle {
         state.userEnabledRules.forEach { id -> enableRule(id) }
 
         allRules.distinctBy { it.id }.onEach { rule ->
-          rulesToLanguages.getOrPut(rule.id, ::ObjectOpenHashSet).add(lang)
+          rulesToLanguages.getOrPut(rule.id, {CollectionFactory.createSmallMemoryFootprintSet()}).add(lang)
         }
       }
     }

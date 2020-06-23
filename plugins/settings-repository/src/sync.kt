@@ -13,8 +13,8 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import com.intellij.util.SmartList
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.messages.MessageBus
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.eclipse.jgit.errors.NoRemoteRepositoryException
@@ -216,7 +216,7 @@ internal suspend fun updateStoragesFromStreamProvider(icsManager: IcsManager, st
     }
 
     val notReloadableComponents = store.getNotReloadableComponents(changedComponentNames)
-    val changedStorageSet = ObjectOpenHashSet<StateStorage>(changed)
+    val changedStorageSet = CollectionFactory.createSmallMemoryFootprintSet<StateStorage>(changed)
     changedStorageSet.addAll(deleted)
     runBatchUpdate(messageBus) {
       store.reinitComponents(changedComponentNames, changedStorageSet, notReloadableComponents)

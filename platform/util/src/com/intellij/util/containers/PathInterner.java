@@ -9,7 +9,6 @@ import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrays;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,7 +21,7 @@ import java.util.Set;
  * @author peter
  */
 public final class PathInterner {
-  private final ObjectOpenHashSet<CharSegment> myInternMap = new ObjectOpenHashSet<>();
+  private final HashSetInterner<CharSegment> myInternMap = new HashSetInterner<>();
 
   @Contract("_,true->!null")
   private CharSegment[] internParts(@NotNull CharSequence path, boolean forAddition) {
@@ -37,7 +36,7 @@ public final class PathInterner {
         if (!forAddition) {
           return null;
         }
-        myInternMap.add(interned = flyweightKey.createPersistentCopy(asBytes));
+        myInternMap.intern(interned = flyweightKey.createPersistentCopy(asBytes));
       }
       key.add(interned);
       start += flyweightKey.length();
@@ -329,7 +328,7 @@ public final class PathInterner {
     @NotNull
     @Override
     public Set<CharSequence> getValues() {
-      return new ObjectOpenHashSet<>(getAllPaths());
+      return CollectionFactory.createSmallMemoryFootprintSet(getAllPaths());
     }
 
     @Override

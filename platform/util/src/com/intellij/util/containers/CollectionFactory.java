@@ -263,6 +263,40 @@ public final class CollectionFactory {
     //noinspection SSBasedInspection
     return new Object2ObjectOpenHashMap<>(expected, loadFactor);
   }
+
+  /**
+   * @return Set implementation with slightly faster access for very big maps (>100K keys) and a bit smaller memory footprint than {@link HashSet}.
+   * Null keys are permitted.
+   * Use sparingly only when performance considerations are utterly important; in all other cases please prefer {@link HashSet}.
+   * @see HashSet
+   */
+  @Contract(value = "-> new", pure = true)
+  public static <K> @NotNull Set<K> createSmallMemoryFootprintSet() {
+    //noinspection SSBasedInspection
+    return new ObjectOpenHashSet<>();
+  }
+  /**
+   * @return Set implementation with slightly faster access for very big maps (>100K keys) and a bit smaller memory footprint than {@link HashSet}.
+   * Null keys are permitted.
+   * Use sparingly only when performance considerations are utterly important; in all other cases please prefer {@link HashSet}.
+   * @see HashSet
+   */
+  @Contract(value = "_-> new", pure = true)
+  public static <K> @NotNull Set<K> createSmallMemoryFootprintSet(int expected) {
+    //noinspection SSBasedInspection
+    return new ObjectOpenHashSet<>(expected);
+  }
+  /**
+   * @return Set implementation with slightly faster access for very big maps (>100K keys) and a bit smaller memory footprint than {@link HashSet}.
+   * Null keys are permitted.
+   * Use sparingly only when performance considerations are utterly important; in all other cases please prefer {@link HashSet}.
+   * @see HashSet
+   */
+  @Contract(value = "_-> new", pure = true)
+  public static <K> @NotNull Set<K> createSmallMemoryFootprintSet(@NotNull Collection<? extends K> collection) {
+    //noinspection SSBasedInspection
+    return new ObjectOpenHashSet<>(collection);
+  }
 }
 
 // must be not exposed to avoid exposing Hash.Strategy interface

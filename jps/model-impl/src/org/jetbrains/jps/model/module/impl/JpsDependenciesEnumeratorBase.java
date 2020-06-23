@@ -6,7 +6,7 @@ import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.EmptyConsumer;
 import com.intellij.util.Processor;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.library.JpsLibrary;
@@ -91,7 +91,7 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
   }
 
   public boolean processDependencies(Processor<? super JpsDependencyElement> processor) {
-    Set<JpsModule> processed = new ObjectOpenHashSet<>();
+    Set<JpsModule> processed = CollectionFactory.createSmallMemoryFootprintSet();
     for (JpsModule module : myRootModules) {
       if (!doProcessDependencies(module, processor, processed)) {
         return false;

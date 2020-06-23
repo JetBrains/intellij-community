@@ -15,9 +15,9 @@ import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.pico.DefaultPicoContainer;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -415,7 +415,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
       return result;
     }
 
-    ObjectOpenHashSet<T> duplicates = this instanceof BeanExtensionPoint ? null : new ObjectOpenHashSet<>(totalSize);
+    Set<T> duplicates = this instanceof BeanExtensionPoint ? null : CollectionFactory.createSmallMemoryFootprintSet(totalSize);
     ExtensionPointListener<T>[] listeners = myListeners;
     int extensionIndex = 0;
     for (int i = 0; i < adapters.size(); i++) {
@@ -469,7 +469,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   private @Nullable T processAdapter(@NotNull ExtensionComponentAdapter adapter,
                                      ExtensionPointListener<T> @Nullable [] listeners,
                                      T @Nullable [] result,
-                                     @Nullable ObjectOpenHashSet<T> duplicates,
+                                     @Nullable Set<T> duplicates,
                                      @NotNull Class<T> extensionClassForCheck,
                                      @NotNull List<? extends ExtensionComponentAdapter> adapters) {
     try {
@@ -477,7 +477,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
       // do not call CHECK_CANCELED here in loop because it is called by createInstance()
       T extension = adapter.createInstance(componentManager);
       if (duplicates != null && !duplicates.add(extension)) {
-        T duplicate = duplicates.get(extension);
+        T duplicate = duplicates.stream().filter(d->d.equals(extension)).findFirst().orElse(null);
         assert result != null;
 
         LOG.error("Duplicate extension found:\n" +

@@ -20,7 +20,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import com.intellij.util.containers.CollectionFactory
 
 class GrazieInspection : LocalInspectionTool() {
   companion object : GrazieStateLifecycle {
@@ -56,7 +56,7 @@ class GrazieInspection : LocalInspectionTool() {
       override fun visitElement(element: PsiElement) {
         if (element.isInjectedFragment()) return
 
-        val typos = ObjectOpenHashSet<Typo>()
+        val typos = CollectionFactory.createSmallMemoryFootprintSet<Typo>()
 
         val strategies = LanguageGrammarChecking.getStrategiesForElement(element, enabledStrategiesIDs, disabledStrategiesIDs)
 

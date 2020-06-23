@@ -26,7 +26,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +81,7 @@ public final class ActionsTreeUtil {
     List<IdeaPluginDescriptor> plugins = new ArrayList<>(Arrays.asList(PluginManagerCore.getPlugins()));
     plugins.sort(Comparator.comparing(IdeaPluginDescriptor::getName));
 
-    Set<PluginId> collected = new ObjectOpenHashSet<>(plugins.size());
+    Set<PluginId> collected = CollectionFactory.createSmallMemoryFootprintSet(plugins.size());
     for (IdeaPluginDescriptor plugin : plugins) {
       collected.add(plugin.getPluginId());
       Group pluginGroup;
@@ -397,7 +396,7 @@ public final class ActionsTreeUtil {
   @NotNull
   private static Group createOtherGroup(@Nullable Condition<? super AnAction> filtered, Group addedActions, @Nullable Keymap keymap) {
     addedActions.initIds();
-    Set<String> result = new ObjectOpenHashSet<>();
+    Set<String> result = CollectionFactory.createSmallMemoryFootprintSet();
 
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     if (keymap != null) {

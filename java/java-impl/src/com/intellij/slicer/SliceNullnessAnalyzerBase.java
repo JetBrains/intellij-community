@@ -13,10 +13,10 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.WalkingState;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import gnu.trove.THashSet;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -203,7 +203,7 @@ public abstract class SliceNullnessAnalyzerBase {
     static final int NULLS = 0;
     static final int NOT_NULLS = 1;
     static final int UNKNOWNS = 2;
-    final List<ObjectOpenHashSet<PsiElement>> groupedByValue = Arrays.asList(new ObjectOpenHashSet<>(), new ObjectOpenHashSet<>(), new ObjectOpenHashSet<>());
+    final List<Set<PsiElement>> groupedByValue = Arrays.asList(CollectionFactory.createSmallMemoryFootprintSet(), CollectionFactory.createSmallMemoryFootprintSet(), CollectionFactory.createSmallMemoryFootprintSet());
 
     public void clear() {
       for (Collection<PsiElement> elements : groupedByValue) {

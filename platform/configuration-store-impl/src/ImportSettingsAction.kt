@@ -16,8 +16,8 @@ import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.getParentPath
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.*
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -138,7 +138,7 @@ open class ImportSettingsAction : AnAction(), DumbAware {
   }
 
   private fun getRelativeNamesToExtract(chosenComponents: Set<ExportableItem>): Set<String> {
-    val result = ObjectOpenHashSet<String>()
+    val result = CollectionFactory.createSmallMemoryFootprintSet<String>()
     val root = PathManager.getConfigDir()
     for (item in chosenComponents) {
       result.add(root.relativize(item.file).systemIndependentPath)
@@ -152,7 +152,7 @@ open class ImportSettingsAction : AnAction(), DumbAware {
 }
 
 fun getPaths(input: InputStream): Set<String> {
-  val result = ObjectOpenHashSet<String>()
+  val result = CollectionFactory.createSmallMemoryFootprintSet<String>()
   val zipIn = ZipInputStream(input)
   zipIn.use {
     while (true) {

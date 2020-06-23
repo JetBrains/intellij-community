@@ -2,9 +2,9 @@
 package org.jdom;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.containers.Interner;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,7 +16,7 @@ public final class JDOMInterner {
   @ApiStatus.Internal
   public static final JDOMInterner INSTANCE = new JDOMInterner();
 
-  private final ObjectOpenHashSet<String> myStrings = new ObjectOpenHashSet<>();
+  private final Interner<String> myStrings = Interner.createStringInterner();
   private final ObjectOpenCustomHashSet<Element> myElements = new ObjectOpenCustomHashSet<>(new Hash.Strategy<Element>() {
     @Override
     public int hashCode(Element e) {
@@ -150,13 +150,13 @@ public final class JDOMInterner {
     Text interned = myTexts.get(text);
     if (interned == null) {
       // no need to intern CDATA - there are no duplicates anyway
-      interned = text instanceof CDATA ? new ImmutableCDATA(text.getText()) : new ImmutableText(myStrings.addOrGet(text.getText()));
+      interned = text instanceof CDATA ? new ImmutableCDATA(text.getText()) : new ImmutableText(myStrings.intern(text.getText()));
       myTexts.add(interned);
     }
     return interned;
   }
 
   synchronized String internString(String s) {
-    return myStrings.addOrGet(s);
+    return myStrings.intern(s);
   }
 }

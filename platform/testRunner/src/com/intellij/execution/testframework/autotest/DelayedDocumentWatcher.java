@@ -22,8 +22,8 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.PsiErrorElementUtil;
 import com.intellij.util.SingleAlarm;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.messages.MessageBusConnection;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +45,7 @@ public final class DelayedDocumentWatcher implements AutoTestWatcher {
   private Disposable myDisposable;
   private SingleAlarm myAlarm;
   // reduce memory usage
-  private final Set<VirtualFile> myChangedFiles = new ObjectOpenHashSet<>();
+  private final Set<VirtualFile> myChangedFiles = CollectionFactory.createSmallMemoryFootprintSet();
   private boolean myDocumentSavingInProgress = false;
   private MessageBusConnection myConnection;
   private int myModificationStamp = 0;

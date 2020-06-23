@@ -13,11 +13,11 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -152,7 +152,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask<?>> ext
       GroupConfigurationDescriptor groupConfigurationDescriptor = new GroupConfigurationDescriptor(type, icon);
       DefaultMutableTreeNode typeNode = new DefaultMutableTreeNode(groupConfigurationDescriptor);
       root.add(typeNode);
-      Set<String> addedNames = new ObjectOpenHashSet<>();
+      Set<String> addedNames = CollectionFactory.createSmallMemoryFootprintSet();
       for (List<RunnerAndConfigurationSettings> list : entry.getValue().values()) {
         for (RunnerAndConfigurationSettings configuration : list) {
           final String configurationName = configuration.getName();

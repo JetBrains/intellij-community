@@ -3,10 +3,10 @@ package org.jetbrains.io.jsonRpc
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.SimpleTimer
+import com.intellij.util.containers.CollectionFactory
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
 import io.netty.util.AttributeKey
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.io.webSocket.WebSocketServerOptions
 import java.util.function.Consumer
@@ -23,7 +23,7 @@ class ClientManager(private val listener: ClientListener?, val exceptionHandler:
                                                                  })
   }, (options ?: WebSocketServerOptions()).heartbeatDelay.toLong())
 
-  private val clients = ObjectOpenHashSet<Client>()
+  private val clients = CollectionFactory.createSmallMemoryFootprintSet<Client>()
 
   fun addClient(client: Client) {
     synchronized (clients) {

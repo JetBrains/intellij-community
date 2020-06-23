@@ -22,7 +22,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.SmartList;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +51,7 @@ final class BeforeRunStepsPanel extends JPanel {
   private final StepsBeforeRunListener myListener;
   private final JPanel myPanel;
 
-  private final Set<BeforeRunTask<?>> clonedTasks = new ObjectOpenHashSet<>();
+  private final Set<BeforeRunTask<?>> clonedTasks = CollectionFactory.createSmallMemoryFootprintSet();
 
   BeforeRunStepsPanel(@NotNull StepsBeforeRunListener listener) {
     myListener = listener;
@@ -258,7 +258,7 @@ final class BeforeRunStepsPanel extends JPanel {
               }
               task.setEnabled(true);
 
-              Set<RunConfiguration> configurationSet = new ObjectOpenHashSet<>();
+              Set<RunConfiguration> configurationSet = CollectionFactory.createSmallMemoryFootprintSet();
               getAllRunBeforeRuns(task, configurationSet);
               if (configurationSet.contains(myRunConfiguration)) {
                 JOptionPane.showMessageDialog(BeforeRunStepsPanel.this,
@@ -290,7 +290,7 @@ final class BeforeRunStepsPanel extends JPanel {
 
   private @NotNull Set<Key<?>> getActiveProviderKeys() {
     List<BeforeRunTask<?>> items = myModel.getItems();
-    Set<Key<?>> result = new ObjectOpenHashSet<>(items.size());
+    Set<Key<?>> result = CollectionFactory.createSmallMemoryFootprintSet(items.size());
     for (BeforeRunTask<?> task : items) {
       result.add(task.getProviderId());
     }

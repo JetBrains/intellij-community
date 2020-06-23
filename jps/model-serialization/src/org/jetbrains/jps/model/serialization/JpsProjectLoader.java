@@ -8,8 +8,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -310,7 +310,7 @@ public final class JpsProjectLoader extends JpsLoaderBase {
       }
     }
 
-    final Set<Path> foundFiles = new ObjectOpenHashSet<>();
+    final Set<Path> foundFiles = CollectionFactory.createSmallMemoryFootprintSet();
     final List<Path> moduleFiles = new ArrayList<>();
     for (Element moduleElement : JDOMUtil.getChildren(componentElement.getChild(MODULES_TAG), MODULE_TAG)) {
       final String path = moduleElement.getAttributeValue(FILE_PATH_ATTRIBUTE);

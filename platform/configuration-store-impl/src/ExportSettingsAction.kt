@@ -26,9 +26,9 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.processAllImplementationClasses
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ReflectionUtil
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.putValue
 import com.intellij.util.io.*
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import java.io.IOException
 import java.io.OutputStream
 import java.io.StringWriter
@@ -47,7 +47,7 @@ open class ExportSettingsAction : AnAction(), DumbAware {
   protected open fun getExportableComponents(): Map<Path, List<ExportableItem>> = getExportableComponentsMap(true, true)
 
   protected open fun exportSettings(saveFile: Path, markedComponents: Set<ExportableItem>) {
-    val exportFiles = markedComponents.mapTo(ObjectOpenHashSet()) { it.file }
+    val exportFiles = markedComponents.mapTo(CollectionFactory.createSmallMemoryFootprintSet()) { it.file }
     saveFile.outputStream().use {
       exportSettings(exportFiles, it, FileUtil.toSystemIndependentName(PathManager.getConfigPath()))
     }
@@ -93,7 +93,7 @@ open class ExportSettingsAction : AnAction(), DumbAware {
 }
 
 fun exportSettings(exportFiles: Set<Path>, out: OutputStream, configPath: String) {
-  val filter = ObjectOpenHashSet<String>()
+  val filter = CollectionFactory.createSmallMemoryFootprintSet<String>()
   Compressor.Zip(out).filter { entryName, _ -> filter.add(entryName) }.use { zip ->
     for (file in exportFiles) {
       val fileInfo = file.basicAttributesIfExists() ?: continue

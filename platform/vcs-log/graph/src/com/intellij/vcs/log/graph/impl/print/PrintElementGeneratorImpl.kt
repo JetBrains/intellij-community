@@ -3,6 +3,7 @@
 package com.intellij.vcs.log.graph.impl.print
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.SLRUMap
 import com.intellij.vcs.log.graph.EdgePrintElement
 import com.intellij.vcs.log.graph.api.EdgeFilter
@@ -19,7 +20,6 @@ import com.intellij.vcs.log.graph.impl.print.elements.SimplePrintElementImpl
 import com.intellij.vcs.log.graph.impl.print.elements.TerminalEdgePrintElement
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils.*
 import com.intellij.vcs.log.graph.utils.NormalEdge
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.annotations.TestOnly
 import java.util.*
 
@@ -50,7 +50,7 @@ internal class PrintElementGeneratorImpl @TestOnly constructor(private val linea
       var sum = 0.0
       var sumSquares = 0.0
       var edgesCount = 0
-      val currentNormalEdges = ObjectOpenHashSet<NormalEdge>()
+      val currentNormalEdges = CollectionFactory.createSmallMemoryFootprintSet<NormalEdge>()
 
       for (i in 0 until n) {
         val adjacentEdges = linearGraph.getAdjacentEdges(i, EdgeFilter.ALL)

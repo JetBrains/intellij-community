@@ -15,7 +15,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.FieldPanel
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import java.awt.Component
@@ -38,7 +38,7 @@ private val markedElementNames: Set<String>
       emptySet()
     }
     else {
-      ObjectOpenHashSet(value.trim { it <= ' ' }.split("|"))
+      CollectionFactory.createSmallMemoryFootprintSet(value.trim { it <= ' ' }.split("|"))
     }
   }
 
@@ -116,7 +116,7 @@ internal class ChooseComponentsToExportDialog(fileToComponents: Map<Path, List<E
 
   internal val exportableComponents: Set<ExportableItem>
     get() {
-      val components = ObjectOpenHashSet<ExportableItem>()
+      val components = CollectionFactory.createSmallMemoryFootprintSet<ExportableItem>()
       for (elementProperties in chooser.markedElements) {
         components.addAll(elementProperties.items)
       }
@@ -223,7 +223,7 @@ internal class ChooseComponentsToExportDialog(fileToComponents: Map<Path, List<E
 }
 
 private class ComponentElementProperties : MultiStateElementsChooser.ElementProperties {
-  val items = ObjectOpenHashSet<ExportableItem>()
+  val items = CollectionFactory.createSmallMemoryFootprintSet<ExportableItem>()
 
   val fileName: String
     get() = items.first().file.fileName.toString()

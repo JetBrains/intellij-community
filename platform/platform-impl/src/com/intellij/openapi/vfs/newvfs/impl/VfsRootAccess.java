@@ -25,7 +25,6 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -179,7 +178,7 @@ public final class VfsRootAccess {
   private static Collection<String> getAllRootUrls(Project project) {
     insideGettingRoots = true;
     try {
-      Set<String> roots = new ObjectOpenHashSet<>();
+      Set<String> roots = CollectionFactory.createSmallMemoryFootprintSet();
       OrderEnumerator enumerator = ProjectRootManager.getInstance(project).orderEntries().using(new DefaultModulesProvider(project));
       ContainerUtil.addAll(roots, enumerator.classes().getUrls());
       ContainerUtil.addAll(roots, enumerator.sources().getUrls());

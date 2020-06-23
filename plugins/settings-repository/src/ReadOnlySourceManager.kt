@@ -5,9 +5,9 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.AtomicClearableLazyValue
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.mapSmartNotNull
 import com.intellij.util.io.exists
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.eclipse.jgit.diff.DiffEntry
 import org.eclipse.jgit.diff.DiffFormatter
 import org.eclipse.jgit.lib.Repository
@@ -66,7 +66,7 @@ class ReadOnlySourceManager(private val icsManager: IcsManager, val rootDir: Pat
 
       if (firstSlash > 0) {
         if (changedRootDirs == null) {
-          changedRootDirs = ObjectOpenHashSet()
+          changedRootDirs = CollectionFactory.createSmallMemoryFootprintSet()
         }
 
         changedRootDirs!!.add(path.substring(0, firstSlash))

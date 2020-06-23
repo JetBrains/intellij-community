@@ -41,7 +41,6 @@ import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.FileBasedIndexProjectHandler;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.messages.MessageBusConnection;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 
@@ -71,7 +70,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
   private boolean myPointerChangesDetected;
   private int myInsideRefresh;
-  private @NotNull Set<LocalFileSystem.WatchRequest> myRootsToWatch = new ObjectOpenHashSet<>();
+  private @NotNull Set<LocalFileSystem.WatchRequest> myRootsToWatch = CollectionFactory.createSmallMemoryFootprintSet();
   private Disposable myRootPointersDisposable = Disposer.newDisposable(); // accessed in EDT
 
   public ProjectRootManagerComponent(@NotNull Project project) {
@@ -241,7 +240,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     }
 
     List<String> recursiveUrls = ContainerUtil.map(recursivePaths, VfsUtilCore::pathToUrl);
-    Set<String> excludedUrls = new ObjectOpenHashSet<>();
+    Set<String> excludedUrls = CollectionFactory.createSmallMemoryFootprintSet();
     // changes in files provided by this method should be watched manually because no-one's bothered to set up correct pointers for them
     for (DirectoryIndexExcludePolicy excludePolicy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(myProject)) {
       Collections.addAll(excludedUrls, excludePolicy.getExcludeUrlsForProject());

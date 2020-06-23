@@ -11,13 +11,13 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
 import com.intellij.util.Function
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
 import com.intellij.util.text.nullize
 import com.intellij.util.text.trimMiddle
 import com.intellij.util.ui.table.TableModelEditor
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.settingsRepository.git.asProgressMonitor
 import org.jetbrains.settingsRepository.git.cloneBare
 import kotlin.properties.Delegates.notNull
@@ -79,12 +79,12 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
 
     override fun apply(settings: IcsSettings) {
       val oldList = settings.readOnlySources
-      val toDelete = ObjectOpenHashSet<String>(oldList.size)
+      val toDelete = CollectionFactory.createSmallMemoryFootprintSet<String>(oldList.size)
       for (oldSource in oldList) {
         ContainerUtil.addIfNotNull(toDelete, oldSource.path)
       }
 
-      val toCheckout = ObjectOpenHashSet<ReadonlySource>()
+      val toCheckout = CollectionFactory.createSmallMemoryFootprintSet<ReadonlySource>()
 
       val newList = editor.apply()
       for (newSource in newList) {
