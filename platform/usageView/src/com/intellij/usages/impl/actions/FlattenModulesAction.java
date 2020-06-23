@@ -3,6 +3,7 @@ package com.intellij.usages.impl.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.usageView.UsageViewBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,6 +25,7 @@ class FlattenModulesAction extends RuleAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabled(getUsageViewSettings(e).isGroupByModule());
+    Presentation presentation = e.getPresentation();
+    presentation.setEnabled(presentation.isEnabled() && getUsageViewSettings(e).isGroupByModule());
   }
 }
