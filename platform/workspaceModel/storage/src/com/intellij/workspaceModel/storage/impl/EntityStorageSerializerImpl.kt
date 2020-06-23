@@ -165,6 +165,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     kryo.register(EntityStorageInternalIndex::class.java)
     kryo.register(ImmutablePositiveIntIntMultiMap.ByList::class.java)
     kryo.register(IntArray::class.java)
+    kryo.register(Pair::class.java)
 
     registerFieldSerializer(kryo, Collections.unmodifiableCollection<Any>(emptySet()).javaClass) {
       Collections.unmodifiableCollection(emptySet())
