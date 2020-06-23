@@ -38,8 +38,8 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Supplier;
 
 class InspectionPopupManager {
@@ -301,7 +301,7 @@ class InspectionPopupManager {
 
           panel.add(highlightLabel, gc.next().anchor(GridBagConstraints.LINE_START).gridx > 0 ? gc.insetLeft(8) : gc);
 
-          DropDownLink<?> link = createDropDownLink(levels.get(0), controller);
+          DropDownLink<?> link = createDropDownLink(level, controller);
           levelLinks.add(link);
           panel.add(link, gc.next());
         }
