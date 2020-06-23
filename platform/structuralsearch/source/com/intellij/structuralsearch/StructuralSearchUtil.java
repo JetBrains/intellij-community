@@ -152,8 +152,8 @@ public final class StructuralSearchUtil {
 
   public static String makeExtremeSpacesOptional(String word) {
     String result = word;
-    if (result.length() >= 1 && word.startsWith(" ")) result = "\\s?" + result.substring(1);
-    if (result.length() >= 1 && word.endsWith(" ")) result = result.substring(0, result.length() - 1) + "\\s?";
+    if (result.length() >= 1 && word.startsWith(" ")) result = "(?:\\s|\\b)" + result.substring(1);
+    if (result.length() >= 1 && word.endsWith(" ")) result = result.substring(0, result.length() - 1) + "(?:\\s|\\b)";
     return result;
   }
 
