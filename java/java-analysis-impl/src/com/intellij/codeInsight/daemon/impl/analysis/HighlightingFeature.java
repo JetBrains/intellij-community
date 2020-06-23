@@ -103,7 +103,7 @@ public enum HighlightingFeature {
     if (annotation == null) return null;
     if (!annotation.hasQualifiedName(JDK_INTERNAL_PREVIEW_FEATURE)) return null;
 
-    final PsiNameValuePair feature = AnnotationUtil.getAttribute(annotation, "feature");
+    final PsiNameValuePair feature = AnnotationUtil.findDeclaredAttribute(annotation, "feature");
     if (feature == null) return null;
 
     final PsiReferenceExpression referenceExpression = tryCast(feature.getDetachedValue(), PsiReferenceExpression.class);

@@ -302,19 +302,6 @@ public class AnnotationUtil {
     return result.get();
   }
 
-  /**
-   * Get an attribute as an instance of {@link PsiNameValuePair} by its name from the annotation
-   * @param annotation annotation to look for the attribute
-   * @param attributeName attribute name
-   * @return an attribute as an instance of {@link PsiNameValuePair} or null
-   */
-  @Nullable
-  @Contract(pure = true)
-  public static PsiNameValuePair getAttribute(@NotNull final PsiAnnotation annotation, @NotNull final String attributeName) {
-    final PsiNameValuePair @NotNull [] attrs = annotation.getParameterList().getAttributes();
-    return ContainerUtil.find(attrs, a -> attributeName.equals(a.getAttributeName()));
-  }
-
   @MagicConstant(flags = {CHECK_HIERARCHY, CHECK_EXTERNAL, CHECK_INFERRED, CHECK_TYPE})
   @Target({ElementType.PARAMETER, ElementType.METHOD})
   private @interface Flags { }
@@ -601,6 +588,13 @@ public class AnnotationUtil {
     return t;
   }
 
+  /**
+   * Get an attribute as an instance of {@link PsiNameValuePair} by its name from the annotation
+   * @param annotation annotation to look for the attribute
+   * @param attributeName attribute name
+   * @return an attribute as an instance of {@link PsiNameValuePair} or null
+   */
+  @Contract(pure = true)
   @Nullable
   public static PsiNameValuePair findDeclaredAttribute(@NotNull PsiAnnotation annotation, @Nullable("null means 'value'") String attributeName) {
     if (PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(attributeName)) attributeName = null;
