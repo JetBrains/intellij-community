@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.mvc;
 
 import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -36,7 +37,7 @@ import org.jetbrains.plugins.groovy.mvc.projectView.MvcToolWindowDescriptor;
 import java.util.*;
 
 @Service
-public final class MvcModuleStructureSynchronizer {
+public final class MvcModuleStructureSynchronizer implements Disposable {
   private final Set<Pair<Object, SyncAction>> myOrders = new LinkedHashSet<>();
   private final Project myProject;
 
@@ -50,6 +51,11 @@ public final class MvcModuleStructureSynchronizer {
 
   public MvcModuleStructureSynchronizer(@NotNull Project project) {
     myProject = project;
+  }
+
+  @Override
+  public void dispose() {
+    // noop
   }
 
   @NotNull
@@ -263,7 +269,7 @@ public final class MvcModuleStructureSynchronizer {
 
     ReadAction
       .nonBlocking(() -> computeRawActions(takeOrderSnapshot()))
-      .expireWith(myProject)
+      .expireWith(this)
       .coalesceBy(this)
       .finishOnUiThread(ModalityState.NON_MODAL, this::runActions)
       .submit(AppExecutorUtil.getAppExecutorService());
