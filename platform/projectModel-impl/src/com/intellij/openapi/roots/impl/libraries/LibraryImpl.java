@@ -591,6 +591,11 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   @Override
+  public boolean hasSameContent(@NotNull Library library) {
+    return this.equals(library);
+  }
+
+  @Override
   public boolean removeRoot(@NotNull String url, @NotNull OrderRootType rootType) {
     checkDisposed();
     LOG.assertTrue(isWritable());

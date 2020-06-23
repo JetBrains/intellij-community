@@ -110,6 +110,17 @@ internal class LibraryBridgeImpl(
   override fun isJarDirectory(url: String): Boolean = librarySnapshot.isJarDirectory(url)
   override fun isJarDirectory(url: String, rootType: OrderRootType): Boolean = librarySnapshot.isJarDirectory(url, rootType)
   override fun isValid(url: String, rootType: OrderRootType): Boolean = librarySnapshot.isValid(url, rootType)
+  override fun hasSameContent(library: Library): Boolean {
+    if (this === library) return true
+    if (library !is LibraryBridgeImpl) return false
+
+    if (name != library.name) return false
+    if (kind != library.kind) return false
+    if (properties != library.properties) return false
+    if (librarySnapshot.libraryEntity.roots != library.librarySnapshot.libraryEntity.roots) return false
+    if (!excludedRoots.contentEquals(library.excludedRoots)) return false
+    return true
+  }
 
   override fun readExternal(element: Element?) = throw NotImplementedError()
   override fun writeExternal(element: Element) = throw NotImplementedError()
@@ -132,25 +143,6 @@ internal class LibraryBridgeImpl(
     if (isDisposed) {
       throwDisposalError("library $entityId already disposed: $stackTrace")
     }
-  }
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (javaClass != other?.javaClass) return false
-
-    other as LibraryBridgeImpl
-    if (name != other.name) return false
-    if (kind != other.kind) return false
-    if (properties != other.properties) return false
-    if (librarySnapshot.libraryEntity.roots != other.librarySnapshot.libraryEntity.roots) return false
-    if (!excludedRoots.contentEquals(other.excludedRoots)) return false
-    return true
-  }
-
-  override fun hashCode(): Int {
-    var result = librarySnapshot.name.hashCode()
-    result = 31 * result + librarySnapshot.libraryEntity.roots.hashCode()
-    return result
   }
 
   internal fun fireRootSetChanged() {

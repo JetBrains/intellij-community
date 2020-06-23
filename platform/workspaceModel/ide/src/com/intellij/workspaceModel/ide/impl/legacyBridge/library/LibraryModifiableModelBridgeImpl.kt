@@ -181,6 +181,18 @@ internal class LibraryModifiableModelBridgeImpl(
 
   override fun isValid(url: String, rootType: OrderRootType): Boolean = currentLibrary.isValid(url, rootType)
 
+  override fun hasSameContent(library: Library): Boolean {
+    if (this === library) return true
+    if (library !is LibraryBridgeImpl) return false
+
+    if (name != library.name) return false
+    if (kind != library.kind) return false
+    if (properties != library.properties) return false
+    if (currentLibrary.libraryEntity.roots != library.librarySnapshot.libraryEntity.roots) return false
+    if (!excludedRoots.contentEquals(library.excludedRoots)) return false
+    return true
+  }
+
   override fun addExcludedRoot(url: String) {
     assertModelIsLive()
 

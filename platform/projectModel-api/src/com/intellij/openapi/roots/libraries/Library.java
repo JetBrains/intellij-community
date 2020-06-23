@@ -57,6 +57,13 @@ public interface Library extends JDOMExternalizable, Disposable, ProjectModelEle
 
   boolean isValid(@NotNull String url, @NotNull OrderRootType rootType);
 
+  /**
+   * Compares the content of the current instance of the library with the given one.
+   * @param library to compare with
+   * @return true if the content is same
+   */
+  boolean hasSameContent(@NotNull Library library);
+
   interface ModifiableModel extends Disposable {
     String @NotNull [] getUrls(@NotNull OrderRootType rootType);
 

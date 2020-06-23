@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.assertions.Assertions
 import com.intellij.testFramework.rules.ProjectModelRule
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
@@ -266,6 +265,30 @@ class LibraryTest {
       assertThat(changeCount).isEqualTo(0)
     }
     assertThat(changeCount).isEqualTo(0)
+  }
+
+  @Test
+  fun `compare libraries with the same content`() {
+    val mavenModuleName = "maven"
+    val gradleModuleName = "gradle"
+    val libraryName = "kotlin"
+    val classesRoot = projectModel.baseProjectDir.newVirtualDirectory("classes").url
+
+    val mavenModule = projectModel.createModule(mavenModuleName)
+    val gradleModule = projectModel.createModule(gradleModuleName)
+    ModuleRootModificationUtil.addModuleLibrary(mavenModule, libraryName, listOf(classesRoot), emptyList())
+    ModuleRootModificationUtil.addModuleLibrary(gradleModule, libraryName, listOf(classesRoot), emptyList())
+
+    val mavenModuleLibrary = ModuleRootManager.getInstance(mavenModule).orderEntries.filterIsInstance<LibraryOrderEntry>().first().library
+    val gradleModuleLibrary = ModuleRootManager.getInstance(gradleModule).orderEntries.filterIsInstance<LibraryOrderEntry>().first().library
+    assertThat(mavenModuleLibrary).isNotNull
+    assertThat(gradleModuleLibrary).isNotNull
+    assertThat(mavenModuleLibrary!!.hasSameContent(gradleModuleLibrary!!))
+
+    val projectLevelLibrary = projectModel.addProjectLevelLibrary(libraryName) { libraryModel ->
+      libraryModel.addRoot(classesRoot, OrderRootType.CLASSES)
+    }
+    assertThat(projectLevelLibrary.hasSameContent(gradleModuleLibrary))
   }
 
   private fun checkConsistency(library: LibraryEx) {
