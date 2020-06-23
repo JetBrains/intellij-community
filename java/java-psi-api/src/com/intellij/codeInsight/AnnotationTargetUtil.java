@@ -233,7 +233,9 @@ public class AnnotationTargetUtil {
     if (list == null) return null;
     PsiClass annotationClass = JavaPsiFacade.getInstance(modifierListOwner.getProject())
       .findClass(annotation, modifierListOwner.getResolveScope());
-    if (annotationClass != null && findAnnotationTarget(annotationClass, TargetType.TYPE_USE) != null) {
+    if (annotationClass != null && findAnnotationTarget(annotationClass, TargetType.TYPE_USE) != null &&
+        // External annotations for types are not supported
+        !(modifierListOwner instanceof PsiCompiledElement)) {
       PsiElement parent = list.getParent();
       PsiTypeElement type = null;
       if (parent instanceof PsiMethod) {
