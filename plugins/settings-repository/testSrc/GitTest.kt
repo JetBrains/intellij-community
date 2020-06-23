@@ -33,7 +33,7 @@ internal class GitTest : GitTestCase() {
         if (Arrays.equals(mergeData.CURRENT, MARKER_ACCEPT_MY) || Arrays.equals(mergeData.LAST, MARKER_ACCEPT_THEIRS)) {
           mergeSession.conflictResolvedForFile(file, MergeSession.Resolution.AcceptedYours)
         }
-        else if (Arrays.equals(mergeData.CURRENT, MARKER_ACCEPT_THEIRS) || Arrays.equals(mergeData.LAST, MARKER_ACCEPT_MY)) {
+        else if (mergeData.CURRENT!!.contentEquals(MARKER_ACCEPT_THEIRS) || mergeData.LAST!!.contentEquals(MARKER_ACCEPT_MY)) {
           mergeSession.conflictResolvedForFile(file, MergeSession.Resolution.AcceptedTheirs)
         }
         else if (Arrays.equals(mergeData.LAST, MARKER_ACCEPT_MY)) {
@@ -384,7 +384,7 @@ internal class GitTest : GitTestCase() {
     store.setPath(localConfigPath)
     store.storageManager.addStreamProvider(provider)
 
-    icsManager.sync(syncType, GitTestCase.projectRule.project) { copyLocalConfig(store.storageManager) }
+    icsManager.sync(syncType, projectRule.project) { copyLocalConfig(store.storageManager) }
 
     if (addLocalFiles) {
       assertThat(localConfigPath).isDirectory()
