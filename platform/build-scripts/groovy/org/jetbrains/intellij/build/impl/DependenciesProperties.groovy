@@ -18,15 +18,20 @@ class DependenciesProperties {
   }()
 
   @Lazy
-  File file = {
-    if (properties.isEmpty()) throw new IllegalStateException('Dependencies properties are empty')
+  private File propertiesFile = {
     new File(directory, 'build/dependencies.properties')
   }()
 
   @Lazy
-  private Properties properties = {
+  File file = {
+    if (props.isEmpty()) throw new IllegalStateException('Dependencies properties are empty')
+    propertiesFile
+  }()
+
+  @Lazy
+  private Properties props = {
     context.gradle.run('Preparing dependencies file', 'dependenciesFile')
-    file.newInputStream().withStream {
+    propertiesFile.newInputStream().withStream {
       Properties properties = new Properties()
       properties.load(it)
       properties
@@ -34,7 +39,7 @@ class DependenciesProperties {
   }()
 
   String property(String name) {
-    def value = properties.get(name)
+    def value = props.get(name)
     if (value == null) {
       context.messages.error("`$name` is not defined in `$directory/gradle.properties`")
     }
