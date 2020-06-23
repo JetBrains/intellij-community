@@ -59,6 +59,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEditor<T> implements PanelWithAnchor {
   private static final List<TIntArrayList> ourEnabledFields = Arrays.asList(
@@ -679,12 +680,6 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     return ((LabeledComponent<EditorTextFieldWithBrowseButton>)getTestLocation(JUnitConfigurationModel.CLASS)).getComponent().getText();
   }
 
-  private void setPackage(final PsiPackage aPackage) {
-    if (aPackage == null) return;
-    ((LabeledComponent<EditorTextFieldWithBrowseButton>)getTestLocation(JUnitConfigurationModel.ALL_IN_PACKAGE)).getComponent()
-      .setText(aPackage.getQualifiedName());
-  }
-
   @Override
   @NotNull
   public JComponent createEditor() {
@@ -747,7 +742,9 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
     @Override
     protected void onClassChosen(@NotNull PsiClass psiClass) {
-      setPackage(JUnitUtil.getContainingPackage(psiClass));
+      EditorTextFieldWithBrowseButton packageTextField =
+        ((LabeledComponent<EditorTextFieldWithBrowseButton>)getTestLocation(JUnitConfigurationModel.ALL_IN_PACKAGE)).getComponent();
+      packageTextField.setText(StringUtil.getPackageName(Objects.requireNonNull(psiClass.getQualifiedName())));
     }
 
     @Override

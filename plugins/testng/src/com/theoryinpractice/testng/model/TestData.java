@@ -4,7 +4,6 @@ package com.theoryinpractice.testng.model;
 import com.intellij.execution.ExternalizablePath;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
-import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
@@ -192,8 +191,7 @@ public class TestData implements Cloneable
 
   public Module setMainClass(PsiClass psiclass) {
     MAIN_CLASS_NAME = JavaExecutionUtil.getRuntimeQualifiedName(psiclass);
-    PsiPackage psipackage = JUnitUtil.getContainingPackage(psiclass);
-    PACKAGE_NAME = psipackage == null ? "" : psipackage.getQualifiedName();
+    PACKAGE_NAME = StringUtil.getPackageName(Objects.requireNonNull(psiclass.getQualifiedName()));
     return JavaExecutionUtil.findModule(psiclass);
   }
 

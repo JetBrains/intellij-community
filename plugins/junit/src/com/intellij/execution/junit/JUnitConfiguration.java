@@ -835,8 +835,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
     public Module setMainClass(final PsiClass testClass) {
       MAIN_CLASS_NAME = JavaExecutionUtil.getRuntimeQualifiedName(testClass);
-      PsiPackage containingPackage = JUnitUtil.getContainingPackage(testClass);
-      PACKAGE_NAME = containingPackage != null ? containingPackage.getQualifiedName() : "";
+      PACKAGE_NAME = StringUtil.getPackageName(Objects.requireNonNull(testClass.getQualifiedName()));
       return JavaExecutionUtil.findModule(testClass);
     }
 
