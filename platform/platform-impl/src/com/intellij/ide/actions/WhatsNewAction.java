@@ -16,10 +16,12 @@ public class WhatsNewAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     String text = e.getPresentation().getText();
+    String whatsNewUrl = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl();
     if (e.getProject() == null || text == null) {
-      BrowserUtil.browse(ApplicationInfoEx.getInstanceEx().getWhatsNewUrl());
+      BrowserUtil.browse(whatsNewUrl);
     } else {
-      HTMLEditorProvider.Companion.openEditor(e.getProject(), text, ApplicationInfoEx.getInstanceEx().getWhatsNewUrl() + getEmbeddedSuffix(), null);
+      HTMLEditorProvider.Companion.openEditor(e.getProject(), text, whatsNewUrl + getEmbeddedSuffix(), null,
+                                              () -> "<a href=\"" + whatsNewUrl + "\">What's new page.</a>");
     }
   }
 
