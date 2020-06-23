@@ -2,6 +2,7 @@
 
 package com.intellij.refactoring.rename;
 
+import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.TitledHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -18,6 +19,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,11 +28,9 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @author dsl
@@ -38,7 +38,7 @@ import java.util.function.Function;
 public class RenameHandlerRegistry {
   public static final Key<Boolean> SELECT_ALL = Key.create("rename.selectAll");
   private final PsiElementRenameHandler myDefaultElementRenameHandler;
-  private Function<? super Collection<RenameHandler>, ? extends RenameHandler> myRenameHandlerSelectorInTests = ContainerUtil::getFirstItem;
+  private Function<? super Collection<? extends RenameHandler>, ? extends RenameHandler> myRenameHandlerSelectorInTests = ContainerUtil::getFirstItem;
 
   public static RenameHandlerRegistry getInstance() {
     return ServiceManager.getService(RenameHandlerRegistry.class);
@@ -58,41 +58,61 @@ public class RenameHandlerRegistry {
 
   @Nullable
   public RenameHandler getRenameHandler(@NotNull DataContext dataContext) {
-    final Map<String, RenameHandler> availableHandlers = new TreeMap<>();
-    for (RenameHandler renameHandler : RenameHandler.EP_NAME.getExtensionList()) {
-      checkHandler(renameHandler, dataContext, availableHandlers);
+    List<? extends RenameHandler> availableHandlers = getRenameHandlers(dataContext);
+    if (availableHandlers.isEmpty()) {
+      return null;
     }
-    if (availableHandlers.size() == 1) return availableHandlers.values().iterator().next();
-    for (Iterator<Map.Entry<String, RenameHandler>> iterator = availableHandlers.entrySet().iterator(); iterator.hasNext(); ) {
-      Map.Entry<String, RenameHandler> entry = iterator.next();
-      if (entry.getValue() instanceof MemberInplaceRenameHandler) {
+    else if (availableHandlers.size() == 1) {
+      return availableHandlers.get(0);
+    }
+    else if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return myRenameHandlerSelectorInTests.apply(availableHandlers);
+    }
+    else {
+      Map<String, ? extends List<? extends RenameHandler>> title2Handlers = availableHandlers.stream().collect(
+        Collectors.groupingBy(it -> getHandlerTitle(it))
+      );
+      final String[] strings = ArrayUtilRt.toStringArray(title2Handlers.keySet());
+      final HandlersChooser chooser = new HandlersChooser(CommonDataKeys.PROJECT.getData(dataContext), strings);
+      if (chooser.showAndGet()) {
+        return ContainerUtil.getLastItem(title2Handlers.get(chooser.getSelection()));
+      }
+      throw new ProcessCanceledException();
+    }
+  }
+
+  /**
+   * Must not show dialogs.
+   */
+  public @NotNull List<? extends @NotNull RenameHandler> getRenameHandlers(@NotNull DataContext dataContext) {
+    return ProhibitAWTEvents.prohibitEventsInside("getRenameHandlers", () -> doGetRenameHandlers(dataContext));
+  }
+
+  private @NotNull List<? extends @NotNull RenameHandler> doGetRenameHandlers(@NotNull DataContext dataContext) {
+    final List<RenameHandler> availableHandlers = new SmartList<>();
+    for (RenameHandler renameHandler : RenameHandler.EP_NAME.getExtensionList()) {
+      if (renameHandler.isRenaming(dataContext)) {
+        availableHandlers.add(renameHandler);
+      }
+    }
+    if (availableHandlers.size() == 1) {
+      return availableHandlers;
+    }
+    for (Iterator<RenameHandler> iterator = availableHandlers.iterator(); iterator.hasNext(); ) {
+      RenameHandler renameHandler = iterator.next();
+      if (renameHandler instanceof MemberInplaceRenameHandler) {
         iterator.remove();
         break;
       }
     }
-    if (availableHandlers.size() == 1) return availableHandlers.values().iterator().next();
-    if (availableHandlers.size() > 1) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        return myRenameHandlerSelectorInTests.apply(availableHandlers.values());
-      }
-      final String[] strings = ArrayUtilRt.toStringArray(availableHandlers.keySet());
-      final HandlersChooser chooser = new HandlersChooser(CommonDataKeys.PROJECT.getData(dataContext), strings);
-      if (chooser.showAndGet()) {
-        return availableHandlers.get(chooser.getSelection());
-      }
-      throw new ProcessCanceledException();
+    if (availableHandlers.isEmpty() && myDefaultElementRenameHandler.isRenaming(dataContext)) {
+      return Collections.singletonList(myDefaultElementRenameHandler);
     }
-    return myDefaultElementRenameHandler.isRenaming(dataContext) ? myDefaultElementRenameHandler : null;
-  }
-
-  private static void checkHandler(RenameHandler renameHandler, DataContext dataContext, Map<String, RenameHandler> availableHandlers) {
-    if (renameHandler.isRenaming(dataContext)) {
-      availableHandlers.put(getHandlerTitle(renameHandler), renameHandler);
-    }
+    return availableHandlers;
   }
 
   @TestOnly
-  public void setRenameHandlerSelectorInTests(Function<? super Collection<RenameHandler>, ? extends RenameHandler> selector, Disposable parentDisposable) {
+  public void setRenameHandlerSelectorInTests(Function<? super Collection<? extends RenameHandler>, ? extends RenameHandler> selector, Disposable parentDisposable) {
     myRenameHandlerSelectorInTests = selector;
     Disposer.register(parentDisposable, new Disposable() {
       @Override
