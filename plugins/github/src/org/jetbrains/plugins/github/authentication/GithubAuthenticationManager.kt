@@ -87,7 +87,8 @@ class GithubAuthenticationManager internal constructor() {
 
   @CalledInAwt
   internal fun login(project: Project?, parentComponent: Component?, request: GHLoginRequest): GHAccountAuthData? =
-    request.loginWithPasswordOrToken(project, parentComponent)
+    if (request.server?.isGithubDotCom == false) request.loginWithToken(project, parentComponent)
+    else request.loginWithPasswordOrToken(project, parentComponent)
 
   @CalledInAwt
   internal fun removeAccount(account: GithubAccount) {

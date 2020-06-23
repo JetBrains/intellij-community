@@ -36,16 +36,7 @@ internal class GithubLoginDialog @JvmOverloads constructor(
     init()
   }
 
-  fun withServer(path: String, editable: Boolean): GithubLoginDialog = apply { setServer(path, editable) }
-  fun withLogin(login: String?, editable: Boolean): GithubLoginDialog = apply { loginPanel.setLogin(login, editable) }
-  fun withPassword(password: String?): GithubLoginDialog = apply { loginPanel.setPassword(password) }
-  fun withToken(token: String?): GithubLoginDialog = apply { loginPanel.setToken(token) }
-
-  fun withError(exception: Throwable): GithubLoginDialog =
-    apply {
-      loginPanel.setError(exception)
-      startTrackingValidation()
-    }
+  fun setPassword(password: String?) = loginPanel.setPassword(password)
 
   override fun startGettingToken() {
     switchLoginUiLink.isEnabled = false
