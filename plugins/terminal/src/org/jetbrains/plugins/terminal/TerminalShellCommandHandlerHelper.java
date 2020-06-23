@@ -100,7 +100,7 @@ public final class TerminalShellCommandHandlerHelper {
         return;
       }
       String title = TerminalBundle.message("smart_command_execution.notification.title");
-      String content = TerminalBundle.message("smart_command_execution.notification.text", KeymapUtil.getFirstKeyboardShortcutText(action));
+      String content = TerminalBundle.message("smart_command_execution.notification.text", KeymapUtil.getFirstKeyboardShortcutText(action), GOT_IT);
       NotificationListener.Adapter listener = new NotificationListener.Adapter() {
         @Override
         protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
