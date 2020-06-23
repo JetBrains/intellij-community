@@ -14,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.IntFunction;
-import java.util.function.IntUnaryOperator;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -43,21 +42,6 @@ public final class TroveUtil {
   public static IntStream stream(@NotNull TIntArrayList list) {
     if (list.isEmpty()) return IntStream.empty();
     return IntStream.range(0, list.size()).map(list::get);
-  }
-
-  @Nullable
-  public static TIntHashSet intersect(TIntHashSet @NotNull ... sets) {
-    Arrays.sort(sets, (set1, set2) -> {
-      if (set1 == null) return -1;
-      if (set2 == null) return 1;
-      return set1.size() - set2.size();
-    });
-    TIntHashSet result = null;
-    for (TIntHashSet set : sets) {
-      result = intersect(result, set);
-    }
-
-    return result;
   }
 
   @Nullable
@@ -135,28 +119,6 @@ public final class TroveUtil {
     }
   }
 
-  @NotNull
-  public static Set<Integer> createJavaSet(@Nullable TIntHashSet set) {
-    if (set == null) return new HashSet<>();
-
-    Set<Integer> result = new HashSet<>(set.size());
-    set.forEach(value -> {
-      result.add(value);
-      return true;
-    });
-    return result;
-  }
-
-  @NotNull
-  public static TIntHashSet createTroveSet(@NotNull Set<Integer> set) {
-    TIntHashSet result = new TIntHashSet(set.size());
-    for (int i : set) {
-      result.add(i);
-    }
-    return result;
-  }
-
-
   public static void addAll(@NotNull TIntHashSet where, @NotNull TIntHashSet what) {
     what.forEach(value -> {
       where.add(value);
@@ -197,16 +159,6 @@ public final class TroveUtil {
   @NotNull
   public static <T> List<T> map2List(@NotNull TIntHashSet set, @NotNull IntFunction<? extends T> function) {
     return stream(set).mapToObj(function).collect(Collectors.toList());
-  }
-
-  @NotNull
-  public static TIntHashSet map2IntSet(@NotNull TIntHashSet set, @NotNull IntUnaryOperator function) {
-    TIntHashSet result = new TIntHashSet();
-    set.forEach(it -> {
-      result.add(function.applyAsInt(it));
-      return true;
-    });
-    return result;
   }
 
   @NotNull
@@ -276,13 +228,6 @@ public final class TroveUtil {
   }
 
   @NotNull
-  public static TIntHashSet collect(@NotNull IntStream stream) {
-    TIntHashSet result = new TIntHashSet();
-    stream.forEach(result::add);
-    return result;
-  }
-
-  @NotNull
   public static TIntHashSet singleton(@NotNull Integer elements) {
     TIntHashSet commits = new TIntHashSet();
     commits.add(elements);
@@ -303,15 +248,5 @@ public final class TroveUtil {
       return true;
     });
     return result.get();
-  }
-
-  public static boolean removeAll(@NotNull TIntHashSet fromWhere, @NotNull Set<Integer> what) {
-    boolean result = false;
-    for (int i : what) {
-      if (fromWhere.remove(i)) {
-        result = true;
-      }
-    }
-    return result;
   }
 }
