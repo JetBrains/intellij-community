@@ -68,6 +68,11 @@ class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     assert gotoClass("@Anno") == [match]
   }
 
+  void "test class a in same-named package and partially matching subpackage"() {
+    def c = myFixture.addClass("package com.intellij.codeInsight.template.impl; class TemplateListPanel {}")
+    assert gotoClass("templistpa") == [c]
+  }
+
   void "test no result for empty patterns"() {
     myFixture.addClass("@interface Anno1 {}")
     myFixture.addClass("class Anno2 {}")

@@ -451,7 +451,6 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
     // try to match the remainder of pattern with the remainder of name
     // it may not succeed with the longest matching fragment, then try shorter matches
     int i = fragmentLength;
-    int minNext = Integer.MAX_VALUE;
     while (i >= minFragment || (i > 0 && isWildcard(patternIndex + i))) {
       FList<TextRange> ranges;
       if (isWildcard(patternIndex + i)) {
@@ -460,12 +459,8 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
       else {
         int nextOccurrence = findNextPatternCharOccurrence(name, nameIndex + i + 1, patternIndex + i, isAsciiName);
         nextOccurrence = checkForSpecialChars(name, nameIndex + i, nextOccurrence, patternIndex + i);
-        if (nextOccurrence >= 0 && nextOccurrence < minNext) {
+        if (nextOccurrence >= 0) {
           ranges = matchSkippingWords(name, patternIndex + i, nextOccurrence, false, isAsciiName);
-
-          // If on the next iteration we go one character back in the pattern and find an occurrence one character back in the name or further,
-          // that'd mean we've already failed to match following pattern chars against this name fragment, no need to repeat that
-          minNext = nextOccurrence - 1;
         } else {
           ranges = null;
         }
