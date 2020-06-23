@@ -664,12 +664,11 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   public void setSelectedChanges(@NotNull Collection<?> changes) {
     HashSet<Object> changesSet = new HashSet<>(changes);
     final List<TreePath> treeSelection = new ArrayList<>(changes.size());
-    TreeUtil.traverse(getRoot(), node -> {
+    TreeUtil.treeNodeTraverser(getRoot()).forEach(node -> {
       DefaultMutableTreeNode mutableNode = (DefaultMutableTreeNode)node;
       if (changesSet.contains(mutableNode.getUserObject())) {
         treeSelection.add(new TreePath(mutableNode.getPath()));
       }
-      return true;
     });
     setSelectionPaths(toTreePathArray(treeSelection));
     if (treeSelection.size() == 1) scrollPathToVisible(treeSelection.get(0));
