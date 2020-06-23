@@ -2789,7 +2789,7 @@
                      level="WARNING" implementationClass="com.siyeh.ig.visibility.LambdaParameterHidingMemberVariableInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="JUnit5AssertionsConverter" bundle="messages.InspectionGadgetsBundle"
                      key="junit5.assertions.converter.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.JUnit5AssertionsConverterInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="JUnit5Converter" bundle="messages.InspectionGadgetsBundle"
                      key="junit5.converter.display.name"
