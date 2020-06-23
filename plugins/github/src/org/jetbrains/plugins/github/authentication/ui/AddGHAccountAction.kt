@@ -32,7 +32,7 @@ class AddGHAccountAction : DumbAwareAction() {
   }
 
   private fun createDialog(project: Project?, accountsPanel: GHAccountsPanel): BaseLoginDialog =
-    if (isOAuthEnabled()) OAuthLoginDialog(project, accountsPanel, accountsPanel::isAccountUnique)
+    if (isOAuthEnabled()) GHOAuthLoginDialog(project, accountsPanel, accountsPanel::isAccountUnique)
     else PasswordLoginDialog(project, accountsPanel, accountsPanel::isAccountUnique)
 }
 
@@ -50,7 +50,7 @@ private class PasswordLoginDialog(project: Project?, parent: Component?, isAccou
   override fun createSouthAdditionalPanel(): JPanel = createSignUpLink()
 }
 
-private class OAuthLoginDialog(project: Project?, parent: Component?, isAccountUnique: UniqueLoginPredicate) :
+internal class GHOAuthLoginDialog(project: Project?, parent: Component?, isAccountUnique: UniqueLoginPredicate) :
   BaseLoginDialog(project, parent, GithubApiRequestExecutor.Factory.getInstance(), isAccountUnique) {
 
   init {
