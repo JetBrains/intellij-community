@@ -430,14 +430,14 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   private fun computeExtraToolWindowBeans(list: MutableList<RegisterToolWindowTask>) {
     val area = ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl
     area.getExtensionPoint<RegisterToolWindowTaskProvider>("com.intellij.registerToolWindowTaskProvider").processImplementations(
-      true) { supplier, pluginDescriptor ->
-      if (pluginDescriptor.pluginId != PluginManagerCore.CORE_ID) {
-        LOG.error("Only bundled plugin can define registerToolWindowTaskProvider: $pluginDescriptor")
+      true) { supplier, epPluginDescriptor ->
+      if (epPluginDescriptor.pluginId != PluginManagerCore.CORE_ID) {
+        LOG.error("Only bundled plugin can define registerToolWindowTaskProvider: $epPluginDescriptor")
         return@processImplementations
       }
 
       for (bean in supplier.get().getTasks(project)) {
-        val factory = bean.getToolWindowFactory(pluginDescriptor) ?: continue
+        val factory = bean.getToolWindowFactory(bean.pluginDescriptor) ?: continue
         if (factory.isApplicable(project)) {
           list.add(beanToTask(bean, factory, bean.pluginDescriptor))
         }
