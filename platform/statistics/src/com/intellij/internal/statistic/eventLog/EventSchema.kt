@@ -97,10 +97,12 @@ data class StringListEventField(override val name: String): EventField<List<Stri
   }
 }
 
-data class ClassEventField(override val name: String): EventField<Class<*>>() {
-  override fun addData(fuData: FeatureUsageData, value: Class<*>) {
-    val pluginInfo = getPluginInfo(value)
-    fuData.addData(name, if (pluginInfo.isSafeToReport()) value.name else "third.party")
+data class ClassEventField(override val name: String): EventField<Class<*>?>() {
+  override fun addData(fuData: FeatureUsageData, value: Class<*>?) {
+    if (value != null) {
+      val pluginInfo = getPluginInfo(value)
+      fuData.addData(name, if (pluginInfo.isSafeToReport()) value.name else "third.party")
+    }
   }
 }
 

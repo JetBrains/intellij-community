@@ -30,6 +30,7 @@ public class UsageInfo {
   private static final Logger LOG = Logger.getInstance(UsageInfo.class);
   private final SmartPsiElementPointer<?> mySmartPointer;
   private final SmartPsiFileRange myPsiFileRange;
+  @Nullable private Class<? extends PsiReference> myReferenceClass = null;
 
   public final boolean isNonCodeUsage;
   protected boolean myDynamicUsage;
@@ -126,6 +127,7 @@ public class UsageInfo {
 
   public UsageInfo(@NotNull PsiReference reference) {
     this(reference.getElement(), reference.getRangeInElement().getStartOffset(), reference.getRangeInElement().getEndOffset());
+    myReferenceClass = reference.getClass();
     if (reference instanceof PsiPolyVariantReference) {
       myDynamicUsage = ((PsiPolyVariantReference)reference).multiResolve(false).length == 0;
     }
@@ -136,6 +138,7 @@ public class UsageInfo {
 
   public UsageInfo(@NotNull PsiQualifiedReferenceElement reference) {
     this((PsiElement)reference);
+    myReferenceClass = reference.getClass();
   }
 
   public UsageInfo(@NotNull PsiElement element) {
@@ -157,6 +160,10 @@ public class UsageInfo {
 
   public void setDynamicUsage(boolean dynamicUsage) {
     myDynamicUsage = dynamicUsage;
+  }
+
+  public @Nullable Class<? extends PsiReference> getReferenceClass() {
+    return myReferenceClass;
   }
 
   @Nullable

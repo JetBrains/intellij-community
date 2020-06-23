@@ -46,6 +46,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   public static final NotNullFunction<UsageInfo, Usage> CONVERTER = UsageInfo2UsageAdapter::new;
   private static final Comparator<UsageInfo> BY_NAVIGATION_OFFSET = Comparator.comparingInt(UsageInfo::getNavigationOffset);
 
+  @NotNull
   private final UsageInfo myUsageInfo;
   @NotNull
   private Object myMergedUsageInfos; // contains all merged infos, including myUsageInfo. Either UsageInfo or UsageInfo[]
@@ -577,5 +578,10 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
       myUsageType = usageType;
     }
     return usageType;
+  }
+
+  @Override
+  public @Nullable Class<? extends PsiReference> getReferenceClass() {
+    return myUsageInfo.getReferenceClass();
   }
 }
