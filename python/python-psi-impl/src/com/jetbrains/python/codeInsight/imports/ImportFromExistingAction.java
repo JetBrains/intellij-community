@@ -128,7 +128,7 @@ public class ImportFromExistingAction implements QuestionAction {
         AddImportHelper.addLocalImportStatement(myTarget, myName);
       }
       else {
-        AddImportHelper.addImportStatement(file, myName, item.getAsName(), priority, null);
+        AddImportHelper.addImportStatement(file, myName, item.getAsName(), priority, myTarget);
       }
     }
     else {
