@@ -6,7 +6,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
@@ -28,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.Arrays;
@@ -35,6 +35,7 @@ import java.util.Arrays;
 public final class TerminalShellCommandHandlerHelper {
   private static final Logger LOG = Logger.getInstance(TerminalShellCommandHandler.class);
   @NonNls private static final String TERMINAL_CUSTOM_COMMANDS_GOT_IT = "TERMINAL_CUSTOM_COMMANDS_GOT_IT";
+  @NonNls private static final String GOT_IT = "got_it";
   @NonNls private static final String FEATURE_ID = "terminal.shell.command.handling";
 
   private static Experiments ourExperiments;
@@ -100,13 +101,15 @@ public final class TerminalShellCommandHandlerHelper {
       }
       String title = TerminalBundle.message("smart_command_execution.notification.title");
       String content = TerminalBundle.message("smart_command_execution.notification.text", KeymapUtil.getFirstKeyboardShortcutText(action));
-      mySingletonNotificationManager.notify(title, content, project, null,
-                                            new NotificationAction(TerminalBundle.message("smart_command_execution.notification.got.it")) {
-                                              @Override
-                                              public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-                                                getPropertiesComponent().setValue(TERMINAL_CUSTOM_COMMANDS_GOT_IT, true, false);
-                                              }
-                                            });
+      NotificationListener.Adapter listener = new NotificationListener.Adapter() {
+        @Override
+        protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+          if (GOT_IT.equals(e.getDescription())) {
+            getPropertiesComponent().setValue(TERMINAL_CUSTOM_COMMANDS_GOT_IT, true, false);
+          }
+        }
+      };
+      mySingletonNotificationManager.notify(title, content, project, listener);
     }
   }
 
