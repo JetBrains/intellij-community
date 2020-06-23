@@ -206,7 +206,6 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
     CommentTracker ct = new CommentTracker();
     PsiElement anchor = loop;
     for (PsiExpression expression : expressions) {
-      ct.markUnchanged(loop.getBody());
       PsiLoopStatement copy = (PsiLoopStatement)factory.createStatementFromText(loop.getText(), element);
       PsiVariable variable = Objects.requireNonNull(getVariable(copy));
       for (PsiReference reference : ReferencesSearch.search(variable, new LocalSearchScope(copy))) {
@@ -220,10 +219,17 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
       assert body != null;
       PsiElement[] children;
       if (body instanceof PsiBlockStatement) {
+        PsiCodeBlock block = ((PsiBlockStatement)Objects.requireNonNull(loop.getBody())).getCodeBlock();
+        PsiElement firstBodyElement = block.getFirstBodyElement();
+        PsiElement lastBodyElement = block.getLastBodyElement();
+        if (firstBodyElement != null && lastBodyElement != null) {
+          ct.markRangeUnchanged(firstBodyElement, lastBodyElement);
+        }
         children = ((PsiBlockStatement)body).getCodeBlock().getChildren();
         // Skip {braces}
         children = Arrays.copyOfRange(children, 1, children.length-1);
       } else {
+        ct.markUnchanged(loop.getBody());
         children = new PsiElement[]{body};
       }
       for(PsiElement child : children) {
