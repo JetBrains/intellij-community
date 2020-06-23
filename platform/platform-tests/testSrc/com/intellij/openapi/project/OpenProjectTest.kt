@@ -8,6 +8,8 @@ import com.intellij.platform.ModuleAttachProcessor
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.rules.checkDefaultProjectAsTemplate
+import com.intellij.testFramework.rules.createDeleteAppConfigRule
 import com.intellij.util.io.createDirectories
 import org.junit.ClassRule
 import org.junit.Rule
@@ -41,20 +43,22 @@ internal class OpenProjectTest(private val opener: Opener) {
     }
   }
 
-  @JvmField
-  @Rule
   val tempDir = TemporaryDirectory()
 
   @JvmField
   @Rule
   val disposableRule = DisposableRule()
 
+  @JvmField
+  @Rule
+  val ruleChain = RuleChain(tempDir, createDeleteAppConfigRule())
+
   @Test
   fun `open valid existing project dir with ability to attach`() {
     ExtensionTestUtil.maskExtensions(ProjectAttachProcessor.EP_NAME, listOf(ModuleAttachProcessor()), disposableRule.disposable)
     val projectDir = tempDir.newPath("project")
     projectDir.resolve(".idea").createDirectories()
-    openUsingOpenFileActionAndAssertThatProjectContainsOneModule(projectDir)
+    openUsingOpenFileActionAndAssertThatProjectContainsOneModule(projectDir, defaultProjectTemplateShouldBeApplied = false)
   }
 
   @Test
@@ -62,7 +66,7 @@ internal class OpenProjectTest(private val opener: Opener) {
     ExtensionTestUtil.maskExtensions(ProjectAttachProcessor.EP_NAME, listOf(ModuleAttachProcessor()), disposableRule.disposable)
     val projectDir = tempDir.newPath("project")
     projectDir.createDirectories()
-    openUsingOpenFileActionAndAssertThatProjectContainsOneModule(projectDir)
+    openUsingOpenFileActionAndAssertThatProjectContainsOneModule(projectDir, defaultProjectTemplateShouldBeApplied = true)
   }
 
   @Test
@@ -73,7 +77,7 @@ internal class OpenProjectTest(private val opener: Opener) {
     ExtensionTestUtil.maskExtensions(ProjectAttachProcessor.EP_NAME, listOf(), disposableRule.disposable)
     val projectDir = tempDir.newPath("project")
     projectDir.resolve(".idea").createDirectories()
-    openUsingOpenFileActionAndAssertThatProjectContainsOneModule(projectDir)
+    openUsingOpenFileActionAndAssertThatProjectContainsOneModule(projectDir, defaultProjectTemplateShouldBeApplied = false)
   }
 
   @Test
@@ -81,16 +85,16 @@ internal class OpenProjectTest(private val opener: Opener) {
     ExtensionTestUtil.maskExtensions(ProjectAttachProcessor.EP_NAME, listOf(), disposableRule.disposable)
     val projectDir = tempDir.newPath("project")
     projectDir.createDirectories()
-    openUsingOpenFileActionAndAssertThatProjectContainsOneModule(projectDir)
+    openUsingOpenFileActionAndAssertThatProjectContainsOneModule(projectDir, defaultProjectTemplateShouldBeApplied = true)
   }
 
-  private fun openUsingOpenFileActionAndAssertThatProjectContainsOneModule(projectDir: Path) {
-    val project = opener.opener(projectDir)!!
-    try {
-      assertThatProjectContainsOneModule(project)
-    }
-    finally {
-      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+  private fun openUsingOpenFileActionAndAssertThatProjectContainsOneModule(projectDir: Path, defaultProjectTemplateShouldBeApplied: Boolean) {
+    checkDefaultProjectAsTemplate { checkDefaultProjectAsTemplateTask ->
+      val project = opener.opener(projectDir)!!
+      project.use {
+        assertThatProjectContainsOneModule(project)
+        checkDefaultProjectAsTemplateTask(project, defaultProjectTemplateShouldBeApplied)
+      }
     }
   }
 }

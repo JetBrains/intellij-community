@@ -202,13 +202,12 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @ApiStatus.Internal
     @JvmStatic
     fun createOptionsToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?): OpenProjectTask {
-      // doesn't make sense to refresh or to use default project as template in tests
-      val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
+      // doesn't make sense to refresh
       return OpenProjectTask(runConfigurators = true,
                              isNewProject = !ProjectUtil.isValidProjectPath(projectDir),
                              projectToClose = projectToClose,
-                             isRefreshVfsNeeded = !isUnitTestMode,
-                             useDefaultProjectAsTemplate = !isUnitTestMode)
+                             isRefreshVfsNeeded = !ApplicationManager.getApplication().isUnitTestMode,
+                             useDefaultProjectAsTemplate = true)
     }
   }
 
