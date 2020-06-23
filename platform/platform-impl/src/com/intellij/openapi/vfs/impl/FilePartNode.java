@@ -227,7 +227,7 @@ class FilePartNode {
         || myFS instanceof ArchiveFileSystem && child.myFS instanceof ArchiveFileSystem
         : "this: "+this+"; fs="+myFS+"; child[" + i + "] = " + child + "; fs="+child.myFS;
       // child of UrlPartNode can be only UrlPartNode
-      assert !(this instanceof UrlPartNode) || child instanceof UrlPartNode : "this: "+this+"; fs="+myFS+"; child[" + i + "] = " + child + "; fs="+child.myFS;;
+      assert !(this instanceof UrlPartNode) || child instanceof UrlPartNode : "this: "+this+"; fs="+myFS+"; child[" + i + "] = " + child + "; fs="+child.myFS;
       prevChildName = childName;
     }
     int[] leafNumber = new int[1];
