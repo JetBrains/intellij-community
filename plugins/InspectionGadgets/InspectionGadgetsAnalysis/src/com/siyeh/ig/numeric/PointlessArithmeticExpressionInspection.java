@@ -227,7 +227,7 @@ public class PointlessArithmeticExpressionInspection extends BaseInspection {
         return areExpressionsIdenticalWithoutSideEffects(expressions[0], expressions[1]);
       }
       if (type.equals(JavaTokenType.DIV) || type.equals(JavaTokenType.PERC)) {
-        return areExpressionsIdenticalWithoutSideEffects(expressions[0], expressions[1]) ||
+        return areExpressionsIdenticalWithoutSideEffects(expressions[0], expressions[1]) && !isZero(expressions[0]) ||
                (type.equals(JavaTokenType.DIV) && isOne(expressions[1]));
       }
       if (type.equals(JavaTokenType.ASTERISK)) {

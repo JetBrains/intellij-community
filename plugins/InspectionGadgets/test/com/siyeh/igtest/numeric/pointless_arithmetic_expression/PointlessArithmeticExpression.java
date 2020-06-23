@@ -161,6 +161,7 @@ class FloatingPoint {
     double res7 = x * 0.0;
     double res8 = 0.0 / x;
     double res9 = x % 1.0;
+    double nan = 0.0 / 0.0;
   }
 
   void test2(float x) {
@@ -173,6 +174,7 @@ class FloatingPoint {
     float res6 = <warning descr="'x / 1.0f' can be replaced with 'x'">x / 1.0f</warning>;
     float res7 = x * 0.0f;
     float res8 = 0.0f / x;
+    float nan = 0.0f / 0.0f;
   }
   
   void multiplyToCast(int x, int y) {
