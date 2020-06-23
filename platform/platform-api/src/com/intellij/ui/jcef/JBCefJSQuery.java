@@ -38,17 +38,17 @@ public class JBCefJSQuery implements JBCefDisposable {
   /**
    * Creates a unique JS query.
    *
-   * @see JBCefBrowser#JBCEFBROWSER_JSQUERY_POOL_SIZE_PROP
+   * @see JBCefClient#JBCEFCLIENT_JSQUERY_POOL_SIZE_PROP
    * @param browser the associated cef browser
    */
   public static JBCefJSQuery create(@NotNull JBCefBrowser browser) {
     Function<Void, JBCefJSQuery> create = (v) -> {
-      return new JBCefJSQuery(browser, new JSQueryFunc(browser,browser.getJSQueryCounter(), false));
+      return new JBCefJSQuery(browser, new JSQueryFunc(browser.getJBCefClient(), browser.getJSQueryCounter(), false));
     };
     if (!browser.isCefBrowserCreated()) {
       return create.apply(null);
     }
-    JBCefBrowser.JSQueryPool pool = browser.getJSQueryPool();
+    JBCefClient.JSQueryPool pool = browser.getJBCefClient().getJSQueryPool();
     JSQueryFunc slot;
     if (pool != null && (slot = pool.getFreeSlot()) != null) {
       return new JBCefJSQuery(browser, slot);
@@ -174,13 +174,13 @@ public class JBCefJSQuery implements JBCefDisposable {
     final CefMessageRouter myRouter;
     final String myFuncName;
 
-    JSQueryFunc(@NotNull JBCefBrowser browser, int index, boolean isSlot) {
-      myFuncName = "cefQuery_" + browser.hashCode() + "_" + (isSlot ? "slot_" : "") + index;
+    JSQueryFunc(@NotNull JBCefClient client, int index, boolean isSlot) {
+      myFuncName = "cefQuery_" + client.hashCode() + "_" + (isSlot ? "slot_" : "") + index;
       CefMessageRouter.CefMessageRouterConfig config = new CefMessageRouter.CefMessageRouterConfig();
       config.jsQueryFunction = myFuncName;
       config.jsCancelFunction = myFuncName;
       myRouter = CefMessageRouter.create(config);
-      browser.getJBCefClient().getCefClient().addMessageRouter(myRouter);
+      client.getCefClient().addMessageRouter(myRouter);
     }
   }
 }

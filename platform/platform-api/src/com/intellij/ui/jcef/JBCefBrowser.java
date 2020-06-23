@@ -1,9 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.JBColor;
@@ -13,16 +11,12 @@ import org.cef.callback.CefContextMenuParams;
 import org.cef.callback.CefMenuModel;
 import org.cef.handler.*;
 import org.cef.misc.BoolRef;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -38,28 +32,9 @@ import static org.cef.callback.CefMenuModel.MenuId.MENU_ID_USER_LAST;
  * @author tav
  */
 public class JBCefBrowser implements JBCefDisposable {
-  private static final Logger LOG = Logger.getInstance(JBCefBrowser.class);
-
   private static final String BLANK_URI = "about:blank";
 
-  /**
-   * Defines the size of the pool used by {@link JBCefJSQuery} after the native browser has been created.
-   * <p>
-   * JCEF does not allow to register new JavaScript queries after the native browser has been created.
-   * To workaround this limitation a pool of JS query slots can be reserved ahead. One slot corresponds to
-   * a single {@link JBCefJSQuery} instance. The pool is not created by default unless it is explicitly
-   * requested via this property. The property should be added to a browser before it is added to a UI
-   * hierarchy, otherwise it will have no effect.
-   *
-   * @see #addProperty(String, Object)
-   */
-  @ApiStatus.Experimental
-  public static final String JBCEFBROWSER_JSQUERY_POOL_SIZE_PROP = "JBCefBrowser.JSQuery.poolSize";
-
   private static final String JBCEFBROWSER_INSTANCE_PROP = "JBCefBrowser.instance";
-
-  private static final int JS_QUERY_SLOT_POOL_DEF_SIZE = RegistryManager.getInstance().intValue("ide.browser.jcef.jsQueryPoolSize");
-  private static final int JS_QUERY_SLOT_POOL_MAX_SIZE = 10000;
 
   @NotNull private final JBCefClient myCefClient;
   @NotNull private final JPanel myComponent;
@@ -68,9 +43,7 @@ public class JBCefBrowser implements JBCefDisposable {
   @NotNull private final CefFocusHandler myCefFocusHandler;
   @Nullable private final CefLifeSpanHandler myLifeSpanHandler;
   @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
-  @NotNull private final Map<String, Object> myProperties = Collections.synchronizedMap(new HashMap<>());
 
-  @Nullable private volatile JBCefBrowser.JSQueryPool myJSQueryPool;
   private final AtomicInteger myJSQueryCounter = new AtomicInteger(0);
   private final boolean myIsDefaultClient;
   private volatile boolean myIsCefBrowserCreated;
@@ -159,7 +132,7 @@ public class JBCefBrowser implements JBCefDisposable {
           @Override
           public void onAfterCreated(CefBrowser browser) {
             myIsCefBrowserCreated = true;
-            myJSQueryPool = JSQueryPool.create(JBCefBrowser.this);
+            myCefClient.notifyBrowserCreated(JBCefBrowser.this);
             LoadDeferrer loader = myLoadDeferrer;
             if (loader != null) {
               loader.load(browser);
@@ -394,31 +367,6 @@ public class JBCefBrowser implements JBCefDisposable {
     return (JBCefBrowser)((JComponent)browser.getUIComponent()).getClientProperty(JBCEFBROWSER_INSTANCE_PROP);
   }
 
-  /**
-   * Supports the following properties:
-   * <ul>
-   * <li> {@link JBCEFBROWSER_JSQUERY_POOL_SIZE_PROP}
-   * </ul>
-   */
-  public void addProperty(@NotNull String name, @NotNull Object value) {
-    myProperties.put(name, value);
-  }
-
-  /**
-   * @see #addProperty(String, Object)
-   */
-  public void removeProperty(@NotNull String name) {
-    myProperties.remove(name);
-  }
-
-  /**
-   * @see #addProperty(String, Object)
-   */
-  @Nullable
-  public Object getProperty(@NotNull String name) {
-    return myProperties.get(name);
-  }
-
   protected class DefaultCefContextMenuHandler extends CefContextMenuHandlerAdapter {
     protected static final int DEBUG_COMMAND_ID = MENU_ID_USER_LAST;
     private final boolean isInternal;
@@ -468,43 +416,6 @@ public class JBCefBrowser implements JBCefDisposable {
     @Override
     public Component getDefaultComponent(Container aContainer) {
       return myCefBrowser.getUIComponent();
-    }
-  }
-
-  @Nullable
-  JBCefBrowser.JSQueryPool getJSQueryPool() {
-    return myJSQueryPool;
-  }
-
-  static class JSQueryPool {
-    private final JBCefJSQuery.JSQueryFunc[] pool;
-    private int currentFreeSlot;
-
-    @Nullable
-    static JBCefBrowser.JSQueryPool create(@NotNull JBCefBrowser browser) {
-      Object size = browser.getProperty(JBCEFBROWSER_JSQUERY_POOL_SIZE_PROP);
-      int poolSize = size instanceof Integer ? (Integer)size : JS_QUERY_SLOT_POOL_DEF_SIZE;
-      if (poolSize > 0) {
-        poolSize = Math.min(poolSize, JS_QUERY_SLOT_POOL_MAX_SIZE);
-        return new JSQueryPool(browser, poolSize);
-      }
-      return null;
-    }
-
-    JSQueryPool(@NotNull JBCefBrowser browser, int poolSize) {
-      pool = new JBCefJSQuery.JSQueryFunc[poolSize];
-      for (int i = 0; i < pool.length; i++) {
-        pool[i] = new JBCefJSQuery.JSQueryFunc(browser, i, true);
-      }
-    }
-
-    @Nullable
-    public JBCefJSQuery.JSQueryFunc getFreeSlot() {
-      if (currentFreeSlot >= pool.length) {
-        LOG.warn("JavaScript query pool is over [size: " + pool.length + "]", new Throwable());
-        return null;
-      }
-      return pool[currentFreeSlot++];
     }
   }
 }
