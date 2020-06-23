@@ -4,6 +4,7 @@ package com.intellij.usages.impl.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 
 class GroupByDirectoryAction extends RuleAction {
   GroupByDirectoryAction() {
@@ -11,12 +12,12 @@ class GroupByDirectoryAction extends RuleAction {
   }
 
   @Override
-  protected boolean getOptionValue(AnActionEvent e) {
+  protected boolean getOptionValue(@NotNull AnActionEvent e) {
     return getUsageViewSettings(e).isGroupByPackage();
   }
 
   @Override
-  protected void setOptionValue(AnActionEvent e, boolean value) {
+  protected void setOptionValue(@NotNull AnActionEvent e, boolean value) {
     getUsageViewSettings(e).setGroupByPackage(value);
     if (value) {
       getUsageViewSettings(e).setGroupByDirectoryStructure(false); // mutually exclusive

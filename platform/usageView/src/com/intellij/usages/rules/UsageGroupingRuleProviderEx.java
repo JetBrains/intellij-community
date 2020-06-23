@@ -9,6 +9,5 @@ public interface UsageGroupingRuleProviderEx extends UsageGroupingRuleProvider {
   /**
    * @return all rules that could be provided by this provider for given project and usage view, regardless of their enabled status
    */
-  @NotNull
-  UsageGroupingRule[] getAllRules(@NotNull Project project, @Nullable UsageView usageView);
+  @NotNull UsageGroupingRule @NotNull [] getAllRules(@NotNull Project project, @Nullable UsageView usageView);
 }

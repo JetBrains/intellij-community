@@ -4,6 +4,7 @@ package com.intellij.usages.impl.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.usageView.UsageViewBundle;
+import org.jetbrains.annotations.NotNull;
 
 class GroupByUsageTypeAction extends RuleAction {
   GroupByUsageTypeAction() {
@@ -11,12 +12,12 @@ class GroupByUsageTypeAction extends RuleAction {
   }
 
   @Override
-  protected boolean getOptionValue(AnActionEvent e) {
+  protected boolean getOptionValue(@NotNull AnActionEvent e) {
     return getUsageViewSettings(e).isGroupByUsageType();
   }
 
   @Override
-  protected void setOptionValue(AnActionEvent e, boolean value) {
+  protected void setOptionValue(@NotNull AnActionEvent e, boolean value) {
     getUsageViewSettings(e).setGroupByUsageType(value);
   }
 }

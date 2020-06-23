@@ -25,13 +25,13 @@ public abstract class RuleAction extends ToggleAction implements DumbAware {
     this(() -> text, icon);
   }
 
-  protected RuleAction(Supplier<String> text, @NotNull Icon icon) {
+  protected RuleAction(@NotNull Supplier<String> text, @NotNull Icon icon) {
     super(text, icon);
   }
 
-  protected abstract boolean getOptionValue(AnActionEvent e);
+  protected abstract boolean getOptionValue(@NotNull AnActionEvent e);
 
-  protected abstract void setOptionValue(AnActionEvent e, boolean value);
+  protected abstract void setOptionValue(@NotNull AnActionEvent e, boolean value);
 
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
@@ -55,17 +55,19 @@ public abstract class RuleAction extends ToggleAction implements DumbAware {
     }
   }
 
-  protected UsageViewSettings getUsageViewSettings(AnActionEvent e) {
+  protected @NotNull UsageViewSettings getUsageViewSettings(@NotNull AnActionEvent e) {
     UsageView plainView = e.getData(UsageView.USAGE_VIEW_KEY);
-    if (plainView instanceof UsageViewImpl)
-      return ((UsageViewImpl) plainView).getUsageViewSettings();
+    if (plainView instanceof UsageViewImpl) {
+      return ((UsageViewImpl)plainView).getUsageViewSettings();
+    }
     return UsageViewSettings.getInstance();
   }
 
-  protected @Nullable UsageViewImpl getUsageViewImpl(AnActionEvent e) {
+  protected @Nullable UsageViewImpl getUsageViewImpl(@NotNull AnActionEvent e) {
     UsageView plainView = e.getData(UsageView.USAGE_VIEW_KEY);
-    if (plainView instanceof UsageViewImpl)
-      return ((UsageViewImpl) plainView);
+    if (plainView instanceof UsageViewImpl) {
+      return ((UsageViewImpl)plainView);
+    }
     return null;
   }
 }

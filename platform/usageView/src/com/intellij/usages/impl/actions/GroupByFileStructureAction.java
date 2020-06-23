@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.usageView.UsageViewBundle;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 public
@@ -14,12 +15,12 @@ class GroupByFileStructureAction extends RuleAction {
   }
 
   @Override
-  protected boolean getOptionValue(AnActionEvent e) {
+  protected boolean getOptionValue(@NotNull AnActionEvent e) {
     return getUsageViewSettings(e).isGroupByFileStructure();
   }
 
   @Override
-  protected void setOptionValue(AnActionEvent e, boolean value) {
+  protected void setOptionValue(@NotNull AnActionEvent e, boolean value) {
     getUsageViewSettings(e).setGroupByFileStructure(value);
   }
 }
