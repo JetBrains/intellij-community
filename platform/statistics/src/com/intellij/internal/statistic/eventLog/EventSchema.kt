@@ -97,6 +97,13 @@ data class StringListEventField(override val name: String): EventField<List<Stri
   }
 }
 
+data class ClassEventField(override val name: String): EventField<Class<*>>() {
+  override fun addData(fuData: FeatureUsageData, value: Class<*>) {
+    val pluginInfo = getPluginInfo(value)
+    fuData.addData(name, if (pluginInfo.isSafeToReport()) value.name else "third.party")
+  }
+}
+
 class ObjectEventField(override val name: String, vararg val fields: EventField<*>) : EventField<ObjectEventData>() {
   constructor(name: String, description: ObjectDescription) : this(name, *description.getFields())
 
@@ -203,6 +210,9 @@ object EventFields {
   fun Boolean(name: String): BooleanEventField = BooleanEventField(name)
 
   @JvmStatic
+  fun Class(name: String): ClassEventField = ClassEventField(name)
+
+  @JvmStatic
   @JvmOverloads
   fun <T : Enum<*>> Enum(name: String, enumClass: Class<T>, transform: (T) -> String = { it.toString() }): EnumEventField<T> =
     EnumEventField(name, enumClass, transform)
@@ -252,6 +262,14 @@ object EventFields {
     override val name = "file_path"
     override fun addData(fuData: FeatureUsageData, value: String?) {
       fuData.addAnonymizedPath(value)
+    }
+  }
+
+  @JvmField
+  val Language = object : EventField<Language?>() {
+    override val name = "lang"
+    override fun addData(fuData: FeatureUsageData, value: Language?) {
+      fuData.addLanguage(value)
     }
   }
 
