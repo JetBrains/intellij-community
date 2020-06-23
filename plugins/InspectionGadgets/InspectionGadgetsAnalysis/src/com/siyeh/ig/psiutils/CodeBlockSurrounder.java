@@ -375,7 +375,7 @@ public abstract class CodeBlockSurrounder {
   private static class ExtractFieldInitializerSurrounder extends CodeBlockSurrounder {
     private final PsiField myField;
 
-    public ExtractFieldInitializerSurrounder(@NotNull PsiExpression expression, @NotNull PsiField field) {
+    ExtractFieldInitializerSurrounder(@NotNull PsiExpression expression, @NotNull PsiField field) {
       super(expression);
       myField = field;
     }
@@ -530,7 +530,7 @@ public abstract class CodeBlockSurrounder {
     private final PsiConditionalExpression myConditional;
     private final CodeBlockSurrounder myUpstream;
 
-    public TernaryToIfSurrounder(@NotNull PsiExpression expression,
+    TernaryToIfSurrounder(@NotNull PsiExpression expression,
                                  @NotNull PsiConditionalExpression conditional,
                                  @NotNull CodeBlockSurrounder upstream) {
       super(expression);
