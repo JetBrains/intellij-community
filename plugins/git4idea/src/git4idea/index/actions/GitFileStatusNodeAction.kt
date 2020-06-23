@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index.actions
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
@@ -25,6 +27,7 @@ import git4idea.index.ui.NodeKind
 import git4idea.index.vfs.GitIndexFileSystemRefresher
 import git4idea.util.GitFileUtils
 import java.util.function.Supplier
+import javax.swing.Icon
 import kotlin.streams.toList
 
 class GitAddAction : GitFileStatusNodeAction(GitAddOperation)
@@ -32,7 +35,7 @@ class GitResetAction : GitFileStatusNodeAction(GitResetOperation)
 class GitRevertAction : GitFileStatusNodeAction(GitRevertOperation)
 
 abstract class GitFileStatusNodeAction(private val operation: StagingAreaOperation)
-  : DumbAwareAction(operation.actionText) {
+  : DumbAwareAction(operation.actionText, Presentation.NULL_STRING, operation.icon) {
 
   override fun update(e: AnActionEvent) {
     val statusInfoStream = e.getData(GIT_FILE_STATUS_NODES_STREAM)
@@ -51,6 +54,7 @@ abstract class GitFileStatusNodeAction(private val operation: StagingAreaOperati
 object GitAddOperation : StagingAreaOperation {
   override val actionText get() = GitBundle.messagePointer("add.action.name")
   override val progressTitle get() = GitBundle.message("add.adding")
+  override val icon = AllIcons.General.Add
 
   override fun matches(statusNode: GitFileStatusNode) = statusNode.kind == NodeKind.UNSTAGED || statusNode.kind == NodeKind.UNTRACKED
 
@@ -66,6 +70,7 @@ object GitAddOperation : StagingAreaOperation {
 object GitResetOperation : StagingAreaOperation {
   override val actionText get() = GitBundle.messagePointer("stage.reset.action.text")
   override val progressTitle get() = GitBundle.message("stage.reset.process")
+  override val icon = AllIcons.General.Remove
 
   override fun matches(statusNode: GitFileStatusNode) = statusNode.kind == NodeKind.STAGED
 
@@ -81,6 +86,7 @@ object GitResetOperation : StagingAreaOperation {
 object GitRevertOperation : StagingAreaOperation {
   override val actionText get() = GitBundle.messagePointer("stage.revert.action.text")
   override val progressTitle get() = GitBundle.message("stage.revert.process")
+  override val icon = AllIcons.Actions.Rollback
 
   override fun matches(statusNode: GitFileStatusNode) = statusNode.kind == NodeKind.UNSTAGED
 
@@ -132,6 +138,7 @@ private fun showErrorMessage(project: Project, messageTitle: String, exceptions:
 interface StagingAreaOperation {
   val actionText: Supplier<String>
   val progressTitle: String
+  val icon: Icon?
   fun matches(statusNode: GitFileStatusNode): Boolean
 
   @Throws(VcsException::class)
