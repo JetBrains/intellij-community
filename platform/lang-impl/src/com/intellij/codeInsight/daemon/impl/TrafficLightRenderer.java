@@ -73,6 +73,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   boolean passStatusesVisible;
   final Map<ProgressableTextEditorHighlightingPass, Pair<JProgressBar, JLabel>> passes = new LinkedHashMap<>();
   private final TObjectIntHashMap<HighlightSeverity> errorCount = new TObjectIntHashMap<>();
+  private int[] cachedErrors = ArrayUtilRt.EMPTY_INT_ARRAY;
   static final int MAX = 100;
   boolean progressBarsEnabled;
   Boolean progressBarsCompleted;
@@ -127,23 +128,26 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
    * errorCount[idx] == number of highlighters of severity with index idx in this markup model.
    * severity index can be obtained via com.intellij.codeInsight.daemon.impl.SeverityRegistrar#getSeverityIdx(com.intellij.lang.annotation.HighlightSeverity)
    */
-  public int[] getErrorCount() {
-    List<HighlightSeverity> severities = mySeverityRegistrar.getAllSeverities();
-    int[] result = new int[severities.size()];
-    for (HighlightSeverity severity : severities) {
-      int severityIndex = mySeverityRegistrar.getSeverityIdx(severity);
-      result[severityIndex] = errorCount.get(severity);
-    }
-
-    return result;
+  protected int @NotNull [] getErrorCount() {
+    return cachedErrors.clone();
   }
 
   protected void refresh(@Nullable EditorMarkupModelImpl editorMarkupModel) {
+    List<HighlightSeverity> severities = mySeverityRegistrar.getAllSeverities();
+    if (cachedErrors.length != severities.size()) {
+      cachedErrors = new int[severities.size()];
+    }
+
+    for (HighlightSeverity severity : severities) {
+      int severityIndex = mySeverityRegistrar.getSeverityIdx(severity);
+      cachedErrors[severityIndex] = errorCount.get(severity);
+    }
   }
 
   @Override
   public void dispose() {
     errorCount.clear();
+    cachedErrors = ArrayUtilRt.EMPTY_INT_ARRAY;
   }
 
   private void incErrorCount(RangeHighlighter highlighter, int delta) {
