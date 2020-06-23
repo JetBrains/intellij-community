@@ -43,14 +43,13 @@ public final class TerminalShellCommandHandlerHelper {
   @NonNls private static final String FEATURE_ID = "terminal.shell.command.handling";
 
   private static Experiments ourExperiments;
-
+  private static final NotificationGroup ourToolWindowGroup =
+    NotificationGroup.toolWindowGroup("Terminal", TerminalToolWindowFactory.TOOL_WINDOW_ID);
   private final ShellTerminalWidget myWidget;
   private final Alarm myAlarm;
   private volatile String myWorkingDirectory;
   private volatile Boolean myHasRunningCommands;
   private PropertiesComponent myPropertiesComponent;
-  private static final NotificationGroup ourToolWindowGroup =
-    NotificationGroup.toolWindowGroup("Terminal", TerminalToolWindowFactory.TOOL_WINDOW_ID);
   private final SingletonNotificationManager mySingletonNotificationManager =
     new SingletonNotificationManager(ourToolWindowGroup, NotificationType.INFORMATION, null);
 
