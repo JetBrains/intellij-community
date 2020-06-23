@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.openapi.vcs.merge.MergeSession
@@ -19,7 +19,8 @@ import kotlin.properties.Delegates
 internal abstract class GitTestCase : IcsTestCase() {
   companion object {
     @JvmField
-    @ClassRule val projectRule = ProjectRule()
+    @ClassRule
+    val projectRule = ProjectRule(runPostStartUpActivities = false)
   }
 
   protected val repositoryManager: GitRepositoryManager
@@ -108,7 +109,7 @@ internal abstract class GitTestCase : IcsTestCase() {
   }
 
   protected fun FileSystem.compare(): FileSystem {
-    val root = getPath("/")!!
+    val root = getPath("/")
     compareFiles(root, repository.workTreePath)
     compareFiles(root, remoteRepository.workTreePath)
     return this
