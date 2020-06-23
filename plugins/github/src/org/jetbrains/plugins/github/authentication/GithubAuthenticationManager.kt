@@ -37,8 +37,7 @@ class GithubAuthenticationManager internal constructor() {
     GithubLoginDialog(GithubApiRequestExecutor.Factory.getInstance(), project, parentComponent,
                       message = GithubBundle.message("account.token.missing.for", account))
       .withServer(account.server.toString(), false)
-      .withCredentials(account.name)
-      .withToken()
+      .withLogin(account.name, true)
       .updateAccount(account)
 
   @CalledInAwt
@@ -63,7 +62,7 @@ class GithubAuthenticationManager internal constructor() {
   ): GithubAccount? =
     newLoginDialog(project, parentComponent)
       .withServer(server.toUrl(), false)
-      .withCredentials(login, editableLogin = false)
+      .withLogin(login, false)
       .registerAccount()
 
   internal fun isAccountUnique(name: String, server: GithubServerPath) =
@@ -74,7 +73,7 @@ class GithubAuthenticationManager internal constructor() {
   fun requestReLogin(account: GithubAccount, project: Project?, parentComponent: Component? = null): Boolean =
     newLoginDialog(project, parentComponent, false)
       .withServer(account.server.toString(), false)
-      .withCredentials(account.name)
+      .withLogin(account.name, true)
       .updateAccount(account) != null
 
   @CalledInAwt

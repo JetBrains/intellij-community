@@ -36,15 +36,10 @@ internal class GithubLoginDialog @JvmOverloads constructor(
     init()
   }
 
-  @JvmOverloads
-  fun withServer(path: String, editable: Boolean = true): GithubLoginDialog = apply { setServer(path, editable) }
-
-  @JvmOverloads
-  fun withCredentials(login: String? = null, password: String? = null, editableLogin: Boolean = true): GithubLoginDialog =
-    apply { loginPanel.setCredentials(login, password, editableLogin) }
-
-  @JvmOverloads
-  fun withToken(token: String? = null): GithubLoginDialog = apply { loginPanel.setToken(token) }
+  fun withServer(path: String, editable: Boolean): GithubLoginDialog = apply { setServer(path, editable) }
+  fun withLogin(login: String?, editable: Boolean): GithubLoginDialog = apply { loginPanel.setLogin(login, editable) }
+  fun withPassword(password: String?): GithubLoginDialog = apply { loginPanel.setPassword(password) }
+  fun withToken(token: String?): GithubLoginDialog = apply { loginPanel.setToken(token) }
 
   fun withError(exception: Throwable): GithubLoginDialog =
     apply {

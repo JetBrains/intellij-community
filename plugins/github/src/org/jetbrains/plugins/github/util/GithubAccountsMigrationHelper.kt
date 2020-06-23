@@ -120,7 +120,8 @@ class GithubAccountsMigrationHelper {
       message = GithubBundle.message("accounts.password.auth.not.supported")
     ).apply {
       withServer(GithubSettings.getInstance().oldHost, false)
-      withCredentials(GithubSettings.getInstance().login, password)
+      withLogin(GithubSettings.getInstance().login, true)
+      withPassword(password)
     }
 
     return dialog.getMigrationResult()
