@@ -4,6 +4,7 @@ class Clazz {
   interface MyRef<T> {}
 
   void test(List<MyRef<String>> list1, List<String> list2) {
+    if (list1.containsAll(<warning descr="'List<MyRef<String>>' may not contain objects of type 'String'">list2</warning>)) {}
     list1.removeAll(<warning descr="'List<MyRef<String>>' may not contain objects of type 'String'">list2</warning>);
   }
 

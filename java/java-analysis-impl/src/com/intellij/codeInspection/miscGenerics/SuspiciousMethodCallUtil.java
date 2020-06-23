@@ -13,6 +13,7 @@ import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,7 @@ public class SuspiciousMethodCallUtil {
         PsiClassType wildcardCollection = javaPsiFacade.getElementFactory().createType(collectionClass, PsiWildcardType.createUnbounded(manager));
         addSingleParameterMethod(patternMethods, collectionClass, "removeAll", wildcardCollection);
         addSingleParameterMethod(patternMethods, collectionClass, "retainAll", wildcardCollection);
+        addSingleParameterMethod(patternMethods, collectionClass, "containsAll", wildcardCollection);
       }
     }
 
@@ -273,7 +275,7 @@ public class SuspiciousMethodCallUtil {
       if (typeParamMapping == null) return null;
 
       PsiParameter[] parameters = method.getParameterList().getParameters();
-      if (parameters.length == 1 && ("removeAll".equals(method.getName()) || "retainAll".equals(method.getName()))) {
+      if (parameters.length == 1 && isCollectionAcceptingMethod(method.getName())) {
         PsiType paramType = parameters[0].getType();
         if (InheritanceUtil.isInheritor(paramType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
           PsiType qualifierType = qualifier.getType();
@@ -325,6 +327,11 @@ public class SuspiciousMethodCallUtil {
       return message;
     }
     return null;
+  }
+
+  @Contract(value = "null -> false", pure = true)
+  static boolean isCollectionAcceptingMethod(@Nullable String name) {
+    return "removeAll".equals(name) || "retainAll".equals(name) || "containsAll".equals(name);
   }
 
   private static String getPreciseObjectTitle(PsiClass patternClass, int index) {
