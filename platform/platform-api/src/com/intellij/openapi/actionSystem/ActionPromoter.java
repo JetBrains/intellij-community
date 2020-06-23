@@ -16,6 +16,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -35,5 +36,5 @@ import java.util.List;
 public interface ActionPromoter {
   ExtensionPointName<ActionPromoter> EP_NAME = ExtensionPointName.create("com.intellij.actionPromoter");
 
-  List<AnAction> promote(List<AnAction> actions, DataContext context);
+  List<AnAction> promote(@NotNull List<AnAction> actions, @NotNull DataContext context);
 }
