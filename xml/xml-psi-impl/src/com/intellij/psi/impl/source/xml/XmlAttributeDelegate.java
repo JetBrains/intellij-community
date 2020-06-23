@@ -216,7 +216,7 @@ public abstract class XmlAttributeDelegate {
       }
     }
 
-    final PsiReference[] referencesFromProviders = ReferenceProvidersRegistry.getReferencesFromProviders(myAttribute);
+    PsiReference[] referencesFromProviders = ReferenceProvidersRegistry.getReferencesFromProviders(myAttribute, hints);
     PsiReference[] refs;
     if (myAttribute.isNamespaceDeclaration()) {
       refs = new PsiReference[referencesFromProviders.length + 1];
