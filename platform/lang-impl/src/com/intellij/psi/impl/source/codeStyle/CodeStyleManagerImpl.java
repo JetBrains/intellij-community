@@ -877,7 +877,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
     private int getCaretOffset() {
       int caretOffset = myCaretModel.getOffset();
-      caretOffset = MathUtil.clamp(caretOffset, 0, myDocument.getTextLength() - 1);
+      int upperBound = Math.max(myDocument.getTextLength() - 1, 0);
+      caretOffset = MathUtil.clamp(caretOffset, 0, upperBound);
       return caretOffset;
     }
 
