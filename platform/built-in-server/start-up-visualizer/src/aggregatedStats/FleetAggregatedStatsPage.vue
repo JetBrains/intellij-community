@@ -85,7 +85,7 @@
               <el-col :span="12">
                 <el-card shadow="never" :body-style="{ padding: '0px' }">
                   <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest" :timeRange="timeRange"
-                                      :metrics='["prepareAppInitActivities.start app.duration"]'
+                                      :metrics='["prepareAppInitActivities.start app"]'
                                       :chartSettings="chartSettings"/>
                 </el-card>
               </el-col>
