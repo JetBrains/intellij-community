@@ -2,13 +2,11 @@
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.dataFlow.StringExpressionHelper;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -60,71 +58,6 @@ public class PsiUtil {
 
     return modifiers.hasModifierProperty(PsiModifier.PUBLIC) &&
            (cls.getContainingClass() == null || modifiers.hasModifierProperty(PsiModifier.STATIC));
-  }
-
-  @Nullable
-  public static String getReturnedLiteral(PsiMethod method, PsiClass cls) {
-    PsiExpression value = getReturnedExpression(method);
-    if (value instanceof PsiLiteralExpression) {
-      Object str = ((PsiLiteralExpression)value).getValue();
-      return str == null ? null : str.toString();
-    }
-    else if (value instanceof PsiMethodCallExpression) {
-      if (isSimpleClassNameExpression((PsiMethodCallExpression)value)) {
-        return cls.getName();
-      }
-    }
-    else if (value != null) {
-      Pair<PsiElement, String> evaluateResult = StringExpressionHelper.evaluateConstantExpression(value);
-      if (evaluateResult != null && value.equals(evaluateResult.first)) {
-        return evaluateResult.second;
-      }
-    }
-    return null;
-  }
-
-  private static boolean isSimpleClassNameExpression(PsiMethodCallExpression expr) {
-    String text = expr.getText();
-    if (text == null) return false;
-    if (!StringUtil.contains(text, "getSimpleName")) return false;
-
-    text = text.replaceAll(" ", "")
-      .replaceAll("\n", "")
-      .replaceAll("\t", "")
-      .replaceAll("\r", "");
-    return "getClass().getSimpleName()".equals(text) || "this.getClass().getSimpleName()".equals(text);
-  }
-
-  @Nullable
-  public static PsiExpression getReturnedExpression(PsiMethod method) {
-    PsiCodeBlock body = method.getBody();
-    if (body != null) {
-      PsiStatement[] statements = body.getStatements();
-      if (statements.length != 1) return null;
-
-      PsiStatement statement = statements[0];
-      if (statement instanceof PsiReturnStatement) {
-        PsiExpression value = ((PsiReturnStatement)statement).getReturnValue();
-        if (value instanceof PsiReferenceExpression) {
-          PsiElement element = ((PsiReferenceExpression)value).resolve();
-          if (element instanceof PsiField) {
-            PsiField field = (PsiField)element;
-            if (field.hasModifierProperty(PsiModifier.FINAL)) {
-              return field.getInitializer();
-            }
-          }
-        }
-        else if (value instanceof PsiMethodCallExpression &&
-                 !isSimpleClassNameExpression((PsiMethodCallExpression)value)) {
-          final PsiMethod calledMethod = ((PsiMethodCallExpression)value).resolveMethod();
-          return calledMethod != null ? getReturnedExpression(calledMethod) : null;
-        }
-
-        return value;
-      }
-    }
-
-    return null;
   }
 
   @Nullable

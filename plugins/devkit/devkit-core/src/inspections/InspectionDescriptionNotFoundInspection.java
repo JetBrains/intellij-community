@@ -2,79 +2,70 @@
 
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.inspections.quickfix.CreateHtmlDescriptionFix;
-import org.jetbrains.idea.devkit.util.PsiUtil;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class InspectionDescriptionNotFoundInspection extends DevKitInspectionBase {
+public class InspectionDescriptionNotFoundInspection extends DescriptionNotFoundInspectionBase {
   @NonNls private static final String INSPECTION_PROFILE_ENTRY = DescriptionType.INSPECTION.getClassName();
 
+  public InspectionDescriptionNotFoundInspection() {
+    super(DescriptionType.INSPECTION);
+  }
+
   @Override
-  public ProblemDescriptor[] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    final Project project = psiClass.getProject();
-    final PsiIdentifier nameIdentifier = psiClass.getNameIdentifier();
-    final Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
+  protected boolean skipIfNotRegistered(PsiClass epClass) {
+    return isAnyPathMethodOverridden(epClass);
+  }
 
-    if (nameIdentifier == null || module == null || !PsiUtil.isInstantiable(psiClass)) return null;
-
-    final PsiClass base = JavaPsiFacade.getInstance(project).findClass(INSPECTION_PROFILE_ENTRY, psiClass.getResolveScope());
-    if (base == null || !psiClass.isInheritor(base, true) || isPathMethodsAreOverridden(psiClass)) return null;
-
+  @Override
+  protected boolean checkDynamicDescription(ProblemsHolder holder,
+                                            Module module,
+                                            PsiClass psiClass) {
     final InspectionDescriptionInfo info = InspectionDescriptionInfo.create(module, psiClass);
-    if (!info.isValid() || info.hasDescriptionFile()) return null;
-
-    final PsiElement problemElement = getProblemElement(psiClass, info.getShortNameMethod());
-    final ProblemDescriptor problemDescriptor = manager
-      .createProblemDescriptor(problemElement == null ? nameIdentifier : problemElement,
-                               "Inspection does not have a description", isOnTheFly,
-                               new LocalQuickFix[]{new CreateHtmlDescriptionFix(info.getFilename(), module, DescriptionType.INSPECTION)},
-                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-    return new ProblemDescriptor[]{problemDescriptor};
+    return info.isValid() && info.hasDescriptionFile();
   }
 
-  @Nullable
-  private static PsiElement getProblemElement(PsiClass psiClass, @Nullable PsiMethod method) {
-    if (method != null && method.getContainingClass() == psiClass) {
-      return PsiUtil.getReturnedExpression(method);
-    }
-    return psiClass.getNameIdentifier();
+  @Override
+  protected @Nullable String getDescriptionDir(Module module, PsiClass psiClass) {
+    return InspectionDescriptionInfo.create(module, psiClass).getFilename();
   }
 
-  private static boolean isPathMethodsAreOverridden(PsiClass psiClass) {
-    return !(isLastMethodDefinitionIn("getStaticDescription", INSPECTION_PROFILE_ENTRY, psiClass)
-             && isLastMethodDefinitionIn("getDescriptionContextClass", INSPECTION_PROFILE_ENTRY, psiClass)
-             && isLastMethodDefinitionIn("getDescriptionFileName", INSPECTION_PROFILE_ENTRY, psiClass));
+  @Override
+  protected @InspectionMessage @NotNull String getHasNotDescriptionError(Module module,
+                                                                         PsiClass psiClass) {
+    final InspectionDescriptionInfo info = InspectionDescriptionInfo.create(module, psiClass);
+    final PsiMethod shortNameMethod = info.getShortNameMethod();
+    return "Inspection does not have a description" + (shortNameMethod == null ? "" : " [" + shortNameMethod.getName() + "()]");
+  }
+
+  @Override
+  protected @InspectionMessage @NotNull String getHasNotBeforeAfterError() {
+    return "";
+  }
+
+  private static boolean isAnyPathMethodOverridden(PsiClass psiClass) {
+    return !(isLastMethodDefinitionIn("getStaticDescription", psiClass)
+             && isLastMethodDefinitionIn("getDescriptionContextClass", psiClass)
+             && isLastMethodDefinitionIn("getDescriptionFileName", psiClass));
   }
 
   private static boolean isLastMethodDefinitionIn(@NotNull String methodName,
-                                                  @NotNull String classFQN,
                                                   @Nullable PsiClass psiClass) {
     if (psiClass == null) return false;
     for (PsiMethod method : psiClass.findMethodsByName(methodName, false)) {
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) return false;
-      return classFQN.equals(containingClass.getQualifiedName());
+      return INSPECTION_PROFILE_ENTRY.equals(containingClass.getQualifiedName());
     }
-    return isLastMethodDefinitionIn(methodName, classFQN, psiClass.getSuperClass());
+    return isLastMethodDefinitionIn(methodName, psiClass.getSuperClass());
   }
-
-  @Override
-  @NotNull
-  public String getShortName() {
-    return "InspectionDescriptionNotFoundInspection";
-  }
-
 }

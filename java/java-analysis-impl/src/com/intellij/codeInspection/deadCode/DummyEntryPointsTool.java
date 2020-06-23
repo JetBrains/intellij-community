@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ex.JobDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings("InspectionDescriptionNotFoundInspection")
 public class DummyEntryPointsTool extends UnusedDeclarationInspectionBase {
   public DummyEntryPointsTool() {
   }
@@ -34,7 +35,6 @@ public class DummyEntryPointsTool extends UnusedDeclarationInspectionBase {
   @Override
   @NotNull
   public String getShortName() {
-    //noinspection InspectionDescriptionNotFoundInspection
     return "";
   }
 }

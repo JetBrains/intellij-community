@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.inspections;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiClass;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +32,7 @@ public class PostfixTemplateDescriptionNotFoundInspection extends DescriptionNot
 
   @NotNull
   @Override
-  protected String getHasNotDescriptionError() {
+  protected String getHasNotDescriptionError(Module module, PsiClass psiClass) {
     return "Postfix template does not have a description";
   }
 

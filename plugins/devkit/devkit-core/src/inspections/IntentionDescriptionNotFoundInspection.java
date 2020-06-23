@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.util.ExtensionCandidate;
@@ -25,7 +26,7 @@ public class IntentionDescriptionNotFoundInspection extends DescriptionNotFoundI
 
   @Override
   @NotNull
-  protected String getHasNotDescriptionError() {
+  protected String getHasNotDescriptionError(Module module, PsiClass psiClass) {
     return "Intention does not have a description";
   }
 

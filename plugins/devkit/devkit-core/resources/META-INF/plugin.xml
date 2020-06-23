@@ -108,7 +108,7 @@
                      groupPath="Plugin DevKit"
                      key="inspections.component.not.registered.name" groupKey="inspections.group.code" enabledByDefault="true"
                      level="WARNING" implementationClass="org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection"/>
-    <localInspection language="JAVA" shortName="InspectionDescriptionNotFoundInspection" displayName="Inspection description checker"
+    <localInspection language="UAST" shortName="InspectionDescriptionNotFoundInspection" displayName="Inspection description checker"
                      groupPath="Plugin DevKit" groupKey="inspections.group.description.file"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.InspectionDescriptionNotFoundInspection"/>
