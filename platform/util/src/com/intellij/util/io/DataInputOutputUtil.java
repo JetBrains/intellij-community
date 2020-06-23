@@ -11,6 +11,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.List;
 
 public final class DataInputOutputUtil {
   public static final long timeBase = 33L * 365L * 24L * 3600L * 1000L;
@@ -116,5 +117,12 @@ public final class DataInputOutputUtil {
   @Nullable
   public static <T> T readNullable(@NotNull DataInput in, @NotNull ThrowableComputable<T, IOException> readValue) throws IOException {
     return in.readBoolean() ? readValue.compute() : null;
+  }
+
+  @NotNull
+  public static <T> List<T> readSeq(@NotNull DataInput in,
+                                    @SuppressWarnings("BoundedWildcard")
+                                    @NotNull ThrowableComputable<? extends T, IOException> readElement) throws IOException {
+    return DataInputOutputUtilRt.readSeq(in, readElement);
   }
 }
