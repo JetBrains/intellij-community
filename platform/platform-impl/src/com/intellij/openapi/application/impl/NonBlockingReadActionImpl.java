@@ -368,7 +368,8 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
         LOG.trace("Submitting " + this);
       }
       ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-      if (app.isWriteActionInProgress() || app.isWriteActionPending()) {
+      if (app.isWriteActionInProgress() || app.isWriteActionPending() ||
+          app.isReadAccessAllowed() && findUnsatisfiedConstraint() != null) {
         rescheduleLater();
         return;
       }
@@ -477,7 +478,7 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
         if (checkObsolete()) {
           return;
         }
-        ContextConstraint constraint = ContainerUtil.find(myConstraints, t -> !t.isCorrectContext());
+        ContextConstraint constraint = findUnsatisfiedConstraint();
         if (constraint != null) {
           outUnsatisfiedConstraint.set(constraint);
           return;
@@ -547,6 +548,11 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
     public String toString() {
       return "Submission{" + myComputation + ", " + getState() + "}";
     }
+  }
+
+  @Nullable
+  private ContextConstraint findUnsatisfiedConstraint() {
+    return ContainerUtil.find(myConstraints, t -> !t.isCorrectContext());
   }
 
   @TestOnly
